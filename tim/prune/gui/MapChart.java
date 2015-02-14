@@ -23,7 +23,6 @@ import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.TrackInfo;
-//import tim.prune.gui.map.MapWindow;
 
 
 /**
@@ -34,7 +33,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 	// Constants
 	private static final int POINT_RADIUS = 4;
 	private static final int CLICK_SENSITIVITY = 10;
-	private static final double ZOOM_SCALE_FACTOR = 1.2;
+	private static final double ZOOM_SCALE_FACTOR = 1.4;
 	private static final int PAN_DISTANCE = 10;
 	private static final int LIMIT_WAYPOINT_NAMES = 40;
 
@@ -252,8 +251,10 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 				bufferedG.drawRect(x - 2, y - 2, 3, 3);
 
 				// See whether to connect the point with previous one or not
-				currPointTrackpoint = !_track.getPoint(i).isWaypoint() && _track.getPoint(i).getPhoto() == null;
-				if (_connectPointsMenuItem.isSelected() && currPointTrackpoint && lastPointTrackpoint)
+				DataPoint point = _track.getPoint(i);
+				currPointTrackpoint = !point.isWaypoint() && point.getPhoto() == null;
+				if (_connectPointsMenuItem.isSelected() && currPointTrackpoint && lastPointTrackpoint
+					&& !point.getSegmentStart())
 				{
 					bufferedG.drawLine(lastX, lastY, x, y);
 				}
@@ -388,21 +389,11 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 				dataUpdated(DataSubscriber.ALL);
 			}
 		});
-		_connectPointsMenuItem.setSelected(false);
+		_connectPointsMenuItem.setSelected(true);
 		_popup.add(_connectPointsMenuItem);
 		_autoPanMenuItem = new JCheckBoxMenuItem(I18nManager.getText("menu.map.autopan"));
 		_autoPanMenuItem.setSelected(true);
 		_popup.add(_autoPanMenuItem);
-/*
-		JMenuItem mapItem = new JMenuItem("Show map");
-		mapItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				showMap();
-			}
-		});
-		_popup.add(mapItem);
-*/
 	}
 
 
@@ -642,15 +633,4 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 	{
 		// ignore
 	}
-
-	/**
-	 * Show a map window - probably only temporarily here until it gets fixed
-	 */
-/*
-	private void showMap()
-	{
-		MapWindow map = new MapWindow(_track);
-		map.show();
-	}
-*/
 }

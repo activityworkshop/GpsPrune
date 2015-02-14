@@ -17,7 +17,7 @@ public class DataPoint
 	private Timestamp _timestamp = null;
 	private Photo _photo = null;
 	private String _waypointName = null;
-	// private boolean _startOfSegment = false;
+	private boolean _startOfSegment = false;
 
 
 	/**
@@ -48,7 +48,9 @@ public class DataPoint
 		_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inAltFormat);
 		_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
 		_waypointName = getFieldValue(Field.WAYPT_NAME);
-		// TODO: Parse segment start field (format?)
+		String segmentStr = getFieldValue(Field.NEW_SEGMENT);
+		if (segmentStr != null) {segmentStr = segmentStr.trim();}
+		_startOfSegment = (segmentStr != null && (segmentStr.equals("1") || segmentStr.toUpperCase().equals("Y")));
 	}
 
 
@@ -137,6 +139,11 @@ public class DataPoint
 		}
 	}
 
+	/** @param inFlag true for start of track segment */
+	public void setSegmentStart(boolean inFlag)
+	{
+		setFieldValue(Field.NEW_SEGMENT, inFlag?"1":null);
+	}
 
 	/** @return latitude */
 	public Coordinate getLatitude()
@@ -172,6 +179,12 @@ public class DataPoint
 	public String getWaypointName()
 	{
 		return _waypointName;
+	}
+
+	/** @return true if start of new track segment */
+	public boolean getSegmentStart()
+	{
+		return _startOfSegment;
 	}
 
 	/**

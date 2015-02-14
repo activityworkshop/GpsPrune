@@ -13,8 +13,6 @@ import tim.prune.edit.FieldEditList;
  */
 public class Track
 {
-	// Broker object
-	UpdateMessageBroker _broker = null;
 	// Data points
 	private DataPoint[] _dataPoints = null;
 	// Scaled x, y values
@@ -33,11 +31,9 @@ public class Track
 
 	/**
 	 * Constructor for empty track
-	 * @param inBroker message broker object
 	 */
-	public Track(UpdateMessageBroker inBroker)
+	public Track()
 	{
-		_broker = inBroker;
 		// create field list
 		_masterFieldList = new FieldList(null);
 		// make empty DataPoint array
@@ -79,6 +75,11 @@ public class Track
 			}
 		}
 		_numPoints = pointIndex;
+		// Set first track point to be start of segment
+		DataPoint firstTrackPoint = getNextTrackPoint(0);
+		if (firstTrackPoint != null) {
+			firstTrackPoint.setSegmentStart(true);
+		}
 		// needs to be scaled
 		_scaled = false;
 	}
@@ -89,7 +90,7 @@ public class Track
 
 	/**
 	 * Combine this Track with new data
-	 * @param inOtherTrack
+	 * @param inOtherTrack other track to combine
 	 */
 	public void combine(Track inOtherTrack)
 	{
@@ -106,7 +107,7 @@ public class Track
 		// needs to be scaled again
 		_scaled = false;
 		// inform listeners
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 	}
 
 
@@ -121,7 +122,7 @@ public class Track
 			_numPoints = inNewSize;
 			// needs to be scaled again
 			_scaled = false;
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 		}
 	}
 
@@ -146,14 +147,17 @@ public class Track
 		if (yscale > wholeScale) wholeScale = yscale;
 		double minDist = wholeScale / inResolution;
 
+		// Keep track of segment start flags of the deleted points
+		boolean setSegment = false;
 		// Copy selected points
 		DataPoint[] newPointArray = new DataPoint[_numPoints];
 		int[] pointIndices = new int[_numPoints];
 		for (int i=0; i<_numPoints; i++)
 		{
+			DataPoint point = _dataPoints[i];
 			boolean keepPoint = true;
 			// Don't delete waypoints or photo points
-			if (!_dataPoints[i].isWaypoint() && _dataPoints[i].getPhoto() == null)
+			if (!point.isWaypoint() && point.getPhoto() == null)
 			{
 				// go through newPointArray to check for range
 				for (int j=0; j<numCopied && keepPoint; j++)
@@ -167,9 +171,20 @@ public class Track
 			}
 			if (keepPoint)
 			{
-				newPointArray[numCopied] = _dataPoints[i];
+				newPointArray[numCopied] = point;
 				pointIndices[numCopied] = i;
 				numCopied++;
+				// set segment flag if it's the first track point
+				if (setSegment && !point.isWaypoint())
+				{
+					point.setSegmentStart(true);
+					setSegment = false;
+				}
+			}
+			else
+			{
+				// point will be removed, so check segment flag
+				if (point.getSegmentStart()) {setSegment = true;}
 			}
 		}
 
@@ -203,7 +218,7 @@ public class Track
 		_dataPoints = newPointArray;
 		_numPoints = _dataPoints.length;
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 		return numDeleted;
 	}
 
@@ -232,6 +247,16 @@ public class Track
 		{
 			// no valid range selected so can't delete
 			return false;
+		}
+		// check through range to be deleted, and see if any new segment flags present
+		boolean hasSegmentStart = false;
+		DataPoint nextTrackPoint = getNextTrackPoint(inEnd+1);
+		if (nextTrackPoint != null) {
+			for (int i=inStart; i<=inEnd && !hasSegmentStart; i++) {
+				hasSegmentStart |= _dataPoints[i].getSegmentStart();
+			}
+			// If segment break found, make sure next trackpoint also has break
+			if (hasSegmentStart) {nextTrackPoint.setSegmentStart(true);}
 		}
 		// valid range, let's delete it
 		int numToDelete = inEnd - inStart + 1;
@@ -324,12 +349,44 @@ public class Track
 			_dataPoints[inStart + i] = _dataPoints[inEnd - i];
 			_dataPoints[inEnd - i] = p;
 		}
+		// adjust segment starts
+		shiftSegmentStarts(inStart, inEnd);
+		// Find first track point and following track point, and set segment starts to true
+		DataPoint firstTrackPoint = getNextTrackPoint(inStart);
+		if (firstTrackPoint != null) {firstTrackPoint.setSegmentStart(true);}
+		DataPoint nextTrackPoint = getNextTrackPoint(inEnd+1);
+		if (nextTrackPoint != null) {nextTrackPoint.setSegmentStart(true);}
 		// needs to be scaled again
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 		return true;
 	}
 
+
+	/**
+	 * Merge the track segments within the given range
+	 * @param inStart start index
+	 * @param inEnd end index
+	 * @return true if successful
+	 */
+	public boolean mergeTrackSegments(int inStart, int inEnd)
+	{
+		boolean firstTrackPoint = true;
+		// Loop between start and end
+		for (int i=inStart; i<=inEnd; i++) {
+			DataPoint point = getPoint(i);
+			// Set all segments to false apart from first track point
+			if (point != null && !point.isWaypoint()) {
+				point.setSegmentStart(firstTrackPoint);
+				firstTrackPoint = false;
+			}
+		}
+		// Find following track point, if any
+		DataPoint nextPoint = getNextTrackPoint(inEnd+1);
+		if (nextPoint != null) {nextPoint.setSegmentStart(true);}
+		UpdateMessageBroker.informSubscribers();
+		return true;
+	}
 
 	/**
 	 * Collect all waypoints to the start or end of the track
@@ -381,7 +438,7 @@ public class Track
 		}
 		// needs to be scaled again
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 		return true;
 	}
 
@@ -439,7 +496,7 @@ public class Track
 		_dataPoints = dataCopy;
 		// needs to be scaled again to recalc x, y
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 		return true;
 	}
 
@@ -481,7 +538,7 @@ public class Track
 		}
 		// needs to be scaled again to recalc x, y
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 	}
 
 
@@ -760,6 +817,71 @@ public class Track
 	}
 
 
+	/**
+	 * Get the next track point starting from the given index
+	 * @param inStartIndex index to start looking from
+	 * @return next track point, or null if end of data reached
+	 */
+	public DataPoint getNextTrackPoint(int inStartIndex)
+	{
+		return getNextTrackPoint(inStartIndex, 1);
+	}
+
+	/**
+	 * Get the previous track point starting from the given index
+	 * @param inStartIndex index to start looking from
+	 * @return next track point, or null if end of data reached
+	 */
+	public DataPoint getPreviousTrackPoint(int inStartIndex)
+	{
+		return getNextTrackPoint(inStartIndex, -1);
+	}
+
+	/**
+	 * Get the next track point starting from the given index
+	 * @param inStartIndex index to start looking from
+	 * @param inIncrement increment to add to point index, +1 for next, -1 for previous
+	 * @return next track point, or null if end of data reached
+	 */
+	private DataPoint getNextTrackPoint(int inStartIndex, int inIncrement)
+	{
+		// Loop forever over points
+		for (int i=inStartIndex; ; i+=inIncrement)
+		{
+			DataPoint point = getPoint(i);
+			// Exit if end of data reached - there wasn't a track point
+			if (point == null) {return null;}
+			if (point.isValid() && !point.isWaypoint()) {
+				// next track point found
+				return point;
+			}
+		}
+	}
+
+	/**
+	 * Shift all the segment start flags in the given range by 1
+	 * Method used by reverse range and its undo
+	 * @param inStartIndex start of range, inclusive
+	 * @param inEndIndex end of range, inclusive
+	 */
+	public void shiftSegmentStarts(int inStartIndex, int inEndIndex)
+	{
+		boolean prevFlag = true;
+		boolean currFlag = true;
+		for (int i=inStartIndex; i<= inEndIndex; i++)
+		{
+			DataPoint point = getPoint(i);
+			if (point != null && !point.isWaypoint())
+			{
+				// remember flag
+				currFlag = point.getSegmentStart();
+				// shift flag by 1
+				point.setSegmentStart(prevFlag);
+				prevFlag = currFlag;
+			}
+		}
+	}
+
 	////////////////// Cloning and replacing ///////////////////
 
 	/**
@@ -824,7 +946,7 @@ public class Track
 		_numPoints++;
 		// needs to be scaled again
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 		return true;
 	}
 
@@ -857,7 +979,7 @@ public class Track
 		_numPoints += inPoints.length;
 		// needs to be scaled again
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 		return true;
 	}
 
@@ -875,7 +997,7 @@ public class Track
 		_dataPoints = inContents;
 		_numPoints = _dataPoints.length;
 		_scaled = false;
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 		return true;
 	}
 
@@ -910,7 +1032,7 @@ public class Track
 			// point possibly needs to be scaled again
 			_scaled = false;
 			// trigger listeners
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 			return true;
 		}
 		return false;

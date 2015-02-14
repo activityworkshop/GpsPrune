@@ -4,28 +4,18 @@ package tim.prune;
  * Class responsible for distributing update information
  * to all registered listeners
  */
-public class UpdateMessageBroker
+public abstract class UpdateMessageBroker
 {
-	private DataSubscriber[] _subscribers;
-	private int _subscriberNum = 0;
-	private static final int MAXIMUM_NUMBER_SUBSCRIBERS = 5;
-
-
-	/**
-	 * Constructor
-	 * @param inTrack Track object
-	 */
-	public UpdateMessageBroker()
-	{
-		_subscribers = new DataSubscriber[MAXIMUM_NUMBER_SUBSCRIBERS];
-	}
+	private static final int MAXIMUM_NUMBER_SUBSCRIBERS = 6;
+	private static DataSubscriber[] _subscribers = new DataSubscriber[MAXIMUM_NUMBER_SUBSCRIBERS];
+	private static int _subscriberNum = 0;
 
 
 	/**
 	 * Add a data subscriber to the list
 	 * @param inSub DataSubscriber to add
 	 */
-	public void addSubscriber(DataSubscriber inSub)
+	public static void addSubscriber(DataSubscriber inSub)
 	{
 		_subscribers[_subscriberNum] = inSub;
 		_subscriberNum++;
@@ -36,7 +26,7 @@ public class UpdateMessageBroker
 	 * Send a message to all subscribers that
 	 * the data has been updated
 	 */
-	public void informSubscribers()
+	public static void informSubscribers()
 	{
 		informSubscribers(DataSubscriber.ALL);
 	}
@@ -46,13 +36,28 @@ public class UpdateMessageBroker
 	 * Send message to all subscribers
 	 * @param inChange Change that occurred
 	 */
-	public void informSubscribers(byte inChange)
+	public static void informSubscribers(byte inChange)
 	{
 		for (int i=0; i<_subscribers.length; i++)
 		{
 			if (_subscribers[i] != null)
 			{
 				_subscribers[i].dataUpdated(inChange);
+			}
+		}
+	}
+
+	/**
+	 * Send message to all subscribers
+	 * @param inMessage message to display informing of action completed
+	 */
+	public static void informSubscribers(String inMessage)
+	{
+		for (int i=0; i<_subscribers.length; i++)
+		{
+			if (_subscribers[i] != null)
+			{
+				_subscribers[i].actionCompleted(inMessage);
 			}
 		}
 	}

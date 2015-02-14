@@ -10,7 +10,6 @@ import tim.prune.UpdateMessageBroker;
 public class Selection
 {
 	private Track _track = null;
-	private UpdateMessageBroker _broker = null;
 	private int _currentPoint = -1;
 	private boolean _valid = false;
 	private int _startIndex = -1, _endIndex = -1;
@@ -25,12 +24,10 @@ public class Selection
 	/**
 	 * Constructor
 	 * @param inTrack track object
-	 * @param inBroker broker object
 	 */
-	public Selection(Track inTrack, UpdateMessageBroker inBroker)
+	public Selection(Track inTrack)
 	{
 		_track = inTrack;
-		_broker = inBroker;
 	}
 
 
@@ -304,7 +301,7 @@ public class Selection
 			}
 		}
 		reset();
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 	}
 
 
@@ -337,7 +334,7 @@ public class Selection
 			}
 		}
 		reset();
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
 	}
 
 
@@ -419,7 +416,6 @@ public class Selection
 		return _currentPhotoIndex;
 	}
 
-
 	/**
 	 * Check that the selection still makes sense
 	 * and fire update message to listeners
@@ -450,6 +446,6 @@ public class Selection
 				_currentPoint = _startIndex = _endIndex = -1;
 			}
 		}
-		_broker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+		UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 	}
 }

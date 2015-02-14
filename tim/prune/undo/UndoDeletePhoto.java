@@ -1,6 +1,7 @@
 package tim.prune.undo;
 
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
@@ -61,7 +62,7 @@ public class UndoDeletePhoto implements UndoOperation
 		else
 		{
 			// update needed if not already triggered by track update
-			inTrackInfo.triggerUpdate();
+			UpdateMessageBroker.informSubscribers();
 		}
 		// Ensure that photo is associated with point and vice versa
 		_photo.setDataPoint(_point);

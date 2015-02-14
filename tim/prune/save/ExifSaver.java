@@ -21,6 +21,7 @@ import javax.swing.JTable;
 
 import tim.prune.ExternalTools;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -244,10 +245,9 @@ public class ExifSaver implements Runnable
 			_progressBar.setValue(i + 1);
 		}
 		_progressBar.setVisible(false);
-		// Show confirmation dialog
-		JOptionPane.showMessageDialog(_dialog, I18nManager.getText("dialog.saveexif.ok1") + " "
-			+ numSaved + " " + I18nManager.getText("dialog.saveexif.ok2"),
-			I18nManager.getText("dialog.saveexif.title"), JOptionPane.INFORMATION_MESSAGE);
+		// Show confirmation
+		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.saveexif.ok1") + " "
+			+ numSaved + " " + I18nManager.getText("confirm.saveexif.ok2"));
 		// close dialog, all finished
 		_dialog.dispose();
 	}

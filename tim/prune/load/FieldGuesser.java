@@ -80,6 +80,12 @@ public abstract class FieldGuesser
 					fields[f] = Field.TIMESTAMP;
 					continue;
 				}
+				// check for tracksegment
+				if (!checkArrayHasField(fields, Field.NEW_SEGMENT) && fieldLooksLikeSegment(value, isHeader))
+				{
+					fields[f] = Field.NEW_SEGMENT;
+					continue;
+				}
 			}
 		}
 		// Fill in the rest of the fields using just custom fields
@@ -268,6 +274,28 @@ public abstract class FieldGuesser
 			if (inValue.length() < 7) {return false;}
 			Timestamp stamp = new Timestamp(inValue);
 			return stamp.isValid();
+		}
+	}
+
+	/**
+	 * Check whether the given String looks like a track segment field
+	 * @param inValue value from file
+	 * @param inIsHeader true if this is a header line, false for data
+	 * @return true if it could be a track segment
+	 */
+	private static boolean fieldLooksLikeSegment(String inValue, boolean inIsHeader)
+	{
+		if (inValue == null || inValue.equals("")) {return false;}
+		if (inIsHeader)
+		{
+			String upperValue = inValue.toUpperCase();
+			// This is a header line so look for english or local text
+			return upperValue.equals("SEGMENT");
+		}
+		else
+		{
+			// can't reliably identify it just using the value
+			return false;
 		}
 	}
 }

@@ -105,10 +105,8 @@ public class PhotoThumbnail extends JPanel implements Runnable
 			if (picWidth > -1 && picHeight > -1)
 			{
 				int displayWidth = Math.min(getWidth(), getParent().getWidth());
-				// System.out.println("width = " + getWidth() + ", " + getParent().getWidth() + " = " + displayWidth);
 				int displayHeight = Math.min(getHeight(), getParent().getHeight());
-				// System.out.println("height = " + getHeight() + ", " + getParent().getHeight() + " = " + displayHeight);
-	
+
 				// calculate maximum thumbnail size
 				Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, displayWidth, displayHeight);
 				// Work out if need to remake image

@@ -99,7 +99,9 @@ public class KmlHandler extends XmlHandler
 			// Add each of the unnamed track points to list
 			for (int p=0; p<numPoints; p++)
 			{
-				_pointList.add(makeStringArray(coordArray[p], null));
+				String[] pointArray = makeStringArray(coordArray[p], null);
+				if (p==0) {pointArray[4] = "1";}
+				_pointList.add(pointArray);
 			}
 		}
 	}
@@ -113,7 +115,7 @@ public class KmlHandler extends XmlHandler
 	 */
 	private static String[] makeStringArray(String inCoordinates, String inName)
 	{
-		String[] result = new String[4];
+		String[] result = new String[5];
 		String[] values = inCoordinates.split(",");
 		if (values.length == 3) {System.arraycopy(values, 0, result, 0, 3);}
 		result[3] = inName;
@@ -126,7 +128,7 @@ public class KmlHandler extends XmlHandler
 	 */
 	public Field[] getFieldArray()
 	{
-		final Field[] fields = {Field.LONGITUDE, Field.LATITUDE, Field.ALTITUDE, Field.WAYPT_NAME};
+		final Field[] fields = {Field.LONGITUDE, Field.LATITUDE, Field.ALTITUDE, Field.WAYPT_NAME, Field.NEW_SEGMENT};
 		return fields;
 	}
 

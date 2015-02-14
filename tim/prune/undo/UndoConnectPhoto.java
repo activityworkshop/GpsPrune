@@ -1,6 +1,7 @@
 package tim.prune.undo;
 
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
@@ -49,7 +50,7 @@ public class UndoConnectPhoto implements UndoOperation
 			_point.setPhoto(null);
 			photo.setDataPoint(null);
 			// inform subscribers
-			inTrackInfo.triggerUpdate();
+			UpdateMessageBroker.informSubscribers();
 		}
 		else
 		{

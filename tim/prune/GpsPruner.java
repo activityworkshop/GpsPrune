@@ -1,10 +1,11 @@
 package tim.prune;
 
-import java.awt.BorderLayout;
 import java.awt.event.WindowAdapter;
+import java.awt.BorderLayout;
 import java.awt.event.WindowEvent;
 import java.util.Locale;
 
+import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
@@ -15,6 +16,7 @@ import tim.prune.gui.MapChart;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.ProfileChart;
 import tim.prune.gui.SelectorDisplay;
+import tim.prune.gui.StatusBar;
 
 /**
  * Tool to visualize, edit and prune GPS data
@@ -22,9 +24,9 @@ import tim.prune.gui.SelectorDisplay;
  */
 public class GpsPruner
 {
-	// Patch to version 4
-	public static final String VERSION_NUMBER = "4.1";
-	public static final String BUILD_NUMBER = "091";
+	// Final build of version 5
+	public static final String VERSION_NUMBER = "5";
+	public static final String BUILD_NUMBER = "100";
 	private static App APP = null;
 
 
@@ -83,27 +85,30 @@ public class GpsPruner
 	private static void launch()
 	{
 		JFrame frame = new JFrame("Prune");
-		UpdateMessageBroker broker = new UpdateMessageBroker();
-		APP = new App(frame, broker);
+		APP = new App(frame);
 
 		// make menu
 		MenuManager menuManager = new MenuManager(frame, APP, APP.getTrackInfo());
 		frame.setJMenuBar(menuManager.createMenuBar());
 		APP.setMenuManager(menuManager);
-		broker.addSubscriber(menuManager);
+		UpdateMessageBroker.addSubscriber(menuManager);
 		// Make toolbar for buttons
 		JToolBar toolbar = menuManager.createToolBar();
 
-		// Make three GUI components and add as listeners
+		// Make main GUI components and add as listeners
 		SelectorDisplay leftPanel = new SelectorDisplay(APP.getTrackInfo());
-		broker.addSubscriber(leftPanel);
+		UpdateMessageBroker.addSubscriber(leftPanel);
 		DetailsDisplay rightPanel = new DetailsDisplay(APP.getTrackInfo());
-		broker.addSubscriber(rightPanel);
+		UpdateMessageBroker.addSubscriber(rightPanel);
 		MapChart mapDisp = new MapChart(APP, APP.getTrackInfo());
-		broker.addSubscriber(mapDisp);
+		UpdateMessageBroker.addSubscriber(mapDisp);
 		ProfileChart profileDisp = new ProfileChart(APP.getTrackInfo());
-		broker.addSubscriber(profileDisp);
+		UpdateMessageBroker.addSubscriber(profileDisp);
+		StatusBar statusBar = new StatusBar();
+		UpdateMessageBroker.addSubscriber(statusBar);
+		UpdateMessageBroker.informSubscribers("Prune v" + VERSION_NUMBER);
 
+		// Arrange in the frame using split panes
 		JSplitPane midPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mapDisp, profileDisp);
 		midPane.setResizeWeight(1.0); // allocate as much space as poss to map
 		JSplitPane triplePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, midPane, rightPanel);
@@ -113,6 +118,8 @@ public class GpsPruner
 		frame.getContentPane().add(toolbar, BorderLayout.NORTH);
 		frame.getContentPane().add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel,
 			triplePane), BorderLayout.CENTER);
+		frame.getContentPane().add(statusBar, BorderLayout.SOUTH);
+
 		// add closing listener
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -122,9 +129,17 @@ public class GpsPruner
 		// Avoid automatically shutting down if window closed
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
+		// set icon
+		try {
+			frame.setIconImage(new ImageIcon(GpsPruner.class.getResource("gui/images/window_icon.png")).getImage());
+		}
+		catch (Exception e) {} // ignore
+
 		// finish off and display frame
 		frame.pack();
 		frame.setSize(650, 450);
 		frame.show();
+		// Set position of map/profile splitter
+		midPane.setDividerLocation(0.75);
 	}
 }

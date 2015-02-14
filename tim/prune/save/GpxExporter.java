@@ -25,6 +25,7 @@ import javax.swing.filechooser.FileFilter;
 
 import tim.prune.GpsPruner;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -201,10 +202,10 @@ public class GpxExporter implements Runnable
 
 			// close file
 			writer.close();
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.ok1")
-				 + " " + numPoints + " " + I18nManager.getText("dialog.save.ok2")
-				 + " " + _exportFile.getAbsolutePath(),
-				I18nManager.getText("dialog.save.oktitle"), JOptionPane.INFORMATION_MESSAGE);
+			// Show confirmation
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
+				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
+				 + " " + _exportFile.getAbsolutePath());
 			// export successful so need to close dialog and return
 			_dialog.dispose();
 			return;
@@ -264,7 +265,7 @@ public class GpxExporter implements Runnable
 		for (i=0; i<numPoints; i++)
 		{
 			point = _track.getPoint(i);
-			// Make a blob for each waypoint
+			// Make a wpt element for each waypoint
 			if (point.isWaypoint())
 			{
 				exportWaypoint(point, inWriter);
@@ -274,18 +275,23 @@ public class GpxExporter implements Runnable
 				hasTrackpoints = true;
 			}
 		}
-		// Make a line for the track, if there is one
-		// TODO: Look at segments of track, and split into separate track segments in Gpx if necessary
+		// Output the track, if there is one
 		if (hasTrackpoints)
 		{
+			boolean firstPoint = true;
 			inWriter.write("\t<trk><trkseg>\n");
 			// Loop over track points
 			for (i=0; i<numPoints; i++)
 			{
 				point = _track.getPoint(i);
-				if (!point.isWaypoint())
-				{
+				if (point.getSegmentStart() && !firstPoint) {
+					inWriter.write("\t</trkseg>\n\t<trkseg>\n");
+				}
+				if (!point.isWaypoint()) {
+					// restart track segment if necessary
+					// export the track point
 					exportTrackpoint(point, inWriter);
+					firstPoint = false;
 				}
 			}
 			inWriter.write("\t</trkseg></trk>\n");

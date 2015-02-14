@@ -20,4 +20,9 @@ public interface DataSubscriber
 	 */
 	public void dataUpdated(byte inUpdateType);
 
+	/**
+	 * Inform clients that an action has been completed
+	 * @param inMessage message describing action
+	 */
+	public void actionCompleted(String inMessage);
 }

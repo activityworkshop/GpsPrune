@@ -61,11 +61,11 @@ public class JpegLoader implements Runnable
 
 
 	/**
-	 * Select an input file and open the GUI frame
-	 * to select load options
+	 * Open the GUI to select options and start the load
 	 */
-	public void openFile()
+	public void openDialog()
 	{
+		// TODO: Allow restriction of load area, either to current track or manually-entered range
 		if (_fileChooser == null)
 		{
 			_fileChooser = new JFileChooser();

@@ -12,6 +12,7 @@ public class UndoDeletePoint implements UndoOperation
 	private int _pointIndex = -1;
 	private DataPoint _point = null;
 	private int _photoIndex = -1;
+	private boolean _segmentStart = false;
 
 
 	/**
@@ -19,12 +20,14 @@ public class UndoDeletePoint implements UndoOperation
 	 * @param inPointIndex index number of point within track
 	 * @param inPoint data point
 	 * @param inPhotoIndex index number of photo within photo list
+	 * @param inSegmentStart true if following track point starts new segment
 	 */
-	public UndoDeletePoint(int inPointIndex, DataPoint inPoint, int inPhotoIndex)
+	public UndoDeletePoint(int inPointIndex, DataPoint inPoint, int inPhotoIndex, boolean inSegmentStart)
 	{
 		_pointIndex = inPointIndex;
 		_point = inPoint;
 		_photoIndex = inPhotoIndex;
+		_segmentStart = inSegmentStart;
 	}
 
 
@@ -63,6 +66,15 @@ public class UndoDeletePoint implements UndoOperation
 			}
 			// Ensure that photo is associated with point
 			_point.getPhoto().setDataPoint(_point);
+		}
+		// Restore previous status of following track point if necessary
+		if (!_segmentStart)
+		{
+			// Deletion of point can only set following point to true, so only need to set it back to false
+			DataPoint nextTrackPoint = inTrackInfo.getTrack().getNextTrackPoint(_pointIndex + 1);
+			if (nextTrackPoint != null) {
+				nextTrackPoint.setSegmentStart(false);
+			}
 		}
 	}
 }

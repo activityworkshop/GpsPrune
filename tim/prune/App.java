@@ -7,6 +7,8 @@ import java.util.Stack;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import tim.prune.browser.BrowserLauncher;
+import tim.prune.browser.UrlGenerator;
 import tim.prune.correlate.PhotoCorrelator;
 import tim.prune.correlate.PointPair;
 import tim.prune.data.DataPoint;
@@ -20,6 +22,7 @@ import tim.prune.edit.PointEditor;
 import tim.prune.edit.PointNameEditor;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.UndoManager;
+import tim.prune.gui.map.MapWindow;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
 import tim.prune.save.ExifSaver;
@@ -43,6 +46,7 @@ import tim.prune.undo.UndoException;
 import tim.prune.undo.UndoInsert;
 import tim.prune.undo.UndoLoad;
 import tim.prune.undo.UndoLoadPhotos;
+import tim.prune.undo.UndoMergeTrackSegments;
 import tim.prune.undo.UndoOperation;
 import tim.prune.undo.UndoRearrangeWaypoints;
 import tim.prune.undo.UndoReverseSection;
@@ -65,8 +69,8 @@ public class App
 	private KmlExporter _kmlExporter = null;
 	private GpxExporter _gpxExporter = null;
 	private PovExporter _povExporter = null;
+	private BrowserLauncher _browserLauncher = null;
 	private Stack _undoStack = null;
-	private UpdateMessageBroker _broker = null;
 	private boolean _reversePointsConfirmed = false;
 
 	// Constants
@@ -78,15 +82,13 @@ public class App
 	/**
 	 * Constructor
 	 * @param inFrame frame object for application
-	 * @param inBroker message broker
 	 */
-	public App(JFrame inFrame, UpdateMessageBroker inBroker)
+	public App(JFrame inFrame)
 	{
 		_frame = inFrame;
 		_undoStack = new Stack();
-		_broker = inBroker;
-		_track = new Track(_broker);
-		_trackInfo = new TrackInfo(_track, _broker);
+		_track = new Track();
+		_trackInfo = new TrackInfo(_track);
 	}
 
 
@@ -138,13 +140,13 @@ public class App
 
 
 	/**
-	 * Add a photo or a directory of photos which are already correlated
+	 * Add a photo or a directory of photos
 	 */
 	public void addPhotos()
 	{
 		if (_jpegLoader == null)
 			_jpegLoader = new JpegLoader(this, _frame);
-		_jpegLoader.openFile();
+		_jpegLoader.openDialog();
 	}
 
 
@@ -322,6 +324,8 @@ public class App
 			if (_track.editPoint(currentPoint, inEditList))
 			{
 				_undoStack.push(undo);
+				// Confirm point edit
+				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.point.edit"));
 			}
 		}
 	}
@@ -350,50 +354,53 @@ public class App
 	 */
 	public void deleteCurrentPoint()
 	{
-		if (_track != null)
+		if (_track == null) {return;}
+		DataPoint currentPoint = _trackInfo.getCurrentPoint();
+		if (currentPoint != null)
 		{
-			DataPoint currentPoint = _trackInfo.getCurrentPoint();
-			if (currentPoint != null)
+			boolean deletePhoto = false;
+			Photo currentPhoto = currentPoint.getPhoto();
+			if (currentPhoto != null)
 			{
-				boolean deletePhoto = false;
-				Photo currentPhoto = currentPoint.getPhoto();
+				// Confirm deletion of photo or decoupling
+				int response = JOptionPane.showConfirmDialog(_frame,
+					I18nManager.getText("dialog.deletepoint.deletephoto") + " " + currentPhoto.getFile().getName(),
+					I18nManager.getText("dialog.deletepoint.title"),
+					JOptionPane.YES_NO_CANCEL_OPTION);
+				if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION)
+				{
+					// cancel pressed- abort delete
+					return;
+				}
+				if (response == JOptionPane.YES_OPTION) {deletePhoto = true;}
+			}
+			// store necessary information to undo it later
+			int pointIndex = _trackInfo.getSelection().getCurrentPointIndex();
+			int photoIndex = _trackInfo.getPhotoList().getPhotoIndex(currentPhoto);
+			DataPoint nextTrackPoint = _trackInfo.getTrack().getNextTrackPoint(pointIndex + 1);
+			// Construct Undo object
+			UndoOperation undo = new UndoDeletePoint(pointIndex, currentPoint, photoIndex,
+				nextTrackPoint != null && nextTrackPoint.getSegmentStart());
+			// call track to delete point
+			if (_trackInfo.deletePoint())
+			{
+				// Delete was successful so add undo info to stack
+				_undoStack.push(undo);
 				if (currentPhoto != null)
 				{
-					// Confirm deletion of photo or decoupling
-					int response = JOptionPane.showConfirmDialog(_frame,
-						I18nManager.getText("dialog.deletepoint.deletephoto") + " " + currentPhoto.getFile().getName(),
-						I18nManager.getText("dialog.deletepoint.title"),
-						JOptionPane.YES_NO_CANCEL_OPTION);
-					if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION)
+					// delete photo if necessary
+					if (deletePhoto)
 					{
-						// cancel pressed- abort delete
-						return;
+						_trackInfo.getPhotoList().deletePhoto(photoIndex);
 					}
-					if (response == JOptionPane.YES_OPTION) {deletePhoto = true;}
-				}
-				// add information to undo stack
-				int pointIndex = _trackInfo.getSelection().getCurrentPointIndex();
-				int photoIndex = _trackInfo.getPhotoList().getPhotoIndex(currentPhoto);
-				// Undo object needs to know index of photo in list (if any) to restore
-				UndoOperation undo = new UndoDeletePoint(pointIndex, currentPoint, photoIndex);
-				// call track to delete point
-				if (_trackInfo.deletePoint())
-				{
-					_undoStack.push(undo);
-					if (currentPhoto != null)
+					else
 					{
-						// delete photo if necessary
-						if (deletePhoto)
-						{
-							_trackInfo.getPhotoList().deletePhoto(photoIndex);
-						}
-						else
-						{
-							// decouple photo from point
-							currentPhoto.setDataPoint(null);
-						}
+						// decouple photo from point
+						currentPhoto.setDataPoint(null);
 					}
 				}
+				// Confirm
+				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.deletepoint.single"));
 			}
 		}
 	}
@@ -453,7 +460,7 @@ public class App
 					}
 				}
 				// add information to undo stack
-				UndoOperation undo = new UndoDeleteRange(_trackInfo);
+				UndoDeleteRange undo = new UndoDeleteRange(_trackInfo);
 				// delete requested photos
 				for (int i=0; i<numToDelete; i++)
 				{
@@ -476,6 +483,9 @@ public class App
 				if (_trackInfo.deleteRange())
 				{
 					_undoStack.push(undo);
+					// Confirm
+					UpdateMessageBroker.informSubscribers("" + numToDelete + " "
+						+ I18nManager.getText("confirm.deletepoint.multi"));
 				}
 			}
 		}
@@ -499,17 +509,18 @@ public class App
 				String message = null;
 				if (numDeleted == 1)
 				{
-					message = "1 " + I18nManager.getText("dialog.deleteduplicates.single.text");
+					message = "1 " + I18nManager.getText("confirm.deleteduplicates.single");
 				}
 				else
 				{
-					message = "" + numDeleted + " " + I18nManager.getText("dialog.deleteduplicates.multi.text");
+					message = "" + numDeleted + " " + I18nManager.getText("confirm.deleteduplicates.multi");
 				}
-				JOptionPane.showMessageDialog(_frame, message,
-					I18nManager.getText("dialog.deleteduplicates.title"), JOptionPane.INFORMATION_MESSAGE);
+				// Pass message to broker
+				UpdateMessageBroker.informSubscribers(message);
 			}
 			else
 			{
+				// No duplicates found to delete
 				JOptionPane.showMessageDialog(_frame,
 					I18nManager.getText("dialog.deleteduplicates.nonefound"),
 					I18nManager.getText("dialog.deleteduplicates.title"), JOptionPane.INFORMATION_MESSAGE);
@@ -538,11 +549,8 @@ public class App
 		{
 			undo.setNumPointsDeleted(numPointsDeleted);
 			_undoStack.add(undo);
-			JOptionPane.showMessageDialog(_frame,
-				I18nManager.getText("dialog.compresstrack.text") + " - "
-				 + numPointsDeleted + " "
-				 + (numPointsDeleted==1?I18nManager.getText("dialog.compresstrack.single.text"):I18nManager.getText("dialog.compresstrack.multi.text")),
-				I18nManager.getText("dialog.compresstrack.title"), JOptionPane.INFORMATION_MESSAGE);
+			UpdateMessageBroker.informSubscribers("" + numPointsDeleted + " "
+				 + (numPointsDeleted==1?I18nManager.getText("confirm.deletepoint.single"):I18nManager.getText("confirm.deletepoint.multi")));
 		}
 		else
 		{
@@ -553,7 +561,7 @@ public class App
 
 
 	/**
-	 * Reverse a section of the track
+	 * Reverse the currently selected section of the track
 	 */
 	public void reverseRange()
 	{
@@ -567,11 +575,35 @@ public class App
 				 I18nManager.getText("dialog.confirmreversetrack.title"),
 				 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION && (_reversePointsConfirmed = true)))
 		{
-			UndoReverseSection undo = new UndoReverseSection(selStart, selEnd);
+			UndoReverseSection undo = new UndoReverseSection(_track, selStart, selEnd);
 			// call track to reverse range
 			if (_track.reverseRange(selStart, selEnd))
 			{
 				_undoStack.add(undo);
+				// Confirm
+				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.reverserange"));
+			}
+		}
+	}
+
+	/**
+	 * Merge the track segments within the current selection
+	 */
+	public void mergeTrackSegments()
+	{
+		if (_trackInfo.getSelection().hasRangeSelected())
+		{
+			// Maybe could check segment start flags to see if it's worth merging
+			// If first track point is already start and no other seg starts then do nothing
+
+			int selStart = _trackInfo.getSelection().getStart();
+			int selEnd = _trackInfo.getSelection().getEnd();
+			// Make undo object
+			UndoMergeTrackSegments undo = new UndoMergeTrackSegments(_track, selStart, selEnd);
+			// Call track to merge segments
+			if (_track.mergeTrackSegments(selStart, selEnd)) {
+				_undoStack.add(undo);
+				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.mergetracksegments"));
 			}
 		}
 	}
@@ -686,7 +718,7 @@ public class App
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, int inAltFormat, String inFilename)
 	{
 		// Check whether loaded array can be properly parsed into a Track
-		Track loadedTrack = new Track(_broker);
+		Track loadedTrack = new Track();
 		loadedTrack.load(inFieldArray, inDataArray, inAltFormat);
 		if (loadedTrack.getNumPoints() <= 0)
 		{
@@ -747,7 +779,9 @@ public class App
 			_trackInfo.loadTrack(inFieldArray, inDataArray, inAltFormat);
 			_trackInfo.getFileInfo().setFile(inFilename);
 		}
-		_broker.informSubscribers();
+		UpdateMessageBroker.informSubscribers();
+		// Update status bar
+		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile") + " '" + inFilename + "'");
 		// update menu
 		_menuManager.informFileLoaded();
 	}
@@ -771,18 +805,14 @@ public class App
 			}
 			if (numPhotosAdded == 1)
 			{
-				JOptionPane.showMessageDialog(_frame,
-					"" + numPhotosAdded + " " + I18nManager.getText("dialog.jpegload.photoadded"),
-					I18nManager.getText("dialog.jpegload.title"), JOptionPane.INFORMATION_MESSAGE);
+				UpdateMessageBroker.informSubscribers("" + numPhotosAdded + " " + I18nManager.getText("confirm.jpegload.single"));
 			}
 			else
 			{
-				JOptionPane.showMessageDialog(_frame,
-					"" + numPhotosAdded + " " + I18nManager.getText("dialog.jpegload.photosadded"),
-					I18nManager.getText("dialog.jpegload.title"), JOptionPane.INFORMATION_MESSAGE);
+				UpdateMessageBroker.informSubscribers("" + numPhotosAdded + " " + I18nManager.getText("confirm.jpegload.multi"));
 			}
 			// TODO: Improve message when photo(s) fail to load (eg already added)
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 			// update menu
 			_menuManager.informFileLoaded();
 		}
@@ -802,7 +832,8 @@ public class App
 			_undoStack.add(new UndoConnectPhoto(point, photo.getFile().getName()));
 			photo.setDataPoint(point);
 			point.setPhoto(photo);
-			_broker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.connect"));
 		}
 	}
 
@@ -820,7 +851,8 @@ public class App
 			// disconnect
 			photo.setDataPoint(null);
 			point.setPhoto(null);
-			_broker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.disconnect"));
 		}
 	}
 
@@ -875,7 +907,7 @@ public class App
 	public void beginCorrelatePhotos()
 	{
 		PhotoCorrelator correlator = new PhotoCorrelator(this, _frame);
-		// TODO: Do we need to keep a reference to this object to reuse it later?
+		// TODO: Do we need to keep a reference to this Photo Correlator object to reuse it later?
 		correlator.begin();
 	}
 
@@ -971,10 +1003,8 @@ public class App
 			undo.setNumPhotosCorrelated(numPhotos);
 			_undoStack.add(undo);
 			// confirm correlation
-			JOptionPane.showMessageDialog(_frame, "" + numPhotos + " "
-				 + (numPhotos==1?I18nManager.getText("dialog.correlate.confirmsingle.text"):I18nManager.getText("dialog.correlate.confirmmultiple.text")),
-				I18nManager.getText("dialog.correlate.title"),
-				JOptionPane.INFORMATION_MESSAGE);
+			UpdateMessageBroker.informSubscribers("" + numPhotos + " "
+				 + (numPhotos==1?I18nManager.getText("confirm.correlate.single"):I18nManager.getText("confirm.correlate.multi")));
 			// observers already informed by track update
 		}
 	}
@@ -1006,6 +1036,7 @@ public class App
 	{
 		if (_undoStack.isEmpty())
 		{
+			// Nothing to undo
 			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.undo.none.text"),
 				I18nManager.getText("dialog.undo.none.title"), JOptionPane.INFORMATION_MESSAGE);
 		}
@@ -1036,7 +1067,7 @@ public class App
 			_undoStack.clear();
 			_lastSavePosition = 0;
 			if (unsaved) _lastSavePosition = -1;
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 		}
 	}
 
@@ -1053,10 +1084,9 @@ public class App
 			{
 				((UndoOperation) _undoStack.pop()).performUndo(_trackInfo);
 			}
-			JOptionPane.showMessageDialog(_frame, "" + inNumUndos + " "
-				 + (inNumUndos==1?I18nManager.getText("dialog.confirmundo.single.text"):I18nManager.getText("dialog.confirmundo.multiple.text")),
-				I18nManager.getText("dialog.confirmundo.title"),
-				JOptionPane.INFORMATION_MESSAGE);
+			String message = "" + inNumUndos + " "
+				 + (inNumUndos==1?I18nManager.getText("confirm.undo.single"):I18nManager.getText("confirm.undo.multi"));
+			UpdateMessageBroker.informSubscribers(message);
 		}
 		catch (UndoException ue)
 		{
@@ -1065,7 +1095,7 @@ public class App
 				I18nManager.getText("error.undofailed.title"),
 				JOptionPane.ERROR_MESSAGE);
 			_undoStack.clear();
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 		}
 		catch (EmptyStackException empty) {}
 	}
@@ -1099,5 +1129,24 @@ public class App
 		JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.help.help"),
 			I18nManager.getText("menu.help"),
 			JOptionPane.INFORMATION_MESSAGE);
+	}
+
+	/**
+	 * Show an OSM map window
+	 */
+	public void showOsmMap()
+	{
+		MapWindow map = new MapWindow(_track);
+		map.pack();
+		map.show();
+	}
+
+	/**
+	 * Show a map url in an external browser
+	 */
+	public void showExternalMap(int inSourceIndex)
+	{
+		if (_browserLauncher == null) {_browserLauncher = new BrowserLauncher();}
+		_browserLauncher.launchBrowser(UrlGenerator.generateUrl(inSourceIndex, _trackInfo));
 	}
 }

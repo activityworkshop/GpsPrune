@@ -427,7 +427,7 @@ public class TextFileLoader
 				{
 					fields = _delimiterInfos[i].getMaxFields();
 					_statusLabel.setText("" + numRecords + " " + I18nManager.getText("dialog.openoptions.deliminfo.records")
-						+ fields + " " + I18nManager.getText("dialog.openoptions.deliminfo.fields"));
+						+ " " + fields + " " + I18nManager.getText("dialog.openoptions.deliminfo.fields"));
 				}
 			}
 		}

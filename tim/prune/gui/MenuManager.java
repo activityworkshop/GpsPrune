@@ -17,6 +17,7 @@ import javax.swing.KeyStroke;
 import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
+import tim.prune.browser.UrlGenerator;
 import tim.prune.data.PhotoList;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
@@ -53,11 +54,11 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _selectStartItem = null;
 	private JMenuItem _selectEndItem = null;
 	private JMenuItem _reverseItem = null;
+	private JMenuItem _mergeSegmentsItem = null;
 	private JMenu     _rearrangeMenu = null;
-	private JMenuItem _rearrangeStartItem = null;
-	private JMenuItem _rearrangeEndItem = null;
-	private JMenuItem _rearrangeNearestItem = null;
 	private JMenuItem _show3dItem = null;
+	private JMenuItem _showOsmMapItem = null;
+	private JMenu     _browserMapMenu = null;
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _connectPhotoItem = null;
 	private JMenuItem _deletePhotoItem = null;
@@ -275,36 +276,45 @@ public class MenuManager implements DataSubscriber
 		});
 		_reverseItem.setEnabled(false);
 		editMenu.add(_reverseItem);
+		_mergeSegmentsItem = new JMenuItem(I18nManager.getText("menu.edit.mergetracksegments"));
+		_mergeSegmentsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.mergeTrackSegments();
+			}
+		});
+		_mergeSegmentsItem.setEnabled(false);
+		editMenu.add(_mergeSegmentsItem);
 		// Rearrange waypoints
 		_rearrangeMenu = new JMenu(I18nManager.getText("menu.edit.rearrange"));
 		_rearrangeMenu.setEnabled(false);
-		_rearrangeStartItem = new JMenuItem(I18nManager.getText("menu.edit.rearrange.start"));
-		_rearrangeStartItem.addActionListener(new ActionListener() {
+		JMenuItem  rearrangeStartItem = new JMenuItem(I18nManager.getText("menu.edit.rearrange.start"));
+		rearrangeStartItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.rearrangeWaypoints(App.REARRANGE_TO_START);
 			}
 		});
-		_rearrangeStartItem.setEnabled(true);
-		_rearrangeMenu.add(_rearrangeStartItem);
-		_rearrangeEndItem = new JMenuItem(I18nManager.getText("menu.edit.rearrange.end"));
-		_rearrangeEndItem.addActionListener(new ActionListener() {
+		rearrangeStartItem.setEnabled(true);
+		_rearrangeMenu.add(rearrangeStartItem);
+		JMenuItem rearrangeEndItem = new JMenuItem(I18nManager.getText("menu.edit.rearrange.end"));
+		rearrangeEndItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.rearrangeWaypoints(App.REARRANGE_TO_END);
 			}
 		});
-		_rearrangeEndItem.setEnabled(true);
-		_rearrangeMenu.add(_rearrangeEndItem);
-		_rearrangeNearestItem = new JMenuItem(I18nManager.getText("menu.edit.rearrange.nearest"));
-		_rearrangeNearestItem.addActionListener(new ActionListener() {
+		rearrangeEndItem.setEnabled(true);
+		_rearrangeMenu.add(rearrangeEndItem);
+		JMenuItem rearrangeNearestItem = new JMenuItem(I18nManager.getText("menu.edit.rearrange.nearest"));
+		rearrangeNearestItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.rearrangeWaypoints(App.REARRANGE_TO_NEAREST);
 			}
 		});
-		_rearrangeNearestItem.setEnabled(true);
-		_rearrangeMenu.add(_rearrangeNearestItem);
+		rearrangeNearestItem.setEnabled(true);
+		_rearrangeMenu.add(rearrangeNearestItem);
 		editMenu.add(_rearrangeMenu);
 		menubar.add(editMenu);
 
@@ -350,6 +360,49 @@ public class MenuManager implements DataSubscriber
 		_selectEndItem.addActionListener(_selectEndAction);
 		selectMenu.add(_selectEndItem);
 		menubar.add(selectMenu);
+
+		// Add view menu
+		JMenu viewMenu = new JMenu(I18nManager.getText("menu.view"));
+		_show3dItem = new JMenuItem(I18nManager.getText("menu.view.show3d"));
+		_show3dItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.show3dWindow();
+			}
+		});
+		_show3dItem.setEnabled(false);
+		viewMenu.add(_show3dItem);
+		// Show OSM map
+		_showOsmMapItem = new JMenuItem(I18nManager.getText("menu.view.showmap"));
+		_showOsmMapItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.showOsmMap();
+			}
+		});
+		_showOsmMapItem.setEnabled(false);
+		viewMenu.add(_showOsmMapItem);
+		// browser submenu
+		_browserMapMenu = new JMenu(I18nManager.getText("menu.view.browser"));
+		_browserMapMenu.setEnabled(false);
+		JMenuItem googleMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.google"));
+		googleMapsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.showExternalMap(UrlGenerator.MAP_SOURCE_GOOGLE);
+			}
+		});
+		_browserMapMenu.add(googleMapsItem);
+		JMenuItem openMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.openstreetmap"));
+		openMapsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.showExternalMap(UrlGenerator.MAP_SOURCE_OSM);
+			}
+		});
+		_browserMapMenu.add(openMapsItem);
+		viewMenu.add(_browserMapMenu);
+		menubar.add(viewMenu);
 
 		// Add photo menu
 		JMenu photoMenu = new JMenu(I18nManager.getText("menu.photo"));
@@ -407,19 +460,6 @@ public class MenuManager implements DataSubscriber
 		_correlatePhotosItem.setEnabled(false);
 		photoMenu.add(_correlatePhotosItem);
 		menubar.add(photoMenu);
-
-		// Add 3d menu (whether java3d available or not)
-		JMenu threeDMenu = new JMenu(I18nManager.getText("menu.3d"));
-		_show3dItem = new JMenuItem(I18nManager.getText("menu.3d.show3d"));
-		_show3dItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_app.show3dWindow();
-			}
-		});
-		_show3dItem.setEnabled(false);
-		threeDMenu.add(_show3dItem);
-		menubar.add(threeDMenu);
 
 		// Help menu
 		JMenu helpMenu = new JMenu(I18nManager.getText("menu.help"));
@@ -534,6 +574,8 @@ public class MenuManager implements DataSubscriber
 		_selectNoneItem.setEnabled(hasData);
 		if (_show3dItem != null)
 			_show3dItem.setEnabled(hasData);
+		_showOsmMapItem.setEnabled(hasData);
+		_browserMapMenu.setEnabled(hasData);
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
 		_undoItem.setEnabled(hasUndo);
@@ -568,6 +610,15 @@ public class MenuManager implements DataSubscriber
 		_deleteRangeItem.setEnabled(hasRange);
 		_interpolateItem.setEnabled(hasRange
 			&& (_selection.getEnd() - _selection.getStart()) == 1);
+		_mergeSegmentsItem.setEnabled(hasRange);
 		_reverseItem.setEnabled(hasRange);
 	}
+
+
+	/**
+	 * Ignore action completed signals
+	 * @see tim.prune.DataSubscriber#actionCompleted(java.lang.String)
+	 */
+	public void actionCompleted(String inMessage)
+	{}
 }

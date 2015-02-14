@@ -13,6 +13,8 @@ public class UndoDeleteRange implements UndoOperation
 	private int _startIndex = -1;
 	private DataPoint[] _points = null;
 	private PhotoList _photoList = null;
+	private DataPoint _nextTrackPoint = null;
+	private boolean _segmentStart = false;
 
 
 	/**
@@ -24,6 +26,11 @@ public class UndoDeleteRange implements UndoOperation
 		_startIndex = inTrackInfo.getSelection().getStart();
 		_points = inTrackInfo.cloneSelectedRange();
 		_photoList = inTrackInfo.getPhotoList().cloneList();
+		// Save segment flag of following track point
+		_nextTrackPoint = inTrackInfo.getTrack().getNextTrackPoint(_startIndex + _points.length);
+		if (_nextTrackPoint != null) {
+			_segmentStart = _nextTrackPoint.getSegmentStart();
+		}
 	}
 
 
@@ -56,5 +63,9 @@ public class UndoDeleteRange implements UndoOperation
 		}
 		// restore point array into track
 		inTrackInfo.getTrack().insertRange(_points, _startIndex);
+		// Restore segment flag of following track point
+		if (_nextTrackPoint != null) {
+			_nextTrackPoint.setSegmentStart(_segmentStart);
+		}
 	}
 }

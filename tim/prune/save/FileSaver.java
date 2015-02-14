@@ -33,6 +33,7 @@ import javax.swing.table.TableModel;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -490,7 +491,7 @@ public class FileSaver
 								}
 								else if (field == Field.TIMESTAMP)
 								{
-									try
+									if (point.hasTimestamp())
 									{
 										if (timestampFormat == Timestamp.FORMAT_ORIGINAL) {
 											// output original string
@@ -501,7 +502,6 @@ public class FileSaver
 											buffer.append(point.getTimestamp().getText(timestampFormat));
 										}
 									}
-									catch (NullPointerException npe) {}
 								}
 								else
 								{
@@ -519,10 +519,9 @@ public class FileSaver
 						writer.write(lineSeparator);
 					}
 					// Save successful
-					JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.ok1")
-						 + " " + numPoints + " " + I18nManager.getText("dialog.save.ok2")
-						 + " " + saveFile.getAbsolutePath(),
-						I18nManager.getText("dialog.save.oktitle"), JOptionPane.INFORMATION_MESSAGE);
+					UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
+						 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
+						 + " " + saveFile.getAbsolutePath());
 					_app.informDataSaved();
 				}
 				catch (IOException ioe)

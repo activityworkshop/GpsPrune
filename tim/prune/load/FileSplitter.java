@@ -106,7 +106,7 @@ public class FileSplitter
 	 */
 	public String[] getFirstFullRow()
 	{
-		return _firstFullRow; 
+		return _firstFullRow;
 	}
 
 

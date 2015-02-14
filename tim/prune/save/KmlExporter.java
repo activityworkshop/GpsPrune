@@ -35,6 +35,7 @@ import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -302,10 +303,10 @@ public class KmlExporter implements Runnable
 
 			// close file
 			writer.close();
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.ok1")
-				 + " " + numPoints + " " + I18nManager.getText("dialog.save.ok2")
-				 + " " + _exportFile.getAbsolutePath(),
-				I18nManager.getText("dialog.save.oktitle"), JOptionPane.INFORMATION_MESSAGE);
+			// show confirmation
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
+				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
+				 + " " + _exportFile.getAbsolutePath());
 			// export successful so need to close dialog and return
 			_dialog.dispose();
 			return;
@@ -335,7 +336,6 @@ public class KmlExporter implements Runnable
 	private int exportData(OutputStreamWriter inWriter, boolean inExportImages)
 	throws IOException
 	{
-		// TODO: Look at segments of track, and split into separate lines in Kml if necessary
 		inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.1\">\n<Folder>\n");
 		inWriter.write("\t<name>");
 		if (_descriptionField != null && _descriptionField.getText() != null && !_descriptionField.getText().equals(""))
@@ -383,24 +383,37 @@ public class KmlExporter implements Runnable
 		// Make a line for the track, if there is one
 		if (hasTrackpoints)
 		{
-			inWriter.write("\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
+			// Set up strings for start and end of track segment
+			String trackStart = "\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
 				+ "\t\t\t\t<color>cc0000cc</color>\n\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
 				+ "\t\t\t<PolyStyle><color>33cc0000</color></PolyStyle>\n"
-				+ "\t\t</Style>\n\t\t<LineString>\n");
+				+ "\t\t</Style>\n\t\t<LineString>\n";
 			if (exportAltitudes) {
-				inWriter.write("\t\t\t<extrude>1</extrude>\n\t\t\t<altitudeMode>absolute</altitudeMode>\n");
+				trackStart += "\t\t\t<extrude>1</extrude>\n\t\t\t<altitudeMode>absolute</altitudeMode>\n";
 			}
-			inWriter.write("\t\t\t<coordinates>");
+			trackStart += "\t\t\t<coordinates>";
+			String trackEnd = "\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>";
+
+			// Start segment
+			inWriter.write(trackStart);
 			// Loop over track points
+			boolean firstTrackpoint = true;
 			for (i=0; i<numPoints; i++)
 			{
 				point = _track.getPoint(i);
+				// start new track segment if necessary
+				if (point.getSegmentStart() && !firstTrackpoint) {
+					inWriter.write(trackEnd);
+					inWriter.write(trackStart);
+				}
 				if (!point.isWaypoint() && point.getPhoto() == null)
 				{
 					exportTrackpoint(point, inWriter, exportAltitudes);
+					firstTrackpoint = false;
 				}
 			}
-			inWriter.write("\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>");
+			// end segment
+			inWriter.write(trackEnd);
 		}
 		inWriter.write("</Folder>\n</kml>");
 		return numPoints;

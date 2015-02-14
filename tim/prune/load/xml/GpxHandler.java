@@ -17,6 +17,7 @@ public class GpxHandler extends XmlHandler
 	private boolean _insideName = false;
 	private boolean _insideElevation = false;
 	private boolean _insideTime = false;
+	private boolean _startSegment = true;
 	private String _name = null, _latitude = null, _longitude = null;
 	private String _elevation = null;
 	private String _time = null;
@@ -56,6 +57,10 @@ public class GpxHandler extends XmlHandler
 		else if (qName.equalsIgnoreCase("time"))
 		{
 			_insideTime = true;
+		}
+		else if (qName.equalsIgnoreCase("trkseg"))
+		{
+			_startSegment = true;
 		}
 		super.startElement(uri, localName, qName, attributes);
 	}
@@ -122,10 +127,14 @@ public class GpxHandler extends XmlHandler
 	private void processPoint()
 	{
 		// Put the values into a String array matching the order in getFieldArray()
-		String[] values = new String[5];
+		String[] values = new String[6];
 		values[0] = _latitude; values[1] = _longitude;
 		values[2] = _elevation; values[3] = _name;
 		values[4] = _time;
+		if (_startSegment && !_insideWaypoint) {
+			values[5] = "1";
+			_startSegment = false;
+		}
 		_pointList.add(values);
 	}
 
@@ -136,7 +145,7 @@ public class GpxHandler extends XmlHandler
 	public Field[] getFieldArray()
 	{
 		final Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
-			Field.WAYPT_NAME, Field.TIMESTAMP};
+			Field.WAYPT_NAME, Field.TIMESTAMP, Field.NEW_SEGMENT};
 		return fields;
 	}
 

@@ -12,6 +12,7 @@ public class UndoCompress implements UndoOperation
 {
 	private DataPoint[] _contents = null;
 	protected int _numPointsDeleted = -1;
+	private boolean[] _segmentStarts = null;
 
 
 	/**
@@ -21,6 +22,11 @@ public class UndoCompress implements UndoOperation
 	public UndoCompress(Track inTrack)
 	{
 		_contents = inTrack.cloneContents();
+		// Copy boolean segment start flags
+		_segmentStarts = new boolean[inTrack.getNumPoints()];
+		for (int i=0; i<inTrack.getNumPoints(); i++) {
+			_segmentStarts[i] = inTrack.getPoint(i).getSegmentStart();
+		}
 	}
 
 
@@ -55,6 +61,13 @@ public class UndoCompress implements UndoOperation
 	{
 		// restore track to previous values
 		inTrackInfo.getTrack().replaceContents(_contents);
+		// Copy boolean segment start flags
+		Track track = inTrackInfo.getTrack();
+		if (_segmentStarts.length != track.getNumPoints())
+			throw new UndoException("Cannot undo compress - track length no longer matches");
+		for (int i=0; i<_segmentStarts.length; i++) {
+			track.getPoint(i).setSegmentStart(_segmentStarts[i]);
+		}
 		// clear selection
 		inTrackInfo.getSelection().clearAll();
 	}

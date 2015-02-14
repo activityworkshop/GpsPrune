@@ -10,7 +10,6 @@ import tim.prune.UpdateMessageBroker;
  */
 public class TrackInfo
 {
-	private UpdateMessageBroker _broker = null;
 	private Track _track = null;
 	private Selection _selection = null;
 	private FileInfo _fileInfo = null;
@@ -20,13 +19,11 @@ public class TrackInfo
 	/**
 	 * Constructor
 	 * @param inTrack Track object
-	 * @param inBroker broker object
 	 */
-	public TrackInfo(Track inTrack, UpdateMessageBroker inBroker)
+	public TrackInfo(Track inTrack)
 	{
-		_broker = inBroker;
 		_track = inTrack;
-		_selection = new Selection(_track, inBroker);
+		_selection = new Selection(_track);
 		_fileInfo = new FileInfo();
 		_photoList = new PhotoList();
 	}
@@ -198,7 +195,7 @@ public class TrackInfo
 		if (_track.deletePoint(_selection.getCurrentPointIndex()))
 		{
 			_selection.modifyPointDeleted();
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 			return true;
 		}
 		return false;
@@ -236,7 +233,7 @@ public class TrackInfo
 			}
 			// update subscribers
 			_selection.modifyPointDeleted();
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 		}
 		return true;
 	}
@@ -252,7 +249,7 @@ public class TrackInfo
 		int numDeleted = _track.compress(inResolution);
 		if (numDeleted > 0) {
 			_selection.clearAll();
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 		}
 		return numDeleted;
 	}
@@ -267,7 +264,7 @@ public class TrackInfo
 		int numDeleted = _track.deleteDuplicates();
 		if (numDeleted > 0) {
 			_selection.clearAll();
-			_broker.informSubscribers();
+			UpdateMessageBroker.informSubscribers();
 		}
 		return numDeleted;
 	}
@@ -330,14 +327,5 @@ public class TrackInfo
 			// no photo, just reset selection
 			_selection.selectPhotoAndPoint(-1, -1);
 		}
-	}
-
-
-	/**
-	 * Fire a trigger to all data subscribers
-	 */
-	public void triggerUpdate()
-	{
-		_broker.informSubscribers();
 	}
 }

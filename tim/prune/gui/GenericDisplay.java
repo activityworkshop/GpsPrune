@@ -23,4 +23,11 @@ public abstract class GenericDisplay extends JPanel implements DataSubscriber
 		_trackInfo = inTrackInfo;
 		_track = _trackInfo.getTrack();
 	}
+
+	/**
+	 * Ignore action completed signals
+	 */
+	public void actionCompleted(String inMessage)
+	{
+	}
 }

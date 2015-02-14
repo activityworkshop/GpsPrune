@@ -10,6 +10,20 @@ public class DoubleRange
 	private double _min = 0.0, _max = 0.0;
 
 
+	/** Empty constructor, cleared to zeroes */
+	public DoubleRange() {}
+
+	/**
+	 * Constructor giving two initial values
+	 * @param inValue1 first value
+	 * @param inValue2 second value
+	 */
+	public DoubleRange(double inValue1, double inValue2)
+	{
+		addValue(inValue1);
+		addValue(inValue2);
+	}
+
 	/**
 	 * Clear for a new calculation
 	 */

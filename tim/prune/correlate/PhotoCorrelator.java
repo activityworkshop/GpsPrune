@@ -427,10 +427,9 @@ public class PhotoCorrelator
 				long numSecs = pair.getMinSeconds();
 				correlatePhoto = (numSecs <= timeLimit.getTotalSeconds());
 			}
-			if (angDistLimit > 0.0 && correlatePhoto) {
+			if (angDistLimit > 0.0 && correlatePhoto)
+			{
 				final double angDistPair = DataPoint.calculateRadiansBetween(pair.getPointBefore(), pair.getPointAfter());
-				//System.out.println("(dist between pair is " + angDistPair + ") which means "
-				//	+ Distance.convertRadiansToDistance(angDistPair, Distance.UNITS_METRES) + "m");
 				double frac = pair.getFraction();
 				if (frac > 0.5) {frac = 1 - frac;}
 				final double angDistPhoto = angDistPair * frac;
@@ -613,7 +612,6 @@ public class PhotoCorrelator
 		{
 			PhotoSelectionTableRow row = inModel.getRow(i);
 			set.add(new TimeIndexPair(row.getTimeDiff().getTotalSeconds(), i));
-			//System.out.println("pair " + i + " has time " + row.getTimeDiff().getTotalSeconds());
 		}
 		// pull out middle entry and return index
 		TimeIndexPair pair = null;
@@ -621,7 +619,6 @@ public class PhotoCorrelator
 		for (i=0; i<(numRows+1)/2; i++)
 		{
 			pair = (TimeIndexPair) iterator.next();
-			//System.out.println("After sorting, pair " + i + " has index " + pair.getIndex());
 		}
 		return pair.getIndex();
 	}
@@ -632,8 +629,7 @@ public class PhotoCorrelator
 	 */
 	public void disableOkButton()
 	{
-		if (_okButton != null)
-		{
+		if (_okButton != null) {
 			_okButton.setEnabled(false);
 		}
 	}

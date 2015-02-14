@@ -22,6 +22,7 @@ import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Track;
 import tim.prune.threedee.LineDialog;
 import tim.prune.threedee.ThreeDModel;
@@ -308,10 +309,9 @@ public class PovExporter
 			writeDataPoints(writer, model, lineSeparator);
 
 			// everything worked
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.ok1")
-				 + " " + _track.getNumPoints() + " " + I18nManager.getText("dialog.save.ok2")
-				 + " " + inFile.getAbsolutePath(),
-				I18nManager.getText("dialog.save.oktitle"), JOptionPane.INFORMATION_MESSAGE);
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
+				 + " " + _track.getNumPoints() + " " + I18nManager.getText("confirm.save.ok2")
+				 + " " + inFile.getAbsolutePath());
 			return true;
 		}
 		catch (IOException ioe)

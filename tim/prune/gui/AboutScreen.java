@@ -2,6 +2,7 @@ package tim.prune.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -10,6 +11,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.InputStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -19,7 +21,9 @@ import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 
 import tim.prune.ExternalTools;
 import tim.prune.GpsPruner;
@@ -120,6 +124,12 @@ public class AboutScreen extends JDialog
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText(ExternalTools.isExiftoolInstalled()?"dialog.about.yes":"dialog.about.no")),
 			1, 4);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText("dialog.about.systeminfo.gpsbabel") + " : "),
+			0, 5);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText(ExternalTools.isGpsbabelInstalled()?"dialog.about.yes":"dialog.about.no")),
+			1, 5);
 		tabPane.add(I18nManager.getText("dialog.about.systeminfo"), sysInfoPanel);
 
 		// Third pane for credits
@@ -151,7 +161,7 @@ public class AboutScreen extends JDialog
 			new JLabel(I18nManager.getText("dialog.about.credits.translators") + " : "),
 			0, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Ramon, Miguel, Inés, Piotr"),
+			new JLabel("Ramon, Miguel, Inés, Piotr, Petrovsk"),
 			1, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
@@ -178,6 +188,18 @@ public class AboutScreen extends JDialog
 			new JLabel("Friends and loved ones, for encouragement and support"),
 			1, 7);
 		tabPane.add(I18nManager.getText("dialog.about.credits"), creditsPanel);
+
+		// Read me
+		JPanel readmePanel = new JPanel();
+		readmePanel.setLayout(new BorderLayout());
+		JTextArea textArea = new JTextArea(getReadmeText());
+		textArea.setEditable(false);
+		textArea.setLineWrap(true); textArea.setWrapStyleWord(true);
+		JScrollPane scrollPane = new JScrollPane(textArea);
+		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.setPreferredSize(new Dimension(600, 130));
+		readmePanel.add(scrollPane, BorderLayout.CENTER);
+		tabPane.add(I18nManager.getText("dialog.about.readme"), readmePanel);
 
 		// OK button at the bottom
 		JPanel okPanel = new JPanel();
@@ -227,6 +249,26 @@ public class AboutScreen extends JDialog
 		inPanel.add(inLabel);
 	}
 
+	/**
+	 * @return text from the readme file
+	 */
+	private String getReadmeText()
+	{
+		try
+		{
+			// For some reason using ../readme.txt doesn't work, so need absolute path
+			InputStream in = getClass().getResourceAsStream("/tim/prune/readme.txt");
+			if (in != null) {
+				byte[] buffer = new byte[in.available()];
+				in.read(buffer);
+				return new String(buffer);
+			}
+		}
+		catch (java.io.IOException e) {
+			System.err.println("Exception trying to get readme : " + e.getMessage());
+		}
+		return I18nManager.getText("error.readme.notfound");
+	}
 
 	/**
 	 * Show window

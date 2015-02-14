@@ -37,12 +37,13 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _indexLabel = null;
 	private JLabel _latLabel = null, _longLabel = null;
 	private JLabel _altLabel = null, _nameLabel = null;
-	private JLabel _timeLabel = null;
+	private JLabel _timeLabel = null, _speedLabel = null;
 
 	// Range details
 	private JLabel _rangeLabel = null;
 	private JLabel _distanceLabel = null, _durationLabel = null;
 	private JLabel _altRangeLabel = null, _updownLabel = null;
+	private JLabel _aveSpeedLabel = null;
 
 	// Photo details
 	private JLabel _photoLabel = null;
@@ -106,6 +107,8 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_altLabel);
 		_timeLabel = new JLabel("");
 		pointDetailsPanel.add(_timeLabel);
+		_speedLabel = new JLabel("");
+		pointDetailsPanel.add(_speedLabel);
 		_nameLabel = new JLabel("");
 		pointDetailsPanel.add(_nameLabel);
 		pointDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -125,13 +128,15 @@ public class DetailsDisplay extends GenericDisplay
 		rangeDetailsPanel.add(_distanceLabel);
 		_durationLabel = new JLabel("");
 		rangeDetailsPanel.add(_durationLabel);
+		_aveSpeedLabel = new JLabel("");
+		rangeDetailsPanel.add(_aveSpeedLabel);
 		_altRangeLabel = new JLabel("");
 		rangeDetailsPanel.add(_altRangeLabel);
 		_updownLabel = new JLabel("");
 		rangeDetailsPanel.add(_updownLabel);
 		rangeDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		// range details panel
+		// photo details panel
 		JPanel photoDetailsPanel = new JPanel();
 		photoDetailsPanel.setLayout(new BoxLayout(photoDetailsPanel, BoxLayout.Y_AXIS));
 		photoDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -203,6 +208,10 @@ public class DetailsDisplay extends GenericDisplay
 		DataPoint currentPoint = _trackInfo.getCurrentPoint();
 		Selection selection = _trackInfo.getSelection();
 		int currentPointIndex = selection.getCurrentPointIndex();
+		_speedLabel.setText("");
+		int distUnits = _distUnitsDropdown.getSelectedIndex()==0?Distance.UNITS_KILOMETRES:Distance.UNITS_MILES;
+		String distUnitsStr = I18nManager.getText(_distUnitsDropdown.getSelectedIndex()==0?"units.kilometres.short":"units.miles.short");
+		String speedUnitsStr = I18nManager.getText(_distUnitsDropdown.getSelectedIndex()==0?"units.kmh":"units.mph");
 		if (_track == null || currentPoint == null)
 		{
 			_indexLabel.setText(I18nManager.getText("details.nopointselection"));
@@ -224,9 +233,27 @@ public class DetailsDisplay extends GenericDisplay
 					(currentPoint.getAltitude().getValue() + getAltitudeUnitsLabel(currentPoint.getAltitude().getFormat())):
 				""));
 			if (currentPoint.getTimestamp().isValid())
+			{
+				if (currentPointIndex > 0 && currentPointIndex < (_trackInfo.getTrack().getNumPoints()-1)) {
+					DataPoint prevPoint = _trackInfo.getTrack().getPoint(currentPointIndex - 1);
+					DataPoint nextPoint = _trackInfo.getTrack().getPoint(currentPointIndex + 1);
+					if (prevPoint.getTimestamp().isValid() && nextPoint.getTimestamp().isValid()) {
+						// use total distance and total time between neighbouring points
+						long diff = nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp());
+						if (diff < 100) {
+							double rads = DataPoint.calculateRadiansBetween(prevPoint, currentPoint) +
+								DataPoint.calculateRadiansBetween(currentPoint, nextPoint);
+							double dist = Distance.convertRadiansToDistance(rads, distUnits);
+							String speed = roundedNumber(3600 * dist / diff) + " " + speedUnitsStr;
+							_speedLabel.setText(I18nManager.getText("details.speed") + ": " + speed);
+						}
+					}
+				}
 				_timeLabel.setText(LABEL_POINT_TIMESTAMP + currentPoint.getTimestamp().getText());
-			else
+			}
+			else {
 				_timeLabel.setText("");
+			}
 			String name = currentPoint.getWaypointName();
 			if (name != null && !name.equals(""))
 			{
@@ -249,18 +276,16 @@ public class DetailsDisplay extends GenericDisplay
 			_rangeLabel.setText(LABEL_RANGE_SELECTED1
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
-			if (_distUnitsDropdown.getSelectedIndex() == 0)
-				_distanceLabel.setText(LABEL_RANGE_DISTANCE + buildDistanceString(
-					selection.getDistance(Distance.UNITS_KILOMETRES))
-					+ " " + I18nManager.getText("units.kilometres.short"));
-			else
-				_distanceLabel.setText(LABEL_RANGE_DISTANCE + buildDistanceString(
-					selection.getDistance(Distance.UNITS_MILES))
-					+ " " + I18nManager.getText("units.miles.short"));
-			if (selection.getNumSeconds() > 0)
+			_distanceLabel.setText(LABEL_RANGE_DISTANCE + roundedNumber(selection.getDistance(distUnits)) + " " + distUnitsStr);
+			if (selection.getNumSeconds() > 0) {
 				_durationLabel.setText(LABEL_RANGE_DURATION + buildDurationString(selection.getNumSeconds()));
-			else
+				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
+					+ roundedNumber(selection.getDistance(distUnits)/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
+			}
+			else {
 				_durationLabel.setText("");
+				_aveSpeedLabel.setText("");
+			}
 			String altUnitsLabel = getAltitudeUnitsLabel(selection.getAltitudeFormat());
 			IntegerRange altRange = selection.getAltitudeRange();
 			if (altRange.getMinimum() >= 0 && altRange.getMaximum() >= 0)
@@ -354,17 +379,19 @@ public class DetailsDisplay extends GenericDisplay
 			+ " " + (inNumSecs % 60) + I18nManager.getText("display.range.time.secs");
 		if (inNumSecs < 86400L) return "" + (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours")
 			+ " " + ((inNumSecs / 60) % 60) + I18nManager.getText("display.range.time.mins");
+		if (inNumSecs < 432000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days")
+			+ (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours");
 		if (inNumSecs < 8640000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days");
 		return "big";
 	}
 
 
 	/**
-	 * Build a String to describe a distance
+	 * Format a number to a sensible precision
 	 * @param inDist distance
 	 * @return formatted String
 	 */
-	private String buildDistanceString(double inDist)
+	private String roundedNumber(double inDist)
 	{
 		// Set precision of formatter
 		int numDigits = 0;
