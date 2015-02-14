@@ -2,20 +2,24 @@ package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
+import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
@@ -23,6 +27,7 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
+import tim.prune.gui.map.MapSourceLibrary;
 
 /**
  * Function to set the tile server for the map backgrounds
@@ -30,11 +35,13 @@ import tim.prune.config.Config;
 public class SetMapBgFunction extends GenericFunction
 {
 	private JDialog _dialog = null;
+	private JList _list = null;
+	private MapSourceListModel _listModel = null;
+	private String _initialSource = null;
 	private JButton _okButton = null;
-	private JRadioButton[] _serverRadios = null;
-	private JTextField _serverUrl = null;
-	/** Index of 'other' server with freeform url */
-	private static final int OTHER_SERVER_NUM = 3;
+	private JButton _deleteButton = null;
+	// Add dialog
+	private AddMapSourceDialog _addDialog = null;
 
 
 	/**
@@ -63,10 +70,10 @@ public class SetMapBgFunction extends GenericFunction
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
-			initValues();
 			_dialog.pack();
 		}
-		enableOK();
+		initValues();
+		enableButtons();
 		_dialog.setVisible(true);
 	}
 
@@ -78,39 +85,48 @@ public class SetMapBgFunction extends GenericFunction
 	private Component makeDialogComponents()
 	{
 		JPanel dialogPanel = new JPanel();
-		dialogPanel.setLayout(new BorderLayout());
-		// Main panel
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		_serverRadios = new JRadioButton[4];
-		ButtonGroup serverRadioGroup = new ButtonGroup();
-		String[] serverKeys = {"dialog.setmapbg.mapnik", "dialog.setmapbg.osma",
-			"dialog.setmapbg.cyclemap", "dialog.setmapbg.other"};
-		// action listener for radios
-		ActionListener changeListener = new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				enableOK();
-			}
-		};
-		// Create four radio buttons
-		for (int i=0; i<4; i++)
-		{
-			_serverRadios[i] = new JRadioButton(I18nManager.getText(serverKeys[i]));
-			_serverRadios[i].addActionListener(changeListener);
-			serverRadioGroup.add(_serverRadios[i]);
-			mainPanel.add(_serverRadios[i]);
-		}
-		// entry field for other server urls
-		mainPanel.add(new JLabel(I18nManager.getText("dialog.setmapbg.server")));
-		_serverUrl = new JTextField("", 12);
-		_serverUrl.addKeyListener(new KeyAdapter() {
-			public void keyReleased(KeyEvent e) {
-				super.keyReleased(e);
-				enableOK();
+		dialogPanel.setLayout(new BorderLayout(8, 8));
+		// intro label
+		JLabel introLabel = new JLabel(I18nManager.getText("dialog.setmapbg.intro"));
+		introLabel.setBorder(BorderFactory.createEmptyBorder(5, 4, 1, 4));
+		dialogPanel.add(introLabel, BorderLayout.NORTH);
+		// list box
+		_listModel = new MapSourceListModel();
+		_list = new JList(_listModel);
+		_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		dialogPanel.add(new JScrollPane(_list), BorderLayout.CENTER);
+		_list.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent arg0) {
+				enableButtons();
 			}
 		});
-		mainPanel.add(_serverUrl);
-		dialogPanel.add(mainPanel, BorderLayout.NORTH);
+		_list.addKeyListener(new KeyAdapter() {
+			public void keyReleased(KeyEvent e) {
+				super.keyReleased(e);
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
+			}
+		});
+		_list.setPreferredSize(new Dimension(200, 200));
+		// button panel on right
+		JPanel rightPanel = new JPanel();
+		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
+		JButton addButton = new JButton(I18nManager.getText("button.addnew"));
+		addButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				addNewSource();
+			}
+		});
+		rightPanel.add(addButton);
+		_deleteButton = new JButton(I18nManager.getText("button.delete"));
+		_deleteButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				deleteMapSource(_list.getSelectedIndex());
+			}
+		});
+		rightPanel.add(_deleteButton);
+		dialogPanel.add(rightPanel, BorderLayout.EAST);
 
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
@@ -142,49 +158,65 @@ public class SetMapBgFunction extends GenericFunction
 	 */
 	private void initValues()
 	{
-		// Get values from config
-		try {
-			_serverRadios[Config.getConfigInt(Config.KEY_MAPSERVERINDEX)].setSelected(true);
+		updateList();
+		// Get selected value from config
+		int currSource = Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX);
+		if (currSource < 0 || currSource >= _listModel.getSize()) {
+			currSource = 0;
 		}
-		catch (ArrayIndexOutOfBoundsException e) {} // ignore
-		String url = Config.getConfigString(Config.KEY_MAPSERVERURL);
-		if (url != null) {_serverUrl.setText(url);}
-		// Choose default if none selected
-		if (getSelectedServer() < 0) {
-			_serverRadios[0].setSelected(true);
-		}
+		_initialSource = _listModel.getSource(currSource).getSiteStrings();
+		_list.setSelectedIndex(currSource);
 	}
 
 	/**
-	 * @return index of selected radio button, or -1 if none
+	 * @return index of selected server, or -1 if none
 	 */
 	private int getSelectedServer()
 	{
-		// Loop over all four radios
-		for (int i=0; i<4; i++) {
-			if (_serverRadios[i].isSelected()) {return i;}
+		return _list.getSelectedIndex();
+	}
+
+	/**
+	 * Enable or disable the buttons according to the selection
+	 */
+	private void enableButtons()
+	{
+		int serverNum = getSelectedServer();
+		_okButton.setEnabled(serverNum >= 0 && serverNum < _listModel.getSize()
+			&& !_listModel.getSource(serverNum).getSiteStrings().equals(_initialSource));
+		_deleteButton.setEnabled(serverNum >= MapSourceLibrary.getNumFixedSources()
+			&& serverNum < _listModel.getSize());
+	}
+
+	/**
+	 * Start the dialog to add a new map source to the list
+	 */
+	private void addNewSource()
+	{
+		if (_addDialog == null) {
+			_addDialog = new AddMapSourceDialog(_dialog, this);
 		}
-		// None selected
-		return -1;
+		_addDialog.showDialog();
 	}
 
 	/**
-	 * Enable or disable the OK button according to the selection
+	 * Delete the selected map source so it is no longer available
+	 * @param inIndex index within list
 	 */
-	private void enableOK()
+	private void deleteMapSource(int inIndex)
 	{
-		int serverNum = getSelectedServer();
-		_okButton.setEnabled(inputOK());
-		_serverUrl.setEnabled(serverNum == OTHER_SERVER_NUM);
+		MapSourceLibrary.deleteSource(inIndex);
+		updateList();
+		enableButtons();
 	}
 
 	/**
-	 * @return true if inputs are ok
+	 * use the library to update the current list, after add or delete
 	 */
-	private boolean inputOK()
+	public void updateList()
 	{
-		int serverNum = getSelectedServer();
-		return serverNum >= 0 && (serverNum != OTHER_SERVER_NUM || _serverUrl.getText().length() > 4);
+		_listModel.fireChanged();
+		Config.setConfigString(Config.KEY_MAPSOURCE_LIST, MapSourceLibrary.getConfigString());
 	}
 
 	/**
@@ -193,9 +225,8 @@ public class SetMapBgFunction extends GenericFunction
 	private void finish()
 	{
 		int serverNum = getSelectedServer();
-		if (!inputOK()) {serverNum = 0;}
-		Config.setConfigInt(Config.KEY_MAPSERVERINDEX, serverNum);
-		Config.setConfigString(Config.KEY_MAPSERVERURL, _serverUrl.getText());
+		if (serverNum < 0) {serverNum = 0;}
+		Config.setConfigInt(Config.KEY_MAPSOURCE_INDEX, serverNum);
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 		_dialog.dispose();
 	}

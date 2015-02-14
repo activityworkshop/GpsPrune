@@ -1,5 +1,5 @@
-Prune version 9
-===============
+Prune version 10
+================
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_09.jar
+   java -jar prune_10.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,7 +25,19 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_09.jar --lang=DE
+   java -jar prune_10.jar --lang=DE
+
+New with version 10
+===================
+
+The following features were added since version 9:
+  - Function to lookup altitudes using SRTM data from the Space Shuttle
+  - Choice between altitude profile and speed profile in main view
+  - Caching of map tiles to disk for faster access
+  - Offline mode where maps are only retrieved from disk
+  - Storage of multiple custom map sources, not just one custom one
+  - Use of maps with multiple layers (like maps-for-free)
+  - Use of cloudmade maps
 
 New with version 9
 ==================

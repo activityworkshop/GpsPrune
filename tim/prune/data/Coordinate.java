@@ -117,6 +117,7 @@ public abstract class Coordinate
 			}
 			// parse fields according to number found
 			_degrees = (int) fields[0];
+			_asDouble = _degrees;
 			_originalFormat = hasCardinal?FORMAT_DEG:FORMAT_DEG_WITHOUT_CARDINAL;
 			_fracDenom = 10;
 			if (numFields == 2)

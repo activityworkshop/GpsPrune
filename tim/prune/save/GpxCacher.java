@@ -56,7 +56,7 @@ public class GpxCacher extends DefaultHandler
 					saxParser.parse(new GZIPInputStream(new FileInputStream(inInfo.getFile())), this);
 				}
 				else {
-					System.out.println("Unrecognised file type: " + inInfo.getFile().getName());
+					System.out.println("GpxCacher unrecognised file type: " + inInfo.getFile().getName());
 				}
 			} catch (Exception e) {
 				// TODO: Handle errors here with a list of warnings?

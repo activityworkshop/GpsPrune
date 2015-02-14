@@ -36,6 +36,7 @@ public class NmeaFileLoader
 	{
 		BufferedReader reader = null;
 		ArrayList<NmeaMessage> messages = new ArrayList<NmeaMessage>();
+		String lastDate = null;
 		try
 		{
 			reader = new BufferedReader(new FileReader(inFile));
@@ -46,16 +47,31 @@ public class NmeaFileLoader
 				// Try to make an NmeaMessage object for each line of file
 				if (currLine.trim().length() > 0)
 				{
-					NmeaMessage message = processLine(currLine);
+					NmeaMessage message = processGGA(currLine);
 					if (message != null)
 					{
-						if (message.hasFix()) {
+						if (message.hasFix())
+						{
 							message.setSegment(newSegment);
+							message.setDate(lastDate);
 							// add message to list
 							messages.add(message);
 						}
 						// Start a new segment if fix lost
 						newSegment = !message.hasFix();
+					}
+					else {
+						String date = getDateFromRMC(currLine);
+						if (date != null)
+						{
+							if (lastDate == null && !messages.isEmpty()) {
+								// Backfill first few messages received before the first date
+								for (int m=0; m<messages.size(); m++) {
+									messages.get(m).setDate(date);
+								}
+							}
+							lastDate = date;
+						}
 					}
 				}
 				// Read next line, if any
@@ -68,8 +84,7 @@ public class NmeaFileLoader
 		finally
 		{
 			// close file ignoring errors
-			try
-			{
+			try {
 				if (reader != null) reader.close();
 			}
 			catch (Exception e) {}
@@ -82,17 +97,16 @@ public class NmeaFileLoader
 	}
 
 	/**
-	 * Process the given NMEA line and return the message
+	 * Process the given GGA sentence and return the message
 	 * @param inLine line to process
 	 * @return message object
 	 */
-	private static NmeaMessage processLine(String inLine)
+	private static NmeaMessage processGGA(String inLine)
 	{
 		// Only consider lines which are long enough and begin with the GPS position sentence
 		if (inLine == null || inLine.length() < 20 || !inLine.startsWith("$GPGGA")) {
 			return null;
 		}
-		// TODO: May be possible to pull date out of GPRMC messages, but then need to back-populate
 		// Assume comma delimiter, split into array
 		String[] splitLine = inLine.split(",");
 		if (splitLine != null && splitLine.length >= 10)
@@ -102,6 +116,27 @@ public class NmeaFileLoader
 				splitLine[9], // altitude
 				splitLine[1], // timestamp
 				splitLine[6]); // fix
+		}
+		// Couldn't parse it, return null
+		return null;
+	}
+
+	/**
+	 * Process the given MRC sentence and return the date
+	 * @param inLine line to process
+	 * @return date, if any
+	 */
+	private static String getDateFromRMC(String inLine)
+	{
+		// Only consider lines which are long enough and begin with the RMC sentence
+		if (inLine == null || inLine.length() < 20 || !inLine.startsWith("$GPRMC")) {
+			return null;
+		}
+		// Assume comma delimiter, split into array
+		String[] splitLine = inLine.split(",");
+		if (splitLine != null && splitLine.length >= 10)
+		{
+			return splitLine[9]; // date in position 9
 		}
 		// Couldn't parse it, return null
 		return null;

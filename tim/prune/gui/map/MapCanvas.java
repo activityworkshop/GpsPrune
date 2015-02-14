@@ -40,6 +40,7 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
+import tim.prune.data.Checker;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.DoubleRange;
@@ -66,8 +67,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private Selection _selection = null;
 	/** Previously selected point */
 	private int _prevSelectedPoint = -1;
-	/** Tile cacher */
-	private MapTileCacher _tileCacher = new MapTileCacher(this);
+	/** Tile manager */
+	private MapTileManager _tileManager = new MapTileManager(this);
 	/** Image to display */
 	private BufferedImage _mapImage = null;
 	/** Slider for transparency */
@@ -153,7 +154,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		ItemListener mapCheckListener = new ItemListener() {
 			public void itemStateChanged(ItemEvent e)
 			{
-				_tileCacher.clearAll();
+				_tileManager.clearMemoryCaches();
 				_recalculate = true;
 				Config.setConfigBoolean(Config.KEY_SHOW_MAP, e.getStateChange() == ItemEvent.SELECTED);
 				UpdateMessageBroker.informSubscribers(); // to let menu know
@@ -372,10 +373,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				_prevSelectedPoint = selectedPoint;
 			}
 
-			// Draw the mapImage if necessary
+			// Draw the map contents if necessary
 			if ((_mapImage == null || _recalculate))
 			{
-				getMapTiles();
+				paintMapContents();
 				_scaleBar.updateScale(_mapPosition.getZoom(), _mapPosition.getCentreTileY());
 			}
 			// Draw the prepared image onto the panel
@@ -406,9 +407,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 
 	/**
-	 * Get the map tiles for the current zoom level and given tile parameters
+	 * Paint the map tiles and the points on to the _mapImage
 	 */
-	private void getMapTiles()
+	private void paintMapContents()
 	{
 		if (_mapImage == null || _mapImage.getWidth() != getWidth() || _mapImage.getHeight() != getHeight())
 		{
@@ -427,16 +428,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 		// reset error message
 		if (!showMap) {_shownOsmErrorAlready = false;}
+		_recalculate = false;
 		// Only get map tiles if selected
 		if (showMap)
 		{
 			// init tile cacher
-			_tileCacher.centreMap(_mapPosition.getZoom(), _mapPosition.getCentreTileX(), _mapPosition.getCentreTileY());
+			_tileManager.centreMap(_mapPosition.getZoom(), _mapPosition.getCentreTileX(), _mapPosition.getCentreTileY());
 
 			boolean loadingFailed = false;
 			if (_mapImage == null) return;
 
-			if (_tileCacher.isOverzoomed())
+			if (_tileManager.isOverzoomed())
 			{
 				// display overzoom message
 				g.setColor(COLOR_MESSAGES);
@@ -444,6 +446,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 			else
 			{
+				int numLayers = _tileManager.getNumLayers();
 				// Loop over tiles drawing each one
 				int[] tileIndices = _mapPosition.getTileIndices(getWidth(), getHeight());
 				int[] pixelOffsets = _mapPosition.getDisplayOffsets(getWidth(), getHeight());
@@ -453,9 +456,13 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					for (int tileY = tileIndices[2]; tileY <= tileIndices[3]; tileY++)
 					{
 						int y = (tileY - tileIndices[2]) * 256 - pixelOffsets[1];
-						Image image = _tileCacher.getTile(tileX, tileY);
-						if (image != null) {
-							g.drawImage(image, x, y, 256, 256, null);
+						// Loop over layers
+						for (int l=0; l<numLayers; l++)
+						{
+							Image image = _tileManager.getTile(l, tileX, tileY);
+							if (image != null) {
+								g.drawImage(image, x, y, 256, 256, null);
+							}
 						}
 					}
 				}
@@ -485,7 +492,6 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// free g
 		g.dispose();
 
-		_recalculate = false;
 		// Zoom to fit if no points found
 		if (pointsPainted <= 0 && _checkBounds) {
 			zoomToFit();
@@ -919,7 +925,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			_checkBounds = true;
 		}
 		if ((inUpdateType & DataSubscriber.MAPSERVER_CHANGED) > 0) {
-			_tileCacher.setTileConfig(new MapTileConfig());
+			_tileManager.resetConfig();
 		}
 		repaint();
 		// enable or disable components
@@ -938,8 +944,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	{
 		int code = inE.getKeyCode();
 		int currPointIndex = _selection.getCurrentPointIndex();
-		// Check for meta key
-		if (inE.isControlDown())
+		// Check for Ctrl key (for Linux/Win) or meta key (Clover key for Mac)
+		if (inE.isControlDown() || inE.isMetaDown())
 		{
 			// Check for arrow keys to zoom in and out
 			if (code == KeyEvent.VK_UP)
@@ -951,6 +957,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				_trackInfo.selectPoint(currPointIndex-1);
 			else if (code == KeyEvent.VK_RIGHT)
 				_trackInfo.selectPoint(currPointIndex+1);
+			else if (code == KeyEvent.VK_PAGE_UP)
+				_trackInfo.selectPoint(Checker.getPreviousSegmentStart(
+					_trackInfo.getTrack(), _trackInfo.getSelection().getCurrentPointIndex()));
+			else if (code == KeyEvent.VK_PAGE_DOWN)
+				_trackInfo.selectPoint(Checker.getNextSegmentStart(
+					_trackInfo.getTrack(), _trackInfo.getSelection().getCurrentPointIndex()));
+			// Check for home and end
+			else if (code == KeyEvent.VK_HOME)
+				_trackInfo.selectPoint(0);
+			else if (code == KeyEvent.VK_END)
+				_trackInfo.selectPoint(_trackInfo.getTrack().getNumPoints()-1);
 		}
 		else
 		{
@@ -966,9 +983,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			else if (code == KeyEvent.VK_LEFT)
 				rightwardsPan = -PAN_DISTANCE;
 			panMap(rightwardsPan, upwardsPan);
-			// Check for delete key to delete current point
-			if (code == KeyEvent.VK_DELETE && currPointIndex >= 0)
-			{
+			// Check for backspace key to delete current point (delete key already handled by menu)
+			if (code == KeyEvent.VK_BACK_SPACE && currPointIndex >= 0) {
 				_app.deleteCurrentPoint();
 			}
 		}

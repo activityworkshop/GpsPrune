@@ -80,7 +80,7 @@ public class ZipFileLoader
 			}
 		}
 		catch (Exception e) {
-			System.err.println("Error: " + e.getClass().getName() + " -message= " + e.getMessage());
+			System.err.println("ZipFile Error: " + e.getClass().getName() + " -message= " + e.getMessage());
 		}
 	}
 
@@ -125,7 +125,7 @@ public class ZipFileLoader
 			}
 		}
 		catch (Exception e) {
-			System.err.println("Error: " + e.getClass().getName() + " -message= " + e.getMessage());
+			System.err.println("ZipStream Error: " + e.getClass().getName() + " -message= " + e.getMessage());
 		}
 	}
 }

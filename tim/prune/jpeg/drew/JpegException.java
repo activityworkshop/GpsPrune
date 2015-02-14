@@ -1,4 +1,4 @@
-package tim.prune.drew.jpeg;
+package tim.prune.jpeg.drew;
 
 /**
  * Class to indicate a fatal exception processing a jpeg,

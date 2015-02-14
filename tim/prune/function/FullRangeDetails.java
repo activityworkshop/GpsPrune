@@ -22,6 +22,7 @@ import tim.prune.data.Altitude;
 import tim.prune.data.Distance;
 import tim.prune.data.Selection;
 import tim.prune.gui.DisplayUtils;
+import tim.prune.gui.profile.SpeedData;
 
 /**
  * Class to show the full range details in a separate popup
@@ -38,6 +39,7 @@ public class FullRangeDetails extends GenericFunction
 	private JLabel _gradientLabel = null;
 	/** Moving distance, speed */
 	private JLabel _movingDistanceLabel = null, _aveMovingSpeedLabel = null;
+	private JLabel _maxSpeedLabel = null;
 	/** Number formatter for one decimal place */
 	private static final NumberFormat FORMAT_ONE_DP = NumberFormat.getNumberInstance();
 	/** Flexible number formatter for different decimal places */
@@ -123,6 +125,12 @@ public class FullRangeDetails extends GenericFunction
 		midPanel.add(movingSpeedLabel);
 		_aveMovingSpeedLabel = new JLabel("5 km/h");
 		midPanel.add(_aveMovingSpeedLabel);
+		// Maximum speed
+		JLabel maxSpeedLabel = new JLabel(I18nManager.getText("details.range.maxspeed") + ": ");
+		maxSpeedLabel.setHorizontalAlignment(JLabel.RIGHT);
+		midPanel.add(maxSpeedLabel);
+		_maxSpeedLabel = new JLabel("10 km/h");
+		midPanel.add(_maxSpeedLabel);
 
 		dialogPanel.add(midPanel, BorderLayout.CENTER);
 		// button panel at bottom
@@ -193,6 +201,22 @@ public class FullRangeDetails extends GenericFunction
 		}
 		else {
 			_aveMovingSpeedLabel.setText("");
+		}
+
+		// Maximum speed
+		SpeedData speeds = new SpeedData(_app.getTrackInfo().getTrack());
+		speeds.init();
+		double maxSpeed = 0.0;
+		for (int i=selection.getStart(); i<=selection.getEnd(); i++) {
+			if (speeds.hasData(i) && (speeds.getData(i) > maxSpeed)) {
+				maxSpeed = speeds.getData(i);
+			}
+		}
+		if (maxSpeed > 0.0) {
+			_maxSpeedLabel.setText(roundedNumber(maxSpeed) + " " + speedUnitsStr);
+		}
+		else {
+			_maxSpeedLabel.setText("");
 		}
 	}
 

@@ -1,7 +1,9 @@
-package tim.prune.drew.jpeg;
+package tim.prune.jpeg.drew;
 
 import java.io.File;
 import java.util.HashMap;
+
+import tim.prune.jpeg.JpegData;
 
 /**
  * Extracts Exif data from a JPEG header segment
@@ -336,25 +338,29 @@ public class ExifReader
 				inMetadata.setLatitudeRef(readString(inTagValueOffset, inFormatCode, inComponentCount));
 				break;
 			case TAG_GPS_LATITUDE:
-				inMetadata.setLatitude(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
+				Rational[] latitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+				inMetadata.setLatitude(new double[] {latitudes[0].doubleValue(), latitudes[1].doubleValue(), latitudes[2].doubleValue()});
 				break;
 			case TAG_GPS_LONGITUDE_REF:
 				inMetadata.setLongitudeRef(readString(inTagValueOffset, inFormatCode, inComponentCount));
 				break;
 			case TAG_GPS_LONGITUDE:
-				inMetadata.setLongitude(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
+				Rational[] longitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+				inMetadata.setLongitude(new double[] {longitudes[0].doubleValue(), longitudes[1].doubleValue(), longitudes[2].doubleValue()});
 				break;
 			case TAG_GPS_ALTITUDE_REF:
 				inMetadata.setAltitudeRef(_data[inTagValueOffset]);
 				break;
 			case TAG_GPS_ALTITUDE:
-				inMetadata.setAltitude(readRational(inTagValueOffset, inFormatCode, inComponentCount));
+				inMetadata.setAltitude(readRational(inTagValueOffset, inFormatCode, inComponentCount).intValue());
 				break;
 			case TAG_GPS_TIMESTAMP:
-				inMetadata.setGpsTimestamp(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
+				Rational[] times = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+				inMetadata.setGpsTimestamp(new int[] {times[0].intValue(), times[1].intValue(), times[2].intValue()});
 				break;
 			case TAG_GPS_DATESTAMP:
-				inMetadata.setGpsDatestamp(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
+				Rational[] dates = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+				inMetadata.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
 				break;
 			default: // ignore all other tags
 		}

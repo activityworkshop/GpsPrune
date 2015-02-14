@@ -748,11 +748,14 @@ public class Track
 	}
 
 	/**
-	 * @return true if track has altitude data (which are not all zero)
+	 * @return true if track has altitude data
 	 */
 	public boolean hasAltitudeData()
 	{
-		return getAltitudeRange().getMaximum() > 0;
+		for (int i=0; i<_numPoints; i++) {
+			if (_dataPoints[i].hasAltitude()) {return true;}
+		}
+		return false;
 	}
 
 	/**

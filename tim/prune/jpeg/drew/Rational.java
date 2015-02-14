@@ -1,4 +1,4 @@
-package tim.prune.drew.jpeg;
+package tim.prune.jpeg.drew;
 
 /**
  * Immutable class for holding a rational number without loss of precision.

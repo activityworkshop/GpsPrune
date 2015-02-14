@@ -87,7 +87,10 @@ public class SetPathsFunction extends GenericFunction
 
 		// Main panel with edit boxes for paths
 		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new GridLayout(3, 3, 10, 1));
+		mainPanel.setLayout(new GridLayout(NUM_KEYS+1, 3, 10, 1));
+		mainPanel.add(new JLabel(" "));
+		mainPanel.add(new JLabel(" "));
+		mainPanel.add(new JLabel(I18nManager.getText("dialog.setpaths.found")));
 		_editFields = new JTextField[NUM_KEYS];
 		_installedLabels = new JLabel[NUM_KEYS];
 		for (int i=0; i<NUM_KEYS; i++)
@@ -147,7 +150,7 @@ public class SetPathsFunction extends GenericFunction
 		for (int i=0; i<NUM_KEYS; i++)
 		{
 			String command = _editFields[i].getText();
-			_installedLabels[i].setText(ExternalTools.isToolInstalled(i, command)?yesText:noText);
+			_installedLabels[i].setText("   " + (ExternalTools.isToolInstalled(i, command)?yesText:noText));
 		}
 	}
 

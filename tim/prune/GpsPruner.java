@@ -17,11 +17,11 @@ import tim.prune.config.ConfigException;
 import tim.prune.gui.DetailsDisplay;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MenuManager;
-import tim.prune.gui.ProfileChart;
 import tim.prune.gui.SelectorDisplay;
 import tim.prune.gui.StatusBar;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.map.MapCanvas;
+import tim.prune.gui.profile.ProfileChart;
 
 /**
  * Prune is a tool to visualize, edit, convert and prune GPS data
@@ -33,11 +33,14 @@ import tim.prune.gui.map.MapCanvas;
 public class GpsPruner
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "9";
+	public static final String VERSION_NUMBER = "10";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "176";
+	public static final String BUILD_NUMBER = "189";
 	/** Static reference to App object */
 	private static App APP = null;
+
+	/** Program name, used for Frame title and for Macs also on the system bar */
+	private static final String PROGRAM_NAME = "Prune";
 
 
 	/**
@@ -52,6 +55,13 @@ public class GpsPruner
 		String configFilename = null;
 		ArrayList<File> dataFiles = new ArrayList<File>();
 		boolean showUsage = false;
+
+		// Mac OSX - specific properties (Mac insists that this is done as soon as possible)
+		if (System.getProperty("mrj.version") != null) {
+			System.setProperty("apple.laf.useScreenMenuBar", "true"); // menu at top of screen
+			System.setProperty("com.apple.mrj.application.apple.menu.about.name", PROGRAM_NAME);
+		}
+		// Loop over given arguments, if any
 		for (int i=0; i<args.length; i++)
 		{
 			String arg = args[i];
@@ -168,7 +178,8 @@ public class GpsPruner
 	 */
 	private static void launch(ArrayList<File> inDataFiles)
 	{
-		JFrame frame = new JFrame("Prune");
+		// Initialise Frame
+		JFrame frame = new JFrame(PROGRAM_NAME);
 		APP = new App(frame);
 
 		// make menu

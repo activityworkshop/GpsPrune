@@ -11,6 +11,7 @@ public class NmeaMessage
 	private String _longitude = null;
 	private String _altitude = null;
 	private String _timestamp = null;
+	private String _date = null;
 	private boolean _fix = false;
 	private boolean _segment = false;
 
@@ -45,6 +46,13 @@ public class NmeaMessage
 	public void setSegment(boolean inSegment)
 	{
 		_segment = inSegment;
+	}
+
+	/**
+	 * @param inDate date from MRC sentence
+	 */
+	public void setDate(String inDate) {
+		_date = inDate;
 	}
 
 	/**
@@ -83,6 +91,17 @@ public class NmeaMessage
 		try
 		{
 			Calendar cal = Calendar.getInstance();
+			// use date if available (today if not)
+			if (_date != null && _date.length() == 6) {
+				try {
+					cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(_date.substring(0, 2)));
+					cal.set(Calendar.MONTH, Integer.parseInt(_date.substring(2, 4))-1); // month starts at zero
+					int year = Integer.parseInt(_date.substring(4, 6));
+					if (year < 80) {year += 2000;} else {year += 1900;} // two-digit year hack
+					cal.set(Calendar.YEAR, year);
+				}
+				catch (Exception e) {} // ignore exceptions for date, still take time
+			}
 			cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(_timestamp.substring(0, 2)));
 			cal.set(Calendar.MINUTE, Integer.parseInt(_timestamp.substring(2, 4)));
 			cal.set(Calendar.SECOND, Integer.parseInt(_timestamp.substring(4, 6)));

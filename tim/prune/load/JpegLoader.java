@@ -21,15 +21,14 @@ import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
+import tim.prune.data.Field;
 import tim.prune.data.LatLonRectangle;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Photo;
 import tim.prune.data.Timestamp;
-import tim.prune.drew.jpeg.ExifReader;
-import tim.prune.drew.jpeg.JpegData;
-import tim.prune.drew.jpeg.JpegException;
-import tim.prune.drew.jpeg.Rational;
+import tim.prune.jpeg.ExifGateway;
+import tim.prune.jpeg.JpegData;
 
 /**
  * Class to manage the loading of Jpegs and dealing with the GPS data from them
@@ -250,19 +249,19 @@ public class JpegLoader implements Runnable
 
 		// Create Photo object
 		Photo photo = new Photo(inFile);
+		if (inFile.exists() && inFile.canRead()) {
+			_fileCounts[1]++; // jpeg found
+		}
 		// Try to get information out of exif
-		try
+		JpegData jpegData = ExifGateway.getJpegData(inFile);
+		Timestamp timestamp = null;
+		if (jpegData != null)
 		{
-			JpegData jpegData = new ExifReader(inFile).extract();
-			_fileCounts[1]++; // jpeg found (no exception thrown)
 			if (jpegData.getExifDataPresent())
 				{_fileCounts[2]++;} // exif found
-			if (jpegData.isValid())
+			if (jpegData.isGpsValid())
 			{
-				if (jpegData.getGpsDatestamp() != null && jpegData.getGpsTimestamp() != null)
-				{
-					photo.setTimestamp(createTimestamp(jpegData.getGpsDatestamp(), jpegData.getGpsTimestamp()));
-				}
+				timestamp = createTimestamp(jpegData.getGpsDatestamp(), jpegData.getGpsTimestamp());
 				// Make DataPoint and attach to Photo
 				DataPoint point = createDataPoint(jpegData);
 				point.setPhoto(photo);
@@ -272,19 +271,21 @@ public class JpegLoader implements Runnable
 				_fileCounts[3]++;
 			}
 			// Use exif timestamp if gps timestamp not available
-			if (photo.getTimestamp() == null && jpegData.getOriginalTimestamp() != null)
-			{
-				photo.setTimestamp(createTimestamp(jpegData.getOriginalTimestamp()));
+			if (timestamp == null && jpegData.getOriginalTimestamp() != null) {
+				timestamp = createTimestamp(jpegData.getOriginalTimestamp());
 			}
 			photo.setExifThumbnail(jpegData.getThumbnailImage());
 			// Also extract orientation tag for setting rotation state of photo
 			photo.setRotation(jpegData.getRequiredRotation());
 		}
-		catch (JpegException jpe) { // don't list errors, just count them
-		}
 		// Use file timestamp if exif timestamp isn't available
-		if (photo.getTimestamp() == null) {
-			photo.setTimestamp(new Timestamp(inFile.lastModified()));
+		if (timestamp == null) {
+			timestamp = new Timestamp(inFile.lastModified());
+		}
+		// Apply timestamp to photo and its point (if any)
+		photo.setTimestamp(timestamp);
+		if (photo.getDataPoint() != null) {
+			photo.getDataPoint().setFieldValue(Field.TIMESTAMP, timestamp.getText(Timestamp.FORMAT_ISO_8601), false);
 		}
 		// Check the criteria for adding the photo - check whether the photo has coordinates and if so if they're within the rectangle
 		if ( (photo.getDataPoint() != null || _noExifCheckbox.isSelected())
@@ -350,26 +351,25 @@ public class JpegLoader implements Runnable
 			inData.getLongitudeRef() == 'E' || inData.getLongitudeRef() == 'e');
 		Longitude longitude = new Longitude(lonval, Longitude.FORMAT_DEG_MIN_SEC);
 		Altitude altitude = null;
-		if (inData.getAltitude() != null)
-		{
-			altitude = new Altitude(inData.getAltitude().intValue(), Altitude.Format.METRES);
+		if (inData.hasAltitude()) {
+			altitude = new Altitude(inData.getAltitude(), Altitude.Format.METRES);
 		}
 		return new DataPoint(latitude, longitude, altitude);
 	}
 
 
 	/**
-	 * Convert an array of 3 Rational numbers into a double coordinate value
-	 * @param inRationals array of three Rational objects
+	 * Convert an array of 3 doubles (deg-min-sec) into a double coordinate value
+	 * @param inValues array of three doubles for deg-min-sec
 	 * @param isPositive true for positive hemisphere, for positive double value
 	 * @return double value of coordinate, either positive or negative
 	 */
-	private static double getCoordinateDoubleValue(Rational[] inRationals, boolean isPositive)
+	private static double getCoordinateDoubleValue(double[] inValues, boolean isPositive)
 	{
-		if (inRationals == null || inRationals.length != 3) return 0.0;
-		double value = inRationals[0].doubleValue()        // degrees
-			+ inRationals[1].doubleValue() / 60.0          // minutes
-			+ inRationals[2].doubleValue() / 60.0 / 60.0;  // seconds
+		if (inValues == null || inValues.length != 3) return 0.0;
+		double value = inValues[0]        // degrees
+			+ inValues[1] / 60.0          // minutes
+			+ inValues[2] / 60.0 / 60.0;  // seconds
 		// make sure it's the correct sign
 		value = Math.abs(value);
 		if (!isPositive) value = -value;
@@ -378,15 +378,18 @@ public class JpegLoader implements Runnable
 
 
 	/**
-	 * Use the given Rational values to create a timestamp
-	 * @param inDate rationals describing date
-	 * @param inTime rationals describing time
+	 * Use the given int values to create a timestamp
+	 * @param inDate ints describing date
+	 * @param inTime ints describing time
 	 * @return Timestamp object corresponding to inputs
 	 */
-	private static Timestamp createTimestamp(Rational[] inDate, Rational[] inTime)
+	private static Timestamp createTimestamp(int[] inDate, int[] inTime)
 	{
-		return new Timestamp(inDate[0].intValue(), inDate[1].intValue(), inDate[2].intValue(),
-			inTime[0].intValue(), inTime[1].intValue(), inTime[2].intValue());
+		if (inDate == null || inTime == null || inDate.length != 3 || inTime.length != 3) {
+			return null;
+		}
+		return new Timestamp(inDate[0], inDate[1], inDate[2],
+			inTime[0], inTime[1], inTime[2]);
 	}
 
 

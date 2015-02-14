@@ -1,7 +1,6 @@
-package tim.prune.drew.jpeg;
+package tim.prune.jpeg;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Class to hold the GPS data extracted from a Jpeg including position and time
@@ -12,11 +11,12 @@ public class JpegData
 	private char _latitudeRef = '\0';
 	private char _longitudeRef = '\0';
 	private byte _altitudeRef = 0;
-	private Rational[] _latitude = null;
-	private Rational[] _longitude = null;
-	private Rational   _altitude = null;
-	private Rational[] _gpsTimestamp = null;
-	private Rational[] _gpsDatestamp = null;
+	private double[] _latitude = null;
+	private double[] _longitude = null;
+	private int _altitude = -1;
+	private boolean _altitudePresent = false;
+	private int[] _gpsTimestamp = null;
+	private int[] _gpsDatestamp = null;
 	private String _originalTimestamp = null;
 	private int _orientationCode = -1;
 	private byte[] _thumbnail = null;
@@ -40,40 +40,22 @@ public class JpegData
 
 	/**
 	 * Set the latitude reference (N/S)
-	 * @param inChar character representing reference
-	 */
-	public void setLatitudeRef(char inChar)
-	{
-		_latitudeRef = inChar;
-	}
-
-	/**
-	 * Set the latitude reference (N/S)
 	 * @param inString string containing reference
 	 */
 	public void setLatitudeRef(String inString)
 	{
 		if (inString != null && inString.length() == 1)
-			setLatitudeRef(inString.charAt(0));
+			_latitudeRef = inString.charAt(0);
 	}
 
 	/**
 	 * Set the latitude
-	 * @param inValues array of three Rationals for deg-min-sec
+	 * @param inValues array of three doubles for deg-min-sec
 	 */
-	public void setLatitude(Rational[] inValues)
+	public void setLatitude(double[] inValues)
 	{
 		if (inValues != null && inValues.length == 3)
 			_latitude = inValues;
-	}
-
-	/**
-	 * Set the longitude reference (E/W)
-	 * @param inChar character representing reference
-	 */
-	public void setLongitudeRef(char inChar)
-	{
-		_longitudeRef = inChar;
 	}
 
 	/**
@@ -83,14 +65,14 @@ public class JpegData
 	public void setLongitudeRef(String inString)
 	{
 		if (inString != null && inString.length() == 1)
-			setLongitudeRef(inString.charAt(0));
+			_longitudeRef = inString.charAt(0);
 	}
 
 	/**
 	 * Set the longitude
-	 * @param inValues array of three Rationals for deg-min-sec
+	 * @param inValues array of three doubles for deg-min-sec
 	 */
-	public void setLongitude(Rational[] inValues)
+	public void setLongitude(double[] inValues)
 	{
 		if (inValues != null && inValues.length == 3)
 			_longitude = inValues;
@@ -107,27 +89,28 @@ public class JpegData
 
 	/**
 	 * Set the altitude
-	 * @param inRational Rational number representing altitude
+	 * @param inValue integer representing altitude
 	 */
-	public void setAltitude(Rational inRational)
+	public void setAltitude(int inValue)
 	{
-		_altitude = inRational;
+		_altitude = inValue;
+		_altitudePresent = true;
 	}
 
 	/**
 	 * Set the Gps timestamp
-	 * @param inValues array of Rationals holding timestamp
+	 * @param inValues array of ints holding timestamp
 	 */
-	public void setGpsTimestamp(Rational[] inValues)
+	public void setGpsTimestamp(int[] inValues)
 	{
 		_gpsTimestamp = inValues;
 	}
 
 	/**
 	 * Set the Gps datestamp
-	 * @param inValues array of Rationals holding datestamp
+	 * @param inValues array of ints holding datestamp
 	 */
-	public void setGpsDatestamp(Rational[] inValues)
+	public void setGpsDatestamp(int[] inValues)
 	{
 		_gpsDatestamp = inValues;
 	}
@@ -155,19 +138,21 @@ public class JpegData
 	/** @return latitude ref as char */
 	public char getLatitudeRef() { return _latitudeRef; }
 	/** @return latitude as array of 3 Rationals */
-	public Rational[] getLatitude() { return _latitude; }
+	public double[] getLatitude() { return _latitude; }
 	/** @return longitude ref as char */
 	public char getLongitudeRef() { return _longitudeRef; }
-	/** @return longitude as array of 3 Rationals */
-	public Rational[] getLongitude() { return _longitude; }
+	/** @return longitude as array of 3 doubles */
+	public double[] getLongitude() { return _longitude; }
 	/** @return altitude ref as byte (should be 0) */
 	public byte getAltitudeRef() { return _altitudeRef; }
-	/** @return altitude as Rational */
-	public Rational getAltitude() { return _altitude; }
-	/** @return Gps timestamp as array of 3 Rationals */
-	public Rational[] getGpsTimestamp() { return _gpsTimestamp; }
-	/** @return Gps datestamp as array of 3 Rationals */
-	public Rational[] getGpsDatestamp() { return _gpsDatestamp; }
+	/** @return true if altitude present */
+	public boolean hasAltitude() { return _altitudePresent; }
+	/** @return altitude as int */
+	public int getAltitude() { return _altitude; }
+	/** @return Gps timestamp as array of 3 ints */
+	public int[] getGpsTimestamp() { return _gpsTimestamp; }
+	/** @return Gps datestamp as array of 3 ints */
+	public int[] getGpsDatestamp() { return _gpsDatestamp; }
 	/** @return orientation code (1 to 8) */
 	public int getOrientationCode() { return _orientationCode; }
 	/** @return original timestamp as string */
@@ -200,7 +185,7 @@ public class JpegData
 	 * @return true if data looks valid, ie has at least lat and long
 	 *  (altitude and timestamp optional).
 	 */
-	public boolean isValid()
+	public boolean isGpsValid()
 	{
 		return (_latitudeRef == 'N' || _latitudeRef == 'n' || _latitudeRef == 'S' || _latitudeRef == 's')
 			&& _latitude != null
@@ -238,7 +223,7 @@ public class JpegData
 	/**
 	 * @return all errors as a list
 	 */
-	public List<String> getErrors()
+	public ArrayList<String> getErrors()
 	{
 		return _errors;
 	}

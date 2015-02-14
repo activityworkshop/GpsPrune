@@ -37,12 +37,16 @@ public abstract class Config
 	public static final String KEY_POVRAY_FONT = "prune.povrayfont";
 	/** Key for metric/imperial */
 	public static final String KEY_METRIC_UNITS = "prune.metricunits";
-	/** Key for map server index */
-	public static final String KEY_MAPSERVERINDEX = "prune.mapserverindex";
-	/** Key for map server url */
-	public static final String KEY_MAPSERVERURL = "prune.mapserverurl";
+	/** Key for index of map source */
+	public static final String KEY_MAPSOURCE_INDEX = "prune.mapsource";
+	/** Key for String containing custom map sources */
+	public static final String KEY_MAPSOURCE_LIST = "prune.mapsourcelist";
 	/** Key for show map flag */
 	public static final String KEY_SHOW_MAP = "prune.showmap";
+	/** Key for path to disk cache */
+	public static final String KEY_DISK_CACHE = "prune.diskcache";
+	/** Key for working online flag */
+	public static final String KEY_ONLINE_MODE = "prune.onlinemode";
 	/** Key for width of thumbnails in kmz */
 	public static final String KEY_KMZ_IMAGE_WIDTH = "prune.kmzimagewidth";
 	/** Key for height of thumbnails in kmz */
@@ -217,7 +221,7 @@ public abstract class Config
 	/**
 	 * Get the given configuration setting as a boolean
 	 * @param inKey key
-	 * @return configuration setting as a boolean
+	 * @return configuration setting as a boolean (default to true)
 	 */
 	public static boolean getConfigBoolean(String inKey)
 	{

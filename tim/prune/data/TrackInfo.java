@@ -399,7 +399,9 @@ public class TrackInfo
 	{
 		// See whether to start selection from current range start or current point
 		int rangeStart = _selection.getStart();
-		if (rangeStart < 0) {rangeStart = _selection.getCurrentPointIndex();}
+		if (rangeStart < 0 || _selection.getCurrentPointIndex() != _selection.getEnd()) {
+			rangeStart = _selection.getCurrentPointIndex();
+		}
 		selectPoint(inPointNum);
 		if (rangeStart < inPointNum) {
 			_selection.selectRange(rangeStart, inPointNum);

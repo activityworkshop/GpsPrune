@@ -1,4 +1,4 @@
-package tim.prune.drew.jpeg;
+package tim.prune.jpeg.drew;
 
 import java.io.*;
 

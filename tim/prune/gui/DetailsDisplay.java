@@ -22,6 +22,7 @@ import tim.prune.DataSubscriber;
 import tim.prune.FunctionLibrary;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
@@ -214,8 +215,8 @@ public class DetailsDisplay extends GenericDisplay
 		_distUnitsDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				dataUpdated(DataSubscriber.UNITS_CHANGED);
 				Config.setConfigBoolean(Config.KEY_METRIC_UNITS, _distUnitsDropdown.getSelectedIndex() == 0);
+				UpdateMessageBroker.informSubscribers(DataSubscriber.UNITS_CHANGED);
 			}
 		});
 		lowerPanel.add(_distUnitsDropdown);
@@ -405,7 +406,12 @@ public class DetailsDisplay extends GenericDisplay
 			default: // just as it was
 				coord = inCoordinate.output(Coordinate.FORMAT_NONE);
 		}
-		return inPrefix + coord;
+		// Fix broken degree signs (due to unicode mangling)
+		final char brokenDeg = 65533;
+		if (coord.indexOf(brokenDeg) >= 0) {
+			coord = coord.replaceAll(String.valueOf(brokenDeg), "\u00B0");
+		}
+		return inPrefix + restrictDP(coord);
 	}
 
 
@@ -428,6 +434,25 @@ public class DetailsDisplay extends GenericDisplay
 		_distanceFormatter.setMaximumFractionDigits(numDigits);
 		_distanceFormatter.setMinimumFractionDigits(numDigits);
 		return _distanceFormatter.format(inDist);
+	}
+
+	/**
+	 * Restrict the given coordinate to a limited number of decimal places for display
+	 * @param inCoord coordinate string
+	 * @return chopped string
+	 */
+	private static String restrictDP(String inCoord)
+	{
+		final int DECIMAL_PLACES = 7;
+		if (inCoord == null) return "";
+		final int dotPos = Math.max(inCoord.lastIndexOf('.'), inCoord.lastIndexOf(','));
+		if (dotPos >= 0) {
+			final int chopPos = dotPos + DECIMAL_PLACES;
+			if (chopPos < (inCoord.length()-1)) {
+				return inCoord.substring(0, chopPos);
+			}
+		}
+		return inCoord;
 	}
 
 	/**

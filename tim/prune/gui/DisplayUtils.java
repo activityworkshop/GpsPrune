@@ -22,7 +22,7 @@ public abstract class DisplayUtils
 			+ " " + ((inNumSecs / 60) % 60) + I18nManager.getText("display.range.time.mins");
 		if (inNumSecs < 432000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days")
 			+ " " + (inNumSecs / 60 / 60) % 24 + I18nManager.getText("display.range.time.hours");
-		if (inNumSecs < 8640000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days");
+		if (inNumSecs < 86400000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days");
 		return "big";
 	}
 }

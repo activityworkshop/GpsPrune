@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import tim.prune.data.Altitude;
+import tim.prune.data.Checker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.LatLonRectangle;
@@ -578,14 +579,13 @@ public class App
 	{
 		// create undo object
 		UndoCreatePoint undo = new UndoCreatePoint();
+		_undoStack.add(undo);
 		// add point to track
 		inPoint.setSegmentStart(true);
 		_track.appendPoints(new DataPoint[] {inPoint});
 		// ensure track's field list contains point's fields
 		_track.extendFieldList(inPoint.getFieldList());
 		_trackInfo.selectPoint(_trackInfo.getTrack().getNumPoints()-1);
-		// add undo object to stack
-		_undoStack.add(undo);
 		// update listeners
 		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.createpoint"));
 	}
@@ -647,8 +647,8 @@ public class App
 	 * @param inAltFormat altitude format
 	 * @param inSourceInfo information about the source of the data
 	 */
-	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, Altitude.Format inAltFormat,
-		SourceInfo inSourceInfo)
+	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
+		Altitude.Format inAltFormat, SourceInfo inSourceInfo)
 	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
@@ -659,6 +659,11 @@ public class App
 			// load next file if there's a queue
 			loadNextFile();
 			return;
+		}
+		// Check for doubled track
+		if (Checker.isDoubledTrack(loadedTrack)) {
+			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.open.contentsdoubled"),
+				I18nManager.getText("function.open"), JOptionPane.WARNING_MESSAGE);
 		}
 		// Decide whether to load or append
 		if (_track.getNumPoints() > 0)
@@ -716,7 +721,8 @@ public class App
 		}
 		UpdateMessageBroker.informSubscribers();
 		// Update status bar
-		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile") + " '" + inSourceInfo.getName() + "'");
+		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile")
+			+ " '" + inSourceInfo.getName() + "'");
 		// update menu
 		_menuManager.informFileLoaded();
 		// load next file if there's a queue

@@ -189,14 +189,6 @@ public class Charter extends GenericFunction
 		// button panel on bottom
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		// Cancel button
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.setVisible(false);
-			}
-		});
-		buttonPanel.add(cancelButton);
 		// ok button
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
 		okButton.addActionListener(new ActionListener() {
@@ -206,6 +198,14 @@ public class Charter extends GenericFunction
 			}
 		});
 		buttonPanel.add(okButton);
+		// Cancel button
+		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
+		cancelButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				_dialog.setVisible(false);
+			}
+		});
+		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
 	}
@@ -526,6 +526,7 @@ public class Charter extends GenericFunction
 		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
 		DataPoint prevPoint = null, currPoint = null, nextPoint = null;
 		DataPoint[] points = getDataPoints(inTrack, false);
+		final boolean useMetric = Config.getConfigBoolean(Config.KEY_METRIC_UNITS);
 		// Loop over collected points
 		for (int i=1; i<(points.length-1); i++)
 		{
@@ -541,7 +542,7 @@ public class Charter extends GenericFunction
 					+ DataPoint.calculateRadiansBetween(currPoint, nextPoint);
 				double time = nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp()) / 60.0 / 60.0;
 				// Convert to distance and pass to chartseries
-				if (Config.getConfigBoolean(Config.KEY_METRIC_UNITS)) {
+				if (useMetric) {
 					values.setData(i, Distance.convertRadiansToDistance(rads, Units.KILOMETRES) / time);
 				} else {
 					values.setData(i, Distance.convertRadiansToDistance(rads, Units.MILES) / time);

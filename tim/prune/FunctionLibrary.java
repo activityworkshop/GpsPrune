@@ -7,6 +7,7 @@ import tim.prune.function.compress.CompressTrackFunction;
 import tim.prune.function.distance.DistanceFunction;
 import tim.prune.function.edit.PointNameEditor;
 import tim.prune.function.gpsies.GetGpsiesFunction;
+import tim.prune.function.srtm.LookupSrtmFunction;
 import tim.prune.load.GpsLoader;
 import tim.prune.save.GpsSaver;
 import tim.prune.save.GpxExporter;
@@ -28,6 +29,7 @@ public abstract class FunctionLibrary
 	public static RearrangeWaypointsFunction FUNCTION_REARRANGE_WAYPOINTS = null;
 	public static GenericFunction FUNCTION_REARRANGE_PHOTOS = null;
 	public static GenericFunction FUNCTION_COMPRESS = null;
+	public static GenericFunction FUNCTION_LOOKUP_SRTM = null;
 	public static GenericFunction FUNCTION_ADD_TIME_OFFSET  = null;
 	public static GenericFunction FUNCTION_ADD_ALTITUDE_OFFSET  = null;
 	public static GenericFunction FUNCTION_CONVERT_NAMES_TO_TIMES  = null;
@@ -44,6 +46,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_FULL_RANGE_DETAILS = null;
 	public static GenericFunction FUNCTION_GET_GPSIES = null;
 	public static GenericFunction FUNCTION_SET_MAP_BG = null;
+	public static GenericFunction FUNCTION_SET_DISK_CACHE = null;
 	public static GenericFunction FUNCTION_SET_PATHS  = null;
 	public static GenericFunction FUNCTION_SET_KMZ_IMAGE_SIZE = null;
 	public static GenericFunction FUNCTION_SET_COLOURS = null;
@@ -70,6 +73,7 @@ public abstract class FunctionLibrary
 		FUNCTION_REARRANGE_WAYPOINTS = new RearrangeWaypointsFunction(inApp);
 		FUNCTION_REARRANGE_PHOTOS = new RearrangePhotosFunction(inApp);
 		FUNCTION_COMPRESS = new CompressTrackFunction(inApp);
+		FUNCTION_LOOKUP_SRTM = new LookupSrtmFunction(inApp);
 		FUNCTION_ADD_TIME_OFFSET = new AddTimeOffset(inApp);
 		FUNCTION_ADD_ALTITUDE_OFFSET = new AddAltitudeOffset(inApp);
 		FUNCTION_CONVERT_NAMES_TO_TIMES = new ConvertNamesToTimes(inApp);
@@ -86,6 +90,7 @@ public abstract class FunctionLibrary
 		FUNCTION_FULL_RANGE_DETAILS = new FullRangeDetails(inApp);
 		FUNCTION_GET_GPSIES = new GetGpsiesFunction(inApp);
 		FUNCTION_SET_MAP_BG = new SetMapBgFunction(inApp);
+		FUNCTION_SET_DISK_CACHE = new DiskCacheConfig(inApp);
 		FUNCTION_SET_PATHS = new SetPathsFunction(inApp);
 		FUNCTION_SET_KMZ_IMAGE_SIZE = new SetKmzImageSize(inApp);
 		FUNCTION_SET_COLOURS = new SetColours(inApp);

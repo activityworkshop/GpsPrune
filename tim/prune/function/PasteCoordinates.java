@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -96,12 +97,15 @@ public class PasteCoordinates extends GenericFunction
 		// Listeners to enable/disable ok button
 		KeyAdapter keyListener = new KeyAdapter() {
 			/** Key released */
-			public void keyReleased(KeyEvent arg0) {
+			public void keyReleased(KeyEvent inE) {
 				enableOK();
+				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
 			}
 		};
 		MouseAdapter mouseListener = new MouseAdapter() {
-			public void mouseReleased(java.awt.event.MouseEvent arg0) {
+			public void mouseReleased(MouseEvent inE) {
 				enableOK();
 			};
 		};
@@ -132,7 +136,7 @@ public class PasteCoordinates extends GenericFunction
 		ActionListener okListener = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				finish();
+				if (_okButton.isEnabled()) {finish();}
 			}
 		};
 		_okButton.addActionListener(okListener);
@@ -159,7 +163,7 @@ public class PasteCoordinates extends GenericFunction
 	private void enableOK()
 	{
 		String text = _coordField.getText();
-		_okButton.setEnabled(text != null && text.length() > 10
+		_okButton.setEnabled(text != null && text.length() > 6
 			&& (text.indexOf(' ') >= 0 || text.indexOf(',') >= 0));
 	}
 

@@ -11,7 +11,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.zip.GZIPInputStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -29,6 +34,7 @@ import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.GpsPruner;
 import tim.prune.I18nManager;
+import tim.prune.jpeg.ExifGateway;
 import tim.prune.threedee.WindowFactory;
 
 /**
@@ -144,6 +150,13 @@ public class AboutScreen extends GenericFunction
 			new JLabel(I18nManager.getText("dialog.about.systeminfo.gnuplot") + " : "),
 			0, 5);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[3], 1, 5);
+		// Exif library
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText("dialog.about.systeminfo.exiflib") + " : "),
+			0, 6);
+		final String exiflibkey = "dialog.about.systeminfo.exiflib." + ExifGateway.getDescriptionKey();
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText(exiflibkey)), 1, 6);
 		_tabs.add(I18nManager.getText("dialog.about.systeminfo"), sysInfoPanel);
 
 		// Third pane for credits
@@ -178,32 +191,35 @@ public class AboutScreen extends GenericFunction
 			new JLabel("Ramon, Miguel, In\u00E9s, Piotr, Petrovsk, Josatoc, Weehal,"),
 			1, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph, nazotoko, katpatuka"),
+			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph, nazotoko,"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
-			0, 5);
-		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
+			new JLabel(" katpatuka, R\u00E9mi"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
 			0, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Debian Linux, Sun Java, Eclipse, Svn, Gimp, Inkscape"),
+			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
 			0, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Openstreetmap, Povray, Exiftool, Google Earth, Gpsbabel, Gnuplot"),
+			new JLabel("Debian Linux, Sun Java, Eclipse, Svn, Gimp, Inkscape"),
 			1, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
 			0, 8);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Friends and loved ones, for encouragement and support"),
+			new JLabel("Openstreetmap, Povray, Exiftool, Google Earth, Gpsbabel, Gnuplot"),
 			1, 8);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			0, 9);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel("Friends and loved ones, for encouragement and support"),
+			1, 9);
 		_tabs.add(I18nManager.getText("dialog.about.credits"), creditsPanel);
 
 		// Read me
@@ -271,6 +287,9 @@ public class AboutScreen extends GenericFunction
 	 */
 	private String getReadmeText()
 	{
+		// First, try locally-held readme.txt if available (as it normally should be)
+		// Readme file can either be in file system or packed in the same jar as code
+		String errorMessage = null;
 		try
 		{
 			// For some reason using ../readme.txt doesn't work, so need absolute path
@@ -278,11 +297,39 @@ public class AboutScreen extends GenericFunction
 			if (in != null) {
 				byte[] buffer = new byte[in.available()];
 				in.read(buffer);
+				in.close();
 				return new String(buffer);
 			}
 		}
-		catch (java.io.IOException e) {
-			System.err.println("Exception trying to get readme : " + e.getMessage());
+		catch (IOException e) {
+			errorMessage =  e.getMessage();
+		}
+		// Locally-held file failed, so try to find gz file installed on system (eg Debian)
+		try
+		{
+			File gzFile = new File("/usr/share/doc/gpsprune/readme.txt.gz");
+			if (gzFile.exists())
+			{
+				// Copy decompressed bytes from gz file into out
+				InputStream in = new GZIPInputStream(new FileInputStream(gzFile));
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+				byte[] buffer = new byte[8 * 1024];
+				int count = 0;
+				do {
+					out.write(buffer, 0, count);
+					count = in.read(buffer, 0, buffer.length);
+				} while (count != -1);
+				out.close();
+				in.close();
+				return out.toString();
+			}
+		}
+		catch (IOException e) {
+			System.err.println("Exception trying to get readme.gz : " + e.getMessage());
+		}
+		// Only show first error message if couldn't get readme from gz either
+		if (errorMessage != null) {
+			System.err.println("Exception trying to get readme: " + errorMessage);
 		}
 		return I18nManager.getText("error.readme.notfound");
 	}

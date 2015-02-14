@@ -19,6 +19,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	private Photo _photo = null;
 	private BufferedImage _thumbnail = null;
 	private boolean _loadingImage = false;
+	private boolean _loadFailed = false;
 	/** String to show before photo is loaded */
 	private static final String LOADING_STRING = I18nManager.getText("details.photo.loading") + " ...";
 
@@ -42,6 +43,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 		if (_photo != inPhoto) {
 			_photo = inPhoto;
 			_thumbnail = null;
+			_loadFailed = false;
 		}
 		repaint();
 	}
@@ -51,6 +53,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	 */
 	public void refresh() {
 		_thumbnail = null;
+		_loadFailed = false;
 	}
 
 	/**
@@ -63,7 +66,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 		if (_photo != null)
 		{
 			// read thumbnail in separate thread
-			if (_thumbnail == null && !_loadingImage)
+			if (_thumbnail == null && !_loadingImage && !_loadFailed)
 			{
 				_loadingImage = true;
 				new Thread(this).start();
@@ -74,7 +77,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 				inG.setColor(Color.BLACK);
 				inG.drawString(LOADING_STRING, 10, 30);
 			}
-			else
+			else if (_thumbnail != null && !_loadFailed)
 			{
 				// Copy scaled, smoothed (and rotated) image into scaled
 				int usableWidth = getParent().getWidth()-10;
@@ -124,6 +127,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 				_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
 				image = null;
 			}
+			else _loadFailed = true;
 		}
 		_loadingImage = false;
 		repaint();
