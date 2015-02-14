@@ -109,7 +109,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	/**
 	 * @return Class of cell data
 	 */
-	public Class getColumnClass(int inColumnIndex)
+	public Class<?> getColumnClass(int inColumnIndex)
 	{
 		if (inColumnIndex==0) return String.class;
 		return Boolean.class;

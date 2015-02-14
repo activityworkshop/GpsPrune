@@ -105,7 +105,7 @@ public class PhotoTableModel extends AbstractTableModel
 	/**
 	 * @return Class of cell data
 	 */
-	public Class getColumnClass(int inColumnIndex)
+	public Class<?> getColumnClass(int inColumnIndex)
 	{
 		if (inColumnIndex < 2) return String.class;
 		return Boolean.class;

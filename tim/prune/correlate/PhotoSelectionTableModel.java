@@ -11,7 +11,7 @@ import tim.prune.data.Photo;
  */
 public class PhotoSelectionTableModel extends AbstractTableModel
 {
-	private ArrayList _list = new ArrayList();
+	private ArrayList<PhotoSelectionTableRow> _list = new ArrayList<PhotoSelectionTableRow>();
 
 
 	/**
@@ -53,8 +53,7 @@ public class PhotoSelectionTableModel extends AbstractTableModel
 	 */
 	public PhotoSelectionTableRow getRow(int inRowIndex)
 	{
-		PhotoSelectionTableRow row = (PhotoSelectionTableRow) _list.get(inRowIndex);
-		return row;
+		return _list.get(inRowIndex);
 	}
 
 
@@ -67,7 +66,7 @@ public class PhotoSelectionTableModel extends AbstractTableModel
 	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
 		// TODO: only show time of photos (not date) if dates all identical
-		PhotoSelectionTableRow row = (PhotoSelectionTableRow) _list.get(inRowIndex);
+		PhotoSelectionTableRow row = _list.get(inRowIndex);
 		if (inColumnIndex == 0) return row.getPhoto().getFile().getName();
 		else if (inColumnIndex == 1) return row.getPhoto().getTimestamp().getText();
 		else if (inColumnIndex == 2) return row.getTimeDiff().getDescription();

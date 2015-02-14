@@ -1,4 +1,4 @@
-package tim.prune.gui;
+package tim.prune.function;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,24 +7,40 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Properties;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import tim.prune.App;
+import tim.prune.GenericFunction;
 import tim.prune.GpsPruner;
 import tim.prune.I18nManager;
-import tim.prune.browser.BrowserLauncher;
+import tim.prune.function.browser.BrowserLauncher;
 
 /**
  * Class to check the version of Prune
  * and show an appropriate dialog
  */
-public abstract class CheckVersionScreen
+public class CheckVersionScreen extends GenericFunction
 {
 	/**
-	 * Show the check version dialog
-	 * @param inParent parent frame
+	 * Constructor
+	 * @param inApp app object
 	 */
-	public static void show(JFrame inParent)
+	public CheckVersionScreen(App inApp)
+	{
+		super(inApp);
+	}
+
+	/**
+	 * Get the name key
+	 */
+	public String getNameKey() {
+		return "function.checkversion";
+	}
+
+	/**
+	 * Show the check version dialog
+	 */
+	public void begin()
 	{
 		final String filePathStart = "http://activityworkshop.net/software/prune/prune_versioncheck_";
 		final String filePathEnd = ".txt";
@@ -49,8 +65,8 @@ public abstract class CheckVersionScreen
 
 		if (latestVer == null) {
 			// Couldn't get version number, show error message
-			JOptionPane.showMessageDialog(inParent, I18nManager.getText("dialog.checkversion.error"),
-				I18nManager.getText("dialog.checkversion.title"), JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.checkversion.error"),
+				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
 		}
 		else if (latestVer.equals(GpsPruner.VERSION_NUMBER))
 		{
@@ -61,8 +77,8 @@ public abstract class CheckVersionScreen
 				displayMessage += "\n\n" + nextVersion;
 			}
 			// Show information message that the current version is already running
-			JOptionPane.showMessageDialog(inParent, displayMessage,
-				I18nManager.getText("dialog.checkversion.title"), JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(_parentFrame, displayMessage,
+				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
 		}
 		else
 		{
@@ -84,13 +100,13 @@ public abstract class CheckVersionScreen
 
 			// Show information message to download the new version
 			Object[] buttonTexts = {I18nManager.getText("button.showwebpage"), I18nManager.getText("button.cancel")};
-			if (JOptionPane.showOptionDialog(inParent, displayMessage,
-					I18nManager.getText("dialog.checkversion.title"), JOptionPane.YES_NO_OPTION,
+			if (JOptionPane.showOptionDialog(_parentFrame, displayMessage,
+					I18nManager.getText(getNameKey()), JOptionPane.YES_NO_OPTION,
 					JOptionPane.INFORMATION_MESSAGE, null, buttonTexts, buttonTexts[1])
 				== JOptionPane.YES_OPTION)
 			{
 				// User selected to launch home page
-				new BrowserLauncher().launchBrowser("http://activityworkshop.net/software/prune/download.html");
+				BrowserLauncher.launchBrowser("http://activityworkshop.net/software/prune/download.html");
 			}
 		}
 	}

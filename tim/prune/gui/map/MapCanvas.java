@@ -27,7 +27,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
@@ -36,6 +35,7 @@ import javax.swing.event.ChangeListener;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
+import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
 import tim.prune.data.DoubleRange;
 import tim.prune.data.Selection;
@@ -109,7 +109,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 	// Colours
 	private static final Color COLOR_BG         = Color.WHITE;
+	private static final Color COLOR_MESSAGES   = Color.GRAY;
 	private static final Color COLOR_POINT      = Color.BLUE;
+	private static final Color COLOR_POINT_DELETED = Color.RED;
 	private static final Color COLOR_CURR_RANGE = Color.GREEN;
 	private static final Color COLOR_CROSSHAIRS = Color.RED;
 	private static final Color COLOR_WAYPT_NAME = Color.BLACK;
@@ -264,6 +266,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}});
 		zoomFullItem.setEnabled(true);
 		_popup.add(zoomFullItem);
+		_popup.addSeparator();
+		// Set background
+		JMenuItem setMapBgItem = new JMenuItem(
+			I18nManager.getText(FunctionLibrary.FUNCTION_SET_MAP_BG.getNameKey()));
+		setMapBgItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				FunctionLibrary.FUNCTION_SET_MAP_BG.begin();
+			}});
+		_popup.add(setMapBgItem);
 		// new point option
 		JMenuItem newPointItem = new JMenuItem(I18nManager.getText("menu.map.newpoint"));
 		newPointItem.addActionListener(new ActionListener() {
@@ -309,10 +321,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if (_autopanCheckBox.isSelected())
 			{
 				int selectedPoint = _selection.getCurrentPointIndex();
-				if (selectedPoint > 0 && _dragFromX == -1 && selectedPoint != _prevSelectedPoint)
+				if (selectedPoint >= 0 && _dragFromX == -1 && selectedPoint != _prevSelectedPoint)
 				{
-					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getXNew(selectedPoint));
-					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getYNew(selectedPoint));
+					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(selectedPoint));
+					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(selectedPoint));
 					int panX = 0;
 					int panY = 0;
 					if (px < PAN_DISTANCE) {
@@ -356,7 +368,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		{
 			inG.setColor(COLOR_BG);
 			inG.fillRect(0, 0, getWidth(), getHeight());
-			inG.setColor(Color.GRAY);
+			inG.setColor(COLOR_MESSAGES);
 			inG.drawString(I18nManager.getText("display.nodata"), 50, getHeight()/2);
 		}
 		// Draw slider etc on top
@@ -391,63 +403,117 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			boolean loadingFailed = false;
 			if (_mapImage == null) return;
 
-			// Loop over tiles drawing each one
-			int[] tileIndices = _mapPosition.getTileIndices(getWidth(), getHeight());
-			int[] pixelOffsets = _mapPosition.getDisplayOffsets(getWidth(), getHeight());
-			for (int tileX = tileIndices[0]; tileX <= tileIndices[1] && !loadingFailed; tileX++)
+			if (_tileCacher.isOverzoomed())
 			{
-				int x = (tileX - tileIndices[0]) * 256 - pixelOffsets[0];
-				for (int tileY = tileIndices[2]; tileY <= tileIndices[3]; tileY++)
+				// display overzoom message
+				g.setColor(COLOR_MESSAGES);
+				g.drawString(I18nManager.getText("map.overzoom"), 50, getHeight()/2);
+			}
+			else
+			{
+				// Loop over tiles drawing each one
+				int[] tileIndices = _mapPosition.getTileIndices(getWidth(), getHeight());
+				int[] pixelOffsets = _mapPosition.getDisplayOffsets(getWidth(), getHeight());
+				for (int tileX = tileIndices[0]; tileX <= tileIndices[1] && !loadingFailed; tileX++)
 				{
-					int y = (tileY - tileIndices[2]) * 256 - pixelOffsets[1];
-					Image image = _tileCacher.getTile(tileX, tileY);
-					if (image != null) {
-						g.drawImage(image, x, y, 256, 256, null);
+					int x = (tileX - tileIndices[0]) * 256 - pixelOffsets[0];
+					for (int tileY = tileIndices[2]; tileY <= tileIndices[3]; tileY++)
+					{
+						int y = (tileY - tileIndices[2]) * 256 - pixelOffsets[1];
+						Image image = _tileCacher.getTile(tileX, tileY);
+						if (image != null) {
+							g.drawImage(image, x, y, 256, 256, null);
+						}
 					}
 				}
-			}
 
-			// Make maps brighter / fainter
-			float[] scaleFactors = {1.0f, 1.05f, 1.1f, 1.2f, 1.6f, 2.0f};
-			float scaleFactor = scaleFactors[_transparencySlider.getValue()];
-			if (scaleFactor > 1.0f) {
-				RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-				hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-				RescaleOp op = new RescaleOp(scaleFactor, 0, hints);
-				op.filter(_mapImage, _mapImage);
+				// Make maps brighter / fainter
+				float[] scaleFactors = {1.0f, 1.05f, 1.1f, 1.2f, 1.6f, 2.0f};
+				float scaleFactor = scaleFactors[_transparencySlider.getValue()];
+				if (scaleFactor > 1.0f) {
+					RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+					hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+					RescaleOp op = new RescaleOp(scaleFactor, 0, hints);
+					op.filter(_mapImage, _mapImage);
+				}
 			}
 		}
 
+		// Paint the track points on top
+		int pointsPainted = 1;
+		try
+		{
+			pointsPainted = paintPoints(g);
+		}
+		catch (NullPointerException npe) { // ignore, probably due to data being changed during drawing
+		}
+
+		// free g
+		g.dispose();
+
+		_recalculate = false;
+		// Zoom to fit if no points found
+		if (pointsPainted <= 0 && _checkBounds) {
+			zoomToFit();
+			_recalculate = true;
+			repaint();
+		}
+		_checkBounds = false;
+		// enable / disable transparency slider
+		_transparencySlider.setEnabled(_mapCheckBox.isSelected());
+	}
+
+
+	/**
+	 * Paint the points using the given graphics object
+	 * @param inG Graphics object to use for painting
+	 * @return number of points painted, if any
+	 */
+	private int paintPoints(Graphics inG)
+	{
 		int pointsPainted = 0;
 		// draw track points
-		g.setColor(COLOR_POINT);
+		inG.setColor(COLOR_POINT);
 		int prevX = -1, prevY = -1;
 		boolean connectPoints = _connectCheckBox.isSelected();
+		boolean prevPointVisible = false, currPointVisible = false;
 		for (int i=0; i<_track.getNumPoints(); i++)
 		{
-			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getXNew(i));
-			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getYNew(i));
-			if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
+			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
+			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
+			currPointVisible = px >= 0 && px < getWidth() && py >= 0 && py < getHeight();
+			if (currPointVisible)
 			{
 				if (!_track.getPoint(i).isWaypoint())
 				{
-					g.drawRect(px-2, py-2, 3, 3);
-					// Connect track points
-					if (connectPoints && prevX != -1 && prevY != -1 && !_track.getPoint(i).getSegmentStart()) {
-						g.drawLine(prevX, prevY, px, py);
+					// Draw rectangle for track point
+					if (_track.getPoint(i).getDeleteFlag()) {
+						inG.setColor(COLOR_POINT_DELETED);
 					}
+					else {
+						inG.setColor(COLOR_POINT);
+					}
+					inG.drawRect(px-2, py-2, 3, 3);
 					pointsPainted++;
-					prevX = px; prevY = py;
 				}
 			}
-			else {
-				prevX = -1; prevY = -1;
+			if (!_track.getPoint(i).isWaypoint())
+			{
+				// Connect track points if either of them are visible
+				if (connectPoints && (currPointVisible || prevPointVisible)
+				 && !(prevX == -1 && prevY == -1)
+				 && !_track.getPoint(i).getSegmentStart())
+				{
+					inG.drawLine(prevX, prevY, px, py);
+				}
+				prevX = px; prevY = py;
 			}
+			prevPointVisible = currPointVisible;
 		}
 
 		// Loop over points, just drawing blobs for waypoints
-		g.setColor(COLOR_WAYPT_NAME);
-		FontMetrics fm = g.getFontMetrics();
+		inG.setColor(COLOR_WAYPT_NAME);
+		FontMetrics fm = inG.getFontMetrics();
 		int nameHeight = fm.getHeight();
 		int width = getWidth();
 		int height = getHeight();
@@ -455,11 +521,11 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		{
 			if (_track.getPoint(i).isWaypoint())
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getXNew(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getYNew(i));
+				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
+				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
 				if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
 				{
-					g.fillRect(px-3, py-3, 6, 6);
+					inG.fillRect(px-3, py-3, 6, 6);
 					pointsPainted++;
 				}
 			}
@@ -469,8 +535,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		{
 			if (_track.getPoint(i).isWaypoint())
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getXNew(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getYNew(i));
+				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
+				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
 				if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
 				{
 					// Figure out where to draw waypoint name so it doesn't obscure track
@@ -493,7 +559,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 								&& !overlapsPoints(nameXs[a], nameYs[a], nameWidth, nameHeight))
 							{
 								// Found a rectangle to fit - draw name here and quit
-								g.drawString(waypointName, nameXs[a], nameYs[a]);
+								inG.drawString(waypointName, nameXs[a], nameYs[a]);
 								drawnName = true;
 								break;
 							}
@@ -503,17 +569,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 		}
 		// Loop over points, drawing blobs for photo points
-		g.setColor(COLOR_PHOTO_PT);
+		inG.setColor(COLOR_PHOTO_PT);
 		for (int i=0; i<_track.getNumPoints(); i++)
 		{
 			if (_track.getPoint(i).getPhoto() != null)
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getXNew(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getYNew(i));
+				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
+				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
 				if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
 				{
-					g.drawRect(px-1, py-1, 2, 2);
-					g.drawRect(px-2, py-2, 4, 4);
+					inG.drawRect(px-1, py-1, 2, 2);
+					inG.drawRect(px-2, py-2, 4, 4);
 					pointsPainted++;
 				}
 			}
@@ -522,12 +588,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// Draw selected range
 		if (_selection.hasRangeSelected())
 		{
-			g.setColor(COLOR_CURR_RANGE);
+			inG.setColor(COLOR_CURR_RANGE);
 			for (int i=_selection.getStart(); i<=_selection.getEnd(); i++)
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getXNew(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getYNew(i));
-				g.drawRect(px-1, py-1, 2, 2);
+				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
+				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
+				inG.drawRect(px-1, py-1, 2, 2);
 			}
 		}
 
@@ -535,30 +601,18 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		int selectedPoint = _selection.getCurrentPointIndex();
 		if (selectedPoint >= 0)
 		{
-			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getXNew(selectedPoint));
-			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getYNew(selectedPoint));
-			g.setColor(COLOR_CROSSHAIRS);
+			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(selectedPoint));
+			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(selectedPoint));
+			inG.setColor(COLOR_CROSSHAIRS);
 			// crosshairs
-			g.drawLine(px, 0, px, getHeight());
-			g.drawLine(0, py, getWidth(), py);
+			inG.drawLine(px, 0, px, getHeight());
+			inG.drawLine(0, py, getWidth(), py);
 			// oval
-			g.drawOval(px - 2, py - 2, 4, 4);
-			g.drawOval(px - 3, py - 3, 6, 6);
+			inG.drawOval(px - 2, py - 2, 4, 4);
+			inG.drawOval(px - 3, py - 3, 6, 6);
 		}
-
-		// free g
-		g.dispose();
-
-		_recalculate = false;
-		// Zoom to fit if no points found
-		if (pointsPainted <= 0 && _checkBounds) {
-			zoomToFit();
-			_recalculate = true;
-			repaint();
-		}
-		_checkBounds = false;
-		// enable / disable transparency slider
-		_transparencySlider.setEnabled(_mapCheckBox.isSelected());
+		// Return the number of points painted
+		return pointsPainted;
 	}
 
 
@@ -601,22 +655,19 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 	/**
 	 * Inform that tiles have been updated and the map can be repainted
-	 * @param isOK true if data loaded ok, false for error
+	 * @param inIsOk true if data loaded ok, false for error
 	 */
 	public synchronized void tilesUpdated(boolean inIsOk)
 	{
 		// Show message if loading failed (but not too many times)
-		if (!inIsOk && !_shownOsmErrorAlready)
+		if (!inIsOk && !_shownOsmErrorAlready && _mapCheckBox.isSelected())
 		{
 			_shownOsmErrorAlready = true;
 			// use separate thread to show message about failing to load osm images
 			new Thread(new Runnable() {
 				public void run() {
 					try {Thread.sleep(500);} catch (InterruptedException ie) {}
-					JOptionPane.showMessageDialog(MapCanvas.this,
-						I18nManager.getText("error.osmimage.failed"),
-						I18nManager.getText("error.osmimage.dialogtitle"),
-						JOptionPane.ERROR_MESSAGE);
+					_app.showErrorMessage("error.osmimage.dialogtitle", "error.osmimage.failed");
 				}
 			}).start();
 		}
@@ -685,7 +736,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			 // select point if it's a left-click
 			if (!inE.isMetaDown())
 			{
-				int pointIndex = _track.getNearestPointIndexNew(
+				int pointIndex = _track.getNearestPointIndex(
 					 _mapPosition.getXFromPixels(inE.getX(), getWidth()),
 					 _mapPosition.getYFromPixels(inE.getY(), getHeight()),
 					 _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY), false);
@@ -805,6 +856,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_recalculate = true;
 		if ((inUpdateType & DataSubscriber.DATA_ADDED_OR_REMOVED) > 0) {
 			_checkBounds = true;
+		}
+		if ((inUpdateType & DataSubscriber.MAPSERVER_CHANGED) > 0) {
+			_tileCacher.setTileConfig(new MapTileConfig());
 		}
 		repaint();
 		// enable or disable components

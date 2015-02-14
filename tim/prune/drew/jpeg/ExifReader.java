@@ -25,31 +25,27 @@ public class ExifReader
 	/** Thumbnail length */
 	private int _thumbnailLength = -1;
 
-	/**
-	 * The number of bytes used per format descriptor.
-	 */
+	/** The number of bytes used per format descriptor */
 	private static final int[] BYTES_PER_FORMAT = {0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8};
 
-	/**
-	 * The number of formats known.
-	 */
+	/** The number of formats known */
 	private static final int MAX_FORMAT_CODE = 12;
 
 	// Format types
 	// Note: Cannot use the DataFormat enumeration in the case statement that uses these tags.
 	//	   Is there a better way?
-	private static final int FMT_BYTE = 1;
+	//private static final int FMT_BYTE = 1;
 	private static final int FMT_STRING = 2;
-	private static final int FMT_USHORT = 3;
-	private static final int FMT_ULONG = 4;
+	//private static final int FMT_USHORT = 3;
+	//private static final int FMT_ULONG = 4;
 	private static final int FMT_URATIONAL = 5;
-	private static final int FMT_SBYTE = 6;
-	private static final int FMT_UNDEFINED = 7;
-	private static final int FMT_SSHORT = 8;
-	private static final int FMT_SLONG = 9;
+	//private static final int FMT_SBYTE = 6;
+	//private static final int FMT_UNDEFINED = 7;
+	//private static final int FMT_SSHORT = 8;
+	//private static final int FMT_SLONG = 9;
 	private static final int FMT_SRATIONAL = 10;
-	private static final int FMT_SINGLE = 11;
-	private static final int FMT_DOUBLE = 12;
+	//private static final int FMT_SINGLE = 11;
+	//private static final int FMT_DOUBLE = 12;
 
 	public static final int TAG_EXIF_OFFSET = 0x8769;
 	public static final int TAG_INTEROP_OFFSET = 0xA005;
@@ -85,7 +81,7 @@ public class ExifReader
 
 
 	/**
-	 * Creates an ExifReader for a Jpeg file.
+	 * Creates an ExifReader for a Jpeg file
 	 * @param inFile File object to attempt to read from
 	 * @throws JpegException on failure
 	 */
@@ -144,7 +140,7 @@ public class ExifReader
 			firstDirectoryOffset = 14;
 		}
 
-		HashMap processedDirectoryOffsets = new HashMap();
+		HashMap<Integer, String> processedDirectoryOffsets = new HashMap<Integer, String>();
 
 		// 0th IFD (we merge with Exif IFD)
 		processDirectory(metadata, false, processedDirectoryOffsets, firstDirectoryOffset, TIFF_HEADER_START_OFFSET);
@@ -179,15 +175,15 @@ public class ExifReader
 	 *   2 bytes: format code
 	 *   4 bytes: component count
 	 */
-	private void processDirectory(JpegData inMetadata, boolean inIsGPS, HashMap inDirectoryOffsets,
+	private void processDirectory(JpegData inMetadata, boolean inIsGPS, HashMap<Integer, String> inDirectoryOffsets,
 		int inDirOffset, int inTiffHeaderOffset)
 	{
 		// check for directories we've already visited to avoid stack overflows when recursive/cyclic directory structures exist
-		if (inDirectoryOffsets.containsKey(new Integer(inDirOffset)))
+		if (inDirectoryOffsets.containsKey(Integer.valueOf(inDirOffset)))
 			return;
 
 		// remember that we've visited this directory so that we don't visit it again later
-		inDirectoryOffsets.put(new Integer(inDirOffset), "processed");
+		inDirectoryOffsets.put(Integer.valueOf(inDirOffset), "processed");
 
 		if (inDirOffset >= _data.length || inDirOffset < 0)
 		{

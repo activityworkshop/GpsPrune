@@ -2,9 +2,10 @@ package tim.prune.data;
 
 import java.util.List;
 
+import tim.prune.Config;
 import tim.prune.UpdateMessageBroker;
-import tim.prune.edit.FieldEdit;
-import tim.prune.edit.FieldEditList;
+import tim.prune.function.edit.FieldEdit;
+import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.map.MapUtils;
 
 
@@ -19,8 +20,6 @@ public class Track
 	// Scaled x, y values
 	private double[] _xValues = null;
 	private double[] _yValues = null;
-	private double[] _xValuesNew = null;
-	private double[] _yValuesNew = null;
 	private boolean _scaled = false;
 	private int _numPoints = 0;
 	private boolean _mixedData = false;
@@ -53,7 +52,7 @@ public class Track
 	 * @param inPointArray 2d object array containing data
 	 * @param inAltFormat altitude format
 	 */
-	public void load(Field[] inFieldArray, Object[][] inPointArray, int inAltFormat)
+	public void load(Field[] inFieldArray, Object[][] inPointArray, Altitude.Format inAltFormat)
 	{
 		if (inFieldArray == null || inPointArray == null)
 		{
@@ -87,6 +86,19 @@ public class Track
 		_scaled = false;
 	}
 
+
+	/**
+	 * Load the track by transferring the contents from a loaded Track object
+	 * @param inOther Track object containing loaded data
+	 */
+	public void load(Track inOther)
+	{
+		_numPoints = inOther._numPoints;
+		_masterFieldList = inOther._masterFieldList;
+		_dataPoints = inOther._dataPoints;
+		// needs to be scaled
+		_scaled = false;
+	}
 
 	////////////////// Modification methods //////////////////////
 
@@ -131,64 +143,22 @@ public class Track
 
 
 	/**
-	 * Compress the track to the given resolution
-	 * @param inResolution resolution
+	 * Delete the points marked for deletion
 	 * @return number of points deleted
 	 */
-	public int compress(int inResolution)
+	public int deleteMarkedPoints()
 	{
-		// (maybe should be separate thread?)
-		// (maybe should be in separate class?)
-		// (maybe should be based on subtended angles instead of distances?)
-		// Suggestion: Find last track point, don't delete it (or maybe preserve first and last of each segment?)
-
-		if (inResolution <= 0) return 0;
 		int numCopied = 0;
-		// Establish range of track and minimum range between points
-		scalePoints();
-		double wholeScale = _xRange.getMaximum() - _xRange.getMinimum();
-		double yscale = _yRange.getMaximum() - _yRange.getMinimum();
-		if (yscale > wholeScale) wholeScale = yscale;
-		double minDist = wholeScale / inResolution;
-
-		// Keep track of segment start flags of the deleted points
-		boolean setSegment = false;
 		// Copy selected points
 		DataPoint[] newPointArray = new DataPoint[_numPoints];
-		int[] pointIndices = new int[_numPoints];
 		for (int i=0; i<_numPoints; i++)
 		{
 			DataPoint point = _dataPoints[i];
-			boolean keepPoint = true;
 			// Don't delete waypoints or photo points
-			if (!point.isWaypoint() && point.getPhoto() == null)
-			{
-				// go through newPointArray to check for range
-				for (int j=0; j<numCopied && keepPoint; j++)
-				{
-					// calculate distance between point j and current point
-					double pointDist = Math.abs(_xValues[i] - _xValues[pointIndices[j]])
-					 + Math.abs(_yValues[i] - _yValues[pointIndices[j]]);
-					if (pointDist < minDist)
-						keepPoint = false;
-				}
-			}
-			if (keepPoint)
+			if (point.isWaypoint() || point.getPhoto() != null || !point.getDeleteFlag())
 			{
 				newPointArray[numCopied] = point;
-				pointIndices[numCopied] = i;
 				numCopied++;
-				// set segment flag if it's the first track point
-				if (setSegment && !point.isWaypoint())
-				{
-					point.setSegmentStart(true);
-					setSegment = false;
-				}
-			}
-			else
-			{
-				// point will be removed, so check segment flag
-				if (point.getSegmentStart()) {setSegment = true;}
 			}
 		}
 
@@ -201,28 +171,6 @@ public class Track
 			_numPoints = _dataPoints.length;
 			_scaled = false;
 		}
-		return numDeleted;
-	}
-
-
-	/**
-	 * Halve the track by deleting alternate points
-	 * @return number of points deleted
-	 */
-	public int halve()
-	{
-		if (_numPoints < 100) return 0;
-		int newSize = _numPoints / 2;
-		int numDeleted = _numPoints - newSize;
-		DataPoint[] newPointArray = new DataPoint[newSize];
-		// Delete alternate points
-		for (int i=0; i<newSize; i++)
-			newPointArray[i] = _dataPoints[i*2];
-		// Copy array references
-		_dataPoints = newPointArray;
-		_numPoints = _dataPoints.length;
-		_scaled = false;
-		UpdateMessageBroker.informSubscribers();
 		return numDeleted;
 	}
 
@@ -282,52 +230,6 @@ public class Track
 		// needs to be scaled again
 		_scaled = false;
 		return true;
-	}
-
-
-	/**
-	 * Delete all the duplicate points in the track
-	 * @return number of points deleted
-	 */
-	public int deleteDuplicates()
-	{
-		// loop through Track counting duplicates first
-		boolean[] dupes = new boolean[_numPoints];
-		int numDupes = 0;
-		int i, j;
-		for (i=1; i<_numPoints; i++)
-		{
-			DataPoint p1 = _dataPoints[i];
-			// Loop through all points before this one
-			for (j=0; j<i && !dupes[i]; j++)
-			{
-				DataPoint p2 = _dataPoints[j];
-				if (p1.isDuplicate(p2))
-				{
-					dupes[i] = true;
-					numDupes++;
-				}
-			}
-		}
-		if (numDupes > 0)
-		{
-			// Make new resized array and copy DataPoints over
-			DataPoint[] newPointArray = new DataPoint[_numPoints - numDupes];
-			j = 0;
-			for (i=0; i<_numPoints; i++)
-			{
-				if (!dupes[i])
-				{
-					newPointArray[j] = _dataPoints[i];
-					j++;
-				}
-			}
-			// Copy array references
-			_dataPoints = newPointArray;
-			_numPoints = _dataPoints.length;
-			_scaled = false;
-		}
-		return numDupes;
 	}
 
 
@@ -614,6 +516,53 @@ public class Track
 
 
 	/**
+	 * Average selected points
+	 * @param inStartIndex start index of selection
+	 * @param inEndIndex end index of selection
+	 * @return true if successful
+	 */
+	public boolean average(int inStartIndex, int inEndIndex)
+	{
+		// check parameters
+		if (inStartIndex < 0 || inStartIndex >= _numPoints || inEndIndex <= inStartIndex)
+			return false;
+
+		DataPoint startPoint = getPoint(inStartIndex);
+		double firstLatitude = startPoint.getLatitude().getDouble();
+		double firstLongitude = startPoint.getLongitude().getDouble();
+		double latitudeDiff = 0.0, longitudeDiff = 0.0;
+		double totalAltitude = 0;
+		int numAltitudes = 0;
+		Altitude.Format altFormat = Config.getUseMetricUnits()?Altitude.Format.METRES:Altitude.Format.FEET;
+		// loop between start and end points
+		for (int i=inStartIndex; i<= inEndIndex; i++)
+		{
+			DataPoint currPoint = getPoint(i);
+			latitudeDiff += (currPoint.getLatitude().getDouble() - firstLatitude);
+			longitudeDiff += (currPoint.getLongitude().getDouble() - firstLongitude);
+			if (currPoint.hasAltitude()) {
+				totalAltitude += currPoint.getAltitude().getValue(altFormat);
+				numAltitudes++;
+			}
+		}
+		int numPoints = inEndIndex - inStartIndex + 1;
+		double meanLatitude = firstLatitude + (latitudeDiff / numPoints);
+		double meanLongitude = firstLongitude + (longitudeDiff / numPoints);
+		Altitude meanAltitude = null;
+		if (numAltitudes > 0) {meanAltitude = new Altitude((int) (totalAltitude / numAltitudes), altFormat);}
+
+		DataPoint insertedPoint = new DataPoint(new Latitude(meanLatitude, Coordinate.FORMAT_NONE),
+			new Longitude(meanLongitude, Coordinate.FORMAT_NONE), meanAltitude);
+		// Make into singleton
+		insertedPoint.setSegmentStart(true);
+		DataPoint nextPoint = getNextTrackPoint(inEndIndex+1);
+		if (nextPoint != null) {nextPoint.setSegmentStart(true);}
+		// Insert points into track
+		return insertRange(new DataPoint[] {insertedPoint}, inEndIndex + 1);
+	}
+
+
+	/**
 	 * Append the specified points to the end of the track
 	 * @param inPoints DataPoint objects to add
 	 */
@@ -720,26 +669,6 @@ public class Track
 	}
 
 	/**
-	 * @param inPointNum point index, starting at 0
-	 * @return scaled x value of specified point
-	 */
-	public double getXNew(int inPointNum)
-	{
-		if (!_scaled) scalePoints();
-		return _xValuesNew[inPointNum];
-	}
-
-	/**
-	 * @param inPointNum point index, starting at 0
-	 * @return scaled y value of specified point
-	 */
-	public double getYNew(int inPointNum)
-	{
-		if (!_scaled) scalePoints();
-		return _yValuesNew[inPointNum];
-	}
-
-	/**
 	 * @return the master field list
 	 */
 	public FieldList getFieldList()
@@ -768,11 +697,17 @@ public class Track
 	 */
 	public boolean hasData(Field inField, int inStart, int inEnd)
 	{
+		// Loop over selected point range
 		for (int i=inStart; i<=inEnd; i++)
 		{
 			if (_dataPoints[i].getFieldValue(inField) != null)
 			{
-				return true;
+				// Check altitudes and timestamps
+				if ((inField != Field.ALTITUDE || _dataPoints[i].getAltitude().isValid())
+					&& (inField != Field.TIMESTAMP || _dataPoints[i].getTimestamp().isValid()))
+				{
+					return true;
+				}
 			}
 		}
 		return false;
@@ -788,12 +723,41 @@ public class Track
 		return _mixedData;
 	}
 
+	/**
+	 * @return true if track contains any points marked for deletion
+	 */
+	public boolean hasMarkedPoints()
+	{
+		if (_numPoints < 1) {
+			return false;
+		}
+		// Loop over points looking for any marked for deletion
+		for (int i=0; i<=_numPoints-1; i++)
+		{
+			if (_dataPoints[i] != null && _dataPoints[i].getDeleteFlag()) {
+				return true;
+			}
+		}
+		// None found
+		return false;
+	}
+
+	/**
+	 * Clear all the deletion markers
+	 */
+	public void clearDeletionMarkers()
+	{
+		for (int i=0; i<_numPoints; i++)
+		{
+			_dataPoints[i].setMarkedForDeletion(false);
+		}
+	}
 
 	/**
 	 * Collect all the waypoints into the given List
 	 * @param inList List to fill with waypoints
 	 */
-	public void getWaypoints(List inList)
+	public void getWaypoints(List<DataPoint> inList)
 	{
 		// clear list
 		inList.clear();
@@ -865,16 +829,9 @@ public class Track
 		}
 		_mixedData = hasWaypoint && hasTrackpoint;
 
-		// Use medians to centre at 0
-		double longMedian = (_longRange.getMaximum() + _longRange.getMinimum()) / 2.0;
-		double latMedian = (_latRange.getMaximum() + _latRange.getMinimum()) / 2.0;
-		double longFactor = Math.cos(latMedian / 180.0 * Math.PI); // Function of median latitude
-
 		// Loop over points and calculate scales
 		_xValues = new double[getNumPoints()];
 		_yValues = new double[getNumPoints()];
-		_xValuesNew = new double[getNumPoints()];
-		_yValuesNew = new double[getNumPoints()];
 		_xRange = new DoubleRange();
 		_yRange = new DoubleRange();
 		for (p=0; p < getNumPoints(); p++)
@@ -882,12 +839,10 @@ public class Track
 			DataPoint point = getPoint(p);
 			if (point != null)
 			{
-				_xValues[p] = (point.getLongitude().getDouble() - longMedian) * longFactor;
+				_xValues[p] = MapUtils.getXFromLongitude(point.getLongitude().getDouble());
 				_xRange.addValue(_xValues[p]);
-				_xValuesNew[p] = MapUtils.getXFromLongitude(point.getLongitude().getDouble());
-				_yValues[p] = (point.getLatitude().getDouble() - latMedian);
+				_yValues[p] = MapUtils.getYFromLatitude(point.getLatitude().getDouble());
 				_yRange.addValue(_yValues[p]);
-				_yValuesNew[p] = MapUtils.getYFromLatitude(point.getLatitude().getDouble());
 			}
 		}
 		_scaled = true;
@@ -913,41 +868,6 @@ public class Track
 			if (!inJustTrackPoints || !_dataPoints[i].isWaypoint())
 			{
 				currDist = Math.abs(_xValues[i] - inX) + Math.abs(_yValues[i] - inY);
-				if (currDist < nearestDist || nearestDist < 0.0)
-				{
-					nearestPoint = i;
-					nearestDist = currDist;
-				}
-			}
-		}
-		// Check whether it's within required distance
-		if (nearestDist > inMaxDist && inMaxDist > 0.0)
-		{
-			return -1;
-		}
-		return nearestPoint;
-	}
-
-
-	/**
-	 * Find the nearest point to the specified x and y coordinates
-	 * or -1 if no point is within the specified max distance
-	 * @param inX x coordinate
-	 * @param inY y coordinate
-	 * @param inMaxDist maximum distance from selected coordinates
-	 * @param inJustTrackPoints true if waypoints should be ignored
-	 * @return index of nearest point or -1 if not found
-	 */
-	public int getNearestPointIndexNew(double inX, double inY, double inMaxDist, boolean inJustTrackPoints)
-	{
-		int nearestPoint = 0;
-		double nearestDist = -1.0;
-		double currDist;
-		for (int i=0; i < getNumPoints(); i++)
-		{
-			if (!inJustTrackPoints || !_dataPoints[i].isWaypoint())
-			{
-				currDist = Math.abs(_xValuesNew[i] - inX) + Math.abs(_yValuesNew[i] - inY);
 				if (currDist < nearestDist || nearestDist < 0.0)
 				{
 					nearestPoint = i;
@@ -1187,7 +1107,7 @@ public class Track
 			// set photo status if coordinates have changed
 			if (inPoint.getPhoto() != null && coordsChanged)
 			{
-				inPoint.getPhoto().setCurrentStatus(PhotoStatus.CONNECTED);
+				inPoint.getPhoto().setCurrentStatus(Photo.Status.CONNECTED);
 			}
 			// point possibly needs to be scaled again
 			_scaled = false;

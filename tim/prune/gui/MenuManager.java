@@ -5,7 +5,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -14,12 +13,15 @@ import javax.swing.KeyStroke;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
+import tim.prune.FunctionLibrary;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
-import tim.prune.browser.UrlGenerator;
 import tim.prune.data.PhotoList;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.function.RearrangeWaypointsFunction.Rearrange;
+import tim.prune.function.browser.UrlGenerator;
 
 /**
  * Class to manage the menu bar and tool bar,
@@ -27,13 +29,13 @@ import tim.prune.data.TrackInfo;
  */
 public class MenuManager implements DataSubscriber
 {
-	private JFrame _parent = null;
 	private App _app = null;
 	private Track _track = null;
 	private Selection _selection = null;
 	private PhotoList _photos = null;
 
 	// Menu items which need enabling/disabling
+	private JMenuItem _sendGpsItem = null;
 	private JMenuItem _saveItem = null;
 	private JMenuItem _exportKmlItem = null;
 	private JMenuItem _exportGpxItem = null;
@@ -44,9 +46,10 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _editWaypointNameItem = null;
 	private JMenuItem _deletePointItem = null;
 	private JMenuItem _deleteRangeItem = null;
-	private JMenuItem _deleteDuplicatesItem = null;
 	private JMenuItem _compressItem = null;
+	private JMenuItem _deleteMarkedPointsItem = null;
 	private JMenuItem _interpolateItem = null;
+	private JMenuItem _averageItem = null;
 	private JMenuItem _selectAllItem = null;
 	private JMenuItem _selectNoneItem = null;
 	private JMenuItem _selectStartItem = null;
@@ -58,6 +61,8 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _cutAndMoveItem = null;
 	private JMenuItem _show3dItem = null;
 	private JMenu     _browserMapMenu = null;
+	private JMenuItem _chartItem = null;
+	private JMenuItem _distanceItem = null;
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _connectPhotoItem = null;
 	private JMenuItem _deletePhotoItem = null;
@@ -89,13 +94,11 @@ public class MenuManager implements DataSubscriber
 
 	/**
 	 * Constructor
-	 * @param inParent parent object for dialogs
 	 * @param inApp application to call on menu actions
 	 * @param inTrackInfo track info object
 	 */
-	public MenuManager(JFrame inParent, App inApp, TrackInfo inTrackInfo)
+	public MenuManager(App inApp, TrackInfo inTrackInfo)
 	{
-		_parent = inParent;
 		_app = inApp;
 		_track = inTrackInfo.getTrack();
 		_selection = inTrackInfo.getSelection();
@@ -132,15 +135,26 @@ public class MenuManager implements DataSubscriber
 		};
 		addPhotosMenuItem.addActionListener(_addPhotoAction);
 		fileMenu.add(addPhotosMenuItem);
-		// Add photos
-		JMenuItem loadFromGpsMenuItem = new JMenuItem(I18nManager.getText("menu.file.loadfromgps"));
+		fileMenu.addSeparator();
+		// Load from GPS
+		JMenuItem loadFromGpsMenuItem = makeMenuItem(FunctionLibrary.FUNCTION_GPSLOAD);
 		loadFromGpsMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.beginLoadFromGps();
+				FunctionLibrary.FUNCTION_GPSLOAD.begin();
 			}
 		});
 		fileMenu.add(loadFromGpsMenuItem);
+		// Save to GPS
+		_sendGpsItem = makeMenuItem(FunctionLibrary.FUNCTION_GPSSAVE);
+		_sendGpsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				FunctionLibrary.FUNCTION_GPSSAVE.begin();
+			}
+		});
+		_sendGpsItem.setEnabled(false);
+		fileMenu.add(_sendGpsItem);
 		fileMenu.addSeparator();
 		// Save
 		_saveItem = new JMenuItem(I18nManager.getText("menu.file.save"), KeyEvent.VK_S);
@@ -154,31 +168,31 @@ public class MenuManager implements DataSubscriber
 		_saveItem.setEnabled(false);
 		fileMenu.add(_saveItem);
 		// Export - Kml
-		_exportKmlItem = new JMenuItem(I18nManager.getText("menu.file.exportkml"));
+		_exportKmlItem = makeMenuItem(FunctionLibrary.FUNCTION_KMLEXPORT);
 		_exportKmlItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.exportKml();
+				FunctionLibrary.FUNCTION_KMLEXPORT.begin();
 			}
 		});
 		_exportKmlItem.setEnabled(false);
 		fileMenu.add(_exportKmlItem);
 		// Gpx
-		_exportGpxItem = new JMenuItem(I18nManager.getText("menu.file.exportgpx"));
+		_exportGpxItem = makeMenuItem(FunctionLibrary.FUNCTION_GPXEXPORT);
 		_exportGpxItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.exportGpx();
+				FunctionLibrary.FUNCTION_GPXEXPORT.begin();
 			}
 		});
 		_exportGpxItem.setEnabled(false);
 		fileMenu.add(_exportGpxItem);
 		// Pov
-		_exportPovItem = new JMenuItem(I18nManager.getText("menu.file.exportpov"));
+		_exportPovItem = makeMenuItem(FunctionLibrary.FUNCTION_POVEXPORT);
 		_exportPovItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.exportPov();
+				FunctionLibrary.FUNCTION_POVEXPORT.begin();
 			}
 		});
 		_exportPovItem.setEnabled(false);
@@ -255,24 +269,25 @@ public class MenuManager implements DataSubscriber
 		_deleteRangeItem.addActionListener(_deleteRangeAction);
 		_deleteRangeItem.setEnabled(false);
 		editMenu.add(_deleteRangeItem);
-		_deleteDuplicatesItem = new JMenuItem(I18nManager.getText("menu.edit.deleteduplicates"));
-		_deleteDuplicatesItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_app.deleteDuplicates();
-			}
-		});
-		_deleteDuplicatesItem.setEnabled(false);
-		editMenu.add(_deleteDuplicatesItem);
-		_compressItem = new JMenuItem(I18nManager.getText("menu.edit.compress"));
+		editMenu.addSeparator();
+		_compressItem = makeMenuItem(FunctionLibrary.FUNCTION_COMPRESS);
 		_compressItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.compressTrack();
+				FunctionLibrary.FUNCTION_COMPRESS.begin();
 			}
 		});
 		_compressItem.setEnabled(false);
 		editMenu.add(_compressItem);
+		_deleteMarkedPointsItem = new JMenuItem(I18nManager.getText("menu.edit.deletemarked"));
+		_deleteMarkedPointsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.finishCompressTrack();
+			}
+		});
+		_deleteMarkedPointsItem.setEnabled(false);
+		editMenu.add(_deleteMarkedPointsItem);
 		editMenu.addSeparator();
 		_interpolateItem = new JMenuItem(I18nManager.getText("menu.edit.interpolate"));
 		_interpolateItem.addActionListener(new ActionListener() {
@@ -283,6 +298,15 @@ public class MenuManager implements DataSubscriber
 		});
 		_interpolateItem.setEnabled(false);
 		editMenu.add(_interpolateItem);
+		_averageItem = new JMenuItem(I18nManager.getText("menu.edit.average"));
+		_averageItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.averageSelection();
+			}
+		});
+		_averageItem.setEnabled(false);
+		editMenu.add(_averageItem);
 		_reverseItem = new JMenuItem(I18nManager.getText("menu.edit.reverse"));
 		_reverseItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -292,11 +316,11 @@ public class MenuManager implements DataSubscriber
 		});
 		_reverseItem.setEnabled(false);
 		editMenu.add(_reverseItem);
-		_addTimeOffsetItem = new JMenuItem(I18nManager.getText("menu.edit.addtimeoffset"));
+		_addTimeOffsetItem = makeMenuItem(FunctionLibrary.FUNCTION_ADD_TIME_OFFSET);
 		_addTimeOffsetItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.beginAddTimeOffset();
+				FunctionLibrary.FUNCTION_ADD_TIME_OFFSET.begin();
 			}
 		});
 		_addTimeOffsetItem.setEnabled(false);
@@ -317,7 +341,7 @@ public class MenuManager implements DataSubscriber
 		rearrangeStartItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.rearrangeWaypoints(App.REARRANGE_TO_START);
+				FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS.rearrangeWaypoints(Rearrange.TO_START);
 			}
 		});
 		rearrangeStartItem.setEnabled(true);
@@ -326,7 +350,7 @@ public class MenuManager implements DataSubscriber
 		rearrangeEndItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.rearrangeWaypoints(App.REARRANGE_TO_END);
+				FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS.rearrangeWaypoints(Rearrange.TO_END);
 			}
 		});
 		rearrangeEndItem.setEnabled(true);
@@ -335,7 +359,7 @@ public class MenuManager implements DataSubscriber
 		rearrangeNearestItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.rearrangeWaypoints(App.REARRANGE_TO_NEAREST);
+				FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS.rearrangeWaypoints(Rearrange.TO_NEAREST);
 			}
 		});
 		rearrangeNearestItem.setEnabled(true);
@@ -397,11 +421,11 @@ public class MenuManager implements DataSubscriber
 
 		// Add view menu
 		JMenu viewMenu = new JMenu(I18nManager.getText("menu.view"));
-		_show3dItem = new JMenuItem(I18nManager.getText("menu.view.show3d"));
+		_show3dItem = makeMenuItem(FunctionLibrary.FUNCTION_3D);
 		_show3dItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.show3dWindow();
+				FunctionLibrary.FUNCTION_3D.begin();
 			}
 		});
 		_show3dItem.setEnabled(false);
@@ -425,7 +449,50 @@ public class MenuManager implements DataSubscriber
 			}
 		});
 		_browserMapMenu.add(openMapsItem);
+		JMenuItem mapquestMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.mapquest"));
+		mapquestMapsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.showExternalMap(UrlGenerator.MAP_SOURCE_MAPQUEST);
+			}
+		});
+		_browserMapMenu.add(mapquestMapsItem);
+		JMenuItem yahooMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.yahoo"));
+		yahooMapsItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.showExternalMap(UrlGenerator.MAP_SOURCE_YAHOO);
+			}
+		});
+		_browserMapMenu.add(yahooMapsItem);
 		viewMenu.add(_browserMapMenu);
+		// Charts
+		_chartItem = makeMenuItem(FunctionLibrary.FUNCTION_CHARTS);
+		_chartItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				FunctionLibrary.FUNCTION_CHARTS.begin();
+			}
+		});
+		_chartItem.setEnabled(false);
+		viewMenu.add(_chartItem);
+		// Distances
+		_distanceItem = makeMenuItem(FunctionLibrary.FUNCTION_DISTANCES);
+		_distanceItem.setEnabled(false);
+		_distanceItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				FunctionLibrary.FUNCTION_DISTANCES.begin();
+			}
+		});
+		viewMenu.add(_distanceItem);
+		// Set the map background
+		JMenuItem mapBgItem = makeMenuItem(FunctionLibrary.FUNCTION_SET_MAP_BG);
+		mapBgItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				FunctionLibrary.FUNCTION_SET_MAP_BG.begin();
+			}
+		});
+		viewMenu.add(mapBgItem);
 		menubar.add(viewMenu);
 
 		// Add photo menu
@@ -474,11 +541,11 @@ public class MenuManager implements DataSubscriber
 		photoMenu.add(_deletePhotoItem);
 		photoMenu.addSeparator();
 		// correlate all photos
-		_correlatePhotosItem = new JMenuItem(I18nManager.getText("menu.photo.correlate"));
+		_correlatePhotosItem = makeMenuItem(FunctionLibrary.FUNCTION_CORRELATE_PHOTOS);
 		_correlatePhotosItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.beginCorrelatePhotos();
+				FunctionLibrary.FUNCTION_CORRELATE_PHOTOS.begin();
 			}
 		});
 		_correlatePhotosItem.setEnabled(false);
@@ -487,27 +554,27 @@ public class MenuManager implements DataSubscriber
 
 		// Help menu
 		JMenu helpMenu = new JMenu(I18nManager.getText("menu.help"));
-		JMenuItem helpItem = new JMenuItem(I18nManager.getText("menu.help"));
+		JMenuItem helpItem = makeMenuItem(FunctionLibrary.FUNCTION_HELP);
 		helpItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.showHelp();
+				FunctionLibrary.FUNCTION_HELP.begin();
 			}
 		});
 		helpMenu.add(helpItem);
-		JMenuItem aboutItem = new JMenuItem(I18nManager.getText("menu.help.about"));
+		JMenuItem aboutItem = makeMenuItem(FunctionLibrary.FUNCTION_ABOUT);
 		aboutItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				new AboutScreen(_parent).show();
+				FunctionLibrary.FUNCTION_ABOUT.begin();
 			}
 		});
 		helpMenu.add(aboutItem);
-		JMenuItem checkVersionItem = new JMenuItem(I18nManager.getText("menu.help.checkversion"));
+		JMenuItem checkVersionItem = makeMenuItem(FunctionLibrary.FUNCTION_CHECK_VERSION);
 		checkVersionItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				CheckVersionScreen.show(_parent);
+				FunctionLibrary.FUNCTION_CHECK_VERSION.begin();
 			}
 		});
 		helpMenu.add(checkVersionItem);
@@ -516,6 +583,15 @@ public class MenuManager implements DataSubscriber
 		return menubar;
 	}
 
+	/**
+	 * Convenience method for making a menu item using a function
+	 * @param inFunction function
+	 * @return menu item using localized name of function
+	 */
+	private static JMenuItem makeMenuItem(GenericFunction inFunction)
+	{
+		return new JMenuItem(I18nManager.getText(inFunction.getNameKey()));
+	}
 
 	/**
 	 * Create a JToolBar containing all toolbar buttons
@@ -592,10 +668,11 @@ public class MenuManager implements DataSubscriber
 	public void informFileLoaded()
 	{
 		// save, undo, delete enabled
+		_sendGpsItem.setEnabled(true);
 		_saveItem.setEnabled(true);
 		_undoItem.setEnabled(true);
-		_deleteDuplicatesItem.setEnabled(true);
 		_compressItem.setEnabled(true);
+		_deleteMarkedPointsItem.setEnabled(false);
 	}
 
 
@@ -606,19 +683,21 @@ public class MenuManager implements DataSubscriber
 	{
 		boolean hasData = (_track != null && _track.getNumPoints() > 0);
 		// set functions which require data
+		_sendGpsItem.setEnabled(hasData);
 		_saveItem.setEnabled(hasData);
 		_saveButton.setEnabled(hasData);
 		_exportKmlItem.setEnabled(hasData);
 		_exportGpxItem.setEnabled(hasData);
 		_exportPovItem.setEnabled(hasData);
-		_deleteDuplicatesItem.setEnabled(hasData);
 		_compressItem.setEnabled(hasData);
+		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeMenu.setEnabled(hasData && _track.hasMixedData());
 		_selectAllItem.setEnabled(hasData);
 		_selectNoneItem.setEnabled(hasData);
-		if (_show3dItem != null)
-			_show3dItem.setEnabled(hasData);
+		_show3dItem.setEnabled(hasData);
+		_chartItem.setEnabled(hasData);
 		_browserMapMenu.setEnabled(hasData);
+		_distanceItem.setEnabled(hasData);
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
 		_undoItem.setEnabled(hasUndo);
@@ -655,6 +734,7 @@ public class MenuManager implements DataSubscriber
 		_deleteRangeButton.setEnabled(hasRange);
 		_interpolateItem.setEnabled(hasRange
 			&& (_selection.getEnd() - _selection.getStart()) == 1);
+		_averageItem.setEnabled(hasRange);
 		_mergeSegmentsItem.setEnabled(hasRange);
 		_reverseItem.setEnabled(hasRange);
 		_addTimeOffsetItem.setEnabled(hasRange);

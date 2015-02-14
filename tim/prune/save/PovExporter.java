@@ -17,7 +17,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -25,7 +24,9 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import tim.prune.App;
 import tim.prune.Config;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Track;
@@ -37,9 +38,8 @@ import tim.prune.threedee.ThreeDModel;
  * Class to export track information
  * into a specified Pov file
  */
-public class PovExporter
+public class PovExporter extends GenericFunction
 {
-	private JFrame _parentFrame = null;
 	private Track _track = null;
 	private JDialog _dialog = null;
 	private JFileChooser _fileChooser = null;
@@ -56,17 +56,20 @@ public class PovExporter
 
 	/**
 	 * Constructor giving frame and track
-	 * @param inParentFrame parent frame
-	 * @param inTrack track object to save
+	 * @param inApp App object
 	 */
-	public PovExporter(JFrame inParentFrame, Track inTrack)
+	public PovExporter(App inApp)
 	{
-		_parentFrame = inParentFrame;
-		_track = inTrack;
+		super(inApp);
+		_track = inApp.getTrackInfo().getTrack();
 		// Set default camera coordinates
 		_cameraX = "17"; _cameraY = "13"; _cameraZ = "-20";
 	}
 
+	/** Get the name key */
+	public String getNameKey() {
+		return "function.exportpov";
+	}
 
 	/**
 	 * Set the coordinates for the camera (can be any scale)
@@ -104,12 +107,12 @@ public class PovExporter
 	/**
 	 * Show the dialog to select options and export file
 	 */
-	public void showDialog()
+	public void begin()
 	{
 		// Make dialog window to select angles, colours etc
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.exportpov.title"), true);
+			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogComponents());
 		}
@@ -122,7 +125,7 @@ public class PovExporter
 		_altitudeCapField.setText("" + _altitudeCap);
 		// Show dialog
 		_dialog.pack();
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 
@@ -636,11 +639,11 @@ public class PovExporter
 		inWriter.write(inLineSeparator);
 
 		// Loop over all the track segments
-		ArrayList segmentList = getSegmentList(inModel);
-		Iterator segmentIterator = segmentList.iterator();
+		ArrayList<ModelSegment> segmentList = getSegmentList(inModel);
+		Iterator<ModelSegment> segmentIterator = segmentList.iterator();
 		while (segmentIterator.hasNext())
 		{
-			ModelSegment segment = (ModelSegment) segmentIterator.next();
+			ModelSegment segment = segmentIterator.next();
 			int segLength = segment.getNumTrackPoints();
 
 			// if the track segment is long enough, do a cubic spline sphere sweep
@@ -787,9 +790,9 @@ public class PovExporter
 	 * @param inModel model containing data
 	 * @return list of ModelSegment objects
 	 */
-	private static ArrayList getSegmentList(ThreeDModel inModel)
+	private static ArrayList<ModelSegment> getSegmentList(ThreeDModel inModel)
 	{
-		ArrayList segmentList = new ArrayList();
+		ArrayList<ModelSegment> segmentList = new ArrayList<ModelSegment>();
 		if (inModel != null && inModel.getNumPoints() > 0)
 		{
 			ModelSegment currSegment = null;

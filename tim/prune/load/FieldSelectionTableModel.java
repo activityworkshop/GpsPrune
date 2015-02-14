@@ -215,9 +215,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 			if (!hasField(inValue))
 			{
 				// Change is ok - find new Field object corresponding to text
-				for (int i=0; i<Field.ALL_AVAILABLE_FIELDS.length; i++)
-					if (Field.ALL_AVAILABLE_FIELDS[i].getName().equals(inValue))
-						_fieldArray[inRow] = Field.ALL_AVAILABLE_FIELDS[i];
+				_fieldArray[inRow] = Field.getField(inValue);
 			}
 		}
 		// fire change

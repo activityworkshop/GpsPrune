@@ -18,13 +18,14 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import tim.prune.App;
 import tim.prune.Config;
+import tim.prune.GenericFunction;
 import tim.prune.GpsPruner;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
@@ -33,16 +34,14 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
-import tim.prune.data.TrackInfo;
 import tim.prune.load.GenericFileFilter;
 
 /**
  * Class to export track information
  * into a specified Gpx file
  */
-public class GpxExporter implements Runnable
+public class GpxExporter extends GenericFunction implements Runnable
 {
-	private JFrame _parentFrame = null;
 	private Track _track = null;
 	private JDialog _dialog = null;
 	private JTextField _nameField = null;
@@ -52,38 +51,41 @@ public class GpxExporter implements Runnable
 	private File _exportFile = null;
 
 	/** version number of Gpx */
-	private static final String GPX_VERSION_NUMBER = "1.1";
+	private static final String GPX_VERSION_NUMBER = "1.0";
 	/** this program name */
 	private static final String GPX_CREATOR = "Prune v" + GpsPruner.VERSION_NUMBER + " activityworkshop.net";
 
 
 	/**
-	 * Constructor giving frame and track
-	 * @param inParentFrame parent frame
-	 * @param inTrackInfo track info object to save
+	 * Constructor
+	 * @param inApp app object
 	 */
-	public GpxExporter(JFrame inParentFrame, TrackInfo inTrackInfo)
+	public GpxExporter(App inApp)
 	{
-		_parentFrame = inParentFrame;
-		_track = inTrackInfo.getTrack();
+		super(inApp);
+		_track = inApp.getTrackInfo().getTrack();
 	}
 
+	/** Get name key */
+	public String getNameKey() {
+		return "function.exportgpx";
+	}
 
 	/**
 	 * Show the dialog to select options and export file
 	 */
-	public void showDialog()
+	public void begin()
 	{
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.exportgpx.title"), true);
+			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
 		}
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 
@@ -202,7 +204,8 @@ public class GpxExporter implements Runnable
 			// normal writing to file
 			writer = new OutputStreamWriter(new FileOutputStream(_exportFile));
 			// write file
-			int numPoints = exportData(writer);
+			int numPoints = exportData(writer, _track, _nameField.getText(),
+				_descriptionField.getText(), _timestampsCheckbox.isSelected());
 
 			// close file
 			writer.close();
@@ -235,9 +238,15 @@ public class GpxExporter implements Runnable
 	/**
 	 * Export the information to the given writer
 	 * @param inWriter writer object
+	 * @param inTrack track object containing data
+	 * @param inName name of track (optional)
+	 * @param inDesc description of track (optional)
+	 * @param inTimestamps true to export timestamps
 	 * @return number of points written
+	 * @throws IOException if io errors occur on write
 	 */
-	private int exportData(OutputStreamWriter inWriter) throws IOException
+	public static int exportData(OutputStreamWriter inWriter, Track inTrack, String inName,
+		String inDesc, boolean inTimestamps) throws IOException
 	{
 		inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<gpx version=\"");
 		inWriter.write(GPX_VERSION_NUMBER);
@@ -247,17 +256,18 @@ public class GpxExporter implements Runnable
 			+ " xmlns=\"http://www.topografix.com/GPX/1/0\""
 			+ " xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n");
 		// Name field
-		if (_nameField != null && _nameField.getText() != null && !_nameField.getText().equals(""))
+		String trackName = "PruneTrack";
+		if (inName != null && !inName.equals(""))
 		{
+			trackName = inName;
 			inWriter.write("\t<name>");
-			inWriter.write(_nameField.getText());
+			inWriter.write(trackName);
 			inWriter.write("</name>\n");
 		}
 		// Description field
 		inWriter.write("\t<desc>");
-		if (_descriptionField != null && _descriptionField.getText() != null && !_descriptionField.getText().equals(""))
-		{
-			inWriter.write(_descriptionField.getText());
+		if (inDesc != null && !inDesc.equals("")) {
+			inWriter.write(inDesc);
 		}
 		else
 		{
@@ -269,14 +279,14 @@ public class GpxExporter implements Runnable
 		DataPoint point = null;
 		boolean hasTrackpoints = false;
 		// Loop over waypoints
-		int numPoints = _track.getNumPoints();
+		int numPoints = inTrack.getNumPoints();
 		for (i=0; i<numPoints; i++)
 		{
-			point = _track.getPoint(i);
+			point = inTrack.getPoint(i);
 			// Make a wpt element for each waypoint
 			if (point.isWaypoint())
 			{
-				exportWaypoint(point, inWriter);
+				exportWaypoint(point, inWriter, inTimestamps);
 			}
 			else
 			{
@@ -287,18 +297,18 @@ public class GpxExporter implements Runnable
 		if (hasTrackpoints)
 		{
 			boolean firstPoint = true;
-			inWriter.write("\t<trk><trkseg>\n");
+			inWriter.write("\t<trk><name>" + trackName + "</name><number>1</number><trkseg>\n");
 			// Loop over track points
 			for (i=0; i<numPoints; i++)
 			{
-				point = _track.getPoint(i);
+				point = inTrack.getPoint(i);
 				// restart track segment if necessary
 				if (point.getSegmentStart() && !firstPoint) {
 					inWriter.write("\t</trkseg>\n\t<trkseg>\n");
 				}
 				if (!point.isWaypoint()) {
 					// export the track point
-					exportTrackpoint(point, inWriter);
+					exportTrackpoint(point, inWriter, inTimestamps);
 					firstPoint = false;
 				}
 			}
@@ -313,27 +323,30 @@ public class GpxExporter implements Runnable
 	 * Export the specified waypoint into the file
 	 * @param inPoint waypoint to export
 	 * @param inWriter writer object
+	 * @param inTimestamps true to export timestamps too
 	 * @throws IOException on write failure
 	 */
-	private void exportWaypoint(DataPoint inPoint, Writer inWriter) throws IOException
+	private static void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inTimestamps)
+		throws IOException
 	{
 		inWriter.write("\t<wpt lat=\"");
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\" lon=\"");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\">\n");
-		inWriter.write("\t\t<name>");
-		inWriter.write(inPoint.getWaypointName().trim());
-		inWriter.write("</name>\n");
 		// altitude if available
 		if (inPoint.hasAltitude())
 		{
 			inWriter.write("\t\t<ele>");
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 			inWriter.write("</ele>\n");
 		}
-		// timestamp if available (point might have altitude and then be turned into a waypoint)
-		if (inPoint.hasTimestamp() && _timestampsCheckbox.isSelected())
+		// write waypoint name after elevation
+		inWriter.write("\t\t<name>");
+		inWriter.write(inPoint.getWaypointName().trim());
+		inWriter.write("</name>\n");
+		// timestamp if available (point might have timestamp and then be turned into a waypoint)
+		if (inPoint.hasTimestamp() && inTimestamps)
 		{
 			inWriter.write("\t\t<time>");
 			inWriter.write(inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
@@ -348,23 +361,25 @@ public class GpxExporter implements Runnable
 	 * Export the specified trackpoint into the file
 	 * @param inPoint trackpoint to export
 	 * @param inWriter writer object
+	 * @param inTimestamps true to export timestamps too
 	 */
-	private void exportTrackpoint(DataPoint inPoint, Writer inWriter) throws IOException
+	private static void exportTrackpoint(DataPoint inPoint, Writer inWriter, boolean inTimestamps)
+		throws IOException
 	{
 		inWriter.write("\t\t<trkpt lat=\"");
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\" lon=\"");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\">");
 		// altitude
 		if (inPoint.hasAltitude())
 		{
 			inWriter.write("<ele>");
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 			inWriter.write("</ele>");
 		}
 		// timestamp if available (and selected)
-		if (inPoint.hasTimestamp() && _timestampsCheckbox.isSelected())
+		if (inPoint.hasTimestamp() && inTimestamps)
 		{
 			inWriter.write("<time>");
 			inWriter.write(inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));

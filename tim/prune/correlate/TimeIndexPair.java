@@ -4,7 +4,7 @@ package tim.prune.correlate;
  * Simple class to hold a time and an index.
  * Used in a TreeSet for calculating median time difference
  */
-public class TimeIndexPair implements Comparable
+public class TimeIndexPair implements Comparable<TimeIndexPair>
 {
 	/** Time as long */
 	private long _time = 0L;
@@ -37,9 +37,20 @@ public class TimeIndexPair implements Comparable
 	 * Compare two TimeIndexPair objects
 	 * @see java.lang.Comparable#compareTo(java.lang.Object)
 	 */
-	public int compareTo(Object inOther)
+	public int compareTo(TimeIndexPair inOther)
 	{
-		TimeIndexPair other = (TimeIndexPair) inOther;
-		return (int) (_time - other._time);
+		return (int) (_time - inOther._time);
+	}
+
+	/**
+	 * Override equals method to match compareTo
+	 */
+	public boolean equals(Object inOther)
+	{
+		if (inOther instanceof TimeIndexPair) {
+			TimeIndexPair otherPair = (TimeIndexPair) inOther;
+			return _time == otherPair._time;
+		}
+		return false;
 	}
 }

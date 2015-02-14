@@ -1,4 +1,4 @@
-package tim.prune.edit;
+package tim.prune.function.edit;
 
 import java.util.ArrayList;
 
@@ -7,7 +7,7 @@ import java.util.ArrayList;
  */
 public class FieldEditList
 {
-	private ArrayList _editList = new ArrayList();
+	private ArrayList<FieldEdit> _editList = new ArrayList<FieldEdit>();
 
 
 	/**
@@ -35,6 +35,6 @@ public class FieldEditList
 	 */
 	public FieldEdit getEdit(int inIndex)
 	{
-		return (FieldEdit) _editList.get(inIndex);
+		return _editList.get(inIndex);
 	}
 }

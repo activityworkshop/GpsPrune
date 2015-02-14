@@ -25,7 +25,6 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.IntegerRange;
 import tim.prune.data.Photo;
-import tim.prune.data.PhotoStatus;
 import tim.prune.data.Selection;
 import tim.prune.data.TrackInfo;
 
@@ -75,7 +74,7 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_RANGE_CLIMB = I18nManager.getText("details.range.climb") + ": ";
 	private static final String LABEL_RANGE_DESCENT = ", " + I18nManager.getText("details.range.descent") + ": ";
 	private static String LABEL_POINT_ALTITUDE_UNITS = null;
-	private static int LABEL_POINT_ALTITUDE_FORMAT = Altitude.FORMAT_NONE;
+	private static Altitude.Format LABEL_POINT_ALTITUDE_FORMAT = Altitude.Format.NO_FORMAT;
 
 
 	/**
@@ -202,6 +201,7 @@ public class DetailsDisplay extends GenericDisplay
 			public void actionPerformed(ActionEvent e)
 			{
 				dataUpdated(DataSubscriber.UNITS_CHANGED);
+				Config.setUseMetricUnits(_distUnitsDropdown.getSelectedIndex() == 0);
 			}
 		});
 		lowerPanel.add(_distUnitsDropdown);
@@ -221,7 +221,7 @@ public class DetailsDisplay extends GenericDisplay
 		Selection selection = _trackInfo.getSelection();
 		int currentPointIndex = selection.getCurrentPointIndex();
 		_speedLabel.setText("");
-		int distUnits = _distUnitsDropdown.getSelectedIndex()==0?Distance.UNITS_KILOMETRES:Distance.UNITS_MILES;
+		Distance.Units distUnits = _distUnitsDropdown.getSelectedIndex()==0?Distance.Units.KILOMETRES:Distance.Units.MILES;
 		String distUnitsStr = I18nManager.getText(_distUnitsDropdown.getSelectedIndex()==0?"units.kilometres.short":"units.miles.short");
 		String speedUnitsStr = I18nManager.getText(_distUnitsDropdown.getSelectedIndex()==0?"units.kmh":"units.mph");
 		if (_track == null || currentPoint == null)
@@ -252,12 +252,13 @@ public class DetailsDisplay extends GenericDisplay
 					{
 						// use total distance and total time between neighbouring points
 						long diff = nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp());
-						if (diff < 1000) {
+						if (diff < 1000 && diff > 0)
+						{
 							double rads = DataPoint.calculateRadiansBetween(prevPoint, currentPoint) +
 								DataPoint.calculateRadiansBetween(currentPoint, nextPoint);
 							double dist = Distance.convertRadiansToDistance(rads, distUnits);
 							String speed = roundedNumber(3600 * dist / diff) + " " + speedUnitsStr;
-							_speedLabel.setText(I18nManager.getText("details.speed") + ": " + speed);
+							_speedLabel.setText(I18nManager.getText("fieldname.speed") + ": " + speed);
 						}
 					}
 				}
@@ -339,7 +340,7 @@ public class DetailsDisplay extends GenericDisplay
 			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getFile().getName());
 			_photoLabel.setText(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText());
 			_photoConnectedLabel.setText(I18nManager.getText("details.photo.connected") + ": "
-				+ (currentPhoto.getCurrentStatus() == PhotoStatus.NOT_CONNECTED ?
+				+ (currentPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
 			_photoThumbnail.setVisible(true);
 			_photoThumbnail.setPhoto(currentPhoto);
@@ -353,12 +354,12 @@ public class DetailsDisplay extends GenericDisplay
 	 * @param inFormat altitude format
 	 * @return language-sensitive string
 	 */
-	private static String getAltitudeUnitsLabel(int inFormat)
+	private static String getAltitudeUnitsLabel(Altitude.Format inFormat)
 	{
 		if (inFormat == LABEL_POINT_ALTITUDE_FORMAT && LABEL_POINT_ALTITUDE_UNITS != null)
 			return LABEL_POINT_ALTITUDE_UNITS;
 		LABEL_POINT_ALTITUDE_FORMAT = inFormat;
-		if (inFormat == Altitude.FORMAT_METRES)
+		if (inFormat == Altitude.Format.METRES)
 			return " " + I18nManager.getText("units.metres.short");
 		return " " + I18nManager.getText("units.feet.short");
 	}

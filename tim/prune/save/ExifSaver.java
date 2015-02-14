@@ -27,7 +27,6 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
-import tim.prune.data.PhotoStatus;
 
 /**
  * Class to call Exiftool to save coordinate information in jpg files
@@ -115,7 +114,7 @@ public class ExifSaver implements Runnable
 		_dialog.pack();
 		// set progress bar and show dialog
 		_progressBar.setVisible(false);
-		_dialog.show();
+		_dialog.setVisible(true);
 		return true;
 	}
 
@@ -291,7 +290,7 @@ public class ExifSaver implements Runnable
 			}
 		}
 		String[] command = null;
-		if (inPhoto.getCurrentStatus() == PhotoStatus.NOT_CONNECTED)
+		if (inPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED)
 		{
 			// Photo is no longer connected, so delete gps tags
 			command = getDeleteGpsExifTagsCommand(inPhoto.getFile(), inOverwriteFlag);
@@ -369,7 +368,7 @@ public class ExifSaver implements Runnable
 		result[paramOffset + 3] = "-GPSLongitudeRef=" + inPoint.getLongitude().output(Coordinate.FORMAT_CARDINAL);
 		// add altitude if it has it
 		result[paramOffset + 4] = "-GPSAltitude="
-		 + (inPoint.hasAltitude()?inPoint.getAltitude().getValue(Altitude.FORMAT_METRES):0);
+		 + (inPoint.hasAltitude()?inPoint.getAltitude().getValue(Altitude.Format.METRES):0);
 		result[paramOffset + 5] = "-GPSAltitudeRef='Above Sea Level'";
 		// add the filename to modify
 		result[paramOffset + 6] = inFile.getAbsolutePath();

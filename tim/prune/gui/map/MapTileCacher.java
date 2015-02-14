@@ -14,8 +14,6 @@ public class MapTileCacher implements ImageObserver
 {
 	/** Parent to be informed of updates */
 	private MapCanvas _parent = null;
-	/** Default grid size */
-	private static final int GRID_SIZE = 11;
 	/** Array of images to hold tiles */
 	private Image[] _tiles = new Image[GRID_SIZE * GRID_SIZE];
 	/** Current zoom level */
@@ -28,6 +26,13 @@ public class MapTileCacher implements ImageObserver
 	private int _gridCentreX = 0;
 	/** Y coord of grid centre */
 	private int _gridCentreY = 0;
+	/** Tile configuration */
+	private MapTileConfig _tileConfig = null;
+
+	/** Grid size */
+	private static final int GRID_SIZE = 11;
+	/** max zoom level of map tiles */
+	private static final int MAX_TILE_ZOOM = 18;
 
 
 	/**
@@ -82,6 +87,7 @@ public class MapTileCacher implements ImageObserver
 	 */
 	public Image getTile(int inX, int inY)
 	{
+		if (_tileConfig == null) {_tileConfig = new MapTileConfig();}
 		int arrayIndex = getArrayIndex(inX, inY);
 		Image image = _tiles[arrayIndex];
 		if (image != null)
@@ -90,13 +96,17 @@ public class MapTileCacher implements ImageObserver
 			return image;
 		}
 
+		// Protect against zoom > max
+		if (isOverzoomed()) return null;
+
 		// Trigger load if not already triggered
 		// Work out tile coords for URL
 		int urlX = getUrlCoordinate(inX, _zoom);
 		int urlY = getUrlCoordinate(inY, _zoom);
 		try
 		{
-			String url = "http://tile.openstreetmap.org/" + _zoom + "/" + urlX + "/" + urlY + ".png";
+			// Use configured tile server
+			String url = _tileConfig.getUrl() + _zoom + "/" + urlX + "/" + urlY + ".png";
 			// Load image asynchronously, using observer
 			image = Toolkit.getDefaultToolkit().createImage(new URL(url));
 			_tiles[arrayIndex] = image;
@@ -106,6 +116,13 @@ public class MapTileCacher implements ImageObserver
 		return null;
 	}
 
+	/**
+	 * @return true if zoom is too high for tiles
+	 */
+	public boolean isOverzoomed()
+	{
+		return (_zoom > MAX_TILE_ZOOM);
+	}
 
 	/**
 	 * Get the array index for the given coordinates
@@ -192,5 +209,15 @@ public class MapTileCacher implements ImageObserver
 			_parent.tilesUpdated(loaded);
 		}
 		return !loaded;
+	}
+
+	/**
+	 * Set or reset the tile config
+	 * @param inConfig object containing tile config
+	 */
+	public void setTileConfig(MapTileConfig inConfig)
+	{
+		_tileConfig = inConfig;
+		clearAll();
 	}
 }

@@ -4,12 +4,11 @@ import java.io.File;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 
 import tim.prune.App;
 import tim.prune.Config;
-import tim.prune.I18nManager;
 import tim.prune.load.xml.XmlFileLoader;
+import tim.prune.load.xml.ZipFileLoader;
 
 
 /**
@@ -18,10 +17,12 @@ import tim.prune.load.xml.XmlFileLoader;
  */
 public class FileLoader
 {
+	private App _app;
 	private JFileChooser _fileChooser = null;
 	private JFrame _parentFrame;
 	private TextFileLoader _textFileLoader = null;
 	private XmlFileLoader _xmlFileLoader = null;
+	private ZipFileLoader _zipFileLoader = null;
 
 
 	/**
@@ -31,9 +32,11 @@ public class FileLoader
 	 */
 	public FileLoader(App inApp, JFrame inParentFrame)
 	{
+		_app = inApp;
 		_parentFrame = inParentFrame;
 		_textFileLoader = new TextFileLoader(inApp, inParentFrame);
-		_xmlFileLoader = new XmlFileLoader(inApp, inParentFrame);
+		_xmlFileLoader = new XmlFileLoader(inApp);
+		_zipFileLoader = new ZipFileLoader(inApp, _xmlFileLoader);
 	}
 
 
@@ -50,6 +53,7 @@ public class FileLoader
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.txt", new String[] {"txt", "text"}));
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kml", new String[] {"kml"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kmz", new String[] {"kmz"}));
 			_fileChooser.setAcceptAllFileFilterUsed(true);
 			// start from directory in config if already set (by load jpegs)
 			File configDir = Config.getWorkingDirectory();
@@ -74,6 +78,11 @@ public class FileLoader
 					// Use xml loader for kml, gpx and xml filenames
 					_xmlFileLoader.openFile(file);
 				}
+				else if (fileExtension.equals(".kmz") || fileExtension.equals(".zip"))
+				{
+					// Use zip loader for zipped kml (or zipped gpx)
+					_zipFileLoader.openFile(file);
+				}
 				else
 				{
 					// Use text loader for everything else
@@ -83,8 +92,7 @@ public class FileLoader
 			else
 			{
 				// couldn't read file - show error message
-				JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.load.noread"),
-					I18nManager.getText("error.load.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+				_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");
 			}
 		}
 	}

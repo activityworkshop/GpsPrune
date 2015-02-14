@@ -2,8 +2,6 @@ package tim.prune.threedee;
 
 import javax.swing.JFrame;
 
-import tim.prune.App;
-
 /**
  * Factory class for getting a Window
  */
@@ -13,16 +11,15 @@ public abstract class WindowFactory
 
 	/**
 	 * Get a Window object
-	 * @param inApp App object
 	 * @param inFrame parent frame
 	 * @return object if available, otherwise null
 	 */
-	public static ThreeDWindow getWindow(App inApp, JFrame inFrame)
+	public static ThreeDWindow getWindow(JFrame inFrame)
 	{
 		if (isJava3dEnabled())
 		{
 			if (_window == null) {
-				_window = new Java3DWindow(inApp, inFrame);
+				_window = new Java3DWindow(inFrame);
 			}
 			else {
 				_window.dispose();
@@ -41,7 +38,7 @@ public abstract class WindowFactory
 		boolean has3d = false;
 		try
 		{
-			Class universeClass = Class.forName("com.sun.j3d.utils.universe.SimpleUniverse");
+			Class<?> universeClass = Class.forName("com.sun.j3d.utils.universe.SimpleUniverse");
 			has3d = (universeClass != null);
 		}
 		catch (ClassNotFoundException e)

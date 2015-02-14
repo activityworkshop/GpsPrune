@@ -2,7 +2,6 @@ package tim.prune.save;
 
 import tim.prune.I18nManager;
 import tim.prune.data.Photo;
-import tim.prune.data.PhotoStatus;
 
 /**
  * Class to represent a row of the photo table for saving exif
@@ -35,16 +34,16 @@ public class PhotoTableEntry
 	 * @param inCurrentStatus current status of photo
 	 * @return status string for display
 	 */
-	private static String getStatusString (byte inOriginalStatus, byte inCurrentStatus)
+	private static String getStatusString (Photo.Status inOriginalStatus, Photo.Status inCurrentStatus)
 	{
 		if (inOriginalStatus != inCurrentStatus)
 		{
-			if (inOriginalStatus == PhotoStatus.NOT_CONNECTED)
+			if (inOriginalStatus == Photo.Status.NOT_CONNECTED)
 			{
 				// originally didn't have a point, now it has
 				return I18nManager.getText("dialog.saveexif.photostatus.connected");
 			}
-			if (inCurrentStatus == PhotoStatus.NOT_CONNECTED)
+			if (inCurrentStatus == Photo.Status.NOT_CONNECTED)
 			{
 				// originally had a point, now it doesn't
 				return I18nManager.getText("dialog.saveexif.photostatus.disconnected");

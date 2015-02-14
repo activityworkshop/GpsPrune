@@ -1,4 +1,4 @@
-package tim.prune.edit;
+package tim.prune.function.edit;
 
 import tim.prune.data.Field;
 

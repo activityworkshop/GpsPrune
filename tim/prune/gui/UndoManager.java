@@ -44,13 +44,13 @@ public class UndoManager
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout(3, 3));
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		Stack undoStack = inApp.getUndoStack();
+		Stack<UndoOperation> undoStack = inApp.getUndoStack();
 		mainPanel.add(new JLabel(I18nManager.getText("dialog.undo.pretext")), BorderLayout.NORTH);
 
 		String[] undoActions = new String[undoStack.size()];
 		for (int i=0; i<undoStack.size(); i++)
 		{
-			undoActions[i] = ((UndoOperation) undoStack.elementAt(undoStack.size()-1-i)).getDescription();
+			undoActions[i] = undoStack.elementAt(undoStack.size()-1-i).getDescription();
 		}
 		_actionList = new JList(undoActions);
 		_actionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
@@ -91,7 +91,7 @@ public class UndoManager
 		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 		_dialog.getContentPane().add(mainPanel);
 		_dialog.pack();
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 }

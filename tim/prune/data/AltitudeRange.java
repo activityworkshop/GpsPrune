@@ -7,7 +7,7 @@ package tim.prune.data;
 public class AltitudeRange
 {
 	private IntegerRange _range = new IntegerRange();
-	private int _format = Altitude.FORMAT_NONE;
+	private Altitude.Format _format = Altitude.Format.NO_FORMAT;
 
 
 	/**
@@ -16,7 +16,7 @@ public class AltitudeRange
 	public void clear()
 	{
 		_range.clear();
-		_format = Altitude.FORMAT_NONE;
+		_format = Altitude.Format.NO_FORMAT;
 	}
 
 
@@ -30,7 +30,7 @@ public class AltitudeRange
 		{
 			int altValue = inAltitude.getValue(_format);
 			_range.addValue(altValue);
-			if (_format == Altitude.FORMAT_NONE)
+			if (_format == Altitude.Format.NO_FORMAT)
 			{
 				_format = inAltitude.getFormat();
 			}
@@ -39,11 +39,11 @@ public class AltitudeRange
 
 
 	/**
-	 * @return true if positive data values were found
+	 * @return true if altitude range found
 	 */
-	public boolean hasData()
+	public boolean hasRange()
 	{
-		return (_range.hasData());
+		return _range.getMaximum() > _range.getMinimum();
 	}
 
 
@@ -68,7 +68,7 @@ public class AltitudeRange
 	/**
 	 * @return the altitude format used
 	 */
-	public int getFormat()
+	public Altitude.Format getFormat()
 	{
 		return _format;
 	}

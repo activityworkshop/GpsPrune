@@ -1,5 +1,9 @@
 package tim.prune.data;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
+
 /**
  * Class to represent a lat/long coordinate
  * and provide conversion functions
@@ -11,7 +15,7 @@ public abstract class Coordinate
 	public static final int EAST = 1;
 	public static final int SOUTH = 2;
 	public static final int WEST = 3;
-	public static final char[] PRINTABLE_CARDINALS = {'N', 'E', 'S', 'W'};
+	private static final char[] PRINTABLE_CARDINALS = {'N', 'E', 'S', 'W'};
 	public static final int FORMAT_DEG_MIN_SEC = 10;
 	public static final int FORMAT_DEG_MIN = 11;
 	public static final int FORMAT_DEG = 12;
@@ -19,7 +23,15 @@ public abstract class Coordinate
 	public static final int FORMAT_DEG_WHOLE_MIN = 14;
 	public static final int FORMAT_DEG_MIN_SEC_WITH_SPACES = 15;
 	public static final int FORMAT_CARDINAL = 16;
+	public static final int FORMAT_DECIMAL_FORCE_POINT = 17;
 	public static final int FORMAT_NONE = 19;
+
+	/** Number formatter for fixed decimals with forced decimal point */
+	private static final NumberFormat EIGHT_DP = NumberFormat.getNumberInstance(Locale.UK);
+	// Select the UK locale for this formatter so that decimal point is always used (not comma)
+	static {
+		if (EIGHT_DP instanceof DecimalFormat) ((DecimalFormat) EIGHT_DP).applyPattern("0.00000000");
+	}
 
 	// Instance variables
 	private boolean _valid = false;
@@ -110,6 +122,7 @@ public abstract class Coordinate
 				double numSecs = (numMins - _minutes) * 60.0;
 				_seconds = (int) numSecs;
 				_fracs = (int) ((numSecs - _seconds) * 10);
+				_asDouble = _degrees + 1.0 * fields[1] / denoms[1];
 			}
 			// Differentiate between d-m.f and d-m-s using . or ,
 			else if (numFields == 3 && (secondDelim.equals(".") || secondDelim.equals(",")))
@@ -120,6 +133,7 @@ public abstract class Coordinate
 				double numSecs = fields[2] * 60.0 / denoms[2];
 				_seconds = (int) numSecs;
 				_fracs = (int) ((numSecs - _seconds) * 10);
+				_asDouble = 1.0 * _degrees + (_minutes / 60.0) + (numSecs / 3600.0);
 			}
 			else if (numFields == 4 || numFields == 3)
 			{
@@ -130,8 +144,8 @@ public abstract class Coordinate
 				_fracs = (int) fields[3];
 				_fracDenom = (int) denoms[3];
 				if (_fracDenom < 1) {_fracDenom = 1;}
+				_asDouble = 1.0 * _degrees + (_minutes / 60.0) + (_seconds / 3600.0) + (_fracs / 3600.0 / _fracDenom);
 			}
-			_asDouble = 1.0 * _degrees + (_minutes / 60.0) + (_seconds / 3600.0) + (_fracs / 3600.0 / _fracDenom);
 			if (_cardinal == WEST || _cardinal == SOUTH || inString.charAt(0) == '-')
 				_asDouble = -_asDouble;
 			// validate fields
@@ -275,6 +289,12 @@ public abstract class Coordinate
 				{
 					answer = (_asDouble<0.0?"-":"")
 						+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 3600.0 / _fracDenom);
+					break;
+				}
+				case FORMAT_DECIMAL_FORCE_POINT:
+				{
+					// Forcing a decimal point instead of system-dependent commas etc
+					answer = EIGHT_DP.format(_asDouble);
 					break;
 				}
 				case FORMAT_DEG_MIN_SEC_WITH_SPACES:

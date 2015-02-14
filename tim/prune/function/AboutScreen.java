@@ -1,4 +1,4 @@
-package tim.prune.gui;
+package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -18,14 +18,15 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 
+import tim.prune.App;
 import tim.prune.ExternalTools;
+import tim.prune.GenericFunction;
 import tim.prune.GpsPruner;
 import tim.prune.I18nManager;
 import tim.prune.threedee.WindowFactory;
@@ -33,20 +34,31 @@ import tim.prune.threedee.WindowFactory;
 /**
  * Class to represent the "About" popup window
  */
-public class AboutScreen extends JDialog
+public class AboutScreen extends GenericFunction
 {
-	JButton _okButton = null;
+	private JDialog _dialog = null;
+	private JTabbedPane _tabs = null;
+	private JButton _okButton = null;
+	/** Labels for whether tools installed or not */
+	private JLabel[] _installedLabels = null;
+
 
 	/**
 	 * Constructor
-	 * @param inParent parent frame
+	 * @param inApp app object
 	 */
-	public AboutScreen(JFrame inParent)
+	public AboutScreen(App inApp)
 	{
-		super(inParent, I18nManager.getText("dialog.about.title"));
-		getContentPane().add(makeContents());
+		super(inApp);
 	}
 
+	/**
+	 * Return the name key for this function
+	 */
+	public String getNameKey()
+	{
+		return "function.about";
+	}
 
 	/**
 	 * @return the contents of the window as a Component
@@ -56,8 +68,8 @@ public class AboutScreen extends JDialog
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());
 
-		JTabbedPane tabPane = new JTabbedPane();
-		mainPanel.add(tabPane, BorderLayout.CENTER);
+		_tabs = new JTabbedPane();
+		mainPanel.add(_tabs, BorderLayout.CENTER);
 
 		JPanel aboutPanel = new JPanel();
 		aboutPanel.setLayout(new BoxLayout(aboutPanel, BoxLayout.Y_AXIS));
@@ -78,7 +90,8 @@ public class AboutScreen extends JDialog
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext2")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
-			.append("deutsch, english, español, français, italiano, polski, schwiizerdüütsch").append("</p>");
+			.append("deutsch, english, español, français, italiano, polski,<br>" +
+				"schwiizerdüütsch, português, bahasa indonesia, română").append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -88,7 +101,7 @@ public class AboutScreen extends JDialog
 
 		aboutPanel.add(descPane);
 		aboutPanel.add(new JLabel(" "));
-		tabPane.add(I18nManager.getText("dialog.about.title"), aboutPanel);
+		_tabs.add(I18nManager.getText("function.about"), aboutPanel);
 
 		// Second pane for system info
 		JPanel sysInfoPanel = new JPanel();
@@ -108,31 +121,33 @@ public class AboutScreen extends JDialog
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
 			new JLabel(System.getProperty("java.runtime.version")),
 			1, 1);
+		// Create install labels to be populated later
+		final int NUM_INSTALL_CHECKS = 5;
+		_installedLabels = new JLabel[NUM_INSTALL_CHECKS];
+		for (int i=0; i<NUM_INSTALL_CHECKS; i++) {
+			_installedLabels[i] = new JLabel("...");
+		}
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.systeminfo.java3d") + " : "),
 			0, 2);
-		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText(WindowFactory.isJava3dEnabled()?"dialog.about.yes":"dialog.about.no")),
-			1, 2);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[0], 1, 2);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.systeminfo.povray") + " : "),
 			0, 3);
-		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText(ExternalTools.isPovrayInstalled()?"dialog.about.yes":"dialog.about.no")),
-			1, 3);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[1], 1, 3);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.systeminfo.exiftool") + " : "),
 			0, 4);
-		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText(ExternalTools.isExiftoolInstalled()?"dialog.about.yes":"dialog.about.no")),
-			1, 4);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[2], 1, 4);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.systeminfo.gpsbabel") + " : "),
 			0, 5);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[3], 1, 5);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText(ExternalTools.isGpsbabelInstalled()?"dialog.about.yes":"dialog.about.no")),
-			1, 5);
-		tabPane.add(I18nManager.getText("dialog.about.systeminfo"), sysInfoPanel);
+			new JLabel(I18nManager.getText("dialog.about.systeminfo.gnuplot") + " : "),
+			0, 6);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[4], 1, 6);
+		_tabs.add(I18nManager.getText("dialog.about.systeminfo"), sysInfoPanel);
 
 		// Third pane for credits
 		JPanel creditsPanel = new JPanel();
@@ -163,33 +178,36 @@ public class AboutScreen extends JDialog
 			new JLabel(I18nManager.getText("dialog.about.credits.translators") + " : "),
 			0, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Ramon, Miguel, Inés, Piotr, Petrovsk, Josatoc"),
+			new JLabel("Ramon, Miguel, Inés, Piotr, Petrovsk, Josatoc, Weehal,"),
 			1, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
-			0, 4);
-		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
+			new JLabel(" theYinYeti, Rothermographer"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
 			0, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Mandriva Linux, Sun Java, Eclipse, Svn, Gimp"),
+			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
 			0, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Garble, Kate, Povray, Exiftool, Inkscape, Google Earth"),
+			new JLabel("Mandriva Linux, Sun Java, Eclipse, Svn, Gimp"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
 			0, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Friends and loved ones, for encouragement and support"),
+			new JLabel("Kate, Povray, Exiftool, Inkscape, Google Earth, Gpsbabel, Gnuplot"),
 			1, 7);
-		tabPane.add(I18nManager.getText("dialog.about.credits"), creditsPanel);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			0, 8);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel("Friends and loved ones, for encouragement and support"),
+			1, 8);
+		_tabs.add(I18nManager.getText("dialog.about.credits"), creditsPanel);
 
 		// Read me
 		JPanel readmePanel = new JPanel();
@@ -201,7 +219,7 @@ public class AboutScreen extends JDialog
 		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setPreferredSize(new Dimension(600, 130));
 		readmePanel.add(scrollPane, BorderLayout.CENTER);
-		tabPane.add(I18nManager.getText("dialog.about.readme"), readmePanel);
+		_tabs.add(I18nManager.getText("dialog.about.readme"), readmePanel);
 
 		// OK button at the bottom
 		JPanel okPanel = new JPanel();
@@ -211,13 +229,13 @@ public class AboutScreen extends JDialog
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				dispose();
+				_dialog.dispose();
 			}
 		});
 		_okButton.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent e)
 			{
-				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {dispose();}
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
 			}
 			public void keyTyped(KeyEvent e) {}
 			public void keyReleased(KeyEvent e) {}
@@ -259,7 +277,7 @@ public class AboutScreen extends JDialog
 		try
 		{
 			// For some reason using ../readme.txt doesn't work, so need absolute path
-			InputStream in = getClass().getResourceAsStream("/tim/prune/readme.txt");
+			InputStream in = AboutScreen.class.getResourceAsStream("/tim/prune/readme.txt");
 			if (in != null) {
 				byte[] buffer = new byte[in.available()];
 				in.read(buffer);
@@ -275,11 +293,31 @@ public class AboutScreen extends JDialog
 	/**
 	 * Show window
 	 */
-	public void show()
+	public void begin()
 	{
-		pack();
-		// setSize(300,200);
-		super.show();
+		if (_dialog == null)
+		{
+			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()));
+			_dialog.getContentPane().add(makeContents());
+			_dialog.pack();
+		}
+		_tabs.setSelectedIndex(0);
+		checkInstalls();
+		_dialog.setVisible(true);
 		_okButton.requestFocus();
+	}
+
+	/**
+	 * Check the installed components and set the label texts accordingly
+	 */
+	private void checkInstalls()
+	{
+		String yesText = I18nManager.getText("dialog.about.yes");
+		String noText = I18nManager.getText("dialog.about.no");
+		_installedLabels[0].setText(WindowFactory.isJava3dEnabled()?yesText:noText);
+		_installedLabels[1].setText(ExternalTools.isPovrayInstalled()?yesText:noText);
+		_installedLabels[2].setText(ExternalTools.isExiftoolInstalled()?yesText:noText);
+		_installedLabels[3].setText(ExternalTools.isGpsbabelInstalled()?yesText:noText);
+		_installedLabels[4].setText(ExternalTools.isGnuplotInstalled()?yesText:noText);
 	}
 }

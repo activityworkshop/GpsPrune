@@ -17,7 +17,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -27,6 +26,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 
 import tim.prune.App;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
@@ -37,15 +37,14 @@ import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.undo.UndoCorrelatePhotos;
 
 /**
  * Class to manage the automatic correlation of photos to points
  * including the GUI stuff to control the correlation options
  */
-public class PhotoCorrelator
+public class PhotoCorrelator extends GenericFunction
 {
-	private App _app;
-	private JFrame _parentFrame;
 	private JDialog _dialog;
 	private JButton _nextButton = null, _backButton = null;
 	private JButton _okButton = null;
@@ -66,18 +65,21 @@ public class PhotoCorrelator
 	/**
 	 * Constructor
 	 * @param inApp App object to report actions to
-	 * @param inFrame parent frame for dialogs
 	 */
-	public PhotoCorrelator(App inApp, JFrame inFrame)
+	public PhotoCorrelator(App inApp)
 	{
-		_app = inApp;
-		_parentFrame = inFrame;
-		_dialog = new JDialog(inFrame, I18nManager.getText("dialog.correlate.title"), true);
-		_dialog.setLocationRelativeTo(inFrame);
+		super(inApp);
+		_dialog = new JDialog(inApp.getFrame(), I18nManager.getText(getNameKey()), true);
+		_dialog.setLocationRelativeTo(inApp.getFrame());
 		_dialog.getContentPane().add(makeDialogContents());
 		_dialog.pack();
 	}
 
+
+	/** Get the name key */
+	public String getNameKey() {
+		return "function.correlatephotos";
+	}
 
 	/**
 	 * Reset dialog and show it
@@ -88,7 +90,7 @@ public class PhotoCorrelator
 		if (!_app.getTrackInfo().getTrack().hasData(Field.TIMESTAMP))
 		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.correlate.notimestamps"),
-				I18nManager.getText("dialog.correlate.title"), JOptionPane.INFORMATION_MESSAGE);
+				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 		// Check for any non-correlated photos, show warning continue/cancel
@@ -96,7 +98,7 @@ public class PhotoCorrelator
 		{
 			Object[] buttonTexts = {I18nManager.getText("button.continue"), I18nManager.getText("button.cancel")};
 			if (JOptionPane.showOptionDialog(_parentFrame, I18nManager.getText("dialog.correlate.nouncorrelatedphotos"),
-					I18nManager.getText("dialog.correlate.title"), JOptionPane.YES_NO_OPTION,
+					I18nManager.getText(getNameKey()), JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 				== JOptionPane.NO_OPTION)
 			{
@@ -127,7 +129,7 @@ public class PhotoCorrelator
 			_tipLabel.setVisible(true);
 			setupSecondCard(null);
 		}
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 
@@ -298,7 +300,7 @@ public class PhotoCorrelator
 			{
 				public void actionPerformed(ActionEvent e)
 				{
-					_app.finishCorrelatePhotos(getPointPairs());
+					finishCorrelation();
 					_dialog.dispose();
 				}
 			});
@@ -457,7 +459,7 @@ public class PhotoCorrelator
 		if (inShowWarning && !model.hasPhotosSelected())
 		{
 			JOptionPane.showMessageDialog(_dialog, I18nManager.getText("dialog.correlate.alloutsiderange"),
-				I18nManager.getText("dialog.correlate.title"), JOptionPane.ERROR_MESSAGE);
+				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -503,9 +505,9 @@ public class PhotoCorrelator
 	/**
 	 * @return the selected distance units from the dropdown
 	 */
-	private int getSelectedDistanceUnits()
+	private Distance.Units getSelectedDistanceUnits()
 	{
-		final int[] distUnits = {Distance.UNITS_KILOMETRES, Distance.UNITS_METRES, Distance.UNITS_MILES};
+		final Distance.Units[] distUnits = {Distance.Units.KILOMETRES, Distance.Units.METRES, Distance.Units.MILES};
 		return distUnits[_distUnitsDropdown.getSelectedIndex()];
 	}
 
@@ -604,7 +606,7 @@ public class PhotoCorrelator
 	private static int getMedianIndex(PhotoSelectionTableModel inModel)
 	{
 		// make sortable list
-		TreeSet set = new TreeSet();
+		TreeSet<TimeIndexPair> set = new TreeSet<TimeIndexPair>();
 		// loop through rows of table adding to list
 		int numRows = inModel.getRowCount();
 		int i;
@@ -615,10 +617,10 @@ public class PhotoCorrelator
 		}
 		// pull out middle entry and return index
 		TimeIndexPair pair = null;
-		Iterator iterator = set.iterator();
+		Iterator<TimeIndexPair> iterator = set.iterator();
 		for (i=0; i<(numRows+1)/2; i++)
 		{
-			pair = (TimeIndexPair) iterator.next();
+			pair = iterator.next();
 		}
 		return pair.getIndex();
 	}
@@ -653,5 +655,102 @@ public class PhotoCorrelator
 		}
 		// no uncorrelated photos found
 		return false;
+	}
+
+	/**
+	 * Finish the correlation by modifying the track
+	 * and passing the Undo information back to the App
+	 */
+	private void finishCorrelation()
+	{
+		PointPair[] pointPairs = getPointPairs();
+		if (pointPairs == null || pointPairs.length <= 0) {return;}
+
+		// begin to construct undo information
+		UndoCorrelatePhotos undo = new UndoCorrelatePhotos(_app.getTrackInfo());
+		// loop over Photos
+		int arraySize = pointPairs.length;
+		int i = 0, numPhotos = 0;
+		int numPointsToCreate = 0;
+		PointPair pair = null;
+		for (i=0; i<arraySize; i++)
+		{
+			pair = pointPairs[i];
+			if (pair != null && pair.isValid())
+			{
+				if (pair.getMinSeconds() == 0L)
+				{
+					// exact match
+					Photo pointPhoto = pair.getPointBefore().getPhoto();
+					if (pointPhoto == null)
+					{
+						// photo coincides with photoless point so connect the two
+						pair.getPointBefore().setPhoto(pair.getPhoto());
+						pair.getPhoto().setDataPoint(pair.getPointBefore());
+					}
+					else if (pointPhoto.equals(pair.getPhoto()))
+					{
+						// photo is already connected, nothing to do
+					}
+					else
+					{
+						// point is already connected to a different photo, so need to clone point
+						numPointsToCreate++;
+					}
+				}
+				else
+				{
+					// photo time falls between two points, so need to interpolate new one
+					numPointsToCreate++;
+				}
+				numPhotos++;
+			}
+		}
+		// Second loop, to create points if necessary
+		if (numPointsToCreate > 0)
+		{
+			// make new array for added points
+			DataPoint[] addedPoints = new DataPoint[numPointsToCreate];
+			int pointNum = 0;
+			DataPoint pointToAdd = null;
+			for (i=0; i<arraySize; i++)
+			{
+				pair = pointPairs[i];
+				if (pair != null && pair.isValid())
+				{
+					pointToAdd = null;
+					if (pair.getMinSeconds() == 0L && pair.getPointBefore().getPhoto() != null
+					 && !pair.getPointBefore().getPhoto().equals(pair.getPhoto()))
+					{
+						// clone point
+						pointToAdd = pair.getPointBefore().clonePoint();
+					}
+					else if (pair.getMinSeconds() > 0L)
+					{
+						// interpolate point
+						pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
+					}
+					if (pointToAdd != null)
+					{
+						// link photo to point
+						pointToAdd.setPhoto(pair.getPhoto());
+						pair.getPhoto().setDataPoint(pointToAdd);
+						// set to start of segment so not joined in track
+						pointToAdd.setSegmentStart(true);
+						// add to point array
+						addedPoints[pointNum] = pointToAdd;
+						pointNum++;
+					}
+				}
+			}
+			// expand track
+			_app.getTrackInfo().getTrack().appendPoints(addedPoints);
+		}
+
+		// send undo information back to controlling app
+		undo.setNumPhotosCorrelated(numPhotos);
+		_app.completeFunction(undo, ("" + numPhotos + " "
+			 + (numPhotos==1?I18nManager.getText("confirm.correlate.single"):I18nManager.getText("confirm.correlate.multi"))));
+		// observers already informed by track update
 	}
 }

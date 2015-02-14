@@ -1,4 +1,4 @@
-package tim.prune.edit;
+package tim.prune.function.edit;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -78,7 +78,7 @@ public class PointEditor
 		// Create Gui and show it
 		_dialog.getContentPane().add(makeDialogComponents());
 		_dialog.pack();
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 

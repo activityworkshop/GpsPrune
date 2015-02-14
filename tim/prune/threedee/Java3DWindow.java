@@ -42,7 +42,7 @@ import com.sun.j3d.utils.geometry.Cylinder;
 import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.universe.SimpleUniverse;
 
-import tim.prune.App;
+import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
 import tim.prune.data.Track;
@@ -53,7 +53,6 @@ import tim.prune.data.Track;
  */
 public class Java3DWindow implements ThreeDWindow
 {
-	private App _app = null;
 	private Track _track = null;
 	private JFrame _parentFrame = null;
 	private JFrame _frame = null;
@@ -73,12 +72,10 @@ public class Java3DWindow implements ThreeDWindow
 
 	/**
 	 * Constructor
-	 * @param inApp App object to use for callbacks
 	 * @param inFrame parent frame
 	 */
-	public Java3DWindow(App inApp, JFrame inFrame)
+	public Java3DWindow(JFrame inFrame)
 	{
-		_app = inApp;
 		_parentFrame = inFrame;
 	}
 
@@ -133,7 +130,7 @@ public class Java3DWindow implements ThreeDWindow
 		{
 			if (JOptionPane.showOptionDialog(_frame,
 					I18nManager.getText("dialog.exportpov.warningtracksize"),
-					I18nManager.getText("dialog.exportpov.title"), JOptionPane.OK_CANCEL_OPTION,
+					I18nManager.getText("function.exportpov"), JOptionPane.OK_CANCEL_OPTION,
 					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 				== JOptionPane.OK_OPTION)
 			{
@@ -171,11 +168,12 @@ public class Java3DWindow implements ThreeDWindow
 		_frame = new JFrame(I18nManager.getText("dialog.3d.title"));
 		_frame.getContentPane().setLayout(new BorderLayout());
 		_frame.getContentPane().add(canvas, BorderLayout.CENTER);
+		_frame.setIconImage(_parentFrame.getIconImage());
 		// Make panel for render, close buttons
 		JPanel panel = new JPanel();
 		panel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		// Add callback button for render
-		JButton renderButton = new JButton(I18nManager.getText("menu.file.exportpov"));
+		JButton renderButton = new JButton(I18nManager.getText("function.exportpov"));
 		renderButton.addActionListener(new ActionListener()
 		{
 			/** Render button pressed */
@@ -224,7 +222,7 @@ public class Java3DWindow implements ThreeDWindow
 		});
 
 		// show frame
-		_frame.show();
+		_frame.setVisible(true);
 		if (_frame.getState() == JFrame.ICONIFIED)
 		{
 			_frame.setState(JFrame.NORMAL);
@@ -570,8 +568,10 @@ public class Java3DWindow implements ThreeDWindow
 		Point3d result = new Point3d();
 		secondTran.transform(point, result);
 		firstTran.transform(result);
-		// Callback settings to App
-		_app.exportPov(result.x, result.y, result.z, _altitudeCap);
+		// Callback settings to pov export function
+		FunctionLibrary.FUNCTION_POVEXPORT.setCameraCoordinates(result.x, result.y, result.z);
+		FunctionLibrary.FUNCTION_POVEXPORT.setAltitudeCap(_altitudeCap);
+		FunctionLibrary.FUNCTION_POVEXPORT.begin();
 	}
 
 
@@ -582,8 +582,8 @@ public class Java3DWindow implements ThreeDWindow
 	 */
 	private static String getAltitudeUnitsLabel(Track inTrack)
 	{
-		int altitudeFormat = inTrack.getAltitudeRange().getFormat();
-		if (altitudeFormat == Altitude.FORMAT_METRES)
+		Altitude.Format altitudeFormat = inTrack.getAltitudeRange().getFormat();
+		if (altitudeFormat == Altitude.Format.METRES)
 			return I18nManager.getText("units.metres.short");
 		return I18nManager.getText("units.feet.short");
 	}

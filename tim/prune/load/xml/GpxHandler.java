@@ -21,7 +21,7 @@ public class GpxHandler extends XmlHandler
 	private String _name = null, _latitude = null, _longitude = null;
 	private String _elevation = null;
 	private String _time = null;
-	private ArrayList _pointList = new ArrayList();
+	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
 
 
 	/**
@@ -161,7 +161,7 @@ public class GpxHandler extends XmlHandler
 		String[][] result = new String[numPoints][];
 		for (int i=0; i<numPoints; i++)
 		{
-			result[i] = (String[]) _pointList.get(i);
+			result[i] = _pointList.get(i);
 		}
 		return result;
 	}

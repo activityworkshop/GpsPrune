@@ -38,6 +38,15 @@ public abstract class ExternalTools
 	}
 
 	/**
+	 * Attempt to call gnuplot to see if it's installed / available in path
+	 * @return true if found, false otherwise
+	 */
+	public static boolean isGnuplotInstalled()
+	{
+		return check(Config.getGnuplotPath() + " -V");
+	}
+
+	/**
 	 * Attempt to call the specified command
 	 * @return true if found, false otherwise
 	 */

@@ -7,7 +7,7 @@ import java.util.ArrayList;
  */
 public class PhotoList
 {
-	private ArrayList _photos = null;
+	private ArrayList<Photo> _photos = null;
 
 	/**
 	 * Empty constructor
@@ -21,7 +21,7 @@ public class PhotoList
 	 * Constructor
 	 * @param inList ArrayList containing Photo objects
 	 */
-	private PhotoList(ArrayList inList)
+	private PhotoList(ArrayList<Photo> inList)
 	{
 		_photos = inList;
 	}
@@ -48,7 +48,7 @@ public class PhotoList
 			// Make sure array is initialised
 			if (_photos == null)
 			{
-				_photos = new ArrayList();
+				_photos = new ArrayList<Photo>();
 			}
 			// Add the photo
 			_photos.add(inPhoto);
@@ -68,7 +68,7 @@ public class PhotoList
 			// Make sure array is initialised
 			if (_photos == null)
 			{
-				_photos = new ArrayList();
+				_photos = new ArrayList<Photo>();
 			}
 			// Add the photo
 			_photos.add(inIndex, inPhoto);
@@ -135,7 +135,7 @@ public class PhotoList
 	public Photo getPhoto(int inIndex)
 	{
 		if (inIndex < 0 || inIndex >= getNumPhotos()) return null;
-		return (Photo) _photos.get(inIndex);
+		return _photos.get(inIndex);
 	}
 
 
@@ -201,7 +201,7 @@ public class PhotoList
 		if (numPhotos > 0)
 		{
 			// Construct new list to copy into
-			ArrayList listCopy = new ArrayList();
+			ArrayList<Photo> listCopy = new ArrayList<Photo>();
 			// Loop over photos in list
 			for (int i=0; i<numPhotos; i++)
 			{
@@ -227,7 +227,11 @@ public class PhotoList
 	public PhotoList cloneList()
 	{
 		if (_photos == null) return this;
-		return new PhotoList((ArrayList) _photos.clone());
+		ArrayList<Photo> listCopy = new ArrayList<Photo>();
+		for (int i=0; i<_photos.size(); i++) {
+			listCopy.add(_photos.get(i));
+		}
+		return new PhotoList(listCopy);
 	}
 
 

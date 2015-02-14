@@ -17,9 +17,10 @@ public class Timestamp
 	private String _text = null;
 	private String _timeText = null;
 
-	private static DateFormat DEFAULT_DATE_FORMAT = DateFormat.getDateTimeInstance();
-	private static DateFormat DEFAULT_TIME_FORMAT = DateFormat.getTimeInstance();
-	private static DateFormat ISO_8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private static final DateFormat DEFAULT_DATE_FORMAT = DateFormat.getDateTimeInstance();
+	private static final DateFormat DEFAULT_TIME_FORMAT = DateFormat.getTimeInstance();
+	private static final DateFormat ISO_8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private static final DateFormat ISO_8601_FORMAT_NOZ = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
 	private static long SECS_SINCE_1970 = 0L;
@@ -53,7 +54,7 @@ public class Timestamp
 			new SimpleDateFormat("HH:mm:ss dd MMM yyyy"),
 			new SimpleDateFormat("dd MMM yyyy HH:mm:ss"),
 			new SimpleDateFormat("yyyy MMM dd HH:mm:ss"),
-			ISO_8601_FORMAT
+			ISO_8601_FORMAT, ISO_8601_FORMAT_NOZ
 		};
 	}
 

@@ -32,7 +32,7 @@ public class FileCacher
 	 */
 	private void loadFile()
 	{
-		ArrayList contentList = new ArrayList();
+		ArrayList<String> contentList = new ArrayList<String>();
 		if (_file != null && _file.exists() && _file.canRead())
 		{
 			BufferedReader reader = null;
@@ -62,7 +62,7 @@ public class FileCacher
 		int numLines = contentList.size();
 		_contentArray = new String[numLines];
 		for (int i=0; i<numLines; i++)
-			_contentArray[i] = contentList.get(i).toString();
+			_contentArray[i] = contentList.get(i);
 	}
 
 

@@ -25,7 +25,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -33,7 +32,9 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import tim.prune.App;
 import tim.prune.Config;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
@@ -49,9 +50,8 @@ import tim.prune.load.GenericFileFilter;
  * Class to export track information
  * into a specified Kml file
  */
-public class KmlExporter implements Runnable
+public class KmlExporter extends GenericFunction implements Runnable
 {
-	private JFrame _parentFrame = null;
 	private TrackInfo _trackInfo = null;
 	private Track _track = null;
 	private JDialog _dialog = null;
@@ -71,27 +71,30 @@ public class KmlExporter implements Runnable
 
 
 	/**
-	 * Constructor giving frame and track
-	 * @param inParentFrame parent frame
-	 * @param inTrackInfo track info object to save
+	 * Constructor
+	 * @param inApp app object
 	 */
-	public KmlExporter(JFrame inParentFrame, TrackInfo inTrackInfo)
+	public KmlExporter(App inApp)
 	{
-		_parentFrame = inParentFrame;
-		_trackInfo = inTrackInfo;
-		_track = inTrackInfo.getTrack();
+		super(inApp);
+		_trackInfo = inApp.getTrackInfo();
+		_track = _trackInfo.getTrack();
 	}
 
+	/** Get name key */
+	public String getNameKey() {
+		return "function.exportkml";
+	}
 
 	/**
 	 * Show the dialog to select options and export file
 	 */
-	public void showDialog()
+	public void begin()
 	{
 		// Make dialog window including whether to compress to kmz (and include pictures) or not
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.exportkml.title"), true);
+			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -99,7 +102,7 @@ public class KmlExporter implements Runnable
 		}
 		enableCheckboxes();
 		_progressBar.setVisible(false);
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 
@@ -435,12 +438,12 @@ public class KmlExporter implements Runnable
 			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
 		}
 		inWriter.write("\t\t\t<coordinates>");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(',');
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(",");
 		if (inExportAltitude && inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
 			inWriter.write("0");
@@ -481,12 +484,12 @@ public class KmlExporter implements Runnable
 			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
 		}
 		inWriter.write("\t\t\t<coordinates>");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(',');
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(",");
 		if (inExportAltitude && inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
 			inWriter.write("0");
@@ -503,13 +506,13 @@ public class KmlExporter implements Runnable
 	 */
 	private void exportTrackpoint(DataPoint inPoint, Writer inWriter, boolean inExportAltitude) throws IOException
 	{
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(',');
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		// Altitude either absolute or locked to ground by Google Earth
 		inWriter.write(",");
 		if (inExportAltitude && inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
 			inWriter.write("0");
@@ -525,12 +528,12 @@ public class KmlExporter implements Runnable
 	private void exportThumbnails(ZipOutputStream inZipStream) throws IOException
 	{
 		// set up image writer
-		Iterator writers = ImageIO.getImageWritersByFormatName("jpg");
+		Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
 		if (writers == null || !writers.hasNext())
 		{
 			throw new IOException("no JPEG writer found");
 		}
-		ImageWriter imageWriter = (ImageWriter) writers.next();
+		ImageWriter imageWriter = writers.next();
 
 		int numPoints = _track.getNumPoints();
 		DataPoint point = null;

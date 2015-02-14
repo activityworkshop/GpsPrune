@@ -1,8 +1,9 @@
-Prune version 6
+Prune version 7
 ===============
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
-including format conversion and photo correlation.
+including format conversion, charting and photo correlation.
+Full details can be found at http://activityworkshop.net/software/prune/
 
 Prune is copyright activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
@@ -16,7 +17,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_06.jar
+   java -jar prune_07.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -24,8 +25,20 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_06.jar --lang=DE
+   java -jar prune_07.jar --lang=DE
 
+
+New with version 7
+==================
+
+The following features were added since version 6:
+  - Loading of KMZ files and zipped GPX
+  - Improved compression functions with four configurable algorithms
+  - New function to call gpsbabel to send data directly to GPS receiver
+  - Charting functions (eg altitude or speed against distance) using gnuplot
+  - Map view can now use other OpenStreetMap images such as OpenCycleMap or any other tile server
+  - New function to create an average position from a track section
+  - Display of straight line distances between waypoints
 
 New with version 6
 ==================

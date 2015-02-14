@@ -19,15 +19,17 @@ import tim.prune.gui.StatusBar;
 import tim.prune.gui.map.MapCanvas;
 
 /**
- * Tool to visualize, edit and prune GPS data
+ * Tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or http://activityworkshop.net
  * This software is copyright activityworkshop.net and made available through the Gnu GPL
  */
 public class GpsPruner
 {
-	// Final build of version 6
-	public static final String VERSION_NUMBER = "6";
-	public static final String BUILD_NUMBER = "117";
+	/** Version number of application, used in about screen and for version check */
+	public static final String VERSION_NUMBER = "7";
+	/** Build number, just used for about screen */
+	public static final String BUILD_NUMBER = "136";
+	/** Static reference to App object */
 	private static App APP = null;
 
 
@@ -43,25 +45,28 @@ public class GpsPruner
 		boolean showUsage = false;
 		for (int i=0; i<args.length; i++)
 		{
-			if (args[i].startsWith("--locale="))
+			String arg = args[i];
+			if (arg.startsWith("--locale="))
 			{
-				locale = getLanguage(args[i].substring(9));
+				locale = getLanguage(arg.substring(9));
 			}
-			else if (args[i].startsWith("--lang="))
+			else if (arg.startsWith("--lang="))
 			{
-				locale = getLanguage(args[i].substring(7));
+				locale = getLanguage(arg.substring(7));
 			}
-			else if (args[i].startsWith("--langfile="))
+			else if (arg.startsWith("--langfile="))
 			{
-				langFilename = args[i].substring(11);
+				langFilename = arg.substring(11);
 			}
-			else if (args[i].startsWith("--configfile="))
+			else if (arg.startsWith("--configfile="))
 			{
-				configFilename = args[i].substring(13);
+				configFilename = arg.substring(13);
 			}
 			else
 			{
-				System.out.println("Unknown parameter '" + args[i] + "'.");
+				if (!arg.startsWith("--help")) {
+					System.out.println("Unknown parameter '" + arg + "'.");
+				}
 				showUsage = true;
 			}
 		}
@@ -129,7 +134,7 @@ public class GpsPruner
 		APP = new App(frame);
 
 		// make menu
-		MenuManager menuManager = new MenuManager(frame, APP, APP.getTrackInfo());
+		MenuManager menuManager = new MenuManager(APP, APP.getTrackInfo());
 		frame.setJMenuBar(menuManager.createMenuBar());
 		APP.setMenuManager(menuManager);
 		UpdateMessageBroker.addSubscriber(menuManager);
@@ -179,7 +184,7 @@ public class GpsPruner
 		// finish off and display frame
 		frame.pack();
 		frame.setSize(650, 450);
-		frame.show();
+		frame.setVisible(true);
 		// Set position of map/profile splitter
 		midPane.setDividerLocation(0.75);
 	}

@@ -12,7 +12,7 @@ import tim.prune.data.Track;
 public class WaypointListModel extends AbstractListModel
 {
 	Track _track = null;
-	ArrayList _waypoints = null;
+	ArrayList<DataPoint> _waypoints = null;
 
 	/**
 	 * Constructor giving Track object
@@ -21,7 +21,7 @@ public class WaypointListModel extends AbstractListModel
 	public WaypointListModel(Track inTrack)
 	{
 		_track = inTrack;
-		_waypoints = new ArrayList();
+		_waypoints = new ArrayList<DataPoint>();
 		_track.getWaypoints(_waypoints);
 	}
 
@@ -38,7 +38,7 @@ public class WaypointListModel extends AbstractListModel
 	 */
 	public Object getElementAt(int inIndex)
 	{
-		return ((DataPoint)_waypoints.get(inIndex)).getWaypointName();
+		return _waypoints.get(inIndex).getWaypointName();
 	}
 
 	/**
@@ -48,7 +48,7 @@ public class WaypointListModel extends AbstractListModel
 	 */
 	public DataPoint getWaypoint(int inIndex)
 	{
-		return (DataPoint) _waypoints.get(inIndex);
+		return _waypoints.get(inIndex);
 	}
 
 	/**

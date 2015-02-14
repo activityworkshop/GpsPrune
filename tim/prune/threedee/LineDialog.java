@@ -52,7 +52,7 @@ public class LineDialog
 		_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 		_dialog.getContentPane().add(makeDialogComponents());
 		_dialog.pack();
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 

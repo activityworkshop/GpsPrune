@@ -70,7 +70,7 @@ public class FileSaver
 	private JRadioButton[] _timestampUnitsRadios = null;
 	private static final int[] FORMAT_COORDS = {Coordinate.FORMAT_NONE, Coordinate.FORMAT_DEG_MIN_SEC,
 		Coordinate.FORMAT_DEG_MIN, Coordinate.FORMAT_DEG};
-	private static final int[] FORMAT_ALTS = {Altitude.FORMAT_NONE, Altitude.FORMAT_METRES, Altitude.FORMAT_FEET};
+	private static final Altitude.Format[] FORMAT_ALTS = {Altitude.Format.NO_FORMAT, Altitude.Format.METRES, Altitude.Format.FEET};
 	private static final int[] FORMAT_TIMES = {Timestamp.FORMAT_ORIGINAL, Timestamp.FORMAT_LOCALE, Timestamp.FORMAT_ISO_8601};
 
 
@@ -113,7 +113,7 @@ public class FileSaver
 		}
 		// Initialise dialog and show it
 		initDialog(_model, inDefaultDelimiter);
-		_dialog.show();
+		_dialog.setVisible(true);
 	}
 
 
@@ -404,7 +404,7 @@ public class FileSaver
 			for (int i=0; i<_coordUnitsRadios.length; i++)
 				if (_coordUnitsRadios[i].isSelected())
 					coordFormat = FORMAT_COORDS[i];
-			int altitudeFormat = Altitude.FORMAT_NONE;
+			Altitude.Format altitudeFormat = Altitude.Format.NO_FORMAT;
 			for (int i=0; i<_altitudeUnitsRadios.length; i++)
 			{
 				if (_altitudeUnitsRadios[i].isSelected())
@@ -540,10 +540,8 @@ public class FileSaver
 				catch (IOException ioe)
 				{
 					saveOK = false;
-					JOptionPane.showMessageDialog(_parentFrame,
-						I18nManager.getText("error.save.failed") + ioe.getMessage(),
-						I18nManager.getText("error.save.dialogtitle"),
-						JOptionPane.ERROR_MESSAGE);
+					_app.showErrorMessageNoLookup("error.save.dialogtitle",
+						I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
 				}
 				finally
 				{

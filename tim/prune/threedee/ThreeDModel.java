@@ -23,6 +23,7 @@ public class ThreeDModel
 	private byte[] _pointHeights = null;
 
 	private static final double DEFAULT_MODEL_SIZE = 10.0;
+	/** Minimum altitude cap */
 	public static final int MINIMUM_ALTITUDE_CAP = 100;
 
 	// Constants for point types
@@ -138,7 +139,7 @@ public class ThreeDModel
 		{
 			DataPoint point = _track.getPoint(i);
 			_pointTypes[i] = (point.isWaypoint()?POINT_TYPE_WAYPOINT:(point.getSegmentStart()?POINT_TYPE_SEGMENT_START:POINT_TYPE_NORMAL_POINT));
-			_pointHeights[i] = (byte) (point.getAltitude().getValue(Altitude.FORMAT_METRES) / 500);
+			_pointHeights[i] = (byte) (point.getAltitude().getValue(Altitude.Format.METRES) / 500);
 		}
 	}
 

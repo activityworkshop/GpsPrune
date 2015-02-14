@@ -1,5 +1,7 @@
 package tim.prune.data;
 
+import tim.prune.Config;
+
 /**
  * Class to represent a single data point in the series
  * including all its fields
@@ -18,6 +20,7 @@ public class DataPoint
 	private Photo _photo = null;
 	private String _waypointName = null;
 	private boolean _startOfSegment = false;
+	private boolean _markedForDeletion = false;
 
 
 	/**
@@ -26,31 +29,44 @@ public class DataPoint
 	 * @param inFieldList list of fields
 	 * @param inAltFormat altitude format
 	 */
-	public DataPoint(String[] inValueArray, FieldList inFieldList, int inAltFormat)
+	public DataPoint(String[] inValueArray, FieldList inFieldList, Altitude.Format inAltFormat)
 	{
 		// save data
 		_fieldValues = inValueArray;
 		// save list of fields
 		_fieldList = inFieldList;
 		// parse fields into objects
-		parseFields(inAltFormat);
+		parseFields(null, inAltFormat);
 	}
 
 
 	/**
 	 * Parse the string values into objects eg Coordinates
+	 * @param inField field which has changed, or null for all
 	 * @param inAltFormat altitude format
 	 */
-	private void parseFields(int inAltFormat)
+	private void parseFields(Field inField, Altitude.Format inAltFormat)
 	{
-		_latitude = new Latitude(getFieldValue(Field.LATITUDE));
-		_longitude = new Longitude(getFieldValue(Field.LONGITUDE));
-		_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inAltFormat);
-		_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
-		_waypointName = getFieldValue(Field.WAYPT_NAME);
-		String segmentStr = getFieldValue(Field.NEW_SEGMENT);
-		if (segmentStr != null) {segmentStr = segmentStr.trim();}
-		_startOfSegment = (segmentStr != null && (segmentStr.equals("1") || segmentStr.toUpperCase().equals("Y")));
+		if (inField == null || inField == Field.LATITUDE) {
+			_latitude = new Latitude(getFieldValue(Field.LATITUDE));
+		}
+		if (inField == null || inField == Field.LONGITUDE) {
+			_longitude = new Longitude(getFieldValue(Field.LONGITUDE));
+		}
+		if (inField == null || inField == Field.ALTITUDE) {
+			_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inAltFormat);
+		}
+		if (inField == null || inField == Field.TIMESTAMP) {
+			_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
+		}
+		if (inField == null || inField == Field.WAYPT_NAME) {
+			_waypointName = getFieldValue(Field.WAYPT_NAME);
+		}
+		if (inField == null || inField == Field.NEW_SEGMENT) {
+			String segmentStr = getFieldValue(Field.NEW_SEGMENT);
+			if (segmentStr != null) {segmentStr = segmentStr.trim();}
+			_startOfSegment = (segmentStr != null && (segmentStr.equals("1") || segmentStr.toUpperCase().equals("Y")));
+		}
 	}
 
 
@@ -75,7 +91,7 @@ public class DataPoint
 		}
 		else {
 			_altitude = inAltitude;
-			_fieldValues[2] = "" + inAltitude.getValue(Altitude.FORMAT_METRES); // units are ignored
+			_fieldValues[2] = "" + inAltitude.getValue(Altitude.Format.METRES); // units are ignored
 		}
 		_timestamp = new Timestamp(null);
 	}
@@ -133,14 +149,13 @@ public class DataPoint
 		// Set field value in array
 		_fieldValues[fieldIndex] = inValue;
 		// Change Coordinate, Altitude, Name or Timestamp fields after edit
-		if (_altitude != null)
-		{
-			parseFields(_altitude.getFormat());
+		if (_altitude != null && _altitude.getFormat() != Altitude.Format.NO_FORMAT) {
+			// Altitude already present so reuse format
+			parseFields(inField, _altitude.getFormat());
 		}
-		else
-		{
-			// use default altitude format of metres
-			parseFields(Altitude.FORMAT_METRES);
+		else {
+			// use default altitude format from config
+			parseFields(inField, Config.getUseMetricUnits()?Altitude.Format.METRES:Altitude.Format.FEET);
 		}
 	}
 
@@ -148,6 +163,14 @@ public class DataPoint
 	public void setSegmentStart(boolean inFlag)
 	{
 		setFieldValue(Field.NEW_SEGMENT, inFlag?"1":null);
+	}
+
+	/**
+	 * Mark the point for deletion
+	 * @param inFlag true to delete, false to keep
+	 */
+	public void setMarkedForDeletion(boolean inFlag) {
+		_markedForDeletion = inFlag;
 	}
 
 	/** @return latitude */
@@ -190,6 +213,12 @@ public class DataPoint
 	public boolean getSegmentStart()
 	{
 		return _startOfSegment;
+	}
+
+	/** @return true if point marked for deletion */
+	public boolean getDeleteFlag()
+	{
+		return _markedForDeletion;
 	}
 
 	/**
@@ -350,32 +379,6 @@ public class DataPoint
 		// Make new object to hold cloned data
 		DataPoint point = new DataPoint(valuesCopy, _fieldList, _altitude.getFormat());
 		return point;
-	}
-
-
-	/**
-	 * Restore the contents from another point
-	 * @param inOther point containing contents to copy
-	 * @return true if successful
-	 */
-	public boolean restoreContents(DataPoint inOther)
-	{
-		if (inOther != null)
-		{
-			// Copy string values across
-			_fieldValues = inOther._fieldValues;
-			if (_altitude != null)
-			{
-				parseFields(_altitude.getFormat());
-			}
-			else
-			{
-				// use default altitude format of metres
-				parseFields(Altitude.FORMAT_METRES);
-			}
-			return true;
-		}
-		return false;
 	}
 
 

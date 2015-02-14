@@ -1,4 +1,4 @@
-package tim.prune.browser;
+package tim.prune.function.browser;
 
 import javax.swing.JOptionPane;
 
@@ -6,15 +6,17 @@ import javax.swing.JOptionPane;
 /**
  * Class to launch a browser window to show an external map
  */
-public class BrowserLauncher
+public abstract class BrowserLauncher
 {
-	private String[] _browserCommand = null;
-	private boolean _urlNeedsQuotes = false;
+	private static boolean _initialised = false;
+	private static String[] _browserCommand = null;
+	private static boolean _urlNeedsQuotes = false;
+
 
 	/**
-	 * Constructor to set up browser
+	 * Init method to set up browser
 	 */
-	public BrowserLauncher()
+	private static void init()
 	{
 		// First check if "which" command is available
 		if (commandExists("which"))
@@ -45,7 +47,9 @@ public class BrowserLauncher
 				_urlNeedsQuotes = true;
 			}
 		}
+		_initialised = true;
 	}
+
 
 	/**
 	 * Check if the specified command exists on the system
@@ -66,12 +70,14 @@ public class BrowserLauncher
 		return false;
 	}
 
+
 	/**
 	 * Launch a browser window to show the given url
 	 * @param inUrl url to show
 	 */
-	public void launchBrowser(String inUrl)
+	public static void launchBrowser(String inUrl)
 	{
+		if (!_initialised) {init();}
 		if (_browserCommand == null) {
 			JOptionPane.showMessageDialog(null, "Cannot show url: " + inUrl);
 		}

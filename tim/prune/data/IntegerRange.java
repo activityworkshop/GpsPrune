@@ -34,15 +34,6 @@ public class IntegerRange
 
 
 	/**
-	 * @return true if positive data values were found
-	 */
-	public boolean hasData()
-	{
-		return (_max >= 0);
-	}
-
-
-	/**
 	 * @return minimum value, or -1 if none found
 	 */
 	public int getMinimum()

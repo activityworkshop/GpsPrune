@@ -20,7 +20,7 @@ public class JpegData
 	private Rational[] _gpsDatestamp = null;
 	private String _originalTimestamp = null;
 	private byte[] _thumbnail = null;
-	private ArrayList _errors = null;
+	private ArrayList<String> _errors = null;
 
 
 	/**
@@ -190,7 +190,7 @@ public class JpegData
 	 */
 	public void addError(String inError)
 	{
-		if (_errors == null) _errors = new ArrayList();
+		if (_errors == null) _errors = new ArrayList<String>();
 		_errors.add(inError);
 	}
 
@@ -214,7 +214,7 @@ public class JpegData
 	/**
 	 * @return all errors as a list
 	 */
-	public List getErrors()
+	public List<String> getErrors()
 	{
 		return _errors;
 	}

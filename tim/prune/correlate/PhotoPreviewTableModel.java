@@ -12,9 +12,9 @@ import tim.prune.data.Distance;
 public class PhotoPreviewTableModel extends AbstractTableModel
 {
 	/** ArrayList containing TableRow objects */
-	private ArrayList _list = new ArrayList();
+	private ArrayList<PhotoPreviewTableRow> _list = new ArrayList<PhotoPreviewTableRow>();
 	/** Distance units */
-	private int _distanceUnits = Distance.UNITS_KILOMETRES;
+	private Distance.Units _distanceUnits = Distance.Units.KILOMETRES;
 	/** Number formatter */
 	private static final NumberFormat FORMAT_ONE_DP = NumberFormat.getNumberInstance();
 
@@ -67,8 +67,7 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	 */
 	public PhotoPreviewTableRow getRow(int inRowIndex)
 	{
-		PhotoPreviewTableRow row = (PhotoPreviewTableRow) _list.get(inRowIndex);
-		return row;
+		return _list.get(inRowIndex);
 	}
 
 
@@ -80,7 +79,7 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	 */
 	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
-		PhotoPreviewTableRow row = (PhotoPreviewTableRow) _list.get(inRowIndex);
+		PhotoPreviewTableRow row = _list.get(inRowIndex);
 		if (inColumnIndex == 0) return row.getPhoto().getFile().getName();
 		else if (inColumnIndex == 1) {
 			return row.getPhoto().getTimestamp().getText();
@@ -104,7 +103,7 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	/**
 	 * @param inUnits the distance units to use
 	 */
-	public void setDistanceUnits(int inUnits)
+	public void setDistanceUnits(Distance.Units inUnits)
 	{
 		_distanceUnits = inUnits;
 	}
@@ -133,7 +132,7 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	 * Get the class of objects in the given column
 	 * @see javax.swing.table.AbstractTableModel#getColumnClass(int)
 	 */
-	public Class getColumnClass(int inColumnIndex)
+	public Class<?> getColumnClass(int inColumnIndex)
 	{
 		if (inColumnIndex == 4) {return Boolean.class;}
 		return super.getColumnClass(inColumnIndex);

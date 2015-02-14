@@ -6,6 +6,7 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 import tim.prune.I18nManager;
+import tim.prune.data.Altitude;
 import tim.prune.data.AltitudeRange;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
@@ -86,27 +87,32 @@ public class ProfileChart extends GenericChart
 				}
 			}
 
-			// loop through points
-			int chartFormat = altitudeRange.getFormat();
-			for (int p = 0; p < numPoints; p++)
+			try
 			{
-				int x = (int) (_xScaleFactor * p);
-				if (p == selectedPoint)
+				// loop through points
+				Altitude.Format chartFormat = altitudeRange.getFormat();
+				for (int p = 0; p < numPoints; p++)
 				{
-					g.setColor(COLOR_SELECTED_BG);
-					g.fillRect(BORDER_WIDTH + x, BORDER_WIDTH+1, barWidth, height-2*BORDER_WIDTH-2);
-					g.setColor(COLOR_SELECTED);
+					int x = (int) (_xScaleFactor * p);
+					if (p == selectedPoint)
+					{
+						g.setColor(COLOR_SELECTED_BG);
+						g.fillRect(BORDER_WIDTH + x, BORDER_WIDTH+1, barWidth, height-2*BORDER_WIDTH-2);
+						g.setColor(COLOR_SELECTED);
+					}
+					else
+					{
+						g.setColor(COLOR_ALT_BARS);
+					}
+					if (_track.getPoint(p).getAltitude().isValid())
+					{
+						altitude = _track.getPoint(p).getAltitude().getValue(chartFormat);
+						y = (int) (yScaleFactor * (altitude - minAltitude));
+						g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
+					}
 				}
-				else
-				{
-					g.setColor(COLOR_ALT_BARS);
-				}
-				if (_track.getPoint(p).getAltitude().isValid())
-				{
-					altitude = _track.getPoint(p).getAltitude().getValue(chartFormat);
-					y = (int) (yScaleFactor * (altitude - minAltitude));
-					g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
-				}
+			}
+			catch (NullPointerException npe) { // ignore, probably due to data being changed
 			}
 			// Draw numbers on top of the graph to mark scale
 			if (lineScale > 1)

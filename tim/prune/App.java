@@ -7,10 +7,7 @@ import java.util.Stack;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-import tim.prune.browser.BrowserLauncher;
-import tim.prune.browser.UrlGenerator;
-import tim.prune.correlate.PhotoCorrelator;
-import tim.prune.correlate.PointPair;
+import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
@@ -21,31 +18,23 @@ import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
-import tim.prune.edit.FieldEditList;
-import tim.prune.edit.PointEditor;
-import tim.prune.edit.PointNameEditor;
+import tim.prune.function.browser.BrowserLauncher;
+import tim.prune.function.browser.UrlGenerator;
+import tim.prune.function.edit.FieldEditList;
+import tim.prune.function.edit.PointEditor;
+import tim.prune.function.edit.PointNameEditor;
 import tim.prune.gui.MenuManager;
-import tim.prune.gui.TimeOffsetDialog;
 import tim.prune.gui.UndoManager;
 import tim.prune.load.FileLoader;
-import tim.prune.load.GpsLoader;
 import tim.prune.load.JpegLoader;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
-import tim.prune.save.GpxExporter;
-import tim.prune.save.KmlExporter;
-import tim.prune.save.PovExporter;
-import tim.prune.threedee.ThreeDException;
-import tim.prune.threedee.ThreeDWindow;
-import tim.prune.threedee.WindowFactory;
 import tim.prune.undo.UndoAddTimeOffset;
 import tim.prune.undo.UndoCompress;
 import tim.prune.undo.UndoConnectPhoto;
 import tim.prune.undo.UndoConnectPhotoWithClone;
-import tim.prune.undo.UndoCorrelatePhotos;
 import tim.prune.undo.UndoCreatePoint;
 import tim.prune.undo.UndoCutAndMove;
-import tim.prune.undo.UndoDeleteDuplicates;
 import tim.prune.undo.UndoDeletePhoto;
 import tim.prune.undo.UndoDeletePoint;
 import tim.prune.undo.UndoDeleteRange;
@@ -57,7 +46,6 @@ import tim.prune.undo.UndoLoad;
 import tim.prune.undo.UndoLoadPhotos;
 import tim.prune.undo.UndoMergeTrackSegments;
 import tim.prune.undo.UndoOperation;
-import tim.prune.undo.UndoRearrangeWaypoints;
 import tim.prune.undo.UndoReverseSection;
 
 
@@ -74,20 +62,9 @@ public class App
 	private MenuManager _menuManager = null;
 	private FileLoader _fileLoader = null;
 	private JpegLoader _jpegLoader = null;
-	private GpsLoader _gpsLoader = null;
 	private FileSaver _fileSaver = null;
-	private KmlExporter _kmlExporter = null;
-	private GpxExporter _gpxExporter = null;
-	private PovExporter _povExporter = null;
-	private BrowserLauncher _browserLauncher = null;
-	private Stack _undoStack = null;
+	private Stack<UndoOperation> _undoStack = null;
 	private boolean _mangleTimestampsConfirmed = false;
-
-	// Constants
-	public static final int REARRANGE_TO_START   = 0;
-	public static final int REARRANGE_TO_END     = 1;
-	public static final int REARRANGE_TO_NEAREST = 2;
-
 
 	/**
 	 * Constructor
@@ -96,9 +73,10 @@ public class App
 	public App(JFrame inFrame)
 	{
 		_frame = inFrame;
-		_undoStack = new Stack();
+		_undoStack = new Stack<UndoOperation>();
 		_track = new Track();
 		_trackInfo = new TrackInfo(_track);
+		FunctionLibrary.initialise(this);
 	}
 
 
@@ -108,6 +86,14 @@ public class App
 	public TrackInfo getTrackInfo()
 	{
 		return _trackInfo;
+	}
+
+	/**
+	 * @return the dialog frame
+	 */
+	public JFrame getFrame()
+	{
+		return _frame;
 	}
 
 	/**
@@ -123,9 +109,20 @@ public class App
 	/**
 	 * @return the undo stack
 	 */
-	public Stack getUndoStack()
+	public Stack<UndoOperation> getUndoStack()
 	{
 		return _undoStack;
+	}
+
+	/**
+	 * Complete a function execution
+	 * @param inUndo undo object to be added to stack
+	 * @param inConfirmText confirmation text
+	 */
+	public void completeFunction(UndoOperation inUndo, String inConfirmText)
+	{
+		_undoStack.add(inUndo);
+		UpdateMessageBroker.informSubscribers(inConfirmText);
 	}
 
 	/**
@@ -160,24 +157,12 @@ public class App
 	}
 
 	/**
-	 * Start a load from Gps
-	 */
-	public void beginLoadFromGps()
-	{
-		if (_gpsLoader == null)
-			_gpsLoader = new GpsLoader(this, _frame);
-		_gpsLoader.openDialog();
-	}
-
-	/**
 	 * Save the file in the selected format
 	 */
 	public void saveFile()
 	{
-		if (_track == null)
-		{
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.save.nodata"),
-				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+		if (_track == null) {
+			showErrorMessage("error.save.dialogtitle", "error.save.nodata");
 		}
 		else
 		{
@@ -187,105 +172,6 @@ public class App
 			char delim = ',';
 			if (_fileLoader != null) {delim = _fileLoader.getLastUsedDelimiter();}
 			_fileSaver.showDialog(delim);
-		}
-	}
-
-
-	/**
-	 * Export track data as Kml
-	 */
-	public void exportKml()
-	{
-		if (_track == null)
-		{
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.save.nodata"),
-				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
-		}
-		else
-		{
-			// Invoke the export
-			if (_kmlExporter == null)
-			{
-				_kmlExporter = new KmlExporter(_frame, _trackInfo);
-			}
-			_kmlExporter.showDialog();
-		}
-	}
-
-
-	/**
-	 * Export track data as Gpx
-	 */
-	public void exportGpx()
-	{
-		if (_track == null)
-		{
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.save.nodata"),
-				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
-		}
-		else
-		{
-			// Invoke the export
-			if (_gpxExporter == null)
-			{
-				_gpxExporter = new GpxExporter(_frame, _trackInfo);
-			}
-			_gpxExporter.showDialog();
-		}
-	}
-
-
-	/**
-	 * Export track data as Pov without specifying settings
-	 */
-	public void exportPov()
-	{
-		exportPov(false, 0.0, 0.0, 0.0, 0);
-	}
-
-	/**
-	 * Export track data as Pov and also specify settings
-	 * @param inX X component of unit vector
-	 * @param inY Y component of unit vector
-	 * @param inZ Z component of unit vector
-	 * @param inAltitudeCap altitude cap
-	 */
-	public void exportPov(double inX, double inY, double inZ, int inAltitudeCap)
-	{
-		exportPov(true, inX, inY, inZ, inAltitudeCap);
-	}
-
-	/**
-	 * Export track data as Pov with optional angle specification
-	 * @param inDefineAngles true to define angles, false to ignore
-	 * @param inX X component of unit vector
-	 * @param inY Y component of unit vector
-	 * @param inZ Z component of unit vector
-	 * @param inAltitudeCap altitude cap
-	 */
-	private void exportPov(boolean inDefineSettings, double inX, double inY, double inZ, int inAltitudeCap)
-	{
-		// Check track has data to export
-		if (_track == null || _track.getNumPoints() <= 0)
-		{
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.save.nodata"),
-				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
-		}
-		else
-		{
-			// Make new exporter if necessary
-			if (_povExporter == null)
-			{
-				_povExporter = new PovExporter(_frame, _track);
-			}
-			// Specify angles if necessary
-			if (inDefineSettings)
-			{
-				_povExporter.setCameraCoordinates(inX, inY, inZ);
-				_povExporter.setAltitudeCap(inAltitudeCap);
-			}
-			// Initiate export
-			_povExporter.showDialog();
 		}
 	}
 
@@ -514,57 +400,13 @@ public class App
 
 
 	/**
-	 * Delete all the duplicate points in the track
+	 * Finish the compression by deleting the marked points
 	 */
-	public void deleteDuplicates()
-	{
-		if (_track != null)
-		{
-			// Save undo information
-			UndoOperation undo = new UndoDeleteDuplicates(_track);
-			// tell track to do it
-			int numDeleted = _trackInfo.deleteDuplicates();
-			if (numDeleted > 0)
-			{
-				_undoStack.add(undo);
-				String message = null;
-				if (numDeleted == 1)
-				{
-					message = "1 " + I18nManager.getText("confirm.deleteduplicates.single");
-				}
-				else
-				{
-					message = "" + numDeleted + " " + I18nManager.getText("confirm.deleteduplicates.multi");
-				}
-				// Pass message to broker
-				UpdateMessageBroker.informSubscribers(message);
-			}
-			else
-			{
-				// No duplicates found to delete
-				JOptionPane.showMessageDialog(_frame,
-					I18nManager.getText("dialog.deleteduplicates.nonefound"),
-					I18nManager.getText("dialog.deleteduplicates.title"), JOptionPane.INFORMATION_MESSAGE);
-			}
-		}
-	}
-
-
-	/**
-	 * Compress the track
-	 */
-	public void compressTrack()
+	public void finishCompressTrack()
 	{
 		UndoCompress undo = new UndoCompress(_track);
-		// Get compression parameter
-		Object compParam = JOptionPane.showInputDialog(_frame,
-			I18nManager.getText("dialog.compresstrack.parameter.text"),
-			I18nManager.getText("dialog.compresstrack.title"),
-			JOptionPane.QUESTION_MESSAGE, null, null, "100");
-		int compNumber = parseNumber(compParam);
-		if (compNumber <= 0) return;
 		// call track to do compress
-		int numPointsDeleted = _trackInfo.compress(compNumber);
+		int numPointsDeleted = _trackInfo.deleteMarkedPoints();
 		// add to undo stack if successful
 		if (numPointsDeleted > 0)
 		{
@@ -573,13 +415,10 @@ public class App
 			UpdateMessageBroker.informSubscribers("" + numPointsDeleted + " "
 				 + (numPointsDeleted==1?I18nManager.getText("confirm.deletepoint.single"):I18nManager.getText("confirm.deletepoint.multi")));
 		}
-		else
-		{
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.compresstrack.nonefound"),
-				I18nManager.getText("dialog.compresstrack.title"), JOptionPane.WARNING_MESSAGE);
+		else {
+			showErrorMessage("function.compress", "dialog.compress.nonefound");
 		}
 	}
-
 
 	/**
 	 * Reverse the currently selected section of the track
@@ -604,24 +443,6 @@ public class App
 				// Confirm
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.reverserange"));
 			}
-		}
-	}
-
-	/**
-	 * Trigger the dialog to add a time offset to the current selection
-	 */
-	public void beginAddTimeOffset()
-	{
-		int selStart = _trackInfo.getSelection().getStart();
-		int selEnd = _trackInfo.getSelection().getEnd();
-		if (!_track.hasData(Field.TIMESTAMP, selStart, selEnd)) {
-			JOptionPane.showMessageDialog(_frame,
-				I18nManager.getText("dialog.addtimeoffset.notimestamps"),
-				I18nManager.getText("dialog.addtimeoffset.title"), JOptionPane.ERROR_MESSAGE);
-		}
-		else {
-			TimeOffsetDialog timeDialog = new TimeOffsetDialog(this, _frame);
-			timeDialog.showDialog();
 		}
 	}
 
@@ -691,6 +512,24 @@ public class App
 
 
 	/**
+	 * Average the selected points
+	 */
+	public void averageSelection()
+	{
+		// Find following track point
+		DataPoint nextPoint = _track.getNextTrackPoint(_trackInfo.getSelection().getEnd() + 1);
+		boolean segFlag = false;
+		if (nextPoint != null) {segFlag = nextPoint.getSegmentStart();}
+		UndoInsert undo = new UndoInsert(_trackInfo.getSelection().getEnd() + 1, 1, nextPoint != null, segFlag);
+		// call track info object to do the averaging
+		if (_trackInfo.average())
+		{
+			_undoStack.add(undo);
+		}
+	}
+
+
+	/**
 	 * Create a new point at the given lat/long coordinates
 	 * @param inLat latitude
 	 * @param inLong longitude
@@ -708,37 +547,6 @@ public class App
 		_undoStack.add(undo);
 		// update listeners
 		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.createpoint"));
-	}
-
-
-	/**
-	 * Rearrange the waypoints into track order
-	 * @param inFunction nearest point, all to end or all to start
-	 */
-	public void rearrangeWaypoints(int inFunction)
-	{
-		UndoRearrangeWaypoints undo = new UndoRearrangeWaypoints(_track);
-		boolean success = false;
-		if (inFunction == REARRANGE_TO_START || inFunction == REARRANGE_TO_END)
-		{
-			// Collect the waypoints to the start or end of the track
-			success = _track.collectWaypoints(inFunction == REARRANGE_TO_START);
-		}
-		else
-		{
-			// Interleave the waypoints into track order
-			success = _track.interleaveWaypoints();
-		}
-		if (success)
-		{
-			_undoStack.add(undo);
-			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.rearrangewaypoints"));
-		}
-		else
-		{
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.rearrange.noop"),
-				I18nManager.getText("error.function.noop.title"), JOptionPane.WARNING_MESSAGE);
-		}
 	}
 
 
@@ -783,34 +591,6 @@ public class App
 
 
 	/**
-	 * Open a new window with the 3d view
-	 */
-	public void show3dWindow()
-	{
-		ThreeDWindow window = WindowFactory.getWindow(this, _frame);
-		if (window == null)
-		{
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.function.nojava3d"),
-				I18nManager.getText("error.function.notavailable.title"), JOptionPane.WARNING_MESSAGE);
-		}
-		else
-		{
-			try
-			{
-				// Pass the track object and show the window
-				window.setTrack(_track);
-				window.show();
-			}
-			catch (ThreeDException e)
-			{
-				JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.3d") + ": " + e.getMessage(),
-					I18nManager.getText("error.3d.title"), JOptionPane.ERROR_MESSAGE);
-			}
-		}
-	}
-
-
-	/**
 	 * Select all points
 	 */
 	public void selectAll()
@@ -825,6 +605,7 @@ public class App
 	{
 		// deselect point, range and photo
 		_trackInfo.getSelection().clearAll();
+		_track.clearDeletionMarkers();
 	}
 
 
@@ -835,44 +616,25 @@ public class App
 	 * @param inAltFormat altitude format
 	 * @param inFilename filename used
 	 */
-	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, int inAltFormat, String inFilename)
-	{
-		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inFilename, false);
-	}
-
-	/**
-	 * Receive loaded data and optionally merge with current Track
-	 * @param inFieldArray array of fields
-	 * @param inDataArray array of data
-	 * @param inAltFormat altitude format
-	 * @param inFilename filename used
-	 * @param inOverrideAppend true to override append question and always append
-	 */
-	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, int inAltFormat,
-		String inFilename, boolean inOverrideAppend)
+	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, Altitude.Format inAltFormat,
+		String inFilename)
 	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
 		loadedTrack.load(inFieldArray, inDataArray, inAltFormat);
 		if (loadedTrack.getNumPoints() <= 0)
 		{
-			JOptionPane.showMessageDialog(_frame,
-				I18nManager.getText("error.load.nopoints"),
-				I18nManager.getText("error.load.dialogtitle"),
-				JOptionPane.ERROR_MESSAGE);
+			showErrorMessage("error.load.dialogtitle", "error.load.nopoints");
 			return;
 		}
 		// Decide whether to load or append
-		if (_track != null && _track.getNumPoints() > 0)
+		if (_track.getNumPoints() > 0)
 		{
 			// ask whether to replace or append
-			int answer = JOptionPane.YES_OPTION;
-			if (!inOverrideAppend) {
-				answer = JOptionPane.showConfirmDialog(_frame,
-					I18nManager.getText("dialog.openappend.text"),
-					I18nManager.getText("dialog.openappend.title"),
-					JOptionPane.YES_NO_CANCEL_OPTION);
-			}
+			int answer = JOptionPane.showConfirmDialog(_frame,
+				I18nManager.getText("dialog.openappend.text"),
+				I18nManager.getText("dialog.openappend.title"),
+				JOptionPane.YES_NO_CANCEL_OPTION);
 			if (answer == JOptionPane.YES_OPTION)
 			{
 				// append data to current Track
@@ -898,9 +660,8 @@ public class App
 				}
 				_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length, photos));
 				_lastSavePosition = _undoStack.size();
-				// TODO: Should be possible to reuse the Track object already loaded?
-				_trackInfo.selectPoint(null);
-				_trackInfo.loadTrack(inFieldArray, inDataArray, inAltFormat);
+				_trackInfo.getSelection().clearAll();
+				_track.load(loadedTrack);
 				_trackInfo.getFileInfo().setFile(inFilename);
 				if (photos != null)
 				{
@@ -910,10 +671,11 @@ public class App
 		}
 		else
 		{
-			// currently no data held, so use received data
+			// Currently no data held, so transfer received data
 			_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length, null));
 			_lastSavePosition = _undoStack.size();
-			_trackInfo.loadTrack(inFieldArray, inDataArray, inAltFormat);
+			_trackInfo.getSelection().clearAll();
+			_track.load(loadedTrack);
 			_trackInfo.getFileInfo().setFile(inFilename);
 		}
 		UpdateMessageBroker.informSubscribers();
@@ -928,7 +690,7 @@ public class App
 	 * Accept a list of loaded photos
 	 * @param inPhotoSet Set of Photo objects
 	 */
-	public void informPhotosLoaded(Set inPhotoSet)
+	public void informPhotosLoaded(Set<Photo> inPhotoSet)
 	{
 		if (inPhotoSet != null && !inPhotoSet.isEmpty())
 		{
@@ -1064,117 +826,6 @@ public class App
 
 
 	/**
-	 * Begin the photo correlation process by invoking dialog
-	 */
-	public void beginCorrelatePhotos()
-	{
-		PhotoCorrelator correlator = new PhotoCorrelator(this, _frame);
-		// TODO: Do we need to keep a reference to this Photo Correlator object to reuse it later?
-		correlator.begin();
-	}
-
-
-	/**
-	 * Finish the photo correlation process
-	 * @param inPointPairs array of PointPair objects describing operation
-	 */
-	public void finishCorrelatePhotos(PointPair[] inPointPairs)
-	{
-		// TODO: This method is too big for App, but where should it go?
-		if (inPointPairs != null && inPointPairs.length > 0)
-		{
-			// begin to construct undo information
-			UndoCorrelatePhotos undo = new UndoCorrelatePhotos(_trackInfo);
-			// loop over Photos
-			int arraySize = inPointPairs.length;
-			int i = 0, numPhotos = 0;
-			int numPointsToCreate = 0;
-			PointPair pair = null;
-			for (i=0; i<arraySize; i++)
-			{
-				pair = inPointPairs[i];
-				if (pair != null && pair.isValid())
-				{
-					if (pair.getMinSeconds() == 0L)
-					{
-						// exact match
-						Photo pointPhoto = pair.getPointBefore().getPhoto();
-						if (pointPhoto == null)
-						{
-							// photo coincides with photoless point so connect the two
-							pair.getPointBefore().setPhoto(pair.getPhoto());
-							pair.getPhoto().setDataPoint(pair.getPointBefore());
-						}
-						else if (pointPhoto.equals(pair.getPhoto()))
-						{
-							// photo is already connected, nothing to do
-						}
-						else
-						{
-							// point is already connected to a different photo, so need to clone point
-							numPointsToCreate++;
-						}
-					}
-					else
-					{
-						// photo time falls between two points, so need to interpolate new one
-						numPointsToCreate++;
-					}
-					numPhotos++;
-				}
-			}
-			// Second loop, to create points if necessary
-			if (numPointsToCreate > 0)
-			{
-				// make new array for added points
-				DataPoint[] addedPoints = new DataPoint[numPointsToCreate];
-				int pointNum = 0;
-				DataPoint pointToAdd = null;
-				for (i=0; i<arraySize; i++)
-				{
-					pair = inPointPairs[i];
-					if (pair != null && pair.isValid())
-					{
-						pointToAdd = null;
-						if (pair.getMinSeconds() == 0L && pair.getPointBefore().getPhoto() != null
-						 && !pair.getPointBefore().getPhoto().equals(pair.getPhoto()))
-						{
-							// clone point
-							pointToAdd = pair.getPointBefore().clonePoint();
-						}
-						else if (pair.getMinSeconds() > 0L)
-						{
-							// interpolate point
-							pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
-						}
-						if (pointToAdd != null)
-						{
-							// link photo to point
-							pointToAdd.setPhoto(pair.getPhoto());
-							pair.getPhoto().setDataPoint(pointToAdd);
-							// set to start of segment so not joined in track
-							pointToAdd.setSegmentStart(true);
-							// add to point array
-							addedPoints[pointNum] = pointToAdd;
-							pointNum++;
-						}
-					}
-				}
-				// expand track
-				_track.appendPoints(addedPoints);
-			}
-			// add undo information to stack
-			undo.setNumPhotosCorrelated(numPhotos);
-			_undoStack.add(undo);
-			// confirm correlation
-			UpdateMessageBroker.informSubscribers("" + numPhotos + " "
-				 + (numPhotos==1?I18nManager.getText("confirm.correlate.single"):I18nManager.getText("confirm.correlate.multi")));
-			// observers already informed by track update
-		}
-	}
-
-
-	/**
 	 * Save the coordinates of photos in their exif data
 	 */
 	public void saveExif()
@@ -1246,7 +897,7 @@ public class App
 		{
 			for (int i=0; i<inNumUndos; i++)
 			{
-				((UndoOperation) _undoStack.pop()).performUndo(_trackInfo);
+				_undoStack.pop().performUndo(_trackInfo);
 			}
 			String message = "" + inNumUndos + " "
 				 + (inNumUndos==1?I18nManager.getText("confirm.undo.single"):I18nManager.getText("confirm.undo.multi"));
@@ -1254,10 +905,8 @@ public class App
 		}
 		catch (UndoException ue)
 		{
-			JOptionPane.showMessageDialog(_frame,
-				I18nManager.getText("error.undofailed.text") + " : " + ue.getMessage(),
-				I18nManager.getText("error.undofailed.title"),
-				JOptionPane.ERROR_MESSAGE);
+			showErrorMessageNoLookup("error.undofailed.title",
+				I18nManager.getText("error.undofailed.text") + " : " + ue.getMessage());
 			_undoStack.clear();
 			UpdateMessageBroker.informSubscribers();
 		}
@@ -1286,29 +935,33 @@ public class App
 	}
 
 	/**
-	 * Show a brief help message
-	 */
-	public void showHelp()
-	{
-		// show the dialog and offer to open home page
-		Object[] buttonTexts = {I18nManager.getText("button.showwebpage"), I18nManager.getText("button.cancel")};
-		if (JOptionPane.showOptionDialog(_frame, I18nManager.getText("dialog.help.help"),
-				I18nManager.getText("menu.help"), JOptionPane.YES_NO_OPTION,
-				JOptionPane.INFORMATION_MESSAGE, null, buttonTexts, buttonTexts[1])
-			== JOptionPane.YES_OPTION)
-		{
-			// User selected to launch home page
-			if (_browserLauncher == null) {_browserLauncher = new BrowserLauncher();}
-			_browserLauncher.launchBrowser("http://activityworkshop.net/software/prune/index.html");
-		}
-	}
-
-	/**
 	 * Show a map url in an external browser
+	 * @param inSourceIndex index of map source to use
 	 */
 	public void showExternalMap(int inSourceIndex)
 	{
-		if (_browserLauncher == null) {_browserLauncher = new BrowserLauncher();}
-		_browserLauncher.launchBrowser(UrlGenerator.generateUrl(inSourceIndex, _trackInfo));
+		BrowserLauncher.launchBrowser(UrlGenerator.generateUrl(inSourceIndex, _trackInfo));
+	}
+
+	/**
+	 * Display a standard error message
+	 * @param inTitleKey key to lookup for window title
+	 * @param inMessageKey key to lookup for error message
+	 */
+	public void showErrorMessage(String inTitleKey, String inMessageKey)
+	{
+		JOptionPane.showMessageDialog(_frame, I18nManager.getText(inMessageKey),
+			I18nManager.getText(inTitleKey), JOptionPane.ERROR_MESSAGE);
+	}
+
+	/**
+	 * Display a standard error message
+	 * @param inTitleKey key to lookup for window title
+	 * @param inMessage error message
+	 */
+	public void showErrorMessageNoLookup(String inTitleKey, String inMessage)
+	{
+		JOptionPane.showMessageDialog(_frame, inMessage,
+			I18nManager.getText(inTitleKey), JOptionPane.ERROR_MESSAGE);
 	}
 }

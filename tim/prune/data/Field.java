@@ -21,9 +21,9 @@ public class Field
 	public static final Field WAYPT_TYPE = new Field("fieldname.waypointtype", FieldType.NONE);
 	public static final Field NEW_SEGMENT = new Field("fieldname.newsegment", FieldType.BOOL);
 
-	public static final Field[] ALL_AVAILABLE_FIELDS = {
-			LATITUDE, LONGITUDE, ALTITUDE, TIMESTAMP, WAYPT_NAME, WAYPT_TYPE, NEW_SEGMENT,
-			new Field("fieldname.custom", FieldType.NONE)
+	private static final Field[] ALL_AVAILABLE_FIELDS = {
+		LATITUDE, LONGITUDE, ALTITUDE, TIMESTAMP, WAYPT_NAME, WAYPT_TYPE, NEW_SEGMENT,
+		new Field("fieldname.custom", FieldType.NONE)
 	};
 
 	/**
@@ -94,5 +94,34 @@ public class Field
 	public boolean equals(Field inOther)
 	{
 		return (isBuiltIn() == inOther.isBuiltIn() && getName().equals(inOther.getName()));
+	}
+
+	/**
+	 * Get the field for the given field name
+	 * @param inFieldName name of field to look for
+	 * @return Field if found, or null otherwise
+	 */
+	public static Field getField(String inFieldName)
+	{
+		for (int i=0; i<ALL_AVAILABLE_FIELDS.length; i++) {
+			Field field = ALL_AVAILABLE_FIELDS[i];
+			if (field.getName().equals(inFieldName)) {
+				return field;
+			}
+		}
+		// not found
+		return null;
+	}
+
+	/**
+	 * @return array of field names
+	 */
+	public static String[] getFieldNames()
+	{
+		String[] names = new String[ALL_AVAILABLE_FIELDS.length];
+		for (int i=0; i<ALL_AVAILABLE_FIELDS.length; i++) {
+			names[i] = ALL_AVAILABLE_FIELDS[i].getName();
+		}
+		return names;
 	}
 }

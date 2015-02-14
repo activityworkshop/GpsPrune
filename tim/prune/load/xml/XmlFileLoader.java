@@ -1,8 +1,6 @@
 package tim.prune.load.xml;
 
 import java.io.File;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -21,7 +19,6 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 {
 	private File _file = null;
 	private App _app = null;
-	private JFrame _parentFrame = null;
 	private XmlHandler _handler = null;
 	private String _unknownType = null;
 
@@ -29,24 +26,29 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	/**
 	 * Constructor
 	 * @param inApp Application object to inform of track load
-	 * @param inParentFrame parent frame to reference for dialogs
 	 */
-	public XmlFileLoader(App inApp, JFrame inParentFrame)
+	public XmlFileLoader(App inApp)
 	{
 		_app = inApp;
-		_parentFrame = inParentFrame;
 	}
 
+	/**
+	 * Reset the handler to ensure data cleared
+	 */
+	public void reset()
+	{
+		_handler = null;
+		_unknownType = null;
+	}
 
 	/**
-	 * Open the selected file and show the GUI dialog to select load options
+	 * Open the selected file
 	 * @param inFile File to open
 	 */
 	public void openFile(File inFile)
 	{
 		_file = inFile;
-		_handler = null;
-		_unknownType = null;
+		reset();
 		// start new thread in case xml parsing is time-consuming
 		new Thread(this).start();
 	}
@@ -68,23 +70,21 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 			if (_handler == null)
 			{
 				// Wasn't either kml or gpx
-				JOptionPane.showMessageDialog(_parentFrame,
-					I18nManager.getText("error.load.unknownxml") + " " + _unknownType,
-					I18nManager.getText("error.load.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+				_app.showErrorMessageNoLookup("error.load.dialogtitle",
+					I18nManager.getText("error.load.unknownxml") + " " + _unknownType);
 			}
 			else
 			{
 				// Pass information back to app
 				_app.informDataLoaded(_handler.getFieldArray(), _handler.getDataArray(),
-					Altitude.FORMAT_METRES, _file.getName());
+					Altitude.Format.METRES, _file.getName());
 			}
 		}
 		catch (Exception e)
 		{
 			// Show error dialog
-			JOptionPane.showMessageDialog(_parentFrame,
-				I18nManager.getText("error.load.othererror") + " " + e.getMessage(),
-				I18nManager.getText("error.load.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+			_app.showErrorMessageNoLookup("error.load.dialogtitle",
+				I18nManager.getText("error.load.othererror") + " " + e.getMessage());
 		}
 	}
 
@@ -101,7 +101,7 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 		{
 			if (qName.equals("kml")) {_handler = new KmlHandler();}
 			else if (qName.equals("gpx")) {_handler = new GpxHandler();}
-			else if (_unknownType == null && qName != null && !qName.equals(""))
+			else if (_unknownType == null && !qName.equals(""))
 			{
 				_unknownType = qName;
 			}

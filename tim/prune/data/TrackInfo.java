@@ -83,30 +83,16 @@ public class TrackInfo
 
 
 	/**
-	 * Load the specified data into the Track
-	 * @param inFieldArray array of Field objects describing fields
-	 * @param inPointArray 2d object array containing data
-	 * @param inAltFormat altitude format
-	 */
-	public void loadTrack(Field[] inFieldArray, Object[][] inPointArray, int inAltFormat)
-	{
-		_track.cropTo(0);
-		_track.load(inFieldArray, inPointArray, inAltFormat);
-		_selection.clearAll();
-	}
-
-
-	/**
 	 * Add a Set of Photos
 	 * @param inSet Set containing Photo objects
 	 * @return array containing number of photos and number of points added
 	 */
-	public int[] addPhotos(Set inSet)
+	public int[] addPhotos(Set<Photo> inSet)
 	{
 		// Firstly count number of points and photos to add
 		int numPhotosToAdd = 0;
 		int numPointsToAdd = 0;
-		Iterator iterator = null;
+		Iterator<Photo> iterator = null;
 		if (inSet != null && !inSet.isEmpty())
 		{
 			iterator = inSet.iterator();
@@ -114,7 +100,7 @@ public class TrackInfo
 			{
 				try
 				{
-					Photo photo = (Photo) iterator.next();
+					Photo photo = iterator.next();
 					if (photo != null && !_photoList.contains(photo))
 					{
 						numPhotosToAdd++;
@@ -139,7 +125,7 @@ public class TrackInfo
 			{
 				try
 				{
-					Photo photo = (Photo) iterator.next();
+					Photo photo = iterator.next();
 					if (photo != null && !_photoList.contains(photo))
 					{
 						// Add photo
@@ -240,28 +226,12 @@ public class TrackInfo
 
 
 	/**
-	 * Compress the track to the given resolution
-	 * @param inResolution resolution
+	 * Delete all the points which have been marked for deletion
 	 * @return number of points deleted
 	 */
-	public int compress(int inResolution)
+	public int deleteMarkedPoints()
 	{
-		int numDeleted = _track.compress(inResolution);
-		if (numDeleted > 0) {
-			_selection.clearAll();
-			UpdateMessageBroker.informSubscribers();
-		}
-		return numDeleted;
-	}
-
-
-	/**
-	 * Delete all the duplicate points in the track
-	 * @return number of points deleted
-	 */
-	public int deleteDuplicates()
-	{
-		int numDeleted = _track.deleteDuplicates();
+		int numDeleted = _track.deleteMarkedPoints();
 		if (numDeleted > 0) {
 			_selection.clearAll();
 			UpdateMessageBroker.informSubscribers();
@@ -290,6 +260,20 @@ public class TrackInfo
 		boolean success = _track.interpolate(_selection.getStart(), inNumPoints);
 		if (success) {
 			_selection.selectRangeEnd(_selection.getEnd() + inNumPoints);
+		}
+		return success;
+	}
+
+
+	/**
+	 * Average selected points to create a new one
+	 * @return true if successful
+	 */
+	public boolean average()
+	{
+		boolean success = _track.average(_selection.getStart(), _selection.getEnd());
+		if (success) {
+			_selection.selectPoint(_selection.getEnd()+1);
 		}
 		return success;
 	}

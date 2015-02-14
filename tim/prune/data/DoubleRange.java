@@ -71,4 +71,12 @@ public class DoubleRange
 	{
 		return _max;
 	}
+
+	/**
+	 * @return range, as maximum - minimum
+	 */
+	public double getRange()
+	{
+		return _max - _min;
+	}
 }

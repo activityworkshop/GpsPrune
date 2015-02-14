@@ -13,10 +13,12 @@ public class MapPosition
 	/** y position (scale depends on zoom) */
 	private long _yPosition = 0L;
 
-	/** Zoom level, from 2 to 15 */
+	/** Zoom level, from 2 to max */
 	private int _zoom = 12;
 	/** Factor to zoom by, 2 to the power of zoom */
 	private int _zoomFactor = 1 << _zoom;
+	/** Maximum zoom level */
+	private static final int MAX_ZOOM = 21;
 
 
 	/**
@@ -35,7 +37,7 @@ public class MapPosition
 		double diffY = Math.abs(inMaxY - inMinY);
 		// Find out what zoom level to go to
 		int requiredZoom = -1;
-		for (int currZoom = 15; currZoom >= 2; currZoom--)
+		for (int currZoom = MAX_ZOOM; currZoom >= 2; currZoom--)
 		{
 			if (transformToPixels(diffX, currZoom) < inWidth
 				&& transformToPixels(diffY, currZoom) < inHeight)
@@ -69,7 +71,7 @@ public class MapPosition
 		// Find out what zoom level to go to
 		int requiredZoom = -1;
 		int multFactor = 0;
-		for (int currZoom = 16; currZoom >= _zoom; currZoom--)
+		for (int currZoom = MAX_ZOOM; currZoom >= _zoom; currZoom--)
 		{
 			multFactor = 1 << (currZoom - _zoom);
 			if ((diffX * multFactor) < inWidth && (diffY * multFactor) < inHeight)
@@ -227,7 +229,7 @@ public class MapPosition
 	 */
 	public void zoomIn()
 	{
-		if (_zoom < 16)
+		if (_zoom < MAX_ZOOM)
 		{
 			_zoom++;
 			_zoomFactor = 1 << _zoom;

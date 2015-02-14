@@ -13,6 +13,8 @@ public interface DataSubscriber
 	public static final byte PHOTOS_MODIFIED       = 16;
 	public static final byte UNITS_CHANGED         = 32;
 	public static final byte ALL                   = 63;
+	public static final byte MAPSERVER_CHANGED     = 64;
+
 
 	/**
 	 * Inform clients that data has been updated

@@ -13,7 +13,6 @@ import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
@@ -26,7 +25,6 @@ import tim.prune.data.LatLonRectangle;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Photo;
-import tim.prune.data.PhotoStatus;
 import tim.prune.data.Timestamp;
 import tim.prune.drew.jpeg.ExifReader;
 import tim.prune.drew.jpeg.JpegData;
@@ -50,7 +48,7 @@ public class JpegLoader implements Runnable
 	private int[] _fileCounts = null;
 	private boolean _cancelled = false;
 	private LatLonRectangle _trackRectangle = null;
-	private TreeSet _photos = null;
+	private TreeSet<Photo> _photos = null;
 
 
 	/**
@@ -136,7 +134,7 @@ public class JpegLoader implements Runnable
 		panel.add(cancelButton);
 		_progressDialog.getContentPane().add(panel);
 		_progressDialog.pack();
-		_progressDialog.show();
+		_progressDialog.setVisible(true);
 	}
 
 
@@ -147,7 +145,7 @@ public class JpegLoader implements Runnable
 	{
 		// Initialise arrays, errors, summaries
 		_fileCounts = new int[4]; // files, jpegs, exifs, gps
-		_photos = new TreeSet(new PhotoSorter());
+		_photos = new TreeSet<Photo>(new PhotoSorter());
 		File[] files = _fileChooser.getSelectedFiles();
 		// Loop recursively over selected files/directories to count files
 		int numFiles = countFileList(files, true, _subdirCheckbox.isSelected());
@@ -158,7 +156,7 @@ public class JpegLoader implements Runnable
 
 		// Process the files recursively and build lists of photos
 		processFileList(files, true, _subdirCheckbox.isSelected());
-		_progressDialog.hide();
+		_progressDialog.setVisible(false);
 		if (_cancelled) {return;}
 
 		//System.out.println("Finished - counts are: " + _fileCounts[0] + ", " + _fileCounts[1]
@@ -166,26 +164,22 @@ public class JpegLoader implements Runnable
 		if (_fileCounts[0] == 0)
 		{
 			// No files found at all
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.nofilesfound"),
-				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nofilesfound");
 		}
 		else if (_fileCounts[1] == 0)
 		{
 			// No jpegs found
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.nojpegsfound"),
-				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nojpegsfound");
 		}
 		else if (!_noExifCheckbox.isSelected() && _fileCounts[2] == 0)
 		{
 			// Need coordinates but no exif found
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.noexiffound"),
-				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.noexiffound");
 		}
 		else if (!_noExifCheckbox.isSelected() && _fileCounts[3] == 0)
 		{
 			// Need coordinates but no gps information found
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.nogpsfound"),
-				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nogpsfound");
 		}
 		else
 		{
@@ -271,7 +265,7 @@ public class JpegLoader implements Runnable
 				point.setPhoto(photo);
 				point.setSegmentStart(true);
 				photo.setDataPoint(point);
-				photo.setOriginalStatus(PhotoStatus.TAGGED);
+				photo.setOriginalStatus(Photo.Status.TAGGED);
 				_fileCounts[3]++;
 			}
 			// Use exif timestamp if gps timestamp not available
@@ -352,7 +346,7 @@ public class JpegLoader implements Runnable
 		Altitude altitude = null;
 		if (inData.getAltitude() != null)
 		{
-			altitude = new Altitude(inData.getAltitude().intValue(), Altitude.FORMAT_METRES);
+			altitude = new Altitude(inData.getAltitude().intValue(), Altitude.Format.METRES);
 		}
 		return new DataPoint(latitude, longitude, altitude);
 	}

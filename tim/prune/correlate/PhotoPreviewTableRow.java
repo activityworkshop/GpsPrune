@@ -31,7 +31,7 @@ public class PhotoPreviewTableRow extends PhotoSelectionTableRow
 	 * @param inUnits units to use
 	 * @return distance in selected format
 	 */
-	public double getDistance(int inUnits)
+	public double getDistance(Distance.Units inUnits)
 	{
 		return Distance.convertRadiansToDistance(_distance, inUnits);
 	}

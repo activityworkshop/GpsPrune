@@ -23,4 +23,12 @@ public class FieldType
 	{
 		_id = inId;
 	}
+
+	/**
+	 * Method only needed to avoid compiler warnings
+	 * @return id
+	 */
+	protected char getId() {
+		return _id;
+	}
 }

@@ -44,26 +44,29 @@ public abstract class GenericChart extends GenericDisplay implements MouseListen
 
 	/**
 	 * Override paint method to draw map
+	 * @param inG graphics object
 	 */
-	public void paint(Graphics g)
+	public void paint(Graphics inG)
 	{
-		super.paint(g);
+		super.paint(inG);
 		int width = getWidth();
 		int height = getHeight();
 		// border background
-		g.setColor(COLOR_BORDER_BG);
-		g.fillRect(0, 0, width, height);
+		inG.setColor(COLOR_BORDER_BG);
+		inG.fillRect(0, 0, width, height);
 		if (width < 2*BORDER_WIDTH || height < 2*BORDER_WIDTH) return;
 		// blank graph area, with line border
-		g.setColor(COLOR_CHART_BG);
-		g.fillRect(BORDER_WIDTH, BORDER_WIDTH, width - 2*BORDER_WIDTH, height-2*BORDER_WIDTH);
-		g.setColor(COLOR_CHART_LINE);
-		g.drawRect(BORDER_WIDTH, BORDER_WIDTH, width - 2*BORDER_WIDTH, height-2*BORDER_WIDTH);
+		inG.setColor(COLOR_CHART_BG);
+		inG.fillRect(BORDER_WIDTH, BORDER_WIDTH, width - 2*BORDER_WIDTH, height-2*BORDER_WIDTH);
 		// Display message if no data to be displayed
 		if (_track == null || _track.getNumPoints() <= 0)
 		{
-			g.setColor(COLOR_NODATA_TEXT);
-			g.drawString(I18nManager.getText("display.nodata"), 50, height/2);
+			inG.setColor(COLOR_NODATA_TEXT);
+			inG.drawString(I18nManager.getText("display.nodata"), 50, height/2);
+		}
+		else {
+			inG.setColor(COLOR_CHART_LINE);
+			inG.drawRect(BORDER_WIDTH, BORDER_WIDTH, width - 2*BORDER_WIDTH, height-2*BORDER_WIDTH);
 		}
 	}
 

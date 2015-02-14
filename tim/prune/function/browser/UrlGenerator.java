@@ -1,4 +1,4 @@
-package tim.prune.browser;
+package tim.prune.function.browser;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -16,7 +16,7 @@ import tim.prune.data.TrackInfo;
 public abstract class UrlGenerator
 {
 	/** Number formatter for five dp */
-	public static final NumberFormat FIVE_DP = NumberFormat.getNumberInstance(Locale.UK);
+	private static final NumberFormat FIVE_DP = NumberFormat.getNumberInstance(Locale.UK);
 	// Select the UK locale for this formatter so that decimal point is always used (not comma)
 	static {
 		if (FIVE_DP instanceof DecimalFormat) ((DecimalFormat) FIVE_DP).applyPattern("0.00000");
@@ -26,8 +26,12 @@ public abstract class UrlGenerator
 	public static final int MAP_SOURCE_GOOGLE = 0;
 	/** Constant for Open Street Maps */
 	public static final int MAP_SOURCE_OSM    = 1;
+	/** Constant for Mapquest */
+	public static final int MAP_SOURCE_MAPQUEST = 2;
+	/** Constant for Yahoo */
+	public static final int MAP_SOURCE_YAHOO  = 3;
 
-	// TODO: Add other map sources, eg Yahoo, MSN, search.ch ?
+	// TODO: Add other map sources, eg MSN, search.ch ?
 
 	/**
 	 * Generate a URL for the given source and track info
@@ -39,6 +43,12 @@ public abstract class UrlGenerator
 	{
 		if (inSource == MAP_SOURCE_GOOGLE) {
 			return generateGoogleUrl(inTrackInfo);
+		}
+		else if (inSource == MAP_SOURCE_MAPQUEST) {
+			return generateMapquestUrl(inTrackInfo);
+		}
+		else if (inSource == MAP_SOURCE_YAHOO) {
+			return generateYahooUrl(inTrackInfo);
 		}
 		return generateOpenStreetMapUrl(inTrackInfo);
 	}
@@ -104,6 +114,47 @@ public abstract class UrlGenerator
 	}
 
 	/**
+	 * Generate a url for Mapquest maps
+	 * @param inTrackInfo track information
+	 * @return URL
+	 */
+	private static String generateMapquestUrl(TrackInfo inTrackInfo)
+	{
+		// Check if any data to display
+		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
+		{
+			return null;
+		}
+		double medianLat = getMedianValue(inTrackInfo.getTrack().getLatRange());
+		double medianLon = getMedianValue(inTrackInfo.getTrack().getLonRange());
+		// Build basic url with centre position
+		String url = "http://atlas.mapquest.com/maps/map.adp?latlongtype=decimal&latitude="
+			+ FIVE_DP.format(medianLat) + "&longitude=" + FIVE_DP.format(medianLon);
+		return url;
+	}
+
+
+	/**
+	 * Generate a url for Yahoo maps
+	 * @param inTrackInfo track information
+	 * @return URL
+	 */
+	private static String generateYahooUrl(TrackInfo inTrackInfo)
+	{
+		// Check if any data to display
+		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
+		{
+			return null;
+		}
+		double medianLat = getMedianValue(inTrackInfo.getTrack().getLatRange());
+		double medianLon = getMedianValue(inTrackInfo.getTrack().getLonRange());
+		// Build basic url with centre position
+		String url = "http://maps.yahoo.com/#lat=" + FIVE_DP.format(medianLat)
+			+ "&lon=" + FIVE_DP.format(medianLon) + "&zoom=13";
+		return url;
+	}
+
+/**
 	 * Get the median value from the given lat/long range
 	 * @param inRange range of values
 	 * @return median value

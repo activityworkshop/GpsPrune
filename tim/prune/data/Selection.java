@@ -16,7 +16,7 @@ public class Selection
 	private int _currentPhotoIndex = -1;
 	private IntegerRange _altitudeRange = null;
 	private int _climb = -1, _descent = -1;
-	private int _altitudeFormat = Altitude.FORMAT_NONE;
+	private Altitude.Format _altitudeFormat = Altitude.Format.NO_FORMAT;
 	private long _totalSeconds = 0L, _movingSeconds = 0L;
 	private double _angDistance = -1.0, _angMovingDistance = -1.0;
 
@@ -109,7 +109,7 @@ public class Selection
 	 */
 	private void recalculate()
 	{
-		_altitudeFormat = Altitude.FORMAT_NONE;
+		_altitudeFormat = Altitude.Format.NO_FORMAT;
 		if (_track.getNumPoints() > 0 && hasRangeSelected())
 		{
 			_altitudeRange = new IntegerRange();
@@ -132,7 +132,7 @@ public class Selection
 				if (!currPoint.isWaypoint() && altitude.isValid())
 				{
 					altValue = altitude.getValue(_altitudeFormat);
-					if (_altitudeFormat == Altitude.FORMAT_NONE)
+					if (_altitudeFormat == Altitude.Format.NO_FORMAT)
 						_altitudeFormat = altitude.getFormat();
 					_altitudeRange.addValue(altValue);
 					if (foundAlt)
@@ -202,7 +202,7 @@ public class Selection
 	/**
 	 * @return the altitude format, ie feet or metres
 	 */
-	public int getAltitudeFormat()
+	public Altitude.Format getAltitudeFormat()
 	{
 		return _altitudeFormat;
 	}
@@ -258,7 +258,7 @@ public class Selection
 	 * @param inUnits distance units to use, from class Distance
 	 * @return distance of Selection in specified units
 	 */
-	public double getDistance(int inUnits)
+	public double getDistance(Distance.Units inUnits)
 	{
 		return Distance.convertRadiansToDistance(_angDistance, inUnits);
 	}
@@ -267,7 +267,7 @@ public class Selection
 	 * @param inUnits distance units to use, from class Distance
 	 * @return moving distance of Selection in specified units
 	 */
-	public double getMovingDistance(int inUnits)
+	public double getMovingDistance(Distance.Units inUnits)
 	{
 		return Distance.convertRadiansToDistance(_angMovingDistance, inUnits);
 	}

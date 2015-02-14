@@ -21,7 +21,8 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	private int _lastWidth = -1;
 	private int _lastHeight = -1;
 	private boolean _loadingImage = false;
-	private static String _loadingString = null;
+	/** String to show before photo is loaded */
+	private static final String _loadingString = I18nManager.getText("details.photo.loading") + " ...";
 
 
 	/**
@@ -31,7 +32,6 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	{
 		// TODO: Make size of thumbnail dynamic, as big as it can be
 		setOpaque(true);
-		_loadingString = I18nManager.getText("details.photo.loading") + " ...";
 	}
 
 

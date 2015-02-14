@@ -19,12 +19,22 @@ public class Photo
 	/** Size of original image */
 	private Dimension _size = null;
 	/** Status of photo when loaded */
-	private byte _originalStatus = PhotoStatus.NOT_CONNECTED;
+	private Status _originalStatus = Status.NOT_CONNECTED;
 	/** Current photo status */
-	private byte _currentStatus = PhotoStatus.NOT_CONNECTED;
+	private Status _currentStatus = Status.NOT_CONNECTED;
 	// TODO: Need to store caption for image?
 	// thumbnail for image (from exif)
 	private byte[] _exifThumbnail = null;
+
+	/** Photo status */
+	public enum Status {
+		/** Photo is not connected to any point */
+		NOT_CONNECTED,
+		/** Photo has been connected to a point since it was loaded */
+		TAGGED,
+		/** Photo is connected to a point */
+		CONNECTED
+	};
 
 
 	/**
@@ -56,11 +66,11 @@ public class Photo
 		// set status according to point
 		if (inPoint == null)
 		{
-			setCurrentStatus(PhotoStatus.NOT_CONNECTED);
+			setCurrentStatus(Status.NOT_CONNECTED);
 		}
 		else
 		{
-			setCurrentStatus(PhotoStatus.CONNECTED);
+			setCurrentStatus(Status.CONNECTED);
 		}
 	}
 
@@ -143,7 +153,7 @@ public class Photo
 	/**
 	 * @param inStatus status of photo when loaded
 	 */
-	public void setOriginalStatus(byte inStatus)
+	public void setOriginalStatus(Status inStatus)
 	{
 		_originalStatus = inStatus;
 		_currentStatus = inStatus;
@@ -152,7 +162,7 @@ public class Photo
 	/**
 	 * @return status of photo when it was loaded
 	 */
-	public byte getOriginalStatus()
+	public Status getOriginalStatus()
 	{
 		return _originalStatus;
 	}
@@ -160,14 +170,14 @@ public class Photo
 	/**
 	 * @return current status of photo
 	 */
-	public byte getCurrentStatus()
+	public Status getCurrentStatus()
 	{
 		return _currentStatus;
 	}
 	/**
 	 * @param inStatus current status of photo
 	 */
-	public void setCurrentStatus(byte inStatus)
+	public void setCurrentStatus(Status inStatus)
 	{
 		_currentStatus = inStatus;
 	}

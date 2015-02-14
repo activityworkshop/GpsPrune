@@ -54,7 +54,7 @@ public class TextFileLoader
 	// previously selected values
 	private char _lastUsedDelimiter = ',';
 	private Field[] _lastSelectedFields = null;
-	private int _lastAltitudeFormat = Altitude.FORMAT_NONE;
+	private Altitude.Format _lastAltitudeFormat = Altitude.Format.NO_FORMAT;
 
 	// constants
 	private static final int SNIPPET_SIZE = 6;
@@ -122,12 +122,11 @@ public class TextFileLoader
 				_delimiterRadios[_delimiterRadios.length-1].setSelected(true);
 			informDelimiterSelected();
 			_dialog.pack();
-			_dialog.show();
+			_dialog.setVisible(true);
 		}
-		else
-		{
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.load.noread"),
-				I18nManager.getText("error.load.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+		else {
+			// Didn't pass pre-check
+			_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");
 		}
 	}
 
@@ -318,7 +317,7 @@ public class TextFileLoader
 		JScrollPane tableScrollPane = new JScrollPane(extractTable);
 		extractTable.setPreferredScrollableViewportSize(new Dimension(350, 80));
 		extractTable.getTableHeader().setReorderingAllowed(false);
-		secondCard.add(makeLabelledPanel("dialog.openoptions.tabledesc", tableScrollPane), BorderLayout.NORTH);
+		secondCard.add(makeLabelledPanel("dialog.openoptions.filesnippet", tableScrollPane), BorderLayout.NORTH);
 		JPanel innerPanel2 = new JPanel();
 		innerPanel2.setLayout(new BorderLayout());
 		innerPanel2.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -494,16 +493,17 @@ public class TextFileLoader
 		_fieldTable.setModel(_fieldTableModel);
 		// add dropdowns to second column
 		JComboBox fieldTypesBox = new JComboBox();
-		for (int i=0; i<Field.ALL_AVAILABLE_FIELDS.length; i++)
+		String[] fieldNames = Field.getFieldNames();
+		for (int i=0; i<fieldNames.length; i++)
 		{
-			fieldTypesBox.addItem(Field.ALL_AVAILABLE_FIELDS[i].getName());
+			fieldTypesBox.addItem(fieldNames[i]);
 		}
 		_fieldTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(fieldTypesBox));
 
 		// Set altitude format to same as last time if available
-		if (_lastAltitudeFormat == Altitude.FORMAT_METRES)
+		if (_lastAltitudeFormat == Altitude.Format.METRES)
 			_unitsDropDown.setSelectedIndex(0);
-		else if (_lastAltitudeFormat == Altitude.FORMAT_FEET)
+		else if (_lastAltitudeFormat == Altitude.Format.FEET)
 			_unitsDropDown.setSelectedIndex(1);
 		// no selection on field list
 		selectField(-1);
@@ -518,10 +518,10 @@ public class TextFileLoader
 		// Save delimiter, field array and altitude format for later use
 		_lastUsedDelimiter = _currentDelimiter;
 		_lastSelectedFields = _fieldTableModel.getFieldArray();
-		int altitudeFormat = Altitude.FORMAT_METRES;
+		Altitude.Format altitudeFormat = Altitude.Format.METRES;
 		if (_unitsDropDown.getSelectedIndex() == 1)
 		{
-			altitudeFormat = Altitude.FORMAT_FEET;
+			altitudeFormat = Altitude.Format.FEET;
 		}
 		_lastAltitudeFormat = altitudeFormat;
 		// give data to App

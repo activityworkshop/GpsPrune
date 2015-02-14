@@ -3,7 +3,7 @@ package tim.prune.undo;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.TrackInfo;
-import tim.prune.edit.FieldEditList;
+import tim.prune.function.edit.FieldEditList;
 
 /**
  * Operation to undo the edit of a single point
@@ -32,8 +32,11 @@ public class UndoEditPoint implements UndoOperation
 	public String getDescription()
 	{
 		String desc = I18nManager.getText("undo.editpoint");
+		String newName = _undoFieldList.getEdit(0).getValue();
 		String pointName = _originalPoint.getWaypointName();
-		if (pointName != null && !pointName.equals(""))
+		if (newName != null && !newName.equals(""))
+			desc = desc + " " + newName;
+		else if (pointName != null && !pointName.equals(""))
 			desc = desc + " " + pointName;
 		return desc;
 	}

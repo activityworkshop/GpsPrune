@@ -14,7 +14,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -29,6 +28,7 @@ import javax.xml.parsers.SAXParserFactory;
 import tim.prune.App;
 import tim.prune.Config;
 import tim.prune.ExternalTools;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
 import tim.prune.load.xml.XmlFileLoader;
@@ -37,48 +37,48 @@ import tim.prune.load.xml.XmlHandler;
 /**
  * Class to manage the loading of GPS data using GpsBabel
  */
-public class GpsLoader implements Runnable
+public class GpsLoader extends GenericFunction implements Runnable
 {
-	private App _app = null;
-	private JFrame _parentFrame = null;
 	private boolean _gpsBabelChecked = false;
 	private JDialog _dialog = null;
 	private JTextField _deviceField = null, _formatField = null;
 	private JCheckBox _waypointCheckbox = null, _trackCheckbox = null;
 	private JButton _okButton = null;
-	private JProgressBar _waypointProgressBar = null, _trackProgressBar = null;
+	private JProgressBar _progressBar = null;
 	private boolean _cancelled = false;
 
 
 	/**
 	 * Constructor
 	 * @param inApp Application object to inform of data load
-	 * @param inParentFrame parent frame to reference for dialogs
 	 */
-	public GpsLoader(App inApp, JFrame inParentFrame)
+	public GpsLoader(App inApp)
 	{
-		_app = inApp;
-		_parentFrame = inParentFrame;
+		super(inApp);
 	}
 
+	/** Get the name key */
+	public String getNameKey() {
+		return "function.loadfromgps";
+	}
 
 	/**
 	 * Open the GUI to select options and start the load
 	 */
-	public void openDialog()
+	public void begin()
 	{
 		// Check if gpsbabel looks like it's installed
 		if (_gpsBabelChecked || ExternalTools.isGpsbabelInstalled()
 			|| JOptionPane.showConfirmDialog(_dialog,
 				I18nManager.getText("dialog.gpsload.nogpsbabel"),
-				I18nManager.getText("dialog.gpsload.title"),
+				I18nManager.getText(getNameKey()),
 				JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)
 		{
 			_gpsBabelChecked = true;
 			// Make dialog window
 			if (_dialog == null)
 			{
-				_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.gpsload.title"), true);
+				_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 				_dialog.setLocationRelativeTo(_parentFrame);
 				_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 				_dialog.getContentPane().add(makeDialogComponents());
@@ -86,8 +86,8 @@ public class GpsLoader implements Runnable
 			}
 			// Initialise progress bars, buttons
 			enableOkButton();
-			setupProgressBars(true);
-			_dialog.show();
+			setupProgressBar(true);
+			_dialog.setVisible(true);
 		}
 	}
 
@@ -135,11 +135,9 @@ public class GpsLoader implements Runnable
 		_trackCheckbox.addChangeListener(checkboxListener);
 		_trackCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_trackCheckbox);
-		// progress bars (initially invisible)
-		_waypointProgressBar = new JProgressBar(0, 10);
-		mainPanel.add(_waypointProgressBar);
-		_trackProgressBar = new JProgressBar(0, 10);
-		mainPanel.add(_trackProgressBar);
+		// progress bar (initially invisible)
+		_progressBar = new JProgressBar(0, 10);
+		mainPanel.add(_progressBar);
 		outerPanel.add(mainPanel, BorderLayout.NORTH);
 
 		// Lower panel with ok and cancel buttons
@@ -172,16 +170,13 @@ public class GpsLoader implements Runnable
 	/**
 	 * @param inStart true if the dialog is restarting
 	 */
-	private void setupProgressBars(boolean inStart)
+	private void setupProgressBar(boolean inStart)
 	{
 		// set visibility
-		_waypointProgressBar.setVisible(!inStart && _waypointCheckbox.isSelected());
-		_trackProgressBar.setVisible(!inStart && _trackCheckbox.isSelected());
+		_progressBar.setVisible(!inStart);
 		// set indeterminate flags, initial value
-		_waypointProgressBar.setIndeterminate(false);
-		_waypointProgressBar.setValue(0);
-		_trackProgressBar.setIndeterminate(false);
-		_trackProgressBar.setValue(0);
+		_progressBar.setIndeterminate(false);
+		_progressBar.setValue(0);
 	}
 
 
@@ -200,45 +195,23 @@ public class GpsLoader implements Runnable
 	public void run()
 	{
 		_okButton.setEnabled(false);
-		setupProgressBars(false);
-		if (_waypointCheckbox.isSelected())
+		setupProgressBar(false);
+		if (_waypointCheckbox.isSelected() || _trackCheckbox.isSelected())
 		{
-			_waypointProgressBar.setIndeterminate(true);
-			_trackProgressBar.setIndeterminate(false);
+			_progressBar.setIndeterminate(true);
 			try
 			{
-				callGpsBabel(true);
+				callGpsBabel(_waypointCheckbox.isSelected(), _trackCheckbox.isSelected());
 			}
 			catch (Exception e)
 			{
-				JOptionPane.showMessageDialog(_dialog, e.getMessage(),
-					I18nManager.getText("dialog.gpsload.title"), JOptionPane.ERROR_MESSAGE);
+				// System.err.println("Error: " + e.getClass().getName());
+				// System.err.println("Error: " + e.getMessage());
+				_app.showErrorMessageNoLookup(getNameKey(), e.getMessage());
 				_cancelled = true;
 			}
 		}
-		// Exit if cancelled or failed
-		if (_cancelled) {
-			setupProgressBars(true);
-			enableOkButton();
-			return;
-		}
-		if (_trackCheckbox.isSelected())
-		{
-			_waypointProgressBar.setIndeterminate(false);
-			_waypointProgressBar.setValue(10);
-			_trackProgressBar.setIndeterminate(true);
-			try
-			{
-				callGpsBabel(false);
-			}
-			catch (Exception e)
-			{
-				JOptionPane.showMessageDialog(_dialog, e.getMessage(),
-					I18nManager.getText("dialog.gpsload.title"), JOptionPane.ERROR_MESSAGE);
-				_cancelled = true;
-			}
-		}
-		setupProgressBars(true);
+		setupProgressBar(true);
 		enableOkButton();
 
 		// Close dialog
@@ -250,13 +223,27 @@ public class GpsLoader implements Runnable
 
 	/**
 	 * Execute the call to gpsbabel and pass the results back to the app
-	 * @param inWaypoints true to get waypoints, false to get track data
+	 * @param inWaypoints true to load waypoints
+	 * @param inTracks true to load track points
 	 */
-	private void callGpsBabel(boolean inWaypoints) throws Exception
+	private void callGpsBabel(boolean inWaypoints, boolean inTracks) throws Exception
 	{
 		// Set up command to call gpsbabel
-		String[] commands = {"gpsbabel", null, "-i", _formatField.getText(), "-f", _deviceField.getText(), "-o", "gpx", "-F", "-"};
-		commands[1] = inWaypoints?"-w":"-t";
+		String[] commands = null;
+		if (inWaypoints && inTracks) {
+			// Both waypoints and track points selected
+			commands = new String[] {"gpsbabel", "-w", "-t", "-i", _formatField.getText(),
+				"-f", _deviceField.getText(), "-o", "gpx", "-F", "-"};
+		}
+		else
+		{
+			// Only waypoints OR track points selected
+			commands = new String[] {"gpsbabel", "-w", "-i", _formatField.getText(),
+				"-f", _deviceField.getText(), "-o", "gpx", "-F", "-"};
+			if (inTracks) {
+				commands[1] = "-t";
+			}
+		}
 
 		String errorMessage = "";
 		XmlHandler handler = null;
@@ -265,7 +252,7 @@ public class GpsLoader implements Runnable
 		// Pass input stream to try to parse the xml
 		try
 		{
-			XmlFileLoader xmlLoader = new XmlFileLoader(_app, _parentFrame);
+			XmlFileLoader xmlLoader = new XmlFileLoader(_app);
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			saxParser.parse(process.getInputStream(), xmlLoader);
 			handler = xmlLoader.getHandler();
@@ -284,12 +271,16 @@ public class GpsLoader implements Runnable
 		while ((line = r.readLine()) != null) {
 			errorMessage2 += line + "\n";
 		}
+		// Close error stream
+		try {
+			r.close();
+		} catch (Exception e) {}
+
 		if (errorMessage2.length() > 0) {errorMessage = errorMessage2;}
 		if (errorMessage.length() > 0) {throw new Exception(errorMessage);}
 
 		// Send data back to app
-		boolean append = _waypointCheckbox.isSelected() && !inWaypoints;
 		_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-			Altitude.FORMAT_METRES, _deviceField.getText(), append);
+			Altitude.Format.METRES, _deviceField.getText());
 	}
 }

@@ -49,14 +49,26 @@ A GPS connected to the serial port may appear as /dev/ttyS0.
 This setting controls the default value of the format parameter to gpsbabel.  If you call gpsbabel from the command line, it's the -i parameter.  Example:
    prune.gpsformat=garmin
 
+== Gnuplot path ==
+On linux systems this setting is unnecessary as the gnuplot executable will be found in /usr/bin but on Windows the executable must be called pgnuplot (with an extra p) and may not be in the system path.  This setting controls the default location searched to call gnuplot.
+   prune.gnuplotpath=gnuplot
+
+== Map server ==
+The default map tile server is called Mapnik and shows the maps just like they are in openstreetmap.org.  The following two settings allow other tile servers to be used by default.  The settings are the same as in the dialog View -> Set map background.
+The "mapserverindex" parameter is a number from 0 to 3, where 0=Mapnik, 1=Osma, 2=Opencyclemap and 3=Other.  If the mapserverindex is set to 3, Prune will use the URL given by the "mapserverurl" parameter.
+   prune.mapserverindex=3
+   prune.mapserverurl=http://openpistemap.org/tiles/contours/
+
 == Example file ==
 The following can be used as a template to make your own file.
 
 # Prune configuration file
 prune.directory=/home/user/gps/
-prune.languagecode=ES
+prune.languagecode=EN
 prune.metricunits=y
 prune.povrayfont=crystal.ttf
 prune.gpsdevice=usb:
 prune.gpsformat=garmin
-
+prune.gnuplotpath=gnuplot
+prune.mapserverindex=3
+prune.mapserverurl=http://openpistemap.org/tiles/contours/

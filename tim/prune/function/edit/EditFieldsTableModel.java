@@ -1,4 +1,4 @@
-package tim.prune.edit;
+package tim.prune.function.edit;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -98,7 +98,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 	/**
 	 * @return Class of cell data
 	 */
-	public Class getColumnClass(int inColumnIndex)
+	public Class<?> getColumnClass(int inColumnIndex)
 	{
 		if (inColumnIndex <= 1) return String.class;
 		return Boolean.class;

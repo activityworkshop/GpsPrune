@@ -53,13 +53,18 @@ public abstract class I18nManager
 	 */
 	public static void addLanguageFile(String inFilename)
 	{
+		FileInputStream fis = null;
 		try
 		{
 			File file = new File(inFilename);
 			ExternalPropsFile = new Properties();
-			ExternalPropsFile.load(new FileInputStream(file));
+			fis = new FileInputStream(file);
+			ExternalPropsFile.load(fis);
 		}
 		catch (IOException ioe) {}
+		finally { try { fis.close();
+			} catch (Exception e) {}
+		}
 	}
 
 

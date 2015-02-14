@@ -13,7 +13,7 @@ public class WholeNumberField extends JTextField
 	/**
 	 * Inner class to act as document for validation
 	 */
-	protected class WholeNumberDocument extends PlainDocument
+	protected static class WholeNumberDocument extends PlainDocument
 	{
 		/** Num digits to allow */
 		private int _maxDigits = 0;

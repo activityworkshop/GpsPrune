@@ -12,16 +12,8 @@ import java.util.List;
 public class JpegSegmentData
 {
 	/** A map of byte[], keyed by the segment marker */
-	private final HashMap _segmentDataMap;
+	private final HashMap<Byte, List<byte[]>> _segmentDataMap = new HashMap<Byte, List<byte[]>>(10);
 
-
-	/**
-	 * Constructor for an empty collection
-	 */
-	public JpegSegmentData()
-	{
-		_segmentDataMap = new HashMap(10);
-	}
 
 	/**
 	 * Add a segment to the collection
@@ -30,7 +22,7 @@ public class JpegSegmentData
 	 */
 	public void addSegment(byte inSegmentMarker, byte[] inSegmentBytes)
 	{
-		List segmentList = getOrCreateSegmentList(inSegmentMarker);
+		List<byte[]> segmentList = getOrCreateSegmentList(inSegmentMarker);
 		segmentList.add(inSegmentBytes);
 	}
 
@@ -54,12 +46,12 @@ public class JpegSegmentData
 	 */
 	public byte[] getSegment(byte inSegmentMarker, int inOccurrence)
 	{
-		final List segmentList = getSegmentList(inSegmentMarker);
+		final List<byte[]> segmentList = getSegmentList(inSegmentMarker);
 
 		if (segmentList==null || segmentList.size()<=inOccurrence)
 			return null;
 		else
-			return (byte[]) segmentList.get(inOccurrence);
+			return segmentList.get(inOccurrence);
 	}
 
 
@@ -70,7 +62,7 @@ public class JpegSegmentData
 	 */
 	public int getSegmentCount(byte inSegmentMarker)
 	{
-		final List segmentList = getSegmentList(inSegmentMarker);
+		final List<byte[]> segmentList = getSegmentList(inSegmentMarker);
 		if (segmentList == null)
 			return 0;
 		else
@@ -83,9 +75,9 @@ public class JpegSegmentData
 	 * @param inSegmentMarker marker byte
 	 * @return list of segments
 	 */
-	private List getSegmentList(byte inSegmentMarker)
+	private List<byte[]> getSegmentList(byte inSegmentMarker)
 	{
-		return (List)_segmentDataMap.get(new Byte(inSegmentMarker));
+		return _segmentDataMap.get(Byte.valueOf(inSegmentMarker));
 	}
 
 
@@ -94,19 +86,19 @@ public class JpegSegmentData
 	 * @param inSegmentMarker marker byte
 	 * @return list of segments
 	 */
-	private List getOrCreateSegmentList(byte inSegmentMarker)
+	private List<byte[]> getOrCreateSegmentList(byte inSegmentMarker)
 	{
-		List segmentList = null;
-		Byte key = new Byte(inSegmentMarker);
+		List<byte[]> segmentList = null;
+		Byte key = Byte.valueOf(inSegmentMarker);
 		if (_segmentDataMap.containsKey(key))
 		{
 			// list already exists
-			segmentList = (List)_segmentDataMap.get(key);
+			segmentList = _segmentDataMap.get(key);
 		}
 		else
 		{
 			// create new list and add it
-			segmentList = new ArrayList();
+			segmentList = new ArrayList<byte[]>();
 			_segmentDataMap.put(key, segmentList);
 		}
 		return segmentList;

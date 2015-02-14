@@ -17,7 +17,7 @@ public class KmlHandler extends XmlHandler
 	private boolean _insideCoordinates = false;
 	private String _name = null;
 	private StringBuffer _coordinates = null;
-	private ArrayList _pointList = new ArrayList();
+	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
 
 
 	/**
@@ -97,11 +97,16 @@ public class KmlHandler extends XmlHandler
 		else if (numPoints > 1)
 		{
 			// Add each of the unnamed track points to list
+			boolean firstPoint = true;
 			for (int p=0; p<numPoints; p++)
 			{
-				String[] pointArray = makeStringArray(coordArray[p], null);
-				if (p==0) {pointArray[4] = "1";}
-				_pointList.add(pointArray);
+				if (coordArray[p] != null && coordArray[p].trim().length()>3)
+				{
+					String[] pointArray = makeStringArray(coordArray[p], null);
+					if (firstPoint) {pointArray[4] = "1";}
+					firstPoint = false;
+					_pointList.add(pointArray);
+				}
 			}
 		}
 	}
@@ -144,7 +149,7 @@ public class KmlHandler extends XmlHandler
 		String[][] result = new String[numPoints][];
 		for (int i=0; i<numPoints; i++)
 		{
-			result[i] = (String[]) _pointList.get(i);
+			result[i] = _pointList.get(i);
 		}
 		return result;
 	}

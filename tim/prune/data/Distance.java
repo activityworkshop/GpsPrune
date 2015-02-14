@@ -5,10 +5,18 @@ package tim.prune.data;
  */
 public abstract class Distance
 {
-	// distance formats
-	public static final int UNITS_KILOMETRES = 1;
-	public static final int UNITS_MILES      = 2;
-	public static final int UNITS_METRES     = 3;
+	/** distance units */
+	public enum Units
+	{
+		/** Kilometres */
+		KILOMETRES,
+		/** Miles */
+		MILES,
+		/** Metres */
+		METRES,
+		/** Feet */
+		FEET
+	}
 
 	// Geographical constants
 	private static final double EARTH_RADIUS_KM = 6372.795;
@@ -22,12 +30,12 @@ public abstract class Distance
 	 * @param inUnits desired units, eg miles or km
 	 * @return distance in specified format
 	 */
-	public static double convertRadiansToDistance(double inAngDist, int inUnits)
+	public static double convertRadiansToDistance(double inAngDist, Units inUnits)
 	{
 		// Multiply by appropriate factor
-		if (inUnits == UNITS_MILES)
+		if (inUnits == Units.MILES)
 			return inAngDist * EARTH_RADIUS_KM * CONVERT_KM_TO_MILES;
-		else if (inUnits == UNITS_METRES)
+		else if (inUnits == Units.METRES)
 			return inAngDist * EARTH_RADIUS_KM * 1000;
 		// default kilometres
 		return inAngDist * EARTH_RADIUS_KM;
@@ -39,12 +47,12 @@ public abstract class Distance
 	 * @param inUnits units, eg miles or km
 	 * @return angular distance in radians
 	 */
-	public static double convertDistanceToRadians(double inDist, int inUnits)
+	public static double convertDistanceToRadians(double inDist, Units inUnits)
 	{
 		// Divide by appropriate factor
-		if (inUnits == UNITS_MILES)
+		if (inUnits == Units.MILES)
 			return inDist / EARTH_RADIUS_KM / CONVERT_KM_TO_MILES;
-		else if (inUnits == UNITS_METRES)
+		else if (inUnits == Units.METRES)
 			return inDist / EARTH_RADIUS_KM / 1000;
 		// default kilometres
 		return inDist / EARTH_RADIUS_KM;

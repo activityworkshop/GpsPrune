@@ -1,4 +1,4 @@
-package tim.prune.edit;
+package tim.prune.function.edit;
 
 import java.awt.Component;
 import java.awt.BorderLayout;
@@ -53,23 +53,26 @@ public class PointNameEditor
 	public void showDialog(DataPoint inPoint)
 	{
 		_point = inPoint;
-		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.pointnameedit.title"), true);
-		_dialog.setLocationRelativeTo(_parentFrame);
+		if (_dialog == null)
+		{
+			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.pointnameedit.title"), true);
+			_dialog.setLocationRelativeTo(_parentFrame);
+			// Create Gui and show it
+			_dialog.getContentPane().add(makeDialogComponents());
+			_dialog.pack();
+		}
 		// Check current waypoint name, if any
 		String name = _point.getWaypointName();
-		// Create Gui and show it
-		_dialog.getContentPane().add(makeDialogComponents(name));
-		_dialog.pack();
-		_dialog.show();
+		resetDialog(name);
+		_dialog.setVisible(true);
 	}
 
 
 	/**
 	 * Make the dialog components
-	 * @param inName initial name of point
 	 * @return the GUI components for the dialog
 	 */
-	private Component makeDialogComponents(String inName)
+	private Component makeDialogComponents()
 	{
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
@@ -80,16 +83,12 @@ public class PointNameEditor
 		ActionListener okActionListener = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				// Check for empty name
-				if (_nameField.getText().length() > 0)
-				{
-					// update App with edit
-					confirmEdit();
-					_dialog.dispose();
-				}
+				// update App with edit
+				confirmEdit();
+				_dialog.dispose();
 			}
 		};
-		_nameField = new JTextField(inName, 12);
+		_nameField = new JTextField("", 12);
 		_nameField.addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent e)
 			{
@@ -98,8 +97,8 @@ public class PointNameEditor
 				{
 					_dialog.dispose();
 				}
-				// Enable ok button if name not empty
-				_okButton.setEnabled(_nameField.getText().length() > 0);
+				// Enable ok button if name changed
+				_okButton.setEnabled(hasNameChanged());
 			}
 		});
 		_nameField.addActionListener(okActionListener);
@@ -159,6 +158,16 @@ public class PointNameEditor
 
 
 	/**
+	 * Reset the dialog with the given name
+	 * @param inName waypoint name
+	 */
+	private void resetDialog(String inName)
+	{
+		_nameField.setText(inName);
+		_okButton.setEnabled(false);
+	}
+
+	/**
 	 * Turn a String into sentence case by capitalizing each word
 	 * @param inString String to convert
 	 * @return capitalized String
@@ -189,22 +198,31 @@ public class PointNameEditor
 	private void confirmEdit()
 	{
 		// Check whether name has really changed
-		String prevName = _point.getWaypointName();
-		String newName = _nameField.getText().trim();
-		boolean prevNull = (prevName == null || prevName.equals(""));
-		boolean newNull = (newName == null || newName.equals(""));
-		if ( (prevNull && !newNull)
-			|| (!prevNull && newNull)
-			|| (!prevNull && !newNull && !prevName.equals(newName)) )
+		if (hasNameChanged())
 		{
 			// Make lists for edit and undo, and add the changed field
 			FieldEditList editList = new FieldEditList();
 			FieldEditList undoList = new FieldEditList();
-			editList.addEdit(new FieldEdit(Field.WAYPT_NAME, newName));
-			undoList.addEdit(new FieldEdit(Field.WAYPT_NAME, prevName));
+			editList.addEdit(new FieldEdit(Field.WAYPT_NAME, _nameField.getText().trim()));
+			undoList.addEdit(new FieldEdit(Field.WAYPT_NAME, _point.getWaypointName()));
 
 			// Pass back to App to perform edit
 			_app.completePointEdit(editList, undoList);
 		}
+	}
+
+	/**
+	 * Check whether the name has been changed or not
+	 * @return true if the new name is different
+	 */
+	private boolean hasNameChanged()
+	{
+		String prevName = _point.getWaypointName();
+		String newName = _nameField.getText().trim();
+		boolean prevNull = (prevName == null || prevName.equals(""));
+		boolean newNull = (newName == null || newName.equals(""));
+		return (prevNull && !newNull)
+			|| (!prevNull && newNull)
+			|| (!prevNull && !newNull && !prevName.equals(newName));
 	}
 }
