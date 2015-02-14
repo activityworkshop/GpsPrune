@@ -15,6 +15,7 @@ import java.util.zip.ZipInputStream;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
@@ -47,6 +48,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	private static final long HGT_SIZE = 2884802L;
 	/** Altitude below which is considered void */
 	private static final int VOID_VAL = -32768;
+
 
 	/**
 	 * Constructor
@@ -114,14 +116,40 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
-		_dialog.setVisible(true);
 		// Compile list of tiles to get
 		Track track = _app.getTrackInfo().getTrack();
 		ArrayList<SrtmTile> tileList = new ArrayList<SrtmTile>();
+		boolean hasZeroAltitudePoints = false;
+		boolean hasNonZeroAltitudePoints = false;
+		// First, loop to see what kind of points we have
 		for (int i=0; i<track.getNumPoints(); i++)
 		{
-			// Only consider points which don't have altitudes already
-			if (!track.getPoint(i).hasAltitude())
+			if (track.getPoint(i).hasAltitude())
+			{
+				if (track.getPoint(i).getAltitude().getValue() == 0) {
+					hasZeroAltitudePoints = true;
+				}
+				else {
+					hasNonZeroAltitudePoints = true;
+				}
+			}
+		}
+		// Should we overwrite the zero altitude values?
+		boolean overwriteZeros = hasZeroAltitudePoints && !hasNonZeroAltitudePoints;
+		// If non-zero values present as well, ask user whether to overwrite the zeros or not
+		if (hasNonZeroAltitudePoints && hasZeroAltitudePoints && JOptionPane.showConfirmDialog(_parentFrame,
+			I18nManager.getText("dialog.lookupsrtm.overwritezeros"), I18nManager.getText(getNameKey()),
+			JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
+		{
+			overwriteZeros = true;
+		}
+
+		_dialog.setVisible(true);
+		// Now loop again to extract the required tiles
+		for (int i=0; i<track.getNumPoints(); i++)
+		{
+			// Consider points which don't have altitudes or have zero values
+			if (!track.getPoint(i).hasAltitude() || (overwriteZeros && track.getPoint(i).getAltitude().getValue() == 0))
 			{
 				SrtmTile tile = new SrtmTile(track.getPoint(i));
 				boolean alreadyGot = false;
@@ -133,19 +161,30 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 				if (!alreadyGot) {tileList.add(tile);}
 			}
 		}
+		lookupValues(tileList, overwriteZeros);
+	}
+
+	/**
+	 * Lookup the values from SRTM data
+	 * @param inTileList list of tiles to get
+	 * @param inOverwriteZeros true to overwrite zero altitude values
+	 */
+	private void lookupValues(ArrayList<SrtmTile> inTileList, boolean inOverwriteZeros)
+	{
+		Track track = _app.getTrackInfo().getTrack();
 		UndoLookupSrtm undo = new UndoLookupSrtm(_app.getTrackInfo());
 		int numAltitudesFound = 0;
 		// Update progress bar
-		_progressBar.setMaximum(tileList.size());
-		_progressBar.setIndeterminate(tileList.size() <= 1);
+		_progressBar.setMaximum(inTileList.size());
+		_progressBar.setIndeterminate(inTileList.size() <= 1);
 		_progressBar.setValue(0);
 		// Get urls for each tile
-		URL[] urls = TileFinder.getUrls(tileList);
-		for (int t=0; t<tileList.size() && !_cancelled; t++)
+		URL[] urls = TileFinder.getUrls(inTileList);
+		for (int t=0; t<inTileList.size() && !_cancelled; t++)
 		{
 			if (urls[t] != null)
 			{
-				SrtmTile tile = tileList.get(t);
+				SrtmTile tile = inTileList.get(t);
 				// System.out.println("tile " + t + " of " + tileList.size() + " = " + urls[t].toString());
 				try {
 					_progressBar.setValue(t);
@@ -175,7 +214,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 						for (int p=0; p<track.getNumPoints(); p++)
 						{
 							DataPoint point = track.getPoint(p);
-							if (!point.hasAltitude() || point.getAltitude().getValue() == 0) {
+							if (!point.hasAltitude() || (inOverwriteZeros && point.getAltitude().getValue() == 0)) {
 								if (new SrtmTile(point).equals(tile))
 								{
 									double x = (point.getLongitude().getDouble() - tile.getLongitude()) * 1200;
@@ -221,8 +260,11 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			_app.completeFunction(undo, I18nManager.getText("confirm.lookupsrtm1") + " " + numAltitudesFound
 				+ " " + I18nManager.getText("confirm.lookupsrtm2"));
 		}
+		else if (inTileList.size() > 0) {
+			_app.showErrorMessage(getNameKey(), "error.lookupsrtm.nonefound");
+		}
 		else {
-			_app.showErrorMessage(getNameKey(), "error.lookupsrtm.none");
+			_app.showErrorMessage(getNameKey(), "error.lookupsrtm.nonerequired");
 		}
 	}
 

@@ -45,6 +45,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _exportKmlItem = null;
 	private JMenuItem _exportGpxItem = null;
 	private JMenuItem _exportPovItem = null;
+	private JMenuItem _exportSvgItem = null;
 	private JMenuItem _undoItem = null;
 	private JMenuItem _clearUndoItem = null;
 	private JMenuItem _editPointItem = null;
@@ -68,11 +69,13 @@ public class MenuManager implements DataSubscriber
 	private JMenu     _rearrangeMenu = null;
 	private JMenuItem _cutAndMoveItem = null;
 	private JMenuItem _convertNamesToTimesItem = null;
+	private JMenuItem _deleteFieldValuesItem = null;
 	private JCheckBoxMenuItem _mapCheckbox = null;
 	private JMenuItem _show3dItem = null;
 	private JMenu     _browserMapMenu = null;
 	private JMenuItem _chartItem = null;
 	private JMenuItem _getGpsiesItem = null;
+	private JMenuItem _uploadGpsiesItem = null;
 	private JMenuItem _lookupSrtmItem = null;
 	private JMenuItem _distanceItem = null;
 	private JMenuItem _fullRangeDetailsItem = null;
@@ -196,6 +199,10 @@ public class MenuManager implements DataSubscriber
 		_exportPovItem = makeMenuItem(FunctionLibrary.FUNCTION_POVEXPORT);
 		_exportPovItem.setEnabled(false);
 		fileMenu.add(_exportPovItem);
+		// Svg
+		_exportSvgItem = makeMenuItem(FunctionLibrary.FUNCTION_SVGEXPORT);
+		_exportSvgItem.setEnabled(false);
+		fileMenu.add(_exportSvgItem);
 		fileMenu.addSeparator();
 		JMenuItem exitMenuItem = new JMenuItem(I18nManager.getText("menu.file.exit"));
 		exitMenuItem.addActionListener(new ActionListener() {
@@ -279,6 +286,10 @@ public class MenuManager implements DataSubscriber
 		_getGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_GPSIES);
 		_getGpsiesItem.setEnabled(false);
 		trackMenu.add(_getGpsiesItem);
+		// Upload to gpsies
+		_uploadGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_UPLOAD_GPSIES);
+		_uploadGpsiesItem.setEnabled(false);
+		trackMenu.add(_uploadGpsiesItem);
 		_lookupSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_SRTM);
 		_lookupSrtmItem.setEnabled(false);
 		trackMenu.add(_lookupSrtmItem);
@@ -362,6 +373,9 @@ public class MenuManager implements DataSubscriber
 		});
 		_mergeSegmentsItem.setEnabled(false);
 		rangeMenu.add(_mergeSegmentsItem);
+		_deleteFieldValuesItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_FIELD_VALUES);
+		_deleteFieldValuesItem.setEnabled(false);
+		rangeMenu.add(_deleteFieldValuesItem);
 		rangeMenu.addSeparator();
 		_interpolateItem = new JMenuItem(I18nManager.getText("menu.range.interpolate"));
 		_interpolateItem.addActionListener(new ActionListener() {
@@ -449,6 +463,16 @@ public class MenuManager implements DataSubscriber
 			}
 		});
 		viewMenu.add(_mapCheckbox);
+		// Turn off the sidebars
+		JCheckBoxMenuItem sidebarsCheckbox = new JCheckBoxMenuItem(I18nManager.getText("menu.view.showsidebars"));
+		sidebarsCheckbox.setSelected(true);
+		sidebarsCheckbox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				_app.toggleSidebars();
+			}
+		});
+		viewMenu.add(sidebarsCheckbox);
+		// 3d
 		_show3dItem = makeMenuItem(FunctionLibrary.FUNCTION_3D);
 		_show3dItem.setEnabled(false);
 		viewMenu.add(_show3dItem);
@@ -771,6 +795,7 @@ public class MenuManager implements DataSubscriber
 		_exportKmlItem.setEnabled(hasData);
 		_exportGpxItem.setEnabled(hasData);
 		_exportPovItem.setEnabled(hasData);
+		_exportSvgItem.setEnabled(hasData);
 		_compressItem.setEnabled(hasData);
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeMenu.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
@@ -781,6 +806,7 @@ public class MenuManager implements DataSubscriber
 		_browserMapMenu.setEnabled(hasData);
 		_distanceItem.setEnabled(hasData);
 		_getGpsiesItem.setEnabled(hasData);
+		_uploadGpsiesItem.setEnabled(hasData && _track.hasTrackPoints());
 		_lookupSrtmItem.setEnabled(hasData);
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
 		// is undo available?
@@ -830,6 +856,7 @@ public class MenuManager implements DataSubscriber
 		_addTimeOffsetItem.setEnabled(hasRange);
 		_addAltitudeOffsetItem.setEnabled(hasRange);
 		_convertNamesToTimesItem.setEnabled(hasRange && _track.hasWaypoints());
+		_deleteFieldValuesItem.setEnabled(hasRange);
 		_fullRangeDetailsItem.setEnabled(hasRange);
 		// Is the currently selected point outside the current range?
 		_cutAndMoveItem.setEnabled(hasRange && hasPoint &&

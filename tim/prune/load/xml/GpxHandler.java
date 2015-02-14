@@ -6,6 +6,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import tim.prune.data.Field;
+import tim.prune.load.TrackNameList;
 
 
 /**
@@ -13,17 +14,23 @@ import tim.prune.data.Field;
  */
 public class GpxHandler extends XmlHandler
 {
+	private boolean _insidePoint = false;
 	private boolean _insideWaypoint = false;
 	private boolean _insideName = false;
 	private boolean _insideElevation = false;
 	private boolean _insideTime = false;
 	private boolean _insideType = false;
 	private boolean _startSegment = true;
+	private boolean _isTrackPoint = false;
+	private int _trackNum = -1;
+	private String _trackName = null;
 	private String _name = null, _latitude = null, _longitude = null;
 	private String _elevation = null;
 	private String _time = null;
 	private String _type = null;
 	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
+	private TrackNameList _trackNameList = new TrackNameList();
+
 
 	/**
 	 * Receive the start of a tag
@@ -35,7 +42,9 @@ public class GpxHandler extends XmlHandler
 		// Read the parameters for waypoints and track points
 		if (qName.equalsIgnoreCase("wpt") || qName.equalsIgnoreCase("trkpt") || qName.equalsIgnoreCase("rtept"))
 		{
+			_insidePoint = true;
 			_insideWaypoint = qName.equalsIgnoreCase("wpt");
+			_isTrackPoint = qName.equalsIgnoreCase("trkpt");
 			int numAttributes = attributes.getLength();
 			for (int i=0; i<numAttributes; i++)
 			{
@@ -54,6 +63,7 @@ public class GpxHandler extends XmlHandler
 		}
 		else if (qName.equalsIgnoreCase("name"))
 		{
+			_name = null;
 			_insideName = true;
 		}
 		else if (qName.equalsIgnoreCase("time"))
@@ -67,6 +77,11 @@ public class GpxHandler extends XmlHandler
 		else if (qName.equalsIgnoreCase("trkseg"))
 		{
 			_startSegment = true;
+		}
+		else if (qName.equalsIgnoreCase("trk"))
+		{
+			_trackNum++;
+			_trackName = null;
 		}
 		super.startElement(uri, localName, qName, attributes);
 	}
@@ -82,6 +97,7 @@ public class GpxHandler extends XmlHandler
 		if (qName.equalsIgnoreCase("wpt") || qName.equalsIgnoreCase("trkpt") || qName.equalsIgnoreCase("rtept"))
 		{
 			processPoint();
+			_insidePoint = false;
 		}
 		else if (qName.equalsIgnoreCase("ele"))
 		{
@@ -112,6 +128,7 @@ public class GpxHandler extends XmlHandler
 	{
 		String value = new String(ch, start, length);
 		if (_insideName && _insideWaypoint) {_name = checkCharacters(_name, value);}
+		if (_insideName && !_insidePoint) {_trackName = checkCharacters(_trackName, value);}
 		else if (_insideElevation) {_elevation = checkCharacters(_elevation, value);}
 		else if (_insideTime) {_time = checkCharacters(_time, value);}
 		else if (_insideType) {_type = checkCharacters(_type, value);}
@@ -148,6 +165,7 @@ public class GpxHandler extends XmlHandler
 		}
 		values[6] = _type;
 		_pointList.add(values);
+		_trackNameList.addPoint(_trackNum, _trackName, _isTrackPoint);
 	}
 
 
@@ -176,5 +194,13 @@ public class GpxHandler extends XmlHandler
 			result[i] = _pointList.get(i);
 		}
 		return result;
+	}
+
+
+	/**
+	 * @return track name list
+	 */
+	public TrackNameList getTrackNameList() {
+		return _trackNameList;
 	}
 }

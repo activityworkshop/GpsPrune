@@ -66,7 +66,9 @@ public class ExternalExifLibrary implements ExifLibrary
 					data.setGpsTimestamp(new int[] {times[0].intValue(), times[1].intValue(),
 						times[2].intValue()});
 					Rational[] dates = gpsdir.getRationalArray(TAG_GPS_DATESTAMP);
-					data.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
+					if (dates != null) {
+						data.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
+					}
 				}
 			}
 
@@ -75,9 +77,13 @@ public class ExternalExifLibrary implements ExifLibrary
 			{
 				Directory exifdir = metadata.getDirectory(ExifDirectory.class);
 
-				// Take time and date from exif tags if haven't got it already from GPS
-				if (data.getGpsDatestamp() == null && exifdir.containsTag(ExifDirectory.TAG_DATETIME_ORIGINAL)) {
+				// Take time and date from exif tags
+				if (exifdir.containsTag(ExifDirectory.TAG_DATETIME_ORIGINAL)) {
 					data.setOriginalTimestamp(exifdir.getString(ExifDirectory.TAG_DATETIME_ORIGINAL));
+				}
+				// Also take "digitized" timestamp
+				if (exifdir.containsTag(ExifDirectory.TAG_DATETIME_DIGITIZED)) {
+					data.setDigitizedTimestamp(exifdir.getString(ExifDirectory.TAG_DATETIME_DIGITIZED));
 				}
 
 				// Photo rotation code

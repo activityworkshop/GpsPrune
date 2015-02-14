@@ -65,12 +65,10 @@ public class Photo
 	{
 		_dataPoint = inPoint;
 		// set status according to point
-		if (inPoint == null)
-		{
+		if (inPoint == null) {
 			setCurrentStatus(Status.NOT_CONNECTED);
 		}
-		else
-		{
+		else {
 			setCurrentStatus(Status.CONNECTED);
 		}
 	}

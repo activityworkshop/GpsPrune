@@ -50,7 +50,7 @@ public class Altitude
 
 
 	/**
-	 * Constructor with int vaue
+	 * Constructor with int value
 	 * @param inValue int value of altitude
 	 * @param inFormat format of altitude, either metres or feet
 	 */

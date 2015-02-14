@@ -19,12 +19,6 @@ import tim.prune.I18nManager;
  */
 public abstract class ExifGateway
 {
-	// *********************************************************
-	// TODO: Check this exif library flag before releasing!
-	/** Flag to specify internal or external library */
-	private static final boolean USE_INTERNAL_LIBRARY = true;
-	// *********************************************************
-
 	/** Library object to call */
 	private static ExifLibrary _exifLibrary = null;
 	/** Flag to set whether failure warning has already been shown */
@@ -33,7 +27,7 @@ public abstract class ExifGateway
 	/** Static block to initialise library */
 	static
 	{
-		String libraryClass = USE_INTERNAL_LIBRARY?"InternalExifLibrary":"ExternalExifLibrary";
+		String libraryClass = ExifLibrarySwitch.USE_INTERNAL_LIBRARY?"InternalExifLibrary":"ExternalExifLibrary";
 		try
 		{
 			_exifLibrary = (ExifLibrary) Class.forName("tim.prune.jpeg." + libraryClass).newInstance();
@@ -73,7 +67,7 @@ public abstract class ExifGateway
 	 */
 	public static String getDescriptionKey()
 	{
-		String key = USE_INTERNAL_LIBRARY?"internal":"external";
+		String key = ExifLibrarySwitch.USE_INTERNAL_LIBRARY?"internal":"external";
 		if (_exifLibrary == null || !_exifLibrary.looksOK()) {key = key + ".failed";}
 		return key;
 	}

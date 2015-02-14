@@ -15,7 +15,6 @@ public class ThreeDModel
 	private Track _track = null;
 	private PointScaler _scaler = null;
 	private double _modelSize;
-	private int _altitudeCap = -1;
 	private double _scaleFactor = 1.0;
 	private double _altFactor = 1.0;
 	// MAYBE: How to store rods (lifts) in data?
@@ -23,8 +22,6 @@ public class ThreeDModel
 	private byte[] _pointHeights = null;
 
 	private static final double DEFAULT_MODEL_SIZE = 10.0;
-	/** Minimum altitude cap */
-	public static final int MINIMUM_ALTITUDE_CAP = 100;
 
 	// Constants for point types
 	public static final byte POINT_TYPE_WAYPOINT      = 1;
@@ -64,20 +61,15 @@ public class ThreeDModel
 		return _track.getNumPoints();
 	}
 
-
 	/**
-	 * Set the altitude cap
-	 * @param inAltitudeCap altitude range to cap to (ignored if less than data range)
+	 * @param inFactor altitude exaggeration factor (default 1.0)
 	 */
-	public void setAltitudeCap(int inAltitudeCap)
+	public void setAltitudeFactor(double inFactor)
 	{
-		_altitudeCap = inAltitudeCap;
-		if (_altitudeCap < MINIMUM_ALTITUDE_CAP)
-		{
-			_altitudeCap = MINIMUM_ALTITUDE_CAP;
+		if (inFactor >= 1.0) {
+			_altFactor = inFactor;
 		}
 	}
-
 
 	/**
 	 * Scale all points and calculate factors
@@ -102,21 +94,11 @@ public class ThreeDModel
 				_scaleFactor = _modelSize / _scaler.getMaximumVert();
 			}
 		}
-		// calculate altitude scale factor
-		_altFactor = 1.0;
-		if (_scaler.getMaximumAlt() >= 0)
-		{
-			// limit by altitude cap or by data range?
-			if (_scaler.getMaximumAlt() > _altitudeCap)
-			{
-				// data is bigger than cap
-				_altFactor = _modelSize / _scaler.getMaximumAlt();
-			}
-			else
-			{
-				// capped
-				_altFactor = _modelSize / _altitudeCap;
-			}
+		// cap altitude scale factor if it's too big
+		double maxScaledAlt = _scaler.getMaxScaledAlt() * _altFactor;
+		if (maxScaledAlt > _modelSize) {
+			// capped
+			_altFactor = _altFactor * _modelSize / maxScaledAlt;
 		}
 		// calculate lat/long lines
 		_scaler.calculateLatLongLines();
@@ -138,7 +120,8 @@ public class ThreeDModel
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = _track.getPoint(i);
-			_pointTypes[i] = (point.isWaypoint()?POINT_TYPE_WAYPOINT:(point.getSegmentStart()?POINT_TYPE_SEGMENT_START:POINT_TYPE_NORMAL_POINT));
+			_pointTypes[i] = (point.isWaypoint()?POINT_TYPE_WAYPOINT:
+				(point.getSegmentStart()?POINT_TYPE_SEGMENT_START:POINT_TYPE_NORMAL_POINT));
 			_pointHeights[i] = (byte) (point.getAltitude().getValue(Altitude.Format.METRES) / 500);
 		}
 	}
@@ -172,9 +155,9 @@ public class ThreeDModel
 	public double getScaledAltValue(int inIndex)
 	{
 		// if no altitude, just return 0
-		int altVal = _scaler.getAltValue(inIndex);
+		double altVal = _scaler.getAltValue(inIndex);
 		if (altVal < 0) return 0;
-		// scale according to altitude cap
+		// scale according to exaggeration factor
 		return altVal * _altFactor;
 	}
 

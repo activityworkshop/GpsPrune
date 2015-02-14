@@ -3,9 +3,8 @@ package tim.prune.data;
 import java.io.File;
 
 /**
- * Class to hold the source of the point data,
- * including original file and file type, and
- * also file offsets for source copying
+ * Class to hold the source of the point data, including the original file
+ * and file type, and references to each of the point objects
  */
 public class SourceInfo
 {
@@ -21,6 +20,10 @@ public class SourceInfo
 
 	/** Array of datapoints */
 	private DataPoint[] _points = null;
+	/** Number of points */
+	private int _numPoints = 0;
+	/** Array of point indices (if necessary) */
+	private int[] _pointIndices = null;
 
 
 	/**
@@ -76,7 +79,22 @@ public class SourceInfo
 	 */
 	public int getNumPoints()
 	{
-		return _points.length;
+		return _numPoints;
+	}
+
+	/**
+	 * Set the indices of the points selected out of a loaded track
+	 * @param inSelectedFlags array of booleans showing whether each point in the original data was loaded or not
+	 */
+	public void setPointIndices(boolean[] inSelectedFlags)
+	{
+		_numPoints = inSelectedFlags.length;
+		_pointIndices = new int[_numPoints];
+		int p=0;
+		for (int i=0; i<_numPoints; i++) {
+			if (inSelectedFlags[i]) {_pointIndices[p++] = i;}
+		}
+		// Now the point indices array holds the index of each of the selected points
 	}
 
 	/**
@@ -86,6 +104,7 @@ public class SourceInfo
 	 */
 	public void populatePointObjects(Track inTrack, int inNumPoints)
 	{
+		if (_numPoints == 0) {_numPoints = inNumPoints;}
 		if (inNumPoints > 0)
 		{
 			_points = new DataPoint[inNumPoints];
@@ -106,6 +125,7 @@ public class SourceInfo
 		for (int i=0; i<_points.length && (idx < 0); i++) {
 			if (_points[i] == inPoint) {idx = i;}
 		}
-		return idx;
+		if (_pointIndices == null) {return idx;} // All points loaded
+		return _pointIndices[idx]; // use point index mapping
 	}
 }

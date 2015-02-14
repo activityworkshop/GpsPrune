@@ -8,21 +8,20 @@ public class PointScaler
 	// Original data
 	private Track _track = null;
 	// Range information
-	private AltitudeRange _altRange = null;
-	private DoubleRange _latRange = null;
-	private DoubleRange _lonRange = null;
 	private double _latMedian = 0.0;
 	private double _lonMedian = 0.0;
 	private int _minAltitude = 0;
-	private int _maxAltitude = 0;
 	// Scaling information
 	private double _longFactor = 0.0;
+	private double _altFactor = 0.0;
 	// Scaled points
 	private double[] _xValues = null;
 	private double[] _yValues = null;
-	private int[] _altValues = null;
+	private double[] _altValues = null;
+	// max values
 	private double _maxX = 0.0;
 	private double _maxY = 0.0;
+	private double _maxScaledAlt = 0.0;
 	// lat/long lines
 	private double[] _latLinesDegs = null;
 	private double[] _lonLinesDegs = null;
@@ -45,9 +44,6 @@ public class PointScaler
 	public PointScaler(Track inTrack)
 	{
 		_track = inTrack;
-		_altRange = new AltitudeRange();
-		_latRange = new DoubleRange();
-		_lonRange = new DoubleRange();
 	}
 
 
@@ -57,9 +53,9 @@ public class PointScaler
 	public void scale()
 	{
 		// Clear data
-		_altRange.clear();
-		_latRange.clear();
-		_lonRange.clear();
+		DoubleRange latRange = new DoubleRange();
+		DoubleRange lonRange = new DoubleRange();
+		DoubleRange altRange = new DoubleRange();
 		int numPoints = 0;
 		int p = 0;
 		DataPoint point = null;
@@ -71,24 +67,32 @@ public class PointScaler
 				point = _track.getPoint(p);
 				if (point != null)
 				{
-					_latRange.addValue(point.getLatitude().getDouble());
-					_lonRange.addValue(point.getLongitude().getDouble());
-					_altRange.addValue(point.getAltitude());
+					latRange.addValue(point.getLatitude().getDouble());
+					lonRange.addValue(point.getLongitude().getDouble());
+					altRange.addValue(point.getAltitude().getValue(Altitude.Format.METRES));
 				}
 			}
 
 			// Find median latitude and calculate factor
-			_latMedian = (_latRange.getMinimum() + _latRange.getMaximum()) / 2;
-			_lonMedian = (_lonRange.getMinimum() + _lonRange.getMaximum()) / 2;
-			_minAltitude = _altRange.getMinimum();
+			_latMedian = (latRange.getMinimum() + latRange.getMaximum()) / 2;
+			_lonMedian = (lonRange.getMinimum() + lonRange.getMaximum()) / 2;
+			_minAltitude = (int) altRange.getMinimum();
 			_longFactor = Math.cos(_latMedian / 180.0 * Math.PI); // quite rough
+			// Find altitude scale factor using distance
+			DataPoint p1 = new DataPoint(new Latitude(latRange.getMinimum(), Coordinate.FORMAT_DEG),
+				new Longitude(_lonMedian, Coordinate.FORMAT_DEG), null);
+			DataPoint p2 = new DataPoint(new Latitude(latRange.getMaximum(), Coordinate.FORMAT_DEG),
+				new Longitude(_lonMedian, Coordinate.FORMAT_DEG), null);
+			double horizDist = Distance.convertRadiansToDistance(
+				DataPoint.calculateRadiansBetween(p1, p2), Distance.Units.METRES);
+			_altFactor = 1.0 / horizDist;
 
 			// create new arrays for scaled values
 			if (_xValues == null || _xValues.length != numPoints)
 			{
 				_xValues = new double[numPoints];
 				_yValues = new double[numPoints];
-				_altValues = new int[numPoints];
+				_altValues = new double[numPoints];
 			}
 			// Calculate scaled values
 			for (p=0; p<numPoints; p++)
@@ -99,12 +103,12 @@ public class PointScaler
 					_xValues[p] = getScaledLongitude(point.getLongitude().getDouble());
 					_yValues[p] = getScaledLatitude(point.getLatitude().getDouble());
 					_altValues[p] = getScaledAltitude(point.getAltitude());
+					if (_altValues[p] > _maxScaledAlt) {_maxScaledAlt = _altValues[p];}
 				}
 			}
 			// Calculate x and y range
-			_maxX = getScaledLongitude(_lonRange.getMaximum());
-			_maxY = getScaledLatitude(_latRange.getMaximum());
-			_maxAltitude = _altRange.getMaximum() - _altRange.getMinimum();
+			_maxX = getScaledLongitude(lonRange.getMaximum());
+			_maxY = getScaledLatitude(latRange.getMaximum());
 		}
 	}
 
@@ -117,10 +121,9 @@ public class PointScaler
 	 * @return maximum vert value
 	 */
 	public double getMaximumVert() { return _maxY; }
-	/**
-	 * @return maximum alt value
-	 */
-	public int getMaximumAlt() { return _maxAltitude; }
+
+	/** @return maximum scaled altitude value */
+	public double getMaxScaledAlt() { return _maxScaledAlt; }
 
 	/**
 	 * Get the horizontal value for the specified point
@@ -145,7 +148,7 @@ public class PointScaler
 	 * @param inIndex index of point, starting at 0
 	 * @return scaled altitude value
 	 */
-	public int getAltValue(int inIndex)
+	public double getAltValue(int inIndex)
 	{
 		return _altValues[inIndex];
 	}
@@ -155,7 +158,7 @@ public class PointScaler
 	 * @param inLatitude latitude in degrees
 	 * @return scaled latitude
 	 */
-	public double getScaledLatitude(double inLatitude)
+	private double getScaledLatitude(double inLatitude)
 	{
 		return inLatitude - _latMedian;
 	}
@@ -164,7 +167,7 @@ public class PointScaler
 	 * @param inLongitude longitude in degrees
 	 * @return scaled longitude
 	 */
-	public double getScaledLongitude(double inLongitude)
+	private double getScaledLongitude(double inLongitude)
 	{
 		return (inLongitude - _lonMedian) * _longFactor;
 	}
@@ -173,10 +176,10 @@ public class PointScaler
 	 * @param inAltitude Altitude object
 	 * @return scaled altitude
 	 */
-	public int getScaledAltitude(Altitude inAltitude)
+	private double getScaledAltitude(Altitude inAltitude)
 	{
 		if (inAltitude == null) return -1;
-		return inAltitude.getValue(_altRange.getFormat()) - _minAltitude;
+		return (inAltitude.getValue(Altitude.Format.METRES) - _minAltitude) * _altFactor;
 	}
 
 	/**
@@ -184,7 +187,7 @@ public class PointScaler
 	 * @param inScaledLatitude scaled latitude
 	 * @return latitude in degrees
 	 */
-	public double getUnscaledLatitude(double inScaledLatitude)
+	private double getUnscaledLatitude(double inScaledLatitude)
 	{
 		return inScaledLatitude + _latMedian;
 	}
@@ -193,7 +196,7 @@ public class PointScaler
 	 * @param inScaledLongitude scaled longitude
 	 * @return longitude in degrees
 	 */
-	public double getUnscaledLongitude(double inScaledLongitude)
+	private double getUnscaledLongitude(double inScaledLongitude)
 	{
 		return inScaledLongitude / _longFactor + _lonMedian;
 	}

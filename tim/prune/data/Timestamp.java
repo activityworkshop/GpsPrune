@@ -5,6 +5,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Class to hold the timestamp of a track point
@@ -23,6 +25,9 @@ public class Timestamp
 	private static final DateFormat ISO_8601_FORMAT_NOZ = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
+	private static final Pattern GENERAL_TIMESTAMP_PATTERN
+		= Pattern.compile("(\\d{4})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})");
+	private static Matcher GENERAL_TIMESTAMP_MATCHER = null;
 	private static long SECS_SINCE_1970 = 0L;
 	private static long SECS_SINCE_GARTRIP = 0L;
 	private static long MSECS_SINCE_1970 = 0L;
@@ -72,35 +77,7 @@ public class Timestamp
 			try
 			{
 				long rawValue = Long.parseLong(inString.trim());
-				// check for each format possibility and pick nearest
-				long diff1 = Math.abs(SECS_SINCE_1970 - rawValue);
-				long diff2 = Math.abs(MSECS_SINCE_1970 - rawValue);
-				long diff3 = Math.abs(MSECS_SINCE_1990 - rawValue);
-				long diff4 = Math.abs(SECS_SINCE_GARTRIP - rawValue);
-
-				// Start off with "seconds since 1970" format
-				long smallestDiff = diff1;
-				_seconds = rawValue;
-				// Now check millis since 1970
-				if (diff2 < smallestDiff)
-				{
-					// milliseconds since 1970
-					_seconds = rawValue / 1000L;
-					smallestDiff = diff2;
-				}
-				// Now millis since 1990
-				if (diff3 < smallestDiff)
-				{
-					// milliseconds since 1990
-					_seconds = rawValue / 1000L + TWENTY_YEARS_IN_SECS;
-					smallestDiff = diff3;
-				}
-				// Lastly, check gartrip offset
-				if (diff4 < smallestDiff)
-				{
-					// seconds since gartrip offset
-					_seconds = rawValue + GARTRIP_OFFSET;
-				}
+				_seconds = getSeconds(rawValue);
 				_valid = true;
 			}
 			catch (NumberFormatException nfe)
@@ -119,6 +96,21 @@ public class Timestamp
 					}
 					catch (ParseException e) {}
 				}
+				if (!_valid && inString.length() == 19) {
+					GENERAL_TIMESTAMP_MATCHER = GENERAL_TIMESTAMP_PATTERN.matcher(inString);
+					if (GENERAL_TIMESTAMP_MATCHER.matches()) {
+						try {
+							_seconds = getSeconds(Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(1)),
+								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(2)),
+								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(3)),
+								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(4)),
+								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(5)),
+								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(6)));
+							_valid = true;
+						}
+						catch (NumberFormatException nfe2) {} // parse shouldn't fail if matcher matched
+					}
+				}
 			}
 		}
 	}
@@ -135,15 +127,7 @@ public class Timestamp
 	 */
 	public Timestamp(int inYear, int inMonth, int inDay, int inHour, int inMinute, int inSecond)
 	{
-		Calendar cal = Calendar.getInstance();
-		cal.set(Calendar.YEAR, inYear);
-		cal.set(Calendar.MONTH, inMonth - 1);
-		cal.set(Calendar.DAY_OF_MONTH, inDay);
-		cal.set(Calendar.HOUR_OF_DAY, inHour);
-		cal.set(Calendar.MINUTE, inMinute);
-		cal.set(Calendar.SECOND, inSecond);
-		cal.set(Calendar.MILLISECOND, 0);
-		_seconds = cal.getTimeInMillis() / 1000;
+		_seconds = getSeconds(inYear, inMonth, inDay, inHour, inMinute, inSecond);
 		_valid = true;
 	}
 
@@ -158,6 +142,68 @@ public class Timestamp
 		_valid = true;
 	}
 
+
+	/**
+	 * Convert the given timestamp parameters into a number of seconds
+	 * @param inYear year
+	 * @param inMonth month, beginning with 1
+	 * @param inDay day of month, beginning with 1
+	 * @param inHour hour of day, 0-24
+	 * @param inMinute minute
+	 * @param inSecond seconds
+	 * @return number of seconds
+	 */
+	private static long getSeconds(int inYear, int inMonth, int inDay, int inHour, int inMinute, int inSecond)
+	{
+		Calendar cal = Calendar.getInstance();
+		cal.set(Calendar.YEAR, inYear);
+		cal.set(Calendar.MONTH, inMonth - 1);
+		cal.set(Calendar.DAY_OF_MONTH, inDay);
+		cal.set(Calendar.HOUR_OF_DAY, inHour);
+		cal.set(Calendar.MINUTE, inMinute);
+		cal.set(Calendar.SECOND, inSecond);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal.getTimeInMillis() / 1000;
+	}
+
+	/**
+	 * Convert the given long parameters into a number of seconds
+	 * @param inRawValue long value representing seconds / milliseconds
+	 * @return number of seconds
+	 */
+	private static long getSeconds(long inRawValue)
+	{
+		// check for each format possibility and pick nearest
+		long diff1 = Math.abs(SECS_SINCE_1970 - inRawValue);
+		long diff2 = Math.abs(MSECS_SINCE_1970 - inRawValue);
+		long diff3 = Math.abs(MSECS_SINCE_1990 - inRawValue);
+		long diff4 = Math.abs(SECS_SINCE_GARTRIP - inRawValue);
+
+		// Start off with "seconds since 1970" format
+		long smallestDiff = diff1;
+		long seconds = inRawValue;
+		// Now check millis since 1970
+		if (diff2 < smallestDiff)
+		{
+			// milliseconds since 1970
+			seconds = inRawValue / 1000L;
+			smallestDiff = diff2;
+		}
+		// Now millis since 1990
+		if (diff3 < smallestDiff)
+		{
+			// milliseconds since 1990
+			seconds = inRawValue / 1000L + TWENTY_YEARS_IN_SECS;
+			smallestDiff = diff3;
+		}
+		// Lastly, check gartrip offset
+		if (diff4 < smallestDiff)
+		{
+			// seconds since gartrip offset
+			seconds = inRawValue + GARTRIP_OFFSET;
+		}
+		return seconds;
+	}
 
 	/**
 	 * @return true if timestamp is valid
@@ -232,15 +278,12 @@ public class Timestamp
 	 */
 	public String getText(int inFormat)
 	{
+		if (!_valid) {return "";}
 		if (inFormat == FORMAT_ISO_8601) {
 			return format(ISO_8601_FORMAT);
 		}
-		if (_text == null)
-		{
-			if (_valid) {
-				_text = format(DEFAULT_DATE_FORMAT);
-			}
-			else _text = "";
+		if (_text == null) {
+			_text = (_valid?format(DEFAULT_DATE_FORMAT):"");
 		}
 		return _text;
 	}

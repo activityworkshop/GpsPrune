@@ -74,7 +74,16 @@ public class ShowKeysScreen extends GenericFunction
 		introLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 0, 10));
 		mainPanel.add(introLabel, BorderLayout.NORTH);
 
-		JEditorPane kp = new JEditorPane("text/html", I18nManager.getText("dialog.keys.keylist"));
+		String keyText = I18nManager.getText("dialog.keys.keylist");
+		// If running on Mac, do global replace on "Ctrl" (or "Strg") for "Command" (or lang-specific text)
+		if (System.getProperty("mrj.version") != null) {
+			String mod = I18nManager.getText("dialog.keys.normalmodifier");
+			String macmod = I18nManager.getText("dialog.keys.macmodifier");
+			if (mod != null && macmod != null && mod.length() > 1 && macmod.length() > 1) {
+				keyText = keyText.replaceAll(mod, macmod);
+			}
+		}
+		JEditorPane kp = new JEditorPane("text/html", keyText);
 		kp.setEditable(false);
 		kp.setOpaque(false);
 		kp.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));

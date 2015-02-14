@@ -300,7 +300,8 @@ public abstract class FieldGuesser
 		{
 			String upperValue = inValue.toUpperCase();
 			// This is a header line so look for english or local text
-			return upperValue.equals("SEGMENT");
+			return upperValue.equals("SEGMENT")
+				|| upperValue.equals(I18nManager.getText("fieldname.newsegment").toUpperCase());
 		}
 		else
 		{

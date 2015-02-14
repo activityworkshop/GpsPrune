@@ -1,11 +1,13 @@
 package tim.prune.gui.map;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
@@ -377,7 +379,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if ((_mapImage == null || _recalculate))
 			{
 				paintMapContents();
-				_scaleBar.updateScale(_mapPosition.getZoom(), _mapPosition.getCentreTileY());
+				_scaleBar.updateScale(_mapPosition.getZoom(), _mapPosition.getYFromPixels(0, 0));
 			}
 			// Draw the prepared image onto the panel
 			if (_mapImage != null) {
@@ -468,8 +470,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				}
 
 				// Make maps brighter / fainter
-				float[] scaleFactors = {1.0f, 1.05f, 1.1f, 1.2f, 1.6f, 2.0f};
-				float scaleFactor = scaleFactors[_transparencySlider.getValue()];
+				final float[] scaleFactors = {1.0f, 1.05f, 1.1f, 1.2f, 1.6f, 2.2f};
+				final float scaleFactor = scaleFactors[_transparencySlider.getValue()];
 				if (scaleFactor > 1.0f)
 				{
 					RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
@@ -518,6 +520,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		final Color secondColour = Config.getColourScheme().getColour(ColourScheme.IDX_SECONDARY);
 		final Color textColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
 
+		// try to set double line width for painting
+		if (inG instanceof Graphics2D) {
+			((Graphics2D) inG).setStroke(new BasicStroke(2.0f));
+		}
 		int pointsPainted = 0;
 		// draw track points
 		inG.setColor(pointColour);
@@ -797,16 +803,25 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			 // select point if it's a left-click
 			if (!inE.isMetaDown())
 			{
-				int pointIndex = _track.getNearestPointIndex(
-					 _mapPosition.getXFromPixels(inE.getX(), getWidth()),
-					 _mapPosition.getYFromPixels(inE.getY(), getHeight()),
-					 _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY), false);
-				// Extend selection for shift-click
-				if (inE.isShiftDown()) {
-					_trackInfo.extendSelection(pointIndex);
+				if (inE.getClickCount() == 1)
+				{
+					// single click
+					int pointIndex = _track.getNearestPointIndex(
+						 _mapPosition.getXFromPixels(inE.getX(), getWidth()),
+						 _mapPosition.getYFromPixels(inE.getY(), getHeight()),
+						 _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY), false);
+					// Extend selection for shift-click
+					if (inE.isShiftDown()) {
+						_trackInfo.extendSelection(pointIndex);
+					}
+					else {
+						_trackInfo.selectPoint(pointIndex);
+					}
 				}
-				else {
-					_trackInfo.selectPoint(pointIndex);
+				else if (inE.getClickCount() == 2) {
+					// double click
+					panMap(inE.getX() - getWidth()/2, inE.getY() - getHeight()/2);
+					zoomIn();
 				}
 			}
 			else

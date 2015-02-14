@@ -1,4 +1,4 @@
-Prune version 10
+Prune version 11
 ================
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
@@ -17,7 +17,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_10.jar
+   java -jar prune_11.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,7 +25,19 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_10.jar --lang=DE
+   java -jar prune_11.jar --lang=DE
+
+New with version 11
+===================
+
+The following features were added since version 10:
+  - Option to select which of the named tracks to load out of a gpx file or gps
+  - Function to delete all values of a single field (eg all altitudes, all timestamps)
+  - Export of 3d view to svg file
+  - Function to upload current track to gpsies.com
+  - Option to hide sidebars (left panel, right panel and lower panel) to just show map
+  - Various bugfixes, especially with gpx export, track compression and scale bar
+  - Dutch and Czech translations thanks to generous volunteers
 
 New with version 10
 ===================
@@ -162,7 +174,7 @@ Further information and updates
 To obtain the source code (if it wasn't included in your jar file), or for further information,
 please visit the website:  http://activityworkshop.net/
 
-You will find there user guides and screenshots illustrating the major features.
+You will find there user guides, screenshots and demo videos illustrating the major features.
 As Prune is further developed, subsequent versions of the program will also be made freely
 available at this website.
 

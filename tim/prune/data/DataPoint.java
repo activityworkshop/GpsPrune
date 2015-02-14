@@ -152,12 +152,7 @@ public class DataPoint
 		_fieldValues[fieldIndex] = inValue;
 		// Increment edit count on all field edits except segment
 		if (inField != Field.NEW_SEGMENT) {
-			if (!inUndo) {
-				_modifyCount++;
-			}
-			else {
-				_modifyCount--;
-			}
+			setModified(inUndo);
 		}
 		// Change Coordinate, Altitude, Name or Timestamp fields after edit
 		if (_altitude != null && _altitude.getFormat() != Altitude.Format.NO_FORMAT) {
@@ -167,6 +162,20 @@ public class DataPoint
 		else {
 			// use default altitude format from config
 			parseFields(inField, Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET);
+		}
+	}
+
+	/**
+	 * Either increment or decrement the modify count, depending on whether it's an undo or not
+	 * @param inUndo true for undo, false otherwise
+	 */
+	public void setModified(boolean inUndo)
+	{
+		if (!inUndo) {
+			_modifyCount++;
+		}
+		else {
+			_modifyCount--;
 		}
 	}
 

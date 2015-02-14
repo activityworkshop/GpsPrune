@@ -3,6 +3,7 @@ package tim.prune.undo;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
+import tim.prune.data.DataPoint;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -54,9 +55,12 @@ public class UndoAddAltitudeOffset implements UndoOperation
 		// Perform the inverse operation
 		final int numPoints = _altitudes.length;
 		for (int i=0; i<numPoints; i++) {
-			inTrackInfo.getTrack().getPoint(i+_startIndex).getAltitude().reset(_altitudes[i]);
+			DataPoint point = inTrackInfo.getTrack().getPoint(i+_startIndex);
+			point.getAltitude().reset(_altitudes[i]);
+			point.setModified(true);
 		}
 		_altitudes = null;
+		inTrackInfo.getSelection().markInvalid();
 		UpdateMessageBroker.informSubscribers();
 	}
 }

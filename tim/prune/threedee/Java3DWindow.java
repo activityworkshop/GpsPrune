@@ -44,8 +44,8 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
 
 import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
-import tim.prune.data.Altitude;
 import tim.prune.data.Track;
+import tim.prune.function.Export3dFunction;
 
 
 /**
@@ -58,7 +58,7 @@ public class Java3DWindow implements ThreeDWindow
 	private JFrame _frame = null;
 	private ThreeDModel _model = null;
 	private OrbitBehavior _orbit = null;
-	private int _altitudeCap = ThreeDModel.MINIMUM_ALTITUDE_CAP;
+	private double _altFactor = 50.0;
 
 	/** only prompt about big track size once */
 	private static boolean TRACK_SIZE_WARNING_GIVEN = false;
@@ -95,18 +95,17 @@ public class Java3DWindow implements ThreeDWindow
 	 */
 	public void show() throws ThreeDException
 	{
-		// Get the altitude cap to use
-		String altitudeUnits = getAltitudeUnitsLabel(_track);
-		Object altCapString = JOptionPane.showInputDialog(_parentFrame,
-			I18nManager.getText("dialog.3d.altitudecap") + " (" + altitudeUnits + ")",
+		// Get the altitude exaggeration to use
+		Object factorString = JOptionPane.showInputDialog(_parentFrame,
+			I18nManager.getText("dialog.3d.altitudefactor"),
 			I18nManager.getText("dialog.3d.title"),
-			JOptionPane.QUESTION_MESSAGE, null, null, "" + _altitudeCap);
-		if (altCapString == null) return;
-		try
-		{
-			_altitudeCap = Integer.parseInt(altCapString.toString());
+			JOptionPane.QUESTION_MESSAGE, null, null, _altFactor);
+		if (factorString == null) return;
+		try {
+			_altFactor = Double.parseDouble(factorString.toString());
 		}
 		catch (Exception e) {} // Ignore parse errors
+		if (_altFactor < 1.0) {_altFactor = 1.0;}
 
 		// Set up the graphics config
 		GraphicsConfiguration config = SimpleUniverse.getPreferredConfiguration();
@@ -137,8 +136,7 @@ public class Java3DWindow implements ThreeDWindow
 				// opted to continue, don't show warning again
 				TRACK_SIZE_WARNING_GIVEN = true;
 			}
-			else
-			{
+			else {
 				// opted to cancel - show warning again next time
 				return;
 			}
@@ -156,8 +154,7 @@ public class Java3DWindow implements ThreeDWindow
 		u.getViewingPlatform().setNominalViewingTransform();
 
 		// Add behaviour to rotate using mouse
-		_orbit = new OrbitBehavior(canvas, OrbitBehavior.REVERSE_ALL |
-								  OrbitBehavior.STOP_ZOOM);
+		_orbit = new OrbitBehavior(canvas, OrbitBehavior.REVERSE_ALL | OrbitBehavior.STOP_ZOOM);
 		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
 		_orbit.setSchedulingBounds(bounds);
 		u.getViewingPlatform().setViewPlatformBehavior(_orbit);
@@ -172,19 +169,27 @@ public class Java3DWindow implements ThreeDWindow
 		// Make panel for render, close buttons
 		JPanel panel = new JPanel();
 		panel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		// Add callback button for render
-		JButton renderButton = new JButton(I18nManager.getText("function.exportpov"));
-		renderButton.addActionListener(new ActionListener()
-		{
-			/** Render button pressed */
+		// Add button for exporting pov
+		JButton povButton = new JButton(I18nManager.getText("function.exportpov"));
+		povButton.addActionListener(new ActionListener() {
+			/** Export pov button pressed */
 			public void actionPerformed(ActionEvent e)
 			{
-				if (_orbit != null)
-				{
-					callbackRender();
+				if (_orbit != null) {
+					callbackRender(FunctionLibrary.FUNCTION_POVEXPORT);
 				}
 			}});
-		panel.add(renderButton);
+		panel.add(povButton);
+		// Add button for exporting svg
+		JButton svgButton = new JButton(I18nManager.getText("function.exportsvg"));
+		svgButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				if (_orbit != null) {
+					callbackRender(FunctionLibrary.FUNCTION_SVGEXPORT);
+				}
+			}});
+		panel.add(svgButton);
 		// Display coordinates of lat/long lines of 3d graph in separate dialog
 		JButton showLinesButton = new JButton(I18nManager.getText("button.showlines"));
 		showLinesButton.addActionListener(new ActionListener() {
@@ -202,10 +207,8 @@ public class Java3DWindow implements ThreeDWindow
 		closeButton.addActionListener(new ActionListener()
 		{
 			/** Close button pressed - clean up */
-			public void actionPerformed(ActionEvent e)
-			{
-				_frame.dispose();
-				_frame = null;
+			public void actionPerformed(ActionEvent e) {
+				dispose();
 				_orbit = null;
 			}
 		});
@@ -215,16 +218,14 @@ public class Java3DWindow implements ThreeDWindow
 		_frame.pack();
 		// Add a listener to clean up when window closed
 		_frame.addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e)
-			{
+			public void windowClosing(WindowEvent e) {
 				dispose();
 			}
 		});
 
 		// show frame
 		_frame.setVisible(true);
-		if (_frame.getState() == JFrame.ICONIFIED)
-		{
+		if (_frame.getState() == JFrame.ICONIFIED) {
 			_frame.setState(JFrame.NORMAL);
 		}
 	}
@@ -274,20 +275,22 @@ public class Java3DWindow implements ThreeDWindow
 		Box plane = null;
 		planeAppearance = new Appearance();
 		planeAppearance.setMaterial(new Material(new Color3f(0.1f, 0.2f, 0.2f),
-		 new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.3f, 0.4f, 0.4f),
-		 new Color3f(0.3f, 0.3f, 0.3f), 0.0f));
+			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.3f, 0.4f, 0.4f),
+			new Color3f(0.3f, 0.3f, 0.3f), 0.0f));
 		plane = new Box(10f, 0.04f, 10f, planeAppearance);
 		objTrans.addChild(plane);
 
 		// N, S, E, W
 		GeneralPath bevelPath = new GeneralPath();
 		bevelPath.moveTo(0.0f, 0.0f);
-		for (int i=0; i<91; i+= 5)
+		for (int i=0; i<91; i+= 5) {
 			bevelPath.lineTo((float) (0.1 - 0.1 * Math.cos(Math.toRadians(i))),
 			  (float) (0.1 * Math.sin(Math.toRadians(i))));
-		for (int i=90; i>0; i-=5)
+		}
+		for (int i=90; i>0; i-=5) {
 			bevelPath.lineTo((float) (0.3 + 0.1 * Math.cos(Math.toRadians(i))),
 			  (float) (0.1 * Math.sin(Math.toRadians(i))));
+		}
 		Font3D compassFont = new Font3D(
 			new Font(CARDINALS_FONT, Font.PLAIN, 1),
 			new FontExtrusion(bevelPath));
@@ -298,7 +301,7 @@ public class Java3DWindow implements ThreeDWindow
 
 		// create and scale model
 		_model = new ThreeDModel(_track);
-		_model.setAltitudeCap(_altitudeCap);
+		_model.setAltitudeFactor(_altFactor);
 		_model.scale();
 
 		// Lat/Long lines
@@ -308,27 +311,23 @@ public class Java3DWindow implements ThreeDWindow
 		objTrans.addChild(createDataPoints(_model));
 
 		// Create lights
-		BoundingSphere bounds =
-		  new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
+		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
 		AmbientLight aLgt = new AmbientLight(new Color3f(1.0f, 1.0f, 1.0f));
 		aLgt.setInfluencingBounds(bounds);
 		objTrans.addChild(aLgt);
 
 		PointLight pLgt = new PointLight(new Color3f(1.0f, 1.0f, 1.0f),
-		 new Point3f(0f, 0f, 2f),
-		 new Point3f(0.25f, 0.05f, 0.0f) );
+			new Point3f(0f, 0f, 2f), new Point3f(0.25f, 0.05f, 0.0f) );
 		pLgt.setInfluencingBounds(bounds);
 		objTrans.addChild(pLgt);
 
 		PointLight pl2 = new PointLight(new Color3f(0.8f, 0.9f, 0.4f),
-		 new Point3f(6f, 1f, 6f),
-		 new Point3f(0.2f, 0.1f, 0.05f) );
+			new Point3f(6f, 1f, 6f), new Point3f(0.2f, 0.1f, 0.05f) );
 		pl2.setInfluencingBounds(bounds);
 		objTrans.addChild(pl2);
 
 		PointLight pl3 = new PointLight(new Color3f(0.7f, 0.7f, 0.7f),
-		 new Point3f(0.0f, 12f, -2f),
-		 new Point3f(0.1f, 0.1f, 0.0f) );
+			new Point3f(0.0f, 12f, -2f), new Point3f(0.1f, 0.1f, 0.0f) );
 		pl3.setInfluencingBounds(bounds);
 		objTrans.addChild(pl3);
 
@@ -350,8 +349,8 @@ public class Java3DWindow implements ThreeDWindow
 	{
 		Text3D txt = new Text3D(inFont, inText, inLocn, Text3D.ALIGN_FIRST, Text3D.PATH_RIGHT);
 		Material mat = new Material(new Color3f(0.5f, 0.5f, 0.55f),
-		 new Color3f(0.05f, 0.05f, 0.1f), new Color3f(0.3f, 0.4f, 0.5f),
-		 new Color3f(0.4f, 0.5f, 0.7f), 70.0f);
+			new Color3f(0.05f, 0.05f, 0.1f), new Color3f(0.3f, 0.4f, 0.5f),
+			new Color3f(0.4f, 0.5f, 0.7f), 70.0f);
 		mat.setLightingEnable(true);
 		Appearance app = new Appearance();
 		app.setMaterial(mat);
@@ -392,7 +391,7 @@ public class Java3DWindow implements ThreeDWindow
 	{
 		Cylinder latline = new Cylinder(0.1f, (float) (inSize*2));
 		Transform3D horizShift = new Transform3D();
-		horizShift.setTranslation(new Vector3d(0.0, 0.0, inLatitude));
+		horizShift.setTranslation(new Vector3d(0.0, 0.0, -inLatitude));
 		TransformGroup horizTrans = new TransformGroup(horizShift);
 		Transform3D zRot = new Transform3D();
 		zRot.rotZ(Math.toRadians(90.0));
@@ -482,15 +481,17 @@ public class Java3DWindow implements ThreeDWindow
 	}
 
 
+	/** @return track point object */
 	private static Group createTrackpoint(Point3d inPointPos, byte inHeightCode)
 	{
 		Material mat = getTrackpointMaterial(inHeightCode);
 		// MAYBE: sort symbol scaling
-		Sphere dot = new Sphere(0.2f); // * symbolScaling / 100f);
+		Sphere dot = new Sphere(0.2f);
 		return createBall(inPointPos, dot, mat);
 	}
 
 
+	/** @return Material object for track points with the appropriate colour for the height */
 	private static Material getTrackpointMaterial(byte inHeightCode)
 	{
 		// create default material
@@ -499,10 +500,10 @@ public class Java3DWindow implements ThreeDWindow
 			new Color3f(1.0f, 0.6f, 0.6f), 70.0f);
 		// change colour according to height code
 		if (inHeightCode == 1) mat.setDiffuseColor(new Color3f(0.4f, 0.9f, 0.2f));
-		if (inHeightCode == 2) mat.setDiffuseColor(new Color3f(0.7f, 0.8f, 0.2f));
-		if (inHeightCode == 3) mat.setDiffuseColor(new Color3f(0.5f, 0.85f, 0.95f));
-		if (inHeightCode == 4) mat.setDiffuseColor(new Color3f(0.1f, 0.9f, 0.9f));
-		if (inHeightCode >= 5) mat.setDiffuseColor(new Color3f(1.0f, 1.0f, 1.0f));
+		else if (inHeightCode == 2) mat.setDiffuseColor(new Color3f(0.7f, 0.8f, 0.2f));
+		else if (inHeightCode == 3) mat.setDiffuseColor(new Color3f(0.3f, 0.6f, 0.4f));
+		else if (inHeightCode == 4) mat.setDiffuseColor(new Color3f(0.1f, 0.9f, 0.9f));
+		else if (inHeightCode >= 5) mat.setDiffuseColor(new Color3f(1.0f, 1.0f, 1.0f));
 		// return object
 		return mat;
 	}
@@ -531,15 +532,14 @@ public class Java3DWindow implements ThreeDWindow
 		// Also create rod for ball to sit on
 		Cylinder rod = new Cylinder(0.1f, (float) inPosition.y);
 		Material rodMat = new Material(new Color3f(0.2f, 0.2f, 0.2f),
-		 new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.2f, 0.2f, 0.2f),
-		 new Color3f(0.05f, 0.05f, 0.05f), 0.4f);
+			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.2f, 0.2f, 0.2f),
+			new Color3f(0.05f, 0.05f, 0.05f), 0.4f);
 		rodMat.setLightingEnable(true);
 		Appearance rodApp = new Appearance();
 		rodApp.setMaterial(rodMat);
 		rod.setAppearance(rodApp);
 		Transform3D rodShift = new Transform3D();
-		rodShift.setTranslation(new Vector3d(inPosition.x,
-		 inPosition.y/2.0, inPosition.z));
+		rodShift.setTranslation(new Vector3d(inPosition.x, inPosition.y/2.0, inPosition.z));
 		TransformGroup rodShiftTrans = new TransformGroup(rodShift);
 		rodShiftTrans.addChild(rod);
 		group.addChild(rodShiftTrans);
@@ -550,8 +550,9 @@ public class Java3DWindow implements ThreeDWindow
 
 	/**
 	 * Calculate the angles and call them back to the app
+	 * @param inFunction function to call (either pov or svg)
 	 */
-	private void callbackRender()
+	private void callbackRender(Export3dFunction inFunction)
 	{
 		Transform3D trans3d = new Transform3D();
 		_orbit.getViewingPlatform().getViewPlatformTransform().getTransform(trans3d);
@@ -564,28 +565,13 @@ public class Java3DWindow implements ThreeDWindow
 		firstTran.rotY(Math.toRadians(-INITIAL_Y_ROTATION));
 		Transform3D secondTran = new Transform3D();
 		secondTran.rotX(Math.toRadians(-INITIAL_X_ROTATION));
-		// Apply inverse rotations in reverse order to test point
+		// Apply inverse rotations in reverse order to the test point
 		Point3d result = new Point3d();
 		secondTran.transform(point, result);
 		firstTran.transform(result);
 		// Callback settings to pov export function
-		FunctionLibrary.FUNCTION_POVEXPORT.setCameraCoordinates(result.x, result.y, result.z);
-		FunctionLibrary.FUNCTION_POVEXPORT.setAltitudeCap(_altitudeCap);
-		FunctionLibrary.FUNCTION_POVEXPORT.begin();
+		inFunction.setCameraCoordinates(result.x, result.y, result.z);
+		inFunction.setAltitudeExaggeration(_altFactor);
+		inFunction.begin();
 	}
-
-
-	/**
-	 * Get a units label for the altitudes in the given Track
-	 * @param inTrack Track object
-	 * @return units label for altitude used in Track
-	 */
-	private static String getAltitudeUnitsLabel(Track inTrack)
-	{
-		Altitude.Format altitudeFormat = inTrack.getAltitudeRange().getFormat();
-		if (altitudeFormat == Altitude.Format.METRES)
-			return I18nManager.getText("units.metres.short");
-		return I18nManager.getText("units.feet.short");
-	}
-
 }

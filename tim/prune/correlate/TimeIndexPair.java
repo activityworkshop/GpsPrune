@@ -39,7 +39,9 @@ public class TimeIndexPair implements Comparable<TimeIndexPair>
 	 */
 	public int compareTo(TimeIndexPair inOther)
 	{
-		return (int) (_time - inOther._time);
+		int compare = (int) (_time - inOther._time);
+		if (compare == 0) {compare = _index - inOther._index;}
+		return compare;
 	}
 
 	/**

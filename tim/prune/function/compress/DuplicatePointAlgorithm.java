@@ -48,7 +48,7 @@ public class DuplicatePointAlgorithm extends CompressionAlgorithm
 					for (int j=i-NUM_POINTS_TO_BACKTRACK; j<i; j++)
 					{
 						if (j<0) {j=0;} // only look at last few points, but not before 0
-						if (currPoint.isDuplicate(_track.getPoint(j)))
+						if (!inFlags[j] && currPoint.isDuplicate(_track.getPoint(j)))
 						{
 							inFlags[i] = true;
 							numDeleted++;

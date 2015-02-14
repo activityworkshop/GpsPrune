@@ -166,8 +166,11 @@ public class PhotoCorrelator extends GenericFunction
 		JPanel card2Top = new JPanel();
 		card2Top.setLayout(new BoxLayout(card2Top, BoxLayout.Y_AXIS));
 		_tipLabel = new JLabel(I18nManager.getText("dialog.correlate.options.tip"));
+		_tipLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 5, 6));
 		card2Top.add(_tipLabel);
-		card2Top.add(new JLabel(I18nManager.getText("dialog.correlate.options.intro")));
+		JLabel introLabel = new JLabel(I18nManager.getText("dialog.correlate.options.intro"));
+		introLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 5, 6));
+		card2Top.add(introLabel);
 		// time offset section
 		JPanel offsetPanel = new JPanel();
 		offsetPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("dialog.correlate.options.offsetpanel")));
@@ -262,7 +265,7 @@ public class PhotoCorrelator extends GenericFunction
 		card2Top.add(previewButton);
 		card2.add(card2Top, BorderLayout.NORTH);
 		// preview
-		_previewTable = new JTable();
+		_previewTable = new JTable(new PhotoPreviewTableModel());
 		JScrollPane previewScrollPane = new JScrollPane(_previewTable);
 		previewScrollPane.setPreferredSize(new Dimension(300, 100));
 		card2.add(previewScrollPane, BorderLayout.CENTER);
@@ -336,7 +339,9 @@ public class PhotoCorrelator extends GenericFunction
 		for (int i=0; i<numPhotos; i++)
 		{
 			Photo photo = inTrackInfo.getPhotoList().getPhoto(i);
-			if (photo.getDataPoint() != null && photo.getDataPoint().hasTimestamp())
+			// For working out time differences, can't use photos which already had point information
+			if (photo.getDataPoint() != null && photo.getDataPoint().hasTimestamp()
+				&& photo.getOriginalStatus() == Photo.Status.NOT_CONNECTED)
 			{
 				// Calculate time difference, add to table model
 				long timeDiff = photo.getTimestamp().getSecondsSince(photo.getDataPoint().getTimestamp());
@@ -428,6 +433,8 @@ public class PhotoCorrelator extends GenericFunction
 			PhotoPreviewTableRow row = new PhotoPreviewTableRow(pair);
 			// Don't try to correlate photos which don't have points either side
 			boolean correlatePhoto = pair.isValid();
+			// Don't select photos which already have a point
+			if (photo.getCurrentStatus() != Photo.Status.NOT_CONNECTED) {correlatePhoto = false;}
 			// Check time limits, distance limits
 			if (timeLimit != null && correlatePhoto) {
 				long numSecs = pair.getMinSeconds();
@@ -442,8 +449,7 @@ public class PhotoCorrelator extends GenericFunction
 				correlatePhoto = (angDistPhoto < angDistLimit);
 			}
 			// Don't select photos which are already correlated to the same point
-			if (pair.getSecondsBefore() == 0L && pair.getPointBefore().getPhoto() != null
-				&& pair.getPointBefore().getPhoto().equals(photo)) {
+			if (pair.getSecondsBefore() == 0L && pair.getPointBefore().isDuplicate(photo.getDataPoint())) {
 				correlatePhoto = false;
 			}
 			row.setCorrelateFlag(correlatePhoto);
@@ -548,11 +554,14 @@ public class PhotoCorrelator extends GenericFunction
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = inTrack.getPoint(i);
-			Timestamp pointStamp = point.getTimestamp();
-			if (pointStamp != null && pointStamp.isValid())
+			if (point.getPhoto() == null || point.getPhoto().getCurrentStatus() != Photo.Status.TAGGED)
 			{
-				long numSeconds = pointStamp.getSecondsSince(photoStamp);
-				pair.addPoint(point, numSeconds);
+				Timestamp pointStamp = point.getTimestamp();
+				if (pointStamp != null && pointStamp.isValid())
+				{
+					long numSeconds = pointStamp.getSecondsSince(photoStamp);
+					pair.addPoint(point, numSeconds);
+				}
 			}
 		}
 		return pair;
@@ -692,12 +701,10 @@ public class PhotoCorrelator extends GenericFunction
 						pair.getPointBefore().setPhoto(pair.getPhoto());
 						pair.getPhoto().setDataPoint(pair.getPointBefore());
 					}
-					else if (pointPhoto.equals(pair.getPhoto()))
-					{
+					else if (pointPhoto.equals(pair.getPhoto())) {
 						// photo is already connected, nothing to do
 					}
-					else
-					{
+					else {
 						// point is already connected to a different photo, so need to clone point
 						numPointsToCreate++;
 					}

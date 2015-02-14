@@ -7,12 +7,14 @@ import tim.prune.function.compress.CompressTrackFunction;
 import tim.prune.function.distance.DistanceFunction;
 import tim.prune.function.edit.PointNameEditor;
 import tim.prune.function.gpsies.GetGpsiesFunction;
+import tim.prune.function.gpsies.UploadGpsiesFunction;
 import tim.prune.function.srtm.LookupSrtmFunction;
 import tim.prune.load.GpsLoader;
 import tim.prune.save.GpsSaver;
 import tim.prune.save.GpxExporter;
 import tim.prune.save.KmlExporter;
 import tim.prune.save.PovExporter;
+import tim.prune.save.SvgExporter;
 
 /**
  * Class to provide access to functions
@@ -22,6 +24,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_GPXEXPORT = null;
 	public static GenericFunction FUNCTION_KMLEXPORT = null;
 	public static PovExporter FUNCTION_POVEXPORT     = null;
+	public static SvgExporter FUNCTION_SVGEXPORT     = null;
 	public static GenericFunction FUNCTION_GPSLOAD  = null;
 	public static GenericFunction FUNCTION_GPSSAVE  = null;
 	public static GenericFunction FUNCTION_SAVECONFIG  = null;
@@ -33,6 +36,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_ADD_TIME_OFFSET  = null;
 	public static GenericFunction FUNCTION_ADD_ALTITUDE_OFFSET  = null;
 	public static GenericFunction FUNCTION_CONVERT_NAMES_TO_TIMES  = null;
+	public static GenericFunction FUNCTION_DELETE_FIELD_VALUES  = null;
 	public static GenericFunction FUNCTION_PASTE_COORDINATES = null;
 	public static GenericFunction FUNCTION_FIND_WAYPOINT = null;
 	public static GenericFunction FUNCTION_DUPLICATE_POINT = null;
@@ -45,6 +49,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_DISTANCES  = null;
 	public static GenericFunction FUNCTION_FULL_RANGE_DETAILS = null;
 	public static GenericFunction FUNCTION_GET_GPSIES = null;
+	public static GenericFunction FUNCTION_UPLOAD_GPSIES = null;
 	public static GenericFunction FUNCTION_SET_MAP_BG = null;
 	public static GenericFunction FUNCTION_SET_DISK_CACHE = null;
 	public static GenericFunction FUNCTION_SET_PATHS  = null;
@@ -66,6 +71,7 @@ public abstract class FunctionLibrary
 		FUNCTION_GPXEXPORT = new GpxExporter(inApp);
 		FUNCTION_KMLEXPORT = new KmlExporter(inApp);
 		FUNCTION_POVEXPORT = new PovExporter(inApp);
+		FUNCTION_SVGEXPORT = new SvgExporter(inApp);
 		FUNCTION_GPSLOAD   = new GpsLoader(inApp);
 		FUNCTION_GPSSAVE   = new GpsSaver(inApp);
 		FUNCTION_SAVECONFIG = new SaveConfig(inApp);
@@ -77,6 +83,7 @@ public abstract class FunctionLibrary
 		FUNCTION_ADD_TIME_OFFSET = new AddTimeOffset(inApp);
 		FUNCTION_ADD_ALTITUDE_OFFSET = new AddAltitudeOffset(inApp);
 		FUNCTION_CONVERT_NAMES_TO_TIMES = new ConvertNamesToTimes(inApp);
+		FUNCTION_DELETE_FIELD_VALUES = new DeleteFieldValues(inApp);
 		FUNCTION_PASTE_COORDINATES = new PasteCoordinates(inApp);
 		FUNCTION_FIND_WAYPOINT = new FindWaypoint(inApp);
 		FUNCTION_DUPLICATE_POINT = new DuplicatePoint(inApp);
@@ -89,6 +96,7 @@ public abstract class FunctionLibrary
 		FUNCTION_DISTANCES = new DistanceFunction(inApp);
 		FUNCTION_FULL_RANGE_DETAILS = new FullRangeDetails(inApp);
 		FUNCTION_GET_GPSIES = new GetGpsiesFunction(inApp);
+		FUNCTION_UPLOAD_GPSIES = new UploadGpsiesFunction(inApp);
 		FUNCTION_SET_MAP_BG = new SetMapBgFunction(inApp);
 		FUNCTION_SET_DISK_CACHE = new DiskCacheConfig(inApp);
 		FUNCTION_SET_PATHS = new SetPathsFunction(inApp);

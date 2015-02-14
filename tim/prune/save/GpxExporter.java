@@ -38,6 +38,8 @@ import tim.prune.data.Field;
 import tim.prune.data.Timestamp;
 import tim.prune.data.TrackInfo;
 import tim.prune.load.GenericFileFilter;
+import tim.prune.save.xml.GpxCacherList;
+
 
 /**
  * Class to export track information
@@ -334,7 +336,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 				if (point.isWaypoint()) {
 					if (exportWaypoints)
 					{
-						String pointSource = (inUseCopy?gpxCachers.getSourceString(point):null);
+						String pointSource = (inUseCopy?getPointSource(gpxCachers, point):null);
 						if (pointSource != null) {
 							inWriter.write(pointSource);
 							inWriter.write('\n');
@@ -404,7 +406,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 				if ((point.getPhoto()==null && inExportTrackpoints) || (point.getPhoto()!=null && inExportPhotos))
 				{
 					// get the source from the point (if any)
-					String pointSource = (inCachers!=null?inCachers.getSourceString(point):null);
+					String pointSource = getPointSource(inCachers, point);
 					boolean writePoint = (pointSource != null && pointSource.toLowerCase().startsWith(inPointTag))
 						|| (pointSource == null && !inOnlyCopies);
 					if (writePoint)
@@ -428,6 +430,62 @@ public class GpxExporter extends GenericFunction implements Runnable
 		}
 		if (numSaved > 0) {inWriter.write(inEndTag);}
 		return numSaved;
+	}
+
+
+	/**
+	 * Get the point source for the specified point
+	 * @param inCachers list of GPX cachers to ask for source
+	 * @param inPoint point object
+	 * @return xml source if available, or null otherwise
+	 */
+	private static String getPointSource(GpxCacherList inCachers, DataPoint inPoint)
+	{
+		if (inCachers == null || inPoint == null) {return null;}
+		String source = inCachers.getSourceString(inPoint);
+		if (source == null || !inPoint.isModified()) {return source;}
+		// Point has been modified - maybe it's possible to modify the source
+		source = replaceGpxTags(source, "lat=\"", "\"", inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		source = replaceGpxTags(source, "lon=\"", "\"", inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		source = replaceGpxTags(source, "<ele>", "</ele>", inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
+		source = replaceGpxTags(source, "<time>", "</time>", inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
+		if (inPoint.isWaypoint()) {source = replaceGpxTags(source, "<name>", "</name>", inPoint.getWaypointName());}  // only for waypoints
+		return source;
+	}
+
+	/**
+	 * Replace the given value into the given XML string
+	 * @param inSource source XML for point
+	 * @param inStartTag start tag for field
+	 * @param inEndTag end tag for field
+	 * @param inValue value to replace between start tag and end tag
+	 * @return modified String, or null if not possible
+	 */
+	private static String replaceGpxTags(String inSource, String inStartTag, String inEndTag, String inValue)
+	{
+		if (inSource == null) {return null;}
+		// Look for start and end tags within source
+		final int startPos = inSource.indexOf(inStartTag);
+		final int endPos = inSource.indexOf(inEndTag, startPos+inStartTag.length());
+		if (startPos > 0 && endPos > 0)
+		{
+			String origValue = inSource.substring(startPos + inStartTag.length(), endPos);
+			if (inValue != null && origValue.equals(inValue)) {
+				// Value unchanged
+				return inSource;
+			}
+			else if (inValue == null || inValue.equals("")) {
+				// Need to delete value
+				return inSource.substring(0, startPos) + inSource.substring(endPos + inEndTag.length());
+			}
+			else {
+				// Need to replace value
+				return inSource.substring(0, startPos+inStartTag.length()) + inValue + inSource.substring(endPos);
+			}
+		}
+		// Value not found for this field in original source
+		if (inValue == null || inValue.equals("")) {return inSource;}
+		return null;
 	}
 
 	/**

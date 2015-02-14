@@ -14,6 +14,8 @@ public class UndoLookupSrtm implements UndoOperation
 {
 	/** DataPoint objects which didn't have altitudes before */
 	private DataPoint[] _points;
+	/** Altitude strings if present */
+	private String[] _altitudes;
 
 
 	/**
@@ -24,12 +26,16 @@ public class UndoLookupSrtm implements UndoOperation
 	{
 		Track track = inTrackInfo.getTrack();
 		int numPoints = track.getNumPoints();
-		// Make array of points without altitudes
+		// Make arrays of points and altitudes
 		_points = new DataPoint[numPoints];
+		_altitudes = new String[numPoints];
 		for (int i=0; i<numPoints; i++) {
 			DataPoint point = track.getPoint(i);
-			if (!point.hasAltitude()) {
+			if (!point.hasAltitude() || point.getAltitude().getValue() == 0) {
 				_points[i] = point;
+				if (point.hasAltitude()) {
+					_altitudes[i] = point.getFieldValue(Field.ALTITUDE);
+				}
 			}
 		}
 	}
@@ -55,7 +61,12 @@ public class UndoLookupSrtm implements UndoOperation
 		for (int i=0; i<numPoints; i++) {
 			DataPoint point = _points[i];
 			if (point != null && point.hasAltitude()) {
-				point.setFieldValue(Field.ALTITUDE, null, true);
+				if (_altitudes[i] == null) {
+					point.setFieldValue(Field.ALTITUDE, null, true);
+				}
+				else {
+					point.setFieldValue(Field.ALTITUDE, _altitudes[i], true);
+				}
 			}
 		}
 		_points = null;

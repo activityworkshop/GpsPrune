@@ -1,4 +1,4 @@
-package tim.prune.save;
+package tim.prune.save.xml;
 
 import tim.prune.data.DataPoint;
 import tim.prune.data.FileInfo;
@@ -37,8 +37,6 @@ public class GpxCacherList
 	public String getSourceString(DataPoint inPoint)
 	{
 		String str = null;
-		// Check if point has been modified, if so return null
-		if (inPoint.isModified()) {return null;}
 		// Loop over sources
 		for (int i=0; i<_cacherList.length && (str == null); i++) {
 			GpxCacher cacher = _cacherList[i];

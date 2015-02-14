@@ -74,8 +74,10 @@ public class ExifReader
 	public static final int TAG_GPS_TIMESTAMP = 0x0007;
 	/** GPS date (atomic clock) GPSDateStamp 23 1d RATIONAL 3 */
 	public static final int TAG_GPS_DATESTAMP = 0x001d;
-	/** Exif timestamp */
+	/** "Original" Exif timestamp */
 	public static final int TAG_DATETIME_ORIGINAL = 0x9003;
+	/** "Creation" or "Digitized" timestamp */
+    public static final int TAG_DATETIME_DIGITIZED = 0x9004;
 	/** Thumbnail offset */
 	private static final int TAG_THUMBNAIL_OFFSET = 0x0201;
 	/** Thumbnail length */
@@ -331,39 +333,53 @@ public class ExifReader
 	private void processGpsTag(JpegData inMetadata, int inTagType, int inTagValueOffset,
 		int inComponentCount, int inFormatCode)
 	{
-		// Only interested in tags latref, lat, longref, lon, altref, alt and gps timestamp
-		switch (inTagType)
+		try
 		{
-			case TAG_GPS_LATITUDE_REF:
-				inMetadata.setLatitudeRef(readString(inTagValueOffset, inFormatCode, inComponentCount));
-				break;
-			case TAG_GPS_LATITUDE:
-				Rational[] latitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
-				inMetadata.setLatitude(new double[] {latitudes[0].doubleValue(), latitudes[1].doubleValue(), latitudes[2].doubleValue()});
-				break;
-			case TAG_GPS_LONGITUDE_REF:
-				inMetadata.setLongitudeRef(readString(inTagValueOffset, inFormatCode, inComponentCount));
-				break;
-			case TAG_GPS_LONGITUDE:
-				Rational[] longitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
-				inMetadata.setLongitude(new double[] {longitudes[0].doubleValue(), longitudes[1].doubleValue(), longitudes[2].doubleValue()});
-				break;
-			case TAG_GPS_ALTITUDE_REF:
-				inMetadata.setAltitudeRef(_data[inTagValueOffset]);
-				break;
-			case TAG_GPS_ALTITUDE:
-				inMetadata.setAltitude(readRational(inTagValueOffset, inFormatCode, inComponentCount).intValue());
-				break;
-			case TAG_GPS_TIMESTAMP:
-				Rational[] times = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
-				inMetadata.setGpsTimestamp(new int[] {times[0].intValue(), times[1].intValue(), times[2].intValue()});
-				break;
-			case TAG_GPS_DATESTAMP:
-				Rational[] dates = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
-				inMetadata.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
-				break;
-			default: // ignore all other tags
+			// Only interested in tags latref, lat, longref, lon, altref, alt and gps timestamp
+			switch (inTagType)
+			{
+				case TAG_GPS_LATITUDE_REF:
+					inMetadata.setLatitudeRef(readString(inTagValueOffset, inFormatCode, inComponentCount));
+					break;
+				case TAG_GPS_LATITUDE:
+					Rational[] latitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+					inMetadata.setLatitude(new double[] {latitudes[0].doubleValue(), latitudes[1].doubleValue(), latitudes[2].doubleValue()});
+					break;
+				case TAG_GPS_LONGITUDE_REF:
+					inMetadata.setLongitudeRef(readString(inTagValueOffset, inFormatCode, inComponentCount));
+					break;
+				case TAG_GPS_LONGITUDE:
+					Rational[] longitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+					inMetadata.setLongitude(new double[] {longitudes[0].doubleValue(), longitudes[1].doubleValue(), longitudes[2].doubleValue()});
+					break;
+				case TAG_GPS_ALTITUDE_REF:
+					inMetadata.setAltitudeRef(_data[inTagValueOffset]);
+					break;
+				case TAG_GPS_ALTITUDE:
+					inMetadata.setAltitude(readRational(inTagValueOffset, inFormatCode, inComponentCount).intValue());
+					break;
+				case TAG_GPS_TIMESTAMP:
+					Rational[] times = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+					inMetadata.setGpsTimestamp(new int[] {times[0].intValue(), times[1].intValue(), times[2].intValue()});
+					break;
+				case TAG_GPS_DATESTAMP:
+					Rational[] dates = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
+					if (dates != null) {
+						inMetadata.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
+					}
+					else {
+						// Not in rational array format, but maybe as String?
+						String date = readString(inTagValueOffset, inFormatCode, inComponentCount);
+						if (date != null && date.length() == 10) {
+							inMetadata.setGpsDatestamp(new int[] {Integer.parseInt(date.substring(0, 4)),
+								Integer.parseInt(date.substring(5, 7)), Integer.parseInt(date.substring(8))});
+						}
+					}
+					break;
+				default: // ignore all other tags
+			}
 		}
+		catch (Exception e) {} // ignore and continue
 	}
 
 
@@ -379,9 +395,11 @@ public class ExifReader
 		int inComponentCount, int inFormatCode)
 	{
 		// Only interested in original timestamp, thumbnail offset and thumbnail length
-		if (inTagType == TAG_DATETIME_ORIGINAL)
-		{
+		if (inTagType == TAG_DATETIME_ORIGINAL) {
 			inMetadata.setOriginalTimestamp(readString(inTagValueOffset, inFormatCode, inComponentCount));
+		}
+		else if (inTagType == TAG_DATETIME_DIGITIZED) {
+			inMetadata.setDigitizedTimestamp(readString(inTagValueOffset, inFormatCode, inComponentCount));
 		}
 		else if (inTagType == TAG_THUMBNAIL_OFFSET) {
 			_thumbnailOffset = TIFF_HEADER_START_OFFSET + get16Bits(inTagValueOffset);

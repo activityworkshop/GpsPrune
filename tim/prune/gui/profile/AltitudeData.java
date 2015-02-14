@@ -51,6 +51,7 @@ public class AltitudeData extends ProfileData
 					_hasData = true;
 					_pointHasData[i] = true;
 				}
+				else _pointHasData[i] = false;
 			}
 		}
 	}

@@ -263,11 +263,7 @@ public abstract class Coordinate
 	 */
 	public boolean equals(Coordinate inOther)
 	{
-		return (inOther != null && _cardinal == inOther._cardinal
-			&& _degrees == inOther._degrees
-			&& _minutes == inOther._minutes
-			&& _seconds == inOther._seconds
-			&& _fracs == inOther._fracs);
+		return (_asDouble == inOther._asDouble);
 	}
 
 
@@ -304,8 +300,12 @@ public abstract class Coordinate
 				}
 				case FORMAT_DEG_WHOLE_MIN:
 				{
-					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "\u00B0"
-						+ (int) Math.floor(_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom + 0.5) + "'";
+					int deg = _degrees;
+					int min = (int) Math.floor(_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom + 0.5);
+					if (min == 60) {
+						min = 0; deg++;
+					}
+					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(deg) + "\u00B0" + min + "'";
 					break;
 				}
 				case FORMAT_DEG:

@@ -2,6 +2,7 @@ package tim.prune;
 
 import java.awt.event.WindowAdapter;
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -15,6 +16,7 @@ import javax.swing.WindowConstants;
 import tim.prune.config.Config;
 import tim.prune.config.ConfigException;
 import tim.prune.gui.DetailsDisplay;
+import tim.prune.gui.SidebarController;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.SelectorDisplay;
@@ -33,9 +35,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPruner
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "10";
+	public static final String VERSION_NUMBER = "11";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "189";
+	public static final String BUILD_NUMBER = "204";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -206,15 +208,15 @@ public class GpsPruner
 		UpdateMessageBroker.informSubscribers("Prune v" + VERSION_NUMBER);
 
 		// Arrange in the frame using split panes
-		JSplitPane midPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mapDisp, profileDisp);
-		midPane.setResizeWeight(1.0); // allocate as much space as poss to map
-		JSplitPane triplePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, midPane, rightPanel);
-		triplePane.setResizeWeight(1.0); // allocate as much space as poss to map
+		JSplitPane midSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mapDisp, profileDisp);
+		midSplit.setResizeWeight(1.0); // allocate as much space as poss to map
+		JSplitPane rightSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, midSplit, rightPanel);
+		rightSplit.setResizeWeight(1.0); // allocate as much space as poss to map
 
 		frame.getContentPane().setLayout(new BorderLayout());
 		frame.getContentPane().add(toolbar, BorderLayout.NORTH);
-		frame.getContentPane().add(new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel,
-			triplePane), BorderLayout.CENTER);
+		JSplitPane leftSplit = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightSplit);
+		frame.getContentPane().add(leftSplit, BorderLayout.CENTER);
 		frame.getContentPane().add(statusBar, BorderLayout.SOUTH);
 
 		// add closing listener
@@ -237,8 +239,12 @@ public class GpsPruner
 		frame.setSize(650, 450);
 		frame.setVisible(true);
 		// Set position of map/profile splitter
-		midPane.setDividerLocation(0.75);
+		midSplit.setDividerLocation(0.75);
 
+		// Make a full screen toggler
+		SidebarController fsc = new SidebarController(new Component[] {leftPanel, profileDisp, rightPanel},
+			new JSplitPane[] {leftSplit, midSplit, rightSplit});
+		APP.setSidebarController(fsc);
 		// Finally, give the files to load to the App
 		APP.loadDataFiles(inDataFiles);
 	}

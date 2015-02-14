@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -25,28 +26,27 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import tim.prune.App;
-import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
+import tim.prune.data.NumberUtils;
 import tim.prune.data.Track;
+import tim.prune.function.Export3dFunction;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.LineDialog;
 import tim.prune.threedee.ThreeDModel;
 
 /**
- * Class to export track information
- * into a specified Pov file
+ * Class to export a 3d scene of the track to a specified Pov file
  */
-public class PovExporter extends GenericFunction
+public class PovExporter extends Export3dFunction
 {
 	private Track _track = null;
 	private JDialog _dialog = null;
 	private JFileChooser _fileChooser = null;
 	private String _cameraX = null, _cameraY = null, _cameraZ = null;
 	private JTextField _cameraXField = null, _cameraYField = null, _cameraZField = null;
-	private JTextField _fontName = null, _altitudeCapField = null;
-	private int _altitudeCap = ThreeDModel.MINIMUM_ALTITUDE_CAP;
+	private JTextField _fontName = null, _altitudeFactorField = null;
 	private JRadioButton _ballsAndSticksButton = null;
 
 	// defaults
@@ -55,7 +55,7 @@ public class PovExporter extends GenericFunction
 
 
 	/**
-	 * Constructor giving frame and track
+	 * Constructor
 	 * @param inApp App object
 	 */
 	public PovExporter(App inApp)
@@ -83,23 +83,10 @@ public class PovExporter extends GenericFunction
 		double cameraDist = Math.sqrt(inX*inX + inY*inY + inZ*inZ);
 		if (cameraDist > 0.0)
 		{
-			_cameraX = "" + (inX / cameraDist * DEFAULT_CAMERA_DISTANCE);
-			_cameraY = "" + (inY / cameraDist * DEFAULT_CAMERA_DISTANCE);
+			_cameraX = NumberUtils.formatNumber(inX / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
+			_cameraY = NumberUtils.formatNumber(inY / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
 			// Careful! Need to convert from java3d (right-handed) to povray (left-handed) coordinate system!
-			_cameraZ = "" + (-inZ / cameraDist * DEFAULT_CAMERA_DISTANCE);
-		}
-	}
-
-
-	/**
-	 * @param inAltitudeCap altitude cap to use
-	 */
-	public void setAltitudeCap(int inAltitudeCap)
-	{
-		_altitudeCap = inAltitudeCap;
-		if (_altitudeCap < ThreeDModel.MINIMUM_ALTITUDE_CAP)
-		{
-			_altitudeCap = ThreeDModel.MINIMUM_ALTITUDE_CAP;
+			_cameraZ = NumberUtils.formatNumber(-inZ / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
 		}
 	}
 
@@ -121,8 +108,7 @@ public class PovExporter extends GenericFunction
 		_cameraXField.setText(_cameraX);
 		_cameraYField.setText(_cameraY);
 		_cameraZField.setText(_cameraZ);
-		// Set vertical scale
-		_altitudeCapField.setText("" + _altitudeCap);
+		_altitudeFactorField.setText("" + _altFactor);
 		// Show dialog
 		_dialog.pack();
 		_dialog.setVisible(true);
@@ -137,7 +123,9 @@ public class PovExporter extends GenericFunction
 	{
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
-		panel.add(new JLabel(I18nManager.getText("dialog.exportpov.text")), BorderLayout.NORTH);
+		JLabel introLabel = new JLabel(I18nManager.getText("dialog.exportpov.text"));
+		introLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 6, 4));
+		panel.add(introLabel, BorderLayout.NORTH);
 		// OK, Cancel buttons
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -190,12 +178,12 @@ public class PovExporter extends GenericFunction
 		centralPanel.add(cameraZLabel);
 		_cameraZField = new JTextField("" + _cameraZ);
 		centralPanel.add(_cameraZField);
-		// Altitude capping
-		JLabel altitudeCapLabel = new JLabel(I18nManager.getText("dialog.3d.altitudecap"));
+		// Altitude exaggeration
+		JLabel altitudeCapLabel = new JLabel(I18nManager.getText("dialog.3d.altitudefactor"));
 		altitudeCapLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		centralPanel.add(altitudeCapLabel);
-		_altitudeCapField = new JTextField("" + _altitudeCap);
-		centralPanel.add(_altitudeCapField);
+		_altitudeFactorField = new JTextField("1.0");
+		centralPanel.add(_altitudeFactorField);
 
 		// Radio buttons for style - balls on sticks or tubes
 		JPanel stylePanel = new JPanel();
@@ -330,10 +318,12 @@ public class PovExporter extends GenericFunction
 			try
 			{
 				// try to use given altitude cap
-				_altitudeCap = Integer.parseInt(_altitudeCapField.getText());
-				model.setAltitudeCap(_altitudeCap);
+				double altFactor = Double.parseDouble(_altitudeFactorField.getText());
+				model.setAltitudeFactor(altFactor);
 			}
-			catch (NumberFormatException nfe) {}
+			catch (NumberFormatException nfe) { // parse failed, reset
+				_altitudeFactorField.setText("1.0");
+			}
 			model.scale();
 
 			// Create file and write basics

@@ -38,6 +38,7 @@ public abstract class UpdateMessageBroker
 	 */
 	public static void informSubscribers(byte inChange)
 	{
+		// TODO: Launch separate thread so that whatever caused the inform can finish
 		for (int i=0; i<_subscribers.length; i++)
 		{
 			if (_subscribers[i] != null)

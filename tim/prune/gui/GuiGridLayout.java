@@ -16,6 +16,7 @@ public class GuiGridLayout
 	private GridBagLayout _layout = null;
 	private GridBagConstraints _constraints = null;
 	private JPanel _panel = null;
+	private boolean _allLeft = false;
 	private int _x = 0;
 	private int _y = 0;
 
@@ -25,7 +26,18 @@ public class GuiGridLayout
 	 */
 	public GuiGridLayout(JPanel inPanel)
 	{
+		this(inPanel, false);
+	}
+
+	/**
+	 * Constructor
+	 * @param inPanel panel using layout
+	 * @param inAllLeft true to align all elements to left
+	 */
+	public GuiGridLayout(JPanel inPanel, boolean inAllLeft)
+	{
 		_panel = inPanel;
+		_allLeft = inAllLeft;
 		_layout = new GridBagLayout();
 		_constraints = new GridBagConstraints();
 		_constraints.weightx = 1.0;
@@ -47,7 +59,7 @@ public class GuiGridLayout
 		_constraints.gridy = _y;
 		_constraints.weightx = (_x==0?0.5:1.0);
 		// set anchor
-		_constraints.anchor = (_x == 0?GridBagConstraints.LINE_END:GridBagConstraints.LINE_START);
+		_constraints.anchor = ((_x == 0 && !_allLeft)?GridBagConstraints.LINE_END:GridBagConstraints.LINE_START);
 		_layout.setConstraints(inComponent, _constraints);
 		// add to panel
 		_panel.add(inComponent);

@@ -103,7 +103,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			// Find minimum and maximum values to plot
 			double minValue = _data.getMinValue();
 			double maxValue = _data.getMaxValue();
-			if (maxValue <= minValue) {maxValue = minValue + 1;}
+			if (maxValue <= minValue) {maxValue = minValue + 1; minValue--;}
 
 			final int numPoints = _track.getNumPoints();
 			_xScaleFactor = 1.0 * (width - 2 * BORDER_WIDTH - 1) / numPoints;
@@ -153,15 +153,18 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 					}
 				}
 				// current point (make sure it's drawn last)
-				if (_data.hasData(selectedPoint))
+				if (selectedPoint >= 0)
 				{
 					x = (int) (_xScaleFactor * selectedPoint) + 1;
 					g.setColor(secondColour);
 					g.fillRect(BORDER_WIDTH + x, height-usableHeight-BORDER_WIDTH+1, barWidth, usableHeight-2);
-					g.setColor(currentColour);
-					value = _data.getData(selectedPoint);
-					y = (int) (yScaleFactor * (value - minValue));
-					g.fillRect(BORDER_WIDTH + x, height-BORDER_WIDTH - y, barWidth, y);
+					if (_data.hasData(selectedPoint))
+					{
+						g.setColor(currentColour);
+						value = _data.getData(selectedPoint);
+						y = (int) (yScaleFactor * (value - minValue));
+						g.fillRect(BORDER_WIDTH + x, height-BORDER_WIDTH - y, barWidth, y);
+					}
 				}
 			}
 			catch (NullPointerException npe) { // ignore, probably due to data being changed

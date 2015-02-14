@@ -292,9 +292,10 @@ public class Track
 	 * @param inStart start of range
 	 * @param inEnd end of range
 	 * @param inOffset offset to add (-ve to subtract)
+	 * @param inUndo true for undo operation
 	 * @return true on success
 	 */
-	public boolean addTimeOffset(int inStart, int inEnd, long inOffset)
+	public boolean addTimeOffset(int inStart, int inEnd, long inOffset, boolean inUndo)
 	{
 		// sanity check
 		if (inStart < 0 || inEnd < 0 || inStart >= inEnd || inEnd >= _numPoints) {
@@ -310,6 +311,7 @@ public class Track
 				// This point has a timestamp so add the offset to it
 				foundTimestamp = true;
 				timestamp.addOffset(inOffset);
+				_dataPoints[i].setModified(inUndo);
 			}
 		}
 		return foundTimestamp;
@@ -341,6 +343,7 @@ public class Track
 				// This point has an altitude so add the offset to it
 				foundAlt = true;
 				alt.addOffset(inOffset, inFormat, inDecimals);
+				_dataPoints[i].setModified(false);
 			}
 		}
 		// needs to be scaled again

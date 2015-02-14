@@ -274,6 +274,9 @@ public class JpegLoader implements Runnable
 			if (timestamp == null && jpegData.getOriginalTimestamp() != null) {
 				timestamp = createTimestamp(jpegData.getOriginalTimestamp());
 			}
+			if (timestamp == null && jpegData.getDigitizedTimestamp() != null) {
+				timestamp = createTimestamp(jpegData.getDigitizedTimestamp());
+			}
 			photo.setExifThumbnail(jpegData.getThumbnailImage());
 			// Also extract orientation tag for setting rotation state of photo
 			photo.setRotation(jpegData.getRequiredRotation());

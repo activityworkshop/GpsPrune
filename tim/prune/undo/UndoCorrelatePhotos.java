@@ -60,10 +60,14 @@ public class UndoCorrelatePhotos implements UndoOperation
 		for (int i=0; i<_photoPoints.length; i++)
 		{
 			Photo photo = inTrackInfo.getPhotoList().getPhoto(i);
-			DataPoint point = _photoPoints[i];
-			photo.setDataPoint(point);
-			if (point != null) {
-				point.setPhoto(photo);
+			// Only need to look at connected photos, if they're still tagged then leave them
+			if (photo.getCurrentStatus() == Photo.Status.CONNECTED)
+			{
+				DataPoint point = _photoPoints[i];
+				photo.setDataPoint(point);
+				if (point != null) {
+					point.setPhoto(photo);
+				}
 			}
 		}
 		// clear selection

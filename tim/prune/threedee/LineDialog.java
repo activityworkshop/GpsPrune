@@ -64,7 +64,9 @@ public class LineDialog
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
 		StringBuffer descBuffer = new StringBuffer();
-		if (_latLines == null || _latLines.length == 0 || _lonLines == null || _lonLines.length == 0)
+		final int numLatLines = (_latLines == null?0:_latLines.length);
+		final int numLonLines = (_lonLines == null?0:_lonLines.length);
+		if (numLatLines == 0 && numLonLines == 0)
 		{
 			descBuffer.append("<p>").append(I18nManager.getText("dialog.3dlines.empty")).append("</p>");
 		}
@@ -73,7 +75,7 @@ public class LineDialog
 			descBuffer.append("<p>").append(I18nManager.getText("dialog.3dlines.intro")).append(":</p>");
 			descBuffer.append("<p>").append(I18nManager.getText("fieldname.latitude")).append("<ul>");
 			Latitude lat = null;
-			for (int i=0; i<_latLines.length; i++)
+			for (int i=0; i<numLatLines; i++)
 			{
 				lat = new Latitude(_latLines[i], Latitude.FORMAT_DEG);
 				descBuffer.append("<li>").append(lat.output(Latitude.FORMAT_DEG_WHOLE_MIN)).append("</li>");
@@ -81,7 +83,7 @@ public class LineDialog
 			descBuffer.append("</ul></p>");
 			descBuffer.append("<p>").append(I18nManager.getText("fieldname.longitude")).append("<ul>");
 			Longitude lon = null;
-			for (int i=0; i<_lonLines.length; i++)
+			for (int i=0; i<numLonLines; i++)
 			{
 				lon = new Longitude(_lonLines[i], Longitude.FORMAT_DEG);
 				descBuffer.append("<li>").append(lon.output(Longitude.FORMAT_DEG_WHOLE_MIN)).append("</li>");

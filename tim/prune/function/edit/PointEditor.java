@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -102,7 +103,10 @@ public class PointEditor
 		});
 		_table.setPreferredScrollableViewportSize(new Dimension(_table.getWidth(), _table.getRowHeight() * 6));
 		panel.add(new JScrollPane(_table), BorderLayout.CENTER);
-		panel.add(new JLabel(I18nManager.getText("dialog.pointedit.text")), BorderLayout.NORTH);
+		// Label at top
+		JLabel topLabel = new JLabel(I18nManager.getText("dialog.pointedit.text"));
+		topLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 3, 6));
+		panel.add(topLabel, BorderLayout.NORTH);
 		_editButton = new JButton(I18nManager.getText("button.edit"));
 		_editButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)

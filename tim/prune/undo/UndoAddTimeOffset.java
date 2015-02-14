@@ -45,7 +45,7 @@ public class UndoAddTimeOffset implements UndoOperation
 	public void performUndo(TrackInfo inTrackInfo) throws UndoException
 	{
 		// Perform the inverse operation
-		inTrackInfo.getTrack().addTimeOffset(_startIndex, _endIndex, -_timeOffset);
+		inTrackInfo.getTrack().addTimeOffset(_startIndex, _endIndex, -_timeOffset, true);
 		UpdateMessageBroker.informSubscribers();
 	}
 }

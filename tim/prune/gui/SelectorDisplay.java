@@ -16,6 +16,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.border.EtchedBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -98,6 +99,7 @@ public class SelectorDisplay extends GenericDisplay
 		_waypointListModel = new WaypointListModel(_trackInfo.getTrack());
 		_waypointList = new JList(_waypointListModel);
 		_waypointList.setVisibleRowCount(NUM_LIST_ENTRIES);
+		_waypointList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_waypointList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{
@@ -112,6 +114,7 @@ public class SelectorDisplay extends GenericDisplay
 		_photoListModel = new PhotoListModel(_trackInfo.getPhotoList());
 		_photoList = new JList(_photoListModel);
 		_photoList.setVisibleRowCount(NUM_LIST_ENTRIES);
+		_photoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_photoList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{

@@ -45,6 +45,7 @@ public class AboutScreen extends GenericFunction
 	private JDialog _dialog = null;
 	private JTabbedPane _tabs = null;
 	private JButton _okButton = null;
+	private JTextArea _aboutTextArea = null;
 	/** Labels for whether tools installed or not */
 	private JLabel[] _installedLabels = null;
 
@@ -96,9 +97,9 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext2")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
-			.append("deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, polski, \u4e2d\u6587; (chinese)<br>" +
-				"schwiizerd\u00FC\u00FCtsch, \u65E5\u672C\u8A9E (japanese), t\u00FCrk\u00E7e, portugu\u00EAs, " +
-				"bahasa indonesia, rom\u00E2n\u0103").append("</p>");
+			.append("deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, nederlands,<br>" +
+				" polski, portugu\u00EAs, \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese), schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, " +
+				"<br> \u010de\u0161tina, rom\u00E2n\u0103, afrikaans, bahasa indonesia, farsi").append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -194,7 +195,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph, nazotoko,"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" katpatuka, R\u00E9mi"),
+			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
@@ -225,10 +226,16 @@ public class AboutScreen extends GenericFunction
 		// Read me
 		JPanel readmePanel = new JPanel();
 		readmePanel.setLayout(new BorderLayout());
-		JTextArea textArea = new JTextArea(getReadmeText());
-		textArea.setEditable(false);
-		textArea.setLineWrap(true); textArea.setWrapStyleWord(true);
-		JScrollPane scrollPane = new JScrollPane(textArea);
+		_aboutTextArea = new JTextArea(I18nManager.getText("details.photo.loading"));
+		// Set readme text in separate thread so that about screen pops up sooner
+		new Thread(new Runnable() {
+			public void run() {
+				_aboutTextArea.setText(getReadmeText());
+			}
+		}).start();
+		_aboutTextArea.setEditable(false);
+		_aboutTextArea.setLineWrap(true); _aboutTextArea.setWrapStyleWord(true);
+		JScrollPane scrollPane = new JScrollPane(_aboutTextArea);
 		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollPane.setPreferredSize(new Dimension(600, 130));
 		readmePanel.add(scrollPane, BorderLayout.CENTER);

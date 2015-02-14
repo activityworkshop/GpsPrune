@@ -397,8 +397,6 @@ public class FileSaver
 			_fileChooser = new JFileChooser();
 			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.txt", new String[] {"txt", "text"}));
-			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
-			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kml", new String[] {"kml"}));
 			_fileChooser.setAcceptAllFileFilterUsed(true);
 			// start from directory in config which should be set
 			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
@@ -445,9 +443,12 @@ public class FileSaver
 			}
 		}
 
+		// Correct chosen filename if necessary
+		final File saveFile = (isFilenameOk(inSaveFile)?inSaveFile:new File(inSaveFile.getAbsolutePath() + ".txt"));
+
 		// Check if file exists, and confirm overwrite if necessary
 		Object[] buttonTexts = {I18nManager.getText("button.overwrite"), I18nManager.getText("button.cancel")};
-		if (!inSaveFile.exists() || JOptionPane.showOptionDialog(_parentFrame,
+		if (!saveFile.exists() || JOptionPane.showOptionDialog(_parentFrame,
 				I18nManager.getText("dialog.save.overwrite.text"),
 				I18nManager.getText("dialog.save.overwrite.title"), JOptionPane.YES_NO_OPTION,
 				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
@@ -456,7 +457,7 @@ public class FileSaver
 			try
 			{
 				// Create output file
-				writer = new FileWriter(inSaveFile);
+				writer = new FileWriter(saveFile);
 				// Determine delimiter character to use
 				final char delimiter = getDelimiter();
 				FieldInfo info = null;
@@ -525,11 +526,11 @@ public class FileSaver
 					writer.write(lineSeparator);
 				}
 				// Store directory in config for later
-				Config.setConfigString(Config.KEY_TRACK_DIR, inSaveFile.getParentFile().getAbsolutePath());
+				Config.setConfigString(Config.KEY_TRACK_DIR, saveFile.getParentFile().getAbsolutePath());
 				// Save successful
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 					 + " " + numSaved + " " + I18nManager.getText("confirm.save.ok2")
-					 + " " + inSaveFile.getAbsolutePath());
+					 + " " + saveFile.getAbsolutePath());
 				_app.informDataSaved();
 			}
 			catch (IOException ioe)
@@ -626,5 +627,18 @@ public class FileSaver
 		}
 		// Wasn't any of those so must be 'other'
 		return _otherDelimiterText.getText().charAt(0);
+	}
+
+
+	/**
+	 * Check the selected filename to see if it is acceptable
+	 * @param inFile chosen file to save
+	 * @return true if filename is ok
+	 */
+	private static boolean isFilenameOk(File inFile)
+	{
+		String filename = inFile.getName().toLowerCase();
+		return (filename.length() <4 || (!filename.endsWith(".gpx")
+			&& !filename.endsWith(".kml") && !filename.endsWith(".kmz") && !filename.endsWith(".zip")));
 	}
 }

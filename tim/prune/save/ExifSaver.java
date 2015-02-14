@@ -8,6 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -129,7 +130,10 @@ public class ExifSaver implements Runnable
 	{
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
-		panel.add(new JLabel(I18nManager.getText("dialog.saveexif.intro")), BorderLayout.NORTH);
+		// Label at top
+		JLabel topLabel = new JLabel(I18nManager.getText("dialog.saveexif.intro"));
+		topLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 5, 6));
+		panel.add(topLabel, BorderLayout.NORTH);
 		// centre panel with most controls
 		JPanel centrePanel = new JPanel();
 		centrePanel.setLayout(new BorderLayout());

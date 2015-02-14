@@ -8,6 +8,9 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -110,7 +113,14 @@ public class TextFileLoader
 		{
 			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.openoptions.title"), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
-			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			_dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+			// add closing listener
+			_dialog.addWindowListener(new WindowAdapter() {
+				public void windowClosing(WindowEvent e) {
+					_dialog.dispose();
+					_app.informNoDataLoaded();
+				}
+			});
 			_dialog.getContentPane().add(makeDialogComponents());
 
 			// select best separator according to row counts (more is better)

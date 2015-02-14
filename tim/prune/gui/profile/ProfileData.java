@@ -87,7 +87,7 @@ public abstract class ProfileData
 	public abstract String getNoDataKey();
 
 	/**
-	 * Initialise the data arrays
+	 * Initialise the data arrays to the correct size
 	 */
 	protected void initArrays()
 	{

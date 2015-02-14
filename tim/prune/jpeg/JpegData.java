@@ -18,6 +18,7 @@ public class JpegData
 	private int[] _gpsTimestamp = null;
 	private int[] _gpsDatestamp = null;
 	private String _originalTimestamp = null;
+	private String _digitizedTimestamp = null;
 	private int _orientationCode = -1;
 	private byte[] _thumbnail = null;
 	private ArrayList<String> _errors = null;
@@ -125,6 +126,15 @@ public class JpegData
 	}
 
 	/**
+	 * Set the digitized timestamp
+	 * @param inStamp digitized (creation) timestamp of photo
+	 */
+	public void setDigitizedTimestamp(String inStamp)
+	{
+		_digitizedTimestamp = inStamp;
+	}
+
+	/**
 	 * Set the orientation code
 	 * @param inCode code from exif (1 to 8)
 	 */
@@ -157,6 +167,8 @@ public class JpegData
 	public int getOrientationCode() { return _orientationCode; }
 	/** @return original timestamp as string */
 	public String getOriginalTimestamp() { return _originalTimestamp; }
+	/** @return digitized timestamp as string */
+	public String getDigitizedTimestamp() { return _digitizedTimestamp; }
 
 	/**
 	 * Set the thumbnail

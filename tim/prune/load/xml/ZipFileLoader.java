@@ -22,7 +22,7 @@ public class ZipFileLoader
 	/** App for callback of file loading */
 	private App _app = null;
 	/** Object to do the handling of the xml */
-	XmlFileLoader _xmlLoader = null;
+	private XmlFileLoader _xmlLoader = null;
 
 	/**
 	 * Constructor
@@ -67,7 +67,7 @@ public class ZipFileLoader
 							SourceInfo sourceInfo = new SourceInfo(inFile,
 								(handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
 							_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-								Altitude.Format.METRES, sourceInfo);
+								Altitude.Format.METRES, sourceInfo, handler.getTrackNameList());
 							xmlFound = true;
 						}
 					}
@@ -113,7 +113,8 @@ public class ZipFileLoader
 						else {
 							// Send back to app
 							_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-								Altitude.Format.METRES, new SourceInfo("gpsies", SourceInfo.FILE_TYPE.GPSIES));
+								Altitude.Format.METRES, new SourceInfo("gpsies", SourceInfo.FILE_TYPE.GPSIES),
+								handler.getTrackNameList());
 							xmlFound = true;
 						}
 					}

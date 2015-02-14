@@ -20,35 +20,21 @@ import tim.prune.data.PhotoList;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.function.SelectTracksFunction;
 import tim.prune.function.browser.BrowserLauncher;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.function.edit.PointEditor;
+import tim.prune.gui.SidebarController;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.UndoManager;
 import tim.prune.gui.Viewport;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
+import tim.prune.load.TrackNameList;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
-import tim.prune.undo.UndoAddAltitudeOffset;
-import tim.prune.undo.UndoAddTimeOffset;
-import tim.prune.undo.UndoCompress;
-import tim.prune.undo.UndoConnectPhoto;
-import tim.prune.undo.UndoCreatePoint;
-import tim.prune.undo.UndoCutAndMove;
-import tim.prune.undo.UndoDeletePhoto;
-import tim.prune.undo.UndoDeletePoint;
-import tim.prune.undo.UndoDeleteRange;
-import tim.prune.undo.UndoDisconnectPhoto;
-import tim.prune.undo.UndoEditPoint;
-import tim.prune.undo.UndoException;
-import tim.prune.undo.UndoInsert;
-import tim.prune.undo.UndoLoad;
-import tim.prune.undo.UndoLoadPhotos;
-import tim.prune.undo.UndoMergeTrackSegments;
-import tim.prune.undo.UndoOperation;
-import tim.prune.undo.UndoReverseSection;
+import tim.prune.undo.*;
 
 
 /**
@@ -62,6 +48,7 @@ public class App
 	private TrackInfo _trackInfo = null;
 	private int _lastSavePosition = 0;
 	private MenuManager _menuManager = null;
+	private SidebarController __sidebarController = null;
 	private FileLoader _fileLoader = null;
 	private JpegLoader _jpegLoader = null;
 	private FileSaver _fileSaver = null;
@@ -465,7 +452,7 @@ public class App
 		int selStart = _trackInfo.getSelection().getStart();
 		int selEnd = _trackInfo.getSelection().getEnd();
 		UndoAddTimeOffset undo = new UndoAddTimeOffset(selStart, selEnd, inTimeOffset);
-		if (_trackInfo.getTrack().addTimeOffset(selStart, selEnd, inTimeOffset))
+		if (_trackInfo.getTrack().addTimeOffset(selStart, selEnd, inTimeOffset, false))
 		{
 			_undoStack.add(undo);
 			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_EDITED);
@@ -501,6 +488,7 @@ public class App
 		if (success)
 		{
 			_undoStack.add(undo);
+			_trackInfo.getSelection().markInvalid();
 			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_EDITED);
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.addaltitudeoffset"));
 		}
@@ -641,7 +629,7 @@ public class App
 	}
 
 	/**
-	 * Receive loaded data and optionally merge with current Track
+	 * Receive loaded data and start load
 	 * @param inFieldArray array of fields
 	 * @param inDataArray array of data
 	 * @param inAltFormat altitude format
@@ -649,6 +637,20 @@ public class App
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
 		Altitude.Format inAltFormat, SourceInfo inSourceInfo)
+	{
+		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inSourceInfo, null);
+	}
+
+	/**
+	 * Receive loaded data and determine whether to filter on tracks or not
+	 * @param inFieldArray array of fields
+	 * @param inDataArray array of data
+	 * @param inAltFormat altitude format
+	 * @param inSourceInfo information about the source of the data
+	 * @param inTrackNameList information about the track names
+	 */
+	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
+		Altitude.Format inAltFormat, SourceInfo inSourceInfo, TrackNameList inTrackNameList)
 	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
@@ -665,6 +667,26 @@ public class App
 			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.open.contentsdoubled"),
 				I18nManager.getText("function.open"), JOptionPane.WARNING_MESSAGE);
 		}
+		// Look at TrackNameList, decide whether to filter or not
+		if (inTrackNameList != null && inTrackNameList.getNumTracks() > 1)
+		{
+			// Launch a dialog to let the user choose which tracks to load, then continue
+			new SelectTracksFunction(this, inFieldArray, inDataArray, inAltFormat, inSourceInfo,
+				inTrackNameList).begin();
+		}
+		else {
+			// go directly to load
+			informDataLoaded(loadedTrack, inSourceInfo);
+		}
+	}
+
+	/**
+	 * Receive loaded data and optionally merge with current Track
+	 * @param inLoadedTrack loaded track
+	 * @param inSourceInfo information about the source of the data
+	 */
+	public void informDataLoaded(Track inLoadedTrack, SourceInfo inSourceInfo)
+	{
 		// Decide whether to load or append
 		if (_track.getNumPoints() > 0)
 		{
@@ -683,28 +705,26 @@ public class App
 			if (answer == JOptionPane.YES_OPTION)
 			{
 				// append data to current Track
-				_undoStack.add(new UndoLoad(_track.getNumPoints(), loadedTrack.getNumPoints()));
-				_track.combine(loadedTrack);
+				_undoStack.add(new UndoLoad(_track.getNumPoints(), inLoadedTrack.getNumPoints()));
+				_track.combine(inLoadedTrack);
 				// set source information
-				inSourceInfo.populatePointObjects(_track, loadedTrack.getNumPoints());
+				inSourceInfo.populatePointObjects(_track, inLoadedTrack.getNumPoints());
 				_trackInfo.getFileInfo().addSource(inSourceInfo);
 			}
 			else if (answer == JOptionPane.NO_OPTION)
 			{
 				// Don't append, replace data
 				PhotoList photos = null;
-				if (_trackInfo.getPhotoList().hasCorrelatedPhotos())
-				{
+				if (_trackInfo.getPhotoList().hasCorrelatedPhotos()) {
 					photos = _trackInfo.getPhotoList().cloneList();
 				}
-				_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length, photos));
+				_undoStack.add(new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), photos));
 				_lastSavePosition = _undoStack.size();
 				_trackInfo.getSelection().clearAll();
-				_track.load(loadedTrack);
+				_track.load(inLoadedTrack);
 				inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
 				_trackInfo.getFileInfo().replaceSource(inSourceInfo);
-				if (photos != null)
-				{
+				if (photos != null) {
 					_trackInfo.getPhotoList().removeCorrelatedPhotos();
 				}
 			}
@@ -712,10 +732,10 @@ public class App
 		else
 		{
 			// Currently no data held, so transfer received data
-			_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length, null));
+			_undoStack.add(new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), null));
 			_lastSavePosition = _undoStack.size();
 			_trackInfo.getSelection().clearAll();
-			_track.load(loadedTrack);
+			_track.load(inLoadedTrack);
 			inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
 			_trackInfo.getFileInfo().addSource(inSourceInfo);
 		}
@@ -776,12 +796,10 @@ public class App
 				// Save numbers so load can be undone
 				_undoStack.add(new UndoLoadPhotos(numPhotosAdded, numPointsAdded));
 			}
-			if (numPhotosAdded == 1)
-			{
+			if (numPhotosAdded == 1) {
 				UpdateMessageBroker.informSubscribers("" + numPhotosAdded + " " + I18nManager.getText("confirm.jpegload.single"));
 			}
-			else
-			{
+			else {
 				UpdateMessageBroker.informSubscribers("" + numPhotosAdded + " " + I18nManager.getText("confirm.jpegload.multi"));
 			}
 			// MAYBE: Improve message when photo(s) fail to load (eg already added)
@@ -1031,5 +1049,22 @@ public class App
 	public Viewport getViewport()
 	{
 		return _viewport;
+	}
+
+	/**
+	 * Set the controller for the full screen mode
+	 * @param inController controller object
+	 */
+	public void setSidebarController(SidebarController inController)
+	{
+		__sidebarController = inController;
+	}
+
+	/**
+	 * Toggle sidebars on and off
+	 */
+	public void toggleSidebars()
+	{
+		__sidebarController.toggle();
 	}
 }

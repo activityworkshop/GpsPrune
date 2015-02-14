@@ -326,7 +326,8 @@ public class GpsLoader extends GenericFunction implements Runnable
 
 			// Send data back to app
 			_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(), Altitude.Format.METRES,
-				new SourceInfo(_deviceField.getText(), SourceInfo.FILE_TYPE.GPSBABEL));
+				new SourceInfo(_deviceField.getText(), SourceInfo.FILE_TYPE.GPSBABEL),
+				handler.getTrackNameList());
 		}
 	}
 
