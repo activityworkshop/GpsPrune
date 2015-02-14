@@ -7,6 +7,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import tim.prune.App;
+import tim.prune.Config;
 import tim.prune.I18nManager;
 import tim.prune.load.xml.XmlFileLoader;
 
@@ -42,14 +43,27 @@ public class FileLoader
 	 */
 	public void openFile()
 	{
+		// Construct file chooser if necessary
 		if (_fileChooser == null)
+		{
 			_fileChooser = new JFileChooser();
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.txt", new String[] {"txt", "text"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kml", new String[] {"kml"}));
+			_fileChooser.setAcceptAllFileFilterUsed(true);
+			// start from directory in config if already set (by load jpegs)
+			File configDir = Config.getWorkingDirectory();
+			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+		}
+		// Show the open dialog
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
 			File file = _fileChooser.getSelectedFile();
 			// Check file exists and is readable
 			if (file != null && file.exists() && file.canRead())
 			{
+				// Store directory in config for later
+				Config.setWorkingDirectory(file.getParentFile());
 				// Check file type to see if it's xml or just normal text
 				String fileExtension = file.getName().toLowerCase();
 				if (fileExtension.length() > 4)

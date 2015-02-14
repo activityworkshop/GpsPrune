@@ -1,4 +1,4 @@
-Prune version 5
+Prune version 6
 ===============
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
@@ -16,7 +16,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_05.jar
+   java -jar prune_06.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -24,8 +24,21 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_05.jar --lang=DE
+   java -jar prune_06.jar --lang=DE
 
+
+New with version 6
+==================
+
+The following features were added since version 5:
+  - Map view using OpenStreetMap images is now integrated in the main window, with control for map transparency
+  - Pov export has new option to use sphere sweeps for better appearance
+  - New function to check online for a newer version of Prune
+  - New function to take a section of track and cut/paste it to another position
+  - New function to add or subtract a time offset from point timestamps
+  - New function to call gpsbabel to load data directly from GPS receiver
+  - Additional file filter options on load and save
+  - Italian language thanks to generous user input
 
 New with version 5
 ==================

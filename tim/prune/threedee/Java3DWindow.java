@@ -7,6 +7,8 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.GeneralPath;
 
 import javax.media.j3d.AmbientLight;
@@ -207,11 +209,19 @@ public class Java3DWindow implements ThreeDWindow
 				_frame.dispose();
 				_frame = null;
 				_orbit = null;
-			}});
+			}
+		});
 		panel.add(closeButton);
 		_frame.getContentPane().add(panel, BorderLayout.SOUTH);
 		_frame.setSize(500, 350);
 		_frame.pack();
+		// Add a listener to clean up when window closed
+		_frame.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e)
+			{
+				dispose();
+			}
+		});
 
 		// show frame
 		_frame.show();
@@ -221,6 +231,16 @@ public class Java3DWindow implements ThreeDWindow
 		}
 	}
 
+	/**
+	 * Dispose of the frame and its resources
+	 */
+	public void dispose()
+	{
+		if (_frame != null) {
+			_frame.dispose();
+			_frame = null;
+		}
+	}
 
 	/**
 	 * Create the whole scenery from the given track

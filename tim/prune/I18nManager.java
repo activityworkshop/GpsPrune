@@ -1,7 +1,11 @@
 package tim.prune;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Locale;
 import java.util.MissingResourceException;
+import java.util.Properties;
 import java.util.ResourceBundle;
 
 /**
@@ -15,7 +19,10 @@ public abstract class I18nManager
 	private static final Locale BACKUP_LOCALE = new Locale("en", "GB");
 
 	private static ResourceBundle EnglishTexts = null;
-	private static ResourceBundle ExtraTexts = null;
+	private static ResourceBundle LocalTexts = null;
+
+	/** External properties file for developer testing */
+	private static Properties ExternalPropsFile = null;
 
 
 	/**
@@ -30,13 +37,29 @@ public abstract class I18nManager
 		// Get bundle for selected locale, if any
 		if (inLocale != null)
 		{
-			ExtraTexts = ResourceBundle.getBundle(BUNDLE_NAME, inLocale);
+			LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, inLocale);
 		}
 		else
 		{
 			// locale is null so just use the system default
-			ExtraTexts = ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault());
+			LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault());
 		}
+	}
+
+
+	/**
+	 * Add a language file
+	 * @param inFilename filename of file
+	 */
+	public static void addLanguageFile(String inFilename)
+	{
+		try
+		{
+			File file = new File(inFilename);
+			ExternalPropsFile = new Properties();
+			ExternalPropsFile.load(new FileInputStream(file));
+		}
+		catch (IOException ioe) {}
 	}
 
 
@@ -48,12 +71,19 @@ public abstract class I18nManager
 	public static String getText(String inKey)
 	{
 		String value = null;
+		// look in external props file if available
+		if (ExternalPropsFile != null)
+		{
+			value = ExternalPropsFile.getProperty(inKey);
+			if (value != null && !value.equals(""))
+				return value;
+		}
 		// look in extra texts if available
-		if (ExtraTexts != null)
+		if (LocalTexts != null)
 		{
 			try
 			{
-				value = ExtraTexts.getString(inKey);
+				value = LocalTexts.getString(inKey);
 				if (value != null && !value.equals(""))
 					return value;
 			}

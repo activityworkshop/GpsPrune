@@ -9,7 +9,11 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -17,13 +21,15 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.filechooser.FileFilter;
 
+import tim.prune.Config;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Track;
+import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.LineDialog;
 import tim.prune.threedee.ThreeDModel;
 
@@ -41,11 +47,11 @@ public class PovExporter
 	private JTextField _cameraXField = null, _cameraYField = null, _cameraZField = null;
 	private JTextField _fontName = null, _altitudeCapField = null;
 	private int _altitudeCap = ThreeDModel.MINIMUM_ALTITUDE_CAP;
+	private JRadioButton _ballsAndSticksButton = null;
 
 	// defaults
 	private static final double DEFAULT_CAMERA_DISTANCE = 30.0;
 	private static final String DEFAULT_FONT_FILE = "crystal.ttf";
-	// alternative font: DejaVuSans-Bold.ttf
 
 
 	/**
@@ -158,7 +164,11 @@ public class PovExporter
 		JLabel fontLabel = new JLabel(I18nManager.getText("dialog.exportpov.font"));
 		fontLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		centralPanel.add(fontLabel);
-		_fontName = new JTextField(DEFAULT_FONT_FILE, 12);
+		String defaultFont = Config.getPovrayFont();
+		if (defaultFont == null || defaultFont.equals("")) {
+			defaultFont = DEFAULT_FONT_FILE;
+		}
+		_fontName = new JTextField(defaultFont, 12);
 		_fontName.setAlignmentX(Component.LEFT_ALIGNMENT);
 		centralPanel.add(_fontName);
 		//coordinates of camera
@@ -184,8 +194,32 @@ public class PovExporter
 		_altitudeCapField = new JTextField("" + _altitudeCap);
 		centralPanel.add(_altitudeCapField);
 
-		JPanel flowPanel = new JPanel();
-		flowPanel.add(centralPanel);
+		// Radio buttons for style - balls on sticks or tubes
+		JPanel stylePanel = new JPanel();
+		stylePanel.setLayout(new GridLayout(0, 2, 10, 4));
+		JLabel styleLabel = new JLabel(I18nManager.getText("dialog.exportpov.modelstyle"));
+		styleLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+		stylePanel.add(styleLabel);
+		JPanel radioPanel = new JPanel();
+		radioPanel.setLayout(new BoxLayout(radioPanel, BoxLayout.Y_AXIS));
+		_ballsAndSticksButton = new JRadioButton(I18nManager.getText("dialog.exportpov.ballsandsticks"));
+		_ballsAndSticksButton.setSelected(false);
+		radioPanel.add(_ballsAndSticksButton);
+		JRadioButton tubesButton = new JRadioButton(I18nManager.getText("dialog.exportpov.tubesandwalls"));
+		tubesButton.setSelected(true);
+		radioPanel.add(tubesButton);
+		ButtonGroup group = new ButtonGroup();
+		group.add(_ballsAndSticksButton); group.add(tubesButton);
+		stylePanel.add(radioPanel);
+
+		// add this grid to the holder panel
+		JPanel holderPanel = new JPanel();
+		holderPanel.setLayout(new BorderLayout(5, 5));
+		JPanel boxPanel = new JPanel();
+		boxPanel.setLayout(new BoxLayout(boxPanel, BoxLayout.Y_AXIS));
+		boxPanel.add(centralPanel);
+		boxPanel.add(stylePanel);
+		holderPanel.add(boxPanel, BorderLayout.CENTER);
 
 		// show lines button
 		JButton showLinesButton = new JButton(I18nManager.getText("button.showlines"));
@@ -201,8 +235,11 @@ public class PovExporter
 				dialog.showDialog();
 			}
 		});
+		JPanel flowPanel = new JPanel();
+		flowPanel.setLayout(new FlowLayout());
 		flowPanel.add(showLinesButton);
-		panel.add(flowPanel, BorderLayout.CENTER);
+		holderPanel.add(flowPanel, BorderLayout.EAST);
+		panel.add(holderPanel, BorderLayout.CENTER);
 		return panel;
 	}
 
@@ -219,19 +256,15 @@ public class PovExporter
 
 		// OK pressed, so choose output file
 		if (_fileChooser == null)
+		{
 			_fileChooser = new JFileChooser();
-		_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-		_fileChooser.setFileFilter(new FileFilter() {
-			public boolean accept(File f)
-			{
-				return (f != null && (f.isDirectory() || f.getName().toLowerCase().endsWith(".pov")));
-			}
-			public String getDescription()
-			{
-				return I18nManager.getText("dialog.exportpov.filetype");
-			}
-		});
-		_fileChooser.setAcceptAllFileFilterUsed(false);
+			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+			_fileChooser.setFileFilter(new GenericFileFilter("filetype.pov", new String[] {"pov"}));
+			_fileChooser.setAcceptAllFileFilterUsed(false);
+			// start from directory in config which should be set
+			File configDir = Config.getWorkingDirectory();
+			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+		}
 
 		// Allow choose again if an existing file is selected
 		boolean chooseAgain = false;
@@ -258,6 +291,8 @@ public class PovExporter
 					if (exportFile(file))
 					{
 						// file saved
+						// Store directory in config for later
+						Config.setWorkingDirectory(file.getParentFile());
 					}
 					else
 					{
@@ -306,7 +341,12 @@ public class PovExporter
 			writeLatLongLines(writer, model, lineSeparator);
 
 			// write out points
-			writeDataPoints(writer, model, lineSeparator);
+			if (_ballsAndSticksButton.isSelected()) {
+				writeDataPointsBallsAndSticks(writer, model, lineSeparator);
+			}
+			else {
+				writeDataPointsTubesAndWalls(writer, model, lineSeparator);
+			}
 
 			// everything worked
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
@@ -433,7 +473,16 @@ public class PovExporter
 		  "      pigment {color rgb <0.1 1.0 1.0>}",
 		  "      finish { phong 1 }",
 		  "   }",
-		  " }", "",
+		  " }",
+		  "#declare track_sphere_t =",
+		  "  sphere {",
+		  "   <0, 0, 0>, 0.25", // size should depend on model size
+		  "   texture {",
+		  "      pigment {color rgb <0.6 1.0 0.2>}",
+		  "      finish { phong 1 }",
+		  "   } no_shadow",
+		  " }",
+		  "#declare wall_colour = rgbt <0.5, 0.5, 0.5, 0.3>;", "",
 		  "// Base plane",
 		  "box {",
 		  "   <-" + inModelSize + ", -0.15, -" + inModelSize + ">,  // Near lower left corner",
@@ -510,13 +559,13 @@ public class PovExporter
 
 
 	/**
-	 * Write out all the data points to the file
+	 * Write out all the data points to the file in the balls-and-sticks style
 	 * @param inWriter Writer to use for writing file
 	 * @param inModel model object for getting data points
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private void writeDataPoints(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
+	private void writeDataPointsBallsAndSticks(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
 	throws IOException
 	{
 		inWriter.write("// Data points:");
@@ -552,6 +601,159 @@ public class PovExporter
 
 
 	/**
+	 * Write out all the data points to the file in the tubes-and-walls style
+	 * @param inWriter Writer to use for writing file
+	 * @param inModel model object for getting data points
+	 * @param inLineSeparator line separator to use
+	 * @throws IOException on file writing error
+	 */
+	private void writeDataPointsTubesAndWalls(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
+	throws IOException
+	{
+		inWriter.write("// Data points:");
+		inWriter.write(inLineSeparator);
+		int numPoints = inModel.getNumPoints();
+		int numTrackPoints = 0;
+		// Loop over all points and write out waypoints as balls
+		for (int i=0; i<numPoints; i++)
+		{
+			if (inModel.getPointType(i) == ThreeDModel.POINT_TYPE_WAYPOINT)
+			{
+				// waypoint ball
+				inWriter.write("object { waypoint_sphere translate <" + inModel.getScaledHorizValue(i)
+					+ "," + inModel.getScaledAltValue(i) + "," + inModel.getScaledVertValue(i) + "> }");
+				// vertical rod (if altitude positive)
+				if (inModel.getScaledAltValue(i) > 0.0)
+				{
+					inWriter.write(inLineSeparator);
+					inWriter.write("object { point_rod translate <" + inModel.getScaledHorizValue(i) + ",0,"
+						+ inModel.getScaledVertValue(i) + "> scale <1," + inModel.getScaledAltValue(i) + ",1> }");
+				}
+				inWriter.write(inLineSeparator);
+			}
+			else {numTrackPoints++;}
+		}
+		inWriter.write(inLineSeparator);
+
+		// Loop over all the track segments
+		ArrayList segmentList = getSegmentList(inModel);
+		Iterator segmentIterator = segmentList.iterator();
+		while (segmentIterator.hasNext())
+		{
+			ModelSegment segment = (ModelSegment) segmentIterator.next();
+			int segLength = segment.getNumTrackPoints();
+
+			// if the track segment is long enough, do a cubic spline sphere sweep
+			if (segLength <= 1)
+			{
+				// single point in segment - just draw sphere
+				int index = segment.getStartIndex();
+				inWriter.write("object { track_sphere_t"
+					+ " translate <" + inModel.getScaledHorizValue(index) + "," + inModel.getScaledAltValue(index)
+					+ "," + inModel.getScaledVertValue(index) + "> }");
+				// maybe draw some kind of polygon too or rod?
+			}
+			else
+			{
+				writeSphereSweep(inWriter, inModel, segment, inLineSeparator);
+			}
+
+			// Write wall underneath segment
+			if (segLength > 1)
+			{
+				writePolygonWall(inWriter, inModel, segment, inLineSeparator);
+			}
+		}
+	}
+
+
+	/**
+	 * Write out a single sphere sweep using either cubic spline or linear spline
+	 * @param inWriter Writer to use for writing file
+	 * @param inModel model object for getting data points
+	 * @param inSegment model segment to draw
+	 * @param inLineSeparator line separator to use
+	 * @throws IOException on file writing error
+	 */
+	private static void writeSphereSweep(FileWriter inWriter, ThreeDModel inModel, ModelSegment inSegment, String inLineSeparator)
+	throws IOException
+	{
+		// 3d sphere sweep
+		inWriter.write("// Sphere sweep:");
+		inWriter.write(inLineSeparator);
+		String splineType = inSegment.getNumTrackPoints() < 5?"linear_spline":"cubic_spline";
+		inWriter.write("sphere_sweep { "); inWriter.write(splineType);
+		inWriter.write(" " + inSegment.getNumTrackPoints() + ",");
+		inWriter.write(inLineSeparator);
+		// Loop over all points in this segment and write out sphere sweep
+		for (int i=inSegment.getStartIndex(); i<=inSegment.getEndIndex(); i++)
+		{
+			if (inModel.getPointType(i) != ThreeDModel.POINT_TYPE_WAYPOINT)
+			{
+				inWriter.write("  <" + inModel.getScaledHorizValue(i) + "," + inModel.getScaledAltValue(i)
+					+ "," + inModel.getScaledVertValue(i) + ">, 0.25");
+				inWriter.write(inLineSeparator);
+			}
+		}
+		inWriter.write("  tolerance 0.1");
+		inWriter.write(inLineSeparator);
+		inWriter.write("  texture { pigment {color rgb <0.6 1.0 0.2>}  finish {phong 1} }");
+		inWriter.write(inLineSeparator);
+		inWriter.write("  no_shadow");
+		inWriter.write(inLineSeparator);
+		inWriter.write("}");
+		inWriter.write(inLineSeparator);
+	}
+
+
+	/**
+	 * Write out a single polygon-based wall for the tubes-and-walls style
+	 * @param inWriter Writer to use for writing file
+	 * @param inModel model object for getting data points
+	 * @param inSegment model segment to draw
+	 * @param inLineSeparator line separator to use
+	 * @throws IOException on file writing error
+	 */
+	private static void writePolygonWall(FileWriter inWriter, ThreeDModel inModel, ModelSegment inSegment, String inLineSeparator)
+	throws IOException
+	{
+		// wall
+		inWriter.write(inLineSeparator);
+		inWriter.write("// wall between sweep and floor:");
+		inWriter.write(inLineSeparator);
+		// Loop over all points in this segment again and write out polygons
+		int prevIndex = -1;
+		for (int i=inSegment.getStartIndex(); i<=inSegment.getEndIndex(); i++)
+		{
+			if (inModel.getPointType(i) != ThreeDModel.POINT_TYPE_WAYPOINT)
+			{
+				if (prevIndex >= 0)
+				{
+					double xDiff = inModel.getScaledHorizValue(i) - inModel.getScaledHorizValue(prevIndex);
+					double yDiff = inModel.getScaledVertValue(i) - inModel.getScaledVertValue(prevIndex);
+					double dist = Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+					if (dist > 0)
+					{
+						inWriter.write("polygon {");
+						inWriter.write("  5, <" + inModel.getScaledHorizValue(prevIndex) + ", 0.0, " + inModel.getScaledVertValue(prevIndex) + ">,");
+						inWriter.write(" <" + inModel.getScaledHorizValue(prevIndex) + ", " + inModel.getScaledAltValue(prevIndex) + ", "
+							+ inModel.getScaledVertValue(prevIndex) + ">,");
+						inWriter.write(" <" + inModel.getScaledHorizValue(i) + ", " + inModel.getScaledAltValue(i) + ", "
+							+ inModel.getScaledVertValue(i) + ">,");
+						inWriter.write(" <" + inModel.getScaledHorizValue(i) + ", 0.0, " + inModel.getScaledVertValue(i) + ">,");
+						inWriter.write(" <" + inModel.getScaledHorizValue(prevIndex) + ", 0.0, " + inModel.getScaledVertValue(prevIndex) + ">");
+						inWriter.write("  pigment { color wall_colour } no_shadow");
+						inWriter.write("}");
+						inWriter.write(inLineSeparator);
+					}
+				}
+				prevIndex = i;
+			}
+		}
+	}
+
+
+	/**
 	 * @param inCode height code to check
 	 * @return validated height code within range 0 to max
 	 */
@@ -578,5 +780,47 @@ public class PovExporter
 		}
 		catch (Exception e) {} // ignore parse failures
 		return "" + value;
+	}
+
+	/**
+	 * Go through the points making a list of the segment starts and the number of track points in each segment
+	 * @param inModel model containing data
+	 * @return list of ModelSegment objects
+	 */
+	private static ArrayList getSegmentList(ThreeDModel inModel)
+	{
+		ArrayList segmentList = new ArrayList();
+		if (inModel != null && inModel.getNumPoints() > 0)
+		{
+			ModelSegment currSegment = null;
+			int numTrackPoints = 0;
+			for (int i=0; i<inModel.getNumPoints(); i++)
+			{
+				if (inModel.getPointType(i) != ThreeDModel.POINT_TYPE_WAYPOINT)
+				{
+					if (inModel.getPointType(i) == ThreeDModel.POINT_TYPE_SEGMENT_START || currSegment == null)
+					{
+						// start of segment
+						if (currSegment != null)
+						{
+							currSegment.setEndIndex(i-1);
+							currSegment.setNumTrackPoints(numTrackPoints);
+							segmentList.add(currSegment);
+							numTrackPoints = 0;
+						}
+						currSegment = new ModelSegment(i);
+					}
+					numTrackPoints++;
+				}
+			}
+			// Add last segment to list
+			if (currSegment != null && numTrackPoints > 0)
+			{
+				currSegment.setEndIndex(inModel.getNumPoints()-1);
+				currSegment.setNumTrackPoints(numTrackPoints);
+				segmentList.add(currSegment);
+			}
+		}
+		return segmentList;
 	}
 }

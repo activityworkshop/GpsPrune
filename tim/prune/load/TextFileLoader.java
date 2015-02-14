@@ -267,6 +267,7 @@ public class TextFileLoader
 		_cardPanel.setLayout(_layout);
 		JPanel firstCard = new JPanel();
 		firstCard.setLayout(new BorderLayout());
+		firstCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 
 		JPanel delimsPanel = new JPanel();
 		delimsPanel.setLayout(new GridLayout(0, 2));
@@ -310,6 +311,7 @@ public class TextFileLoader
 		// Second screen, for field order selection
 		JPanel secondCard = new JPanel();
 		secondCard.setLayout(new BorderLayout());
+		secondCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 		// table for file contents
 		_fileExtractTableModel = new FileExtractTableModel();
 		JTable extractTable = new JTable(_fileExtractTableModel);
@@ -319,6 +321,8 @@ public class TextFileLoader
 		secondCard.add(makeLabelledPanel("dialog.openoptions.tabledesc", tableScrollPane), BorderLayout.NORTH);
 		JPanel innerPanel2 = new JPanel();
 		innerPanel2.setLayout(new BorderLayout());
+		innerPanel2.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
 		_fieldTable = new JTable(new FieldSelectionTableModel());
 		_fieldTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		// add listener for selected table row

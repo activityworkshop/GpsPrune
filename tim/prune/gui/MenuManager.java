@@ -4,8 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
-
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -54,10 +52,11 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _selectStartItem = null;
 	private JMenuItem _selectEndItem = null;
 	private JMenuItem _reverseItem = null;
+	private JMenuItem _addTimeOffsetItem = null;
 	private JMenuItem _mergeSegmentsItem = null;
 	private JMenu     _rearrangeMenu = null;
+	private JMenuItem _cutAndMoveItem = null;
 	private JMenuItem _show3dItem = null;
-	private JMenuItem _showOsmMapItem = null;
 	private JMenu     _browserMapMenu = null;
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _connectPhotoItem = null;
@@ -71,6 +70,8 @@ public class MenuManager implements DataSubscriber
 	private ActionListener _saveAction = null;
 	private ActionListener _undoAction = null;
 	private ActionListener _editPointAction = null;
+	private ActionListener _deletePointAction = null;
+	private ActionListener _deleteRangeAction = null;
 	private ActionListener _selectStartAction = null;
 	private ActionListener _selectEndAction = null;
 	private ActionListener _connectPhotoAction = null;
@@ -79,6 +80,8 @@ public class MenuManager implements DataSubscriber
 	private JButton _saveButton = null;
 	private JButton _undoButton = null;
 	private JButton _editPointButton = null;
+	private JButton _deletePointButton = null;
+	private JButton _deleteRangeButton = null;
 	private JButton _selectStartButton = null;
 	private JButton _selectEndButton = null;
 	private JButton _connectPhotoButton = null;
@@ -129,6 +132,16 @@ public class MenuManager implements DataSubscriber
 		};
 		addPhotosMenuItem.addActionListener(_addPhotoAction);
 		fileMenu.add(addPhotosMenuItem);
+		// Add photos
+		JMenuItem loadFromGpsMenuItem = new JMenuItem(I18nManager.getText("menu.file.loadfromgps"));
+		loadFromGpsMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.beginLoadFromGps();
+			}
+		});
+		fileMenu.add(loadFromGpsMenuItem);
+		fileMenu.addSeparator();
 		// Save
 		_saveItem = new JMenuItem(I18nManager.getText("menu.file.save"), KeyEvent.VK_S);
 		_saveAction = new ActionListener() {
@@ -180,6 +193,7 @@ public class MenuManager implements DataSubscriber
 		});
 		fileMenu.add(exitMenuItem);
 		menubar.add(fileMenu);
+		// Edit menu
 		JMenu editMenu = new JMenu(I18nManager.getText("menu.edit"));
 		editMenu.setMnemonic(KeyEvent.VK_E);
 		_undoItem = new JMenuItem(I18nManager.getText("menu.edit.undo"));
@@ -222,21 +236,23 @@ public class MenuManager implements DataSubscriber
 		_editWaypointNameItem.setEnabled(false);
 		editMenu.add(_editWaypointNameItem);
 		_deletePointItem = new JMenuItem(I18nManager.getText("menu.edit.deletepoint"));
-		_deletePointItem.addActionListener(new ActionListener() {
+		_deletePointAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.deleteCurrentPoint();
 			}
-		});
+		};
+		_deletePointItem.addActionListener(_deletePointAction);
 		_deletePointItem.setEnabled(false);
 		editMenu.add(_deletePointItem);
 		_deleteRangeItem = new JMenuItem(I18nManager.getText("menu.edit.deleterange"));
-		_deleteRangeItem.addActionListener(new ActionListener() {
+		_deleteRangeAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.deleteSelectedRange();
 			}
-		});
+		};
+		_deleteRangeItem.addActionListener(_deleteRangeAction);
 		_deleteRangeItem.setEnabled(false);
 		editMenu.add(_deleteRangeItem);
 		_deleteDuplicatesItem = new JMenuItem(I18nManager.getText("menu.edit.deleteduplicates"));
@@ -276,6 +292,15 @@ public class MenuManager implements DataSubscriber
 		});
 		_reverseItem.setEnabled(false);
 		editMenu.add(_reverseItem);
+		_addTimeOffsetItem = new JMenuItem(I18nManager.getText("menu.edit.addtimeoffset"));
+		_addTimeOffsetItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.beginAddTimeOffset();
+			}
+		});
+		_addTimeOffsetItem.setEnabled(false);
+		editMenu.add(_addTimeOffsetItem);
 		_mergeSegmentsItem = new JMenuItem(I18nManager.getText("menu.edit.mergetracksegments"));
 		_mergeSegmentsItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -316,6 +341,15 @@ public class MenuManager implements DataSubscriber
 		rearrangeNearestItem.setEnabled(true);
 		_rearrangeMenu.add(rearrangeNearestItem);
 		editMenu.add(_rearrangeMenu);
+		_cutAndMoveItem = new JMenuItem(I18nManager.getText("menu.edit.cutandmove"));
+		_cutAndMoveItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.cutAndMoveSelection();
+			}
+		});
+		_cutAndMoveItem.setEnabled(false);
+		editMenu.add(_cutAndMoveItem);
 		menubar.add(editMenu);
 
 		// Select menu
@@ -372,16 +406,6 @@ public class MenuManager implements DataSubscriber
 		});
 		_show3dItem.setEnabled(false);
 		viewMenu.add(_show3dItem);
-		// Show OSM map
-		_showOsmMapItem = new JMenuItem(I18nManager.getText("menu.view.showmap"));
-		_showOsmMapItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_app.showOsmMap();
-			}
-		});
-		_showOsmMapItem.setEnabled(false);
-		viewMenu.add(_showOsmMapItem);
 		// browser submenu
 		_browserMapMenu = new JMenu(I18nManager.getText("menu.view.browser"));
 		_browserMapMenu.setEnabled(false);
@@ -479,6 +503,14 @@ public class MenuManager implements DataSubscriber
 			}
 		});
 		helpMenu.add(aboutItem);
+		JMenuItem checkVersionItem = new JMenuItem(I18nManager.getText("menu.help.checkversion"));
+		checkVersionItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				CheckVersionScreen.show(_parent);
+			}
+		});
+		helpMenu.add(checkVersionItem);
 		menubar.add(helpMenu);
 
 		return menubar;
@@ -493,45 +525,57 @@ public class MenuManager implements DataSubscriber
 	{
 		JToolBar toolbar = new JToolBar();
 		// Add text file
-		JButton openFileButton = new JButton(new ImageIcon(getClass().getResource("images/add_textfile_icon.png")));
+		JButton openFileButton = new JButton(IconManager.getImageIcon(IconManager.OPEN_FILE));
 		openFileButton.setToolTipText(I18nManager.getText("menu.file.open"));
 		openFileButton.addActionListener(_openFileAction);
 		toolbar.add(openFileButton);
 		// Add photo
-		JButton addPhotoButton = new JButton(new ImageIcon(getClass().getResource("images/add_photo_icon.png")));
+		JButton addPhotoButton = new JButton(IconManager.getImageIcon(IconManager.ADD_PHOTO));
 		addPhotoButton.setToolTipText(I18nManager.getText("menu.file.addphotos"));
 		addPhotoButton.addActionListener(_addPhotoAction);
 		toolbar.add(addPhotoButton);
 		// Save
-		_saveButton = new JButton(new ImageIcon(getClass().getResource("images/save_icon.gif")));
+		_saveButton = new JButton(IconManager.getImageIcon(IconManager.SAVE_FILE));
 		_saveButton.setToolTipText(I18nManager.getText("menu.file.save"));
 		_saveButton.addActionListener(_saveAction);
 		_saveButton.setEnabled(false);
 		toolbar.add(_saveButton);
 		// Undo
-		_undoButton = new JButton(new ImageIcon(getClass().getResource("images/undo_icon.gif")));
+		_undoButton = new JButton(IconManager.getImageIcon(IconManager.UNDO));
 		_undoButton.setToolTipText(I18nManager.getText("menu.edit.undo"));
 		_undoButton.addActionListener(_undoAction);
 		_undoButton.setEnabled(false);
 		toolbar.add(_undoButton);
 		// Edit point
-		_editPointButton = new JButton(new ImageIcon(getClass().getResource("images/edit_point_icon.gif")));
+		_editPointButton = new JButton(IconManager.getImageIcon(IconManager.EDIT_POINT));
 		_editPointButton.setToolTipText(I18nManager.getText("menu.edit.editpoint"));
 		_editPointButton.addActionListener(_editPointAction);
 		_editPointButton.setEnabled(false);
 		toolbar.add(_editPointButton);
+		// Delete point
+		_deletePointButton = new JButton(IconManager.getImageIcon(IconManager.DELETE_POINT));
+		_deletePointButton.setToolTipText(I18nManager.getText("menu.edit.deletepoint"));
+		_deletePointButton.addActionListener(_deletePointAction);
+		_deletePointButton.setEnabled(false);
+		toolbar.add(_deletePointButton);
+		// Delete range
+		_deleteRangeButton = new JButton(IconManager.getImageIcon(IconManager.DELETE_RANGE));
+		_deleteRangeButton.setToolTipText(I18nManager.getText("menu.edit.deleterange"));
+		_deleteRangeButton.addActionListener(_deleteRangeAction);
+		_deleteRangeButton.setEnabled(false);
+		toolbar.add(_deleteRangeButton);
 		// Select start, end
-		_selectStartButton = new JButton(new ImageIcon(getClass().getResource("images/set_start_icon.png")));
+		_selectStartButton = new JButton(IconManager.getImageIcon(IconManager.SET_RANGE_START));
 		_selectStartButton.setToolTipText(I18nManager.getText("menu.select.start"));
 		_selectStartButton.addActionListener(_selectStartAction);
 		_selectStartButton.setEnabled(false);
 		toolbar.add(_selectStartButton);
-		_selectEndButton = new JButton(new ImageIcon(getClass().getResource("images/set_end_icon.png")));
+		_selectEndButton = new JButton(IconManager.getImageIcon(IconManager.SET_RANGE_END));
 		_selectEndButton.setToolTipText(I18nManager.getText("menu.select.end"));
 		_selectEndButton.addActionListener(_selectEndAction);
 		_selectEndButton.setEnabled(false);
 		toolbar.add(_selectEndButton);
-		_connectPhotoButton = new JButton(new ImageIcon(getClass().getResource("images/connect_photo_icon.png")));
+		_connectPhotoButton = new JButton(IconManager.getImageIcon(IconManager.CONNECT_PHOTO));
 		_connectPhotoButton.setToolTipText(I18nManager.getText("menu.photo.connect"));
 		_connectPhotoButton.addActionListener(_connectPhotoAction);
 		_connectPhotoButton.setEnabled(false);
@@ -574,7 +618,6 @@ public class MenuManager implements DataSubscriber
 		_selectNoneItem.setEnabled(hasData);
 		if (_show3dItem != null)
 			_show3dItem.setEnabled(hasData);
-		_showOsmMapItem.setEnabled(hasData);
 		_browserMapMenu.setEnabled(hasData);
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
@@ -587,6 +630,7 @@ public class MenuManager implements DataSubscriber
 		_editPointButton.setEnabled(hasPoint);
 		_editWaypointNameItem.setEnabled(hasPoint);
 		_deletePointItem.setEnabled(hasPoint);
+		_deletePointButton.setEnabled(hasPoint);
 		_selectStartItem.setEnabled(hasPoint);
 		_selectStartButton.setEnabled(hasPoint);
 		_selectEndItem.setEnabled(hasPoint);
@@ -596,9 +640,9 @@ public class MenuManager implements DataSubscriber
 		_saveExifItem.setEnabled(anyPhotos);
 		// is there a current photo?
 		boolean hasPhoto = anyPhotos && _selection.getCurrentPhotoIndex() >= 0;
-		// connect is only available when current photo is not connected to current point
-		boolean connectAvailable = hasPhoto && hasPoint
-			&& _track.getPoint(_selection.getCurrentPointIndex()).getPhoto() == null;
+		// connect is available if photo and point selected, and photo has no point
+		boolean connectAvailable = hasPhoto && hasPoint && _photos.getPhoto(_selection.getCurrentPhotoIndex()) != null
+			&& _photos.getPhoto(_selection.getCurrentPhotoIndex()).getDataPoint() == null;
 		_connectPhotoItem.setEnabled(connectAvailable);
 		_connectPhotoButton.setEnabled(connectAvailable);
 		_disconnectPhotoItem.setEnabled(hasPhoto && _photos.getPhoto(_selection.getCurrentPhotoIndex()) != null
@@ -608,10 +652,16 @@ public class MenuManager implements DataSubscriber
 		// is there a current range?
 		boolean hasRange = (hasData && _selection.hasRangeSelected());
 		_deleteRangeItem.setEnabled(hasRange);
+		_deleteRangeButton.setEnabled(hasRange);
 		_interpolateItem.setEnabled(hasRange
 			&& (_selection.getEnd() - _selection.getStart()) == 1);
 		_mergeSegmentsItem.setEnabled(hasRange);
 		_reverseItem.setEnabled(hasRange);
+		_addTimeOffsetItem.setEnabled(hasRange);
+		// Is the currently selected point outside the current range?
+		_cutAndMoveItem.setEnabled(hasRange && hasPoint &&
+			(_selection.getCurrentPointIndex() < _selection.getStart()
+				|| _selection.getCurrentPointIndex() > (_selection.getEnd()+1)));
 	}
 
 

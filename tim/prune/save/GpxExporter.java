@@ -12,8 +12,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -21,8 +23,8 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.filechooser.FileFilter;
 
+import tim.prune.Config;
 import tim.prune.GpsPruner;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
@@ -32,6 +34,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.load.GenericFileFilter;
 
 /**
  * Class to export track information
@@ -44,6 +47,7 @@ public class GpxExporter implements Runnable
 	private JDialog _dialog = null;
 	private JTextField _nameField = null;
 	private JTextField _descriptionField = null;
+	private JCheckBox _timestampsCheckbox = null;
 	private JFileChooser _fileChooser = null;
 	private File _exportFile = null;
 
@@ -103,6 +107,10 @@ public class GpxExporter implements Runnable
 		_descriptionField = new JTextField(10);
 		descPanel.add(_descriptionField);
 		mainPanel.add(descPanel);
+		// checkbox for timestamps
+		_timestampsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.includetimestamps"));
+		_timestampsCheckbox.setSelected(true);
+		mainPanel.add(_timestampsCheckbox);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
 
 		// button panel at bottom
@@ -127,6 +135,7 @@ public class GpxExporter implements Runnable
 		});
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
+		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 		return dialogPanel;
 	}
 
@@ -138,20 +147,15 @@ public class GpxExporter implements Runnable
 	{
 		// OK pressed, so choose output file
 		if (_fileChooser == null)
-			{_fileChooser = new JFileChooser();}
-		_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-		_fileChooser.setFileFilter(new FileFilter() {
-			public boolean accept(File f)
-			{
-				return (f != null && (f.isDirectory()
-					|| f.getName().toLowerCase().endsWith(".gpx")));
-			}
-			public String getDescription()
-			{
-				return I18nManager.getText("dialog.exportgpx.filetype");
-			}
-		});
-		_fileChooser.setAcceptAllFileFilterUsed(false);
+		{
+			_fileChooser = new JFileChooser();
+			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+			_fileChooser.setFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
+			_fileChooser.setAcceptAllFileFilterUsed(false);
+			// start from directory in config which should be set
+			File configDir = Config.getWorkingDirectory();
+			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+		}
 		// Allow choose again if an existing file is selected
 		boolean chooseAgain = false;
 		do
@@ -202,6 +206,8 @@ public class GpxExporter implements Runnable
 
 			// close file
 			writer.close();
+			// Store directory in config for later
+			Config.setWorkingDirectory(_exportFile.getParentFile());
 			// Show confirmation
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
@@ -237,7 +243,9 @@ public class GpxExporter implements Runnable
 		inWriter.write(GPX_VERSION_NUMBER);
 		inWriter.write("\" creator=\"");
 		inWriter.write(GPX_CREATOR);
-		inWriter.write("\">\n");
+		inWriter.write("\"\n xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"
+			+ " xmlns=\"http://www.topografix.com/GPX/1/0\""
+			+ " xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n");
 		// Name field
 		if (_nameField != null && _nameField.getText() != null && !_nameField.getText().equals(""))
 		{
@@ -284,11 +292,11 @@ public class GpxExporter implements Runnable
 			for (i=0; i<numPoints; i++)
 			{
 				point = _track.getPoint(i);
+				// restart track segment if necessary
 				if (point.getSegmentStart() && !firstPoint) {
 					inWriter.write("\t</trkseg>\n\t<trkseg>\n");
 				}
 				if (!point.isWaypoint()) {
-					// restart track segment if necessary
 					// export the track point
 					exportTrackpoint(point, inWriter);
 					firstPoint = false;
@@ -321,11 +329,11 @@ public class GpxExporter implements Runnable
 		if (inPoint.hasAltitude())
 		{
 			inWriter.write("\t\t<ele>");
-			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
 			inWriter.write("</ele>\n");
 		}
 		// timestamp if available (point might have altitude and then be turned into a waypoint)
-		if (inPoint.hasTimestamp())
+		if (inPoint.hasTimestamp() && _timestampsCheckbox.isSelected())
 		{
 			inWriter.write("\t\t<time>");
 			inWriter.write(inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
@@ -352,11 +360,11 @@ public class GpxExporter implements Runnable
 		if (inPoint.hasAltitude())
 		{
 			inWriter.write("<ele>");
-			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
 			inWriter.write("</ele>");
 		}
-		// timestamp if available
-		if (inPoint.hasTimestamp())
+		// timestamp if available (and selected)
+		if (inPoint.hasTimestamp() && _timestampsCheckbox.isSelected())
 		{
 			inWriter.write("<time>");
 			inWriter.write(inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));

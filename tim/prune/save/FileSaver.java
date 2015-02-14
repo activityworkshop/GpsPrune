@@ -32,6 +32,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.TableModel;
 
 import tim.prune.App;
+import tim.prune.Config;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
@@ -41,6 +42,7 @@ import tim.prune.data.Field;
 import tim.prune.data.FieldList;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
+import tim.prune.load.GenericFileFilter;
 import tim.prune.load.OneCharDocument;
 
 /**
@@ -220,7 +222,7 @@ public class FileSaver
 
 		// header checkbox
 		firstCard.add(Box.createRigidArea(new Dimension(0,10)));
-		_headerRowCheckbox = new JCheckBox(I18nManager.getText("dialog.save.headerrow"));
+		_headerRowCheckbox = new JCheckBox(I18nManager.getText("dialog.save.headerrow"), true);
 		firstCard.add(_headerRowCheckbox);
 
 		_cards.add(firstCard, "card1");
@@ -382,8 +384,17 @@ public class FileSaver
 		boolean saveOK = true;
 		FileWriter writer = null;
 		if (_fileChooser == null)
+		{
 			_fileChooser = new JFileChooser();
-		_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.txt", new String[] {"txt", "text"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kml", new String[] {"kml"}));
+			_fileChooser.setAcceptAllFileFilterUsed(true);
+			// start from directory in config which should be set
+			File configDir = Config.getWorkingDirectory();
+			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+		}
 		if (_fileChooser.showSaveDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
 			File saveFile = _fileChooser.getSelectedFile();
@@ -485,7 +496,7 @@ public class FileSaver
 								{
 									try
 									{
-										buffer.append(point.getAltitude().getValue(altitudeFormat));
+										buffer.append(point.getAltitude().getStringValue(altitudeFormat));
 									}
 									catch (NullPointerException npe) {}
 								}
@@ -518,6 +529,8 @@ public class FileSaver
 						writer.write(buffer.toString());
 						writer.write(lineSeparator);
 					}
+					// Store directory in config for later
+					Config.setWorkingDirectory(saveFile.getParentFile());
 					// Save successful
 					UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 						 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")

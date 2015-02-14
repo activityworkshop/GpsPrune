@@ -3,30 +3,31 @@ package tim.prune;
 import java.awt.event.WindowAdapter;
 import java.awt.BorderLayout;
 import java.awt.event.WindowEvent;
+import java.io.File;
 import java.util.Locale;
-
-import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 import javax.swing.WindowConstants;
 
 import tim.prune.gui.DetailsDisplay;
-import tim.prune.gui.MapChart;
+import tim.prune.gui.IconManager;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.ProfileChart;
 import tim.prune.gui.SelectorDisplay;
 import tim.prune.gui.StatusBar;
+import tim.prune.gui.map.MapCanvas;
 
 /**
  * Tool to visualize, edit and prune GPS data
  * Please see the included readme.txt or http://activityworkshop.net
+ * This software is copyright activityworkshop.net and made available through the Gnu GPL
  */
 public class GpsPruner
 {
-	// Final build of version 5
-	public static final String VERSION_NUMBER = "5";
-	public static final String BUILD_NUMBER = "100";
+	// Final build of version 6
+	public static final String VERSION_NUMBER = "6";
+	public static final String BUILD_NUMBER = "117";
 	private static App APP = null;
 
 
@@ -37,23 +38,63 @@ public class GpsPruner
 	public static void main(String[] args)
 	{
 		Locale locale = null;
-		if (args.length == 1)
+		String langFilename = null;
+		String configFilename = null;
+		boolean showUsage = false;
+		for (int i=0; i<args.length; i++)
 		{
-			if (args[0].startsWith("--locale="))
+			if (args[i].startsWith("--locale="))
 			{
-				locale = getLanguage(args[0].substring(9));
+				locale = getLanguage(args[i].substring(9));
 			}
-			else if (args[0].startsWith("--lang="))
+			else if (args[i].startsWith("--lang="))
 			{
-				locale = getLanguage(args[0].substring(7));
+				locale = getLanguage(args[i].substring(7));
+			}
+			else if (args[i].startsWith("--langfile="))
+			{
+				langFilename = args[i].substring(11);
+			}
+			else if (args[i].startsWith("--configfile="))
+			{
+				configFilename = args[i].substring(13);
 			}
 			else
 			{
-				System.out.println("Unknown parameter '" + args[0] +
-					"'. Possible parameters:\n   --locale= or --lang=  used for overriding language settings\n");
+				System.out.println("Unknown parameter '" + args[i] + "'.");
+				showUsage = true;
 			}
 		}
+		if (showUsage) {
+			System.out.println("Possible parameters:"
+				+ "\n   --configfile=<file> used to specify a configuration file"
+				+ "\n   --lang=<code> or --locale=<code>  used to specify language"
+				+ "\n   --langfile=<file>   used to specify an alternative language file\n");
+		}
+		// Initialise configuration if selected
+		try
+		{
+			if (configFilename != null) {
+				Config.loadFile(new File(configFilename));
+			}
+			else {
+				Config.loadDefaultFile();
+			}
+		}
+		catch (ConfigException ce) {
+			System.err.println("Failed to load config file: " + configFilename);
+		}
+		// Set locale according to Config's language property
+		String langCode = Config.getLanguageCode();
+		if (locale == null && langCode != null) {
+			Locale configLocale = getLanguage(langCode);
+			if (configLocale != null) {locale = configLocale;}
+		}
 		I18nManager.init(locale);
+		if (langFilename != null) {
+			I18nManager.addLanguageFile(langFilename);
+		}
+		// Set up the window and go
 		launch();
 	}
 
@@ -100,7 +141,7 @@ public class GpsPruner
 		UpdateMessageBroker.addSubscriber(leftPanel);
 		DetailsDisplay rightPanel = new DetailsDisplay(APP.getTrackInfo());
 		UpdateMessageBroker.addSubscriber(rightPanel);
-		MapChart mapDisp = new MapChart(APP, APP.getTrackInfo());
+		MapCanvas mapDisp = new MapCanvas(APP, APP.getTrackInfo());
 		UpdateMessageBroker.addSubscriber(mapDisp);
 		ProfileChart profileDisp = new ProfileChart(APP.getTrackInfo());
 		UpdateMessageBroker.addSubscriber(profileDisp);
@@ -131,7 +172,7 @@ public class GpsPruner
 
 		// set icon
 		try {
-			frame.setIconImage(new ImageIcon(GpsPruner.class.getResource("gui/images/window_icon.png")).getImage());
+			frame.setIconImage(IconManager.getImageIcon(IconManager.WINDOW_ICON).getImage());
 		}
 		catch (Exception e) {} // ignore
 

@@ -32,8 +32,8 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.filechooser.FileFilter;
 
+import tim.prune.Config;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Altitude;
@@ -43,6 +43,7 @@ import tim.prune.data.Field;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.ImageUtils;
+import tim.prune.load.GenericFileFilter;
 
 /**
  * Class to export track information
@@ -189,19 +190,14 @@ public class KmlExporter implements Runnable
 	{
 		// OK pressed, so choose output file
 		if (_fileChooser == null)
-			{_fileChooser = new JFileChooser();}
-		_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-		_fileChooser.setFileFilter(new FileFilter() {
-			public boolean accept(File f)
-			{
-				return (f != null && (f.isDirectory()
-					|| f.getName().toLowerCase().endsWith(".kml") || f.getName().toLowerCase().endsWith(".kmz")));
-			}
-			public String getDescription()
-			{
-				return I18nManager.getText("dialog.exportkml.filetype");
-			}
-		});
+		{
+			_fileChooser = new JFileChooser();
+			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
+			_fileChooser.setFileFilter(new GenericFileFilter("filetype.kmlkmz", new String[] {"kml", "kmz"}));
+			// start from directory in config which should be set
+			File configDir = Config.getWorkingDirectory();
+			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+		}
 		String requiredExtension = null, otherExtension = null;
 		if (_kmzCheckbox.isSelected())
 		{
@@ -303,6 +299,8 @@ public class KmlExporter implements Runnable
 
 			// close file
 			writer.close();
+			// Store directory in config for later
+			Config.setWorkingDirectory(_exportFile.getParentFile());
 			// show confirmation
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
@@ -442,7 +440,7 @@ public class KmlExporter implements Runnable
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
 		inWriter.write(",");
 		if (inExportAltitude && inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
 		}
 		else {
 			inWriter.write("0");
@@ -488,7 +486,7 @@ public class KmlExporter implements Runnable
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
 		inWriter.write(",");
 		if (inExportAltitude && inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
 		}
 		else {
 			inWriter.write("0");
@@ -511,7 +509,7 @@ public class KmlExporter implements Runnable
 		// Altitude either absolute or locked to ground by Google Earth
 		inWriter.write(",");
 		if (inExportAltitude && inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.FORMAT_METRES));
 		}
 		else {
 			inWriter.write("0");

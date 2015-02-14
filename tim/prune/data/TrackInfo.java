@@ -282,15 +282,15 @@ public class TrackInfo
 
 	/**
 	 * Interpolate extra points between two selected ones
-	 * @param inStartIndex start index of interpolation
 	 * @param inNumPoints num points to insert
 	 * @return true if successful
 	 */
 	public boolean interpolate(int inNumPoints)
 	{
 		boolean success = _track.interpolate(_selection.getStart(), inNumPoints);
-		if (success)
+		if (success) {
 			_selection.selectRangeEnd(_selection.getEnd() + inNumPoints);
+		}
 		return success;
 	}
 

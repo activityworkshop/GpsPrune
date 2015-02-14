@@ -11,8 +11,12 @@ import tim.prune.browser.BrowserLauncher;
 import tim.prune.browser.UrlGenerator;
 import tim.prune.correlate.PhotoCorrelator;
 import tim.prune.correlate.PointPair;
+import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.LatLonRectangle;
+import tim.prune.data.Latitude;
+import tim.prune.data.Longitude;
 import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
 import tim.prune.data.Track;
@@ -21,9 +25,10 @@ import tim.prune.edit.FieldEditList;
 import tim.prune.edit.PointEditor;
 import tim.prune.edit.PointNameEditor;
 import tim.prune.gui.MenuManager;
+import tim.prune.gui.TimeOffsetDialog;
 import tim.prune.gui.UndoManager;
-import tim.prune.gui.map.MapWindow;
 import tim.prune.load.FileLoader;
+import tim.prune.load.GpsLoader;
 import tim.prune.load.JpegLoader;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
@@ -33,9 +38,13 @@ import tim.prune.save.PovExporter;
 import tim.prune.threedee.ThreeDException;
 import tim.prune.threedee.ThreeDWindow;
 import tim.prune.threedee.WindowFactory;
+import tim.prune.undo.UndoAddTimeOffset;
 import tim.prune.undo.UndoCompress;
 import tim.prune.undo.UndoConnectPhoto;
+import tim.prune.undo.UndoConnectPhotoWithClone;
 import tim.prune.undo.UndoCorrelatePhotos;
+import tim.prune.undo.UndoCreatePoint;
+import tim.prune.undo.UndoCutAndMove;
 import tim.prune.undo.UndoDeleteDuplicates;
 import tim.prune.undo.UndoDeletePhoto;
 import tim.prune.undo.UndoDeletePoint;
@@ -65,13 +74,14 @@ public class App
 	private MenuManager _menuManager = null;
 	private FileLoader _fileLoader = null;
 	private JpegLoader _jpegLoader = null;
+	private GpsLoader _gpsLoader = null;
 	private FileSaver _fileSaver = null;
 	private KmlExporter _kmlExporter = null;
 	private GpxExporter _gpxExporter = null;
 	private PovExporter _povExporter = null;
 	private BrowserLauncher _browserLauncher = null;
 	private Stack _undoStack = null;
-	private boolean _reversePointsConfirmed = false;
+	private boolean _mangleTimestampsConfirmed = false;
 
 	// Constants
 	public static final int REARRANGE_TO_START   = 0;
@@ -146,9 +156,18 @@ public class App
 	{
 		if (_jpegLoader == null)
 			_jpegLoader = new JpegLoader(this, _frame);
-		_jpegLoader.openDialog();
+		_jpegLoader.openDialog(new LatLonRectangle(_track.getLatRange(), _track.getLonRange()));
 	}
 
+	/**
+	 * Start a load from Gps
+	 */
+	public void beginLoadFromGps()
+	{
+		if (_gpsLoader == null)
+			_gpsLoader = new GpsLoader(this, _frame);
+		_gpsLoader.openDialog();
+	}
 
 	/**
 	 * Save the file in the selected format
@@ -165,7 +184,9 @@ public class App
 			if (_fileSaver == null) {
 				_fileSaver = new FileSaver(this, _frame, _track);
 			}
-			_fileSaver.showDialog(_fileLoader.getLastUsedDelimiter());
+			char delim = ',';
+			if (_fileLoader != null) {delim = _fileLoader.getLastUsedDelimiter();}
+			_fileSaver.showDialog(delim);
 		}
 	}
 
@@ -569,11 +590,11 @@ public class App
 		int selStart = _trackInfo.getSelection().getStart();
 		int selEnd = _trackInfo.getSelection().getEnd();
 		if (!_track.hasData(Field.TIMESTAMP, selStart, selEnd)
-			|| _reversePointsConfirmed
+			|| _mangleTimestampsConfirmed
 			|| (JOptionPane.showConfirmDialog(_frame,
 				 I18nManager.getText("dialog.confirmreversetrack.text"),
 				 I18nManager.getText("dialog.confirmreversetrack.title"),
-				 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION && (_reversePointsConfirmed = true)))
+				 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION && (_mangleTimestampsConfirmed = true)))
 		{
 			UndoReverseSection undo = new UndoReverseSection(_track, selStart, selEnd);
 			// call track to reverse range
@@ -585,6 +606,43 @@ public class App
 			}
 		}
 	}
+
+	/**
+	 * Trigger the dialog to add a time offset to the current selection
+	 */
+	public void beginAddTimeOffset()
+	{
+		int selStart = _trackInfo.getSelection().getStart();
+		int selEnd = _trackInfo.getSelection().getEnd();
+		if (!_track.hasData(Field.TIMESTAMP, selStart, selEnd)) {
+			JOptionPane.showMessageDialog(_frame,
+				I18nManager.getText("dialog.addtimeoffset.notimestamps"),
+				I18nManager.getText("dialog.addtimeoffset.title"), JOptionPane.ERROR_MESSAGE);
+		}
+		else {
+			TimeOffsetDialog timeDialog = new TimeOffsetDialog(this, _frame);
+			timeDialog.showDialog();
+		}
+	}
+
+	/**
+	 * Complete the add time offset function with the specified offset
+	 * @param inTimeOffset time offset to add (+ve for add, -ve for subtract)
+	 */
+	public void finishAddTimeOffset(long inTimeOffset)
+	{
+		// Construct undo information
+		int selStart = _trackInfo.getSelection().getStart();
+		int selEnd = _trackInfo.getSelection().getEnd();
+		UndoAddTimeOffset undo = new UndoAddTimeOffset(selStart, selEnd, inTimeOffset);
+		if (_trackInfo.getTrack().addTimeOffset(selStart, selEnd, inTimeOffset))
+		{
+			_undoStack.add(undo);
+			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_EDITED);
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.addtimeoffset"));
+		}
+	}
+
 
 	/**
 	 * Merge the track segments within the current selection
@@ -633,6 +691,27 @@ public class App
 
 
 	/**
+	 * Create a new point at the given lat/long coordinates
+	 * @param inLat latitude
+	 * @param inLong longitude
+	 */
+	public void createPoint(double inLat, double inLong)
+	{
+		// create undo object
+		UndoCreatePoint undo = new UndoCreatePoint();
+		// create point and add to track
+		DataPoint point = new DataPoint(new Latitude(inLat, Coordinate.FORMAT_NONE), new Longitude(inLong, Coordinate.FORMAT_NONE), null);
+		point.setSegmentStart(true);
+		_track.appendPoints(new DataPoint[] {point});
+		_trackInfo.getSelection().selectPoint(_trackInfo.getTrack().getNumPoints()-1);
+		// add undo object to stack
+		_undoStack.add(undo);
+		// update listeners
+		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.createpoint"));
+	}
+
+
+	/**
 	 * Rearrange the waypoints into track order
 	 * @param inFunction nearest point, all to end or all to start
 	 */
@@ -653,11 +732,52 @@ public class App
 		if (success)
 		{
 			_undoStack.add(undo);
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.rearrangewaypoints"));
 		}
 		else
 		{
 			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.rearrange.noop"),
 				I18nManager.getText("error.function.noop.title"), JOptionPane.WARNING_MESSAGE);
+		}
+	}
+
+
+	/**
+	 * Cut the current selection and move it to before the currently selected point
+	 */
+	public void cutAndMoveSelection()
+	{
+		int startIndex = _trackInfo.getSelection().getStart();
+		int endIndex = _trackInfo.getSelection().getEnd();
+		int pointIndex = _trackInfo.getSelection().getCurrentPointIndex();
+		// If timestamps would be mangled by cut/move, confirm
+		if (!_track.hasData(Field.TIMESTAMP, startIndex, endIndex)
+			|| _mangleTimestampsConfirmed
+			|| (JOptionPane.showConfirmDialog(_frame,
+				 I18nManager.getText("dialog.confirmcutandmove.text"),
+				 I18nManager.getText("dialog.confirmcutandmove.title"),
+				 JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION && (_mangleTimestampsConfirmed = true)))
+		{
+			// Find points to set segment flags
+			DataPoint firstTrackPoint = _track.getNextTrackPoint(startIndex, endIndex);
+			DataPoint nextTrackPoint = _track.getNextTrackPoint(endIndex+1);
+			DataPoint moveToTrackPoint = _track.getNextTrackPoint(pointIndex);
+			// Make undo object
+			UndoCutAndMove undo = new UndoCutAndMove(_track, startIndex, endIndex, pointIndex);
+			// Call track info to move track section
+			if (_track.cutAndMoveSection(startIndex, endIndex, pointIndex))
+			{
+				// Set segment start flags (first track point, next track point, move to point)
+				if (firstTrackPoint != null) {firstTrackPoint.setSegmentStart(true);}
+				if (nextTrackPoint != null) {nextTrackPoint.setSegmentStart(true);}
+				if (moveToTrackPoint != null) {moveToTrackPoint.setSegmentStart(true);}
+
+				// Add undo object to stack, set confirm message
+				_undoStack.add(undo);
+				_trackInfo.getSelection().deselectRange();
+				UpdateMessageBroker.informSubscribers();
+				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.cutandmove"));
+			}
 		}
 	}
 
@@ -717,6 +837,20 @@ public class App
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, int inAltFormat, String inFilename)
 	{
+		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inFilename, false);
+	}
+
+	/**
+	 * Receive loaded data and optionally merge with current Track
+	 * @param inFieldArray array of fields
+	 * @param inDataArray array of data
+	 * @param inAltFormat altitude format
+	 * @param inFilename filename used
+	 * @param inOverrideAppend true to override append question and always append
+	 */
+	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, int inAltFormat,
+		String inFilename, boolean inOverrideAppend)
+	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
 		loadedTrack.load(inFieldArray, inDataArray, inAltFormat);
@@ -732,10 +866,13 @@ public class App
 		if (_track != null && _track.getNumPoints() > 0)
 		{
 			// ask whether to replace or append
-			int answer = JOptionPane.showConfirmDialog(_frame,
-				I18nManager.getText("dialog.openappend.text"),
-				I18nManager.getText("dialog.openappend.title"),
-				JOptionPane.YES_NO_CANCEL_OPTION);
+			int answer = JOptionPane.YES_OPTION;
+			if (!inOverrideAppend) {
+				answer = JOptionPane.showConfirmDialog(_frame,
+					I18nManager.getText("dialog.openappend.text"),
+					I18nManager.getText("dialog.openappend.title"),
+					JOptionPane.YES_NO_CANCEL_OPTION);
+			}
 			if (answer == JOptionPane.YES_OPTION)
 			{
 				// append data to current Track
@@ -826,14 +963,39 @@ public class App
 	{
 		Photo photo = _trackInfo.getCurrentPhoto();
 		DataPoint point = _trackInfo.getCurrentPoint();
-		if (photo != null && point != null && point.getPhoto() == null)
+		if (photo != null && point != null)
 		{
-			// connect
-			_undoStack.add(new UndoConnectPhoto(point, photo.getFile().getName()));
-			photo.setDataPoint(point);
-			point.setPhoto(photo);
-			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
-			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.connect"));
+			if (point.getPhoto() != null)
+			{
+				// point already has a photo, confirm cloning of new point
+				if (JOptionPane.showConfirmDialog(_frame,
+					I18nManager.getText("dialog.connectphoto.clonepoint"),
+					I18nManager.getText("dialog.connect.title"),
+					JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
+				{
+					// Create undo, clone point and attach
+					int pointIndex = _trackInfo.getSelection().getCurrentPointIndex() + 1;
+					// insert new point after current one
+					point = point.clonePoint();
+					UndoConnectPhotoWithClone undo = new UndoConnectPhotoWithClone(
+						point, photo.getFile().getName(), pointIndex);
+					_track.insertPoint(point, pointIndex);
+					photo.setDataPoint(point);
+					point.setPhoto(photo);
+					_undoStack.add(undo);
+					UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+					UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.connect"));
+				}
+			}
+			else
+			{
+				// point doesn't currently have a photo, so just connect it
+				_undoStack.add(new UndoConnectPhoto(point, photo.getFile().getName()));
+				photo.setDataPoint(point);
+				point.setPhoto(photo);
+				UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.connect"));
+			}
 		}
 	}
 
@@ -990,6 +1152,8 @@ public class App
 							// link photo to point
 							pointToAdd.setPhoto(pair.getPhoto());
 							pair.getPhoto().setDataPoint(pointToAdd);
+							// set to start of segment so not joined in track
+							pointToAdd.setSegmentStart(true);
 							// add to point array
 							addedPoints[pointNum] = pointToAdd;
 							pointNum++;
@@ -1126,19 +1290,17 @@ public class App
 	 */
 	public void showHelp()
 	{
-		JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.help.help"),
-			I18nManager.getText("menu.help"),
-			JOptionPane.INFORMATION_MESSAGE);
-	}
-
-	/**
-	 * Show an OSM map window
-	 */
-	public void showOsmMap()
-	{
-		MapWindow map = new MapWindow(_track);
-		map.pack();
-		map.show();
+		// show the dialog and offer to open home page
+		Object[] buttonTexts = {I18nManager.getText("button.showwebpage"), I18nManager.getText("button.cancel")};
+		if (JOptionPane.showOptionDialog(_frame, I18nManager.getText("dialog.help.help"),
+				I18nManager.getText("menu.help"), JOptionPane.YES_NO_OPTION,
+				JOptionPane.INFORMATION_MESSAGE, null, buttonTexts, buttonTexts[1])
+			== JOptionPane.YES_OPTION)
+		{
+			// User selected to launch home page
+			if (_browserLauncher == null) {_browserLauncher = new BrowserLauncher();}
+			_browserLauncher.launchBrowser("http://activityworkshop.net/software/prune/index.html");
+		}
 	}
 
 	/**

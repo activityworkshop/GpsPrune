@@ -145,4 +145,12 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 		}
 		super.endElement(uri, localName, qName);
 	}
+
+	/**
+	 * @return The Xml handler used for the parsing
+	 */
+	public XmlHandler getHandler()
+	{
+		return _handler;
+	}
 }

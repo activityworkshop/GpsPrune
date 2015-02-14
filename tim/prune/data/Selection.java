@@ -17,8 +17,8 @@ public class Selection
 	private IntegerRange _altitudeRange = null;
 	private int _climb = -1, _descent = -1;
 	private int _altitudeFormat = Altitude.FORMAT_NONE;
-	private long _seconds = 0L;
-	private double _angDistance = -1.0; //, _averageSpeed = -1.0;
+	private long _totalSeconds = 0L, _movingSeconds = 0L;
+	private double _angDistance = -1.0, _angMovingDistance = -1.0;
 
 
 	/**
@@ -117,8 +117,10 @@ public class Selection
 			_descent = 0;
 			Altitude altitude = null;
 			Timestamp time = null, startTime = null, endTime = null;
+			Timestamp previousTime = null;
 			DataPoint lastPoint = null, currPoint = null;
-			_angDistance = 0.0;
+			_angDistance = 0.0; _angMovingDistance = 0.0;
+			_totalSeconds = 0L; _movingSeconds = 0L;
 			int altValue = 0;
 			int lastAltValue = 0;
 			boolean foundAlt = false;
@@ -147,26 +149,30 @@ public class Selection
 				time = currPoint.getTimestamp();
 				if (time.isValid())
 				{
-					if (startTime == null) startTime = time;
-					endTime = time;
+					if (startTime == null || startTime.isAfter(time)) startTime = time;
+					if (endTime == null || time.isAfter(endTime)) endTime = time;
+					// add moving time
+					if (!currPoint.getSegmentStart() && previousTime != null && time.isAfter(previousTime)) {
+						_movingSeconds += time.getSecondsSince(previousTime);
+					}
+					previousTime = time;
 				}
 				// Calculate distances, again ignoring waypoints
 				if (!currPoint.isWaypoint())
 				{
 					if (lastPoint != null)
 					{
-						_angDistance += DataPoint.calculateRadiansBetween(lastPoint, currPoint);
+						double radians = DataPoint.calculateRadiansBetween(lastPoint, currPoint);
+						_angDistance += radians;
+						if (!currPoint.getSegmentStart()) {
+							_angMovingDistance += radians;
+						}
 					}
 					lastPoint = currPoint;
 				}
 			}
-			if (endTime != null)
-			{
-				_seconds = endTime.getSecondsSince(startTime);
-			}
-			else
-			{
-				_seconds = 0L;
+			if (endTime != null) {
+				_totalSeconds = endTime.getSecondsSince(startTime);
 			}
 		}
 		_valid = true;
@@ -236,9 +242,17 @@ public class Selection
 	public long getNumSeconds()
 	{
 		if (!_valid) recalculate();
-		return _seconds;
+		return _totalSeconds;
 	}
 
+	/**
+	 * @return number of seconds spanned by segments within selection
+	 */
+	public long getMovingSeconds()
+	{
+		if (!_valid) recalculate();
+		return _movingSeconds;
+	}
 
 	/**
 	 * @param inUnits distance units to use, from class Distance
@@ -249,6 +263,14 @@ public class Selection
 		return Distance.convertRadiansToDistance(_angDistance, inUnits);
 	}
 
+	/**
+	 * @param inUnits distance units to use, from class Distance
+	 * @return moving distance of Selection in specified units
+	 */
+	public double getMovingDistance(int inUnits)
+	{
+		return Distance.convertRadiansToDistance(_angMovingDistance, inUnits);
+	}
 
 	/**
 	 * Clear selected point and range

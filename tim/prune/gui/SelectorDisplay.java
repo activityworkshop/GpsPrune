@@ -239,6 +239,7 @@ public class SelectorDisplay extends GenericDisplay
 		if (_waypointList.getSelectedIndex() >= 0)
 		{
 			if (_trackInfo.getCurrentPoint() == null
+			 || _waypointList.getSelectedIndex() >= _waypointListModel.getSize()
 			 || !_waypointListModel.getWaypoint(_waypointList.getSelectedIndex()).equals(_trackInfo.getCurrentPoint()))
 			{
 				// point is selected in list but different from current point - deselect

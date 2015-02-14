@@ -19,7 +19,7 @@ public abstract class GenericChart extends GenericDisplay implements MouseListen
 	protected static final int BORDER_WIDTH = 8;
 
 	// Colours
-	private static final Color COLOR_BORDER_BG   = Color.GRAY;
+	private static final Color COLOR_BORDER_BG   = Color.WHITE;
 	private static final Color COLOR_CHART_BG    = Color.WHITE;
 	private static final Color COLOR_CHART_LINE  = Color.BLACK;
 	private static final Color COLOR_NODATA_TEXT = Color.GRAY;

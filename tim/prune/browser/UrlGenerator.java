@@ -1,6 +1,8 @@
 package tim.prune.browser;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
@@ -14,7 +16,11 @@ import tim.prune.data.TrackInfo;
 public abstract class UrlGenerator
 {
 	/** Number formatter for five dp */
-	public static final DecimalFormat FIVE_DP = new DecimalFormat("0.00000");
+	public static final NumberFormat FIVE_DP = NumberFormat.getNumberInstance(Locale.UK);
+	// Select the UK locale for this formatter so that decimal point is always used (not comma)
+	static {
+		if (FIVE_DP instanceof DecimalFormat) ((DecimalFormat) FIVE_DP).applyPattern("0.00000");
+	}
 
 	/** Constant for Google Maps */
 	public static final int MAP_SOURCE_GOOGLE = 0;
@@ -66,6 +72,7 @@ public abstract class UrlGenerator
 				url = url + "(" + currPoint.getWaypointName() + ")";
 			}
 		}
+		//System.out.println(url);
 		return url;
 	}
 

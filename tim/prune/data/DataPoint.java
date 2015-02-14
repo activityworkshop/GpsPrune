@@ -70,8 +70,13 @@ public class DataPoint
 		_fieldValues[0] = inLatitude.output(Coordinate.FORMAT_DEG_MIN_SEC);
 		_longitude = inLongitude;
 		_fieldValues[1] = inLongitude.output(Coordinate.FORMAT_DEG_MIN_SEC);
-		_altitude = inAltitude;
-		if (inAltitude != null) {_fieldValues[2] = "" + inAltitude.getValue(Altitude.FORMAT_METRES);}
+		if (inAltitude == null) {
+			_altitude = Altitude.NONE;
+		}
+		else {
+			_altitude = inAltitude;
+			_fieldValues[2] = "" + inAltitude.getValue(Altitude.FORMAT_METRES); // units are ignored
+		}
 		_timestamp = new Timestamp(null);
 	}
 

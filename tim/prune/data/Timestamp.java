@@ -166,6 +166,14 @@ public class Timestamp
 		return _valid;
 	}
 
+	/**
+	 * @param inOther other Timestamp
+	 * @return true if this one is after the other
+	 */
+	public boolean isAfter(Timestamp inOther)
+	{
+		return _seconds > inOther._seconds;
+	}
 
 	/**
 	 * Calculate the difference between two Timestamps in seconds
@@ -177,13 +185,22 @@ public class Timestamp
 		return _seconds - inOther._seconds;
 	}
 
+	/**
+	 * Add the given number of seconds offset
+	 * @param inOffset number of seconds to add/subtract
+	 */
+	public void addOffset(long inOffset)
+	{
+		_seconds += inOffset;
+		_text = null;
+	}
 
 	/**
 	 * Add the given TimeDifference to this Timestamp
 	 * @param inOffset TimeDifference to add
 	 * @return new Timestamp object
 	 */
-	public Timestamp addOffset(TimeDifference inOffset)
+	public Timestamp createPlusOffset(TimeDifference inOffset)
 	{
 		return new Timestamp((_seconds + inOffset.getTotalSeconds()) * 1000L);
 	}
@@ -194,7 +211,7 @@ public class Timestamp
 	 * @param inOffset TimeDifference to subtract
 	 * @return new Timestamp object
 	 */
-	public Timestamp subtractOffset(TimeDifference inOffset)
+	public Timestamp createMinusOffset(TimeDifference inOffset)
 	{
 		return new Timestamp((_seconds - inOffset.getTotalSeconds()) * 1000L);
 	}

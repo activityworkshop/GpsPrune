@@ -1,0 +1,62 @@
+
+== Prune configuration ==
+=========================
+
+Starting with version 6 of Prune, it's possible to create a configuration file which controls a few basic configuration options.  Currently there isn't a nice gui to let you select these options, although this may be added in the future.  Instead, you can just create a text file with the configuration, and save it with any regular text editor.  Then Prune will load these options when it starts up.
+
+== File location ==
+By default, Prune will try to load a file called .pruneconfig from the current directory (note the dot at the start of the filename).  If this file isn't there, it doesn't matter, it'll just be ignored and Prune will use default settings as before.  The file won't be created for you if it doesn't exist.
+If you create this file in your home directory and you also launch Prune from the same directory, Prune will find the file and use whatever configuration is specified inside.
+
+If you want to use another location for this file, or another name, you'll have to tell Prune where it is.  You can do this with an extra commandline parameter, like this:
+   java -jar prune.jar --configfile=h:/gps/pruneconfig.txt
+You can obviously set this in any shortcuts or aliases that you're currently using so you don't have to type it in every time.  If you specify a file like this and Prune can't find it or can't read it, you'll get a warning message in the console.
+
+== File structure ==
+The configuration file is a simple text file, so you can edit it with any editor like Notepad, Kate or gedit.  Each line in the file represents a configuration setting, with the format:
+   key=value
+The key should match one of the recognised keys given below.  Any unrecognised keys will just be ignored.
+The file can contain any number of settings, in any order.  You can have just one in there or all possible settings.
+
+== Possible configuration settings ==
+The following settings can be defined in the file, in any order:
+
+== Working directory ==
+This setting defines the default directory when you start Prune.  If your track files are always in a certain directory, you can set this here so that Prune starts from that directory.  Example:
+   prune.directory=/home/user/gps/
+
+== Language code ==
+This setting defines the language to use for Prune's interface.  By default, Prune will try to use the language set in your system.  If you use the --lang= command line parameter, you can override this to use a different one.  Or you can put a line in your configuration file to define it there instead.  Possible codes are currently EN, DE, DE_ch, ES, FR, IT and PL.  Example:
+   prune.languagecode=ES
+If you use the --lang= command line parameter, this takes priority over what's in the configuration file.
+
+== Metric/imperial units ==
+By default Prune uses metric units, displaying altitudes in metres and distances in kilometres.  This setting allows you to specify whether you want metric or imperial units by default.  Example:
+   prune.metricunits=n
+By using a value of "n" (for "no"), Prune then displays values in imperial units of feet and miles.
+
+== Povray font ==
+When Prune exports to Pov format, it specifies a font to use for the cardinals N, S, E, W.  Usually this is "crystal.ttf" because this comes as standard with povray.  This setting allows you to change that default if you always want to use a specific font installed on your system.  Example:
+   prune.povrayfont=DejaVuSans-Bold.ttf
+The available fonts will depend on what you have installed.  See the povray documentation for more on this.
+
+== GPS device ==
+When Prune invokes Gpsbabel to load data, it needs to specify the GPS device to load from.  The name of this will depend on your GPS receiver and your connection (eg serial/usb).  If you call gpsbabel from the command line, it's the -f parameter.  This setting allows you to specify the default value used by Prune when you select the load from gps function.  Example:
+   prune.gpsdevice=usb:
+A GPS connected to the serial port may appear as /dev/ttyS0.
+
+== GPS format ==
+This setting controls the default value of the format parameter to gpsbabel.  If you call gpsbabel from the command line, it's the -i parameter.  Example:
+   prune.gpsformat=garmin
+
+== Example file ==
+The following can be used as a template to make your own file.
+
+# Prune configuration file
+prune.directory=/home/user/gps/
+prune.languagecode=ES
+prune.metricunits=y
+prune.povrayfont=crystal.ttf
+prune.gpsdevice=usb:
+prune.gpsformat=garmin
+

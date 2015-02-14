@@ -50,7 +50,14 @@ public abstract class Coordinate
 		if (strLen > 1)
 		{
 			// Check for cardinal character either at beginning or end
+			boolean hasCardinal = true;
 			_cardinal = getCardinal(inString.charAt(0), inString.charAt(strLen-1));
+			if (_cardinal == NO_CARDINAL) {
+				hasCardinal = false;
+				// use default from concrete subclass
+				_cardinal = getDefaultCardinal();
+			}
+
 			// count numeric fields - 1=d, 2=dm, 3=dm.m/dms, 4=dms.s
 			int numFields = 0;
 			boolean inNumeric = false;
@@ -93,7 +100,7 @@ public abstract class Coordinate
 			}
 			// parse fields according to number found
 			_degrees = (int) fields[0];
-			_originalFormat = FORMAT_DEG;
+			_originalFormat = hasCardinal?FORMAT_DEG:FORMAT_DEG_WITHOUT_CARDINAL;
 			_fracDenom = 10;
 			if (numFields == 2)
 			{
@@ -146,10 +153,6 @@ public abstract class Coordinate
 		// if not there, try trailing character
 		if (cardinal == NO_CARDINAL) {
 			cardinal = getCardinal(inLastChar);
-		}
-		// use default from concrete subclass
-		if (cardinal == NO_CARDINAL) {
-			cardinal = getDefaultCardinal();
 		}
 		return cardinal;
 	}

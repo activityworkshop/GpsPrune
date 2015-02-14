@@ -63,7 +63,6 @@ public class StatusBar extends JPanel implements Runnable, DataSubscriber
 			_thread = new Thread(this);
 			_thread.start();
 		}
-		// TODO: Emphasize status bar when text set, eg change colour, make bold or something
 	}
 
 	/**

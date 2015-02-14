@@ -8,12 +8,19 @@ public class Altitude
 	private boolean _valid = false;
 	private int _value = 0;
 	private int _format = -1;
+	private String _stringValue = null;
+
+	/** Altitude formats */
 	public static final int FORMAT_NONE   = -1;
 	public static final int FORMAT_METRES = 0;
 	public static final int FORMAT_FEET = 1;
 
+	/** Constants for conversion */
 	private static final double CONVERT_FEET_TO_METRES = 0.3048;
 	private static final double CONVERT_METRES_TO_FEET = 3.28084;
+
+	/** Constant for no altitude value */
+	public static final Altitude NONE = new Altitude(null, FORMAT_NONE);
 
 
 	/**
@@ -27,6 +34,7 @@ public class Altitude
 		{
 			try
 			{
+				_stringValue = inString;
 				_value = (int) Double.parseDouble(inString.trim());
 				_format = inFormat;
 				_valid = true;
@@ -83,7 +91,7 @@ public class Altitude
 	 */
 	public int getValue(int inFormat)
 	{
-		// TODO: Fix rounding errors here converting between units - return double?
+		// Note possible rounding errors here if converting to/from units
 		if (inFormat == _format)
 			return _value;
 		if (inFormat == FORMAT_METRES)
@@ -91,6 +99,19 @@ public class Altitude
 		if (inFormat == FORMAT_FEET)
 			return (int) (_value * CONVERT_METRES_TO_FEET);
 		return _value;
+	}
+
+	/**
+	 * Get a string version of the value
+	 * @param inFormat specified format
+	 * @return string value, if possible the original one
+	 */
+	public String getStringValue(int inFormat)
+	{
+		if (inFormat == _format && _stringValue != null && !_stringValue.equals("")) {
+			return _stringValue;
+		}
+		return "" + getValue(inFormat);
 	}
 
 

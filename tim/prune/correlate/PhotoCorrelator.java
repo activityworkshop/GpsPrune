@@ -536,8 +536,8 @@ public class PhotoCorrelator
 	private static PointPair getPointPairForPhoto(Track inTrack, Photo inPhoto, TimeDifference inOffset)
 	{
 		PointPair pair = new PointPair(inPhoto);
-		// Add offet to photo timestamp
-		Timestamp photoStamp = inPhoto.getTimestamp().subtractOffset(inOffset);
+		// Add/subtract offet to photo timestamp
+		Timestamp photoStamp = inPhoto.getTimestamp().createMinusOffset(inOffset);
 		int numPoints = inTrack.getNumPoints();
 		for (int i=0; i<numPoints; i++)
 		{

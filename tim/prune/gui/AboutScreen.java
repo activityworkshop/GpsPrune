@@ -77,6 +77,8 @@ public class AboutScreen extends JDialog
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext1")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext2")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
+		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
+			.append("deutsch, english, español, français, italiano, polski, schwiizerdüütsch").append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -161,7 +163,7 @@ public class AboutScreen extends JDialog
 			new JLabel(I18nManager.getText("dialog.about.credits.translators") + " : "),
 			0, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Ramon, Miguel, Inés, Piotr, Petrovsk"),
+			new JLabel("Ramon, Miguel, Inés, Piotr, Petrovsk, Josatoc"),
 			1, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),

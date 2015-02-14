@@ -5,6 +5,7 @@ import java.util.List;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.edit.FieldEdit;
 import tim.prune.edit.FieldEditList;
+import tim.prune.gui.map.MapUtils;
 
 
 /**
@@ -18,6 +19,8 @@ public class Track
 	// Scaled x, y values
 	private double[] _xValues = null;
 	private double[] _yValues = null;
+	private double[] _xValuesNew = null;
+	private double[] _yValuesNew = null;
 	private boolean _scaled = false;
 	private int _numPoints = 0;
 	private boolean _mixedData = false;
@@ -137,6 +140,7 @@ public class Track
 		// (maybe should be separate thread?)
 		// (maybe should be in separate class?)
 		// (maybe should be based on subtended angles instead of distances?)
+		// Suggestion: Find last track point, don't delete it (or maybe preserve first and last of each segment?)
 
 		if (inResolution <= 0) return 0;
 		int numCopied = 0;
@@ -364,6 +368,35 @@ public class Track
 
 
 	/**
+	 * Add the given time offset to the specified range
+	 * @param inStart start of range
+	 * @param inEnd end of range
+	 * @param inOffset offset to add (-ve to subtract)
+	 * @return true on success
+	 */
+	public boolean addTimeOffset(int inStart, int inEnd, long inOffset)
+	{
+		// sanity check
+		if (inStart < 0 || inEnd < 0 || inStart >= inEnd || inEnd >= _numPoints) {
+			return false;
+		}
+		boolean foundTimestamp = false;
+		// Loop over all points within range
+		for (int i=inStart; i<=inEnd; i++)
+		{
+			Timestamp timestamp = _dataPoints[i].getTimestamp();
+			if (timestamp != null)
+			{
+				// This point has a timestamp so add the offset to it
+				foundTimestamp = true;
+				timestamp.addOffset(inOffset);
+			}
+		}
+		return foundTimestamp;
+	}
+
+
+	/**
 	 * Merge the track segments within the given range
 	 * @param inStart start index
 	 * @param inEnd end index
@@ -502,6 +535,61 @@ public class Track
 
 
 	/**
+	 * Cut and move the specified section
+	 * @param inSectionStart start index of section
+	 * @param inSectionEnd end index of section
+	 * @param inMoveTo index of move to point
+	 * @return true if move successful
+	 */
+	public boolean cutAndMoveSection(int inSectionStart, int inSectionEnd, int inMoveTo)
+	{
+		// Check that indices make sense
+		if (inSectionStart > 0 && inSectionEnd > inSectionStart && inMoveTo > 0
+			&& (inMoveTo < inSectionStart || inMoveTo > (inSectionEnd+1)))
+		{
+			// do the cut and move
+			DataPoint[] newPointArray = new DataPoint[_numPoints];
+			// System.out.println("Cut/move section (" + inSectionStart + " - " + inSectionEnd + ") to before point " + inMoveTo);
+			// Is it a forward copy or a backward copy?
+			if (inSectionStart > inMoveTo)
+			{
+				int sectionLength = inSectionEnd - inSectionStart + 1;
+				// move section to earlier point
+				if (inMoveTo > 0)
+					System.arraycopy(_dataPoints, 0, newPointArray, 0, inMoveTo); // unchanged points before
+				System.arraycopy(_dataPoints, inSectionStart, newPointArray, inMoveTo, sectionLength); // moved bit
+				// after insertion point, before moved bit
+				if (inSectionStart > (inMoveTo + 1))
+					System.arraycopy(_dataPoints, inMoveTo, newPointArray, inMoveTo + sectionLength, inSectionStart - inMoveTo);
+				// after moved bit
+				if (inSectionEnd < (_numPoints - 1))
+					System.arraycopy(_dataPoints, inSectionEnd+1, newPointArray, inSectionEnd+1, _numPoints - inSectionEnd - 1);
+			}
+			else
+			{
+				// Move section to later point
+				if (inSectionStart > 0)
+					System.arraycopy(_dataPoints, 0, newPointArray, 0, inSectionStart); // unchanged points before
+				// from end of section to move to point
+				if (inMoveTo > (inSectionEnd + 1))
+					System.arraycopy(_dataPoints, inSectionEnd+1, newPointArray, inSectionStart, inMoveTo - inSectionEnd - 1);
+				// moved bit
+				System.arraycopy(_dataPoints, inSectionStart, newPointArray, inSectionStart + inMoveTo - inSectionEnd - 1,
+					inSectionEnd - inSectionStart + 1);
+				// unchanged bit after
+				if (inSectionEnd < (_numPoints - 1))
+					System.arraycopy(_dataPoints, inMoveTo, newPointArray, inMoveTo, _numPoints - inMoveTo);
+			}
+			// Copy array references
+			_dataPoints = newPointArray;
+			_scaled = false;
+			return true;
+		}
+		return false;
+	}
+
+
+	/**
 	 * Interpolate extra points between two selected ones
 	 * @param inStartIndex start index of interpolation
 	 * @param inNumPoints num points to insert
@@ -629,6 +717,26 @@ public class Track
 	{
 		if (!_scaled) scalePoints();
 		return _yValues[inPointNum];
+	}
+
+	/**
+	 * @param inPointNum point index, starting at 0
+	 * @return scaled x value of specified point
+	 */
+	public double getXNew(int inPointNum)
+	{
+		if (!_scaled) scalePoints();
+		return _xValuesNew[inPointNum];
+	}
+
+	/**
+	 * @param inPointNum point index, starting at 0
+	 * @return scaled y value of specified point
+	 */
+	public double getYNew(int inPointNum)
+	{
+		if (!_scaled) scalePoints();
+		return _yValuesNew[inPointNum];
 	}
 
 	/**
@@ -765,6 +873,8 @@ public class Track
 		// Loop over points and calculate scales
 		_xValues = new double[getNumPoints()];
 		_yValues = new double[getNumPoints()];
+		_xValuesNew = new double[getNumPoints()];
+		_yValuesNew = new double[getNumPoints()];
 		_xRange = new DoubleRange();
 		_yRange = new DoubleRange();
 		for (p=0; p < getNumPoints(); p++)
@@ -774,8 +884,10 @@ public class Track
 			{
 				_xValues[p] = (point.getLongitude().getDouble() - longMedian) * longFactor;
 				_xRange.addValue(_xValues[p]);
+				_xValuesNew[p] = MapUtils.getXFromLongitude(point.getLongitude().getDouble());
 				_yValues[p] = (point.getLatitude().getDouble() - latMedian);
 				_yRange.addValue(_yValues[p]);
+				_yValuesNew[p] = MapUtils.getYFromLatitude(point.getLatitude().getDouble());
 			}
 		}
 		_scaled = true;
@@ -818,13 +930,58 @@ public class Track
 
 
 	/**
+	 * Find the nearest point to the specified x and y coordinates
+	 * or -1 if no point is within the specified max distance
+	 * @param inX x coordinate
+	 * @param inY y coordinate
+	 * @param inMaxDist maximum distance from selected coordinates
+	 * @param inJustTrackPoints true if waypoints should be ignored
+	 * @return index of nearest point or -1 if not found
+	 */
+	public int getNearestPointIndexNew(double inX, double inY, double inMaxDist, boolean inJustTrackPoints)
+	{
+		int nearestPoint = 0;
+		double nearestDist = -1.0;
+		double currDist;
+		for (int i=0; i < getNumPoints(); i++)
+		{
+			if (!inJustTrackPoints || !_dataPoints[i].isWaypoint())
+			{
+				currDist = Math.abs(_xValuesNew[i] - inX) + Math.abs(_yValuesNew[i] - inY);
+				if (currDist < nearestDist || nearestDist < 0.0)
+				{
+					nearestPoint = i;
+					nearestDist = currDist;
+				}
+			}
+		}
+		// Check whether it's within required distance
+		if (nearestDist > inMaxDist && inMaxDist > 0.0)
+		{
+			return -1;
+		}
+		return nearestPoint;
+	}
+
+	/**
 	 * Get the next track point starting from the given index
 	 * @param inStartIndex index to start looking from
 	 * @return next track point, or null if end of data reached
 	 */
 	public DataPoint getNextTrackPoint(int inStartIndex)
 	{
-		return getNextTrackPoint(inStartIndex, 1);
+		return getNextTrackPoint(inStartIndex, _numPoints, true);
+	}
+
+	/**
+	 * Get the next track point in the given range
+	 * @param inStartIndex index to start looking from
+	 * @param inEndIndex index to stop looking
+	 * @return next track point, or null if end of data reached
+	 */
+	public DataPoint getNextTrackPoint(int inStartIndex, int inEndIndex)
+	{
+		return getNextTrackPoint(inStartIndex, inEndIndex, true);
 	}
 
 	/**
@@ -834,19 +991,21 @@ public class Track
 	 */
 	public DataPoint getPreviousTrackPoint(int inStartIndex)
 	{
-		return getNextTrackPoint(inStartIndex, -1);
+		return getNextTrackPoint(inStartIndex, _numPoints, false);
 	}
 
 	/**
 	 * Get the next track point starting from the given index
 	 * @param inStartIndex index to start looking from
-	 * @param inIncrement increment to add to point index, +1 for next, -1 for previous
+	 * @param inEndIndex index to stop looking (inclusive)
+	 * @param inCountUp true for next, false for previous
 	 * @return next track point, or null if end of data reached
 	 */
-	private DataPoint getNextTrackPoint(int inStartIndex, int inIncrement)
+	private DataPoint getNextTrackPoint(int inStartIndex, int inEndIndex, boolean inCountUp)
 	{
 		// Loop forever over points
-		for (int i=inStartIndex; ; i+=inIncrement)
+		int increment = inCountUp?1:-1;
+		for (int i=inStartIndex; i<=inEndIndex; i+=increment)
 		{
 			DataPoint point = getPoint(i);
 			// Exit if end of data reached - there wasn't a track point
@@ -856,6 +1015,7 @@ public class Track
 				return point;
 			}
 		}
+		return null;
 	}
 
 	/**

@@ -15,6 +15,8 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
+
+import tim.prune.Config;
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
@@ -41,13 +43,15 @@ public class DetailsDisplay extends GenericDisplay
 
 	// Range details
 	private JLabel _rangeLabel = null;
-	private JLabel _distanceLabel = null, _durationLabel = null;
+	private JLabel _distanceLabel = null, _movingDistanceLabel = null;
+	private JLabel _durationLabel = null;
 	private JLabel _altRangeLabel = null, _updownLabel = null;
-	private JLabel _aveSpeedLabel = null;
+	private JLabel _aveSpeedLabel = null, _aveMovingSpeedLabel = null;
 
 	// Photo details
 	private JLabel _photoLabel = null;
 	private PhotoThumbnail _photoThumbnail = null;
+	private JLabel _photoTimestampLabel = null;
 	private JLabel _photoConnectedLabel = null;
 
 	// Units
@@ -57,15 +61,16 @@ public class DetailsDisplay extends GenericDisplay
 	private NumberFormat _distanceFormatter = NumberFormat.getInstance();
 
 	// Cached labels
-	private static final String LABEL_POINT_SELECTED1 = I18nManager.getText("details.index.selected") + ": ";
+	private static final String LABEL_POINT_SELECTED = I18nManager.getText("details.index.selected") + ": ";
 	private static final String LABEL_POINT_LATITUDE = I18nManager.getText("fieldname.latitude") + ": ";
 	private static final String LABEL_POINT_LONGITUDE = I18nManager.getText("fieldname.longitude") + ": ";
 	private static final String LABEL_POINT_ALTITUDE = I18nManager.getText("fieldname.altitude") + ": ";
 	private static final String LABEL_POINT_TIMESTAMP = I18nManager.getText("fieldname.timestamp") + ": ";
 	private static final String LABEL_POINT_WAYPOINTNAME = I18nManager.getText("fieldname.waypointname") + ": ";
-	private static final String LABEL_RANGE_SELECTED1 = I18nManager.getText("details.range.selected") + ": ";
+	private static final String LABEL_RANGE_SELECTED = I18nManager.getText("details.range.selected") + ": ";
 	private static final String LABEL_RANGE_DURATION = I18nManager.getText("fieldname.duration") + ": ";
 	private static final String LABEL_RANGE_DISTANCE = I18nManager.getText("fieldname.distance") + ": ";
+	private static final String LABEL_RANGE_MOVINGDISTANCE = I18nManager.getText("fieldname.movingdistance") + ": ";
 	private static final String LABEL_RANGE_ALTITUDE = I18nManager.getText("fieldname.altitude") + ": ";
 	private static final String LABEL_RANGE_CLIMB = I18nManager.getText("details.range.climb") + ": ";
 	private static final String LABEL_RANGE_DESCENT = ", " + I18nManager.getText("details.range.descent") + ": ";
@@ -126,10 +131,14 @@ public class DetailsDisplay extends GenericDisplay
 		rangeDetailsPanel.add(_rangeLabel);
 		_distanceLabel = new JLabel("");
 		rangeDetailsPanel.add(_distanceLabel);
+		_movingDistanceLabel = new JLabel("");
+		rangeDetailsPanel.add(_movingDistanceLabel);
 		_durationLabel = new JLabel("");
 		rangeDetailsPanel.add(_durationLabel);
 		_aveSpeedLabel = new JLabel("");
 		rangeDetailsPanel.add(_aveSpeedLabel);
+		_aveMovingSpeedLabel = new JLabel("");
+		rangeDetailsPanel.add(_aveMovingSpeedLabel);
 		_altRangeLabel = new JLabel("");
 		rangeDetailsPanel.add(_altRangeLabel);
 		_updownLabel = new JLabel("");
@@ -147,6 +156,8 @@ public class DetailsDisplay extends GenericDisplay
 		photoDetailsPanel.add(photoDetailsLabel);
 		_photoLabel = new JLabel(I18nManager.getText("details.nophoto"));
 		photoDetailsPanel.add(_photoLabel);
+		_photoTimestampLabel = new JLabel("");
+		photoDetailsPanel.add(_photoTimestampLabel);
 		_photoConnectedLabel = new JLabel("");
 		photoDetailsPanel.add(_photoConnectedLabel);
 		_photoThumbnail = new PhotoThumbnail();
@@ -186,6 +197,7 @@ public class DetailsDisplay extends GenericDisplay
 		lowerPanel.add(unitsLabel);
 		String[] distUnits = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")};
 		_distUnitsDropdown = new JComboBox(distUnits);
+		if (!Config.getUseMetricUnits()) {_distUnitsDropdown.setSelectedIndex(1);}
 		_distUnitsDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -223,24 +235,24 @@ public class DetailsDisplay extends GenericDisplay
 		}
 		else
 		{
-			_indexLabel.setText(LABEL_POINT_SELECTED1
+			_indexLabel.setText(LABEL_POINT_SELECTED
 				+ (currentPointIndex+1) + " " + I18nManager.getText("details.index.of")
 				+ " " + _track.getNumPoints());
 			_latLabel.setText(makeCoordinateLabel(LABEL_POINT_LATITUDE, currentPoint.getLatitude(), _coordFormatDropdown.getSelectedIndex()));
 			_longLabel.setText(makeCoordinateLabel(LABEL_POINT_LONGITUDE, currentPoint.getLongitude(), _coordFormatDropdown.getSelectedIndex()));
-			_altLabel.setText(LABEL_POINT_ALTITUDE
-				+ (currentPoint.hasAltitude()?
-					(currentPoint.getAltitude().getValue() + getAltitudeUnitsLabel(currentPoint.getAltitude().getFormat())):
-				""));
+			_altLabel.setText(currentPoint.hasAltitude()?
+				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getValue() + getAltitudeUnitsLabel(currentPoint.getAltitude().getFormat()))
+				:"");
 			if (currentPoint.getTimestamp().isValid())
 			{
 				if (currentPointIndex > 0 && currentPointIndex < (_trackInfo.getTrack().getNumPoints()-1)) {
 					DataPoint prevPoint = _trackInfo.getTrack().getPoint(currentPointIndex - 1);
 					DataPoint nextPoint = _trackInfo.getTrack().getPoint(currentPointIndex + 1);
-					if (prevPoint.getTimestamp().isValid() && nextPoint.getTimestamp().isValid()) {
+					if (prevPoint.getTimestamp().isValid() && nextPoint.getTimestamp().isValid())
+					{
 						// use total distance and total time between neighbouring points
 						long diff = nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp());
-						if (diff < 100) {
+						if (diff < 1000) {
 							double rads = DataPoint.calculateRadiansBetween(prevPoint, currentPoint) +
 								DataPoint.calculateRadiansBetween(currentPoint, nextPoint);
 							double dist = Distance.convertRadiansToDistance(rads, distUnits);
@@ -267,24 +279,32 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			_rangeLabel.setText(I18nManager.getText("details.norangeselection"));
 			_distanceLabel.setText("");
+			_movingDistanceLabel.setText("");
 			_durationLabel.setText("");
 			_altRangeLabel.setText("");
 			_updownLabel.setText("");
+			_aveSpeedLabel.setText("");
+			_aveMovingSpeedLabel.setText("");
 		}
 		else
 		{
-			_rangeLabel.setText(LABEL_RANGE_SELECTED1
+			_rangeLabel.setText(LABEL_RANGE_SELECTED
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
 			_distanceLabel.setText(LABEL_RANGE_DISTANCE + roundedNumber(selection.getDistance(distUnits)) + " " + distUnitsStr);
-			if (selection.getNumSeconds() > 0) {
+			_movingDistanceLabel.setText(LABEL_RANGE_MOVINGDISTANCE + roundedNumber(selection.getMovingDistance(distUnits)) + " " + distUnitsStr);
+			if (selection.getNumSeconds() > 0)
+			{
 				_durationLabel.setText(LABEL_RANGE_DURATION + buildDurationString(selection.getNumSeconds()));
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
 					+ roundedNumber(selection.getDistance(distUnits)/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
+				_aveMovingSpeedLabel.setText(I18nManager.getText("details.range.avemovingspeed") + ": "
+					+ roundedNumber(selection.getMovingDistance(distUnits)/selection.getMovingSeconds()*3600.0) + " " + speedUnitsStr);
 			}
 			else {
 				_durationLabel.setText("");
 				_aveSpeedLabel.setText("");
+				_aveMovingSpeedLabel.setText("");
 			}
 			String altUnitsLabel = getAltitudeUnitsLabel(selection.getAltitudeFormat());
 			IntegerRange altRange = selection.getAltitudeRange();
@@ -309,6 +329,7 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			// no photo, hide details
 			_photoLabel.setText(I18nManager.getText("details.nophoto"));
+			_photoTimestampLabel.setText("");
 			_photoConnectedLabel.setText("");
 			_photoThumbnail.setVisible(false);
 		}
@@ -316,6 +337,7 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
 			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getFile().getName());
+			_photoLabel.setText(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText());
 			_photoConnectedLabel.setText(I18nManager.getText("details.photo.connected") + ": "
 				+ (currentPhoto.getCurrentStatus() == PhotoStatus.NOT_CONNECTED ?
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
@@ -380,7 +402,7 @@ public class DetailsDisplay extends GenericDisplay
 		if (inNumSecs < 86400L) return "" + (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours")
 			+ " " + ((inNumSecs / 60) % 60) + I18nManager.getText("display.range.time.mins");
 		if (inNumSecs < 432000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days")
-			+ (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours");
+			+ " " + (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours");
 		if (inNumSecs < 8640000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days");
 		return "big";
 	}

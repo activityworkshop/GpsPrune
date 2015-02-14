@@ -9,7 +9,7 @@ import tim.prune.App;
  */
 public abstract class WindowFactory
 {
-	private static ThreeDWindow _window = null;
+	private static Java3DWindow _window = null;
 
 	/**
 	 * Get a Window object
@@ -21,7 +21,12 @@ public abstract class WindowFactory
 	{
 		if (isJava3dEnabled())
 		{
-			if (_window == null) _window = new Java3DWindow(inApp, inFrame);
+			if (_window == null) {
+				_window = new Java3DWindow(inApp, inFrame);
+			}
+			else {
+				_window.dispose();
+			}
 			return _window;
 		}
 		return null;
