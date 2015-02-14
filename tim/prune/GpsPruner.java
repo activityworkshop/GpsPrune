@@ -22,9 +22,9 @@ import tim.prune.gui.SelectorDisplay;
  */
 public class GpsPruner
 {
-	// Final release of version 4
-	public static final String VERSION_NUMBER = "4";
-	public static final String BUILD_NUMBER = "089";
+	// Patch to version 4
+	public static final String VERSION_NUMBER = "4.1";
+	public static final String BUILD_NUMBER = "091";
 	private static App APP = null;
 
 

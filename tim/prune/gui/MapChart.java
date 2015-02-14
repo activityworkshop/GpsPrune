@@ -23,6 +23,7 @@ import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.TrackInfo;
+//import tim.prune.gui.map.MapWindow;
 
 
 /**
@@ -392,6 +393,16 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		_autoPanMenuItem = new JCheckBoxMenuItem(I18nManager.getText("menu.map.autopan"));
 		_autoPanMenuItem.setSelected(true);
 		_popup.add(_autoPanMenuItem);
+/*
+		JMenuItem mapItem = new JMenuItem("Show map");
+		mapItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				showMap();
+			}
+		});
+		_popup.add(mapItem);
+*/
 	}
 
 
@@ -631,4 +642,15 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 	{
 		// ignore
 	}
+
+	/**
+	 * Show a map window - probably only temporarily here until it gets fixed
+	 */
+/*
+	private void showMap()
+	{
+		MapWindow map = new MapWindow(_track);
+		map.show();
+	}
+*/
 }

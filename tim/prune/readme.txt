@@ -1,5 +1,5 @@
-Prune version 4
-===============
+Prune version 4.1
+=================
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion and photo correlation.
@@ -16,16 +16,22 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_04.jar
+   java -jar prune_04.1.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
-in a file manager window to execute it.  A shortcut, menu item, desktop icon or other link
-can of course be made should you wish.
+in a file manager window to execute it.  A shortcut, menu item, alias, desktop icon
+or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_04.jar --lang=DE
+   java -jar prune_04.1.jar --lang=DE
 
+
+New with version 4.1
+====================
+
+The following fix was added since version 4:
+  - Exiftool calls now made in series rather than in parallel to avoid performance problems in Windows
 
 New with version 4
 ==================

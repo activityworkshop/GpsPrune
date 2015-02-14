@@ -538,6 +538,23 @@ public class Track
 	}
 
 	/**
+	 * @return The range of lat values as a DoubleRange object
+	 */
+	public DoubleRange getLatRange()
+	{
+		if (!_scaled) scalePoints();
+		return _latRange;
+	}
+	/**
+	 * @return The range of lon values as a DoubleRange object
+	 */
+	public DoubleRange getLonRange()
+	{
+		if (!_scaled) scalePoints();
+		return _longRange;
+	}
+
+	/**
 	 * @param inPointNum point index, starting at 0
 	 * @return scaled x value of specified point
 	 */

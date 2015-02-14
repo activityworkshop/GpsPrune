@@ -35,9 +35,11 @@ public class ExifSaver implements Runnable
 {
 	private Frame _parentFrame = null;
 	private JDialog _dialog = null;
+	private JButton _okButton = null;
 	private JCheckBox _overwriteCheckbox = null;
 	private JProgressBar _progressBar = null;
 	private PhotoTableModel _photoTableModel = null;
+	private boolean _saveCancelled = false;
 
 
 	// To preserve timestamps of file use parameter -P
@@ -167,19 +169,22 @@ public class ExifSaver implements Runnable
 		// Lower panel with ok and cancel buttons
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(new ActionListener() {
+		_okButton = new JButton(I18nManager.getText("button.ok"));
+		_okButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+				// disable ok button
+				_okButton.setEnabled(false);
 				// start new thread to do save
 				new Thread(ExifSaver.this).start();
 			}
 		});
-		buttonPanel.add(okButton);
+		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+				_saveCancelled = true;
 				_dialog.dispose();
 			}
 		});
@@ -209,6 +214,7 @@ public class ExifSaver implements Runnable
 	 */
 	public void run()
 	{
+		_saveCancelled = false;
 		PhotoTableEntry entry = null;
 		Photo photo = null;
 		int numPhotos = _photoTableModel.getRowCount();
@@ -221,7 +227,7 @@ public class ExifSaver implements Runnable
 		for (int i=0; i<numPhotos; i++)
 		{
 			entry = _photoTableModel.getPhotoTableEntry(i);
-			if (entry != null && entry.getSaveFlag())
+			if (entry != null && entry.getSaveFlag() && !_saveCancelled)
 			{
 				// Only look at photos which are selected and whose status has changed since load
 				photo = entry.getPhoto();
@@ -298,7 +304,12 @@ public class ExifSaver implements Runnable
 		// Execute exif command
 		try
 		{
-			Runtime.getRuntime().exec(command);
+			Process process = Runtime.getRuntime().exec(command);
+			// Wait for process to finish so not too many run in parallel
+			try {
+				process.waitFor();
+			}
+			catch (InterruptedException ie) {}
 		}
 		catch (Exception e)
 		{
