@@ -18,12 +18,13 @@ import tim.prune.gui.SelectorDisplay;
 
 /**
  * Tool to visualize, edit and prune GPS data
+ * Please see the included readme.txt or http://activityworkshop.net
  */
 public class GpsPruner
 {
-	// Final release of version 3
-	public static final String VERSION_NUMBER = "3";
-	public static final String BUILD_NUMBER = "074";
+	// Final release of version 4
+	public static final String VERSION_NUMBER = "4";
+	public static final String BUILD_NUMBER = "089";
 	private static App APP = null;
 
 

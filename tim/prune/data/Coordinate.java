@@ -6,6 +6,7 @@ package tim.prune.data;
  */
 public abstract class Coordinate
 {
+	public static final int NO_CARDINAL = -1;
 	public static final int NORTH = 0;
 	public static final int EAST = 1;
 	public static final int SOUTH = 2;
@@ -27,6 +28,7 @@ public abstract class Coordinate
 	private int _minutes = 0;
 	private int _seconds = 0;
 	private int _fracs = 0;
+	private int _fracDenom = 0;
 	private String _originalString = null;
 	private int _originalFormat = FORMAT_NONE;
 	private double _asDouble = 0.0;
@@ -47,16 +49,18 @@ public abstract class Coordinate
 		}
 		if (strLen > 1)
 		{
-			// Check for leading character NSEW
-			_cardinal = getCardinal(inString.charAt(0));
+			// Check for cardinal character either at beginning or end
+			_cardinal = getCardinal(inString.charAt(0), inString.charAt(strLen-1));
 			// count numeric fields - 1=d, 2=dm, 3=dm.m/dms, 4=dms.s
 			int numFields = 0;
 			boolean inNumeric = false;
 			char currChar;
-			long[] fields = new long[4];
+			long[] fields = new long[4]; // needs to be long for lengthy decimals
 			long[] denoms = new long[4];
+			String secondDelim = "";
 			try
 			{
+				// Loop over characters in input string, populating fields array
 				for (int i=0; i<strLen; i++)
 				{
 					currChar = inString.charAt(i);
@@ -74,6 +78,10 @@ public abstract class Coordinate
 					else
 					{
 						inNumeric = false;
+						// Remember second delimiter
+						if (numFields == 2) {
+							secondDelim += currChar;
+						}
 					}
 				}
 				_valid = (numFields > 0);
@@ -86,6 +94,7 @@ public abstract class Coordinate
 			// parse fields according to number found
 			_degrees = (int) fields[0];
 			_originalFormat = FORMAT_DEG;
+			_fracDenom = 10;
 			if (numFields == 2)
 			{
 				// String is just decimal degrees
@@ -95,7 +104,8 @@ public abstract class Coordinate
 				_seconds = (int) numSecs;
 				_fracs = (int) ((numSecs - _seconds) * 10);
 			}
-			else if (numFields == 3)
+			// Differentiate between d-m.f and d-m-s using . or ,
+			else if (numFields == 3 && (secondDelim.equals(".") || secondDelim.equals(",")))
 			{
 				// String is degrees-minutes.fractions
 				_originalFormat = FORMAT_DEG_MIN;
@@ -104,19 +114,44 @@ public abstract class Coordinate
 				_seconds = (int) numSecs;
 				_fracs = (int) ((numSecs - _seconds) * 10);
 			}
-			else if (numFields == 4)
+			else if (numFields == 4 || numFields == 3)
 			{
-				_originalFormat = FORMAT_DEG_MIN_SEC;
 				// String is degrees-minutes-seconds.fractions
+				_originalFormat = FORMAT_DEG_MIN_SEC;
 				_minutes = (int) fields[1];
 				_seconds = (int) fields[2];
 				_fracs = (int) fields[3];
+				_fracDenom = (int) denoms[3];
+				if (_fracDenom < 1) {_fracDenom = 1;}
 			}
-			_asDouble = 1.0 * _degrees + (_minutes / 60.0) + (_seconds / 3600.0) + (_fracs / 36000.0);
+			_asDouble = 1.0 * _degrees + (_minutes / 60.0) + (_seconds / 3600.0) + (_fracs / 3600.0 / _fracDenom);
 			if (_cardinal == WEST || _cardinal == SOUTH || inString.charAt(0) == '-')
 				_asDouble = -_asDouble;
+			// validate fields
+			_valid = _valid && (_degrees <= getMaxDegrees() && _minutes < 60 && _seconds < 60 && _fracs < _fracDenom);
 		}
 		else _valid = false;
+	}
+
+
+	/**
+	 * Get the cardinal from the given character
+	 * @param inFirstChar first character from file
+	 * @param inLastChar last character from file
+	 */
+	protected int getCardinal(char inFirstChar, char inLastChar)
+	{
+		// Try leading character first
+		int cardinal = getCardinal(inFirstChar);
+		// if not there, try trailing character
+		if (cardinal == NO_CARDINAL) {
+			cardinal = getCardinal(inLastChar);
+		}
+		// use default from concrete subclass
+		if (cardinal == NO_CARDINAL) {
+			cardinal = getDefaultCardinal();
+		}
+		return cardinal;
 	}
 
 
@@ -125,6 +160,16 @@ public abstract class Coordinate
 	 * @param inChar character from file
 	 */
 	protected abstract int getCardinal(char inChar);
+
+	/**
+	 * @return the default cardinal for the subclass
+	 */
+	protected abstract int getDefaultCardinal();
+
+	/**
+	 * @return the maximum degree range for this coordinate
+	 */
+	protected abstract int getMaxDegrees();
 
 
 	/**
@@ -143,6 +188,7 @@ public abstract class Coordinate
 		double numSecs = (numMins - _minutes) * 60.0;
 		_seconds = (int) numSecs;
 		_fracs = (int) ((numSecs - _seconds) * 10);
+		_fracDenom = 10; // fixed for now
 		// Make a string to display on screen
 		_cardinal = inCardinal;
 		_originalFormat = FORMAT_NONE;
@@ -186,7 +232,6 @@ public abstract class Coordinate
 
 	/**
 	 * Output the Coordinate in the given format
-	 * @param inOriginalString the original String to use as default
 	 * @param inFormat format to use, eg FORMAT_DEG_MIN_SEC
 	 * @return String for output
 	 */
@@ -206,32 +251,33 @@ public abstract class Coordinate
 						.append(threeDigitString(_degrees)).append('°')
 						.append(twoDigitString(_minutes)).append('\'')
 						.append(twoDigitString(_seconds)).append('.')
-						.append(_fracs);
+						.append(formatFraction(_fracs, _fracDenom));
 					answer = buffer.toString();
 					break;
 				}
 				case FORMAT_DEG_MIN:
 				{
 					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
-						+ (_minutes + _seconds / 60.0 + _fracs / 600.0) + "'";
+						+ (_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom) + "'";
 					break;
 				}
 				case FORMAT_DEG_WHOLE_MIN:
 				{
 					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
-						+ (int) Math.floor(_minutes + _seconds / 60.0 + _fracs / 600.0 + 0.5) + "'";
+						+ (int) Math.floor(_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom + 0.5) + "'";
 					break;
 				}
 				case FORMAT_DEG:
 				case FORMAT_DEG_WITHOUT_CARDINAL:
 				{
 					answer = (_asDouble<0.0?"-":"")
-						+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 36000.0);
+						+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 3600.0 / _fracDenom);
 					break;
 				}
 				case FORMAT_DEG_MIN_SEC_WITH_SPACES:
 				{
-					answer = "" + _degrees + " " + _minutes + " " + _seconds + "." + _fracs;
+					// Note: cardinal not needed as this format is only for exif, which has cardinal separately
+					answer = "" + _degrees + " " + _minutes + " " + _seconds + "." + formatFraction(_fracs, _fracDenom);
 					break;
 				}
 				case FORMAT_CARDINAL:
@@ -242,6 +288,22 @@ public abstract class Coordinate
 			}
 		}
 		return answer;
+	}
+
+	/**
+	 * Format the fraction part of seconds value
+	 * @param inFrac fractional part eg 123
+	 * @param inDenom denominator of fraction eg 10000
+	 * @return String describing fraction, in this case 0123
+	 */
+	private static final String formatFraction(int inFrac, int inDenom)
+	{
+		if (inDenom <= 1 || inFrac == 0) {return "" + inFrac;}
+		String denomString = "" + inDenom;
+		int reqdLen = denomString.length() - 1;
+		String result = denomString + inFrac;
+		int resultLen = result.length();
+		return result.substring(resultLen - reqdLen);
 	}
 
 
@@ -284,9 +346,23 @@ public abstract class Coordinate
 	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd,
 		int inIndex, int inNumPoints)
 	{
+		return interpolate(inStart, inEnd, 1.0 * (inIndex+1) / (inNumPoints + 1));
+	}
+
+
+	/**
+	 * Create a new Coordinate between two others
+	 * @param inStart start coordinate
+	 * @param inEnd end coordinate
+	 * @param inFraction fraction from start to end
+	 * @return new Coordinate object
+	 */
+	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd,
+		double inFraction)
+	{
 		double startValue = inStart.getDouble();
 		double endValue = inEnd.getDouble();
-		double newValue = startValue + (endValue - startValue) * (inIndex+1) / (inNumPoints + 1);
+		double newValue = startValue + (endValue - startValue) * inFraction;
 		Coordinate answer = inStart.makeNew(newValue, inStart._originalFormat);
 		return answer;
 	}
@@ -303,9 +379,11 @@ public abstract class Coordinate
 
 	/**
 	 * Create a String representation for debug
+	 * @return String describing coordinate value
 	 */
 	public String toString()
 	{
-		return "Coord: " + _cardinal + " (" + _degrees + ") (" + _minutes + ") (" + _seconds + "." + _fracs + ") = " + _asDouble;
+		return "Coord: " + _cardinal + " (" + _degrees + ") (" + _minutes + ") (" + _seconds + "."
+			+ formatFraction(_fracs, _fracDenom) + ") = " + _asDouble;
 	}
 }

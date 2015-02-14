@@ -35,8 +35,10 @@ import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
 import tim.prune.I18nManager;
+import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
+import tim.prune.data.Field;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.ImageUtils;
@@ -52,6 +54,7 @@ public class KmlExporter implements Runnable
 	private Track _track = null;
 	private JDialog _dialog = null;
 	private JTextField _descriptionField = null;
+	private JCheckBox _altitudesCheckbox = null;
 	private JCheckBox _kmzCheckbox = null;
 	private JCheckBox _exportImagesCheckbox = null;
 	private JProgressBar _progressBar = null;
@@ -116,6 +119,10 @@ public class KmlExporter implements Runnable
 		descPanel.add(_descriptionField);
 		mainPanel.add(descPanel);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
+		// Checkbox for altitude export
+		_altitudesCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.altitude"));
+		_altitudesCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
+		mainPanel.add(_altitudesCheckbox);
 		// Checkboxes for kmz export and image export
 		_kmzCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.kmz"));
 		_kmzCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
@@ -166,6 +173,8 @@ public class KmlExporter implements Runnable
 	 */
 	private void enableCheckboxes()
 	{
+		boolean hasAltitudes = _track.hasData(Field.ALTITUDE);
+		if (!hasAltitudes) {_altitudesCheckbox.setSelected(false);}
 		boolean hasPhotos = _trackInfo.getPhotoList() != null && _trackInfo.getPhotoList().getNumPhotos() > 0;
 		_exportImagesCheckbox.setSelected(hasPhotos && _kmzCheckbox.isSelected());
 		_exportImagesCheckbox.setEnabled(hasPhotos && _kmzCheckbox.isSelected());
@@ -339,6 +348,7 @@ public class KmlExporter implements Runnable
 		}
 		inWriter.write("</name>\n");
 
+		boolean exportAltitudes = _altitudesCheckbox.isSelected();
 		int i = 0;
 		DataPoint point = null;
 		boolean hasTrackpoints = false;
@@ -352,7 +362,11 @@ public class KmlExporter implements Runnable
 			// Make a blob for each waypoint
 			if (point.isWaypoint())
 			{
-				exportWaypoint(point, inWriter);
+				exportWaypoint(point, inWriter, exportAltitudes);
+			}
+			else if (point.getPhoto() == null)
+			{
+				hasTrackpoints = true;
 			}
 			// Make a blob with description for each photo
 			if (point.getPhoto() != null)
@@ -363,11 +377,7 @@ public class KmlExporter implements Runnable
 					writtenPhotoHeader = true;
 				}
 				photoNum++;
-				exportPhotoPoint(point, inWriter, inExportImages, photoNum);
-			}
-			else
-			{
-				hasTrackpoints = true;
+				exportPhotoPoint(point, inWriter, inExportImages, photoNum, exportAltitudes);
 			}
 		}
 		// Make a line for the track, if there is one
@@ -375,14 +385,19 @@ public class KmlExporter implements Runnable
 		{
 			inWriter.write("\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
 				+ "\t\t\t\t<color>cc0000cc</color>\n\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
-				+ "\t\t</Style>\n\t\t<LineString>\n\t\t\t<coordinates>");
+				+ "\t\t\t<PolyStyle><color>33cc0000</color></PolyStyle>\n"
+				+ "\t\t</Style>\n\t\t<LineString>\n");
+			if (exportAltitudes) {
+				inWriter.write("\t\t\t<extrude>1</extrude>\n\t\t\t<altitudeMode>absolute</altitudeMode>\n");
+			}
+			inWriter.write("\t\t\t<coordinates>");
 			// Loop over track points
 			for (i=0; i<numPoints; i++)
 			{
 				point = _track.getPoint(i);
-				if (!point.isWaypoint())
+				if (!point.isWaypoint() && point.getPhoto() == null)
 				{
-					exportTrackpoint(point, inWriter);
+					exportTrackpoint(point, inWriter, exportAltitudes);
 				}
 			}
 			inWriter.write("\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>");
@@ -396,18 +411,30 @@ public class KmlExporter implements Runnable
 	 * Export the specified waypoint into the file
 	 * @param inPoint waypoint to export
 	 * @param inWriter writer object
+	 * @param inExportAltitude true to include altitude
 	 * @throws IOException on write failure
 	 */
-	private void exportWaypoint(DataPoint inPoint, Writer inWriter) throws IOException
+	private void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inExportAltitude) throws IOException
 	{
 		inWriter.write("\t<Placemark>\n\t\t<name>");
 		inWriter.write(inPoint.getWaypointName().trim());
 		inWriter.write("</name>\n");
-		inWriter.write("\t\t<Point>\n\t\t\t<coordinates>");
+		inWriter.write("\t\t<Point>\n");
+		if (inExportAltitude && inPoint.hasAltitude()) {
+			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
+		}
+		inWriter.write("\t\t\t<coordinates>");
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
-		inWriter.write(",0</coordinates>\n\t\t</Point>\n\t</Placemark>\n");
+		inWriter.write(",");
+		if (inExportAltitude && inPoint.hasAltitude()) {
+			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+		}
+		else {
+			inWriter.write("0");
+		}
+		inWriter.write("</coordinates>\n\t\t</Point>\n\t</Placemark>\n");
 	}
 
 
@@ -417,9 +444,11 @@ public class KmlExporter implements Runnable
 	 * @param inWriter writer object
 	 * @param inImageLink flag to set whether to export image links or not
 	 * @param inImageNumber number of image for filename
+	 * @param inExportAltitude true to include altitude
 	 * @throws IOException on write failure
 	 */
-	private void exportPhotoPoint(DataPoint inPoint, Writer inWriter, boolean inImageLink, int inImageNumber)
+	private void exportPhotoPoint(DataPoint inPoint, Writer inWriter, boolean inImageLink,
+		int inImageNumber, boolean inExportAltitude)
 	throws IOException
 	{
 		inWriter.write("\t<Placemark>\n\t\t<name>");
@@ -436,11 +465,22 @@ public class KmlExporter implements Runnable
 				+ "<tr><td><center>Caption for the photo</center></td></tr></table>]]></description>");
 		}
 		inWriter.write("<styleUrl>#camera_icon</styleUrl>\n");
-		inWriter.write("\t\t<Point>\n\t\t\t<coordinates>");
+		inWriter.write("\t\t<Point>\n");
+		if (inExportAltitude && inPoint.hasAltitude()) {
+			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
+		}
+		inWriter.write("\t\t\t<coordinates>");
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
-		inWriter.write(",0</coordinates>\n\t\t</Point>\n\t</Placemark>\n");
+		inWriter.write(",");
+		if (inExportAltitude && inPoint.hasAltitude()) {
+			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+		}
+		else {
+			inWriter.write("0");
+		}
+		inWriter.write("</coordinates>\n\t\t</Point>\n\t</Placemark>\n");
 	}
 
 
@@ -448,14 +488,22 @@ public class KmlExporter implements Runnable
 	 * Export the specified trackpoint into the file
 	 * @param inPoint trackpoint to export
 	 * @param inWriter writer object
+	 * @param inExportAltitude true to include altitude
 	 */
-	private void exportTrackpoint(DataPoint inPoint, Writer inWriter) throws IOException
+	private void exportTrackpoint(DataPoint inPoint, Writer inWriter, boolean inExportAltitude) throws IOException
 	{
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
-		// Altitude not exported, locked to ground by Google Earth
-		inWriter.write(",0\n");
+		// Altitude either absolute or locked to ground by Google Earth
+		inWriter.write(",");
+		if (inExportAltitude && inPoint.hasAltitude()) {
+			inWriter.write("" + inPoint.getAltitude().getValue(Altitude.FORMAT_METRES));
+		}
+		else {
+			inWriter.write("0");
+		}
+		inWriter.write("\n");
 	}
 
 

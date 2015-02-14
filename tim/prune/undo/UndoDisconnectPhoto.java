@@ -6,11 +6,12 @@ import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
 
 /**
- * Operation to undo the connection of a photo to a point
+ * Operation to undo the disconnection of a photo from a point
  */
-public class UndoConnectPhoto implements UndoOperation
+public class UndoDisconnectPhoto implements UndoOperation
 {
 	private DataPoint _point = null;
+	private Photo _photo = null;
 	private String _filename = null;
 
 
@@ -19,9 +20,10 @@ public class UndoConnectPhoto implements UndoOperation
 	 * @param inPoint data point
 	 * @param inFilename filename of photo
 	 */
-	public UndoConnectPhoto(DataPoint inPoint, String inFilename)
+	public UndoDisconnectPhoto(DataPoint inPoint, String inFilename)
 	{
 		_point = inPoint;
+		_photo = inPoint.getPhoto();
 		_filename = inFilename;
 	}
 
@@ -31,7 +33,7 @@ public class UndoConnectPhoto implements UndoOperation
 	 */
 	public String getDescription()
 	{
-		String desc = I18nManager.getText("undo.connectphoto") + " " + _filename;
+		String desc = I18nManager.getText("undo.disconnectphoto") + " " + _filename;
 		return desc;
 	}
 
@@ -42,12 +44,11 @@ public class UndoConnectPhoto implements UndoOperation
 	 */
 	public void performUndo(TrackInfo inTrackInfo) throws UndoException
 	{
-		// Disconnect again
-		Photo photo = _point.getPhoto();
-		if (photo != null)
+		// Connect again
+		if (_point != null && _photo != null)
 		{
-			_point.setPhoto(null);
-			photo.setDataPoint(null);
+			_point.setPhoto(_photo);
+			_photo.setDataPoint(_point);
 			// inform subscribers
 			inTrackInfo.triggerUpdate();
 		}

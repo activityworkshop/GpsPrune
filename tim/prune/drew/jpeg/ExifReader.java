@@ -20,6 +20,11 @@ public class ExifReader
 	 */
 	private boolean _isMotorolaByteOrder;
 
+	/** Thumbnail offset */
+	private int _thumbnailOffset = -1;
+	/** Thumbnail length */
+	private int _thumbnailLength = -1;
+
 	/**
 	 * The number of bytes used per format descriptor.
 	 */
@@ -71,11 +76,18 @@ public class ExifReader
 	public static final int TAG_GPS_TIMESTAMP = 0x0007;
 	/** GPS date (atomic clock) GPSDateStamp 23 1d RATIONAL 3 */
 	public static final int TAG_GPS_DATESTAMP = 0x001d;
+	/** Exif timestamp */
+	public static final int TAG_DATETIME_ORIGINAL = 0x9003;
+	/** Thumbnail offset */
+	private static final int TAG_THUMBNAIL_OFFSET = 0x0201;
+	/** Thumbnail length */
+	private static final int TAG_THUMBNAIL_LENGTH = 0x0202;
+
 
 	/**
 	 * Creates an ExifReader for a Jpeg file.
 	 * @param inFile File object to attempt to read from
-	 * @throws JpegProcessingException on failure
+	 * @throws JpegException on failure
 	 */
 	public ExifReader(File inFile) throws JpegException
 	{
@@ -238,11 +250,11 @@ public class ExifReader
 			// Calculate the value as an offset for cases where the tag represents a directory
 			final int subdirOffset = inTiffHeaderOffset + get32Bits(tagValueOffset);
 
-			// TODO: Also look for timestamp(s) in Exif for correlation - which directory?
+			// Look in both basic Exif tags (for timestamp, thumbnail) and Gps tags (for lat, long, altitude, timestamp)
 			switch (tagType)
 			{
 				case TAG_EXIF_OFFSET:
-					// ignore
+					processDirectory(inMetadata, false, inDirectoryOffsets, subdirOffset, inTiffHeaderOffset);
 					continue;
 				case TAG_INTEROP_OFFSET:
 					// ignore
@@ -255,9 +267,14 @@ public class ExifReader
 					continue;
 				default:
 					// not a known directory, so must just be a normal tag
-					// ignore if we're not in gps directory
 					if (inIsGPS)
+					{
 						processGpsTag(inMetadata, tagType, tagValueOffset, componentCount, formatCode);
+					}
+					else
+					{
+						processExifTag(inMetadata, tagType, tagValueOffset, componentCount, formatCode);
+					}
 					break;
 			}
 		}
@@ -336,12 +353,52 @@ public class ExifReader
 				inMetadata.setAltitude(readRational(inTagValueOffset, inFormatCode, inComponentCount));
 				break;
 			case TAG_GPS_TIMESTAMP:
-				inMetadata.setTimestamp(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
+				inMetadata.setGpsTimestamp(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
 				break;
 			case TAG_GPS_DATESTAMP:
-				inMetadata.setDatestamp(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
+				inMetadata.setGpsDatestamp(readRationalArray(inTagValueOffset, inFormatCode, inComponentCount));
 				break;
 			default: // ignore all other tags
+		}
+	}
+
+
+	/**
+	 * Process a general Exif tag
+	 * @param inMetadata metadata holding extracted values
+	 * @param inTagType tag type (eg latitude)
+	 * @param inTagValueOffset start offset in data array
+	 * @param inComponentCount component count for tag
+	 * @param inFormatCode format code, eg byte
+	 */
+	private void processExifTag(JpegData inMetadata, int inTagType, int inTagValueOffset,
+		int inComponentCount, int inFormatCode)
+	{
+		// Only interested in original timestamp, thumbnail offset and thumbnail length
+		if (inTagType == TAG_DATETIME_ORIGINAL)
+		{
+			inMetadata.setOriginalTimestamp(readString(inTagValueOffset, inFormatCode, inComponentCount));
+		}
+		else if (inTagType == TAG_THUMBNAIL_OFFSET) {
+			_thumbnailOffset = TIFF_HEADER_START_OFFSET + get16Bits(inTagValueOffset);
+			extractThumbnail(inMetadata);
+		}
+		else if (inTagType == TAG_THUMBNAIL_LENGTH) {
+			_thumbnailLength = get16Bits(inTagValueOffset);
+			extractThumbnail(inMetadata);
+		}
+	}
+
+	/**
+	 * Attempt to extract the thumbnail image
+	 */
+	private void extractThumbnail(JpegData inMetadata)
+	{
+		if (_thumbnailOffset > 0 && _thumbnailLength > 0 && inMetadata.getThumbnailImage() == null)
+		{
+			byte[] thumbnailBytes = new byte[_thumbnailLength];
+			System.arraycopy(_data, _thumbnailOffset, thumbnailBytes, 0, _thumbnailLength);
+			inMetadata.setThumbnailImage(thumbnailBytes);
 		}
 	}
 

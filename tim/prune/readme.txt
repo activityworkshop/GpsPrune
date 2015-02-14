@@ -1,7 +1,8 @@
-Prune version 3
+Prune version 4
 ===============
 
-Prune is an application for viewing, editing and managing coordinate data from GPS systems.
+Prune is an application for viewing, editing and managing coordinate data from GPS systems,
+including format conversion and photo correlation.
 
 Prune is copyright activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
@@ -15,16 +16,32 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_03.jar
+   java -jar prune_04.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
 in a file manager window to execute it.  A shortcut, menu item, desktop icon or other link
 can of course be made should you wish.
 
+To specify a language other than the default, use an additional parameter, eg:
+   java -jar prune_04.jar --lang=DE
 
-Updates since version 2
-=======================
+
+New with version 4
+==================
+
+The following features were added since version 3:
+  - Automatic correlation of photos with points based on timestamps
+  - Manual disconnection of photos from points
+  - Reading of photo thumbnails from exif data (speeds up photo loading)
+  - Export to GPX format
+  - KML and KMZ export now includes altitudes option for airborne tracks
+  - Track points in map can be connected by lines
+  - On loading a text file, fields are now guessed according to data or column headings
+  - Polish language
+
+New with version 3
+==================
 
 The following features were added since version 2:
   - Loading of GPX and KML files
@@ -33,15 +50,17 @@ The following features were added since version 2:
   - Saving of coordinates in exif data of jpegs
   - Exporting to KMZ format including thumbnails of photos
   - Four-panel layout with toolbar
+  - French language
 
-Updates since version 1
-=======================
+New with version 2
+==================
 
 The following features were added since version 1:
   - Display of data in 3d view using Java3D library
   - Export of 3d model to POV format for rendering by povray
   - Point edit dialog, waypoint name edit dialog
   - Waypoint list
+  - Spanish language
 
 
 Further information and updates

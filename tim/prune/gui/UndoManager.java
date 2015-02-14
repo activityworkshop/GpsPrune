@@ -33,6 +33,8 @@ public class UndoManager
 
 	/**
 	 * Constructor
+	 * @param inApp App object
+	 * @param inFrame parent frame
 	 */
 	public UndoManager(App inApp, JFrame inFrame)
 	{
@@ -67,7 +69,7 @@ public class UndoManager
 		// Buttons
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton okButton = new JButton("OK");
+		JButton okButton = new JButton(I18nManager.getText("button.ok"));
 		okButton.addActionListener(new ActionListener()
 			{
 				public void actionPerformed(ActionEvent e)
@@ -77,7 +79,7 @@ public class UndoManager
 				}
 			});
 		buttonPanel.add(okButton);
-		JButton cancelButton = new JButton("Cancel");
+		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(new ActionListener()
 			{
 				public void actionPerformed(ActionEvent e)

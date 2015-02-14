@@ -15,6 +15,7 @@ public class PhotoTableModel extends AbstractTableModel
 
 	/**
 	 * Constructor giving list size
+	 * @param inSize number of photos
 	 */
 	public PhotoTableModel(int inSize)
 	{
@@ -75,7 +76,7 @@ public class PhotoTableModel extends AbstractTableModel
 		{
 			return _photos[inRowIndex].getStatus();
 		}
-		return new Boolean(_photos[inRowIndex].getSaveFlag());
+		return Boolean.valueOf(_photos[inRowIndex].getSaveFlag());
 	}
 
 

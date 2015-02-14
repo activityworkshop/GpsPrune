@@ -37,6 +37,7 @@ public class MenuManager implements DataSubscriber
 	// Menu items which need enabling/disabling
 	private JMenuItem _saveItem = null;
 	private JMenuItem _exportKmlItem = null;
+	private JMenuItem _exportGpxItem = null;
 	private JMenuItem _exportPovItem = null;
 	private JMenuItem _undoItem = null;
 	private JMenuItem _clearUndoItem = null;
@@ -60,7 +61,8 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _connectPhotoItem = null;
 	private JMenuItem _deletePhotoItem = null;
-	// TODO: Does Photo menu require disconnect option?
+	private JMenuItem _disconnectPhotoItem = null;
+	private JMenuItem _correlatePhotosItem = null;
 
 	// ActionListeners for reuse by menu and toolbar
 	private ActionListener _openFileAction = null;
@@ -85,6 +87,7 @@ public class MenuManager implements DataSubscriber
 	 * Constructor
 	 * @param inParent parent object for dialogs
 	 * @param inApp application to call on menu actions
+	 * @param inTrackInfo track info object
 	 */
 	public MenuManager(JFrame inParent, App inApp, TrackInfo inTrackInfo)
 	{
@@ -136,7 +139,7 @@ public class MenuManager implements DataSubscriber
 		_saveItem.addActionListener(_saveAction);
 		_saveItem.setEnabled(false);
 		fileMenu.add(_saveItem);
-		// Export
+		// Export - Kml
 		_exportKmlItem = new JMenuItem(I18nManager.getText("menu.file.exportkml"));
 		_exportKmlItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -146,6 +149,17 @@ public class MenuManager implements DataSubscriber
 		});
 		_exportKmlItem.setEnabled(false);
 		fileMenu.add(_exportKmlItem);
+		// Gpx
+		_exportGpxItem = new JMenuItem(I18nManager.getText("menu.file.exportgpx"));
+		_exportGpxItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.exportGpx();
+			}
+		});
+		_exportGpxItem.setEnabled(false);
+		fileMenu.add(_exportGpxItem);
+		// Pov
 		_exportPovItem = new JMenuItem(I18nManager.getText("menu.file.exportpov"));
 		_exportPovItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -360,7 +374,18 @@ public class MenuManager implements DataSubscriber
 		};
 		_connectPhotoItem.addActionListener(_connectPhotoAction);
 		_connectPhotoItem.setEnabled(false);
+		photoMenu.addSeparator();
 		photoMenu.add(_connectPhotoItem);
+		// disconnect photo
+		_disconnectPhotoItem = new JMenuItem(I18nManager.getText("menu.photo.disconnect"));
+		_disconnectPhotoItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.disconnectPhotoFromPoint();
+			}
+		});
+		_disconnectPhotoItem.setEnabled(false);
+		photoMenu.add(_disconnectPhotoItem);
 		_deletePhotoItem = new JMenuItem(I18nManager.getText("menu.photo.delete"));
 		_deletePhotoItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -370,6 +395,17 @@ public class MenuManager implements DataSubscriber
 		});
 		_deletePhotoItem.setEnabled(false);
 		photoMenu.add(_deletePhotoItem);
+		photoMenu.addSeparator();
+		// correlate all photos
+		_correlatePhotosItem = new JMenuItem(I18nManager.getText("menu.photo.correlate"));
+		_correlatePhotosItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.beginCorrelatePhotos();
+			}
+		});
+		_correlatePhotosItem.setEnabled(false);
+		photoMenu.add(_correlatePhotosItem);
 		menubar.add(photoMenu);
 
 		// Add 3d menu (whether java3d available or not)
@@ -385,8 +421,16 @@ public class MenuManager implements DataSubscriber
 		threeDMenu.add(_show3dItem);
 		menubar.add(threeDMenu);
 
-		// Help menu for About
+		// Help menu
 		JMenu helpMenu = new JMenu(I18nManager.getText("menu.help"));
+		JMenuItem helpItem = new JMenuItem(I18nManager.getText("menu.help"));
+		helpItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.showHelp();
+			}
+		});
+		helpMenu.add(helpItem);
 		JMenuItem aboutItem = new JMenuItem(I18nManager.getText("menu.help.about"));
 		aboutItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -481,6 +525,7 @@ public class MenuManager implements DataSubscriber
 		_saveItem.setEnabled(hasData);
 		_saveButton.setEnabled(hasData);
 		_exportKmlItem.setEnabled(hasData);
+		_exportGpxItem.setEnabled(hasData);
 		_exportPovItem.setEnabled(hasData);
 		_deleteDuplicatesItem.setEnabled(hasData);
 		_compressItem.setEnabled(hasData);
@@ -505,15 +550,18 @@ public class MenuManager implements DataSubscriber
 		_selectEndItem.setEnabled(hasPoint);
 		_selectEndButton.setEnabled(hasPoint);
 		// are there any photos?
-		_saveExifItem.setEnabled(_photos != null && _photos.getNumPhotos() > 0);
+		boolean anyPhotos = _photos != null && _photos.getNumPhotos() > 0;
+		_saveExifItem.setEnabled(anyPhotos);
 		// is there a current photo?
-		boolean hasPhoto = _photos != null && _photos.getNumPhotos() > 0
-			&& _selection.getCurrentPhotoIndex() >= 0;
+		boolean hasPhoto = anyPhotos && _selection.getCurrentPhotoIndex() >= 0;
 		// connect is only available when current photo is not connected to current point
 		boolean connectAvailable = hasPhoto && hasPoint
 			&& _track.getPoint(_selection.getCurrentPointIndex()).getPhoto() == null;
 		_connectPhotoItem.setEnabled(connectAvailable);
 		_connectPhotoButton.setEnabled(connectAvailable);
+		_disconnectPhotoItem.setEnabled(hasPhoto && _photos.getPhoto(_selection.getCurrentPhotoIndex()) != null
+			&& _photos.getPhoto(_selection.getCurrentPhotoIndex()).getDataPoint() != null);
+		_correlatePhotosItem.setEnabled(anyPhotos && hasData);
 		_deletePhotoItem.setEnabled(hasPhoto);
 		// is there a current range?
 		boolean hasRange = (hasData && _selection.hasRangeSelected());

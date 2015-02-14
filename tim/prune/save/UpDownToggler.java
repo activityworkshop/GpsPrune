@@ -13,21 +13,27 @@ public class UpDownToggler implements ListSelectionListener
 {
 	private JButton _upButton = null;
 	private JButton _downButton = null;
-	private int _maxIndex = 0;
+	private int _maxIndex = 2;
 
 	/**
-	 * Constructor giving buttons and size
+	 * Constructor giving buttons to enable/disable
 	 * @param inUpButton up button
 	 * @param inDownButton down button
-	 * @param inListSize size of list
 	 */
-	public UpDownToggler(JButton inUpButton, JButton inDownButton, int inListSize)
+	public UpDownToggler(JButton inUpButton, JButton inDownButton)
 	{
 		_upButton = inUpButton;
 		_downButton = inDownButton;
-		_maxIndex = inListSize - 1;
 	}
 
+	/**
+	 * Set the list size
+	 * @param inListSize number of items in list
+	 */
+	public void setListSize(int inListSize)
+	{
+		_maxIndex = inListSize - 1;
+	}
 
 	/**
 	 * list selection has changed

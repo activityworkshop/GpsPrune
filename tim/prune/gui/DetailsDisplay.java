@@ -23,6 +23,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.IntegerRange;
 import tim.prune.data.Photo;
+import tim.prune.data.PhotoStatus;
 import tim.prune.data.Selection;
 import tim.prune.data.TrackInfo;
 
@@ -46,9 +47,11 @@ public class DetailsDisplay extends GenericDisplay
 	// Photo details
 	private JLabel _photoLabel = null;
 	private PhotoThumbnail _photoThumbnail = null;
+	private JLabel _photoConnectedLabel = null;
 
 	// Units
-	private JComboBox _unitsDropdown = null;
+	private JComboBox _coordFormatDropdown = null;
+	private JComboBox _distUnitsDropdown = null;
 	// Formatter
 	private NumberFormat _distanceFormatter = NumberFormat.getInstance();
 
@@ -139,6 +142,8 @@ public class DetailsDisplay extends GenericDisplay
 		photoDetailsPanel.add(photoDetailsLabel);
 		_photoLabel = new JLabel(I18nManager.getText("details.nophoto"));
 		photoDetailsPanel.add(_photoLabel);
+		_photoConnectedLabel = new JLabel("");
+		photoDetailsPanel.add(_photoConnectedLabel);
 		_photoThumbnail = new PhotoThumbnail();
 		_photoThumbnail.setVisible(false);
 		_photoThumbnail.setPreferredSize(new Dimension(100, 100));
@@ -154,28 +159,43 @@ public class DetailsDisplay extends GenericDisplay
 		// add the main panel at the top
 		add(mainPanel, BorderLayout.NORTH);
 
-		// Add units selection
+		// Add format, units selection
 		JPanel lowerPanel = new JPanel();
 		lowerPanel.setLayout(new BoxLayout(lowerPanel, BoxLayout.Y_AXIS));
-		JLabel unitsLabel = new JLabel(I18nManager.getText("details.distanceunits") + ": ");
-		unitsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		lowerPanel.add(unitsLabel);
-		String[] distUnits = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")};
-		_unitsDropdown = new JComboBox(distUnits);
-		_unitsDropdown.addActionListener(new ActionListener() {
+		JLabel coordFormatLabel = new JLabel(I18nManager.getText("details.coordformat") + ": ");
+		coordFormatLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lowerPanel.add(coordFormatLabel);
+		String[] coordFormats = {I18nManager.getText("units.original"), I18nManager.getText("units.degminsec"),
+			I18nManager.getText("units.degmin"), I18nManager.getText("units.deg")};
+		_coordFormatDropdown = new JComboBox(coordFormats);
+		_coordFormatDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				dataUpdated(DataSubscriber.UNITS_CHANGED);
 			}
 		});
-		lowerPanel.add(_unitsDropdown);
-		_unitsDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lowerPanel.add(_coordFormatDropdown);
+		_coordFormatDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
+		JLabel unitsLabel = new JLabel(I18nManager.getText("details.distanceunits") + ": ");
+		unitsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lowerPanel.add(unitsLabel);
+		String[] distUnits = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")};
+		_distUnitsDropdown = new JComboBox(distUnits);
+		_distUnitsDropdown.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				dataUpdated(DataSubscriber.UNITS_CHANGED);
+			}
+		});
+		lowerPanel.add(_distUnitsDropdown);
+		_distUnitsDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
 		add(lowerPanel, BorderLayout.SOUTH);
 	}
 
 
 	/**
 	 * Notification that Track has been updated
+	 * @param inUpdateType byte to specify what has been updated
 	 */
 	public void dataUpdated(byte inUpdateType)
 	{
@@ -197,8 +217,8 @@ public class DetailsDisplay extends GenericDisplay
 			_indexLabel.setText(LABEL_POINT_SELECTED1
 				+ (currentPointIndex+1) + " " + I18nManager.getText("details.index.of")
 				+ " " + _track.getNumPoints());
-			_latLabel.setText(LABEL_POINT_LATITUDE + currentPoint.getLatitude().output(Coordinate.FORMAT_NONE));
-			_longLabel.setText(LABEL_POINT_LONGITUDE + currentPoint.getLongitude().output(Coordinate.FORMAT_NONE));
+			_latLabel.setText(makeCoordinateLabel(LABEL_POINT_LATITUDE, currentPoint.getLatitude(), _coordFormatDropdown.getSelectedIndex()));
+			_longLabel.setText(makeCoordinateLabel(LABEL_POINT_LONGITUDE, currentPoint.getLongitude(), _coordFormatDropdown.getSelectedIndex()));
 			_altLabel.setText(LABEL_POINT_ALTITUDE
 				+ (currentPoint.hasAltitude()?
 					(currentPoint.getAltitude().getValue() + getAltitudeUnitsLabel(currentPoint.getAltitude().getFormat())):
@@ -229,7 +249,7 @@ public class DetailsDisplay extends GenericDisplay
 			_rangeLabel.setText(LABEL_RANGE_SELECTED1
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
-			if (_unitsDropdown.getSelectedIndex() == 0)
+			if (_distUnitsDropdown.getSelectedIndex() == 0)
 				_distanceLabel.setText(LABEL_RANGE_DISTANCE + buildDistanceString(
 					selection.getDistance(Distance.UNITS_KILOMETRES))
 					+ " " + I18nManager.getText("units.kilometres.short"));
@@ -264,12 +284,16 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			// no photo, hide details
 			_photoLabel.setText(I18nManager.getText("details.nophoto"));
+			_photoConnectedLabel.setText("");
 			_photoThumbnail.setVisible(false);
 		}
 		else
 		{
 			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
 			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getFile().getName());
+			_photoConnectedLabel.setText(I18nManager.getText("details.photo.connected") + ": "
+				+ (currentPhoto.getCurrentStatus() == PhotoStatus.NOT_CONNECTED ?
+					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
 			_photoThumbnail.setVisible(true);
 			_photoThumbnail.setPhoto(currentPhoto);
 		}
@@ -290,6 +314,30 @@ public class DetailsDisplay extends GenericDisplay
 		if (inFormat == Altitude.FORMAT_METRES)
 			return " " + I18nManager.getText("units.metres.short");
 		return " " + I18nManager.getText("units.feet.short");
+	}
+
+
+	/**
+	 * Construct an appropriate coordinate label using the selected format
+	 * @param inPrefix prefix of label
+	 * @param inCoordinate coordinate
+	 * @param inFormat index of format selection dropdown
+	 * @return language-sensitive string
+	 */
+	private static String makeCoordinateLabel(String inPrefix, Coordinate inCoordinate, int inFormat)
+	{
+		String coord = null;
+		switch (inFormat) {
+			case 1: // degminsec
+				coord = inCoordinate.output(Coordinate.FORMAT_DEG_MIN_SEC); break;
+			case 2: // degmin
+				coord = inCoordinate.output(Coordinate.FORMAT_DEG_MIN); break;
+			case 3: // degrees
+				coord = inCoordinate.output(Coordinate.FORMAT_DEG); break;
+			default: // just as it was
+				coord = inCoordinate.output(Coordinate.FORMAT_NONE);
+		}
+		return inPrefix + coord;
 	}
 
 

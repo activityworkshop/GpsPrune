@@ -1,5 +1,6 @@
 package tim.prune.data;
 
+import tim.prune.DataSubscriber;
 import tim.prune.UpdateMessageBroker;
 
 /**
@@ -243,12 +244,12 @@ public class Selection
 
 
 	/**
-	 * @param inFormat distance units to use, from class Distance
+	 * @param inUnits distance units to use, from class Distance
 	 * @return distance of Selection in specified units
 	 */
 	public double getDistance(int inUnits)
 	{
-		return Distance.convertRadians(_angDistance, inUnits);
+		return Distance.convertRadiansToDistance(_angDistance, inUnits);
 	}
 
 
@@ -415,7 +416,6 @@ public class Selection
 	 */
 	public int getCurrentPhotoIndex()
 	{
-		// System.out.println("Current photo index = " + _currentPhotoIndex);
 		return _currentPhotoIndex;
 	}
 
@@ -450,6 +450,6 @@ public class Selection
 				_currentPoint = _startIndex = _endIndex = -1;
 			}
 		}
-		_broker.informSubscribers();
+		_broker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 	}
 }

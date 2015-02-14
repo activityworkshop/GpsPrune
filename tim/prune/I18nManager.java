@@ -19,8 +19,8 @@ public abstract class I18nManager
 
 
 	/**
-	 * Initialize the library
-	 * using the (optional) locale
+	 * Initialize the library using the (optional) locale
+	 * @param inLocale locale to use, or null for default
 	 */
 	public static void init(Locale inLocale)
 	{

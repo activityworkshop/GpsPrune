@@ -15,8 +15,11 @@ public class Timestamp
 	private boolean _valid = false;
 	private long _seconds = 0L;
 	private String _text = null;
+	private String _timeText = null;
 
 	private static DateFormat DEFAULT_DATE_FORMAT = DateFormat.getDateTimeInstance();
+	private static DateFormat DEFAULT_TIME_FORMAT = DateFormat.getTimeInstance();
+	private static DateFormat ISO_8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
 	private static long SECS_SINCE_1970 = 0L;
@@ -24,8 +27,14 @@ public class Timestamp
 	private static long MSECS_SINCE_1970 = 0L;
 	private static long MSECS_SINCE_1990 = 0L;
 	private static long TWENTY_YEARS_IN_SECS = 0L;
-
 	private static final long GARTRIP_OFFSET = 631065600L;
+
+	/** Specifies original timestamp format */
+	public static final int FORMAT_ORIGINAL = 0;
+	/** Specifies locale-dependent timestamp format */
+	public static final int FORMAT_LOCALE = 1;
+	/** Specifies ISO 8601 timestamp format */
+	public static final int FORMAT_ISO_8601 = 2;
 
 	// Static block to initialise offsets
 	static
@@ -43,13 +52,15 @@ public class Timestamp
 			new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy"),
 			new SimpleDateFormat("HH:mm:ss dd MMM yyyy"),
 			new SimpleDateFormat("dd MMM yyyy HH:mm:ss"),
-			new SimpleDateFormat("yyyy MMM dd HH:mm:ss")
+			new SimpleDateFormat("yyyy MMM dd HH:mm:ss"),
+			ISO_8601_FORMAT
 		};
 	}
 
 
 	/**
 	 * Constructor
+	 * @param inString String containing timestamp
 	 */
 	public Timestamp(String inString)
 	{
@@ -83,10 +94,10 @@ public class Timestamp
 					_seconds = rawValue / 1000L + TWENTY_YEARS_IN_SECS;
 					smallestDiff = diff3;
 				}
-				// Lastly, check garmin offset
+				// Lastly, check gartrip offset
 				if (diff4 < smallestDiff)
 				{
-					// seconds since garmin offset
+					// seconds since gartrip offset
 					_seconds = rawValue + GARTRIP_OFFSET;
 				}
 				_valid = true;
@@ -137,8 +148,8 @@ public class Timestamp
 
 
 	/**
-	 * Constructor giving millis since 1970
-	 * @param inMillis
+	 * Constructor giving millis
+	 * @param inMillis milliseconds since 1970
 	 */
 	public Timestamp(long inMillis)
 	{
@@ -168,19 +179,87 @@ public class Timestamp
 
 
 	/**
+	 * Add the given TimeDifference to this Timestamp
+	 * @param inOffset TimeDifference to add
+	 * @return new Timestamp object
+	 */
+	public Timestamp addOffset(TimeDifference inOffset)
+	{
+		return new Timestamp((_seconds + inOffset.getTotalSeconds()) * 1000L);
+	}
+
+
+	/**
+	 * Subtract the given TimeDifference from this Timestamp
+	 * @param inOffset TimeDifference to subtract
+	 * @return new Timestamp object
+	 */
+	public Timestamp subtractOffset(TimeDifference inOffset)
+	{
+		return new Timestamp((_seconds - inOffset.getTotalSeconds()) * 1000L);
+	}
+
+
+	/**
 	 * @return Description of timestamp in locale-specific format
 	 */
 	public String getText()
 	{
+		return getText(FORMAT_LOCALE);
+	}
+
+	/**
+	 * @param inFormat format of timestamp
+	 * @return Description of timestamp in required format
+	 */
+	public String getText(int inFormat)
+	{
+		if (inFormat == FORMAT_ISO_8601) {
+			return format(ISO_8601_FORMAT);
+		}
 		if (_text == null)
 		{
-			if (_valid)
-			{
-				CALENDAR.setTimeInMillis(_seconds * 1000L);
-				_text = DEFAULT_DATE_FORMAT.format(CALENDAR.getTime());
+			if (_valid) {
+				_text = format(DEFAULT_DATE_FORMAT);
 			}
 			else _text = "";
 		}
 		return _text;
+	}
+
+	/**
+	 * @return Description of time part of timestamp in locale-specific format
+	 */
+	public String getTimeText()
+	{
+		if (_timeText == null)
+		{
+			if (_valid) {
+				_timeText = format(DEFAULT_TIME_FORMAT);
+			}
+			else _timeText = "";
+		}
+		return _timeText;
+	}
+
+	/**
+	 * Utility method for formatting dates / times
+	 * @param inFormat formatter object
+	 * @return formatted String
+	 */
+	private String format(DateFormat inFormat)
+	{
+		CALENDAR.setTimeInMillis(_seconds * 1000L);
+		return inFormat.format(CALENDAR.getTime());
+	}
+
+	/**
+	 * @return a Calendar object representing this timestamp
+	 */
+	public Calendar getCalendar()
+	{
+		Calendar cal = Calendar.getInstance();
+		cal.setTimeInMillis(_seconds * 1000L);
+		return cal;
 	}
 }

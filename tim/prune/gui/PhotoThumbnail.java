@@ -5,7 +5,6 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 
@@ -92,29 +91,39 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	 */
 	public void run()
 	{
-		int picWidth = _photo.getWidth();
-		int picHeight = _photo.getHeight();
-		if (picWidth > -1 && picHeight > -1)
+		// Use exif thumbnail?
+		if (_photo.getExifThumbnail() != null) {
+			Image image = new ImageIcon(_photo.getExifThumbnail()).getImage();
+			_thumbnail = ImageUtils.createScaledImage(image, image.getWidth(null), image.getHeight(null));
+			image = null;
+		}
+		else
 		{
-			int displayWidth = Math.min(getWidth(), getParent().getWidth());
-			// System.out.println("width = " + getWidth() + ", " + getParent().getWidth() + " = " + displayWidth);
-			int displayHeight = Math.min(getHeight(), getParent().getHeight());
-			// System.out.println("height = " + getHeight() + ", " + getParent().getHeight() + " = " + displayHeight);
-
-			// calculate maximum thumbnail size
-			Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, displayWidth, displayHeight);
-			// Work out if need to remake image
-			boolean needToRemake = (_thumbnail == null)
-			 || _thumbnail.getWidth() != thumbSize.width || _thumbnail.getHeight() != thumbSize.height;
-			if (thumbSize.width > 0 && thumbSize.height > 0 && needToRemake)
+			// no exif thumbnail available, going to have to read whole thing
+			int picWidth = _photo.getWidth();
+			int picHeight = _photo.getHeight();
+			if (picWidth > -1 && picHeight > -1)
 			{
-				// Make icon to load image into
-				Image image = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
-				// save scaled, smoothed thumbnail for reuse
-				_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
-				image = null;
-				// TODO: Calculate and set size of thumbnail here
-				// setPreferredSize(new Dimension(200, 200));
+				int displayWidth = Math.min(getWidth(), getParent().getWidth());
+				// System.out.println("width = " + getWidth() + ", " + getParent().getWidth() + " = " + displayWidth);
+				int displayHeight = Math.min(getHeight(), getParent().getHeight());
+				// System.out.println("height = " + getHeight() + ", " + getParent().getHeight() + " = " + displayHeight);
+	
+				// calculate maximum thumbnail size
+				Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, displayWidth, displayHeight);
+				// Work out if need to remake image
+				boolean needToRemake = (_thumbnail == null)
+				 || _thumbnail.getWidth() != thumbSize.width || _thumbnail.getHeight() != thumbSize.height;
+				if (thumbSize.width > 0 && thumbSize.height > 0 && needToRemake)
+				{
+					// Make icon to load image into
+					Image image = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
+					// save scaled, smoothed thumbnail for reuse
+					_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
+					image = null;
+					// TODO: Calculate and set size of thumbnail here
+					// setPreferredSize(new Dimension(200, 200));
+				}
 			}
 		}
 		_loadingImage = false;

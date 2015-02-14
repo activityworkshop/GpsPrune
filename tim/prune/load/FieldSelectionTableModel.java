@@ -27,7 +27,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 
 	/**
-	 * Get the column count
+	 * @return the column count
 	 */
 	public int getColumnCount()
 	{
@@ -36,7 +36,8 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 
 	/**
-	 * Get the name of the column
+	 * @param inColNum column number
+	 * @return name of the column
 	 */
 	public String getColumnName(int inColNum)
 	{
@@ -47,7 +48,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 
 	/**
-	 * Get the row count
+	 * @return the row count
 	 */
 	public int getRowCount()
 	{
@@ -58,14 +59,16 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 
 	/**
-	 * Get the value of the specified cell
+	 * @param inRowIndex row index
+	 * @param inColumnIndex column index
+	 * @return the value of the specified cell
 	 */
-	public Object getValueAt(int rowIndex, int columnIndex)
+	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
 		if (_fieldArray == null) return "";
-		if (columnIndex == 0) return ("" + (rowIndex+1));
-		Field field = _fieldArray[rowIndex];
-		if (columnIndex == 1)
+		if (inColumnIndex == 0) return ("" + (inRowIndex+1));
+		Field field = _fieldArray[inRowIndex];
+		if (inColumnIndex == 1)
 		{
 			// Field name - take name from built-in fields
 			if (field.isBuiltIn())
@@ -81,13 +84,16 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 	/**
 	 * Make sure only second and third columns are editable
+	 * @param inRowIndex row index
+	 * @param inColumnIndex column index
+	 * @return true if cell editable
 	 */
-	public boolean isCellEditable(int rowIndex, int columnIndex)
+	public boolean isCellEditable(int inRowIndex, int inColumnIndex)
 	{
-		if (columnIndex <= 1)
-			return (columnIndex == 1);
+		if (inColumnIndex <= 1)
+			return (inColumnIndex == 1);
 		// Column is 2 so only edit non-builtin field names
-		Field field = _fieldArray[rowIndex];
+		Field field = _fieldArray[inRowIndex];
 		return !field.isBuiltIn();
 	}
 
@@ -109,24 +115,27 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 	/**
 	 * React to edits to the table data
+	 * @param inValue value to set
+	 * @param inRowIndex row index
+	 * @param inColumnIndex column index
 	 */
-	public void setValueAt(Object aValue, int rowIndex, int columnIndex)
+	public void setValueAt(Object inValue, int inRowIndex, int inColumnIndex)
 	{
-		super.setValueAt(aValue, rowIndex, columnIndex);
-		if (columnIndex == 1)
+		super.setValueAt(inValue, inRowIndex, inColumnIndex);
+		if (inColumnIndex == 1)
 		{
-			Field field = _fieldArray[rowIndex];
-			if (!field.getName().equals(aValue.toString()))
+			Field field = _fieldArray[inRowIndex];
+			if (!field.getName().equals(inValue.toString()))
 			{
-				manageFieldChange(rowIndex, aValue.toString());
+				manageFieldChange(inRowIndex, inValue.toString());
 			}
 		}
-		else if (columnIndex == 2)
+		else if (inColumnIndex == 2)
 		{
 			// change description if it's custom
-			Field field = _fieldArray[rowIndex];
+			Field field = _fieldArray[inRowIndex];
 			if (!field.isBuiltIn())
-				field.setName(aValue.toString());
+				field.setName(inValue.toString());
 		}
 	}
 

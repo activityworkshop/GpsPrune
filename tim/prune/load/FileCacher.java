@@ -77,7 +77,8 @@ public class FileCacher
 
 	/**
 	 * Get the top section of the file for preview
-	 * @param inSize number of lines to extract
+	 * @param inNumRows number of lines to extract
+	 * @param inMaxWidth max length of Strings (longer ones will be chopped)
 	 * @return String array containing non-blank lines from the file
 	 */
 	public String[] getSnippet(int inNumRows, int inMaxWidth)

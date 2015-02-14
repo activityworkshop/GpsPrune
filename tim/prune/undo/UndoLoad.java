@@ -33,7 +33,7 @@ public class UndoLoad implements UndoOperation
 
 	/**
 	 * Constructor for replacing
-	 * @param inOldTrack track being replaced
+	 * @param inOldTrackInfo track info being replaced
 	 * @param inNumLoaded number of points loaded
 	 * @param inPhotoList photo list, if any
 	 */

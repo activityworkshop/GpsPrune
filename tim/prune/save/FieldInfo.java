@@ -14,6 +14,8 @@ public class FieldInfo
 
 	/**
 	 * Constructor
+	 * @param inField Field object
+	 * @param inData true if Field contains data which can be saved
 	 */
 	public FieldInfo(Field inField, boolean inData)
 	{

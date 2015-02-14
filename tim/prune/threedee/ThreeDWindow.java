@@ -17,6 +17,7 @@ public interface ThreeDWindow
 
 	/**
 	 * Show the window
+	 * @throws ThreeDException when 3d classes not found
 	 */
 	public void show() throws ThreeDException;
 }

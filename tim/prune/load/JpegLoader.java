@@ -3,7 +3,7 @@ package tim.prune.load;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.util.ArrayList;
+import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -45,7 +45,7 @@ public class JpegLoader implements Runnable
 	private JProgressBar _progressBar = null;
 	private int[] _fileCounts = null;
 	private boolean _cancelled = false;
-	private ArrayList _photos = null;
+	private TreeSet _photos = null;
 
 
 	/**
@@ -128,7 +128,7 @@ public class JpegLoader implements Runnable
 	{
 		// Initialise arrays, errors, summaries
 		_fileCounts = new int[4]; // files, jpegs, exifs, gps
-		_photos = new ArrayList();
+		_photos = new TreeSet(new PhotoSorter());
 		File[] files = _fileChooser.getSelectedFiles();
 		// Loop recursively over selected files/directories to count files
 		int numFiles = countFileList(files, true, _subdirCheckbox.isSelected());
@@ -244,9 +244,9 @@ public class JpegLoader implements Runnable
 				{_fileCounts[2]++;} // exif found
 			if (jpegData.isValid())
 			{
-				if (jpegData.getDatestamp() != null && jpegData.getTimestamp() != null)
+				if (jpegData.getGpsDatestamp() != null && jpegData.getGpsTimestamp() != null)
 				{
-					photo.setTimestamp(createTimestamp(jpegData.getDatestamp(), jpegData.getTimestamp()));
+					photo.setTimestamp(createTimestamp(jpegData.getGpsDatestamp(), jpegData.getGpsTimestamp()));
 				}
 				// Make DataPoint and attach to Photo
 				DataPoint point = createDataPoint(jpegData);
@@ -255,6 +255,12 @@ public class JpegLoader implements Runnable
 				photo.setOriginalStatus(PhotoStatus.TAGGED);
 				_fileCounts[3]++;
 			}
+			// Use exif timestamp if gps timestamp not available
+			if (photo.getTimestamp() == null && jpegData.getOriginalTimestamp() != null)
+			{
+				photo.setTimestamp(createTimestamp(jpegData.getOriginalTimestamp()));
+			}
+			photo.setExifThumbnail(jpegData.getThumbnailImage());
 		}
 		catch (JpegException jpe) { // don't list errors, just count them
 		}
@@ -364,6 +370,28 @@ public class JpegLoader implements Runnable
 		//	+ inTime[0].toString() + "," + inTime[1].toString() + "," + inTime[2].toString() + ")");
 		return new Timestamp(inDate[0].intValue(), inDate[1].intValue(), inDate[2].intValue(),
 			inTime[0].intValue(), inTime[1].intValue(), inTime[2].intValue());
+	}
+
+
+	/**
+	 * Use the given String value to create a timestamp
+	 * @param inStamp timestamp from exif
+	 * @return Timestamp object corresponding to input
+	 */
+	private static Timestamp createTimestamp(String inStamp)
+	{
+		Timestamp stamp = null;
+		try
+		{
+			stamp = new Timestamp(Integer.parseInt(inStamp.substring(0, 4)),
+				Integer.parseInt(inStamp.substring(5, 7)),
+				Integer.parseInt(inStamp.substring(8, 10)),
+				Integer.parseInt(inStamp.substring(11, 13)),
+				Integer.parseInt(inStamp.substring(14, 16)),
+				Integer.parseInt(inStamp.substring(17)));
+		}
+		catch (NumberFormatException nfe) {}
+		return stamp;
 	}
 
 

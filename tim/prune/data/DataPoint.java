@@ -138,30 +138,37 @@ public class DataPoint
 	}
 
 
+	/** @return latitude */
 	public Coordinate getLatitude()
 	{
 		return _latitude;
 	}
+	/** @return longitude */
 	public Coordinate getLongitude()
 	{
 		return _longitude;
 	}
+	/** @return true if point has altitude */
 	public boolean hasAltitude()
 	{
 		return _altitude.isValid();
 	}
+	/** @return altitude */
 	public Altitude getAltitude()
 	{
 		return _altitude;
 	}
+	/** @return true if point has timestamp */
 	public boolean hasTimestamp()
 	{
 		return _timestamp.isValid();
 	}
+	/** @return timestamp */
 	public Timestamp getTimestamp()
 	{
 		return _timestamp;
 	}
+	/** @return waypoint name, if any */
 	public String getWaypointName()
 	{
 		return _waypointName;
@@ -202,10 +209,7 @@ public class DataPoint
 		{
 			return !inOther.isWaypoint();
 		}
-		else
-		{
-			return (inOther._waypointName != null && inOther._waypointName.equals(_waypointName));
-		}
+		return (inOther._waypointName != null && inOther._waypointName.equals(_waypointName));
 	}
 
 
@@ -246,21 +250,33 @@ public class DataPoint
 	public DataPoint[] interpolate(DataPoint inEndPoint, int inNumPoints)
 	{
 		DataPoint[] range = new DataPoint[inNumPoints];
-		Coordinate endLatitude = inEndPoint.getLatitude();
-		Coordinate endLongitude = inEndPoint.getLongitude();
-		Altitude endAltitude = inEndPoint.getAltitude();
-
 		// Loop over points
 		for (int i=0; i<inNumPoints; i++)
 		{
-			Coordinate latitude = Coordinate.interpolate(_latitude, endLatitude, i, inNumPoints);
-			Coordinate longitude = Coordinate.interpolate(_longitude, endLongitude, i, inNumPoints);
-			Altitude altitude = Altitude.interpolate(_altitude, endAltitude, i, inNumPoints);
+			Coordinate latitude = Coordinate.interpolate(_latitude, inEndPoint.getLatitude(), i, inNumPoints);
+			Coordinate longitude = Coordinate.interpolate(_longitude, inEndPoint.getLongitude(), i, inNumPoints);
+			Altitude altitude = Altitude.interpolate(_altitude, inEndPoint.getAltitude(), i, inNumPoints);
 			range[i] = new DataPoint(latitude, longitude, altitude);
 		}
 		return range;
 	}
 
+	/**
+	 * Interpolate between the two given points
+	 * @param inStartPoint start point
+	 * @param inEndPoint end point
+	 * @param inFrac fractional distance from first point (0.0 to 1.0)
+	 * @return new DataPoint object between two given ones
+	 */
+	public static DataPoint interpolate(DataPoint inStartPoint, DataPoint inEndPoint, double inFrac)
+	{
+		if (inStartPoint == null || inEndPoint == null) {return null;}
+		return new DataPoint(
+			Coordinate.interpolate(inStartPoint.getLatitude(), inEndPoint.getLatitude(), inFrac),
+			Coordinate.interpolate(inStartPoint.getLongitude(), inEndPoint.getLongitude(), inFrac),
+			Altitude.interpolate(inStartPoint.getAltitude(), inEndPoint.getAltitude(), inFrac)
+		);
+	}
 
 	/**
 	 * Calculate the number of radians between two points (for distance calculation)
@@ -342,5 +358,15 @@ public class DataPoint
 			return true;
 		}
 		return false;
+	}
+
+
+	/**
+	 * Get string for debug
+	 * @see java.lang.Object#toString()
+	 */
+	public String toString()
+	{
+		return "[Lat=" + getLatitude().toString() + ", Lon=" + getLongitude().toString() + "]";
 	}
 }

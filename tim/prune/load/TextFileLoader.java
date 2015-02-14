@@ -99,8 +99,8 @@ public class TextFileLoader
 
 
 	/**
-	 * Open the selected file and show the GUI dialog
-	 * to select load options
+	 * Open the selected file and show the GUI dialog to select load options
+	 * @param inFile file to open
 	 */
 	public void openFile(File inFile)
 	{
@@ -364,7 +364,16 @@ public class TextFileLoader
 			}
 		});
 		innerPanel3.add(_moveDownButton);
-		innerPanel3.add(Box.createVerticalStrut(70));
+		innerPanel3.add(Box.createVerticalStrut(60));
+		JButton guessButton = new JButton(I18nManager.getText("button.guessfields"));
+		guessButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_lastSelectedFields = null;
+				prepareSecondPanel();
+			}
+		});
+		innerPanel3.add(guessButton);
 
 		innerPanel2.add(innerPanel3, BorderLayout.EAST);
 		secondCard.add(innerPanel2, BorderLayout.CENTER);
@@ -458,11 +467,8 @@ public class TextFileLoader
 		FileSplitter splitter = new FileSplitter(_fileCacher);
 		// Check info makes sense - num fields > 0, num records > 0
 		// set "Finished" button to disabled if not ok
-		// TODO: Work out if there are header rows or not, save?
-		// Try to match header rows with fields
-		// Try to match data with fields
 		// Add data to GUI elements
-		Object[][] tableData = splitter.splitFieldData(info.getDelimiter());
+		String[][] tableData = splitter.splitFieldData(info.getDelimiter());
 		// possible to ignore blank columns here
 		_currentDelimiter = info.getDelimiter();
 		_fileExtractTableModel.updateData(tableData);
@@ -471,9 +477,15 @@ public class TextFileLoader
 		// Check number of fields and use last ones if count matches
 		Field[] startFieldArray = null;
 		if (_lastSelectedFields != null && splitter.getNumColumns() == _lastSelectedFields.length)
+		{
 			startFieldArray = _lastSelectedFields;
+		}
 		else
-			startFieldArray = splitter.makeDefaultFields();
+		{
+			// Take first full row of file and use it to guess fields
+			startFieldArray = FieldGuesser.guessFields(splitter.getFirstFullRow());
+		}
+
 		_fieldTableModel.updateData(startFieldArray);
 		_fieldTable.setModel(_fieldTableModel);
 		// add dropdowns to second column

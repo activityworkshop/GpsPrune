@@ -49,6 +49,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 	private BufferedImage _image = null;
 	private JPopupMenu _popup = null;
 	private JCheckBoxMenuItem _autoPanMenuItem = null;
+	private JCheckBoxMenuItem _connectPointsMenuItem = null;
 	private int _numPoints = -1;
 	private double _scale;
 	private double _offsetX, _offsetY, _zoomScale;
@@ -97,12 +98,13 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 
 	/**
 	 * Override paint method to draw map
+	 * @param inG graphics object
 	 */
-	public void paint(Graphics g)
+	public void paint(Graphics inG)
 	{
 		if (_track == null)
 		{
-			super.paint(g);
+			super.paint(inG);
 			return;
 		}
 
@@ -161,14 +163,14 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		if (_image == null) {return;}
 
 		// draw buffered image onto g
-		g.drawImage(_image, 0, 0, width, height, COLOR_BG, null);
+		inG.drawImage(_image, 0, 0, width, height, COLOR_BG, null);
 
 		// draw selected range, if any
 		if (_trackInfo.getSelection().hasRangeSelected() && !_zoomDragging)
 		{
 			int rangeStart = _trackInfo.getSelection().getStart();
 			int rangeEnd = _trackInfo.getSelection().getEnd();
-			g.setColor(COLOR_CURR_RANGE);
+			inG.setColor(COLOR_CURR_RANGE);
 			for (int i=rangeStart; i<=rangeEnd; i++)
 			{
 				x = width/2 + (int) ((_track.getX(i) - _offsetX) / _scale * _zoomScale);
@@ -176,7 +178,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 				if (x > BORDER_WIDTH && x < (width - BORDER_WIDTH)
 					&& y < (height - BORDER_WIDTH) && y > BORDER_WIDTH)
 				{
-					g.drawOval(x - 2, y - 2, 4, 4);
+					inG.drawRect(x - 2, y - 2, 4, 4);
 				}
 			}
 		}
@@ -184,47 +186,51 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		// Highlight selected point
 		if (selectedPoint >= 0 && !_zoomDragging)
 		{
-			g.setColor(COLOR_CROSSHAIRS);
+			inG.setColor(COLOR_CROSSHAIRS);
 			x = width/2 + (int) ((_track.getX(selectedPoint) - _offsetX) / _scale * _zoomScale);
 			y = height/2 - (int) ((_track.getY(selectedPoint) - _offsetY) / _scale * _zoomScale);
 			if (x > BORDER_WIDTH && x < (width - BORDER_WIDTH)
 				&& y < (height - BORDER_WIDTH) && y > BORDER_WIDTH)
 			{
 				// Draw cross-hairs for current point
-				g.drawLine(x, BORDER_WIDTH, x, height - BORDER_WIDTH);
-				g.drawLine(BORDER_WIDTH, y, width - BORDER_WIDTH, y);
+				inG.drawLine(x, BORDER_WIDTH, x, height - BORDER_WIDTH);
+				inG.drawLine(BORDER_WIDTH, y, width - BORDER_WIDTH, y);
 
 				// Show selected point afterwards to make sure it's on top
-				g.drawOval(x - 2, y - 2, 4, 4);
-				g.drawOval(x - 3, y - 3, 6, 6);
+				inG.drawOval(x - 2, y - 2, 4, 4);
+				inG.drawOval(x - 3, y - 3, 6, 6);
 			}
 		}
 
 		// Draw rectangle for dragging zoom area
 		if (_zoomDragging)
 		{
-			g.setColor(COLOR_CROSSHAIRS);
-			g.drawLine(_zoomDragFromX, _zoomDragFromY, _zoomDragFromX, _zoomDragToY);
-			g.drawLine(_zoomDragFromX, _zoomDragFromY, _zoomDragToX, _zoomDragFromY);
-			g.drawLine(_zoomDragToX, _zoomDragFromY, _zoomDragToX, _zoomDragToY);
-			g.drawLine(_zoomDragFromX, _zoomDragToY, _zoomDragToX, _zoomDragToY);
+			inG.setColor(COLOR_CROSSHAIRS);
+			inG.drawLine(_zoomDragFromX, _zoomDragFromY, _zoomDragFromX, _zoomDragToY);
+			inG.drawLine(_zoomDragFromX, _zoomDragFromY, _zoomDragToX, _zoomDragFromY);
+			inG.drawLine(_zoomDragToX, _zoomDragFromY, _zoomDragToX, _zoomDragToY);
+			inG.drawLine(_zoomDragFromX, _zoomDragToY, _zoomDragToX, _zoomDragToY);
 		}
 
 		// Attempt to grab keyboard focus if possible
-		//this.requestFocus();
+		//requestFocus();  (causes problems here)
 	}
 
 
 	/**
-	 * Draw the map onto an offscreen image
+	 * Plot the points onto an offscreen image
+	 * which doesn't have to be redrawn when the selection changes
 	 */
 	private void createBackgroundImage()
 	{
 		int width = getWidth();
 		int height = getHeight();
 		int x, y;
-		// Make a new image and initialise it
-		_image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		int lastX = 0, lastY = 0;
+		// Initialise image
+		if (_image == null || _image.getWidth() != width || _image.getHeight() != height) {
+			_image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		}
 		Graphics bufferedG = _image.getGraphics();
 		super.paint(bufferedG);
 
@@ -233,6 +239,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		bufferedG.setColor(COLOR_POINT);
 		int halfWidth = width/2;
 		int halfHeight = height/2;
+		boolean currPointTrackpoint = false, lastPointTrackpoint = false;
 		for (int i=0; i<numPoints; i++)
 		{
 			x = halfWidth + (int) ((_track.getX(i) - _offsetX) / _scale * _zoomScale);
@@ -240,8 +247,21 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 			if (x > BORDER_WIDTH && x < (width - BORDER_WIDTH)
 				&& y < (height - BORDER_WIDTH) && y > BORDER_WIDTH)
 			{
-				bufferedG.drawOval(x - 2, y - 2, 4, 4);
+				// draw block for point (a bit faster than circles)
+				bufferedG.drawRect(x - 2, y - 2, 3, 3);
+
+				// See whether to connect the point with previous one or not
+				currPointTrackpoint = !_track.getPoint(i).isWaypoint() && _track.getPoint(i).getPhoto() == null;
+				if (_connectPointsMenuItem.isSelected() && currPointTrackpoint && lastPointTrackpoint)
+				{
+					bufferedG.drawLine(lastX, lastY, x, y);
+				}
+				lastPointTrackpoint = currPointTrackpoint;
 			}
+			else {
+				lastPointTrackpoint = false;
+			}
+			lastX = x; lastY = y;
 		}
 
 		// Loop again and show waypoints with names
@@ -268,36 +288,34 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 					int nameWidth = fm.stringWidth(waypointName);
 					if (nameWidth < (width - 2 * BORDER_WIDTH))
 					{
-						double nameAngle = 0.3;
-						double nameRadius = 1.0;
 						boolean drawnName = false;
-						while (!drawnName)
+						// Make arrays for coordinates right left up down
+						int[] nameXs = {x + 2, x - nameWidth - 2, x - nameWidth/2, x - nameWidth/2};
+						int[] nameYs = {y + (nameHeight/2), y + (nameHeight/2), y - 2, y + nameHeight + 2};
+						for (int extraSpace = 4; extraSpace < 13 && !drawnName; extraSpace+=2)
 						{
-							int nameX = x + (int) (nameRadius * Math.cos(nameAngle)) - (nameWidth/2);
-							int nameY = y + (int) (nameRadius * Math.sin(nameAngle)) + (nameHeight/2);
-							if (nameX > BORDER_WIDTH && (nameX + nameWidth) < (width - BORDER_WIDTH)
-								&& nameY < (height - BORDER_WIDTH) && (nameY - nameHeight) > BORDER_WIDTH)
+							// Shift arrays for coordinates right left up down
+							nameXs[0] += 2; nameXs[1] -= 2;
+							nameYs[2] -= 2; nameYs[3] += 2;
+							// Check each direction in turn right left up down
+							for (int a=0; a<4; a++)
 							{
-								// name can fit in grid - does it overlap data points?
-								if (!overlapsPoints(nameX, nameY, nameWidth, nameHeight) || nameRadius > 50.0)
+								if (nameXs[a] > BORDER_WIDTH && (nameXs[a] + nameWidth) < (width - BORDER_WIDTH)
+									&& nameYs[a] < (height - BORDER_WIDTH) && (nameYs[a] - nameHeight) > BORDER_WIDTH
+									&& !overlapsPoints(nameXs[a], nameYs[a], nameWidth, nameHeight))
 								{
-									bufferedG.drawString(waypointName, nameX, nameY);
+									// Found a rectangle to fit - draw name here and quit
+									bufferedG.drawString(waypointName, nameXs[a], nameYs[a]);
 									drawnName = true;
-									numWaypointNamesShown++;
+									break;
 								}
-							}
-							nameAngle += 0.08;
-							nameRadius += 0.2;
-							// wasn't room within the radius, so don't print name
-							if (nameRadius > 50.0)
-							{
-								drawnName = true;
 							}
 						}
 					}
 				}
 			}
 		}
+		bufferedG.dispose();
 	}
 
 
@@ -361,6 +379,16 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 			}});
 		zoomFull.setEnabled(true);
 		_popup.add(zoomFull);
+		_connectPointsMenuItem = new JCheckBoxMenuItem(I18nManager.getText("menu.map.connect"));
+		_connectPointsMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				// redraw map
+				dataUpdated(DataSubscriber.ALL);
+			}
+		});
+		_connectPointsMenuItem.setSelected(false);
+		_popup.add(_connectPointsMenuItem);
 		_autoPanMenuItem = new JCheckBoxMenuItem(I18nManager.getText("menu.map.autopan"));
 		_autoPanMenuItem.setSelected(true);
 		_popup.add(_autoPanMenuItem);
@@ -421,24 +449,25 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 
 	/**
 	 * React to click on map display
+	 * @param inE mouse event
 	 */
-	public void mouseClicked(MouseEvent e)
+	public void mouseClicked(MouseEvent inE)
 	{
 		this.requestFocus();
 		if (_track != null)
 		{
-			int xClick = e.getX();
-			int yClick = e.getY();
+			int xClick = inE.getX();
+			int yClick = inE.getY();
 			// Check click is within main area (not in border)
 			if (xClick > BORDER_WIDTH && yClick > BORDER_WIDTH && xClick < (getWidth() - BORDER_WIDTH)
 				&& yClick < (getHeight() - BORDER_WIDTH))
 			{
 				// Check left click or right click
-				if (e.isMetaDown())
+				if (inE.isMetaDown())
 				{
 					// Only show popup if track has data
 					if (_track != null && _track.getNumPoints() > 0)
-						_popup.show(this, e.getX(), e.getY());
+						_popup.show(this, xClick, yClick);
 				}
 				else
 				{

@@ -22,7 +22,7 @@ public class AltitudeRange
 
 	/**
 	 * Add a value to the range
-	 * @param inValue value to add, only positive values considered
+	 * @param inAltitude value to add, only positive values considered
 	 */
 	public void addValue(Altitude inAltitude)
 	{

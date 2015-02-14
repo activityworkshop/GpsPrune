@@ -30,7 +30,6 @@ public class JpegSegmentData
 	 */
 	public void addSegment(byte inSegmentMarker, byte[] inSegmentBytes)
 	{
-		// System.out.println("Adding segment: " + inSegmentMarker);
 		List segmentList = getOrCreateSegmentList(inSegmentMarker);
 		segmentList.add(inSegmentBytes);
 	}

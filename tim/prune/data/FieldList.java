@@ -29,7 +29,7 @@ public class FieldList
 
 	/**
 	 * Constructor giving array of Field objects
-	 * @param inFieldArray
+	 * @param inFieldArray array of Field objects
 	 */
 	public FieldList(Field[] inFieldArray)
 	{

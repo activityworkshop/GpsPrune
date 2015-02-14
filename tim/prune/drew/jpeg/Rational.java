@@ -62,7 +62,8 @@ public class Rational
 	}
 
 	/**
-	 * Checks if this rational number is an Integer, either positive or negative.
+	 * Checks if this rational number is an Integer, either positive or negative
+	 * @return true if an integer
 	 */
 	public boolean isInteger()
 	{

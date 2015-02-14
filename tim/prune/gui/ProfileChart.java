@@ -178,6 +178,7 @@ public class ProfileChart extends GenericChart
 
 	/**
 	 * Method to inform map that data has changed
+	 * @param inTrack track object
 	 */
 	public void dataUpdated(Track inTrack)
 	{

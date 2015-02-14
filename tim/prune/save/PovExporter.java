@@ -185,7 +185,7 @@ public class PovExporter
 
 		JPanel flowPanel = new JPanel();
 		flowPanel.add(centralPanel);
-		
+
 		// show lines button
 		JButton showLinesButton = new JButton(I18nManager.getText("button.showlines"));
 		showLinesButton.addActionListener(new ActionListener() {

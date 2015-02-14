@@ -17,8 +17,7 @@ public class UndoDeleteRange implements UndoOperation
 
 	/**
 	 * Constructor
-	 * @param inIndex index number of point within track
-	 * @param inPoint data point
+	 * @param inTrackInfo track info object
 	 */
 	public UndoDeleteRange(TrackInfo inTrackInfo)
 	{

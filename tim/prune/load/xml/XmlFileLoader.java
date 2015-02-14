@@ -39,8 +39,8 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 
 
 	/**
-	 * Open the selected file and show the GUI dialog
-	 * to select load options
+	 * Open the selected file and show the GUI dialog to select load options
+	 * @param inFile File to open
 	 */
 	public void openFile(File inFile)
 	{
@@ -94,7 +94,7 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	 * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public void startElement(String uri, String localName, String qName,
-			Attributes attributes) throws SAXException
+		Attributes attributes) throws SAXException
 	{
 		// Check for "kml" or "gpx" tags
 		if (_handler == null)
@@ -120,7 +120,7 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	 * @see org.xml.sax.ContentHandler#characters(char[], int, int)
 	 */
 	public void characters(char[] ch, int start, int length)
-			throws SAXException
+		throws SAXException
 	{
 		if (_handler != null)
 		{
@@ -136,7 +136,7 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	 * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public void endElement(String uri, String localName, String qName)
-			throws SAXException
+		throws SAXException
 	{
 		if (_handler != null)
 		{

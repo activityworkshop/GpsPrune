@@ -13,6 +13,7 @@ import tim.prune.data.Field;
  */
 public class GpxHandler extends XmlHandler
 {
+	private boolean _insideWaypoint = false;
 	private boolean _insideName = false;
 	private boolean _insideElevation = false;
 	private boolean _insideTime = false;
@@ -27,11 +28,12 @@ public class GpxHandler extends XmlHandler
 	 * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public void startElement(String uri, String localName, String qName,
-			Attributes attributes) throws SAXException
+		Attributes attributes) throws SAXException
 	{
 		// Read the parameters for waypoints and track points
 		if (qName.equalsIgnoreCase("wpt") || qName.equalsIgnoreCase("trkpt"))
 		{
+			_insideWaypoint = qName.equalsIgnoreCase("wpt");
 			int numAttributes = attributes.getLength();
 			for (int i=0; i<numAttributes; i++)
 			{
@@ -64,7 +66,7 @@ public class GpxHandler extends XmlHandler
 	 * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public void endElement(String uri, String localName, String qName)
-	throws SAXException
+		throws SAXException
 	{
 		if (qName.equalsIgnoreCase("wpt") || qName.equalsIgnoreCase("trkpt"))
 		{
@@ -91,10 +93,10 @@ public class GpxHandler extends XmlHandler
 	 * @see org.xml.sax.ContentHandler#characters(char[], int, int)
 	 */
 	public void characters(char[] ch, int start, int length)
-			throws SAXException
+		throws SAXException
 	{
 		String value = new String(ch, start, length);
-		if (_insideName) {_name = checkCharacters(_name, value);}
+		if (_insideName && _insideWaypoint) {_name = checkCharacters(_name, value);}
 		else if (_insideElevation) {_elevation = checkCharacters(_elevation, value);}
 		else if (_insideTime) {_time = checkCharacters(_time, value);}
 		super.characters(ch, start, length);

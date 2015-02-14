@@ -33,8 +33,8 @@ public class Latitude extends Coordinate
 	protected int getCardinal(char inChar)
 	{
 		// Latitude recognises N, S and -
-		// default is North
-		int cardinal = NORTH;
+		// default is No cardinal
+		int cardinal = NO_CARDINAL;
 		switch (inChar)
 		{
 			case 'N':
@@ -50,6 +50,14 @@ public class Latitude extends Coordinate
 		return cardinal;
 	}
 
+	/**
+	 * @return default cardinal (North)
+	 * @see tim.prune.data.Coordinate#getDefaultCardinal()
+	 */
+	protected int getDefaultCardinal()
+	{
+		return NORTH;
+	}
 
 	/**
 	 * Make a new Latitude object
@@ -60,4 +68,11 @@ public class Latitude extends Coordinate
 		return new Latitude(inValue, inFormat);
 	}
 
+	/**
+	 * @return the maximum degree range for this coordinate
+	 */
+	protected int getMaxDegrees()
+	{
+		return 90;
+	}
 }

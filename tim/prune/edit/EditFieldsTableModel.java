@@ -16,6 +16,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 
 	/**
 	 * Constructor giving list size
+	 * @param inSize number of fields
 	 */
 	public EditFieldsTableModel(int inSize)
 	{
@@ -70,7 +71,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 		{
 			return _fieldValues[inRowIndex];
 		}
-		return new Boolean(_valueChanged[inRowIndex]);
+		return Boolean.valueOf(_valueChanged[inRowIndex]);
 	}
 
 

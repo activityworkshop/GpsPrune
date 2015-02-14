@@ -25,9 +25,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.table.TableModel;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
@@ -36,6 +38,7 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
+import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.load.OneCharDocument;
 
@@ -55,14 +58,17 @@ public class FileSaver
 	private JTable _table = null;
 	private FieldSelectionTableModel _model = null;
 	private JButton _moveUpButton = null, _moveDownButton = null;
+	private UpDownToggler _toggler = null;
 	private JRadioButton[] _delimiterRadios = null;
 	private JTextField _otherDelimiterText = null;
 	private JCheckBox _headerRowCheckbox = null;
 	private JRadioButton[] _coordUnitsRadios = null;
 	private JRadioButton[] _altitudeUnitsRadios = null;
+	private JRadioButton[] _timestampUnitsRadios = null;
 	private static final int[] FORMAT_COORDS = {Coordinate.FORMAT_NONE, Coordinate.FORMAT_DEG_MIN_SEC,
 		Coordinate.FORMAT_DEG_MIN, Coordinate.FORMAT_DEG};
 	private static final int[] FORMAT_ALTS = {Altitude.FORMAT_NONE, Altitude.FORMAT_METRES, Altitude.FORMAT_FEET};
+	private static final int[] FORMAT_TIMES = {Timestamp.FORMAT_ORIGINAL, Timestamp.FORMAT_LOCALE, Timestamp.FORMAT_ISO_8601};
 
 
 	/**
@@ -85,8 +91,13 @@ public class FileSaver
 	 */
 	public void showDialog(char inDefaultDelimiter)
 	{
-		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.saveoptions.title"), true);
-		_dialog.setLocationRelativeTo(_parentFrame);
+		if (_dialog == null)
+		{
+			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.saveoptions.title"), true);
+			_dialog.setLocationRelativeTo(_parentFrame);
+			_dialog.getContentPane().add(makeDialogComponents());
+			_dialog.pack();
+		}
 		// Check field list
 		FieldList fieldList = _track.getFieldList();
 		int numFields = fieldList.getNumFields();
@@ -97,19 +108,17 @@ public class FileSaver
 			FieldInfo info = new FieldInfo(field, _track.hasData(field));
 			_model.addFieldInfo(info, i);
 		}
-		_dialog.getContentPane().add(makeDialogComponents(_model, inDefaultDelimiter));
-		_dialog.pack();
+		// Initialise dialog and show it
+		initDialog(_model, inDefaultDelimiter);
 		_dialog.show();
 	}
 
 
 	/**
 	 * Make the dialog components
-	 * @param inTableModel table model for fields
-	 * @param inDelimiter default delimiter character
 	 * @return the GUI components for the save dialog
 	 */
-	private Component makeDialogComponents(FieldSelectionTableModel inTableModel, char inDelimiter)
+	private Component makeDialogComponents()
 	{
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());
@@ -122,10 +131,12 @@ public class FileSaver
 		firstCard.setLayout(new BoxLayout(firstCard, BoxLayout.Y_AXIS));
 		JPanel tablePanel = new JPanel();
 		tablePanel.setLayout(new BorderLayout());
-		_table = new JTable(inTableModel);
+		_table = new JTable();
 		_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		tablePanel.add(_table.getTableHeader(), BorderLayout.NORTH);
-		tablePanel.add(_table, BorderLayout.CENTER);
+		// Enclose table in a scrollpane to prevent other components getting lost
+		JScrollPane scrollPane = new JScrollPane(_table);
+		_table.setPreferredScrollableViewportSize(new Dimension(300, 150));
+		tablePanel.add(scrollPane, BorderLayout.CENTER);
 
 		// Make a panel to hold the table and up/down buttons
 		JPanel fieldsPanel = new JPanel();
@@ -163,9 +174,8 @@ public class FileSaver
 		updownPanel.add(_moveDownButton);
 		fieldsPanel.add(updownPanel, BorderLayout.EAST);
 		// enable/disable buttons based on table row selection
-		_table.getSelectionModel().addListSelectionListener(
-			new UpDownToggler(_moveUpButton, _moveDownButton, inTableModel.getRowCount())
-		);
+		_toggler = new UpDownToggler(_moveUpButton, _moveDownButton);
+		_table.getSelectionModel().addListSelectionListener(_toggler);
 
 		// Add fields panel and the delimiter panel to first card in pack
 		JLabel saveOptionsLabel = new JLabel(I18nManager.getText("dialog.save.fieldstosave"));
@@ -204,16 +214,6 @@ public class FileSaver
 		{
 			delimGroup.add(_delimiterRadios[i]);
 		}
-		// choose last-used delimiter as default
-		switch (inDelimiter)
-		{
-			case ','  : _delimiterRadios[0].setSelected(true); break;
-			case '\t' : _delimiterRadios[1].setSelected(true); break;
-			case ';'  : _delimiterRadios[2].setSelected(true); break;
-			case ' '  : _delimiterRadios[3].setSelected(true); break;
-			default   : _delimiterRadios[4].setSelected(true);
-						_otherDelimiterText.setText("" + inDelimiter);
-		}
 		delimsPanel.add(otherPanel);
 		firstCard.add(delimsPanel);
 
@@ -235,7 +235,7 @@ public class FileSaver
 		coordsUnitsPanel.setBorder(BorderFactory.createEtchedBorder());
 		coordsUnitsPanel.setLayout(new GridLayout(0, 2));
 		_coordUnitsRadios = new JRadioButton[4];
-		_coordUnitsRadios[0] = new JRadioButton(I18nManager.getText("dialog.save.units.original"));
+		_coordUnitsRadios[0] = new JRadioButton(I18nManager.getText("units.original"));
 		_coordUnitsRadios[1] = new JRadioButton(I18nManager.getText("units.degminsec"));
 		_coordUnitsRadios[2] = new JRadioButton(I18nManager.getText("units.degmin"));
 		_coordUnitsRadios[3] = new JRadioButton(I18nManager.getText("units.deg"));
@@ -249,6 +249,7 @@ public class FileSaver
 		coordsUnitsPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		secondCardHolder.add(coordsUnitsPanel);
 		secondCardHolder.add(Box.createRigidArea(new Dimension(0,10)));
+		// altitude units
 		JLabel altUnitsLabel = new JLabel(I18nManager.getText("dialog.save.altitudeunits"));
 		altUnitsLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
 		secondCardHolder.add(altUnitsLabel);
@@ -256,7 +257,7 @@ public class FileSaver
 		altUnitsPanel.setBorder(BorderFactory.createEtchedBorder());
 		altUnitsPanel.setLayout(new GridLayout(0, 2));
 		_altitudeUnitsRadios = new JRadioButton[3];
-		_altitudeUnitsRadios[0] = new JRadioButton(I18nManager.getText("dialog.save.units.original"));
+		_altitudeUnitsRadios[0] = new JRadioButton(I18nManager.getText("units.original"));
 		_altitudeUnitsRadios[1] = new JRadioButton(I18nManager.getText("units.metres"));
 		_altitudeUnitsRadios[2] = new JRadioButton(I18nManager.getText("units.feet"));
 		ButtonGroup altGroup = new ButtonGroup();
@@ -268,7 +269,27 @@ public class FileSaver
 		}
 		altUnitsPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		secondCardHolder.add(altUnitsPanel);
-		// TODO: selection of format of timestamps
+		secondCardHolder.add(Box.createRigidArea(new Dimension(0,10)));
+		// Selection of format of timestamps
+		JLabel timestampLabel = new JLabel(I18nManager.getText("dialog.save.timestampformat"));
+		timestampLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+		secondCardHolder.add(timestampLabel);
+		JPanel timestampPanel = new JPanel();
+		timestampPanel.setBorder(BorderFactory.createEtchedBorder());
+		timestampPanel.setLayout(new GridLayout(0, 2));
+		_timestampUnitsRadios = new JRadioButton[3];
+		_timestampUnitsRadios[0] = new JRadioButton(I18nManager.getText("units.original"));
+		_timestampUnitsRadios[1] = new JRadioButton(I18nManager.getText("units.default"));
+		_timestampUnitsRadios[2] = new JRadioButton(I18nManager.getText("units.iso8601"));
+		ButtonGroup timeGroup = new ButtonGroup();
+		for (int i=0; i<3; i++)
+		{
+			timeGroup.add(_timestampUnitsRadios[i]);
+			timestampPanel.add(_timestampUnitsRadios[i]);
+			_timestampUnitsRadios[i].setSelected(i==0);
+		}
+		timestampPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
+		secondCardHolder.add(timestampPanel);
 		secondCard.add(secondCardHolder, BorderLayout.NORTH);
 		_cards.add(secondCard, "card2");
 
@@ -279,7 +300,7 @@ public class FileSaver
 		_backButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				CardLayout cl = (CardLayout)(_cards.getLayout());
+				CardLayout cl = (CardLayout) _cards.getLayout();
 				cl.previous(_cards);
 				_backButton.setEnabled(false);
 				_nextButton.setEnabled(true);
@@ -292,7 +313,7 @@ public class FileSaver
 		_nextButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				CardLayout cl = (CardLayout)(_cards.getLayout());
+				CardLayout cl = (CardLayout) _cards.getLayout();
 				cl.next(_cards);
 				_backButton.setEnabled(true);
 				_nextButton.setEnabled(false);
@@ -322,6 +343,34 @@ public class FileSaver
 		return panel;
 	}
 
+	/**
+	 * Initialize the dialog with the given details
+	 * @param inModel table model
+	 * @param inDefaultDelimiter default delimiter character
+	 */
+	private void initDialog(TableModel inModel, char inDefaultDelimiter)
+	{
+		// set table model
+		_table.setModel(inModel);
+		// reset toggler
+		_toggler.setListSize(inModel.getRowCount());
+		// choose last-used delimiter as default
+		switch (inDefaultDelimiter)
+		{
+			case ','  : _delimiterRadios[0].setSelected(true); break;
+			case '\t' : _delimiterRadios[1].setSelected(true); break;
+			case ';'  : _delimiterRadios[2].setSelected(true); break;
+			case ' '  : _delimiterRadios[3].setSelected(true); break;
+			default   : _delimiterRadios[4].setSelected(true);
+						_otherDelimiterText.setText("" + inDefaultDelimiter);
+		}
+		// set card and enable buttons
+		CardLayout cl = (CardLayout) _cards.getLayout();
+		cl.first(_cards);
+		_nextButton.setEnabled(true);
+		_backButton.setEnabled(false);
+	}
+
 
 	/**
 	 * Save the track to file with the chosen options
@@ -349,6 +398,15 @@ public class FileSaver
 				if (_altitudeUnitsRadios[i].isSelected())
 				{
 					altitudeFormat = FORMAT_ALTS[i];
+				}
+			}
+			// Get timestamp formats
+			int timestampFormat = Timestamp.FORMAT_ORIGINAL;
+			for (int i=0; i<_timestampUnitsRadios.length; i++)
+			{
+				if (_timestampUnitsRadios[i].isSelected())
+				{
+					timestampFormat = FORMAT_TIMES[i];
 				}
 			}
 
@@ -434,7 +492,14 @@ public class FileSaver
 								{
 									try
 									{
-										buffer.append(point.getTimestamp().getText());
+										if (timestampFormat == Timestamp.FORMAT_ORIGINAL) {
+											// output original string
+											buffer.append(point.getFieldValue(Field.TIMESTAMP));
+										}
+										else {
+											// format value accordingly
+											buffer.append(point.getTimestamp().getText(timestampFormat));
+										}
 									}
 									catch (NullPointerException npe) {}
 								}

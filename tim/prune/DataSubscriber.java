@@ -16,6 +16,7 @@ public interface DataSubscriber
 
 	/**
 	 * Inform clients that data has been updated
+	 * @param inUpdateType type of update
 	 */
 	public void dataUpdated(byte inUpdateType);
 

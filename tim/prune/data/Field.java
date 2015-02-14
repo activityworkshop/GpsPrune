@@ -79,6 +79,14 @@ public class Field
 	}
 
 	/**
+	 * @return field type
+	 */
+	public FieldType getType()
+	{
+		return _type;
+	}
+
+	/**
 	 * Checks if the two fields are equal
 	 * @param inOther other Field object
 	 * @return true if Fields identical

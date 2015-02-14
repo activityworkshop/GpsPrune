@@ -72,6 +72,7 @@ public class ExifSaver implements Runnable
 	 * Save exif information to all photos in the list
 	 * whose coordinate information has changed since loading
 	 * @param inPhotoList list of photos to save
+	 * @return true if saved
 	 */
 	public boolean saveExifInformation(PhotoList inPhotoList)
 	{

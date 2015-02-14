@@ -14,6 +14,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 	/**
 	 * Constructor giving list size
+	 * @param inSize number of fields
 	 */
 	public FieldSelectionTableModel(int inSize)
 	{
@@ -61,9 +62,9 @@ public class FieldSelectionTableModel extends AbstractTableModel
 		}
 		else if (inColumnIndex == 1)
 		{
-			return new Boolean(_info[inRowIndex].hasData());
+			return Boolean.valueOf(_info[inRowIndex].hasData());
 		}
-		return new Boolean(_info[inRowIndex].isSelected());
+		return Boolean.valueOf(_info[inRowIndex].isSelected());
 	}
 
 

@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 
@@ -92,7 +93,7 @@ public class SelectorDisplay extends GenericDisplay
 
 		// Add panel for waypoints / photos
 		JPanel listsPanel = new JPanel();
-		listsPanel.setLayout(new BoxLayout(listsPanel, BoxLayout.Y_AXIS));
+		listsPanel.setLayout(new GridLayout(0, 1));
 		listsPanel.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
 		);
@@ -104,8 +105,12 @@ public class SelectorDisplay extends GenericDisplay
 			{
 				if (!e.getValueIsAdjusting()) selectWaypoint(_waypointList.getSelectedIndex());
 			}});
-		listsPanel.add(new JLabel(I18nManager.getText("details.waypointsphotos.waypoints")));
-		listsPanel.add(new JScrollPane(_waypointList));
+		JPanel waypointListPanel = new JPanel();
+		waypointListPanel.setLayout(new BorderLayout());
+		waypointListPanel.add(new JLabel(I18nManager.getText("details.waypointsphotos.waypoints")), BorderLayout.NORTH);
+		waypointListPanel.add(new JScrollPane(_waypointList), BorderLayout.CENTER);
+		listsPanel.add(waypointListPanel);
+		// photo list
 		_photoListModel = new PhotoListModel(_trackInfo.getPhotoList());
 		_photoList = new JList(_photoListModel);
 		_photoList.setVisibleRowCount(NUM_LIST_ENTRIES);
@@ -114,8 +119,11 @@ public class SelectorDisplay extends GenericDisplay
 			{
 				if (!e.getValueIsAdjusting()) selectPhoto(_photoList.getSelectedIndex());
 			}});
-		listsPanel.add(new JLabel(I18nManager.getText("details.waypointsphotos.photos")));
-		listsPanel.add(new JScrollPane(_photoList));
+		JPanel photoListPanel = new JPanel();
+		photoListPanel.setLayout(new BorderLayout());
+		photoListPanel.add(new JLabel(I18nManager.getText("details.waypointsphotos.photos")), BorderLayout.NORTH);
+		photoListPanel.add(new JScrollPane(_photoList), BorderLayout.CENTER);
+		listsPanel.add(photoListPanel);
 		listsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// add the controls to the main panel
@@ -123,10 +131,11 @@ public class SelectorDisplay extends GenericDisplay
 		mainPanel.add(Box.createVerticalStrut(5));
 		mainPanel.add(_scroller);
 		mainPanel.add(Box.createVerticalStrut(5));
-		mainPanel.add(listsPanel);
 
 		// add the main panel at the top
 		add(mainPanel, BorderLayout.NORTH);
+		// and lists in the centre
+		add(listsPanel, BorderLayout.CENTER);
 		// set preferred width to be small
 		setPreferredSize(new Dimension(100, 100));
 	}

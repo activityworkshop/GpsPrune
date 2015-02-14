@@ -1,8 +1,5 @@
 package tim.prune.load;
 
-import tim.prune.I18nManager;
-import tim.prune.data.Field;
-
 /**
  * Class responsible for splitting the file contents into an array
  * based on the selected delimiter character
@@ -13,6 +10,8 @@ public class FileSplitter
 	private int _numRows = 0;
 	private int _numColumns = 0;
 	private boolean[] _columnStates = null;
+	private String[] _firstFullRow = null;
+
 
 	/**
 	 * Constructor
@@ -30,6 +29,7 @@ public class FileSplitter
 	 */
 	public String[][] splitFieldData(char inDelim)
 	{
+		_firstFullRow = null;
 		if (_cacher == null) return null;
 		String[] contents = _cacher.getContents();
 		if (contents == null || contents.length == 0) return null;
@@ -46,6 +46,7 @@ public class FileSplitter
 				if (splitLine != null && splitLine.length > maxFields)
 				{
 					maxFields = splitLine.length;
+					_firstFullRow = splitLine;
 				}
 			}
 		}
@@ -100,6 +101,14 @@ public class FileSplitter
 		return _numColumns;
 	}
 
+	/**
+	 * @return the fields in the first full row
+	 */
+	public String[] getFirstFullRow()
+	{
+		return _firstFullRow; 
+	}
+
 
 	/**
 	 * Check if the specified column of the data is blank
@@ -110,38 +119,5 @@ public class FileSplitter
 	{
 		// Should probably trap out of range values
 		return !_columnStates[inColumnNum];
-	}
-
-
-	/**
-	 * @return a Field array to use as defaults for the data
-	 */
-	public Field[] makeDefaultFields()
-	{
-		Field[] fields = null;
-		if (_numColumns > 0)
-		{
-			fields = new Field[_numColumns];
-			try
-			{
-				fields[0] = Field.LATITUDE;
-				fields[1] = Field.LONGITUDE;
-				fields[2] = Field.ALTITUDE;
-				fields[3] = Field.WAYPT_NAME;
-				fields[4] = Field.WAYPT_TYPE;
-				String customPrefix = I18nManager.getText("fieldname.prefix") + " ";
-				for (int i=5;; i++)
-				{
-					fields[i] = new Field(customPrefix + (i+1));
-				}
-			}
-			catch (ArrayIndexOutOfBoundsException finished)
-			{
-				// Finished populating array
-			}
-		}
-		else
-			fields = new Field[0];
-		return fields;
 	}
 }

@@ -32,9 +32,8 @@ public class Track
 
 
 	/**
-	 * Constructor giving arrays of Fields and Objects
-	 * @param inFieldArray field array
-	 * @param inPointArray 2d array of field values
+	 * Constructor for empty track
+	 * @param inBroker message broker object
 	 */
 	public Track(UpdateMessageBroker inBroker)
 	{
@@ -182,7 +181,6 @@ public class Track
 			System.arraycopy(newPointArray, 0, _dataPoints, 0, numCopied);
 			_numPoints = _dataPoints.length;
 			_scaled = false;
-			_broker.informSubscribers();
 		}
 		return numDeleted;
 	}
@@ -212,6 +210,7 @@ public class Track
 
 	/**
 	 * Delete the specified point
+	 * @param inIndex point index
 	 * @return true if successful
 	 */
 	public boolean deletePoint(int inIndex)
@@ -298,7 +297,6 @@ public class Track
 			_dataPoints = newPointArray;
 			_numPoints = _dataPoints.length;
 			_scaled = false;
-			_broker.informSubscribers();
 		}
 		return numDupes;
 	}
@@ -306,6 +304,8 @@ public class Track
 
 	/**
 	 * Reverse the specified range of points
+	 * @param inStart start index
+	 * @param inEnd end index
 	 * @return true if successful, false otherwise
 	 */
 	public boolean reverseRange(int inStart, int inEnd)
@@ -848,6 +848,7 @@ public class Track
 	/**
 	 * Replace the track contents with the given point array
 	 * @param inContents array of DataPoint objects
+	 * @return true on success
 	 */
 	public boolean replaceContents(DataPoint[] inContents)
 	{

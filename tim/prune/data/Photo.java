@@ -23,7 +23,8 @@ public class Photo
 	/** Current photo status */
 	private byte _currentStatus = PhotoStatus.NOT_CONNECTED;
 	// TODO: Need to store caption for image?
-	// TODO: Need to store thumbnail for image?
+	// thumbnail for image (from exif)
+	private byte[] _exifThumbnail = null;
 
 
 	/**
@@ -171,6 +172,21 @@ public class Photo
 		_currentStatus = inStatus;
 	}
 
+	/**
+	 * @return byte array of thumbnail data
+	 */
+	public byte[] getExifThumbnail()
+	{
+		return _exifThumbnail;
+	}
+
+	/**
+	 * @param inBytes byte array from exif
+	 */
+	public void setExifThumbnail(byte[] inBytes)
+	{
+		_exifThumbnail = inBytes;
+	}
 
 	/**
 	 * Delete the cached data when the Photo is no longer needed

@@ -1,12 +1,14 @@
 package tim.prune;
 
 import java.util.EmptyStackException;
-import java.util.List;
+import java.util.Set;
 import java.util.Stack;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import tim.prune.correlate.PhotoCorrelator;
+import tim.prune.correlate.PointPair;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Photo;
@@ -20,9 +22,9 @@ import tim.prune.gui.MenuManager;
 import tim.prune.gui.UndoManager;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
-import tim.prune.load.PhotoMeasurer;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
+import tim.prune.save.GpxExporter;
 import tim.prune.save.KmlExporter;
 import tim.prune.save.PovExporter;
 import tim.prune.threedee.ThreeDException;
@@ -30,10 +32,12 @@ import tim.prune.threedee.ThreeDWindow;
 import tim.prune.threedee.WindowFactory;
 import tim.prune.undo.UndoCompress;
 import tim.prune.undo.UndoConnectPhoto;
+import tim.prune.undo.UndoCorrelatePhotos;
 import tim.prune.undo.UndoDeleteDuplicates;
 import tim.prune.undo.UndoDeletePhoto;
 import tim.prune.undo.UndoDeletePoint;
 import tim.prune.undo.UndoDeleteRange;
+import tim.prune.undo.UndoDisconnectPhoto;
 import tim.prune.undo.UndoEditPoint;
 import tim.prune.undo.UndoException;
 import tim.prune.undo.UndoInsert;
@@ -57,7 +61,9 @@ public class App
 	private MenuManager _menuManager = null;
 	private FileLoader _fileLoader = null;
 	private JpegLoader _jpegLoader = null;
-	private KmlExporter _exporter = null;
+	private FileSaver _fileSaver = null;
+	private KmlExporter _kmlExporter = null;
+	private GpxExporter _gpxExporter = null;
 	private PovExporter _povExporter = null;
 	private Stack _undoStack = null;
 	private UpdateMessageBroker _broker = null;
@@ -154,8 +160,10 @@ public class App
 		}
 		else
 		{
-			FileSaver saver = new FileSaver(this, _frame, _track);
-			saver.showDialog(_fileLoader.getLastUsedDelimiter());
+			if (_fileSaver == null) {
+				_fileSaver = new FileSaver(this, _frame, _track);
+			}
+			_fileSaver.showDialog(_fileLoader.getLastUsedDelimiter());
 		}
 	}
 
@@ -173,11 +181,33 @@ public class App
 		else
 		{
 			// Invoke the export
-			if (_exporter == null)
+			if (_kmlExporter == null)
 			{
-				_exporter = new KmlExporter(_frame, _trackInfo);
+				_kmlExporter = new KmlExporter(_frame, _trackInfo);
 			}
-			_exporter.showDialog();
+			_kmlExporter.showDialog();
+		}
+	}
+
+
+	/**
+	 * Export track data as Gpx
+	 */
+	public void exportGpx()
+	{
+		if (_track == null)
+		{
+			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.save.nodata"),
+				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+		}
+		else
+		{
+			// Invoke the export
+			if (_gpxExporter == null)
+			{
+				_gpxExporter = new GpxExporter(_frame, _trackInfo);
+			}
+			_gpxExporter.showDialog();
 		}
 	}
 
@@ -208,6 +238,7 @@ public class App
 	 * @param inX X component of unit vector
 	 * @param inY Y component of unit vector
 	 * @param inZ Z component of unit vector
+	 * @param inAltitudeCap altitude cap
 	 */
 	private void exportPov(boolean inDefineSettings, double inX, double inY, double inZ, int inAltitudeCap)
 	{
@@ -277,7 +308,8 @@ public class App
 
 	/**
 	 * Complete the point edit
-	 * @param inEditList list of edits
+	 * @param inEditList field values to edit
+	 * @param inUndoList field values before edit
 	 */
 	public void completePointEdit(FieldEditList inEditList, FieldEditList inUndoList)
 	{
@@ -570,6 +602,7 @@ public class App
 
 	/**
 	 * Rearrange the waypoints into track order
+	 * @param inFunction nearest point, all to end or all to start
 	 */
 	public void rearrangeWaypoints(int inFunction)
 	{
@@ -647,6 +680,8 @@ public class App
 	 * Receive loaded data and optionally merge with current Track
 	 * @param inFieldArray array of fields
 	 * @param inDataArray array of data
+	 * @param inAltFormat altitude format
+	 * @param inFilename filename used
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, int inAltFormat, String inFilename)
 	{
@@ -695,6 +730,7 @@ public class App
 				_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length, photos));
 				_lastSavePosition = _undoStack.size();
 				// TODO: Should be possible to reuse the Track object already loaded?
+				_trackInfo.selectPoint(null);
 				_trackInfo.loadTrack(inFieldArray, inDataArray, inAltFormat);
 				_trackInfo.getFileInfo().setFile(inFilename);
 				if (photos != null)
@@ -719,21 +755,19 @@ public class App
 
 	/**
 	 * Accept a list of loaded photos
-	 * @param inPhotoList List of Photo objects
+	 * @param inPhotoSet Set of Photo objects
 	 */
-	public void informPhotosLoaded(List inPhotoList)
+	public void informPhotosLoaded(Set inPhotoSet)
 	{
-		if (inPhotoList != null && !inPhotoList.isEmpty())
+		if (inPhotoSet != null && !inPhotoSet.isEmpty())
 		{
-			int[] numsAdded = _trackInfo.addPhotos(inPhotoList);
+			int[] numsAdded = _trackInfo.addPhotos(inPhotoSet);
 			int numPhotosAdded = numsAdded[0];
 			int numPointsAdded = numsAdded[1];
 			if (numPhotosAdded > 0)
 			{
 				// Save numbers so load can be undone
 				_undoStack.add(new UndoLoadPhotos(numPhotosAdded, numPointsAdded));
-				// Trigger preloading of photo sizes in separate thread
-				new PhotoMeasurer(_trackInfo.getPhotoList()).measurePhotos();
 			}
 			if (numPhotosAdded == 1)
 			{
@@ -768,7 +802,25 @@ public class App
 			_undoStack.add(new UndoConnectPhoto(point, photo.getFile().getName()));
 			photo.setDataPoint(point);
 			point.setPhoto(photo);
-			//TODO: Confirm connect (maybe with status in photo panel?)
+			_broker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
+		}
+	}
+
+
+	/**
+	 * Disconnect the current photo from its point
+	 */
+	public void disconnectPhotoFromPoint()
+	{
+		Photo photo = _trackInfo.getCurrentPhoto();
+		if (photo != null && photo.getDataPoint() != null)
+		{
+			DataPoint point = photo.getDataPoint();
+			_undoStack.add(new UndoDisconnectPhoto(point, photo.getFile().getName()));
+			// disconnect
+			photo.setDataPoint(null);
+			point.setPhoto(null);
+			_broker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 		}
 	}
 
@@ -813,6 +865,117 @@ public class App
 			{
 				_undoStack.add(undoAction);
 			}
+		}
+	}
+
+
+	/**
+	 * Begin the photo correlation process by invoking dialog
+	 */
+	public void beginCorrelatePhotos()
+	{
+		PhotoCorrelator correlator = new PhotoCorrelator(this, _frame);
+		// TODO: Do we need to keep a reference to this object to reuse it later?
+		correlator.begin();
+	}
+
+
+	/**
+	 * Finish the photo correlation process
+	 * @param inPointPairs array of PointPair objects describing operation
+	 */
+	public void finishCorrelatePhotos(PointPair[] inPointPairs)
+	{
+		// TODO: This method is too big for App, but where should it go?
+		if (inPointPairs != null && inPointPairs.length > 0)
+		{
+			// begin to construct undo information
+			UndoCorrelatePhotos undo = new UndoCorrelatePhotos(_trackInfo);
+			// loop over Photos
+			int arraySize = inPointPairs.length;
+			int i = 0, numPhotos = 0;
+			int numPointsToCreate = 0;
+			PointPair pair = null;
+			for (i=0; i<arraySize; i++)
+			{
+				pair = inPointPairs[i];
+				if (pair != null && pair.isValid())
+				{
+					if (pair.getMinSeconds() == 0L)
+					{
+						// exact match
+						Photo pointPhoto = pair.getPointBefore().getPhoto();
+						if (pointPhoto == null)
+						{
+							// photo coincides with photoless point so connect the two
+							pair.getPointBefore().setPhoto(pair.getPhoto());
+							pair.getPhoto().setDataPoint(pair.getPointBefore());
+						}
+						else if (pointPhoto.equals(pair.getPhoto()))
+						{
+							// photo is already connected, nothing to do
+						}
+						else
+						{
+							// point is already connected to a different photo, so need to clone point
+							numPointsToCreate++;
+						}
+					}
+					else
+					{
+						// photo time falls between two points, so need to interpolate new one
+						numPointsToCreate++;
+					}
+					numPhotos++;
+				}
+			}
+			// Second loop, to create points if necessary
+			if (numPointsToCreate > 0)
+			{
+				// make new array for added points
+				DataPoint[] addedPoints = new DataPoint[numPointsToCreate];
+				int pointNum = 0;
+				DataPoint pointToAdd = null;
+				for (i=0; i<arraySize; i++)
+				{
+					pair = inPointPairs[i];
+					if (pair != null && pair.isValid())
+					{
+						pointToAdd = null;
+						if (pair.getMinSeconds() == 0L && pair.getPointBefore().getPhoto() != null
+						 && !pair.getPointBefore().getPhoto().equals(pair.getPhoto()))
+						{
+							// clone point
+							pointToAdd = pair.getPointBefore().clonePoint();
+						}
+						else if (pair.getMinSeconds() > 0L)
+						{
+							// interpolate point
+							pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
+						}
+						if (pointToAdd != null)
+						{
+							// link photo to point
+							pointToAdd.setPhoto(pair.getPhoto());
+							pair.getPhoto().setDataPoint(pointToAdd);
+							// add to point array
+							addedPoints[pointNum] = pointToAdd;
+							pointNum++;
+						}
+					}
+				}
+				// expand track
+				_track.appendPoints(addedPoints);
+			}
+			// add undo information to stack
+			undo.setNumPhotosCorrelated(numPhotos);
+			_undoStack.add(undo);
+			// confirm correlation
+			JOptionPane.showMessageDialog(_frame, "" + numPhotos + " "
+				 + (numPhotos==1?I18nManager.getText("dialog.correlate.confirmsingle.text"):I18nManager.getText("dialog.correlate.confirmmultiple.text")),
+				I18nManager.getText("dialog.correlate.title"),
+				JOptionPane.INFORMATION_MESSAGE);
+			// observers already informed by track update
 		}
 	}
 
@@ -926,5 +1089,15 @@ public class App
 			{}
 		}
 		return num;
+	}
+
+	/**
+	 * Show a brief help message
+	 */
+	public void showHelp()
+	{
+		JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.help.help"),
+			I18nManager.getText("menu.help"),
+			JOptionPane.INFORMATION_MESSAGE);
 	}
 }

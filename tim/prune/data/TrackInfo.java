@@ -1,7 +1,7 @@
 package tim.prune.data;
 
-import java.util.List;
-
+import java.util.Iterator;
+import java.util.Set;
 import tim.prune.UpdateMessageBroker;
 
 /**
@@ -100,23 +100,24 @@ public class TrackInfo
 
 
 	/**
-	 * Add a List of Photos
-	 * @param inList List containing Photo objects
+	 * Add a Set of Photos
+	 * @param inSet Set containing Photo objects
 	 * @return array containing number of photos and number of points added
 	 */
-	public int[] addPhotos(List inList)
+	public int[] addPhotos(Set inSet)
 	{
-		// TODO: Should photos be sorted at load-time, either by filename or date?
 		// Firstly count number of points and photos to add
 		int numPhotosToAdd = 0;
 		int numPointsToAdd = 0;
-		if (inList != null && !inList.isEmpty())
+		Iterator iterator = null;
+		if (inSet != null && !inSet.isEmpty())
 		{
-			for (int i=0; i<inList.size(); i++)
+			iterator = inSet.iterator();
+			while (iterator.hasNext())
 			{
 				try
 				{
-					Photo photo = (Photo) inList.get(i);
+					Photo photo = (Photo) iterator.next();
 					if (photo != null && !_photoList.contains(photo))
 					{
 						numPhotosToAdd++;
@@ -136,11 +137,12 @@ public class TrackInfo
 			int pointNum = 0;
 			boolean hasAltitude = false;
 			// Add each Photo in turn
-			for (int i=0; i<inList.size(); i++)
+			iterator = inSet.iterator();
+			while (iterator.hasNext())
 			{
 				try
 				{
-					Photo photo = (Photo) inList.get(i);
+					Photo photo = (Photo) iterator.next();
 					if (photo != null && !_photoList.contains(photo))
 					{
 						// Add photo
@@ -248,8 +250,10 @@ public class TrackInfo
 	public int compress(int inResolution)
 	{
 		int numDeleted = _track.compress(inResolution);
-		if (numDeleted > 0)
+		if (numDeleted > 0) {
 			_selection.clearAll();
+			_broker.informSubscribers();
+		}
 		return numDeleted;
 	}
 
@@ -261,8 +265,10 @@ public class TrackInfo
 	public int deleteDuplicates()
 	{
 		int numDeleted = _track.deleteDuplicates();
-		if (numDeleted > 0)
+		if (numDeleted > 0) {
 			_selection.clearAll();
+			_broker.informSubscribers();
+		}
 		return numDeleted;
 	}
 

@@ -33,8 +33,8 @@ public class Longitude extends Coordinate
 	protected int getCardinal(char inChar)
 	{
 		// Longitude recognises E, W and -
-		// default is East
-		int cardinal = EAST;
+		// default is no cardinal
+		int cardinal = NO_CARDINAL;
 		switch (inChar)
 		{
 			case 'E':
@@ -52,6 +52,16 @@ public class Longitude extends Coordinate
 
 
 	/**
+	 * @return default cardinal (East)
+	 * @see tim.prune.data.Coordinate#getDefaultCardinal()
+	 */
+	protected int getDefaultCardinal()
+	{
+		return EAST;
+	}
+
+
+	/**
 	 * Make a new Longitude object
 	 * @see tim.prune.data.Coordinate#makeNew(double, int)
 	 */
@@ -60,4 +70,11 @@ public class Longitude extends Coordinate
 		return new Longitude(inValue, inFormat);
 	}
 
+	/**
+	 * @return the maximum degree range for this coordinate
+	 */
+	protected int getMaxDegrees()
+	{
+		return 180;
+	}
 }

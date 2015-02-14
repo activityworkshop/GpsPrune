@@ -16,8 +16,10 @@ public class JpegData
 	private Rational[] _latitude = null;
 	private Rational[] _longitude = null;
 	private Rational   _altitude = null;
-	private Rational[] _timestamp = null;
-	private Rational[] _datestamp = null;
+	private Rational[] _gpsTimestamp = null;
+	private Rational[] _gpsDatestamp = null;
+	private String _originalTimestamp = null;
+	private byte[] _thumbnail = null;
 	private ArrayList _errors = null;
 
 
@@ -113,21 +115,30 @@ public class JpegData
 	}
 
 	/**
-	 * Set the timestamp
+	 * Set the Gps timestamp
 	 * @param inValues array of Rationals holding timestamp
 	 */
-	public void setTimestamp(Rational[] inValues)
+	public void setGpsTimestamp(Rational[] inValues)
 	{
-		_timestamp = inValues;
+		_gpsTimestamp = inValues;
 	}
 
 	/**
-	 * Set the datestamp
+	 * Set the Gps datestamp
 	 * @param inValues array of Rationals holding datestamp
 	 */
-	public void setDatestamp(Rational[] inValues)
+	public void setGpsDatestamp(Rational[] inValues)
 	{
-		_datestamp = inValues;
+		_gpsDatestamp = inValues;
+	}
+
+	/**
+	 * Set the original timestamp
+	 * @param inStamp original timestamp of photo
+	 */
+	public void setOriginalTimestamp(String inStamp)
+	{
+		_originalTimestamp = inStamp;
 	}
 
 	/** @return latitude ref as char */
@@ -142,10 +153,24 @@ public class JpegData
 	public byte getAltitudeRef() { return _altitudeRef; }
 	/** @return altitude as Rational */
 	public Rational getAltitude() { return _altitude; }
-	/** @return timestamp as array of 3 Rationals */
-	public Rational[] getTimestamp() { return _timestamp; }
-	/** @return timestamp as array of 3 Rationals */
-	public Rational[] getDatestamp() { return _datestamp; }
+	/** @return Gps timestamp as array of 3 Rationals */
+	public Rational[] getGpsTimestamp() { return _gpsTimestamp; }
+	/** @return Gps datestamp as array of 3 Rationals */
+	public Rational[] getGpsDatestamp() { return _gpsDatestamp; }
+	/** @return original timestamp as string */
+	public String getOriginalTimestamp() { return _originalTimestamp; }
+
+	/**
+	 * Set the thumbnail
+	 * @param inBytes byte array containing thumbnail
+	 */
+	public void setThumbnailImage(byte[] inBytes) {
+		_thumbnail = inBytes;
+	}
+	/** @return thumbnail as byte array */
+	public byte[] getThumbnailImage() {
+		return _thumbnail;
+	}
 
 	/**
 	 * @return true if data looks valid, ie has at least lat and long

@@ -35,6 +35,7 @@ public class AboutScreen extends JDialog
 
 	/**
 	 * Constructor
+	 * @param inParent parent frame
 	 */
 	public AboutScreen(JFrame inParent)
 	{
@@ -147,29 +148,35 @@ public class AboutScreen extends JDialog
 			new JLabel("Eclipse"),
 			1, 2);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.translators") + " : "),
 			0, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Open Office, Gpsdrive, Babelfish, Leo"),
+			new JLabel("Ramon, Miguel, Inés, Piotr"),
 			1, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
 			0, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Mandriva Linux, Sun Java, Eclipse, Svn, Gimp"),
+			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
 			0, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Garble, Kate, Povray, Inkscape, Google Earth"),
+			new JLabel("Mandriva Linux, Sun Java, Eclipse, Svn, Gimp"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
 			0, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Friends and loved ones, for encouragement and support"),
+			new JLabel("Garble, Kate, Povray, Exiftool, Inkscape, Google Earth"),
 			1, 6);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			0, 7);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel("Friends and loved ones, for encouragement and support"),
+			1, 7);
 		tabPane.add(I18nManager.getText("dialog.about.credits"), creditsPanel);
 
 		// OK button at the bottom

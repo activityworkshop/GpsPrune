@@ -17,7 +17,9 @@ public class Altitude
 
 
 	/**
-	 * Constructor
+	 * Constructor using String
+	 * @param inString string to parse
+	 * @param inFormat format of altitude, either metres or feet
 	 */
 	public Altitude(String inString, int inFormat)
 	{
@@ -35,7 +37,9 @@ public class Altitude
 
 
 	/**
-	 * Constructor
+	 * Constructor with int vaue
+	 * @param inValue int value of altitude
+	 * @param inFormat format of altitude, either metres or feet
 	 */
 	public Altitude(int inValue, int inFormat)
 	{
@@ -100,6 +104,19 @@ public class Altitude
 	 */
 	public static Altitude interpolate(Altitude inStart, Altitude inEnd, int inIndex, int inNumSteps)
 	{
+		return interpolate(inStart, inEnd, 1.0 * (inIndex + 1) / (inNumSteps + 1));
+	}
+
+
+	/**
+	 * Interpolate a new Altitude object between the given ones
+	 * @param inStart start altitude
+	 * @param inEnd end altitude
+	 * @param inFrac fraction of distance from first point
+	 * @return Interpolated Altitude object
+	 */
+	public static Altitude interpolate(Altitude inStart, Altitude inEnd, double inFrac)
+	{
 		// Check if altitudes are valid
 		if (inStart == null || inEnd == null || !inStart.isValid() || !inEnd.isValid())
 			return new Altitude(null, FORMAT_NONE);
@@ -107,8 +124,8 @@ public class Altitude
 		int altFormat = inStart.getFormat();
 		int startValue = inStart.getValue();
 		int endValue = inEnd.getValue(altFormat);
-		int newValue = startValue
-			+ (int) ((endValue - startValue) * 1.0 / (inNumSteps + 1) * (inIndex + 1));
+		// interpolate between start and end
+		int newValue = startValue + (int) ((endValue - startValue) * inFrac);
 		return new Altitude(newValue, altFormat);
 	}
 }
