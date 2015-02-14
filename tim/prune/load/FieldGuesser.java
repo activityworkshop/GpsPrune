@@ -86,6 +86,12 @@ public abstract class FieldGuesser
 					fields[f] = Field.NEW_SEGMENT;
 					continue;
 				}
+				// check for waypoint type
+				if (!checkArrayHasField(fields, Field.WAYPT_TYPE) && fieldLooksLikeWaypointType(value, isHeader))
+				{
+					fields[f] = Field.WAYPT_TYPE;
+					continue;
+				}
 			}
 		}
 		// Fill in the rest of the fields using just custom fields
@@ -114,6 +120,10 @@ public abstract class FieldGuesser
 		}
 		else if (!checkArrayHasField(fields, Field.LONGITUDE)) {
 			fields[1] = Field.LONGITUDE;
+		}
+		// Longitude _could_ have overwritten latitude in position 1
+		if (!checkArrayHasField(fields, Field.LATITUDE)) {
+			fields[0] = Field.LATITUDE;
 		}
 		return fields;
 	}
@@ -291,6 +301,29 @@ public abstract class FieldGuesser
 			String upperValue = inValue.toUpperCase();
 			// This is a header line so look for english or local text
 			return upperValue.equals("SEGMENT");
+		}
+		else
+		{
+			// can't reliably identify it just using the value
+			return false;
+		}
+	}
+
+	/**
+	 * Check whether the given String looks like a waypoint type
+	 * @param inValue value from file
+	 * @param inIsHeader true if this is a header line, false for data
+	 * @return true if it could be a waypoint type
+	 */
+	private static boolean fieldLooksLikeWaypointType(String inValue, boolean inIsHeader)
+	{
+		if (inValue == null || inValue.equals("")) {return false;}
+		if (inIsHeader)
+		{
+			String upperValue = inValue.toUpperCase();
+			// This is a header line so look for english or local text
+			return (upperValue.equals("TYPE")
+				|| upperValue.equals(I18nManager.getText("fieldname.waypointtype").toUpperCase()));
 		}
 		else
 		{

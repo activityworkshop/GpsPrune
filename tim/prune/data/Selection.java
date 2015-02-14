@@ -19,7 +19,7 @@ public class Selection
 	private Altitude.Format _altitudeFormat = Altitude.Format.NO_FORMAT;
 	private long _totalSeconds = 0L, _movingSeconds = 0L;
 	private double _angDistance = -1.0, _angMovingDistance = -1.0;
-	private boolean _multipleSegments = false;
+	private int _numSegments = 0;
 
 
 	/**
@@ -65,7 +65,7 @@ public class Selection
 	private void recalculate()
 	{
 		_altitudeFormat = Altitude.Format.NO_FORMAT;
-		_multipleSegments = false;
+		_numSegments = 0;
 		if (_track.getNumPoints() > 0 && hasRangeSelected())
 		{
 			_altitudeRange = new IntegerRange();
@@ -121,13 +121,15 @@ public class Selection
 						double radians = DataPoint.calculateRadiansBetween(lastPoint, currPoint);
 						_angDistance += radians;
 						if (currPoint.getSegmentStart()) {
-							_multipleSegments = true;
+							_numSegments++;
 						}
 						else {
 							_angMovingDistance += radians;
 						}
 					}
 					lastPoint = currPoint;
+					// If it's a track point then there must be at least one segment
+					if (_numSegments == 0) {_numSegments = 1;}
 				}
 			}
 			if (endTime != null) {
@@ -232,11 +234,11 @@ public class Selection
 	}
 
 	/**
-	 * @return true if track has multiple segments
+	 * @return number of segments in selection
 	 */
-	public boolean getHasMultipleSegments()
+	public int getNumSegments()
 	{
-		return _multipleSegments;
+		return _numSegments;
 	}
 
 	/**
@@ -252,7 +254,7 @@ public class Selection
 
 
 	/**
-	 * Deselect range
+	 * Select range from start to end
 	 * @param inStartIndex index of start of range
 	 * @param inEndIndex index of end of range
 	 */

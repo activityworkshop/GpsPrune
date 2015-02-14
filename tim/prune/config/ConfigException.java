@@ -1,4 +1,4 @@
-package tim.prune;
+package tim.prune.config;
 
 /**
  * Exception thrown when something went wrong with the config

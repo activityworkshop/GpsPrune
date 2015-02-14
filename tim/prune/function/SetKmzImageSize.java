@@ -18,9 +18,9 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.gui.WholeNumberField;
 
 /**

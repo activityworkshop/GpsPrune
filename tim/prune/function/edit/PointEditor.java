@@ -89,7 +89,7 @@ public class PointEditor
 	private Component makeDialogComponents()
 	{
 		JPanel panel = new JPanel();
-		panel.setLayout(new BorderLayout());
+		panel.setLayout(new BorderLayout(1, 10));
 		// Create GUI layout for point editor
 		_table = new JTable(_model);
 		_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);

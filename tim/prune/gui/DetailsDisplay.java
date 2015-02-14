@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.text.NumberFormat;
@@ -11,18 +12,22 @@ import java.text.NumberFormat;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 
-import tim.prune.Config;
 import tim.prune.DataSubscriber;
+import tim.prune.FunctionLibrary;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
+import tim.prune.data.Field;
 import tim.prune.data.IntegerRange;
 import tim.prune.data.Photo;
 import tim.prune.data.Selection;
@@ -37,22 +42,23 @@ public class DetailsDisplay extends GenericDisplay
 	// Point details
 	private JLabel _indexLabel = null;
 	private JLabel _latLabel = null, _longLabel = null;
-	private JLabel _altLabel = null, _nameLabel = null;
+	private JLabel _altLabel = null;
 	private JLabel _timeLabel = null, _speedLabel = null;
+	private JLabel _nameLabel = null, _typeLabel = null;
 
 	// Range details
 	private JLabel _rangeLabel = null;
-	private JLabel _distanceLabel = null, _movingDistanceLabel = null;
+	private JLabel _distanceLabel = null;
 	private JLabel _durationLabel = null;
 	private JLabel _altRangeLabel = null, _updownLabel = null;
-	private JLabel _aveSpeedLabel = null, _aveMovingSpeedLabel = null;
-	private JLabel _paceLabel = null;
+	private JLabel _aveSpeedLabel = null;
 
 	// Photo details
 	private JLabel _photoLabel = null;
 	private PhotoThumbnail _photoThumbnail = null;
 	private JLabel _photoTimestampLabel = null;
 	private JLabel _photoConnectedLabel = null;
+	private JPanel _rotationButtons = null;
 
 	// Units
 	private JComboBox _coordFormatDropdown = null;
@@ -67,10 +73,10 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_POINT_ALTITUDE = I18nManager.getText("fieldname.altitude") + ": ";
 	private static final String LABEL_POINT_TIMESTAMP = I18nManager.getText("fieldname.timestamp") + ": ";
 	private static final String LABEL_POINT_WAYPOINTNAME = I18nManager.getText("fieldname.waypointname") + ": ";
+	private static final String LABEL_POINT_WAYPOINTTYPE = I18nManager.getText("fieldname.waypointtype") + ": ";
 	private static final String LABEL_RANGE_SELECTED = I18nManager.getText("details.range.selected") + ": ";
 	private static final String LABEL_RANGE_DURATION = I18nManager.getText("fieldname.duration") + ": ";
 	private static final String LABEL_RANGE_DISTANCE = I18nManager.getText("fieldname.distance") + ": ";
-	private static final String LABEL_RANGE_MOVINGDISTANCE = I18nManager.getText("fieldname.movingdistance") + ": ";
 	private static final String LABEL_RANGE_ALTITUDE = I18nManager.getText("fieldname.altitude") + ": ";
 	private static final String LABEL_RANGE_CLIMB = I18nManager.getText("details.range.climb") + ": ";
 	private static final String LABEL_RANGE_DESCENT = ", " + I18nManager.getText("details.range.descent") + ": ";
@@ -116,6 +122,8 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_speedLabel);
 		_nameLabel = new JLabel("");
 		pointDetailsPanel.add(_nameLabel);
+		_typeLabel = new JLabel("");
+		pointDetailsPanel.add(_typeLabel);
 		pointDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// range details panel
@@ -131,16 +139,10 @@ public class DetailsDisplay extends GenericDisplay
 		rangeDetailsPanel.add(_rangeLabel);
 		_distanceLabel = new JLabel("");
 		rangeDetailsPanel.add(_distanceLabel);
-		_movingDistanceLabel = new JLabel("");
-		rangeDetailsPanel.add(_movingDistanceLabel);
 		_durationLabel = new JLabel("");
 		rangeDetailsPanel.add(_durationLabel);
 		_aveSpeedLabel = new JLabel("");
 		rangeDetailsPanel.add(_aveSpeedLabel);
-		_aveMovingSpeedLabel = new JLabel("");
-		rangeDetailsPanel.add(_aveMovingSpeedLabel);
-		_paceLabel = new JLabel("");
-		rangeDetailsPanel.add(_paceLabel);
 		_altRangeLabel = new JLabel("");
 		rangeDetailsPanel.add(_altRangeLabel);
 		_updownLabel = new JLabel("");
@@ -166,6 +168,15 @@ public class DetailsDisplay extends GenericDisplay
 		_photoThumbnail.setVisible(false);
 		_photoThumbnail.setPreferredSize(new Dimension(100, 100));
 		photoDetailsPanel.add(_photoThumbnail);
+		// Rotate buttons
+		JButton rotLeft = makeRotateButton(IconManager.ROTATE_LEFT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_LEFT);
+		JButton rotRight = makeRotateButton(IconManager.ROTATE_RIGHT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_RIGHT);
+		_rotationButtons = new JPanel();
+		_rotationButtons.add(rotLeft);
+		_rotationButtons.add(rotRight);
+		_rotationButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
+		_rotationButtons.setVisible(false);
+		photoDetailsPanel.add(_rotationButtons);
 
 		// add the details panels to the main panel
 		mainPanel.add(pointDetailsPanel);
@@ -235,6 +246,7 @@ public class DetailsDisplay extends GenericDisplay
 			_altLabel.setText("");
 			_timeLabel.setText("");
 			_nameLabel.setText("");
+			_typeLabel.setText("");
 		}
 		else
 		{
@@ -271,12 +283,19 @@ public class DetailsDisplay extends GenericDisplay
 			else {
 				_timeLabel.setText("");
 			}
-			String name = currentPoint.getWaypointName();
+			// Waypoint name
+			final String name = currentPoint.getWaypointName();
 			if (name != null && !name.equals(""))
 			{
 				_nameLabel.setText(LABEL_POINT_WAYPOINTNAME + name);
 			}
 			else _nameLabel.setText("");
+			// Waypoint type
+			final String type = currentPoint.getFieldValue(Field.WAYPT_TYPE);
+			if (type != null && !type.equals("")) {
+				_typeLabel.setText(LABEL_POINT_WAYPOINTTYPE + type);
+			}
+			else _typeLabel.setText("");
 		}
 
 		// Update range details
@@ -284,13 +303,10 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			_rangeLabel.setText(I18nManager.getText("details.norangeselection"));
 			_distanceLabel.setText("");
-			_movingDistanceLabel.setText("");
 			_durationLabel.setText("");
 			_altRangeLabel.setText("");
 			_updownLabel.setText("");
 			_aveSpeedLabel.setText("");
-			_aveMovingSpeedLabel.setText("");
-			_paceLabel.setText("");
 		}
 		else
 		{
@@ -298,38 +314,15 @@ public class DetailsDisplay extends GenericDisplay
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
 			_distanceLabel.setText(LABEL_RANGE_DISTANCE + roundedNumber(selection.getDistance(distUnits)) + " " + distUnitsStr);
-			if (selection.getHasMultipleSegments()) {
-				_movingDistanceLabel.setText(LABEL_RANGE_MOVINGDISTANCE + roundedNumber(selection.getMovingDistance(distUnits)) + " " + distUnitsStr);
-			}
-			else {
-				_movingDistanceLabel.setText(null);
-			}
 			if (selection.getNumSeconds() > 0)
 			{
-				_durationLabel.setText(LABEL_RANGE_DURATION + buildDurationString(selection.getNumSeconds()));
+				_durationLabel.setText(LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(selection.getNumSeconds()));
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
 					+ roundedNumber(selection.getDistance(distUnits)/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
-				if (selection.getHasMultipleSegments()) {
-					_aveMovingSpeedLabel.setText(I18nManager.getText("details.range.avemovingspeed") + ": "
-						+ roundedNumber(selection.getMovingDistance(distUnits)/selection.getMovingSeconds()*3600.0) + " " + speedUnitsStr);
-				}
-				else {
-					_aveMovingSpeedLabel.setText(null);
-				}
-				if (Config.getConfigBoolean(Config.KEY_SHOW_PACE)) {
-					_paceLabel.setText(I18nManager.getText("details.range.pace") + ": "
-						+ buildDurationString((long) (selection.getNumSeconds()/selection.getDistance(distUnits)))
-						+ " / " + distUnitsStr);
-				}
-				else {
-					_paceLabel.setText("");
-				}
 			}
 			else {
 				_durationLabel.setText("");
 				_aveSpeedLabel.setText("");
-				_aveMovingSpeedLabel.setText("");
-				_paceLabel.setText("");
 			}
 			String altUnitsLabel = getAltitudeUnitsLabel(selection.getAltitudeFormat());
 			IntegerRange altRange = selection.getAltitudeRange();
@@ -357,6 +350,7 @@ public class DetailsDisplay extends GenericDisplay
 			_photoTimestampLabel.setText("");
 			_photoConnectedLabel.setText("");
 			_photoThumbnail.setVisible(false);
+			_rotationButtons.setVisible(false);
 		}
 		else
 		{
@@ -368,6 +362,8 @@ public class DetailsDisplay extends GenericDisplay
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
 			_photoThumbnail.setVisible(true);
 			_photoThumbnail.setPhoto(currentPhoto);
+			_rotationButtons.setVisible(true);
+			if ((inUpdateType & DataSubscriber.PHOTOS_MODIFIED) > 0) {_photoThumbnail.refresh();}
 		}
 		_photoThumbnail.repaint();
 	}
@@ -414,26 +410,6 @@ public class DetailsDisplay extends GenericDisplay
 
 
 	/**
-	 * Build a String to describe a time duration
-	 * @param inNumSecs number of seconds
-	 * @return time as a string, days, hours, mins, secs as appropriate
-	 */
-	private static String buildDurationString(long inNumSecs)
-	{
-		if (inNumSecs <= 0L) return "";
-		if (inNumSecs < 60L) return "" + inNumSecs + I18nManager.getText("display.range.time.secs");
-		if (inNumSecs < 3600L) return "" + (inNumSecs / 60) + I18nManager.getText("display.range.time.mins")
-			+ " " + (inNumSecs % 60) + I18nManager.getText("display.range.time.secs");
-		if (inNumSecs < 86400L) return "" + (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours")
-			+ " " + ((inNumSecs / 60) % 60) + I18nManager.getText("display.range.time.mins");
-		if (inNumSecs < 432000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days")
-			+ " " + (inNumSecs / 60 / 60) % 24 + I18nManager.getText("display.range.time.hours");
-		if (inNumSecs < 8640000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days");
-		return "big";
-	}
-
-
-	/**
 	 * Format a number to a sensible precision
 	 * @param inDist distance
 	 * @return formatted String
@@ -452,5 +428,20 @@ public class DetailsDisplay extends GenericDisplay
 		_distanceFormatter.setMaximumFractionDigits(numDigits);
 		_distanceFormatter.setMinimumFractionDigits(numDigits);
 		return _distanceFormatter.format(inDist);
+	}
+
+	/**
+	 * Create a little button for rotating the current photo
+	 * @param inIcon icon to use (from IconManager)
+	 * @param inFunction function to call (from FunctionLibrary)
+	 * @return button object
+	 */
+	private static JButton makeRotateButton(String inIcon, GenericFunction inFunction)
+	{
+		JButton button = new JButton(IconManager.getImageIcon(inIcon));
+		button.setToolTipText(I18nManager.getText(inFunction.getNameKey()));
+		button.setMargin(new Insets(0, 2, 0, 2));
+		button.addActionListener(new FunctionLauncher(inFunction));
+		return button;
 	}
 }

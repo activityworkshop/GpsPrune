@@ -19,10 +19,10 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
-import tim.prune.Config;
 import tim.prune.ExternalTools;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -38,6 +38,7 @@ public class ExifSaver implements Runnable
 	private JDialog _dialog = null;
 	private JButton _okButton = null;
 	private JCheckBox _overwriteCheckbox = null;
+	private JCheckBox _forceCheckbox = null;
 	private JProgressBar _progressBar = null;
 	private PhotoTableModel _photoTableModel = null;
 	private boolean _saveCancelled = false;
@@ -139,9 +140,16 @@ public class ExifSaver implements Runnable
 		JScrollPane scrollPane = new JScrollPane(photoTable);
 		scrollPane.setPreferredSize(new Dimension(300, 160));
 		tablePanel.add(scrollPane, BorderLayout.CENTER);
+		// Pair of checkboxes
+		JPanel checkPanel = new JPanel();
+		checkPanel.setLayout(new BoxLayout(checkPanel, BoxLayout.Y_AXIS));
 		_overwriteCheckbox = new JCheckBox(I18nManager.getText("dialog.saveexif.overwrite"));
 		_overwriteCheckbox.setSelected(false);
-		tablePanel.add(_overwriteCheckbox, BorderLayout.SOUTH);
+		checkPanel.add(_overwriteCheckbox);
+		_forceCheckbox = new JCheckBox(I18nManager.getText("dialog.saveexif.force"));
+		_forceCheckbox.setSelected(false);
+		checkPanel.add(_forceCheckbox);
+		tablePanel.add(checkPanel, BorderLayout.SOUTH);
 		centrePanel.add(tablePanel, BorderLayout.CENTER);
 		// progress bar below main controls
 		_progressBar = new JProgressBar(0, 100);
@@ -223,7 +231,7 @@ public class ExifSaver implements Runnable
 		_progressBar.setValue(0);
 		_progressBar.setVisible(true);
 		boolean overwriteFlag = _overwriteCheckbox.isSelected();
-		int numSaved = 0;
+		int numSaved = 0, numFailed = 0, numForced = 0;
 		// Loop over all photos in list
 		for (int i=0; i<numPhotos; i++)
 		{
@@ -235,9 +243,17 @@ public class ExifSaver implements Runnable
 				if (photo != null && photo.getOriginalStatus() != photo.getCurrentStatus())
 				{
 					// Increment counter if save successful
-					if (savePhoto(photo, overwriteFlag))
-					{
+					if (savePhoto(photo, overwriteFlag, false)) {
 						numSaved++;
+					}
+					else {
+						if (_forceCheckbox.isSelected() && savePhoto(photo, overwriteFlag, true))
+						{
+							numForced++;
+						}
+						else {
+							numFailed++;
+						}
 					}
 				}
 			}
@@ -248,6 +264,20 @@ public class ExifSaver implements Runnable
 		// Show confirmation
 		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.saveexif.ok1") + " "
 			+ numSaved + " " + I18nManager.getText("confirm.saveexif.ok2"));
+		if (numFailed > 0)
+		{
+			JOptionPane.showMessageDialog(_parentFrame,
+				I18nManager.getText("error.saveexif.failed1") + " " + numFailed + " "
+				+ I18nManager.getText("error.saveexif.failed2"),
+				I18nManager.getText("dialog.saveexif.title"), JOptionPane.ERROR_MESSAGE);
+		}
+		if (numForced > 0)
+		{
+			JOptionPane.showMessageDialog(_parentFrame,
+				I18nManager.getText("error.saveexif.forced1") + " " + numForced + " "
+				+ I18nManager.getText("error.saveexif.forced2"),
+				I18nManager.getText("dialog.saveexif.title"), JOptionPane.WARNING_MESSAGE);
+		}
 		// close dialog, all finished
 		_dialog.dispose();
 	}
@@ -257,9 +287,10 @@ public class ExifSaver implements Runnable
 	 * Save the details for the given photo
 	 * @param inPhoto Photo object
 	 * @param inOverwriteFlag true to overwrite file, false otherwise
+	 * @param inForceFlag true to force write, ignoring minor errors
 	 * @return true if details saved ok
 	 */
-	private boolean savePhoto(Photo inPhoto, boolean inOverwriteFlag)
+	private boolean savePhoto(Photo inPhoto, boolean inOverwriteFlag, boolean inForceFlag)
 	{
 		// Check whether photo file still exists
 		if (!inPhoto.getFile().exists())
@@ -299,9 +330,10 @@ public class ExifSaver implements Runnable
 		else
 		{
 			// Photo is now connected, so write new gps tags
-			command = getWriteGpsExifTagsCommand(inPhoto.getFile(), inPhoto.getDataPoint(), inOverwriteFlag);
+			command = getWriteGpsExifTagsCommand(inPhoto.getFile(), inPhoto.getDataPoint(), inOverwriteFlag, inForceFlag);
 		}
 		// Execute exif command
+		boolean saved = false;
 		try
 		{
 			Process process = Runtime.getRuntime().exec(command);
@@ -310,15 +342,15 @@ public class ExifSaver implements Runnable
 				process.waitFor();
 			}
 			catch (InterruptedException ie) {}
+			saved = (process.exitValue() == 0);
 		}
 		catch (Exception e)
 		{
 			// show error message
 			JOptionPane.showMessageDialog(_parentFrame, "Exception: '" + e.getClass().getName() + "' : "
 				+ e.getMessage(), I18nManager.getText("dialog.saveexif.title"), JOptionPane.ERROR_MESSAGE);
-			return false;
 		}
-		return true;
+		return saved;
 	}
 
 
@@ -348,16 +380,22 @@ public class ExifSaver implements Runnable
 	 * @param inFile file to which to write the tags
 	 * @param inPoint DataPoint object containing coordinate information
 	 * @param inOverwrite true to overwrite file, false to create copy
+	 * @param inForce true to force write, ignoring minor errors
 	 * @return external command to write gps tags
 	 */
-	private static String[] getWriteGpsExifTagsCommand(File inFile, DataPoint inPoint, boolean inOverwrite)
+	private static String[] getWriteGpsExifTagsCommand(File inFile, DataPoint inPoint,
+		boolean inOverwrite, boolean inForce)
 	{
 		// Make a string array to construct the command and its parameters
-		String[] result = new String[inOverwrite?10:9];
+		String[] result = new String[(inOverwrite?10:9) + (inForce?1:0)];
 		result[0] = Config.getConfigString(Config.KEY_EXIFTOOL_PATH);
 		result[1] = "-P";
 		if (inOverwrite) {result[2] = "-overwrite_original_in_place";}
 		int paramOffset = inOverwrite?3:2;
+		if (inForce) {
+			result[paramOffset] = "-m";
+			paramOffset++;
+		}
 		// To set latitude : -GPSLatitude='12 34 56.78' -GPSLatitudeRef='N'
 		// (latitude as space-separated deg min sec, reference as either N or S)
 		result[paramOffset] = "-GPSLatitude='" + inPoint.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC_WITH_SPACES)

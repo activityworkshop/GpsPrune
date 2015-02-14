@@ -5,8 +5,8 @@ import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
 
-import tim.prune.Config;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Distance;
 
 /**

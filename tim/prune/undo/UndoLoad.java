@@ -2,6 +2,7 @@ package tim.prune.undo;
 
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
+import tim.prune.data.FileInfo;
 import tim.prune.data.PhotoList;
 import tim.prune.data.TrackInfo;
 
@@ -13,8 +14,8 @@ public class UndoLoad implements UndoOperation
 	private int _cropIndex = -1;
 	private int _numLoaded = -1;
 	private DataPoint[] _contents = null;
-	private String _previousFilename = null;
 	private PhotoList _photoList = null;
+	private FileInfo _oldFileInfo = null;
 
 
 	/**
@@ -27,7 +28,6 @@ public class UndoLoad implements UndoOperation
 		_cropIndex = inIndex;
 		_numLoaded = inNumLoaded;
 		_contents = null;
-		_previousFilename = null;
 	}
 
 
@@ -42,8 +42,7 @@ public class UndoLoad implements UndoOperation
 		_cropIndex = -1;
 		_numLoaded = inNumLoaded;
 		_contents = inOldTrackInfo.getTrack().cloneContents();
-		if (inOldTrackInfo.getFileInfo().getNumFiles() == 1)
-			_previousFilename = inOldTrackInfo.getFileInfo().getFilename();
+		_oldFileInfo = inOldTrackInfo.getFileInfo().clone();
 		_photoList = inPhotoList;
 	}
 
@@ -66,11 +65,12 @@ public class UndoLoad implements UndoOperation
 	 */
 	public void performUndo(TrackInfo inTrackInfo) throws UndoException
 	{
-		// remove file from fileinfo
-		inTrackInfo.getFileInfo().removeFile();
-		if (_previousFilename != null)
-		{
-			inTrackInfo.getFileInfo().setFile(_previousFilename);
+		// remove source from fileinfo
+		if (_oldFileInfo == null) {
+			inTrackInfo.getFileInfo().removeSource();
+		}
+		else {
+			inTrackInfo.setFileInfo(_oldFileInfo);
 		}
 		// Crop / replace
 		if (_contents == null)

@@ -6,6 +6,8 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 
 import tim.prune.I18nManager;
+import tim.prune.config.ColourScheme;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.AltitudeRange;
 import tim.prune.data.Track;
@@ -16,14 +18,10 @@ import tim.prune.data.TrackInfo;
  */
 public class ProfileChart extends GenericChart
 {
+	/** Current scale factor in x direction*/
 	private double _xScaleFactor = 0.0;
+	/** Possible altitude scales to use */
 	private static final int[] ALTITUDE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50};
-	private static final Color COLOR_LINES       = Color.GRAY;
-	private static final Color COLOR_ALT_BARS    = Color.BLUE;
-	private static final Color COLOR_CURR_RANGE  = Color.GREEN;
-	private static final Color COLOR_SELECTED    = Color.RED;
-	private static final Color COLOR_SELECTED_BG = Color.ORANGE;
-	private static final Color COLOR_ALT_SCALE   = Color.RED;
 
 
 	/**
@@ -50,10 +48,17 @@ public class ProfileChart extends GenericChart
 			int width = getWidth();
 			int height = getHeight();
 
+			// Set up colours
+			final Color barColour = Config.getColourScheme().getColour(ColourScheme.IDX_POINT);
+			final Color rangeColour = Config.getColourScheme().getColour(ColourScheme.IDX_SELECTION);
+			final Color currentColour = Config.getColourScheme().getColour(ColourScheme.IDX_PRIMARY);
+			final Color secondColour = Config.getColourScheme().getColour(ColourScheme.IDX_SECONDARY);
+			final Color lineColour = Config.getColourScheme().getColour(ColourScheme.IDX_LINES);
+
 			// message if no altitudes in track
 			if (!_track.hasAltitudeData())
 			{
-				g.setColor(COLOR_LINES);
+				g.setColor(lineColour);
 				g.drawString(I18nManager.getText("display.noaltitudes"), 50, height/2);
 				return;
 			}
@@ -63,7 +68,7 @@ public class ProfileChart extends GenericChart
 			int minAltitude = altitudeRange.getMinimum();
 			int maxAltitude = altitudeRange.getMaximum();
 			int numPoints = _track.getNumPoints();
-			_xScaleFactor = 1.0 * (width - 2 * BORDER_WIDTH) / numPoints;
+			_xScaleFactor = 1.0 * (width - 2 * BORDER_WIDTH - 1) / numPoints;
 			double yScaleFactor = 1.0 * (height - 2 * BORDER_WIDTH) / (maxAltitude - minAltitude);
 			int barWidth = (int) (_xScaleFactor + 1.0);
 			int selectedPoint = _trackInfo.getSelection().getCurrentPointIndex();
@@ -77,10 +82,10 @@ public class ProfileChart extends GenericChart
 			// horizontal lines for scale - set to round numbers eg 500m
 			int lineScale = getLineScale(minAltitude, maxAltitude);
 			int altitude = 0;
-			int y = 0;
+			int x = 0, y = 0;
 			if (lineScale > 1)
 			{
-				g.setColor(COLOR_LINES);
+				g.setColor(lineColour);
 				while (altitude < maxAltitude)
 				{
 					if (altitude > minAltitude)
@@ -96,27 +101,34 @@ public class ProfileChart extends GenericChart
 			{
 				// loop through points
 				Altitude.Format chartFormat = altitudeRange.getFormat();
+				g.setColor(barColour);
 				for (int p = 0; p < numPoints; p++)
 				{
-					int x = (int) (_xScaleFactor * p);
-					if (p == selectedPoint)
-					{
-						g.setColor(COLOR_SELECTED_BG);
-						g.fillRect(BORDER_WIDTH + x, BORDER_WIDTH+1, barWidth, height-2*BORDER_WIDTH-2);
-						g.setColor(COLOR_SELECTED);
-					}
-					else
-					{
-						g.setColor(COLOR_ALT_BARS);
-						if (p >= selectionStart && p <= selectionEnd) {
-							g.setColor(COLOR_CURR_RANGE);
-						}
-					}
+					x = (int) (_xScaleFactor * p) + 1;
+					if (p == selectionStart)
+						g.setColor(rangeColour);
+					else if (p == (selectionEnd+1))
+						g.setColor(barColour);
 					if (_track.getPoint(p).getAltitude().isValid())
 					{
 						altitude = _track.getPoint(p).getAltitude().getValue(chartFormat);
 						y = (int) (yScaleFactor * (altitude - minAltitude));
 						g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
+					}
+				}
+				// current point (make sure it's drawn last)
+				if (selectedPoint > -1)
+				{
+					Altitude alt = _track.getPoint(selectedPoint).getAltitude();
+					if (alt.isValid())
+					{
+						x = (int) (_xScaleFactor * selectedPoint) + 1;
+						g.setColor(secondColour);
+						g.fillRect(BORDER_WIDTH + x, BORDER_WIDTH+1, barWidth, height-2*BORDER_WIDTH-2);
+						g.setColor(currentColour);
+						altitude = alt.getValue(chartFormat);
+						y = (int) (yScaleFactor * (altitude - minAltitude));
+						g.fillRect(BORDER_WIDTH + x, height-BORDER_WIDTH - y, barWidth, y);
 					}
 				}
 			}
@@ -128,7 +140,7 @@ public class ProfileChart extends GenericChart
 				int textHeight = g.getFontMetrics().getHeight();
 				altitude = 0;
 				y = 0;
-				g.setColor(COLOR_ALT_SCALE);
+				g.setColor(currentColour);
 				while (altitude < maxAltitude)
 				{
 					if (altitude > minAltitude)
@@ -217,7 +229,13 @@ public class ProfileChart extends GenericChart
 			{
 				// work out which data point is nearest and select it
 				int pointNum = (int) ((e.getX() - BORDER_WIDTH) / _xScaleFactor);
-				_trackInfo.selectPoint(pointNum);
+				// If shift clicked, then extend selection
+				if (e.isShiftDown()) {
+					_trackInfo.extendSelection(pointNum);
+				}
+				else {
+					_trackInfo.selectPoint(pointNum);
+				}
 			}
 		}
 	}

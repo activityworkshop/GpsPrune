@@ -3,7 +3,7 @@ package tim.prune.gui.map;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import tim.prune.Config;
+import tim.prune.config.Config;
 
 /**
  * Class to hold the config for the map tiles

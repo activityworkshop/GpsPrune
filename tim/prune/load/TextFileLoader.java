@@ -21,6 +21,7 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
 import tim.prune.data.Field;
+import tim.prune.data.SourceInfo;
 
 
 /**
@@ -527,9 +528,9 @@ public class TextFileLoader
 		}
 		_lastAltitudeFormat = altitudeFormat;
 		// give data to App
+		SourceInfo sourceInfo = new SourceInfo(_file, SourceInfo.FILE_TYPE.TEXT);
 		_app.informDataLoaded(_fieldTableModel.getFieldArray(),
-			_fileExtractTableModel.getData(), altitudeFormat,
-			_file.getName());
+			_fileExtractTableModel.getData(), altitudeFormat, sourceInfo);
 		// clear up file cacher
 		_fileCacher.clear();
 		// dispose of dialog

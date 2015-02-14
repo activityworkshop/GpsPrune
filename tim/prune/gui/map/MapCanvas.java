@@ -37,7 +37,14 @@ import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
+import tim.prune.config.ColourScheme;
+import tim.prune.config.Config;
+import tim.prune.data.Coordinate;
+import tim.prune.data.DataPoint;
 import tim.prune.data.DoubleRange;
+import tim.prune.data.Latitude;
+import tim.prune.data.Longitude;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
@@ -114,14 +121,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private static final int AUTOPAN_DISTANCE = 75;
 
 	// Colours
-	private static final Color COLOR_BG         = Color.WHITE;
 	private static final Color COLOR_MESSAGES   = Color.GRAY;
-	private static final Color COLOR_POINT      = Color.BLUE;
-	private static final Color COLOR_POINT_DELETED = Color.RED;
-	private static final Color COLOR_CURR_RANGE = Color.GREEN;
-	private static final Color COLOR_CROSSHAIRS = Color.RED;
-	private static final Color COLOR_WAYPT_NAME = Color.BLACK;
-	private static final Color COLOR_PHOTO_PT   = Color.ORANGE;
 
 
 	/**
@@ -155,7 +155,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			{
 				_tileCacher.clearAll();
 				_recalculate = true;
-				repaint();
+				Config.setConfigBoolean(Config.KEY_SHOW_MAP, e.getStateChange() == ItemEvent.SELECTED);
+				UpdateMessageBroker.informSubscribers(); // to let menu know
 			}
 		};
 		_topPanel = new JPanel();
@@ -304,8 +305,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		newPointItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.createPoint(MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(_popupMenuY, getHeight())),
-					MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(_popupMenuX, getWidth())));
+				double lat = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(_popupMenuY, getHeight()));
+				double lon = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(_popupMenuX, getWidth()));
+				_app.createPoint(new DataPoint(new Latitude(lat, Coordinate.FORMAT_NONE),
+					new Longitude(lon, Coordinate.FORMAT_NONE), null));
 			}});
 		newPointItem.setEnabled(true);
 		_popup.add(newPointItem);
@@ -391,7 +394,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 		else
 		{
-			inG.setColor(COLOR_BG);
+			inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND));
 			inG.fillRect(0, 0, getWidth(), getHeight());
 			inG.setColor(COLOR_MESSAGES);
 			inG.drawString(I18nManager.getText("display.nodata"), 50, getHeight()/2);
@@ -414,14 +417,18 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 		// Clear map
 		Graphics g = _mapImage.getGraphics();
-		// Clear to white
-		g.setColor(COLOR_BG);
+		// Clear to background
+		g.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND));
 		g.fillRect(0, 0, getWidth(), getHeight());
 
+		// Check whether maps are on or not
+		boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		_mapCheckBox.setSelected(showMap);
+
 		// reset error message
-		if (!_mapCheckBox.isSelected()) {_shownOsmErrorAlready = false;}
+		if (!showMap) {_shownOsmErrorAlready = false;}
 		// Only get map tiles if selected
-		if (_mapCheckBox.isSelected())
+		if (showMap)
 		{
 			// init tile cacher
 			_tileCacher.centreMap(_mapPosition.getZoom(), _mapPosition.getCentreTileX(), _mapPosition.getCentreTileY());
@@ -487,7 +494,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 		_checkBounds = false;
 		// enable / disable transparency slider
-		_transparencySlider.setEnabled(_mapCheckBox.isSelected());
+		_transparencySlider.setEnabled(showMap);
 	}
 
 
@@ -498,33 +505,44 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	private int paintPoints(Graphics inG)
 	{
+		// Set up colours
+		final Color pointColour = Config.getColourScheme().getColour(ColourScheme.IDX_POINT);
+		final Color rangeColour = Config.getColourScheme().getColour(ColourScheme.IDX_SELECTION);
+		final Color currentColour = Config.getColourScheme().getColour(ColourScheme.IDX_PRIMARY);
+		final Color secondColour = Config.getColourScheme().getColour(ColourScheme.IDX_SECONDARY);
+		final Color textColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
+
 		int pointsPainted = 0;
 		// draw track points
-		inG.setColor(COLOR_POINT);
+		inG.setColor(pointColour);
 		int prevX = -1, prevY = -1;
 		boolean connectPoints = _connectCheckBox.isSelected();
 		boolean prevPointVisible = false, currPointVisible = false;
+		boolean anyWaypoints = false;
+		boolean isWaypoint = false;
 		for (int i=0; i<_track.getNumPoints(); i++)
 		{
 			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
 			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
 			currPointVisible = px >= 0 && px < getWidth() && py >= 0 && py < getHeight();
+			isWaypoint = _track.getPoint(i).isWaypoint();
+			anyWaypoints = anyWaypoints || isWaypoint;
 			if (currPointVisible)
 			{
-				if (!_track.getPoint(i).isWaypoint())
+				if (!isWaypoint)
 				{
 					// Draw rectangle for track point
 					if (_track.getPoint(i).getDeleteFlag()) {
-						inG.setColor(COLOR_POINT_DELETED);
+						inG.setColor(currentColour);
 					}
 					else {
-						inG.setColor(COLOR_POINT);
+						inG.setColor(pointColour);
 					}
 					inG.drawRect(px-2, py-2, 3, 3);
 					pointsPainted++;
 				}
 			}
-			if (!_track.getPoint(i).isWaypoint())
+			if (!isWaypoint)
 			{
 				// Connect track points if either of them are visible
 				if (connectPoints && (currPointVisible || prevPointVisible)
@@ -539,56 +557,58 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 
 		// Loop over points, just drawing blobs for waypoints
-		inG.setColor(COLOR_WAYPT_NAME);
+		inG.setColor(textColour);
 		FontMetrics fm = inG.getFontMetrics();
 		int nameHeight = fm.getHeight();
 		int width = getWidth();
 		int height = getHeight();
-		for (int i=0; i<_track.getNumPoints(); i++)
-		{
-			if (_track.getPoint(i).isWaypoint())
+		if (anyWaypoints) {
+			for (int i=0; i<_track.getNumPoints(); i++)
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
-				if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
+				if (_track.getPoint(i).isWaypoint())
 				{
-					inG.fillRect(px-3, py-3, 6, 6);
-					pointsPainted++;
+					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
+					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
+					if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
+					{
+						inG.fillRect(px-3, py-3, 6, 6);
+						pointsPainted++;
+					}
 				}
 			}
-		}
-		// Loop over points again, now draw names for waypoints
-		for (int i=0; i<_track.getNumPoints(); i++)
-		{
-			if (_track.getPoint(i).isWaypoint())
+			// Loop over points again, now draw names for waypoints
+			for (int i=0; i<_track.getNumPoints(); i++)
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
-				if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
+				if (_track.getPoint(i).isWaypoint())
 				{
-					// Figure out where to draw waypoint name so it doesn't obscure track
-					String waypointName = _track.getPoint(i).getWaypointName();
-					int nameWidth = fm.stringWidth(waypointName);
-					boolean drawnName = false;
-					// Make arrays for coordinates right left up down
-					int[] nameXs = {px + 2, px - nameWidth - 2, px - nameWidth/2, px - nameWidth/2};
-					int[] nameYs = {py + (nameHeight/2), py + (nameHeight/2), py - 2, py + nameHeight + 2};
-					for (int extraSpace = 4; extraSpace < 13 && !drawnName; extraSpace+=2)
+					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
+					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
+					if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
 					{
-						// Shift arrays for coordinates right left up down
-						nameXs[0] += 2; nameXs[1] -= 2;
-						nameYs[2] -= 2; nameYs[3] += 2;
-						// Check each direction in turn right left up down
-						for (int a=0; a<4; a++)
+						// Figure out where to draw waypoint name so it doesn't obscure track
+						String waypointName = _track.getPoint(i).getWaypointName();
+						int nameWidth = fm.stringWidth(waypointName);
+						boolean drawnName = false;
+						// Make arrays for coordinates right left up down
+						int[] nameXs = {px + 2, px - nameWidth - 2, px - nameWidth/2, px - nameWidth/2};
+						int[] nameYs = {py + (nameHeight/2), py + (nameHeight/2), py - 2, py + nameHeight + 2};
+						for (int extraSpace = 4; extraSpace < 13 && !drawnName; extraSpace+=2)
 						{
-							if (nameXs[a] > 0 && (nameXs[a] + nameWidth) < width
-								&& nameYs[a] < height && (nameYs[a] - nameHeight) > 0
-								&& !overlapsPoints(nameXs[a], nameYs[a], nameWidth, nameHeight))
+							// Shift arrays for coordinates right left up down
+							nameXs[0] += 2; nameXs[1] -= 2;
+							nameYs[2] -= 2; nameYs[3] += 2;
+							// Check each direction in turn right left up down
+							for (int a=0; a<4; a++)
 							{
-								// Found a rectangle to fit - draw name here and quit
-								inG.drawString(waypointName, nameXs[a], nameYs[a]);
-								drawnName = true;
-								break;
+								if (nameXs[a] > 0 && (nameXs[a] + nameWidth) < width
+									&& nameYs[a] < height && (nameYs[a] - nameHeight) > 0
+									&& !overlapsPoints(nameXs[a], nameYs[a], nameWidth, nameHeight, textColour))
+								{
+									// Found a rectangle to fit - draw name here and quit
+									inG.drawString(waypointName, nameXs[a], nameYs[a]);
+									drawnName = true;
+									break;
+								}
 							}
 						}
 					}
@@ -596,7 +616,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 		}
 		// Loop over points, drawing blobs for photo points
-		inG.setColor(COLOR_PHOTO_PT);
+		inG.setColor(secondColour);
 		for (int i=0; i<_track.getNumPoints(); i++)
 		{
 			if (_track.getPoint(i).getPhoto() != null)
@@ -615,7 +635,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// Draw selected range
 		if (_selection.hasRangeSelected())
 		{
-			inG.setColor(COLOR_CURR_RANGE);
+			inG.setColor(rangeColour);
 			for (int i=_selection.getStart(); i<=_selection.getEnd(); i++)
 			{
 				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
@@ -630,7 +650,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		{
 			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(selectedPoint));
 			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(selectedPoint));
-			inG.setColor(COLOR_CROSSHAIRS);
+			inG.setColor(currentColour);
 			// crosshairs
 			inG.drawLine(px, 0, px, getHeight());
 			inG.drawLine(0, py, getWidth(), py);
@@ -649,12 +669,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 * @param inY bottom Y coordinate
 	 * @param inWidth width of rectangle
 	 * @param inHeight height of rectangle
-	 * @return true if there's at least one data point in the rectangle
+	 * @param inTextColour colour of text
+	 * @return true if the rectangle overlaps stuff too close to the given colour
 	 */
-	private boolean overlapsPoints(int inX, int inY, int inWidth, int inHeight)
+	private boolean overlapsPoints(int inX, int inY, int inWidth, int inHeight, Color inTextColour)
 	{
-		// each of the colour channels must be brighter than this to count as empty
-		final int BRIGHTNESS_LIMIT = 210;
+		// each of the colour channels must be further away than this to count as empty
+		final int BRIGHTNESS_LIMIT = 80;
+		final int textRGB = inTextColour.getRGB();
+		final int textLow = textRGB & 255;
+		final int textMid = (textRGB >> 8) & 255;
+		final int textHigh = (textRGB >> 16) & 255;
 		try
 		{
 			// loop over x coordinate of rectangle
@@ -665,11 +690,14 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				{
 					int pixelColor = _mapImage.getRGB(inX + x, inY - y);
 					// split into four components rgba
-					int lowestBit = pixelColor & 255;
-					int secondBit = (pixelColor >> 8) & 255;
-					int thirdBit = (pixelColor >> 16) & 255;
+					int pixLow = pixelColor & 255;
+					int pixMid = (pixelColor >> 8) & 255;
+					int pixHigh = (pixelColor >> 16) & 255;
 					//int fourthBit = (pixelColor >> 24) & 255; // alpha ignored
-					if (lowestBit < BRIGHTNESS_LIMIT || secondBit < BRIGHTNESS_LIMIT || thirdBit < BRIGHTNESS_LIMIT) return true;
+					// If colours are too close in any channel then it's an overlap
+					if (Math.abs(pixLow-textLow) < BRIGHTNESS_LIMIT ||
+						Math.abs(pixMid-textMid) < BRIGHTNESS_LIMIT ||
+						Math.abs(pixHigh-textHigh) < BRIGHTNESS_LIMIT) {return true;}
 				}
 			}
 		}
@@ -767,7 +795,13 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					 _mapPosition.getXFromPixels(inE.getX(), getWidth()),
 					 _mapPosition.getYFromPixels(inE.getY(), getHeight()),
 					 _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY), false);
-				_trackInfo.selectPoint(pointIndex);
+				// Extend selection for shift-click
+				if (inE.isShiftDown()) {
+					_trackInfo.extendSelection(pointIndex);
+				}
+				else {
+					_trackInfo.selectPoint(pointIndex);
+				}
 			}
 			else
 			{

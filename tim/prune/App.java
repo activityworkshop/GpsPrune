@@ -1,24 +1,22 @@
 package tim.prune;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
 import java.util.Set;
 import java.util.Stack;
-import java.io.File;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import tim.prune.data.Altitude;
-import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.LatLonRectangle;
-import tim.prune.data.Latitude;
-import tim.prune.data.Longitude;
 import tim.prune.data.NumberUtils;
 import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
+import tim.prune.data.SourceInfo;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.function.browser.BrowserLauncher;
@@ -32,7 +30,24 @@ import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
-import tim.prune.undo.*;
+import tim.prune.undo.UndoAddAltitudeOffset;
+import tim.prune.undo.UndoAddTimeOffset;
+import tim.prune.undo.UndoCompress;
+import tim.prune.undo.UndoConnectPhoto;
+import tim.prune.undo.UndoCreatePoint;
+import tim.prune.undo.UndoCutAndMove;
+import tim.prune.undo.UndoDeletePhoto;
+import tim.prune.undo.UndoDeletePoint;
+import tim.prune.undo.UndoDeleteRange;
+import tim.prune.undo.UndoDisconnectPhoto;
+import tim.prune.undo.UndoEditPoint;
+import tim.prune.undo.UndoException;
+import tim.prune.undo.UndoInsert;
+import tim.prune.undo.UndoLoad;
+import tim.prune.undo.UndoLoadPhotos;
+import tim.prune.undo.UndoMergeTrackSegments;
+import tim.prune.undo.UndoOperation;
+import tim.prune.undo.UndoReverseSection;
 
 
 /**
@@ -178,7 +193,7 @@ public class App
 		else
 		{
 			if (_fileSaver == null) {
-				_fileSaver = new FileSaver(this, _frame, _track);
+				_fileSaver = new FileSaver(this, _frame);
 			}
 			char delim = ',';
 			if (_fileLoader != null) {delim = _fileLoader.getLastUsedDelimiter();}
@@ -239,7 +254,7 @@ public class App
 			// add information to undo stack
 			UndoOperation undo = new UndoEditPoint(currentPoint, inUndoList);
 			// pass to track for completion
-			if (_track.editPoint(currentPoint, inEditList))
+			if (_track.editPoint(currentPoint, inEditList, false))
 			{
 				_undoStack.push(undo);
 				// Confirm point edit
@@ -556,18 +571,18 @@ public class App
 
 
 	/**
-	 * Create a new point at the given lat/long coordinates
-	 * @param inLat latitude
-	 * @param inLong longitude
+	 * Create a new point at the given position
+	 * @param inPoint point to add
 	 */
-	public void createPoint(double inLat, double inLong)
+	public void createPoint(DataPoint inPoint)
 	{
 		// create undo object
 		UndoCreatePoint undo = new UndoCreatePoint();
-		// create point and add to track
-		DataPoint point = new DataPoint(new Latitude(inLat, Coordinate.FORMAT_NONE), new Longitude(inLong, Coordinate.FORMAT_NONE), null);
-		point.setSegmentStart(true);
-		_track.appendPoints(new DataPoint[] {point});
+		// add point to track
+		inPoint.setSegmentStart(true);
+		_track.appendPoints(new DataPoint[] {inPoint});
+		// ensure track's field list contains point's fields
+		_track.extendFieldList(inPoint.getFieldList());
 		_trackInfo.selectPoint(_trackInfo.getTrack().getNumPoints()-1);
 		// add undo object to stack
 		_undoStack.add(undo);
@@ -630,10 +645,10 @@ public class App
 	 * @param inFieldArray array of fields
 	 * @param inDataArray array of data
 	 * @param inAltFormat altitude format
-	 * @param inFilename filename used
+	 * @param inSourceInfo information about the source of the data
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, Altitude.Format inAltFormat,
-		String inFilename)
+		SourceInfo inSourceInfo)
 	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
@@ -665,15 +680,9 @@ public class App
 				// append data to current Track
 				_undoStack.add(new UndoLoad(_track.getNumPoints(), loadedTrack.getNumPoints()));
 				_track.combine(loadedTrack);
-				// set filename if currently empty
-				if (_trackInfo.getFileInfo().getNumFiles() == 0)
-				{
-					_trackInfo.getFileInfo().setFile(inFilename);
-				}
-				else
-				{
-					_trackInfo.getFileInfo().addFile();
-				}
+				// set source information
+				inSourceInfo.populatePointObjects(_track, loadedTrack.getNumPoints());
+				_trackInfo.getFileInfo().addSource(inSourceInfo);
 			}
 			else if (answer == JOptionPane.NO_OPTION)
 			{
@@ -687,7 +696,8 @@ public class App
 				_lastSavePosition = _undoStack.size();
 				_trackInfo.getSelection().clearAll();
 				_track.load(loadedTrack);
-				_trackInfo.getFileInfo().setFile(inFilename);
+				inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
+				_trackInfo.getFileInfo().replaceSource(inSourceInfo);
 				if (photos != null)
 				{
 					_trackInfo.getPhotoList().removeCorrelatedPhotos();
@@ -701,11 +711,12 @@ public class App
 			_lastSavePosition = _undoStack.size();
 			_trackInfo.getSelection().clearAll();
 			_track.load(loadedTrack);
-			_trackInfo.getFileInfo().setFile(inFilename);
+			inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
+			_trackInfo.getFileInfo().addSource(inSourceInfo);
 		}
 		UpdateMessageBroker.informSubscribers();
 		// Update status bar
-		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile") + " '" + inFilename + "'");
+		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile") + " '" + inSourceInfo.getName() + "'");
 		// update menu
 		_menuManager.informFileLoaded();
 		// load next file if there's a queue
@@ -784,29 +795,7 @@ public class App
 		DataPoint point = _trackInfo.getCurrentPoint();
 		if (photo != null && point != null)
 		{
-			if (point.getPhoto() != null)
-			{
-				// point already has a photo, confirm cloning of new point
-				if (JOptionPane.showConfirmDialog(_frame,
-					I18nManager.getText("dialog.connectphoto.clonepoint"),
-					I18nManager.getText("dialog.connect.title"),
-					JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION)
-				{
-					// Create undo, clone point and attach
-					int pointIndex = _trackInfo.getSelection().getCurrentPointIndex() + 1;
-					// insert new point after current one
-					point = point.clonePoint();
-					UndoConnectPhotoWithClone undo = new UndoConnectPhotoWithClone(
-						point, photo.getFile().getName(), pointIndex);
-					_track.insertPoint(point, pointIndex);
-					photo.setDataPoint(point);
-					point.setPhoto(photo);
-					_undoStack.add(undo);
-					UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
-					UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.connect"));
-				}
-			}
-			else
+			if (point.getPhoto() == null)
 			{
 				// point doesn't currently have a photo, so just connect it
 				_undoStack.add(new UndoConnectPhoto(point, photo.getFile().getName()));

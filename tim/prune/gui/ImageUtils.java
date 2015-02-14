@@ -2,6 +2,7 @@ package tim.prune.gui;
 
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.awt.image.ConvolveOp;
@@ -69,11 +70,7 @@ public abstract class ImageUtils
 	 */
 	public static Dimension getThumbnailSize(int inOrigWidth, int inOrigHeight, int inMaxWidth, int inMaxHeight)
 	{
-		if (inMaxWidth <= 0 || inMaxHeight <= 0)
-		{
-			//System.out.println("Can't do it - maxwidth=" + inMaxWidth + ", maxheight=" + inMaxHeight);
-			return new Dimension(0,0);
-		}
+		assert(inMaxWidth > 0 && inMaxHeight > 0);
 		// work out maximum zoom ratio available so that thumbnail isn't too big
 		double xZoom = inMaxWidth * 1.0 / inOrigWidth;
 		double yZoom = inMaxHeight * 1.0 / inOrigHeight;
@@ -82,5 +79,54 @@ public abstract class ImageUtils
 		if (zoom > 1.0) {return new Dimension(inOrigWidth, inOrigHeight);}
 		// calculate new width and height
 		return new Dimension ((int) (zoom * inOrigWidth), (int) (zoom * inOrigHeight));
+	}
+
+
+	/**
+	 * Create a new image by rotating and scaling the given one
+	 * @param inImage input image
+	 * @param inMaxWidth maximum width of output image
+	 * @param inMaxHeight maximum height of output image
+	 * @param inRotationDegrees number of degrees to rotate clockwise (0, 90, 180 or 270)
+	 * @return rotated, scaled image
+	 */
+	public static BufferedImage rotateImage(Image inImage, int inMaxWidth, int inMaxHeight, int inRotationDegrees)
+	{
+		// Create scaled image of suitable size
+		boolean isRotated = (inRotationDegrees % 180 != 0);
+		int origWidth = inImage.getWidth(null);
+		int origHeight = inImage.getHeight(null);
+		int thumbWidth = isRotated?origHeight:origWidth;
+		int thumbHeight = isRotated?origWidth:origHeight;
+		Dimension scaledSize = getThumbnailSize(thumbWidth, thumbHeight, inMaxWidth, inMaxHeight);
+		BufferedImage result = new BufferedImage(scaledSize.width, scaledSize.height, BufferedImage.TYPE_INT_RGB);
+		// Do different things according to rotation angle (a bit messy, sorry!)
+		if (inRotationDegrees == 0)
+		{
+			// Not rotated, so just copy image directly
+			result.getGraphics().drawImage(inImage, 0, 0, scaledSize.width, scaledSize.height, null);
+		}
+		else
+		{
+			// Need to use Graphics2D for rotation, not Graphics
+			Graphics2D g2d = result.createGraphics();
+			switch (inRotationDegrees)
+			{
+				case 90:
+					g2d.rotate(Math.PI / 2, 0.0, 0.0);
+					g2d.drawImage(inImage, 0, -scaledSize.width, scaledSize.height, scaledSize.width, null);
+					break;
+				case 180:
+					g2d.rotate(Math.PI, scaledSize.width/2.0, scaledSize.height/2.0);
+					g2d.drawImage(inImage, 0, 0, scaledSize.width, scaledSize.height, null);
+					break;
+				case 270:
+					g2d.rotate(Math.PI * 3/2, 0.0, 0.0);
+					g2d.drawImage(inImage, -scaledSize.height, 0, scaledSize.height, scaledSize.width, null);
+			}
+			// Clear up memory
+			g2d.dispose();
+		}
+		return result;
 	}
 }

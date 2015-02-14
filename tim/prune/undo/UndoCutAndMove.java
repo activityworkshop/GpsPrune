@@ -32,7 +32,6 @@ public class UndoCutAndMove implements UndoOperation
 	 */
 	public UndoCutAndMove(Track inTrack, int inStart, int inEnd, int inMoveTo)
 	{
-		// System.out.println("Construct undo with params " + inStart + ", "+  inEnd + ", " + inMoveTo);
 		_startIndex = inStart;
 		_endIndex = inEnd;
 		_moveToIndex = inMoveTo;

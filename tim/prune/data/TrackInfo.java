@@ -56,6 +56,14 @@ public class TrackInfo
 	}
 
 	/**
+	 * Replace the file info with a previously made clone
+	 * @param inInfo cloned file info
+	 */
+	public void setFileInfo(FileInfo inInfo) {
+		_fileInfo = inInfo;
+	}
+
+	/**
 	 * @return the PhotoList object
 	 */
 	public PhotoList getPhotoList()
@@ -380,6 +388,21 @@ public class TrackInfo
 			else {
 				_selection.selectPhotoAndPoint(-1, -1); // deselect point too
 			}
+		}
+	}
+
+	/**
+	 * Extend the current selection to end at the given point, eg by shift-clicking
+	 * @param inPointNum index of end point
+	 */
+	public void extendSelection(int inPointNum)
+	{
+		// See whether to start selection from current range start or current point
+		int rangeStart = _selection.getStart();
+		if (rangeStart < 0) {rangeStart = _selection.getCurrentPointIndex();}
+		selectPoint(inPointNum);
+		if (rangeStart < inPointNum) {
+			_selection.selectRange(rangeStart, inPointNum);
 		}
 	}
 }

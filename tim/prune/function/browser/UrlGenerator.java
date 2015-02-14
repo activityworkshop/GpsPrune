@@ -30,8 +30,8 @@ public abstract class UrlGenerator
 	public static final int MAP_SOURCE_MAPQUEST = 2;
 	/** Constant for Yahoo */
 	public static final int MAP_SOURCE_YAHOO  = 3;
-
-	// TODO: Add other map sources, eg MSN, search.ch ?
+	/** Constant for Bing */
+	public static final int MAP_SOURCE_BING = 4;
 
 	/**
 	 * Generate a URL for the given source and track info
@@ -49,6 +49,9 @@ public abstract class UrlGenerator
 		}
 		else if (inSource == MAP_SOURCE_YAHOO) {
 			return generateYahooUrl(inTrackInfo);
+		}
+		else if (inSource == MAP_SOURCE_BING) {
+			return generateBingUrl(inTrackInfo);
 		}
 		return generateOpenStreetMapUrl(inTrackInfo);
 	}
@@ -82,7 +85,6 @@ public abstract class UrlGenerator
 				url = url + "(" + currPoint.getWaypointName() + ")";
 			}
 		}
-		//System.out.println(url);
 		return url;
 	}
 
@@ -154,7 +156,30 @@ public abstract class UrlGenerator
 		return url;
 	}
 
-/**
+	/**
+	 * Generate a url for Bing maps
+	 * @param inTrackInfo track information
+	 * @return URL
+	 */
+	private static String generateBingUrl(TrackInfo inTrackInfo)
+	{
+		// Check if any data to display
+		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
+		{
+			return null;
+		}
+		double medianLat = getMedianValue(inTrackInfo.getTrack().getLatRange());
+		double medianLon = getMedianValue(inTrackInfo.getTrack().getLonRange());
+		// Build basic url with centre position
+		String latStr = FIVE_DP.format(medianLat);
+		String lonStr = FIVE_DP.format(medianLon);
+		String url = "http://bing.com/maps/default.aspx?cp=" + latStr + "~" + lonStr
+			+ "&where1=" + latStr + "%2C%20" + lonStr;
+		return url;
+	}
+
+
+	/**
 	 * Get the median value from the given lat/long range
 	 * @param inRange range of values
 	 * @return median value

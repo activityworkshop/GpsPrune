@@ -72,7 +72,6 @@ public class CompressTrackFunction extends GenericFunction
 	 */
 	private boolean[] preview()
 	{
-		// System.out.println("track dialog preview");
 		int numToDelete = 0;
 		boolean[] deleteFlags = new boolean[_track.getNumPoints()];
 		for (int i=0; i<_algorithms.length; i++)

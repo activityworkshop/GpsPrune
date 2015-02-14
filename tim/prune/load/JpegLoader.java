@@ -17,8 +17,8 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
 import tim.prune.data.LatLonRectangle;
@@ -103,16 +103,23 @@ public class JpegLoader implements Runnable
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
 			// Bring up dialog before starting
-			showDialog();
+			if (_progressDialog == null) {
+				createProgressDialog();
+			}
+			// reset dialog and show it
+			_progressBar.setValue(0);
+			_progressBar.setString("");
+			_progressDialog.setVisible(true);
+			// start thread for processing
 			new Thread(this).start();
 		}
 	}
 
 
 	/**
-	 * Show the main dialog
+	 * Create the dialog to show the progress
 	 */
-	private void showDialog()
+	private void createProgressDialog()
 	{
 		_progressDialog = new JDialog(_parentFrame, I18nManager.getText("dialog.jpegload.progress.title"));
 		_progressDialog.setLocationRelativeTo(_parentFrame);
@@ -135,7 +142,6 @@ public class JpegLoader implements Runnable
 		panel.add(cancelButton);
 		_progressDialog.getContentPane().add(panel);
 		_progressDialog.pack();
-		_progressDialog.setVisible(true);
 	}
 
 
@@ -158,6 +164,7 @@ public class JpegLoader implements Runnable
 		// Process the files recursively and build lists of photos
 		processFileList(files, true, _subdirCheckbox.isSelected());
 		_progressDialog.setVisible(false);
+		_progressDialog.dispose(); // Sometimes dialog doesn't disappear without this dispose
 		if (_cancelled) {return;}
 
 		//System.out.println("Finished - counts are: " + _fileCounts[0] + ", " + _fileCounts[1]
@@ -201,7 +208,7 @@ public class JpegLoader implements Runnable
 		if (inFiles != null)
 		{
 			// Loop over elements in array
-			for (int i=0; i<inFiles.length; i++)
+			for (int i=0; i<inFiles.length && !_cancelled; i++)
 			{
 				File file = inFiles[i];
 				if (file.exists() && file.canRead())
@@ -219,12 +226,7 @@ public class JpegLoader implements Runnable
 						processFileList(files, false, inDescend);
 					}
 				}
-				else
-				{
-					// file doesn't exist or isn't readable - ignore error
-				}
-				// check for cancel button pressed
-				if (_cancelled) break;
+				// if file doesn't exist or isn't readable - ignore
 			}
 		}
 	}
@@ -275,6 +277,8 @@ public class JpegLoader implements Runnable
 				photo.setTimestamp(createTimestamp(jpegData.getOriginalTimestamp()));
 			}
 			photo.setExifThumbnail(jpegData.getThumbnailImage());
+			// Also extract orientation tag for setting rotation state of photo
+			photo.setRotation(jpegData.getRequiredRotation());
 		}
 		catch (JpegException jpe) { // don't list errors, just count them
 		}
@@ -381,8 +385,6 @@ public class JpegLoader implements Runnable
 	 */
 	private static Timestamp createTimestamp(Rational[] inDate, Rational[] inTime)
 	{
-		//System.out.println("Making timestamp for date (" + inDate[0].toString() + "," + inDate[1].toString() + "," + inDate[2].toString() + ") and time ("
-		//	+ inTime[0].toString() + "," + inTime[1].toString() + "," + inTime[2].toString() + ")");
 		return new Timestamp(inDate[0].intValue(), inDate[1].intValue(), inDate[2].intValue(),
 			inTime[0].intValue(), inTime[1].intValue(), inTime[2].intValue());
 	}

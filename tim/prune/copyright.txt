@@ -1,0 +1,8 @@
+The source code of Prune is copyright 2006-2010 activityworkshop.net
+and distributed under the terms of the Gnu GPL version 2.
+
+The package drew.jpeg is taken from Drew Noakes' "Metadata extractor"
+which is copyright Drew Noakes 2002-2006 and was placed in the public domain.
+
+Translations are copyright various contributors, some of whom are named
+in the source code and some preferred to remain anonymous.

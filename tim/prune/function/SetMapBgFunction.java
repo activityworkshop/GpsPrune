@@ -18,11 +18,11 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
 
 /**
  * Function to set the tile server for the map backgrounds

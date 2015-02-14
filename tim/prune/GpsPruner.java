@@ -12,6 +12,8 @@ import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 import javax.swing.WindowConstants;
 
+import tim.prune.config.Config;
+import tim.prune.config.ConfigException;
 import tim.prune.gui.DetailsDisplay;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MenuManager;
@@ -22,16 +24,18 @@ import tim.prune.gui.Viewport;
 import tim.prune.gui.map.MapCanvas;
 
 /**
- * Tool to visualize, edit, convert and prune GPS data
+ * Prune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or http://activityworkshop.net
- * This software is copyright activityworkshop.net and made available through the Gnu GPL
+ * This software is copyright activityworkshop.net 2006-2010 and made available through the Gnu GPL version 2.
+ * For license details please see the included license.txt.
+ * GpsPruner is the main entry point to the application, including initialisation and launch
  */
 public class GpsPruner
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "8";
+	public static final String VERSION_NUMBER = "9";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "155";
+	public static final String BUILD_NUMBER = "176";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -104,7 +108,8 @@ public class GpsPruner
 		catch (ConfigException ce) {
 			System.err.println("Failed to load config file: " + configFilename);
 		}
-		if (locale != null) {
+		boolean overrideLang = (locale != null);
+		if (overrideLang) {
 			// Make sure Config holds chosen language
 			Config.setConfigString(Config.KEY_LANGUAGE_CODE, localeCode);
 		}
@@ -117,9 +122,15 @@ public class GpsPruner
 			}
 		}
 		I18nManager.init(locale);
-		if (langFilename != null) {
+		// Load the external language file, either from config file or from command line params
+		if (langFilename == null && !overrideLang) {
+			// If langfilename is blank on command line parameters then don't use setting from config
+			langFilename = Config.getConfigString(Config.KEY_LANGUAGE_FILE);
+		}
+		if (langFilename != null && !langFilename.equals("")) {
 			try {
 				I18nManager.addLanguageFile(langFilename);
+				Config.setConfigString(Config.KEY_LANGUAGE_FILE, langFilename);
 			}
 			catch (FileNotFoundException fnfe) {
 				System.err.println("Failed to load language file: " + langFilename);

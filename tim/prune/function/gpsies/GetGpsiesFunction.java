@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -227,6 +228,7 @@ public class GetGpsiesFunction extends GenericFunction implements Runnable
 		ArrayList<GpsiesTrack> trackList = null;
 		URL url = null;
 		String descMessage = "";
+		InputStream inStream = null;
 		// Loop for each page of the results
 		do
 		{
@@ -240,12 +242,16 @@ public class GetGpsiesFunction extends GenericFunction implements Runnable
 			{
 				url = new URL(urlString);
 				SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-				saxParser.parse(url.openStream(), xmlHandler);
+				inStream = url.openStream();
+				saxParser.parse(inStream, xmlHandler);
 			}
 			catch (Exception e) {
 				descMessage = e.getClass().getName() + " - " + e.getMessage();
 			}
-			// TODO: Close streams somehow?  Haven't got a reference to the input stream to close it!
+			// Close stream and ignore errors
+			try {
+				inStream.close();
+			} catch (Exception e) {}
 			// Add track list to model
 			trackList = xmlHandler.getTrackList();
 			_trackListModel.addTracks(trackList);

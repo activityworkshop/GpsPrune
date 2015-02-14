@@ -5,7 +5,6 @@ import java.util.List;
 
 /**
  * Class to hold the GPS data extracted from a Jpeg including position and time
- * All contents are in Rational format
  */
 public class JpegData
 {
@@ -19,6 +18,7 @@ public class JpegData
 	private Rational[] _gpsTimestamp = null;
 	private Rational[] _gpsDatestamp = null;
 	private String _originalTimestamp = null;
+	private int _orientationCode = -1;
 	private byte[] _thumbnail = null;
 	private ArrayList<String> _errors = null;
 
@@ -141,6 +141,17 @@ public class JpegData
 		_originalTimestamp = inStamp;
 	}
 
+	/**
+	 * Set the orientation code
+	 * @param inCode code from exif (1 to 8)
+	 */
+	public void setOrientationCode(int inCode)
+	{
+		if (inCode >= 1 && inCode <= 8) {
+			_orientationCode = inCode;
+		}
+	}
+
 	/** @return latitude ref as char */
 	public char getLatitudeRef() { return _latitudeRef; }
 	/** @return latitude as array of 3 Rationals */
@@ -157,6 +168,8 @@ public class JpegData
 	public Rational[] getGpsTimestamp() { return _gpsTimestamp; }
 	/** @return Gps datestamp as array of 3 Rationals */
 	public Rational[] getGpsDatestamp() { return _gpsDatestamp; }
+	/** @return orientation code (1 to 8) */
+	public int getOrientationCode() { return _orientationCode; }
 	/** @return original timestamp as string */
 	public String getOriginalTimestamp() { return _originalTimestamp; }
 
@@ -170,6 +183,17 @@ public class JpegData
 	/** @return thumbnail as byte array */
 	public byte[] getThumbnailImage() {
 		return _thumbnail;
+	}
+
+	/**
+	 * @return rotation required to display photo properly (0 to 3)
+	 */
+	public int getRequiredRotation()
+	{
+		if (_orientationCode <= 2) { return 0; } // no rotation required
+		if (_orientationCode <= 4) { return 2; } // 180 degrees
+		if (_orientationCode <= 6) { return 1; } // 270 degrees, so need to rotate by 90
+		return 3; // 90 degrees, so need to rotate by 270
 	}
 
 	/**

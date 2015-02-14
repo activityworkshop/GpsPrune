@@ -22,6 +22,8 @@ public class Photo
 	private Status _originalStatus = Status.NOT_CONNECTED;
 	/** Current photo status */
 	private Status _currentStatus = Status.NOT_CONNECTED;
+	/** rotation flag (clockwise from 0 to 3) */
+	private int _rotation = 0;
 	// TODO: Need to store caption for image?
 	// thumbnail for image (from exif)
 	private byte[] _exifThumbnail = null;
@@ -35,7 +37,6 @@ public class Photo
 		/** Photo is connected to a point */
 		CONNECTED
 	};
-
 
 	/**
 	 * Constructor
@@ -224,5 +225,33 @@ public class Photo
 	{
 		return (inOther != null && inOther.getFile() != null && getFile() != null
 			&& inOther.getFile().equals(getFile()));
+	}
+
+	/**
+	 * @param inRotation initial rotation value (from exif)
+	 */
+	public void setRotation(int inRotation)
+	{
+		if (inRotation >= 0 && inRotation <= 3) {
+			_rotation = inRotation;
+		}
+	}
+
+	/**
+	 * Rotate the image by 90 degrees
+	 * @param inRight true to rotate right, false for left
+	 */
+	public void rotate(boolean inRight)
+	{
+		int dir = inRight?1:3;
+		_rotation = (_rotation + dir) % 4;
+	}
+
+	/**
+	 * @return rotation status
+	 */
+	public int getRotationDegrees()
+	{
+		return _rotation * 90;
 	}
 }

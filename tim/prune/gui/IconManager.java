@@ -56,6 +56,10 @@ public abstract class IconManager
 	/** Icon for cut range and move */
 	public static final String CUT_AND_MOVE = "cut_and_move.gif";
 
+	/** Icon for rotating photos leftwards */
+	public static final String ROTATE_LEFT = "rotate_left_icon.png";
+	/** Icon for rotating photos rightwards */
+	public static final String ROTATE_RIGHT = "rotate_right_icon.png";
 
 	/**
 	 * Get the specified image

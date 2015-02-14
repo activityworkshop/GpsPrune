@@ -14,12 +14,13 @@ import tim.prune.data.TrackInfo;
 
 /**
  * GUI element to allow the selection of point types for saving,
- * including three checkboxes for track points, waypoints, photo points
+ * including checkboxes for track points, waypoints, photo points
+ * and also a checkbox for the current selection
  */
 public class PointTypeSelector extends JPanel
 {
-	/** Array of three checkboxes */
-	private JCheckBox[] _checkboxes = new JCheckBox[3];
+	/** Array of checkboxes */
+	private JCheckBox[] _checkboxes = new JCheckBox[4];
 
 
 	/**
@@ -39,20 +40,21 @@ public class PointTypeSelector extends JPanel
 	private void createComponents()
 	{
 		setLayout(new BorderLayout());
-		// Need JLabel to explain what it is
+		// Need label to explain what it is
 		add(new JLabel(I18nManager.getText("dialog.pointtype.desc")), BorderLayout.NORTH);
 		// panel for the checkboxes
 		JPanel gridPanel = new JPanel();
-		gridPanel.setLayout(new GridLayout(1, 3, 15, 3));
+		gridPanel.setLayout(new GridLayout(0, 3, 15, 3));
 		final String[] keys = {"track", "waypoint", "photo"};
 		for (int i=0; i<3; i++)
 		{
 			_checkboxes[i] = new JCheckBox(I18nManager.getText("dialog.pointtype." + keys[i]));
-			_checkboxes[i].setEnabled(true);
 			_checkboxes[i].setSelected(true);
 			gridPanel.add(_checkboxes[i]);
 		}
 		add(gridPanel, BorderLayout.CENTER);
+		_checkboxes[3] = new JCheckBox(I18nManager.getText("dialog.pointtype.selection"));
+		add(_checkboxes[3], BorderLayout.SOUTH);
 	}
 
 	/**
@@ -77,6 +79,8 @@ public class PointTypeSelector extends JPanel
 				_checkboxes[i].setEnabled(false);
 			}
 		}
+		_checkboxes[3].setEnabled(inTrackInfo.getSelection().hasRangeSelected());
+		_checkboxes[3].setSelected(false);
 	}
 
 	/**
@@ -101,6 +105,14 @@ public class PointTypeSelector extends JPanel
 	public boolean getPhotopointsSelected()
 	{
 		return _checkboxes[2].isSelected();
+	}
+
+	/**
+	 * @return true if only the current selection should be saved
+	 */
+	public boolean getJustSelection()
+	{
+		return _checkboxes[3].isSelected();
 	}
 
 	/**

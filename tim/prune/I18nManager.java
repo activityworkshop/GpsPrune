@@ -86,22 +86,19 @@ public abstract class I18nManager
 	 */
 	public static String getText(String inKey)
 	{
-		String value = null;
 		// look in external props file if available
-		if (ExternalPropsFile != null)
+		if (ExternalPropsFile != null && ExternalPropsFile.containsKey(inKey))
 		{
-			value = ExternalPropsFile.getProperty(inKey);
-			if (value != null && !value.equals(""))
-				return value;
+			return ExternalPropsFile.getProperty(inKey);
 		}
 		// look in extra texts if available
 		if (LocalTexts != null)
 		{
 			try
 			{
-				value = LocalTexts.getString(inKey);
-				if (value != null && !value.equals(""))
-					return value;
+				if (LocalTexts.containsKey(inKey)) {
+					return LocalTexts.getString(inKey);
+				}
 			}
 			catch (MissingResourceException mre) {}
 		}
@@ -110,9 +107,9 @@ public abstract class I18nManager
 		{
 			try
 			{
-				value = EnglishTexts.getString(inKey);
-				if (value != null && !value.equals(""))
-					return value;
+				if (EnglishTexts.containsKey(inKey)) {
+					return EnglishTexts.getString(inKey);
+				}
 			}
 			catch (MissingResourceException mre) {}
 		}

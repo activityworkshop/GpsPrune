@@ -1,60 +1,94 @@
 package tim.prune.data;
 
+import java.util.ArrayList;
+
 /**
  * Class to hold the information about the file(s)
  * from which the data was loaded from / saved to
  */
 public class FileInfo
 {
-	private String _filename = null;
-	private int _numFiles = 0;
+	/** List of sources */
+	private ArrayList<SourceInfo> _sources = new ArrayList<SourceInfo>();
 
 
 	/**
-	 * Set the file information to the specified file
-	 * @param inFilename filename of file
+	 * Empty constructor
 	 */
-	public void setFile(String inFilename)
-	{
-		_filename = inFilename;
-		_numFiles = 1;
-	}
-
+	public FileInfo()
+	{}
 
 	/**
-	 * Add a file to the data
+	 * Private constructor for creating clone
+	 * @param inList list of sources
 	 */
-	public void addFile()
+	private FileInfo(ArrayList<SourceInfo> inList)
 	{
-		_numFiles++;
+		_sources = inList;
 	}
-
 
 	/**
-	 * Undo a load file
+	 * Add a data source to the list
+	 * @param inInfo info object to add
 	 */
-	public void removeFile()
+	public void addSource(SourceInfo inInfo)
 	{
-		_numFiles--;
+		_sources.add(inInfo);
 	}
 
+	/**
+	 * Replace the list of data sources with the given source
+	 * @param inInfo new source
+	 */
+	public void replaceSource(SourceInfo inInfo)
+	{
+		_sources.clear();
+		addSource(inInfo);
+	}
+
+	/**
+	 * remove the last source added
+	 */
+	public void removeSource()
+	{
+		_sources.remove(_sources.size()-1);
+	}
 
 	/**
 	 * @return the number of files loaded
 	 */
 	public int getNumFiles()
 	{
-		return _numFiles;
+		return _sources.size();
 	}
 
 
 	/**
-	 * @return The filename, if a single file
+	 * @return The source name, if a single file
 	 */
 	public String getFilename()
 	{
-		if (_numFiles == 1 && _filename != null)
-			return _filename;
+		if (getNumFiles() == 1)
+			return _sources.get(0).getName();
 		return "";
+	}
+
+	/**
+	 * @param inIndex index number
+	 * @return source info object
+	 */
+	public SourceInfo getSource(int inIndex) {
+		return _sources.get(inIndex);
+	}
+
+	/**
+	 * Clone contents of file info
+	 */
+	@SuppressWarnings("unchecked")
+	public FileInfo clone()
+	{
+		// copy source list
+		ArrayList<SourceInfo> copy = (ArrayList<SourceInfo>) _sources.clone();
+		return new FileInfo(copy);
 	}
 }

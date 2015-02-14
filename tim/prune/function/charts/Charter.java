@@ -25,10 +25,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;

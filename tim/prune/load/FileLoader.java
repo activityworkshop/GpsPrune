@@ -6,7 +6,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 
 import tim.prune.App;
-import tim.prune.Config;
+import tim.prune.config.Config;
+import tim.prune.load.xml.GzipFileLoader;
 import tim.prune.load.xml.XmlFileLoader;
 import tim.prune.load.xml.ZipFileLoader;
 
@@ -24,6 +25,7 @@ public class FileLoader
 	private NmeaFileLoader _nmeaFileLoader = null;
 	private XmlFileLoader _xmlFileLoader = null;
 	private ZipFileLoader _zipFileLoader = null;
+	private GzipFileLoader _gzipFileLoader = null;
 
 
 	/**
@@ -39,6 +41,7 @@ public class FileLoader
 		_nmeaFileLoader = new NmeaFileLoader(inApp);
 		_xmlFileLoader = new XmlFileLoader(inApp);
 		_zipFileLoader = new ZipFileLoader(inApp, _xmlFileLoader);
+		_gzipFileLoader = new GzipFileLoader(inApp, _xmlFileLoader);
 	}
 
 
@@ -116,6 +119,11 @@ public class FileLoader
 		{
 			// Use zip loader for zipped kml (or zipped gpx)
 			_zipFileLoader.openFile(inFile);
+		}
+		else if (fileExtension.endsWith(".gz") || fileExtension.equals("gzip"))
+		{
+			// Use gzip loader for gzipped xml
+			_gzipFileLoader.openFile(inFile);
 		}
 		else if (fileExtension.equals("nmea"))
 		{

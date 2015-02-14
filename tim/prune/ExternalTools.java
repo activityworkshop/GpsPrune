@@ -2,6 +2,8 @@ package tim.prune;
 
 import java.io.IOException;
 
+import tim.prune.config.Config;
+
 
 /**
  * Class to manage interfaces to external tools, like exiftool
@@ -65,7 +67,6 @@ public abstract class ExternalTools
 	 */
 	private static boolean check(String inCommand)
 	{
-		// System.out.println("Checking tool '" + inCommand + "'");
 		try
 		{
 			Runtime.getRuntime().exec(inCommand);

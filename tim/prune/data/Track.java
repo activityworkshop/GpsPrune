@@ -2,8 +2,8 @@ package tim.prune.data;
 
 import java.util.List;
 
-import tim.prune.Config;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
 import tim.prune.function.edit.FieldEdit;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.map.MapUtils;
@@ -99,6 +99,23 @@ public class Track
 		_dataPoints = inOther._dataPoints;
 		// needs to be scaled
 		_scaled = false;
+	}
+
+	/**
+	 * Request that a rescale be done to recalculate derived values
+	 */
+	public void requestRescale()
+	{
+		_scaled = false;
+	}
+
+	/**
+	 * Extend the track's field list with the given additional fields
+	 * @param inFieldList list of fields to be added
+	 */
+	public void extendFieldList(FieldList inFieldList)
+	{
+		_masterFieldList = _masterFieldList.merge(inFieldList);
 	}
 
 	////////////////// Modification methods //////////////////////
@@ -331,8 +348,6 @@ public class Track
 		return foundAlt;
 	}
 
-	// TODO: Function to collect and sort photo points by time or photo filename
-	// TODO: Function to convert waypoint names into timestamps
 
 	/**
 	 * Collect all waypoints to the start or end of the track
@@ -1120,9 +1135,10 @@ public class Track
 	 * Edit the specified point
 	 * @param inPoint point to edit
 	 * @param inEditList list of edits to make
+	 * @param inUndo true if undo operation, false otherwise
 	 * @return true if successful
 	 */
-	public boolean editPoint(DataPoint inPoint, FieldEditList inEditList)
+	public boolean editPoint(DataPoint inPoint, FieldEditList inEditList, boolean inUndo)
 	{
 		if (inPoint != null && inEditList != null && inEditList.getNumEdits() > 0)
 		{
@@ -1134,7 +1150,7 @@ public class Track
 			{
 				FieldEdit edit = inEditList.getEdit(i);
 				Field editField = edit.getField();
-				inPoint.setFieldValue(editField, edit.getValue());
+				inPoint.setFieldValue(editField, edit.getValue(), inUndo);
 				// Check that master field list has this field already (maybe point name has been added)
 				if (!_masterFieldList.contains(editField)) {
 					_masterFieldList.extendList(editField);

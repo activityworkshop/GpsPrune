@@ -1,6 +1,6 @@
 package tim.prune.data;
 
-import tim.prune.Config;
+import tim.prune.config.Config;
 
 /**
  * Class to represent a single data point in the series
@@ -21,7 +21,7 @@ public class DataPoint
 	private String _waypointName = null;
 	private boolean _startOfSegment = false;
 	private boolean _markedForDeletion = false;
-
+	private int _modifyCount = 0;
 
 	/**
 	 * Constructor
@@ -62,7 +62,8 @@ public class DataPoint
 		if (inField == null || inField == Field.WAYPT_NAME) {
 			_waypointName = getFieldValue(Field.WAYPT_NAME);
 		}
-		if (inField == null || inField == Field.NEW_SEGMENT) {
+		if (inField == null || inField == Field.NEW_SEGMENT)
+		{
 			String segmentStr = getFieldValue(Field.NEW_SEGMENT);
 			if (segmentStr != null) {segmentStr = segmentStr.trim();}
 			_startOfSegment = (segmentStr != null && (segmentStr.equals("1") || segmentStr.toUpperCase().equals("Y")));
@@ -83,15 +84,15 @@ public class DataPoint
 		Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE};
 		_fieldList = new FieldList(fields);
 		_latitude = inLatitude;
-		_fieldValues[0] = inLatitude.output(Coordinate.FORMAT_DEG_MIN_SEC);
+		_fieldValues[0] = inLatitude.output(Coordinate.FORMAT_NONE);
 		_longitude = inLongitude;
-		_fieldValues[1] = inLongitude.output(Coordinate.FORMAT_DEG_MIN_SEC);
+		_fieldValues[1] = inLongitude.output(Coordinate.FORMAT_NONE);
 		if (inAltitude == null) {
 			_altitude = Altitude.NONE;
 		}
 		else {
 			_altitude = inAltitude;
-			_fieldValues[2] = "" + inAltitude.getValue(Altitude.Format.METRES); // units are ignored
+			_fieldValues[2] = "" + inAltitude.getValue();
 		}
 		_timestamp = new Timestamp(null);
 	}
@@ -125,8 +126,9 @@ public class DataPoint
 	 * Set (or edit) the specified field value
 	 * @param inField Field to set
 	 * @param inValue value to set
+	 * @param inUndo true if undo operation, false otherwise
 	 */
-	public void setFieldValue(Field inField, String inValue)
+	public void setFieldValue(Field inField, String inValue, boolean inUndo)
 	{
 		// See if this data point already has this field
 		int fieldIndex = _fieldList.getFieldIndex(inField);
@@ -148,6 +150,15 @@ public class DataPoint
 		}
 		// Set field value in array
 		_fieldValues[fieldIndex] = inValue;
+		// Increment edit count on all field edits except segment
+		if (inField != Field.NEW_SEGMENT) {
+			if (!inUndo) {
+				_modifyCount++;
+			}
+			else {
+				_modifyCount--;
+			}
+		}
 		// Change Coordinate, Altitude, Name or Timestamp fields after edit
 		if (_altitude != null && _altitude.getFormat() != Altitude.Format.NO_FORMAT) {
 			// Altitude already present so reuse format
@@ -159,10 +170,18 @@ public class DataPoint
 		}
 	}
 
+	/**
+	 * @return field list for this point
+	 */
+	public FieldList getFieldList()
+	{
+		return _fieldList;
+	}
+
 	/** @param inFlag true for start of track segment */
 	public void setSegmentStart(boolean inFlag)
 	{
-		setFieldValue(Field.NEW_SEGMENT, inFlag?"1":null);
+		setFieldValue(Field.NEW_SEGMENT, inFlag?"1":null, false);
 	}
 
 	/**
@@ -229,6 +248,13 @@ public class DataPoint
 		return (_waypointName != null && !_waypointName.equals(""));
 	}
 
+	/**
+	 * @return true if point has been modified since loading
+	 */
+	public boolean isModified()
+	{
+		return _modifyCount > 0;
+	}
 
 	/**
 	 * Compare two DataPoint objects to see if they are duplicates
@@ -286,7 +312,6 @@ public class DataPoint
 	{
 		return _latitude.isValid() && _longitude.isValid();
 	}
-
 
 	/**
 	 * Interpolate a set of points between this one and the given one
@@ -373,7 +398,7 @@ public class DataPoint
 	 */
 	public DataPoint clonePoint()
 	{
-		// Copy all values
+		// Copy all values (note that photo not copied)
 		String[] valuesCopy = new String[_fieldValues.length];
 		System.arraycopy(_fieldValues, 0, valuesCopy, 0, _fieldValues.length);
 		// Make new object to hold cloned data

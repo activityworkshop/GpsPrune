@@ -9,7 +9,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -22,19 +24,22 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
+import tim.prune.data.SourceInfo;
 import tim.prune.load.xml.XmlFileLoader;
 import tim.prune.load.xml.XmlHandler;
+import tim.prune.save.GpxExporter;
 
 /**
  * Class to manage the loading of GPS data using GpsBabel
@@ -45,8 +50,10 @@ public class GpsLoader extends GenericFunction implements Runnable
 	private JDialog _dialog = null;
 	private JTextField _deviceField = null, _formatField = null;
 	private JCheckBox _waypointCheckbox = null, _trackCheckbox = null;
+	private JCheckBox _saveCheckbox = null;
 	private JButton _okButton = null;
 	private JProgressBar _progressBar = null;
+	private File _saveFile = null;
 	private boolean _cancelled = false;
 
 
@@ -146,6 +153,11 @@ public class GpsLoader extends GenericFunction implements Runnable
 		_trackCheckbox.addChangeListener(checkboxListener);
 		_trackCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_trackCheckbox);
+		// Checkbox for immediately saving to file
+		_saveCheckbox = new JCheckBox(I18nManager.getText("dialog.gpsload.save"));
+		_saveCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
+		mainPanel.add(_saveCheckbox);
+
 		// progress bar (initially invisible)
 		_progressBar = new JProgressBar(0, 10);
 		mainPanel.add(_progressBar);
@@ -210,14 +222,13 @@ public class GpsLoader extends GenericFunction implements Runnable
 		if (_waypointCheckbox.isSelected() || _trackCheckbox.isSelected())
 		{
 			_progressBar.setIndeterminate(true);
+			_saveFile = null;
 			try
 			{
-				callGpsBabel(_waypointCheckbox.isSelected(), _trackCheckbox.isSelected());
+				callGpsBabel();
 			}
 			catch (Exception e)
 			{
-				// System.err.println("Error: " + e.getClass().getName());
-				// System.err.println("Error: " + e.getMessage());
 				_app.showErrorMessageNoLookup(getNameKey(), e.getMessage());
 				_cancelled = true;
 			}
@@ -234,70 +245,126 @@ public class GpsLoader extends GenericFunction implements Runnable
 
 	/**
 	 * Execute the call to gpsbabel and pass the results back to the app
-	 * @param inWaypoints true to load waypoints
-	 * @param inTracks true to load track points
 	 */
-	private void callGpsBabel(boolean inWaypoints, boolean inTracks) throws Exception
+	private void callGpsBabel() throws Exception
 	{
 		// Set up command to call gpsbabel
-		String[] commands = null;
 		final String device = _deviceField.getText().trim();
 		final String format = _formatField.getText().trim();
-		final String command = Config.getConfigString(Config.KEY_GPSBABEL_PATH);
-		if (inWaypoints && inTracks) {
-			// Both waypoints and track points selected
-			commands = new String[] {command, "-w", "-t", "-i", format,
-				"-f", device, "-o", "gpx", "-F", "-"};
-		}
-		else
-		{
-			// Only waypoints OR track points selected
-			commands = new String[] {command, "-w", "-i", format,
-				"-f", device, "-o", "gpx", "-F", "-"};
-			if (inTracks) {
-				commands[1] = "-t";
-			}
-		}
+		String[] commands = getCommandArray(device, format);
 		// Save GPS settings in config
 		Config.setConfigString(Config.KEY_GPS_DEVICE, device);
 		Config.setConfigString(Config.KEY_GPS_FORMAT, format);
 
-		String errorMessage = "";
+		String errorMessage = "", errorMessage2 = "";
 		XmlHandler handler = null;
 		Process process = Runtime.getRuntime().exec(commands);
+		String line = null;
 
-		// Pass input stream to try to parse the xml
-		try
+		if (_saveFile != null)
 		{
-			XmlFileLoader xmlLoader = new XmlFileLoader(_app);
-			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			saxParser.parse(process.getInputStream(), xmlLoader);
-			handler = xmlLoader.getHandler();
-			if (handler == null) {
-				errorMessage = "Null handler";
+			// data is being saved to file, so need to wait for it to finish
+			process.waitFor();
+			// try to read error message, if any
+			try {
+				BufferedReader r = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+				while ((line = r.readLine()) != null) {
+					errorMessage += line + "\n";
+				}
+				// Close error stream
+				try {
+					r.close();
+				} catch (Exception e) {}
+			}
+			catch (Exception e) {} // couldn't get error message
+
+			// Trigger it to be loaded by app
+			if (process.exitValue() == 0)
+			{
+				SwingUtilities.invokeLater(new Runnable() {
+					public void run() {
+						ArrayList<File> fileList = new ArrayList<File>();
+						fileList.add(_saveFile);
+						_app.loadDataFiles(fileList);
+					}
+				});
+			}
+			else if (errorMessage.length() > 0) {
+				throw new Exception(errorMessage);
+			}
+			else throw new Exception(I18nManager.getText("error.gpsload.unknown"));
+		}
+		else
+		{
+			// Pass input stream to try to parse the xml
+			try
+			{
+				XmlFileLoader xmlLoader = new XmlFileLoader(_app);
+				SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
+				saxParser.parse(process.getInputStream(), xmlLoader);
+				handler = xmlLoader.getHandler();
+				if (handler == null) {
+					errorMessage = "Null handler";
+				}
+			}
+			catch (Exception e) {
+				errorMessage = e.getMessage();
+			}
+
+			// Read the error stream to see if there's a better error message there
+			BufferedReader r = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+			while ((line = r.readLine()) != null) {
+				errorMessage2 += line + "\n";
+			}
+			// Close error stream
+			try {
+				r.close();
+			} catch (Exception e) {}
+
+			if (errorMessage2.length() > 0) {errorMessage = errorMessage2;}
+			if (errorMessage.length() > 0) {throw new Exception(errorMessage);}
+
+			// Send data back to app
+			_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(), Altitude.Format.METRES,
+				new SourceInfo(_deviceField.getText(), SourceInfo.FILE_TYPE.GPSBABEL));
+		}
+	}
+
+
+	/**
+	 * Get the commands to call
+	 * @param inDevice device name to use
+	 * @param inFormat format to use
+	 * @return String array containing commands
+	 */
+	private String[] getCommandArray(String inDevice, String inFormat)
+	{
+		String[] commands = null;
+		final String command = Config.getConfigString(Config.KEY_GPSBABEL_PATH);
+		final boolean loadWaypoints = _waypointCheckbox.isSelected();
+		final boolean loadTrack = _trackCheckbox.isSelected();
+		if (loadWaypoints && loadTrack) {
+			// Both waypoints and track points selected
+			commands = new String[] {command, "-w", "-t", "-i", inFormat,
+				"-f", inDevice, "-o", "gpx", "-F", "-"};
+		}
+		else
+		{
+			// Only waypoints OR track points selected
+			commands = new String[] {command, "-w", "-i", inFormat,
+				"-f", inDevice, "-o", "gpx", "-F", "-"};
+			if (loadTrack) {
+				commands[1] = "-t";
 			}
 		}
-		catch (Exception e) {
-			errorMessage = e.getMessage();
+		// Do we want to save the gpx straight to file?
+		if (_saveCheckbox.isSelected()) {
+			// Select file to save to
+			_saveFile = GpxExporter.chooseGpxFile(_parentFrame);
+			if (_saveFile != null) {
+				commands[commands.length-1] = _saveFile.getAbsolutePath();
+			}
 		}
-
-		// Read the error stream to see if there's a better error message there
-		BufferedReader r = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-		String line = null;
-		String errorMessage2 = "";
-		while ((line = r.readLine()) != null) {
-			errorMessage2 += line + "\n";
-		}
-		// Close error stream
-		try {
-			r.close();
-		} catch (Exception e) {}
-
-		if (errorMessage2.length() > 0) {errorMessage = errorMessage2;}
-		if (errorMessage.length() > 0) {throw new Exception(errorMessage);}
-
-		// Send data back to app
-		_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-			Altitude.Format.METRES, _deviceField.getText());
+		return commands;
 	}
 }

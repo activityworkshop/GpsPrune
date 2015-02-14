@@ -25,10 +25,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 
 /**
  * Class to manage the loading of GPS data using GpsBabel
@@ -257,8 +257,8 @@ public class GpsSaver extends GenericFunction implements Runnable
 		if (trackName == null || trackName.equals("")) {trackName = "prune";}
 		// Generate the GPX file and send to the GPS
 		OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
-		boolean[] saveFlags = {true, true, true, true}; // export everything
-		GpxExporter.exportData(writer, _app.getTrackInfo().getTrack(), trackName, null, saveFlags);
+		boolean[] saveFlags = {true, true, true, false, true}; // export everything
+		GpxExporter.exportData(writer, _app.getTrackInfo(), trackName, null, saveFlags, false);
 		writer.close();
 
 		// Read the error stream to see if there's a better error message there

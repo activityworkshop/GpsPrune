@@ -18,11 +18,9 @@ public class PhotoThumbnail extends JPanel implements Runnable
 {
 	private Photo _photo = null;
 	private BufferedImage _thumbnail = null;
-	private int _lastWidth = -1;
-	private int _lastHeight = -1;
 	private boolean _loadingImage = false;
 	/** String to show before photo is loaded */
-	private static final String _loadingString = I18nManager.getText("details.photo.loading") + " ...";
+	private static final String LOADING_STRING = I18nManager.getText("details.photo.loading") + " ...";
 
 
 	/**
@@ -30,7 +28,6 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	 */
 	public PhotoThumbnail()
 	{
-		// TODO: Make size of thumbnail dynamic, as big as it can be
 		setOpaque(true);
 	}
 
@@ -42,11 +39,19 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	public void setPhoto(Photo inPhoto)
 	{
 		// Check whether the photo has changed
-		if (_photo == inPhoto) {return;}
-		_photo = inPhoto;
-		_thumbnail = null;
+		if (_photo != inPhoto) {
+			_photo = inPhoto;
+			_thumbnail = null;
+		}
+		repaint();
 	}
 
+	/**
+	 * Force a refresh / reload
+	 */
+	public void refresh() {
+		_thumbnail = null;
+	}
 
 	/**
 	 * Override paint method
@@ -57,29 +62,34 @@ public class PhotoThumbnail extends JPanel implements Runnable
 		super.paint(inG);
 		if (_photo != null)
 		{
-			// recalculate thumbnail if photo has changed
-			if (_thumbnail == null || getWidth() != _lastWidth || getHeight() != _lastHeight)
+			// read thumbnail in separate thread
+			if (_thumbnail == null && !_loadingImage)
 			{
-				// initiate load if not already started
-				if (!_loadingImage)
-				{
-					_loadingImage = true;
-					new Thread(this).start();
-				}
+				_loadingImage = true;
+				new Thread(this).start();
 			}
-			// Set width and height
-			_lastWidth = getWidth();
-			_lastHeight = getHeight();
-			// if loading, display image
+			// if loading, display message
 			if (_loadingImage)
 			{
 				inG.setColor(Color.BLACK);
-				inG.drawString(_loadingString, 10, 30);
+				inG.drawString(LOADING_STRING, 10, 30);
 			}
 			else
 			{
-				// Copy scaled, smoothed image onto the screen
-				inG.drawImage(_thumbnail, 0, 0, _thumbnail.getWidth(), _thumbnail.getHeight(), null);
+				// Copy scaled, smoothed (and rotated) image into scaled
+				int usableWidth = getParent().getWidth()-10;
+				Image scaled = ImageUtils.rotateImage(_thumbnail, usableWidth, usableWidth, _photo.getRotationDegrees());
+				int scaleWidth = scaled.getWidth(null);
+				int scaleHeight = scaled.getHeight(null);
+				// Draw scaled / rotated image to component
+				int horizOffset = (getWidth() - scaleWidth) / 2;
+				int vertOffset = (getHeight() - scaleHeight) / 2;
+				inG.drawImage(scaled, horizOffset, vertOffset, scaleWidth, scaleHeight, null);
+				if (getHeight() < getWidth())
+				{
+					setPreferredSize(new Dimension(usableWidth, usableWidth));
+					invalidate();
+				}
 			}
 		}
 	}
@@ -104,24 +114,15 @@ public class PhotoThumbnail extends JPanel implements Runnable
 			int picHeight = _photo.getHeight();
 			if (picWidth > -1 && picHeight > -1)
 			{
-				int displayWidth = Math.min(getWidth(), getParent().getWidth());
-				int displayHeight = Math.min(getHeight(), getParent().getHeight());
-
+				// Just set a "reasonable" thumbnail size for now
+				final int DEFAULT_THUMB_SIZE = 400;
 				// calculate maximum thumbnail size
-				Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, displayWidth, displayHeight);
-				// Work out if need to remake image
-				boolean needToRemake = (_thumbnail == null)
-				 || _thumbnail.getWidth() != thumbSize.width || _thumbnail.getHeight() != thumbSize.height;
-				if (thumbSize.width > 0 && thumbSize.height > 0 && needToRemake)
-				{
-					// Make icon to load image into
-					Image image = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
-					// save scaled, smoothed thumbnail for reuse
-					_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
-					image = null;
-					// TODO: Calculate and set size of thumbnail here
-					// setPreferredSize(new Dimension(200, 200));
-				}
+				Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, DEFAULT_THUMB_SIZE, DEFAULT_THUMB_SIZE);
+				// Make icon to load image into
+				Image image = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
+				// save scaled, smoothed thumbnail for reuse
+				_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
+				image = null;
 			}
 		}
 		_loadingImage = false;

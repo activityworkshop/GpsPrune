@@ -5,8 +5,9 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import javax.swing.JPanel;
 
-import tim.prune.Config;
 import tim.prune.I18nManager;
+import tim.prune.config.ColourScheme;
+import tim.prune.config.Config;
 
 /**
  * Class to show a scale bar on the main map of Prune
@@ -81,18 +82,37 @@ public class ScaleBar extends JPanel
 					if (scale < 1) {return;}
 				}
 
+				// Determine colours to use
+				Color barColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
+				Color blankColour = new Color(255-barColour.getRed(), 255-barColour.getGreen(), 255-barColour.getBlue());
+				// Should this blank colour be set to saturation zero?
+				// Draw blank bars behind
+				inG.setColor(blankColour);
+				inG.drawLine(LEFT_OFFSET, Y_OFFSET-1, rightSide+2, Y_OFFSET-1);
+				inG.drawLine(LEFT_OFFSET, Y_OFFSET+2, rightSide+2, Y_OFFSET+2);
+				inG.drawLine(LEFT_OFFSET-1, Y_OFFSET+2, LEFT_OFFSET-1, Y_OFFSET-TICK_HEIGHT);
+				inG.drawLine(LEFT_OFFSET+2, Y_OFFSET+2, LEFT_OFFSET+2, Y_OFFSET-TICK_HEIGHT);
+				inG.drawLine(rightSide-1, Y_OFFSET+2, rightSide-1, Y_OFFSET-TICK_HEIGHT);
+				inG.drawLine(rightSide+2, Y_OFFSET+2, rightSide+2, Y_OFFSET-TICK_HEIGHT);
 				// horizontal
-				inG.setColor(Color.BLACK);
+				inG.setColor(barColour);
 				inG.drawLine(LEFT_OFFSET, Y_OFFSET, rightSide, Y_OFFSET);
 				inG.drawLine(LEFT_OFFSET, Y_OFFSET+1, rightSide, Y_OFFSET+1);
 				// 0 tick
 				inG.drawLine(LEFT_OFFSET, Y_OFFSET, LEFT_OFFSET, Y_OFFSET-TICK_HEIGHT);
 				inG.drawLine(LEFT_OFFSET+1, Y_OFFSET, LEFT_OFFSET+1, Y_OFFSET-TICK_HEIGHT);
 				// end tick
-				inG.drawLine(rightSide, Y_OFFSET, rightSide, Y_OFFSET-TICK_HEIGHT);
-				inG.drawLine(rightSide+1, Y_OFFSET, rightSide+1, Y_OFFSET-TICK_HEIGHT);
+				inG.drawLine(rightSide, Y_OFFSET+1, rightSide, Y_OFFSET-TICK_HEIGHT);
+				inG.drawLine(rightSide+1, Y_OFFSET+1, rightSide+1, Y_OFFSET-TICK_HEIGHT);
 				// text
-				String text = (scale>0?(""+scale):("1/"+(-scale))) + " " + I18nManager.getText(useMetric?"units.kilometres.short":"units.miles.short");
+				String text = (scale>0?(""+scale):("1/"+(-scale))) + " "
+					+ I18nManager.getText(useMetric?"units.kilometres.short":"units.miles.short");
+				inG.setColor(blankColour);
+				inG.drawString(text, rightSide+MARGIN_WIDTH-1, Y_OFFSET);
+				inG.drawString(text, rightSide+MARGIN_WIDTH+1, Y_OFFSET);
+				inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET-1);
+				inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET+1);
+				inG.setColor(barColour);
 				inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET);
 			}
 			catch (ArrayIndexOutOfBoundsException ai) {}

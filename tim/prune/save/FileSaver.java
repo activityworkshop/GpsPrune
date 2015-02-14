@@ -32,9 +32,9 @@ import javax.swing.ListSelectionModel;
 import javax.swing.table.TableModel;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -47,13 +47,12 @@ import tim.prune.load.OneCharDocument;
 
 /**
  * Class to manage the saving of track data
- * into a user-specified file
+ * as text into a user-specified file
  */
 public class FileSaver
 {
 	private App _app = null;
 	private JFrame _parentFrame = null;
-	private Track _track = null;
 	private JDialog _dialog = null;
 	private JFileChooser _fileChooser = null;
 	private JPanel _cards = null;
@@ -80,13 +79,11 @@ public class FileSaver
 	 * Constructor
 	 * @param inApp application object to inform of success
 	 * @param inParentFrame parent frame
-	 * @param inTrack track object to save
 	 */
-	public FileSaver(App inApp, JFrame inParentFrame, Track inTrack)
+	public FileSaver(App inApp, JFrame inParentFrame)
 	{
 		_app = inApp;
 		_parentFrame = inParentFrame;
-		_track = inTrack;
 	}
 
 
@@ -104,13 +101,14 @@ public class FileSaver
 			_dialog.pack();
 		}
 		// Check field list
-		FieldList fieldList = _track.getFieldList();
+		Track track = _app.getTrackInfo().getTrack();
+		FieldList fieldList = track.getFieldList();
 		int numFields = fieldList.getNumFields();
 		_model = new FieldSelectionTableModel(numFields);
 		for (int i=0; i<numFields; i++)
 		{
 			Field field = fieldList.getField(i);
-			FieldInfo info = new FieldInfo(field, _track.hasData(field));
+			FieldInfo info = new FieldInfo(field, track.hasData(field));
 			_model.addFieldInfo(info, i);
 		}
 		// Initialise dialog and show it
@@ -384,15 +382,16 @@ public class FileSaver
 
 
 	/**
-	 * Save the track to file with the chosen options
+	 * Start the save process by choosing the file to save to
 	 * @return true if successful or cancelled, false if failed
 	 */
 	private boolean saveToFile()
 	{
-		// TODO: Shorten method
-		if (!_pointTypeSelector.getAnythingSelected()) {return false;}
-		boolean saveOK = true;
-		FileWriter writer = null;
+		if (!_pointTypeSelector.getAnythingSelected()) {
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.notypesselected"),
+				I18nManager.getText("dialog.saveoptions.title"), JOptionPane.WARNING_MESSAGE);
+			return false;
+		}
 		if (_fileChooser == null)
 		{
 			_fileChooser = new JFileChooser();
@@ -408,176 +407,206 @@ public class FileSaver
 		}
 		if (_fileChooser.showSaveDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
-			File saveFile = _fileChooser.getSelectedFile();
-			String lineSeparator = System.getProperty("line.separator");
-			// Get coordinate format and altitude format
-			int coordFormat = Coordinate.FORMAT_NONE;
-			for (int i=0; i<_coordUnitsRadios.length; i++)
-				if (_coordUnitsRadios[i].isSelected())
-					coordFormat = FORMAT_COORDS[i];
-			Altitude.Format altitudeFormat = Altitude.Format.NO_FORMAT;
-			for (int i=0; i<_altitudeUnitsRadios.length; i++)
-			{
-				if (_altitudeUnitsRadios[i].isSelected())
-				{
-					altitudeFormat = FORMAT_ALTS[i];
-				}
-			}
-			// Get timestamp formats
-			int timestampFormat = Timestamp.FORMAT_ORIGINAL;
-			for (int i=0; i<_timestampUnitsRadios.length; i++)
-			{
-				if (_timestampUnitsRadios[i].isSelected())
-				{
-					timestampFormat = FORMAT_TIMES[i];
-				}
-			}
+			return saveToFile(_fileChooser.getSelectedFile());
+		}
+		return true; // cancelled
+	}
 
-			// Check if file exists, and confirm overwrite if necessary
-			Object[] buttonTexts = {I18nManager.getText("button.overwrite"), I18nManager.getText("button.cancel")};
-			if (!saveFile.exists() || JOptionPane.showOptionDialog(_parentFrame,
-					I18nManager.getText("dialog.save.overwrite.text"),
-					I18nManager.getText("dialog.save.overwrite.title"), JOptionPane.YES_NO_OPTION,
-					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
-				== JOptionPane.YES_OPTION)
-			{
-				try
-				{
-					// Create output file
-					writer = new FileWriter(saveFile);
-					// Determine delimiter character to use
-					char delimiter = getDelimiter();
-					FieldInfo info = null;
-					Field field = null;
 
-					StringBuffer buffer = null;
-					int numFields = _model.getRowCount();
-					boolean firstField = true;
-					// Write header row if required
-					if (_headerRowCheckbox.isSelected())
-					{
-						buffer = new StringBuffer();
-						for (int f=0; f<numFields; f++)
-						{
-							info = _model.getFieldInfo(f);
-							if (info.isSelected())
-							{
-								if (!firstField)
-								{
-									// output field separator
-									buffer.append(delimiter);
-								}
-								field = info.getField();
-								buffer.append(field.getName());
-								firstField = false;
-							}
-						}
-						writer.write(buffer.toString());
-						writer.write(lineSeparator);
-					}
-
-					// Loop over points outputting each in turn to buffer
-					final int numPoints = _track.getNumPoints();
-					int numSaved = 0;
-					for (int p=0; p<numPoints; p++)
-					{
-						DataPoint point = _track.getPoint(p);
-						boolean savePoint = ((point.isWaypoint() && _pointTypeSelector.getWaypointsSelected())
-							|| (!point.isWaypoint() && point.getPhoto()==null && _pointTypeSelector.getTrackpointsSelected())
-							|| (!point.isWaypoint() && point.getPhoto()!=null && _pointTypeSelector.getPhotopointsSelected()));
-						if (!savePoint) {continue;}
-						numSaved++;
-						firstField = true;
-						buffer = new StringBuffer();
-						for (int f=0; f<numFields; f++)
-						{
-							info = _model.getFieldInfo(f);
-							if (info.isSelected())
-							{
-								if (!firstField)
-								{
-									// output field separator
-									buffer.append(delimiter);
-								}
-								field = info.getField();
-								// Output field according to type
-								if (field == Field.LATITUDE)
-								{
-									buffer.append(point.getLatitude().output(coordFormat));
-								}
-								else if (field == Field.LONGITUDE)
-								{
-									buffer.append(point.getLongitude().output(coordFormat));
-								}
-								else if (field == Field.ALTITUDE)
-								{
-									try
-									{
-										buffer.append(point.getAltitude().getStringValue(altitudeFormat));
-									}
-									catch (NullPointerException npe) {}
-								}
-								else if (field == Field.TIMESTAMP)
-								{
-									if (point.hasTimestamp())
-									{
-										if (timestampFormat == Timestamp.FORMAT_ORIGINAL) {
-											// output original string
-											buffer.append(point.getFieldValue(Field.TIMESTAMP));
-										}
-										else {
-											// format value accordingly
-											buffer.append(point.getTimestamp().getText(timestampFormat));
-										}
-									}
-								}
-								else
-								{
-									String value = point.getFieldValue(field);
-									if (value != null)
-									{
-										buffer.append(value);
-									}
-								}
-								firstField = false;
-							}
-						}
-						// Output to file
-						writer.write(buffer.toString());
-						writer.write(lineSeparator);
-					}
-					// Store directory in config for later
-					Config.setConfigString(Config.KEY_TRACK_DIR, saveFile.getParentFile().getAbsolutePath());
-					// Save successful
-					UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
-						 + " " + numSaved + " " + I18nManager.getText("confirm.save.ok2")
-						 + " " + saveFile.getAbsolutePath());
-					_app.informDataSaved();
-				}
-				catch (IOException ioe)
-				{
-					saveOK = false;
-					_app.showErrorMessageNoLookup("error.save.dialogtitle",
-						I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
-				}
-				finally
-				{
-					// try to close file if it's open
-					try {
-						if (writer != null) {
-							writer.close();
-						}
-					}
-					catch (Exception e) {}
-				}
-			}
-			else
-			{
-				// Overwrite file confirm cancelled
-				saveOK = false;
+	/**
+	 * Save the track to the specified file using the chosen options
+	 * @param inSaveFile file to save to
+	 * @return true if save successful, false if failed
+	 */
+	private boolean saveToFile(File inSaveFile)
+	{
+		// TODO: Shorten method
+		FileWriter writer = null;
+		final String lineSeparator = System.getProperty("line.separator");
+		boolean saveOK = true;
+		// Get coordinate format and altitude format
+		int coordFormat = Coordinate.FORMAT_NONE;
+		for (int i=0; i<_coordUnitsRadios.length; i++)
+			if (_coordUnitsRadios[i].isSelected())
+				coordFormat = FORMAT_COORDS[i];
+		Altitude.Format altitudeFormat = Altitude.Format.NO_FORMAT;
+		for (int i=0; i<_altitudeUnitsRadios.length; i++)
+		{
+			if (_altitudeUnitsRadios[i].isSelected()) {
+				altitudeFormat = FORMAT_ALTS[i];
 			}
 		}
+		// Get timestamp format
+		int timestampFormat = Timestamp.FORMAT_ORIGINAL;
+		for (int i=0; i<_timestampUnitsRadios.length; i++)
+		{
+			if (_timestampUnitsRadios[i].isSelected()) {
+				timestampFormat = FORMAT_TIMES[i];
+			}
+		}
+
+		// Check if file exists, and confirm overwrite if necessary
+		Object[] buttonTexts = {I18nManager.getText("button.overwrite"), I18nManager.getText("button.cancel")};
+		if (!inSaveFile.exists() || JOptionPane.showOptionDialog(_parentFrame,
+				I18nManager.getText("dialog.save.overwrite.text"),
+				I18nManager.getText("dialog.save.overwrite.title"), JOptionPane.YES_NO_OPTION,
+				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
+			== JOptionPane.YES_OPTION)
+		{
+			try
+			{
+				// Create output file
+				writer = new FileWriter(inSaveFile);
+				// Determine delimiter character to use
+				final char delimiter = getDelimiter();
+				FieldInfo info = null;
+
+				StringBuffer buffer = null;
+				int numFields = _model.getRowCount();
+				boolean firstField = true;
+				// Write header row if required
+				if (_headerRowCheckbox.isSelected())
+				{
+					buffer = new StringBuffer();
+					for (int f=0; f<numFields; f++)
+					{
+						info = _model.getFieldInfo(f);
+						if (info.isSelected())
+						{
+							// output field separator
+							if (!firstField) {
+								buffer.append(delimiter);
+							}
+							buffer.append(info.getField().getName());
+							firstField = false;
+						}
+					}
+					writer.write(buffer.toString());
+					writer.write(lineSeparator);
+				}
+
+				// Examine selection
+				int selStart = -1, selEnd = -1;
+				if (_pointTypeSelector.getJustSelection()) {
+					selStart = _app.getTrackInfo().getSelection().getStart();
+					selEnd = _app.getTrackInfo().getSelection().getEnd();
+				}
+				// Loop over points outputting each in turn to buffer
+				Track track = _app.getTrackInfo().getTrack();
+				final int numPoints = track.getNumPoints();
+				int numSaved = 0;
+				for (int p=0; p<numPoints; p++)
+				{
+					DataPoint point = track.getPoint(p);
+					boolean savePoint = ((point.isWaypoint() && _pointTypeSelector.getWaypointsSelected())
+						|| (!point.isWaypoint() && point.getPhoto()==null && _pointTypeSelector.getTrackpointsSelected())
+						|| (!point.isWaypoint() && point.getPhoto()!=null && _pointTypeSelector.getPhotopointsSelected()))
+						&& (!_pointTypeSelector.getJustSelection() || (p>=selStart && p<=selEnd));
+					if (!savePoint) {continue;}
+					numSaved++;
+					firstField = true;
+					buffer = new StringBuffer();
+					for (int f=0; f<numFields; f++)
+					{
+						info = _model.getFieldInfo(f);
+						if (info.isSelected())
+						{
+							if (!firstField)
+							{
+								// output field separator
+								buffer.append(delimiter);
+							}
+							saveField(buffer, point, info.getField(), coordFormat, altitudeFormat, timestampFormat);
+							firstField = false;
+						}
+					}
+					// Output to file
+					writer.write(buffer.toString());
+					writer.write(lineSeparator);
+				}
+				// Store directory in config for later
+				Config.setConfigString(Config.KEY_TRACK_DIR, inSaveFile.getParentFile().getAbsolutePath());
+				// Save successful
+				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
+					 + " " + numSaved + " " + I18nManager.getText("confirm.save.ok2")
+					 + " " + inSaveFile.getAbsolutePath());
+				_app.informDataSaved();
+			}
+			catch (IOException ioe)
+			{
+				saveOK = false;
+				_app.showErrorMessageNoLookup("error.save.dialogtitle",
+					I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
+			}
+			finally
+			{
+				// try to close file if it's open
+				try {
+					writer.close();
+				}
+				catch (Exception e) {}
+			}
+		}
+		else
+		{
+			// Overwrite file confirm cancelled
+			saveOK = false;
+		}
 		return saveOK;
+	}
+
+
+	/**
+	 * Format the given field and append to the given buffer for saving
+	 * @param inBuffer buffer to append to
+	 * @param inPoint point object
+	 * @param inField field object
+	 * @param inCoordFormat coordinate format
+	 * @param inAltitudeFormat altitude format
+	 * @param inTimestampFormat timestamp format
+	 */
+	private void saveField(StringBuffer inBuffer, DataPoint inPoint, Field inField,
+		int inCoordFormat, Altitude.Format inAltitudeFormat, int inTimestampFormat)
+	{
+		// Output field according to type
+		if (inField == Field.LATITUDE)
+		{
+			inBuffer.append(inPoint.getLatitude().output(inCoordFormat));
+		}
+		else if (inField == Field.LONGITUDE)
+		{
+			inBuffer.append(inPoint.getLongitude().output(inCoordFormat));
+		}
+		else if (inField == Field.ALTITUDE)
+		{
+			try
+			{
+				inBuffer.append(inPoint.getAltitude().getStringValue(inAltitudeFormat));
+			}
+			catch (NullPointerException npe) {}
+		}
+		else if (inField == Field.TIMESTAMP)
+		{
+			if (inPoint.hasTimestamp())
+			{
+				if (inTimestampFormat == Timestamp.FORMAT_ORIGINAL) {
+					// output original string
+					inBuffer.append(inPoint.getFieldValue(Field.TIMESTAMP));
+				}
+				else {
+					// format value accordingly
+					inBuffer.append(inPoint.getTimestamp().getText(inTimestampFormat));
+				}
+			}
+		}
+		else
+		{
+			String value = inPoint.getFieldValue(inField);
+			if (value != null)
+			{
+				inBuffer.append(value);
+			}
+		}
 	}
 
 

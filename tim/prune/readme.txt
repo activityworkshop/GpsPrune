@@ -1,11 +1,11 @@
-Prune version 8
+Prune version 9
 ===============
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
 Full details can be found at http://activityworkshop.net/software/prune/
 
-Prune is copyright activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+Prune is copyright 2006-2010 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_08.jar
+   java -jar prune_09.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,7 +25,21 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_08.jar --lang=DE
+   java -jar prune_09.jar --lang=DE
+
+New with version 9
+==================
+
+The following features were added since version 8:
+  - Ability to paste coordinates (eg from wikipedia or geocaching sites) to create new points
+  - Configurable colour settings
+  - Function to convert waypoint names into timestamps
+  - Function to reorganise and sort photos either by filename or time
+  - Ability to load gzipped xml files
+  - New "full range details" dialog including pace and average gradient
+  - Preservation of unrecognised gpx tags by copying source xml
+  - Improved photo handling and ability to rotate photos
+  - Japanese, Portuguese and Turkish languages thanks to generous user input
 
 New with version 8
 ==================
@@ -118,6 +132,16 @@ The following features were added since version 1:
   - Point edit dialog, waypoint name edit dialog
   - Waypoint list
   - Spanish language
+
+Features of version 1
+=====================
+
+The following features were included in version 1:
+  - Loading of text files, display in overhead and profile views
+  - Display of track details such as distances, speeds
+  - Deletion of points and ranges, and variable compression
+  - Export to KML format
+  - English, German and Swiss German languages
 
 
 Further information and updates

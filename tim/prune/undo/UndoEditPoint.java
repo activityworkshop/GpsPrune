@@ -49,7 +49,7 @@ public class UndoEditPoint implements UndoOperation
 	public void performUndo(TrackInfo inTrackInfo) throws UndoException
 	{
 		// Restore contents of point into track
-		if (!inTrackInfo.getTrack().editPoint(_originalPoint, _undoFieldList))
+		if (!inTrackInfo.getTrack().editPoint(_originalPoint, _undoFieldList, true))
 		{
 			// throw exception if failed
 			throw new UndoException(getDescription());

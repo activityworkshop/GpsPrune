@@ -25,10 +25,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
 import tim.prune.data.Track;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.LineDialog;

@@ -91,7 +91,8 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
 			.append("deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, polski, \u4e2d\u6587; (chinese)<br>" +
-				"schwiizerd\u00FC\u00FCtsch, portugu\u00EAs, bahasa indonesia, rom\u00E2n\u0103").append("</p>");
+				"schwiizerd\u00FC\u00FCtsch, \u65E5\u672C\u8A9E (japanese), t\u00FCrk\u00E7e, portugu\u00EAs, " +
+				"bahasa indonesia, rom\u00E2n\u0103").append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -177,7 +178,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel("Ramon, Miguel, In\u00E9s, Piotr, Petrovsk, Josatoc, Weehal,"),
 			1, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph"),
+			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph, nazotoko, katpatuka"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
@@ -189,13 +190,13 @@ public class AboutScreen extends GenericFunction
 			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
 			0, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Mandriva Linux, Sun Java, Eclipse, Svn, Gimp"),
+			new JLabel("Debian Linux, Sun Java, Eclipse, Svn, Gimp, Inkscape"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
 			0, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Kate, Povray, Exiftool, Inkscape, Google Earth, Gpsbabel, Gnuplot"),
+			new JLabel("Openstreetmap, Povray, Exiftool, Google Earth, Gpsbabel, Gnuplot"),
 			1, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
@@ -242,7 +243,7 @@ public class AboutScreen extends GenericFunction
 	}
 
 	/**
-	 * Helper function to reduce complexity of gui making code
+	 * Helper function to reduce complexity of gui-making code
 	 * when adding labels to a GridBagLayout
 	 * @param inPanel panel to add to
 	 * @param inLayout GridBagLayout object
@@ -251,8 +252,8 @@ public class AboutScreen extends GenericFunction
 	 * @param inX grid x
 	 * @param inY grid y
 	 */
-	private static void addToGridBagPanel(JPanel inPanel, GridBagLayout inLayout, GridBagConstraints inConstraints,
-		JLabel inLabel, int inX, int inY)
+	private static void addToGridBagPanel(JPanel inPanel, GridBagLayout inLayout,
+		GridBagConstraints inConstraints, JLabel inLabel, int inX, int inY)
 	{
 		// set x and y in constraints
 		inConstraints.gridx = inX;

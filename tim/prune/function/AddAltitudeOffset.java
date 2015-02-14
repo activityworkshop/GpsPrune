@@ -1,7 +1,6 @@
 package tim.prune.function;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -81,7 +80,7 @@ public class AddAltitudeOffset extends GenericFunction
 	 * Create dialog components
 	 * @return Panel containing all gui elements in dialog
 	 */
-	private Component makeDialogComponents()
+	private JPanel makeDialogComponents()
 	{
 		JPanel dialogPanel = new JPanel();
 		dialogPanel.setLayout(new BorderLayout());

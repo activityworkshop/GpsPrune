@@ -35,6 +35,7 @@ public abstract class Coordinate
 
 	// Instance variables
 	private boolean _valid = false;
+	private boolean _cardinalGuessed = false;
 	protected int _cardinal = NORTH;
 	private int _degrees = 0;
 	private int _minutes = 0;
@@ -68,6 +69,12 @@ public abstract class Coordinate
 				hasCardinal = false;
 				// use default from concrete subclass
 				_cardinal = getDefaultCardinal();
+				_cardinalGuessed = true;
+			}
+			else if (isJustNumber(inString)) {
+				// it's just a number
+				hasCardinal = false;
+				_cardinalGuessed = true;
 			}
 
 			// count numeric fields - 1=d, 2=dm, 3=dm.m/dms, 4=dms.s
@@ -181,6 +188,12 @@ public abstract class Coordinate
 		return cardinal;
 	}
 
+	/**
+	 * @return true if cardinal was guessed, false if parsed
+	 */
+	public boolean getCardinalGuessed() {
+		return _cardinalGuessed;
+	}
 
 	/**
 	 * Get the cardinal from the given character
@@ -304,7 +317,9 @@ public abstract class Coordinate
 				case FORMAT_DECIMAL_FORCE_POINT:
 				{
 					// Forcing a decimal point instead of system-dependent commas etc
-					answer = EIGHT_DP.format(_asDouble);
+					if (_originalFormat != FORMAT_DEG_WITHOUT_CARDINAL || answer.indexOf('.') < 0) {
+						answer = EIGHT_DP.format(_asDouble);
+					}
 					break;
 				}
 				case FORMAT_DEG_MIN_SEC_WITH_SPACES:
@@ -409,6 +424,21 @@ public abstract class Coordinate
 	 */
 	protected abstract Coordinate makeNew(double inValue, int inFormat);
 
+	/**
+	 * Try to parse the given string
+	 * @param inString string to check
+	 * @return true if it can be parsed as a number
+	 */
+	private static boolean isJustNumber(String inString)
+	{
+		boolean justNum = false;
+		try {
+			double x = Double.parseDouble(inString);
+			justNum = (x >= -180.0 && x <= 360.0);
+		}
+		catch (NumberFormatException nfe) {} // flag remains false
+		return justNum;
+	}
 
 	/**
 	 * Create a String representation for debug

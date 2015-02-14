@@ -15,10 +15,10 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import tim.prune.App;
-import tim.prune.Config;
 import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 
 /**
  * Function to set the paths for the external programs (eg gnuplot)

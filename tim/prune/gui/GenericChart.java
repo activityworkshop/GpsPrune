@@ -7,6 +7,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 import tim.prune.I18nManager;
+import tim.prune.config.ColourScheme;
+import tim.prune.config.Config;
 import tim.prune.data.TrackInfo;
 
 
@@ -19,9 +21,6 @@ public abstract class GenericChart extends GenericDisplay implements MouseListen
 	protected static final int BORDER_WIDTH = 8;
 
 	// Colours
-	private static final Color COLOR_BORDER_BG   = Color.WHITE;
-	private static final Color COLOR_CHART_BG    = Color.WHITE;
-	private static final Color COLOR_CHART_LINE  = Color.BLACK;
 	private static final Color COLOR_NODATA_TEXT = Color.GRAY;
 
 
@@ -51,12 +50,17 @@ public abstract class GenericChart extends GenericDisplay implements MouseListen
 		super.paint(inG);
 		int width = getWidth();
 		int height = getHeight();
+		// Get colours
+		ColourScheme colourScheme = Config.getColourScheme();
+		final Color borderColour = colourScheme.getColour(ColourScheme.IDX_BORDERS);
+		final Color backgroundColour = colourScheme.getColour(ColourScheme.IDX_BACKGROUND);
+		final Color insideColour = backgroundColour;
 		// border background
-		inG.setColor(COLOR_BORDER_BG);
+		inG.setColor(backgroundColour);
 		inG.fillRect(0, 0, width, height);
 		if (width < 2*BORDER_WIDTH || height < 2*BORDER_WIDTH) return;
 		// blank graph area, with line border
-		inG.setColor(COLOR_CHART_BG);
+		inG.setColor(insideColour);
 		inG.fillRect(BORDER_WIDTH, BORDER_WIDTH, width - 2*BORDER_WIDTH, height-2*BORDER_WIDTH);
 		// Display message if no data to be displayed
 		if (_track == null || _track.getNumPoints() <= 0)
@@ -65,7 +69,7 @@ public abstract class GenericChart extends GenericDisplay implements MouseListen
 			inG.drawString(I18nManager.getText("display.nodata"), 50, height/2);
 		}
 		else {
-			inG.setColor(COLOR_CHART_LINE);
+			inG.setColor(borderColour);
 			inG.drawRect(BORDER_WIDTH, BORDER_WIDTH, width - 2*BORDER_WIDTH, height-2*BORDER_WIDTH);
 		}
 	}

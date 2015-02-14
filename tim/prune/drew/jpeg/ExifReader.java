@@ -78,6 +78,8 @@ public class ExifReader
 	private static final int TAG_THUMBNAIL_OFFSET = 0x0201;
 	/** Thumbnail length */
 	private static final int TAG_THUMBNAIL_LENGTH = 0x0202;
+	/** Orientation of image */
+	private static final int TAG_ORIENTATION = 0x0112;
 
 
 	/**
@@ -383,6 +385,11 @@ public class ExifReader
 			_thumbnailLength = get16Bits(inTagValueOffset);
 			extractThumbnail(inMetadata);
 		}
+		else if (inTagType == TAG_ORIENTATION) {
+			if (inMetadata.getOrientationCode() < 1) {
+				inMetadata.setOrientationCode(get16Bits(inTagValueOffset));
+			}
+		}
 	}
 
 	/**
@@ -411,7 +418,7 @@ public class ExifReader
 		if (inByteCount > 4)
 		{
 			// If it's bigger than 4 bytes, the dir entry contains an offset.
-			// dirEntryOffset must be passed, as some makernote implementations (e.g. FujiFilm) incorrectly use an
+			// dirEntryOffset must be passed, as some makers (e.g. FujiFilm) incorrectly use an
 			// offset relative to the start of the makernote itself, not the TIFF segment.
 			final int offsetVal = get32Bits(inDirEntryOffset + 8);
 			if (offsetVal + inByteCount > _data.length)
@@ -506,7 +513,8 @@ public class ExifReader
 	private int get16Bits(int offset)
 	{
 		if (offset<0 || offset+2>_data.length)
-			throw new ArrayIndexOutOfBoundsException("attempt to read data outside of exif segment (index " + offset + " where max index is " + (_data.length - 1) + ")");
+			throw new ArrayIndexOutOfBoundsException("attempt to read data outside of exif segment (index "
+				+ offset + " where max index is " + (_data.length - 1) + ")");
 
 		if (_isMotorolaByteOrder) {
 			// Motorola - MSB first
