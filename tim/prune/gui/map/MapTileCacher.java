@@ -30,7 +30,7 @@ public class MapTileCacher implements ImageObserver
 	private MapTileConfig _tileConfig = null;
 
 	/** Grid size */
-	private static final int GRID_SIZE = 11;
+	private static final int GRID_SIZE = 15;
 	/** max zoom level of map tiles */
 	private static final int MAX_TILE_ZOOM = 18;
 
@@ -52,7 +52,10 @@ public class MapTileCacher implements ImageObserver
 	 */
 	public void centreMap(int inZoom, int inTileX, int inTileY)
 	{
-		if (inZoom != _zoom)
+		int shift = Math.max(Math.abs(inTileX-_tileX), Math.abs(inTileY - _tileY));
+		if (shift == 0) {return;}
+		// Clear cache if either zoom has changed or map has jumped too far
+		if (inZoom != _zoom || shift > GRID_SIZE/2)
 		{
 			_zoom = inZoom;
 			clearAll();

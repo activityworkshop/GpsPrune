@@ -19,6 +19,7 @@ public class Selection
 	private Altitude.Format _altitudeFormat = Altitude.Format.NO_FORMAT;
 	private long _totalSeconds = 0L, _movingSeconds = 0L;
 	private double _angDistance = -1.0, _angMovingDistance = -1.0;
+	private boolean _multipleSegments = false;
 
 
 	/**
@@ -32,59 +33,13 @@ public class Selection
 
 
 	/**
-	 * Reset selection to be recalculated
+	 * Mark selection invalid so it will be recalculated
 	 */
-	private void reset()
+	public void markInvalid()
 	{
 		_valid = false;
 	}
 
-
-	/**
-	 * Select the point at the given index
-	 * @param inIndex index number of selected point
-	 */
-	public void selectPoint(int inIndex)
-	{
-		if (inIndex >= -1)
-		{
-			_currentPoint = inIndex;
-			check();
-		}
-	}
-
-	/**
-	 * Select the specified point and range in one go
-	 * @param inPointIndex point selection
-	 * @param inStart range start
-	 * @param inEnd range end
-	 */
-	public void select(int inPointIndex, int inStart, int inEnd)
-	{
-		_currentPoint = inPointIndex;
-		_startIndex = inStart;
-		_endIndex = inEnd;
-		reset();
-		check();
-	}
-
-
-	/**
-	 * Select the previous point
-	 */
-	public void selectPreviousPoint()
-	{
-		if (_currentPoint > 0)
-			selectPoint(_currentPoint - 1);
-	}
-
-	/**
-	 * Select the next point
-	 */
-	public void selectNextPoint()
-	{
-		selectPoint(_currentPoint + 1);
-	}
 
 	/**
 	 * @return the current point index
@@ -110,6 +65,7 @@ public class Selection
 	private void recalculate()
 	{
 		_altitudeFormat = Altitude.Format.NO_FORMAT;
+		_multipleSegments = false;
 		if (_track.getNumPoints() > 0 && hasRangeSelected())
 		{
 			_altitudeRange = new IntegerRange();
@@ -164,7 +120,10 @@ public class Selection
 					{
 						double radians = DataPoint.calculateRadiansBetween(lastPoint, currPoint);
 						_angDistance += radians;
-						if (!currPoint.getSegmentStart()) {
+						if (currPoint.getSegmentStart()) {
+							_multipleSegments = true;
+						}
+						else {
 							_angMovingDistance += radians;
 						}
 					}
@@ -273,23 +232,35 @@ public class Selection
 	}
 
 	/**
-	 * Clear selected point and range
+	 * @return true if track has multiple segments
+	 */
+	public boolean getHasMultipleSegments()
+	{
+		return _multipleSegments;
+	}
+
+	/**
+	 * Clear selected point, range and photo
 	 */
 	public void clearAll()
 	{
 		_currentPoint = -1;
-		deselectRange();
-		deselectPhoto();
+		selectRange(-1, -1);
+		_currentPhotoIndex = -1;
+		check();
 	}
 
 
 	/**
 	 * Deselect range
+	 * @param inStartIndex index of start of range
+	 * @param inEndIndex index of end of range
 	 */
-	public void deselectRange()
+	public void selectRange(int inStartIndex, int inEndIndex)
 	{
-		_startIndex = _endIndex = -1;
-		reset();
+		_startIndex = inStartIndex;
+		_endIndex = inEndIndex;
+		markInvalid();
 		check();
 	}
 
@@ -307,7 +278,7 @@ public class Selection
 	 * Set the index for the start of the range selection
 	 * @param inStartIndex start index
 	 */
-	public void selectRangeStart(int inStartIndex)
+	private void selectRangeStart(int inStartIndex)
 	{
 		if (inStartIndex < 0)
 		{
@@ -322,7 +293,7 @@ public class Selection
 				_endIndex = _track.getNumPoints() - 1;
 			}
 		}
-		reset();
+		markInvalid();
 		UpdateMessageBroker.informSubscribers();
 	}
 
@@ -350,12 +321,11 @@ public class Selection
 		{
 			_endIndex = inEndIndex;
 			// Move start of selection to min if necessary
-			if (_startIndex > _endIndex || _startIndex < 0)
-			{
+			if (_startIndex > _endIndex || _startIndex < 0) {
 				_startIndex = 0;
 			}
 		}
-		reset();
+		markInvalid();
 		UpdateMessageBroker.informSubscribers();
 	}
 
@@ -393,18 +363,8 @@ public class Selection
 			_endIndex--;
 			if (_currentPoint < _startIndex)
 				_startIndex--;
-			reset();
+			markInvalid();
 		}
-		check();
-	}
-
-
-	/**
-	 * Deselect photo
-	 */
-	public void deselectPhoto()
-	{
-		_currentPhotoIndex = -1;
 		check();
 	}
 
@@ -417,16 +377,8 @@ public class Selection
 	public void selectPhotoAndPoint(int inPhotoIndex, int inPointIndex)
 	{
 		_currentPhotoIndex = inPhotoIndex;
-		if (inPointIndex > -1)
-		{
-			// select associated point, if any
-			selectPoint(inPointIndex);
-		}
-		else
-		{
-			// Check if not already done
-			check();
-		}
+		_currentPoint = inPointIndex;
+		check();
 	}
 
 

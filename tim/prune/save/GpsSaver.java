@@ -65,7 +65,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 	public void begin()
 	{
 		// Check if gpsbabel looks like it's installed
-		if (_gpsBabelChecked || ExternalTools.isGpsbabelInstalled()
+		if (_gpsBabelChecked || ExternalTools.isToolInstalled(ExternalTools.TOOL_GPSBABEL)
 			|| JOptionPane.showConfirmDialog(_dialog,
 				I18nManager.getText("dialog.gpsload.nogpsbabel"),
 				I18nManager.getText(getNameKey()),
@@ -106,12 +106,12 @@ public class GpsSaver extends GenericFunction implements Runnable
 		JLabel deviceLabel = new JLabel(I18nManager.getText("dialog.gpsload.device"));
 		deviceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(deviceLabel);
-		_deviceField = new JTextField(Config.getGpsDevice(), 12);
+		_deviceField = new JTextField(Config.getConfigString(Config.KEY_GPS_DEVICE), 12);
 		gridPanel.add(_deviceField);
 		JLabel formatLabel = new JLabel(I18nManager.getText("dialog.gpsload.format"));
 		formatLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(formatLabel);
-		_formatField = new JTextField(Config.getGpsFormat(), 12);
+		_formatField = new JTextField(Config.getConfigString(Config.KEY_GPS_FORMAT), 12);
 		gridPanel.add(_formatField);
 		JLabel nameLabel = new JLabel(I18nManager.getText("dialog.gpssend.trackname"));
 		nameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -228,21 +228,27 @@ public class GpsSaver extends GenericFunction implements Runnable
 	private void callGpsBabel() throws Exception
 	{
 		// Set up command to call gpsbabel
+		final String command = Config.getConfigString(Config.KEY_GPSBABEL_PATH);
 		String[] commands = null;
+		final String device = _deviceField.getText().trim();
+		final String format = _formatField.getText().trim();
 		if (_waypointCheckbox.isSelected() && _trackCheckbox.isSelected()) {
 			// Both waypoints and track points selected
-			commands = new String[] {"gpsbabel", "-w", "-t", "-i", "gpx", "-f", "-", "-o", _formatField.getText(),
-				"-F", _deviceField.getText()};
+			commands = new String[] {command, "-w", "-t", "-i", "gpx", "-f", "-", "-o", format,
+				"-F", device};
 		}
 		else
 		{
 			// Only waypoints OR trackpoints selected
-			commands = new String[] {"gpsbabel", "-w", "-i", "gpx", "-f", "-", "-o", _formatField.getText(),
-				"-F", _deviceField.getText()};
+			commands = new String[] {command, "-w", "-i", "gpx", "-f", "-", "-o", format,
+				"-F", device};
 			if (_trackCheckbox.isSelected()) {
 				commands[1] = "-t";
 			}
 		}
+		// Save GPS settings in config
+		Config.setConfigString(Config.KEY_GPS_DEVICE, device);
+		Config.setConfigString(Config.KEY_GPS_FORMAT, format);
 
 		String errorMessage = "";
 		Process process = Runtime.getRuntime().exec(commands);
@@ -251,7 +257,8 @@ public class GpsSaver extends GenericFunction implements Runnable
 		if (trackName == null || trackName.equals("")) {trackName = "prune";}
 		// Generate the GPX file and send to the GPS
 		OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
-		GpxExporter.exportData(writer, _app.getTrackInfo().getTrack(), trackName, null, true);
+		boolean[] saveFlags = {true, true, true, true}; // export everything
+		GpxExporter.exportData(writer, _app.getTrackInfo().getTrack(), trackName, null, saveFlags);
 		writer.close();
 
 		// Read the error stream to see if there's a better error message there

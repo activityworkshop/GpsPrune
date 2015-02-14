@@ -31,8 +31,8 @@ public class MapTileConfig
 	 */
 	public MapTileConfig()
 	{
-		_index = Config.getMapServerIndex();
-		_url = fixUrl(Config.getMapServerUrl());
+		_index = Config.getConfigInt(Config.KEY_MAPSERVERINDEX);
+		_url = fixUrl(Config.getConfigString(Config.KEY_MAPSERVERURL));
 		// reset index wrong or if other url too short
 		if (_index < 0 || _index > OTHER_SERVER_NUM ||
 			(_index == OTHER_SERVER_NUM && (_url == null || _url.length() < 5)))

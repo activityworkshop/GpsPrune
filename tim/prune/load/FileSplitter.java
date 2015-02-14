@@ -33,7 +33,7 @@ public class FileSplitter
 		if (_cacher == null) return null;
 		String[] contents = _cacher.getContents();
 		if (contents == null || contents.length == 0) return null;
-		String delimStr = "" + inDelim;
+		String delimStr = checkDelimiter(inDelim);
 		// Count non-blank rows and max field count
 		_numRows = 0;
 		int maxFields = 0;
@@ -61,9 +61,11 @@ public class FileSplitter
 			result[i] = new String[maxFields];
 			if (contents[i] != null)
 			{
-				String wholeLine = contents[i].trim();
-				if (!wholeLine.equals(""))
+				String wholeLine = contents[i];
+				if (!wholeLine.trim().equals(""))
 				{
+					// Don't use trimmed string here because you'll lose empty fields at beginning
+					// if separated by spaces or tabs
 					String[] splitLine = wholeLine.split(delimStr);
 					if (splitLine != null)
 					{
@@ -119,5 +121,20 @@ public class FileSplitter
 	{
 		// Should probably trap out of range values
 		return !_columnStates[inColumnNum];
+	}
+
+	/**
+	 * Check the delimiter for proper regular expression matching
+	 * @param inDelim character selected as delimiter
+	 * @return regular expression for splitting
+	 */
+	private static String checkDelimiter(char inDelim)
+	{
+		String result = "" + inDelim;
+		// Don't pass asterisks or dots without escaping them for RE
+		if (inDelim == '*' || inDelim == '.') {
+			result = "\\" + result;
+		}
+		return result;
 	}
 }

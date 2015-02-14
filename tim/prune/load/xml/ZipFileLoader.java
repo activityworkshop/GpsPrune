@@ -1,9 +1,11 @@
 package tim.prune.load.xml;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -33,7 +35,7 @@ public class ZipFileLoader
 	}
 
 	/**
-	 * Open the selected file and show the GUI dialog to select load options
+	 * Open the selected file and select appropriate xml loader
 	 * @param inFile File to open
 	 */
 	public void openFile(File inFile)
@@ -75,8 +77,52 @@ public class ZipFileLoader
 			}
 		}
 		catch (Exception e) {
-			System.err.println("Error: " + e.getMessage());
+			System.err.println("Error: " + e.getClass().getName() + " -message= " + e.getMessage());
 		}
 	}
 
+	/**
+	 * Use the given stream to access a remote zip file
+	 * @param inStream stream to use to access file
+	 */
+	public void openStream(InputStream inStream)
+	{
+		try
+		{
+			ZipInputStream zis = new ZipInputStream(inStream);
+			boolean xmlFound = false;
+			while (!xmlFound && zis.available() > 0)
+			{
+				ZipEntry entry = zis.getNextEntry();
+				String entryName = entry.toString();
+				if (entryName != null && entryName.length() > 4)
+				{
+					String suffix = entryName.substring(entryName.length()-4).toLowerCase();
+					if (suffix.equals(".kml") || suffix.equals(".gpx") || suffix.equals(".xml"))
+					{
+						_xmlLoader.reset();
+						SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
+						saxParser.parse(zis, _xmlLoader);
+						XmlHandler handler = _xmlLoader.getHandler();
+						if (handler == null) {
+							_app.showErrorMessage("error.load.dialogtitle", "error.load.othererror");
+						}
+						else {
+							// Send back to app
+							_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
+								Altitude.Format.METRES, "gpsies");
+							xmlFound = true;
+						}
+					}
+				}
+			}
+			// Check whether there was an xml file inside
+			if (!xmlFound) {
+				_app.showErrorMessage("error.load.dialogtitle", "error.load.noxmlinzip");
+			}
+		}
+		catch (Exception e) {
+			System.err.println("Error: " + e.getClass().getName() + " -message= " + e.getMessage());
+		}
+	}
 }

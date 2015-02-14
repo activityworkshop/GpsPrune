@@ -92,8 +92,9 @@ public class JpegLoader implements Runnable
 			panel.add(_outsideAreaCheckbox);
 			_fileChooser.setAccessory(panel);
 			// start from directory in config if already set by other operations
-			File configDir = Config.getWorkingDirectory();
-			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+			String configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);
+			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_TRACK_DIR);}
+			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 		// enable/disable track checkbox
 		_trackRectangle = inRectangle;
@@ -311,7 +312,8 @@ public class JpegLoader implements Runnable
 				{
 					// Store first directory in config for later
 					if (i == 0 && inFirstDir) {
-						Config.setWorkingDirectory(file.isDirectory()?file:file.getParentFile());
+						File workingDir = file.isDirectory()?file:file.getParentFile();
+						Config.setConfigString(Config.KEY_PHOTO_DIR, workingDir.getAbsolutePath());
 					}
 					// Check whether it's a file or a directory
 					if (file.isFile())

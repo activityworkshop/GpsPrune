@@ -86,7 +86,7 @@ public class KmlHandler extends XmlHandler
 	private void processPlacemark()
 	{
 		if (_coordinates == null) return;
-		String allCoords = _coordinates.toString();
+		String allCoords = _coordinates.toString().trim();
 		String[] coordArray = allCoords.split("[ \n]");
 		int numPoints = coordArray.length;
 		if (numPoints == 1)
@@ -103,7 +103,7 @@ public class KmlHandler extends XmlHandler
 				if (coordArray[p] != null && coordArray[p].trim().length()>3)
 				{
 					String[] pointArray = makeStringArray(coordArray[p], null);
-					if (firstPoint) {pointArray[4] = "1";}
+					if (firstPoint) {pointArray[4] = "1";} // start of segment flag
 					firstPoint = false;
 					_pointList.add(pointArray);
 				}

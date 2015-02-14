@@ -70,6 +70,14 @@ public class WholeNumberField extends JTextField
 	}
 
 	/**
+	 * @param inValue value to set
+	 */
+	public void setValue(int inValue)
+	{
+		setText("" + inValue);
+	}
+
+	/**
 	 * @param inText text to parse
 	 * @return value as integer
 	 */

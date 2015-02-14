@@ -76,6 +76,6 @@ public class UndoInsert implements UndoOperation
 			if (nextPoint != null) {nextPoint.setSegmentStart(_segmentFlag);}
 		}
 		// reset selection
-		inTrackInfo.getSelection().select(_startPosition-1, _startPosition-1, _startPosition);
+		inTrackInfo.getSelection().clearAll();
 	}
 }

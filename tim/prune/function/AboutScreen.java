@@ -90,8 +90,8 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext2")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
-			.append("deutsch, english, español, français, italiano, polski,<br>" +
-				"schwiizerdüütsch, português, bahasa indonesia, română").append("</p>");
+			.append("deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, polski, \u4e2d\u6587; (chinese)<br>" +
+				"schwiizerd\u00FC\u00FCtsch, portugu\u00EAs, bahasa indonesia, rom\u00E2n\u0103").append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -122,7 +122,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(System.getProperty("java.runtime.version")),
 			1, 1);
 		// Create install labels to be populated later
-		final int NUM_INSTALL_CHECKS = 5;
+		final int NUM_INSTALL_CHECKS = 4;
 		_installedLabels = new JLabel[NUM_INSTALL_CHECKS];
 		for (int i=0; i<NUM_INSTALL_CHECKS; i++) {
 			_installedLabels[i] = new JLabel("...");
@@ -132,21 +132,17 @@ public class AboutScreen extends GenericFunction
 			0, 2);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[0], 1, 2);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.systeminfo.povray") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.systeminfo.exiftool") + " : "),
 			0, 3);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[1], 1, 3);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.systeminfo.exiftool") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.systeminfo.gpsbabel") + " : "),
 			0, 4);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[2], 1, 4);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.systeminfo.gpsbabel") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.systeminfo.gnuplot") + " : "),
 			0, 5);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[3], 1, 5);
-		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.systeminfo.gnuplot") + " : "),
-			0, 6);
-		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[4], 1, 6);
 		_tabs.add(I18nManager.getText("dialog.about.systeminfo"), sysInfoPanel);
 
 		// Third pane for credits
@@ -178,10 +174,10 @@ public class AboutScreen extends GenericFunction
 			new JLabel(I18nManager.getText("dialog.about.credits.translators") + " : "),
 			0, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Ramon, Miguel, Inés, Piotr, Petrovsk, Josatoc, Weehal,"),
+			new JLabel("Ramon, Miguel, In\u00E9s, Piotr, Petrovsk, Josatoc, Weehal,"),
 			1, 3);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" theYinYeti, Rothermographer"),
+			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
@@ -315,9 +311,9 @@ public class AboutScreen extends GenericFunction
 		String yesText = I18nManager.getText("dialog.about.yes");
 		String noText = I18nManager.getText("dialog.about.no");
 		_installedLabels[0].setText(WindowFactory.isJava3dEnabled()?yesText:noText);
-		_installedLabels[1].setText(ExternalTools.isPovrayInstalled()?yesText:noText);
-		_installedLabels[2].setText(ExternalTools.isExiftoolInstalled()?yesText:noText);
-		_installedLabels[3].setText(ExternalTools.isGpsbabelInstalled()?yesText:noText);
-		_installedLabels[4].setText(ExternalTools.isGnuplotInstalled()?yesText:noText);
+		final int[] tools = {ExternalTools.TOOL_EXIFTOOL, ExternalTools.TOOL_GPSBABEL, ExternalTools.TOOL_GNUPLOT};
+		for (int i=0; i<tools.length; i++) {
+			_installedLabels[i+1].setText(ExternalTools.isToolInstalled(tools[i])?yesText:noText);
+		}
 	}
 }

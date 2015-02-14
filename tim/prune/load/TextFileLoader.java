@@ -127,6 +127,7 @@ public class TextFileLoader
 		else {
 			// Didn't pass pre-check
 			_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");
+			_app.informNoDataLoaded();
 		}
 	}
 
@@ -255,6 +256,7 @@ public class TextFileLoader
 			public void actionPerformed(ActionEvent e)
 			{
 				_dialog.dispose();
+				_app.informNoDataLoaded();
 			}
 		});
 		buttonPanel.add(cancelButton);

@@ -12,7 +12,9 @@ import java.util.ArrayList;
  */
 public class FileCacher
 {
+	/** File to cache */
 	private File _file = null;
+	/** Array to hold lines of file */
 	private String[] _contentArray = null;
 
 

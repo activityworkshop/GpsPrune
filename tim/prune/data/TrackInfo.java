@@ -249,6 +249,31 @@ public class TrackInfo
 		return _track.cloneRange(_selection.getStart(), _selection.getEnd());
 	}
 
+	/**
+	 * Merge the track segments within the given range
+	 * @param inStart start index
+	 * @param inEnd end index
+	 * @return true if successful
+	 */
+	public boolean mergeTrackSegments(int inStart, int inEnd)
+	{
+		boolean firstTrackPoint = true;
+		// Loop between start and end
+		for (int i=inStart; i<=inEnd; i++) {
+			DataPoint point = _track.getPoint(i);
+			// Set all segments to false apart from first track point
+			if (point != null && !point.isWaypoint()) {
+				point.setSegmentStart(firstTrackPoint);
+				firstTrackPoint = false;
+			}
+		}
+		// Find following track point, if any
+		DataPoint nextPoint = _track.getNextTrackPoint(inEnd+1);
+		if (nextPoint != null) {nextPoint.setSegmentStart(true);}
+		_selection.markInvalid();
+		UpdateMessageBroker.informSubscribers();
+		return true;
+	}
 
 	/**
 	 * Interpolate extra points between two selected ones
@@ -273,7 +298,7 @@ public class TrackInfo
 	{
 		boolean success = _track.average(_selection.getStart(), _selection.getEnd());
 		if (success) {
-			_selection.selectPoint(_selection.getEnd()+1);
+			selectPoint(_selection.getEnd()+1);
 		}
 		return success;
 	}
@@ -285,10 +310,38 @@ public class TrackInfo
 	 */
 	public void selectPoint(DataPoint inPoint)
 	{
-		// get the index of the given Point
-		int index = _track.getPointIndex(inPoint);
+		selectPoint(_track.getPointIndex(inPoint));
+	}
+
+	/**
+	 * Select the data point with the given index
+	 * @param inPointIndex index of DataPoint to select, or -1 for none
+	 */
+	public void selectPoint(int inPointIndex)
+	{
+		if (_selection.getCurrentPointIndex() == inPointIndex || inPointIndex >= _track.getNumPoints()) {return;}
+		// get the index of the current photo
+		int photoIndex = _selection.getCurrentPhotoIndex();
+		// Check if point has photo or not
+		boolean pointHasPhoto = false;
+		if (inPointIndex >= 0)
+		{
+			Photo pointPhoto = _track.getPoint(inPointIndex).getPhoto();
+			pointHasPhoto = (pointPhoto != null);
+			if (pointHasPhoto) {
+				photoIndex = _photoList.getPhotoIndex(pointPhoto);
+			}
+		}
+		// Might need to deselect photo
+		if (!pointHasPhoto)
+		{
+			// selected point hasn't got a photo - deselect photo if necessary
+			if (photoIndex < 0 || _photoList.getPhoto(photoIndex).isConnected()) {
+				photoIndex = -1;
+			}
+		}
 		// give to selection
-		_selection.selectPoint(index);
+		_selection.selectPhotoAndPoint(photoIndex, inPointIndex);
 	}
 
 	/**
@@ -297,19 +350,36 @@ public class TrackInfo
 	 */
 	public void selectPhoto(int inPhotoIndex)
 	{
+		if (_selection.getCurrentPhotoIndex() == inPhotoIndex) {return;}
+		// Photo is primary selection here, not as a result of a point selection
+		// Therefore the photo selection takes priority, deselecting point if necessary
 		// Find Photo object
 		Photo photo = _photoList.getPhoto(inPhotoIndex);
 		if (photo != null)
 		{
 			// Find point object and its index
 			int pointIndex = _track.getPointIndex(photo.getDataPoint());
+			// Check whether to deselect current point or not if photo not correlated
+			if (pointIndex < 0)
+			{
+				int currPointIndex = _selection.getCurrentPointIndex();
+				if (currPointIndex >= 0 && _track.getPoint(currPointIndex).getPhoto() == null)
+				{
+					pointIndex = currPointIndex; // Keep currently selected point
+				}
+			}
 			// give to selection object
 			_selection.selectPhotoAndPoint(inPhotoIndex, pointIndex);
 		}
-		else
-		{
+		else {
 			// no photo, just reset selection
-			_selection.selectPhotoAndPoint(-1, -1);
+			DataPoint currPoint = getCurrentPoint();
+			if (currPoint != null && currPoint.getPhoto() == null) {
+				_selection.selectPhotoAndPoint(-1, _selection.getCurrentPointIndex()); // keep point
+			}
+			else {
+				_selection.selectPhotoAndPoint(-1, -1); // deselect point too
+			}
 		}
 	}
 }

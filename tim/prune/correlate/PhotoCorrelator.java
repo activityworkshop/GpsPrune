@@ -69,10 +69,6 @@ public class PhotoCorrelator extends GenericFunction
 	public PhotoCorrelator(App inApp)
 	{
 		super(inApp);
-		_dialog = new JDialog(inApp.getFrame(), I18nManager.getText(getNameKey()), true);
-		_dialog.setLocationRelativeTo(inApp.getFrame());
-		_dialog.getContentPane().add(makeDialogContents());
-		_dialog.pack();
 	}
 
 
@@ -86,6 +82,14 @@ public class PhotoCorrelator extends GenericFunction
 	 */
 	public void begin()
 	{
+		// First create dialog if necessary
+		if (_dialog == null)
+		{
+			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog.setLocationRelativeTo(_parentFrame);
+			_dialog.getContentPane().add(makeDialogContents());
+			_dialog.pack();
+		}
 		// Check whether track has timestamps, exit if not
 		if (!_app.getTrackInfo().getTrack().hasData(Field.TIMESTAMP))
 		{
@@ -378,7 +382,7 @@ public class PhotoCorrelator extends GenericFunction
 		_pointLaterOption.setSelected(!inTimeDiff.getIsPositive());
 		createPreview(inTimeDiff, true);
 		CardLayout cl = (CardLayout) _cards.getLayout();
-		cl.next(_cards);
+		cl.last(_cards);
 		_backButton.setEnabled(hasTimeDiff);
 		_nextButton.setEnabled(false);
 		// enable ok button if any photos have been selected

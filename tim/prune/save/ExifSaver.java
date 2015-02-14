@@ -19,6 +19,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 
+import tim.prune.Config;
 import tim.prune.ExternalTools;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
@@ -79,7 +80,7 @@ public class ExifSaver implements Runnable
 	public boolean saveExifInformation(PhotoList inPhotoList)
 	{
 		// Check if external exif tool can be called
-		boolean exifToolInstalled = ExternalTools.isExiftoolInstalled();
+		boolean exifToolInstalled = ExternalTools.isToolInstalled(ExternalTools.TOOL_EXIFTOOL);
 		if (!exifToolInstalled)
 		{
 			// show warning
@@ -331,7 +332,7 @@ public class ExifSaver implements Runnable
 	{
 		// Make a string array to construct the command and its parameters
 		String[] result = new String[inOverwrite?5:4];
-		result[0] = "exiftool";
+		result[0] = Config.getConfigString(Config.KEY_EXIFTOOL_PATH);
 		result[1] = "-P";
 		if (inOverwrite) {result[2] = " -overwrite_original_in_place";}
 		// remove all gps tags
@@ -353,7 +354,7 @@ public class ExifSaver implements Runnable
 	{
 		// Make a string array to construct the command and its parameters
 		String[] result = new String[inOverwrite?10:9];
-		result[0] = "exiftool";
+		result[0] = Config.getConfigString(Config.KEY_EXIFTOOL_PATH);
 		result[1] = "-P";
 		if (inOverwrite) {result[2] = "-overwrite_original_in_place";}
 		int paramOffset = inOverwrite?3:2;

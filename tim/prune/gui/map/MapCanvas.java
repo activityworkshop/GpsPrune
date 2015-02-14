@@ -53,6 +53,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private App _app = null;
 	/** Track object */
 	private Track _track = null;
+	/** TrackInfo object */
+	private TrackInfo _trackInfo = null;
 	/** Selection object */
 	private Selection _selection = null;
 	/** Previously selected point */
@@ -63,6 +65,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private BufferedImage _mapImage = null;
 	/** Slider for transparency */
 	private JSlider _transparencySlider = null;
+	/** Checkbox for scale bar */
+	private JCheckBox _scaleCheckBox = null;
 	/** Checkbox for maps */
 	private JCheckBox _mapCheckBox = null;
 	/** Checkbox for autopan */
@@ -75,6 +79,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private JPanel _topPanel = null;
 	/** Side component panel */
 	private JPanel _sidePanel = null;
+	/** Scale bar */
+	private ScaleBar _scaleBar = null;
 	/* Data */
 	private DoubleRange _latRange = null, _lonRange = null;
 	private DoubleRange _xRange = null, _yRange = null;
@@ -126,6 +132,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	public MapCanvas(App inApp, TrackInfo inTrackInfo)
 	{
 		_app = inApp;
+		_trackInfo = inTrackInfo;
 		_track = inTrackInfo.getTrack();
 		_selection = inTrackInfo.getSelection();
 		_mapPosition = new MapPosition();
@@ -169,6 +176,18 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		});
 		_transparencySlider.setFocusable(false); // stop slider from stealing keyboard focus
 		_topPanel.add(_transparencySlider);
+		// Add checkbox button for enabling scale bar
+		_scaleCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.SCALEBAR_BUTTON), true);
+		_scaleCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.SCALEBAR_BUTTON_ON));
+		_scaleCheckBox.setOpaque(false);
+		_scaleCheckBox.setToolTipText(I18nManager.getText("menu.map.showscalebar"));
+		_scaleCheckBox.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				_scaleBar.setVisible(_scaleCheckBox.isSelected());
+			}
+		});
+		_scaleCheckBox.setFocusable(false); // stop button from stealing keyboard focus
+		_topPanel.add(_scaleCheckBox);
 		// Add checkbox button for enabling maps or not
 		_mapCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.MAP_BUTTON), false);
 		_mapCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.MAP_BUTTON_ON));
@@ -223,12 +242,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		zoomOutButton.setFocusable(false); // stop button from stealing keyboard focus
 		_sidePanel.add(zoomOutButton);
 
+		// Bottom panel for scale bar
+		_scaleBar = new ScaleBar();
+
 		// add control panels to this one
 		setLayout(new BorderLayout());
 		_topPanel.setVisible(false);
 		_sidePanel.setVisible(false);
 		add(_topPanel, BorderLayout.NORTH);
 		add(_sidePanel, BorderLayout.WEST);
+		add(_scaleBar, BorderLayout.SOUTH);
 		// Make popup menu
 		makePopup();
 	}
@@ -347,8 +370,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 
 			// Draw the mapImage if necessary
-			if ((_mapImage == null || _recalculate)) {
+			if ((_mapImage == null || _recalculate))
+			{
 				getMapTiles();
+				_scaleBar.updateScale(_mapPosition.getZoom(), _mapPosition.getCentreTileY());
 			}
 			// Draw the prepared image onto the panel
 			if (_mapImage != null) {
@@ -370,6 +395,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			inG.fillRect(0, 0, getWidth(), getHeight());
 			inG.setColor(COLOR_MESSAGES);
 			inG.drawString(I18nManager.getText("display.nodata"), 50, getHeight()/2);
+			_scaleBar.updateScale(-1, 0);
 		}
 		// Draw slider etc on top
 		paintChildren(inG);
@@ -430,7 +456,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				// Make maps brighter / fainter
 				float[] scaleFactors = {1.0f, 1.05f, 1.1f, 1.2f, 1.6f, 2.0f};
 				float scaleFactor = scaleFactors[_transparencySlider.getValue()];
-				if (scaleFactor > 1.0f) {
+				if (scaleFactor > 1.0f)
+				{
 					RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 					hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
 					RescaleOp op = new RescaleOp(scaleFactor, 0, hints);
@@ -740,7 +767,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					 _mapPosition.getXFromPixels(inE.getX(), getWidth()),
 					 _mapPosition.getYFromPixels(inE.getY(), getHeight()),
 					 _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY), false);
-				_selection.selectPoint(pointIndex);
+				_trackInfo.selectPoint(pointIndex);
 			}
 			else
 			{
@@ -876,6 +903,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	public void keyPressed(KeyEvent inE)
 	{
 		int code = inE.getKeyCode();
+		int currPointIndex = _selection.getCurrentPointIndex();
 		// Check for meta key
 		if (inE.isControlDown())
 		{
@@ -885,10 +913,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			else if (code == KeyEvent.VK_DOWN)
 				zoomOut();
 			// Key nav for next/prev point
-			else if (code == KeyEvent.VK_LEFT)
-				_selection.selectPreviousPoint();
+			else if (code == KeyEvent.VK_LEFT && currPointIndex > 0)
+				_trackInfo.selectPoint(currPointIndex-1);
 			else if (code == KeyEvent.VK_RIGHT)
-				_selection.selectNextPoint();
+				_trackInfo.selectPoint(currPointIndex+1);
 		}
 		else
 		{
@@ -905,7 +933,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				rightwardsPan = -PAN_DISTANCE;
 			panMap(rightwardsPan, upwardsPan);
 			// Check for delete key to delete current point
-			if (code == KeyEvent.VK_DELETE && _selection.getCurrentPointIndex() >= 0)
+			if (code == KeyEvent.VK_DELETE && currPointIndex >= 0)
 			{
 				_app.deleteCurrentPoint();
 			}
@@ -938,5 +966,13 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			zoomIn();
 		else if (clicks > 0)
 			zoomOut();
+	}
+
+	/**
+	 * @return current map position
+	 */
+	public MapPosition getMapPosition()
+	{
+		return _mapPosition;
 	}
 }

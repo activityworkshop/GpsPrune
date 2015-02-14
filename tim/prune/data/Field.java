@@ -21,6 +21,8 @@ public class Field
 	public static final Field WAYPT_TYPE = new Field("fieldname.waypointtype", FieldType.NONE);
 	public static final Field NEW_SEGMENT = new Field("fieldname.newsegment", FieldType.BOOL);
 
+	// TODO: Field for photo filename, ability to load (from text) and save (to text)
+
 	private static final Field[] ALL_AVAILABLE_FIELDS = {
 		LATITUDE, LONGITUDE, ALTITUDE, TIMESTAMP, WAYPT_NAME, WAYPT_TYPE, NEW_SEGMENT,
 		new Field("fieldname.custom", FieldType.NONE)

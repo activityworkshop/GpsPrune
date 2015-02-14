@@ -6,6 +6,7 @@ package tim.prune.data;
  */
 public class FieldList
 {
+	/** Array of Field objects making the list */
 	private Field[] _fieldArray;
 
 
@@ -62,8 +63,7 @@ public class FieldList
 
 
 	/**
-	 * Check whether the FieldList contains the given
-	 * Field object
+	 * Check whether the FieldList contains the given Field object
 	 * @param inField Field to check
 	 * @return true if the FieldList contains the given field
 	 */

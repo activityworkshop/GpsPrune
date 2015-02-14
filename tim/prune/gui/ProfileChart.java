@@ -20,6 +20,7 @@ public class ProfileChart extends GenericChart
 	private static final int[] ALTITUDE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50};
 	private static final Color COLOR_LINES       = Color.GRAY;
 	private static final Color COLOR_ALT_BARS    = Color.BLUE;
+	private static final Color COLOR_CURR_RANGE  = Color.GREEN;
 	private static final Color COLOR_SELECTED    = Color.RED;
 	private static final Color COLOR_SELECTED_BG = Color.ORANGE;
 	private static final Color COLOR_ALT_SCALE   = Color.RED;
@@ -48,13 +49,9 @@ public class ProfileChart extends GenericChart
 		{
 			int width = getWidth();
 			int height = getHeight();
-			AltitudeRange altitudeRange = _track.getAltitudeRange();
-			int minAltitude = altitudeRange.getMinimum();
-			int maxAltitude = altitudeRange.getMaximum();
 
 			// message if no altitudes in track
-			if (minAltitude < 0 || maxAltitude < 0
-				|| minAltitude == maxAltitude)
+			if (!_track.hasAltitudeData())
 			{
 				g.setColor(COLOR_LINES);
 				g.drawString(I18nManager.getText("display.noaltitudes"), 50, height/2);
@@ -62,12 +59,20 @@ public class ProfileChart extends GenericChart
 			}
 
 			// altitude profile
+			AltitudeRange altitudeRange = _track.getAltitudeRange();
+			int minAltitude = altitudeRange.getMinimum();
+			int maxAltitude = altitudeRange.getMaximum();
 			int numPoints = _track.getNumPoints();
 			_xScaleFactor = 1.0 * (width - 2 * BORDER_WIDTH) / numPoints;
-			double yScaleFactor = 1.0 * (height - 2 * BORDER_WIDTH) /
-			  (altitudeRange.getMaximum() - minAltitude);
+			double yScaleFactor = 1.0 * (height - 2 * BORDER_WIDTH) / (maxAltitude - minAltitude);
 			int barWidth = (int) (_xScaleFactor + 1.0);
 			int selectedPoint = _trackInfo.getSelection().getCurrentPointIndex();
+			// selection start, end
+			int selectionStart = -1, selectionEnd = -1;
+			if (_trackInfo.getSelection().hasRangeSelected()) {
+				selectionStart = _trackInfo.getSelection().getStart();
+				selectionEnd = _trackInfo.getSelection().getEnd();
+			}
 
 			// horizontal lines for scale - set to round numbers eg 500m
 			int lineScale = getLineScale(minAltitude, maxAltitude);
@@ -103,6 +108,9 @@ public class ProfileChart extends GenericChart
 					else
 					{
 						g.setColor(COLOR_ALT_BARS);
+						if (p >= selectionStart && p <= selectionEnd) {
+							g.setColor(COLOR_CURR_RANGE);
+						}
 					}
 					if (_track.getPoint(p).getAltitude().isValid())
 					{
@@ -209,7 +217,7 @@ public class ProfileChart extends GenericChart
 			{
 				// work out which data point is nearest and select it
 				int pointNum = (int) ((e.getX() - BORDER_WIDTH) / _xScaleFactor);
-				_trackInfo.getSelection().selectPoint(pointNum);
+				_trackInfo.selectPoint(pointNum);
 			}
 		}
 	}

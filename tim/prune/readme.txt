@@ -1,4 +1,4 @@
-Prune version 7
+Prune version 8
 ===============
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
@@ -17,7 +17,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_07.jar
+   java -jar prune_08.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,21 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_07.jar --lang=DE
+   java -jar prune_08.jar --lang=DE
 
+New with version 8
+==================
+
+The following features were added since version 7:
+  - Loading of NMEA files (with suffix .nmea)
+  - Loading of nearby tracks from gpsies.com
+  - Function for finding waypoints by name
+  - Language-sensitive keyboard shortcuts
+  - Scale bar
+  - Display of pace (time per km or time per mile)
+  - Ability to display and save configuration settings
+  - Configurable program paths and KMZ image sizes
+  - Chinese language thanks to generous user input
 
 New with version 7
 ==================

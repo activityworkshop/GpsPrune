@@ -12,6 +12,10 @@ public abstract class IconManager
 	/** Icon for window */
 	public static final String WINDOW_ICON = "window_icon.png";
 
+	/** Icon for scalebar button on main map display */
+	public static final String SCALEBAR_BUTTON = "scalebar.gif";
+	/** Icon for map button on main map display when selected */
+	public static final String SCALEBAR_BUTTON_ON = "scalebar_on.gif";
 	/** Icon for map button on main map display */
 	public static final String MAP_BUTTON = "map_icon.gif";
 	/** Icon for map button on main map display when selected */

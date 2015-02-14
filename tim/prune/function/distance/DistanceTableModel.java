@@ -69,7 +69,7 @@ public class DistanceTableModel extends GenericTableModel
 	public void recalculate(int inIndex)
 	{
 		// Use metric or not?
-		_useMetric = Config.getUseMetricUnits();
+		_useMetric = Config.getConfigBoolean(Config.KEY_METRIC_UNITS);
 		_distanceLabel = getDistanceLabel(_useMetric);
 		// Initialize array of distances
 		int numRows = getRowCount();

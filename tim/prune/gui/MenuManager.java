@@ -4,7 +4,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -12,10 +14,12 @@ import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
 import tim.prune.App;
+import tim.prune.Config;
 import tim.prune.DataSubscriber;
 import tim.prune.FunctionLibrary;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.PhotoList;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
@@ -54,14 +58,18 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _selectNoneItem = null;
 	private JMenuItem _selectStartItem = null;
 	private JMenuItem _selectEndItem = null;
+	private JMenuItem _findWaypointItem = null;
 	private JMenuItem _reverseItem = null;
 	private JMenuItem _addTimeOffsetItem = null;
+	private JMenuItem _addAltitudeOffsetItem = null;
 	private JMenuItem _mergeSegmentsItem = null;
 	private JMenu     _rearrangeMenu = null;
 	private JMenuItem _cutAndMoveItem = null;
 	private JMenuItem _show3dItem = null;
 	private JMenu     _browserMapMenu = null;
 	private JMenuItem _chartItem = null;
+	private JCheckBoxMenuItem _paceCheckbox = null;
+	private JMenuItem _getGpsiesItem = null;
 	private JMenuItem _distanceItem = null;
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _connectPhotoItem = null;
@@ -91,6 +99,14 @@ public class MenuManager implements DataSubscriber
 	private JButton _selectEndButton = null;
 	private JButton _connectPhotoButton = null;
 
+	/** Array of key events */
+	private static final int[] KEY_EVENTS = {
+		KeyEvent.VK_A, KeyEvent.VK_B, KeyEvent.VK_C, KeyEvent.VK_D, KeyEvent.VK_E,
+		KeyEvent.VK_F, KeyEvent.VK_G, KeyEvent.VK_H, KeyEvent.VK_I, KeyEvent.VK_J,
+		KeyEvent.VK_K, KeyEvent.VK_L, KeyEvent.VK_M, KeyEvent.VK_N, KeyEvent.VK_O,
+		KeyEvent.VK_P, KeyEvent.VK_Q, KeyEvent.VK_R, KeyEvent.VK_S, KeyEvent.VK_T,
+		KeyEvent.VK_U, KeyEvent.VK_V, KeyEvent.VK_W, KeyEvent.VK_X, KeyEvent.VK_Y, KeyEvent.VK_Z};
+
 
 	/**
 	 * Constructor
@@ -114,9 +130,10 @@ public class MenuManager implements DataSubscriber
 	{
 		JMenuBar menubar = new JMenuBar();
 		JMenu fileMenu = new JMenu(I18nManager.getText("menu.file"));
+		setAltKey(fileMenu, "altkey.menu.file");
 		// Open file
 		JMenuItem openMenuItem = new JMenuItem(I18nManager.getText("menu.file.open"));
-		openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
+		setShortcut(openMenuItem, "shortcut.menu.file.open");
 		_openFileAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -138,26 +155,16 @@ public class MenuManager implements DataSubscriber
 		fileMenu.addSeparator();
 		// Load from GPS
 		JMenuItem loadFromGpsMenuItem = makeMenuItem(FunctionLibrary.FUNCTION_GPSLOAD);
-		loadFromGpsMenuItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_GPSLOAD.begin();
-			}
-		});
+		setShortcut(loadFromGpsMenuItem, "shortcut.menu.file.load");
 		fileMenu.add(loadFromGpsMenuItem);
-		// Save to GPS
+		// Send to GPS
 		_sendGpsItem = makeMenuItem(FunctionLibrary.FUNCTION_GPSSAVE);
-		_sendGpsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_GPSSAVE.begin();
-			}
-		});
 		_sendGpsItem.setEnabled(false);
 		fileMenu.add(_sendGpsItem);
 		fileMenu.addSeparator();
 		// Save
 		_saveItem = new JMenuItem(I18nManager.getText("menu.file.save"), KeyEvent.VK_S);
+		setShortcut(_saveItem, "shortcut.menu.file.save");
 		_saveAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -169,32 +176,14 @@ public class MenuManager implements DataSubscriber
 		fileMenu.add(_saveItem);
 		// Export - Kml
 		_exportKmlItem = makeMenuItem(FunctionLibrary.FUNCTION_KMLEXPORT);
-		_exportKmlItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_KMLEXPORT.begin();
-			}
-		});
 		_exportKmlItem.setEnabled(false);
 		fileMenu.add(_exportKmlItem);
 		// Gpx
 		_exportGpxItem = makeMenuItem(FunctionLibrary.FUNCTION_GPXEXPORT);
-		_exportGpxItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_GPXEXPORT.begin();
-			}
-		});
 		_exportGpxItem.setEnabled(false);
 		fileMenu.add(_exportGpxItem);
 		// Pov
 		_exportPovItem = makeMenuItem(FunctionLibrary.FUNCTION_POVEXPORT);
-		_exportPovItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_POVEXPORT.begin();
-			}
-		});
 		_exportPovItem.setEnabled(false);
 		fileMenu.add(_exportPovItem);
 		fileMenu.addSeparator();
@@ -209,8 +198,9 @@ public class MenuManager implements DataSubscriber
 		menubar.add(fileMenu);
 		// Edit menu
 		JMenu editMenu = new JMenu(I18nManager.getText("menu.edit"));
-		editMenu.setMnemonic(KeyEvent.VK_E);
+		setAltKey(editMenu, "altkey.menu.edit");
 		_undoItem = new JMenuItem(I18nManager.getText("menu.edit.undo"));
+		setShortcut(_undoItem, "shortcut.menu.edit.undo");
 		_undoAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -240,13 +230,7 @@ public class MenuManager implements DataSubscriber
 		_editPointItem.addActionListener(_editPointAction);
 		_editPointItem.setEnabled(false);
 		editMenu.add(_editPointItem);
-		_editWaypointNameItem = new JMenuItem(I18nManager.getText("menu.edit.editwaypointname"));
-		_editWaypointNameItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_app.editCurrentPointName();
-			}
-		});
+		_editWaypointNameItem = makeMenuItem(FunctionLibrary.FUNCTION_EDIT_WAYPOINT_NAME);
 		_editWaypointNameItem.setEnabled(false);
 		editMenu.add(_editWaypointNameItem);
 		_deletePointItem = new JMenuItem(I18nManager.getText("menu.edit.deletepoint"));
@@ -271,12 +255,7 @@ public class MenuManager implements DataSubscriber
 		editMenu.add(_deleteRangeItem);
 		editMenu.addSeparator();
 		_compressItem = makeMenuItem(FunctionLibrary.FUNCTION_COMPRESS);
-		_compressItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_COMPRESS.begin();
-			}
-		});
+		setShortcut(_compressItem, "shortcut.menu.edit.compress");
 		_compressItem.setEnabled(false);
 		editMenu.add(_compressItem);
 		_deleteMarkedPointsItem = new JMenuItem(I18nManager.getText("menu.edit.deletemarked"));
@@ -317,14 +296,11 @@ public class MenuManager implements DataSubscriber
 		_reverseItem.setEnabled(false);
 		editMenu.add(_reverseItem);
 		_addTimeOffsetItem = makeMenuItem(FunctionLibrary.FUNCTION_ADD_TIME_OFFSET);
-		_addTimeOffsetItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_ADD_TIME_OFFSET.begin();
-			}
-		});
 		_addTimeOffsetItem.setEnabled(false);
 		editMenu.add(_addTimeOffsetItem);
+		_addAltitudeOffsetItem = makeMenuItem(FunctionLibrary.FUNCTION_ADD_ALTITUDE_OFFSET);
+		_addAltitudeOffsetItem.setEnabled(false);
+		editMenu.add(_addAltitudeOffsetItem);
 		_mergeSegmentsItem = new JMenuItem(I18nManager.getText("menu.edit.mergetracksegments"));
 		_mergeSegmentsItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -378,12 +354,14 @@ public class MenuManager implements DataSubscriber
 
 		// Select menu
 		JMenu selectMenu = new JMenu(I18nManager.getText("menu.select"));
+		setAltKey(selectMenu, "altkey.menu.select");
 		_selectAllItem = new JMenuItem(I18nManager.getText("menu.select.all"));
+		setShortcut(_selectAllItem, "shortcut.menu.select.all");
 		_selectAllItem.setEnabled(false);
 		_selectAllItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_app.selectAll();
+				_selection.selectRange(0, _track.getNumPoints()-1);
 			}
 		});
 		selectMenu.add(_selectAllItem);
@@ -417,17 +395,16 @@ public class MenuManager implements DataSubscriber
 		};
 		_selectEndItem.addActionListener(_selectEndAction);
 		selectMenu.add(_selectEndItem);
+		selectMenu.addSeparator();
+		_findWaypointItem = makeMenuItem(FunctionLibrary.FUNCTION_FIND_WAYPOINT);
+		_findWaypointItem.setEnabled(false);
+		selectMenu.add(_findWaypointItem);
 		menubar.add(selectMenu);
 
 		// Add view menu
 		JMenu viewMenu = new JMenu(I18nManager.getText("menu.view"));
+		setAltKey(viewMenu, "altkey.menu.view");
 		_show3dItem = makeMenuItem(FunctionLibrary.FUNCTION_3D);
-		_show3dItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_3D.begin();
-			}
-		});
 		_show3dItem.setEnabled(false);
 		viewMenu.add(_show3dItem);
 		// browser submenu
@@ -468,35 +445,21 @@ public class MenuManager implements DataSubscriber
 		viewMenu.add(_browserMapMenu);
 		// Charts
 		_chartItem = makeMenuItem(FunctionLibrary.FUNCTION_CHARTS);
-		_chartItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_CHARTS.begin();
-			}
-		});
 		_chartItem.setEnabled(false);
 		viewMenu.add(_chartItem);
 		// Distances
 		_distanceItem = makeMenuItem(FunctionLibrary.FUNCTION_DISTANCES);
 		_distanceItem.setEnabled(false);
-		_distanceItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				FunctionLibrary.FUNCTION_DISTANCES.begin();
-			}
-		});
 		viewMenu.add(_distanceItem);
-		// Set the map background
-		JMenuItem mapBgItem = makeMenuItem(FunctionLibrary.FUNCTION_SET_MAP_BG);
-		mapBgItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				FunctionLibrary.FUNCTION_SET_MAP_BG.begin();
-			}
-		});
-		viewMenu.add(mapBgItem);
+		// Get gpsies tracks
+		_getGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_GPSIES);
+		_getGpsiesItem.setEnabled(false);
+		viewMenu.add(_getGpsiesItem);
 		menubar.add(viewMenu);
 
 		// Add photo menu
 		JMenu photoMenu = new JMenu(I18nManager.getText("menu.photo"));
+		setAltKey(photoMenu, "altkey.menu.photo");
 		addPhotosMenuItem = new JMenuItem(I18nManager.getText("menu.file.addphotos"));
 		addPhotosMenuItem.addActionListener(_addPhotoAction);
 		photoMenu.add(addPhotosMenuItem);
@@ -542,41 +505,49 @@ public class MenuManager implements DataSubscriber
 		photoMenu.addSeparator();
 		// correlate all photos
 		_correlatePhotosItem = makeMenuItem(FunctionLibrary.FUNCTION_CORRELATE_PHOTOS);
-		_correlatePhotosItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_CORRELATE_PHOTOS.begin();
-			}
-		});
 		_correlatePhotosItem.setEnabled(false);
 		photoMenu.add(_correlatePhotosItem);
 		menubar.add(photoMenu);
 
+		// Settings menu
+		JMenu settingsMenu = new JMenu(I18nManager.getText("menu.settings"));
+		setAltKey(settingsMenu, "altkey.menu.settings");
+		// Set the map background
+		JMenuItem mapBgItem = makeMenuItem(FunctionLibrary.FUNCTION_SET_MAP_BG);
+		settingsMenu.add(mapBgItem);
+		// Turn pace display on/off
+		_paceCheckbox = new JCheckBoxMenuItem(
+			I18nManager.getText("menu.settings.showpace"), false);
+		_paceCheckbox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Config.setConfigBoolean(Config.KEY_SHOW_PACE, _paceCheckbox.isSelected());
+				UpdateMessageBroker.informSubscribers();
+			}
+		});
+		settingsMenu.add(_paceCheckbox);
+		// Set kmz image size
+		JMenuItem setKmzImageSizeItem = makeMenuItem(FunctionLibrary.FUNCTION_SET_KMZ_IMAGE_SIZE);
+		settingsMenu.add(setKmzImageSizeItem);
+		// Set program paths
+		JMenuItem setPathsItem = makeMenuItem(FunctionLibrary.FUNCTION_SET_PATHS);
+		settingsMenu.add(setPathsItem);
+		settingsMenu.addSeparator();
+		// Save configuration
+		JMenuItem saveConfigMenuItem = makeMenuItem(FunctionLibrary.FUNCTION_SAVECONFIG);
+		settingsMenu.add(saveConfigMenuItem);
+		menubar.add(settingsMenu);
+
 		// Help menu
 		JMenu helpMenu = new JMenu(I18nManager.getText("menu.help"));
+		setAltKey(helpMenu, "altkey.menu.help");
 		JMenuItem helpItem = makeMenuItem(FunctionLibrary.FUNCTION_HELP);
-		helpItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_HELP.begin();
-			}
-		});
+		setShortcut(helpItem, "shortcut.menu.help.help");
 		helpMenu.add(helpItem);
+		JMenuItem showKeysItem = makeMenuItem(FunctionLibrary.FUNCTION_SHOW_KEYS);
+		helpMenu.add(showKeysItem);
 		JMenuItem aboutItem = makeMenuItem(FunctionLibrary.FUNCTION_ABOUT);
-		aboutItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_ABOUT.begin();
-			}
-		});
 		helpMenu.add(aboutItem);
 		JMenuItem checkVersionItem = makeMenuItem(FunctionLibrary.FUNCTION_CHECK_VERSION);
-		checkVersionItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				FunctionLibrary.FUNCTION_CHECK_VERSION.begin();
-			}
-		});
 		helpMenu.add(checkVersionItem);
 		menubar.add(helpMenu);
 
@@ -590,7 +561,49 @@ public class MenuManager implements DataSubscriber
 	 */
 	private static JMenuItem makeMenuItem(GenericFunction inFunction)
 	{
-		return new JMenuItem(I18nManager.getText(inFunction.getNameKey()));
+		JMenuItem item = new JMenuItem(I18nManager.getText(inFunction.getNameKey()));
+		item.addActionListener(new FunctionLauncher(inFunction));
+		return item;
+	}
+
+	/**
+	 * Set the alt key for the given menu
+	 * @param inMenu menu to set
+	 * @param inKey key to lookup to get language-sensitive altkey
+	 */
+	private static void setAltKey(JMenu inMenu, String inKey)
+	{
+		// Lookup the key in the properties
+		String altKey = I18nManager.getText(inKey);
+		if (altKey != null && altKey.length() == 1)
+		{
+			int code = altKey.charAt(0) - 'A';
+			if (code >= 0 && code < 26)
+			{
+				// Found a valid code between A and Z
+				inMenu.setMnemonic(KEY_EVENTS[code]);
+			}
+		}
+	}
+
+	/**
+	 * Set the shortcut key for the given menu item
+	 * @param inMenuItem menu item to set
+	 * @param inKey key to lookup to get language-sensitive shortcut
+	 */
+	private static void setShortcut(JMenuItem inMenuItem, String inKey)
+	{
+		// Lookup the key in the properties
+		String altKey = I18nManager.getText(inKey);
+		if (altKey != null && altKey.length() == 1)
+		{
+			int code = altKey.charAt(0) - 'A';
+			if (code >= 0 && code < 26)
+			{
+				// Found a valid code between A and Z
+				inMenuItem.setAccelerator(KeyStroke.getKeyStroke(KEY_EVENTS[code], InputEvent.CTRL_DOWN_MASK));
+			}
+		}
 	}
 
 	/**
@@ -691,13 +704,15 @@ public class MenuManager implements DataSubscriber
 		_exportPovItem.setEnabled(hasData);
 		_compressItem.setEnabled(hasData);
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
-		_rearrangeMenu.setEnabled(hasData && _track.hasMixedData());
+		_rearrangeMenu.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
 		_selectAllItem.setEnabled(hasData);
 		_selectNoneItem.setEnabled(hasData);
 		_show3dItem.setEnabled(hasData);
 		_chartItem.setEnabled(hasData);
 		_browserMapMenu.setEnabled(hasData);
 		_distanceItem.setEnabled(hasData);
+		_getGpsiesItem.setEnabled(hasData);
+		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
 		_undoItem.setEnabled(hasUndo);
@@ -738,6 +753,7 @@ public class MenuManager implements DataSubscriber
 		_mergeSegmentsItem.setEnabled(hasRange);
 		_reverseItem.setEnabled(hasRange);
 		_addTimeOffsetItem.setEnabled(hasRange);
+		_addAltitudeOffsetItem.setEnabled(hasRange);
 		// Is the currently selected point outside the current range?
 		_cutAndMoveItem.setEnabled(hasRange && hasPoint &&
 			(_selection.getCurrentPointIndex() < _selection.getStart()

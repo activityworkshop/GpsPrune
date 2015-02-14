@@ -167,7 +167,7 @@ public class PovExporter extends GenericFunction
 		JLabel fontLabel = new JLabel(I18nManager.getText("dialog.exportpov.font"));
 		fontLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		centralPanel.add(fontLabel);
-		String defaultFont = Config.getPovrayFont();
+		String defaultFont = Config.getConfigString(Config.KEY_POVRAY_FONT);
 		if (defaultFont == null || defaultFont.equals("")) {
 			defaultFont = DEFAULT_FONT_FILE;
 		}
@@ -265,8 +265,8 @@ public class PovExporter extends GenericFunction
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.pov", new String[] {"pov"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
-			File configDir = Config.getWorkingDirectory();
-			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+			final String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 
 		// Allow choose again if an existing file is selected
@@ -295,7 +295,7 @@ public class PovExporter extends GenericFunction
 					{
 						// file saved
 						// Store directory in config for later
-						Config.setWorkingDirectory(file.getParentFile());
+						Config.setConfigString(Config.KEY_TRACK_DIR, file.getParentFile().getAbsolutePath());
 					}
 					else
 					{
@@ -359,7 +359,7 @@ public class PovExporter extends GenericFunction
 		}
 		catch (IOException ioe)
 		{
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.save.failed") + ioe.getMessage(),
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.save.failed") + " : " + ioe.getMessage(),
 				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
 		}
 		finally
@@ -393,6 +393,9 @@ public class PovExporter extends GenericFunction
 		if (fontPath == null || fontPath.equals(""))
 		{
 			fontPath = DEFAULT_FONT_FILE;
+		}
+		else {
+			Config.setConfigString(Config.KEY_POVRAY_FONT, fontPath);
 		}
 		// Set up output
 		String[] outputLines = {
@@ -428,7 +431,7 @@ public class PovExporter extends GenericFunction
 		  "   open",
 		  "   pigment { color rgb <0.5 0.5 0.5> }",
 		  "  }", "",
-		  // TODO: Export rods to POV?  How to store in data?
+		  // MAYBE: Export rods to POV?  How to store in data?
 		  "#declare waypoint_sphere =",
 		  "  sphere {",
 		  "   <0, 0, 0>, 0.4",
@@ -514,7 +517,7 @@ public class PovExporter extends GenericFunction
 		  "  pigment { color rgb <1 1 1> }",
 		  "  translate <-" + (inModelSize * 1.03) + ", 0.2, 0>",
 		  "}", "",
-		  // TODO: Light positions should relate to model size
+		  // MAYBE: Light positions should relate to model size
 		  "// lights",
 		  "light_source { <-1, 9, -4> color rgb <0.5 0.5 0.5>}",
 		  "light_source { <1, 6, -14> color rgb <0.6 0.6 0.6>}",

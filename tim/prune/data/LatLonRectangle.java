@@ -19,7 +19,7 @@ public class LatLonRectangle
 	{
 		_latRange = inLatRange;
 		_lonRange = inLonRange;
-		// TODO: Expand range by certain percentage
+		// MAYBE: Expand range by certain percentage
 	}
 
 	/**

@@ -11,23 +11,21 @@ import java.awt.event.KeyEvent;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import tim.prune.App;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 
 /**
- * Class to manage the display and editing of waypoint names
+ * Function to manage the display and editing of waypoint names
  */
-public class PointNameEditor
+public class PointNameEditor extends GenericFunction
 {
-	private App _app = null;
-	private JFrame _parentFrame = null;
 	private JDialog _dialog = null;
 	private DataPoint _point = null;
 	private JTextField _nameField = null;
@@ -37,25 +35,26 @@ public class PointNameEditor
 	/**
 	 * Constructor
 	 * @param inApp application object to inform of success
-	 * @param inParentFrame parent frame
 	 */
-	public PointNameEditor(App inApp, JFrame inParentFrame)
+	public PointNameEditor(App inApp)
 	{
-		_app = inApp;
-		_parentFrame = inParentFrame;
+		super(inApp);
 	}
 
+	/** Get the name key */
+	public String getNameKey() {
+		return "function.editwaypointname";
+	}
 
 	/**
-	 * Show the edit point name dialog
-	 * @param inPoint point to edit
+	 * Begin the function by showing the edit point name dialog
 	 */
-	public void showDialog(DataPoint inPoint)
+	public void begin()
 	{
-		_point = inPoint;
+		_point = _app.getTrackInfo().getCurrentPoint();
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.pointnameedit.title"), true);
+			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			// Create Gui and show it
 			_dialog.getContentPane().add(makeDialogComponents());

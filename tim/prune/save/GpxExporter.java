@@ -46,6 +46,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private JDialog _dialog = null;
 	private JTextField _nameField = null;
 	private JTextField _descriptionField = null;
+	private PointTypeSelector _pointTypeSelector = null;
 	private JCheckBox _timestampsCheckbox = null;
 	private JFileChooser _fileChooser = null;
 	private File _exportFile = null;
@@ -85,6 +86,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
 		}
+		_pointTypeSelector.init(_app.getTrackInfo());
 		_dialog.setVisible(true);
 	}
 
@@ -109,6 +111,9 @@ public class GpxExporter extends GenericFunction implements Runnable
 		_descriptionField = new JTextField(10);
 		descPanel.add(_descriptionField);
 		mainPanel.add(descPanel);
+		// point type selection (track points, waypoints, photo points)
+		_pointTypeSelector = new PointTypeSelector();
+		mainPanel.add(_pointTypeSelector);
 		// checkbox for timestamps
 		_timestampsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.includetimestamps"));
 		_timestampsCheckbox.setSelected(true);
@@ -147,7 +152,11 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 */
 	private void startExport()
 	{
-		// OK pressed, so choose output file
+		// OK pressed, so check selections
+		if (!_pointTypeSelector.getAnythingSelected()) {
+			return;
+		}
+		// Choose output file
 		if (_fileChooser == null)
 		{
 			_fileChooser = new JFileChooser();
@@ -155,8 +164,8 @@ public class GpxExporter extends GenericFunction implements Runnable
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
-			File configDir = Config.getWorkingDirectory();
-			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 		// Allow choose again if an existing file is selected
 		boolean chooseAgain = false;
@@ -203,14 +212,16 @@ public class GpxExporter extends GenericFunction implements Runnable
 		{
 			// normal writing to file
 			writer = new OutputStreamWriter(new FileOutputStream(_exportFile));
+			boolean[] saveFlags = {_pointTypeSelector.getTrackpointsSelected(), _pointTypeSelector.getWaypointsSelected(),
+				_pointTypeSelector.getPhotopointsSelected(), _timestampsCheckbox.isSelected()};
 			// write file
-			int numPoints = exportData(writer, _track, _nameField.getText(),
-				_descriptionField.getText(), _timestampsCheckbox.isSelected());
+			final int numPoints = exportData(writer, _track, _nameField.getText(),
+				_descriptionField.getText(), saveFlags);
 
 			// close file
 			writer.close();
 			// Store directory in config for later
-			Config.setWorkingDirectory(_exportFile.getParentFile());
+			Config.setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
 			// Show confirmation
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
@@ -241,12 +252,12 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * @param inTrack track object containing data
 	 * @param inName name of track (optional)
 	 * @param inDesc description of track (optional)
-	 * @param inTimestamps true to export timestamps
+	 * @param inSaveFlags array of booleans to export tracks, waypoints, photos, timestamps
 	 * @return number of points written
 	 * @throws IOException if io errors occur on write
 	 */
 	public static int exportData(OutputStreamWriter inWriter, Track inTrack, String inName,
-		String inDesc, boolean inTimestamps) throws IOException
+		String inDesc, boolean[] inSaveFlags) throws IOException
 	{
 		inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<gpx version=\"");
 		inWriter.write(GPX_VERSION_NUMBER);
@@ -278,15 +289,23 @@ public class GpxExporter extends GenericFunction implements Runnable
 		int i = 0;
 		DataPoint point = null;
 		boolean hasTrackpoints = false;
+		final boolean exportTrackpoints = inSaveFlags[0];
+		final boolean exportWaypoints = inSaveFlags[1];
+		final boolean exportPhotos = inSaveFlags[2];
+		final boolean exportTimestamps = inSaveFlags[3];
 		// Loop over waypoints
-		int numPoints = inTrack.getNumPoints();
+		final int numPoints = inTrack.getNumPoints();
+		int numSaved = 0;
 		for (i=0; i<numPoints; i++)
 		{
 			point = inTrack.getPoint(i);
 			// Make a wpt element for each waypoint
 			if (point.isWaypoint())
 			{
-				exportWaypoint(point, inWriter, inTimestamps);
+				if (exportWaypoints) {
+					exportWaypoint(point, inWriter, exportTimestamps);
+					numSaved++;
+				}
 			}
 			else
 			{
@@ -306,18 +325,22 @@ public class GpxExporter extends GenericFunction implements Runnable
 				if (point.getSegmentStart() && !firstPoint) {
 					inWriter.write("\t</trkseg>\n\t<trkseg>\n");
 				}
-				if (!point.isWaypoint()) {
-					// export the track point
-					exportTrackpoint(point, inWriter, inTimestamps);
-					firstPoint = false;
+				if (!point.isWaypoint())
+				{
+					if ((point.getPhoto()==null && exportTrackpoints) || (point.getPhoto()!=null && exportPhotos))
+					{
+						// export the point
+						exportTrackpoint(point, inWriter, exportTimestamps);
+						numSaved++;
+						firstPoint = false;
+					}
 				}
 			}
 			inWriter.write("\t</trkseg></trk>\n");
 		}
 		inWriter.write("</gpx>\n");
-		return numPoints;
+		return numSaved;
 	}
-
 
 	/**
 	 * Export the specified waypoint into the file

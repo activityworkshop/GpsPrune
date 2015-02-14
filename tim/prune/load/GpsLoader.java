@@ -6,6 +6,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
@@ -68,7 +70,7 @@ public class GpsLoader extends GenericFunction implements Runnable
 	public void begin()
 	{
 		// Check if gpsbabel looks like it's installed
-		if (_gpsBabelChecked || ExternalTools.isGpsbabelInstalled()
+		if (_gpsBabelChecked || ExternalTools.isToolInstalled(ExternalTools.TOOL_GPSBABEL)
 			|| JOptionPane.showConfirmDialog(_dialog,
 				I18nManager.getText("dialog.gpsload.nogpsbabel"),
 				I18nManager.getText(getNameKey()),
@@ -109,12 +111,21 @@ public class GpsLoader extends GenericFunction implements Runnable
 		JLabel deviceLabel = new JLabel(I18nManager.getText("dialog.gpsload.device"));
 		deviceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(deviceLabel);
-		_deviceField = new JTextField(Config.getGpsDevice(), 12);
+		_deviceField = new JTextField(Config.getConfigString(Config.KEY_GPS_DEVICE), 12);
+		_deviceField.addKeyListener(new KeyAdapter() {
+			public void keyReleased(KeyEvent e)
+			{
+				// close dialog if escape pressed
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
+			}
+		});
 		gridPanel.add(_deviceField);
 		JLabel formatLabel = new JLabel(I18nManager.getText("dialog.gpsload.format"));
 		formatLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(formatLabel);
-		_formatField = new JTextField(Config.getGpsFormat(), 12);
+		_formatField = new JTextField(Config.getConfigString(Config.KEY_GPS_FORMAT), 12);
 		gridPanel.add(_formatField);
 		gridPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		gridPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 5, 20));
@@ -230,20 +241,26 @@ public class GpsLoader extends GenericFunction implements Runnable
 	{
 		// Set up command to call gpsbabel
 		String[] commands = null;
+		final String device = _deviceField.getText().trim();
+		final String format = _formatField.getText().trim();
+		final String command = Config.getConfigString(Config.KEY_GPSBABEL_PATH);
 		if (inWaypoints && inTracks) {
 			// Both waypoints and track points selected
-			commands = new String[] {"gpsbabel", "-w", "-t", "-i", _formatField.getText(),
-				"-f", _deviceField.getText(), "-o", "gpx", "-F", "-"};
+			commands = new String[] {command, "-w", "-t", "-i", format,
+				"-f", device, "-o", "gpx", "-F", "-"};
 		}
 		else
 		{
 			// Only waypoints OR track points selected
-			commands = new String[] {"gpsbabel", "-w", "-i", _formatField.getText(),
-				"-f", _deviceField.getText(), "-o", "gpx", "-F", "-"};
+			commands = new String[] {command, "-w", "-i", format,
+				"-f", device, "-o", "gpx", "-F", "-"};
 			if (inTracks) {
 				commands[1] = "-t";
 			}
 		}
+		// Save GPS settings in config
+		Config.setConfigString(Config.KEY_GPS_DEVICE, device);
+		Config.setConfigString(Config.KEY_GPS_FORMAT, format);
 
 		String errorMessage = "";
 		XmlHandler handler = null;

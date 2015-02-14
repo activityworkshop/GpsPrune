@@ -9,67 +9,46 @@ import java.util.Properties;
  */
 public abstract class Config
 {
-	/** Working directory for loading and saving */
-	private static File _workingDir = null;
-	/** Default language */
-	private static String _langCode = null;
-	/** GPS device name */
-	private static String _gpsDevice = null;
-	/** GPS format name */
-	private static String _gpsFormat = null;
-	/** Font to use for povray */
-	private static String _povrayFont = null;
-	/** True to use metric units */
-	private static boolean _metricUnits = true;
-	/** Path to gnuplot executable */
-	private static String _gnuplotPath = null;
-	/** Index of selected map tile server */
-	private static int _mapTileServerIndex = -1;
-	/** URL for freeform map tile server */
-	private static String _mapTileServerUrl = null;
 	/** File from which Config was loaded */
 	private static File _configFile = null;
 
-	// TODO: Need setters for all these parameters if want to make the config saveable
+	/** Hashtable containing all config values */
+	private static Properties _configValues = new Properties();
 
 	/** Default config file */
 	private static final File DEFAULT_CONFIG_FILE = new File(".pruneconfig");
 
-	/** Key for working directory */
-	private static final String KEY_WORKING_DIR = "prune.directory";
+	/** Key for track directory */
+	public static final String KEY_TRACK_DIR = "prune.trackdirectory";
+	/** Key for photo directory */
+	public static final String KEY_PHOTO_DIR = "prune.photodirectory";
 	/** Key for language code */
-	private static final String KEY_LANGUAGE_CODE = "prune.languagecode";
+	public static final String KEY_LANGUAGE_CODE = "prune.languagecode";
 	/** Key for GPS device */
-	private static final String KEY_GPS_DEVICE = "prune.gpsdevice";
+	public static final String KEY_GPS_DEVICE = "prune.gpsdevice";
 	/** Key for GPS format */
-	private static final String KEY_GPS_FORMAT = "prune.gpsformat";
+	public static final String KEY_GPS_FORMAT = "prune.gpsformat";
 	/** Key for Povray font */
-	private static final String KEY_POVRAY_FONT = "prune.povrayfont";
+	public static final String KEY_POVRAY_FONT = "prune.povrayfont";
 	/** Key for metric/imperial */
-	private static final String KEY_METRIC_UNITS = "prune.metricunits";
-	/** Key for gpsbabel path */
-	private static final String KEY_GNUPLOTPATH = "prune.gnuplotpath";
+	public static final String KEY_METRIC_UNITS = "prune.metricunits";
 	/** Key for map server index */
-	private static final String KEY_MAPSERVERINDEX = "prune.mapserverindex";
+	public static final String KEY_MAPSERVERINDEX = "prune.mapserverindex";
 	/** Key for map server url */
-	private static final String KEY_MAPSERVERURL = "prune.mapserverurl";
+	public static final String KEY_MAPSERVERURL = "prune.mapserverurl";
+	/** Key for show pace flag */
+	public static final String KEY_SHOW_PACE = "prune.showpace";
+	/** Key for width of thumbnails in kmz */
+	public static final String KEY_KMZ_IMAGE_WIDTH = "prune.kmzimagewidth";
+	/** Key for height of thumbnails in kmz */
+	public static final String KEY_KMZ_IMAGE_HEIGHT = "prune.kmzimageheight";
+	/** Key for gpsbabel path */
+	public static final String KEY_GPSBABEL_PATH = "prune.gpsbabelpath";
+	/** Key for gnuplot path */
+	public static final String KEY_GNUPLOT_PATH = "prune.gnuplotpath";
+	/** Key for exiftool path */
+	public static final String KEY_EXIFTOOL_PATH = "prune.exiftoolpath";
 
-
-	/**
-	 * @return working directory for loading and saving
-	 */
-	public static File getWorkingDirectory()
-	{
-		return _workingDir;
-	}
-
-	/**
-	 * @param inDirectory working directory to use
-	 */
-	public static void setWorkingDirectory(File inDirectory)
-	{
-		_workingDir = inDirectory;
-	}
 
 	/**
 	 * Load the default configuration file
@@ -110,19 +89,8 @@ public abstract class Config
 			}
 			catch (Exception e) {}
 		}
-		// Save the properties we know about, ignore the rest
-		_langCode = props.getProperty(KEY_LANGUAGE_CODE);
-		String dir = props.getProperty(KEY_WORKING_DIR);
-		if (dir != null) {setWorkingDirectory(new File(dir));}
-		_gpsDevice = props.getProperty(KEY_GPS_DEVICE);
-		_gpsFormat = props.getProperty(KEY_GPS_FORMAT);
-		_povrayFont = props.getProperty(KEY_POVRAY_FONT);
-		String useMetric = props.getProperty(KEY_METRIC_UNITS);
-		_metricUnits = (useMetric == null || useMetric.equals("") || useMetric.toLowerCase().equals("y"));
-		_gnuplotPath = props.getProperty(KEY_GNUPLOTPATH);
-		if (_gnuplotPath == null || _gnuplotPath.equals("")) {_gnuplotPath = "gnuplot";}
-		_mapTileServerIndex = parseInt(props.getProperty(KEY_MAPSERVERINDEX));
-		_mapTileServerUrl = props.getProperty(KEY_MAPSERVERURL);
+		// Save all properties from file
+		_configValues.putAll(props);
 		if (loadFailed) {
 			throw new ConfigException();
 		}
@@ -140,6 +108,12 @@ public abstract class Config
 		props.put(KEY_GPS_DEVICE, "usb:");
 		props.put(KEY_GPS_FORMAT, "garmin");
 		props.put(KEY_POVRAY_FONT, "crystal.ttf"); // alternative: DejaVuSans-Bold.ttf
+		props.put(KEY_SHOW_PACE, "0"); // hide by default
+		props.put(KEY_EXIFTOOL_PATH, "exiftool");
+		props.put(KEY_GNUPLOT_PATH, "gnuplot");
+		props.put(KEY_GPSBABEL_PATH, "gpsbabel");
+		props.put(KEY_KMZ_IMAGE_WIDTH, "240");
+		props.put(KEY_KMZ_IMAGE_HEIGHT, "180");
 		return props;
 	}
 
@@ -157,81 +131,98 @@ public abstract class Config
 		return val;
 	}
 
-	/** @return language code */
-	public static String getLanguageCode()
-	{
-		return _langCode;
-	}
-
-	/** @return gps device */
-	public static String getGpsDevice()
-	{
-		return _gpsDevice;
-	}
-
-	/** @return gps format */
-	public static String getGpsFormat()
-	{
-		return _gpsFormat;
-	}
-
-	/** @return povray font */
-	public static String getPovrayFont()
-	{
-		return _povrayFont;
-	}
-
-	/** @return true to use metric units */
-	public static boolean getUseMetricUnits()
-	{
-		return _metricUnits;
-	}
-
-	/** @param inMetric true to use metric units */
-	public static void setUseMetricUnits(boolean inMetric)
-	{
-		_metricUnits = inMetric;
-	}
-
-	/** @return path to gnuplot */
-	public static String getGnuplotPath()
-	{
-		return _gnuplotPath;
-	}
-
-	/** @param inPath path to Gnuplot */
-	public static void setGnuplotPath(String inPath)
-	{
-		_gnuplotPath = inPath;
-	}
-
-	/** @return index of map server */
-	public static int getMapServerIndex()
-	{
-		return _mapTileServerIndex;
-	}
-
-	/** @param inIndex selected index */
-	public static void setMapServerIndex(int inIndex)
-	{
-		_mapTileServerIndex = inIndex;
-	}
-
-	/** @return url of map server */
-	public static String getMapServerUrl()
-	{
-		return _mapTileServerUrl;
-	}
-
-	/** @param inUrl url of map server */
-	public static void setMapServerUrl(String inUrl)
-	{
-		_mapTileServerUrl = inUrl;
-	}
-
 	/** @return File from which config was loaded (or null) */
 	public static File getConfigFile()
 	{
 		return _configFile;
+	}
+
+	/**
+	 * @return config Properties object to allow all config values to be saved
+	 */
+	public static Properties getAllConfig()
+	{
+		return _configValues;
+	}
+
+	/**
+	 * Store the given configuration setting
+	 * @param inKey key (from constants)
+	 * @param inValue value as string
+	 */
+	public static void setConfigString(String inKey, String inValue)
+	{
+		if (inKey != null && !inKey.equals(""))
+		{
+			_configValues.put(inKey, inValue);
+		}
+	}
+
+	/**
+	 * Store the given configuration setting
+	 * @param inKey key (from constants)
+	 * @param inValue value as boolean
+	 */
+	public static void setConfigBoolean(String inKey, boolean inValue)
+	{
+		if (inKey != null && !inKey.equals(""))
+		{
+			_configValues.put(inKey, (inValue?"1":"0"));
+		}
+	}
+
+	/**
+	 * Store the given configuration setting
+	 * @param inKey key (from constants)
+	 * @param inValue value as int
+	 */
+	public static void setConfigInt(String inKey, int inValue)
+	{
+		if (inKey != null && !inKey.equals(""))
+		{
+			_configValues.put(inKey, "" + inValue);
+		}
+	}
+
+	/**
+	 * Get the given configuration setting as a String
+	 * @param inKey key
+	 * @return configuration setting as a String
+	 */
+	public static String getConfigString(String inKey)
+	{
+		return _configValues.getProperty(inKey);
+	}
+
+	/**
+	 * Get the given configuration setting as a boolean
+	 * @param inKey key
+	 * @return configuration setting as a boolean
+	 */
+	public static boolean getConfigBoolean(String inKey)
+	{
+		String val = _configValues.getProperty(inKey);
+		return (val == null || val.equals("1"));
+	}
+
+	/**
+	 * Get the given configuration setting as an int
+	 * @param inKey key
+	 * @return configuration setting as an int
+	 */
+	public static int getConfigInt(String inKey)
+	{
+		return parseInt(_configValues.getProperty(inKey));
+	}
+
+	/**
+	 * Check whether the given key corresponds to a boolean property
+	 * @param inKey key to check
+	 * @return true if corresponding property is boolean
+	 */
+	public static boolean isKeyBoolean(String inKey)
+	{
+		// Only two boolean keys so far
+		return inKey != null && (inKey.equals(KEY_METRIC_UNITS) || inKey.equals(KEY_SHOW_PACE));
 	}
 }

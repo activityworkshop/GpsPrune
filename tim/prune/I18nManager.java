@@ -2,6 +2,7 @@ package tim.prune;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -35,14 +36,19 @@ public abstract class I18nManager
 		EnglishTexts = ResourceBundle.getBundle(BUNDLE_NAME, BACKUP_LOCALE);
 
 		// Get bundle for selected locale, if any
-		if (inLocale != null)
+		try
 		{
-			LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, inLocale);
+			if (inLocale != null)
+			{
+				LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, inLocale);
+			}
+			else
+			{
+				// locale is null so just use the system default
+				LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault());
+			}
 		}
-		else
-		{
-			// locale is null so just use the system default
-			LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault());
+		catch (MissingResourceException mre) { // ignore error, default to english
 		}
 	}
 
@@ -50,21 +56,26 @@ public abstract class I18nManager
 	/**
 	 * Add a language file
 	 * @param inFilename filename of file
+	 * @throws FileNotFoundException if load failed
 	 */
-	public static void addLanguageFile(String inFilename)
+	public static void addLanguageFile(String inFilename) throws FileNotFoundException
 	{
 		FileInputStream fis = null;
+		boolean fileLoaded = false;
 		try
 		{
 			File file = new File(inFilename);
 			ExternalPropsFile = new Properties();
 			fis = new FileInputStream(file);
 			ExternalPropsFile.load(fis);
+			fileLoaded = true; // everything worked
 		}
 		catch (IOException ioe) {}
 		finally { try { fis.close();
 			} catch (Exception e) {}
 		}
+		// complain if file wasn't loaded, by throwing a filenotfound exception
+		if (!fileLoaded) throw new FileNotFoundException();
 	}
 
 

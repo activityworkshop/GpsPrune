@@ -87,6 +87,12 @@ public class Charter extends GenericFunction
 	 */
 	public void begin()
 	{
+		// First check if gnuplot is available
+		if (!ExternalTools.isToolInstalled(ExternalTools.TOOL_GNUPLOT))
+		{
+			_app.showErrorMessage(getNameKey(), "dialog.charts.gnuplotnotfound");
+			return;
+		}
 		// Make dialog window
 		if (_dialog == null)
 		{
@@ -183,14 +189,6 @@ public class Charter extends GenericFunction
 		// button panel on bottom
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		// Gnuplot button
-		JButton gnuplotButton = new JButton(I18nManager.getText("button.gnuplotpath"));
-		gnuplotButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				setGnuplotPath();
-			}
-		});
-		buttonPanel.add(gnuplotButton);
 		// Cancel button
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(new ActionListener() {
@@ -277,7 +275,8 @@ public class Charter extends GenericFunction
 		OutputStreamWriter writer = null;
 		try
 		{
-			Process process = Runtime.getRuntime().exec(Config.getGnuplotPath() + " -persist");
+			final String gnuplotPath = Config.getConfigString(Config.KEY_GNUPLOT_PATH);
+			Process process = Runtime.getRuntime().exec(gnuplotPath + " -persist");
 			writer = new OutputStreamWriter(process.getOutputStream());
 			if (showSvg)
 			{
@@ -439,7 +438,7 @@ public class Charter extends GenericFunction
 	 */
 	private static String getUnitsLabel(String inMetric, String inImperial)
 	{
-		String key = Config.getUseMetricUnits()?inMetric:inImperial;
+		String key = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?inMetric:inImperial;
 		return I18nManager.getText(key);
 	}
 
@@ -462,7 +461,7 @@ public class Charter extends GenericFunction
 			{
 				totalRads += DataPoint.calculateRadiansBetween(prevPoint, currPoint);
 			}
-			if (Config.getUseMetricUnits()) {
+			if (Config.getConfigBoolean(Config.KEY_METRIC_UNITS)) {
 				values.setData(i, Distance.convertRadiansToDistance(totalRads, Units.KILOMETRES));
 			} else {
 				values.setData(i, Distance.convertRadiansToDistance(totalRads, Units.MILES));
@@ -507,7 +506,7 @@ public class Charter extends GenericFunction
 	private static ChartSeries getAltitudeValues(Track inTrack)
 	{
 		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
-		Altitude.Format altFormat = Config.getUseMetricUnits()?Altitude.Format.METRES:Altitude.Format.FEET;
+		Altitude.Format altFormat = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET;
 		for (int i=0; i<inTrack.getNumPoints(); i++) {
 			if (inTrack.getPoint(i).hasAltitude()) {
 				values.setData(i, inTrack.getPoint(i).getAltitude().getValue(altFormat));
@@ -542,7 +541,7 @@ public class Charter extends GenericFunction
 					+ DataPoint.calculateRadiansBetween(currPoint, nextPoint);
 				double time = nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp()) / 60.0 / 60.0;
 				// Convert to distance and pass to chartseries
-				if (Config.getUseMetricUnits()) {
+				if (Config.getConfigBoolean(Config.KEY_METRIC_UNITS)) {
 					values.setData(i, Distance.convertRadiansToDistance(rads, Units.KILOMETRES) / time);
 				} else {
 					values.setData(i, Distance.convertRadiansToDistance(rads, Units.MILES) / time);
@@ -561,7 +560,7 @@ public class Charter extends GenericFunction
 	{
 		// Calculate speeds and fill in in values array
 		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
-		Altitude.Format altFormat = Config.getUseMetricUnits()?Altitude.Format.METRES:Altitude.Format.FEET;
+		Altitude.Format altFormat = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET;
 		DataPoint prevPoint = null, currPoint = null, nextPoint = null;
 		DataPoint[] points = getDataPoints(inTrack, true); // require that points have altitudes too
 		// Loop over collected points
@@ -614,7 +613,7 @@ public class Charter extends GenericFunction
 
 	/**
 	 * Select a file to write for the SVG output
-	 * @return
+	 * @return selected File object or null if cancelled
 	 */
 	private File selectSvgFile()
 	{
@@ -625,8 +624,8 @@ public class Charter extends GenericFunction
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.svg", new String[] {"svg"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
-			File configDir = Config.getWorkingDirectory();
-			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 		boolean chooseAgain = true;
 		while (chooseAgain)
@@ -650,9 +649,7 @@ public class Charter extends GenericFunction
 				{
 					return file;
 				}
-				else {
-					chooseAgain = true;
-				}
+				chooseAgain = true;
 			}
 		}
 		// Cancel pressed so no file selected
@@ -670,28 +667,5 @@ public class Charter extends GenericFunction
 		if (inNumCharts == 2) {return new int[] {25, 75, 0, 25};}
 		if (inNumCharts == 3) {return new int[] {40, 60, 20, 20, 0, 20};}
 		return new int[] {54, 46, 36, 18, 18, 18, 0, 18};
-	}
-
-	/**
-	 * Prompt the user to set/edit the path to gnuplot
-	 */
-	private void setGnuplotPath()
-	{
-		String currPath = Config.getGnuplotPath();
-		Object path = JOptionPane.showInputDialog(_dialog,
-			I18nManager.getText("dialog.charts.gnuplotpath"),
-			I18nManager.getText(getNameKey()),
-			JOptionPane.QUESTION_MESSAGE, null, null, "" + currPath);
-		if (path != null)
-		{
-			String pathString = path.toString().trim();
-			if (!pathString.equals("") && !pathString.equals(currPath)) {
-				Config.setGnuplotPath(pathString);
-				// warn if gnuplot still not found
-				if (!ExternalTools.isGnuplotInstalled()) {
-					_app.showErrorMessage(getNameKey(), "dialog.charts.gnuplotnotfound");
-				}
-			}
-		}
 	}
 }

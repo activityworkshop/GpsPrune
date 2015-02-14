@@ -76,7 +76,7 @@ public abstract class Coordinate
 			char currChar;
 			long[] fields = new long[4]; // needs to be long for lengthy decimals
 			long[] denoms = new long[4];
-			String secondDelim = "";
+			boolean[] otherDelims = new boolean[5]; // remember whether delimiters have non-decimal chars
 			try
 			{
 				// Loop over characters in input string, populating fields array
@@ -97,10 +97,8 @@ public abstract class Coordinate
 					else
 					{
 						inNumeric = false;
-						// Remember second delimiter
-						if (numFields == 2) {
-							secondDelim += currChar;
-						}
+						// Remember delimiters
+						if (currChar != ',' && currChar != '.') {otherDelims[numFields] = true;}
 					}
 				}
 				_valid = (numFields > 0);
@@ -116,16 +114,28 @@ public abstract class Coordinate
 			_fracDenom = 10;
 			if (numFields == 2)
 			{
-				// String is just decimal degrees
-				double numMins = fields[1] * 60.0 / denoms[1];
-				_minutes = (int) numMins;
-				double numSecs = (numMins - _minutes) * 60.0;
-				_seconds = (int) numSecs;
-				_fracs = (int) ((numSecs - _seconds) * 10);
-				_asDouble = _degrees + 1.0 * fields[1] / denoms[1];
+				if (!otherDelims[1])
+				{
+					// String is just decimal degrees
+					double numMins = fields[1] * 60.0 / denoms[1];
+					_minutes = (int) numMins;
+					double numSecs = (numMins - _minutes) * 60.0;
+					_seconds = (int) numSecs;
+					_fracs = (int) ((numSecs - _seconds) * 10);
+					_asDouble = _degrees + 1.0 * fields[1] / denoms[1];
+				}
+				else
+				{
+					// String is degrees and minutes (due to non-decimal separator)
+					_originalFormat = FORMAT_DEG_MIN;
+					_minutes = (int) fields[1];
+					_seconds = 0;
+					_fracs = 0;
+					_asDouble = 1.0 * _degrees + (_minutes / 60.0);
+				}
 			}
 			// Differentiate between d-m.f and d-m-s using . or ,
-			else if (numFields == 3 && (secondDelim.equals(".") || secondDelim.equals(",")))
+			else if (numFields == 3 && !otherDelims[2])
 			{
 				// String is degrees-minutes.fractions
 				_originalFormat = FORMAT_DEG_MIN;
@@ -265,7 +275,7 @@ public abstract class Coordinate
 				{
 					StringBuffer buffer = new StringBuffer();
 					buffer.append(PRINTABLE_CARDINALS[_cardinal])
-						.append(threeDigitString(_degrees)).append('°')
+						.append(threeDigitString(_degrees)).append('\u00B0')
 						.append(twoDigitString(_minutes)).append('\'')
 						.append(twoDigitString(_seconds)).append('.')
 						.append(formatFraction(_fracs, _fracDenom));
@@ -274,13 +284,13 @@ public abstract class Coordinate
 				}
 				case FORMAT_DEG_MIN:
 				{
-					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
+					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "\u00B0"
 						+ (_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom) + "'";
 					break;
 				}
 				case FORMAT_DEG_WHOLE_MIN:
 				{
-					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
+					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "\u00B0"
 						+ (int) Math.floor(_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom + 0.5) + "'";
 					break;
 				}

@@ -1,8 +1,10 @@
 package tim.prune;
 
+import java.util.ArrayList;
 import java.util.EmptyStackException;
 import java.util.Set;
 import java.util.Stack;
+import java.io.File;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -14,6 +16,7 @@ import tim.prune.data.Field;
 import tim.prune.data.LatLonRectangle;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
+import tim.prune.data.NumberUtils;
 import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
 import tim.prune.data.Track;
@@ -22,31 +25,14 @@ import tim.prune.function.browser.BrowserLauncher;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.function.edit.PointEditor;
-import tim.prune.function.edit.PointNameEditor;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.UndoManager;
+import tim.prune.gui.Viewport;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
-import tim.prune.undo.UndoAddTimeOffset;
-import tim.prune.undo.UndoCompress;
-import tim.prune.undo.UndoConnectPhoto;
-import tim.prune.undo.UndoConnectPhotoWithClone;
-import tim.prune.undo.UndoCreatePoint;
-import tim.prune.undo.UndoCutAndMove;
-import tim.prune.undo.UndoDeletePhoto;
-import tim.prune.undo.UndoDeletePoint;
-import tim.prune.undo.UndoDeleteRange;
-import tim.prune.undo.UndoDisconnectPhoto;
-import tim.prune.undo.UndoEditPoint;
-import tim.prune.undo.UndoException;
-import tim.prune.undo.UndoInsert;
-import tim.prune.undo.UndoLoad;
-import tim.prune.undo.UndoLoadPhotos;
-import tim.prune.undo.UndoMergeTrackSegments;
-import tim.prune.undo.UndoOperation;
-import tim.prune.undo.UndoReverseSection;
+import tim.prune.undo.*;
 
 
 /**
@@ -65,6 +51,10 @@ public class App
 	private FileSaver _fileSaver = null;
 	private Stack<UndoOperation> _undoStack = null;
 	private boolean _mangleTimestampsConfirmed = false;
+	private Viewport _viewport = null;
+	private ArrayList<File> _dataFiles = null;
+	private boolean _firstDataFile = true;
+
 
 	/**
 	 * Constructor
@@ -112,6 +102,27 @@ public class App
 	public Stack<UndoOperation> getUndoStack()
 	{
 		return _undoStack;
+	}
+
+	/**
+	 * Load the specified data files one by one
+	 * @param inDataFiles arraylist containing File objects to load
+	 */
+	public void loadDataFiles(ArrayList<File> inDataFiles)
+	{
+		if (inDataFiles == null || inDataFiles.size() == 0) {
+			_dataFiles = null;
+		}
+		else {
+			_dataFiles = inDataFiles;
+			File f = _dataFiles.get(0);
+			_dataFiles.remove(0);
+			// Start load of specified file
+			if (_fileLoader == null)
+				_fileLoader = new FileLoader(this, _frame);
+			_firstDataFile = true;
+			_fileLoader.openFile(f);
+		}
 	}
 
 	/**
@@ -233,24 +244,6 @@ public class App
 				_undoStack.push(undo);
 				// Confirm point edit
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.point.edit"));
-			}
-		}
-	}
-
-
-	/**
-	 * Edit the name of the currently selected (way)point
-	 */
-	public void editCurrentPointName()
-	{
-		if (_track != null)
-		{
-			DataPoint currentPoint = _trackInfo.getCurrentPoint();
-			if (currentPoint != null)
-			{
-				// Open point dialog to display details
-				PointNameEditor editor = new PointNameEditor(this, _frame);
-				editor.showDialog(currentPoint);
 			}
 		}
 	}
@@ -466,6 +459,39 @@ public class App
 
 
 	/**
+	 * Complete the add altitude offset function with the specified offset
+	 * @param inOffset altitude offset to add as String
+	 * @param inFormat altitude format of offset (eg Feet, Metres)
+	 */
+	public void finishAddAltitudeOffset(String inOffset, Altitude.Format inFormat)
+	{
+		// Sanity check
+		if (inOffset == null || inOffset.equals("") || inFormat==Altitude.Format.NO_FORMAT) {
+			return;
+		}
+		// Construct undo information
+		UndoAddAltitudeOffset undo = new UndoAddAltitudeOffset(_trackInfo);
+		int selStart = _trackInfo.getSelection().getStart();
+		int selEnd = _trackInfo.getSelection().getEnd();
+		// How many decimal places are given in the offset?
+		int numDecimals = NumberUtils.getDecimalPlaces(inOffset);
+		boolean success = false;
+		// Decimal offset given
+		try {
+			double offsetd = Double.parseDouble(inOffset);
+			success = _trackInfo.getTrack().addAltitudeOffset(selStart, selEnd, offsetd, inFormat, numDecimals);
+		}
+		catch (NumberFormatException nfe) {}
+		if (success)
+		{
+			_undoStack.add(undo);
+			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_EDITED);
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.addaltitudeoffset"));
+		}
+	}
+
+
+	/**
 	 * Merge the track segments within the current selection
 	 */
 	public void mergeTrackSegments()
@@ -480,7 +506,7 @@ public class App
 			// Make undo object
 			UndoMergeTrackSegments undo = new UndoMergeTrackSegments(_track, selStart, selEnd);
 			// Call track to merge segments
-			if (_track.mergeTrackSegments(selStart, selEnd)) {
+			if (_trackInfo.mergeTrackSegments(selStart, selEnd)) {
 				_undoStack.add(undo);
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.mergetracksegments"));
 			}
@@ -542,7 +568,7 @@ public class App
 		DataPoint point = new DataPoint(new Latitude(inLat, Coordinate.FORMAT_NONE), new Longitude(inLong, Coordinate.FORMAT_NONE), null);
 		point.setSegmentStart(true);
 		_track.appendPoints(new DataPoint[] {point});
-		_trackInfo.getSelection().selectPoint(_trackInfo.getTrack().getNumPoints()-1);
+		_trackInfo.selectPoint(_trackInfo.getTrack().getNumPoints()-1);
 		// add undo object to stack
 		_undoStack.add(undo);
 		// update listeners
@@ -582,20 +608,11 @@ public class App
 
 				// Add undo object to stack, set confirm message
 				_undoStack.add(undo);
-				_trackInfo.getSelection().deselectRange();
+				_trackInfo.getSelection().selectRange(-1, -1);
 				UpdateMessageBroker.informSubscribers();
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.cutandmove"));
 			}
 		}
-	}
-
-
-	/**
-	 * Select all points
-	 */
-	public void selectAll()
-	{
-		_trackInfo.getSelection().select(0, 0, _track.getNumPoints()-1);
 	}
 
 	/**
@@ -607,7 +624,6 @@ public class App
 		_trackInfo.getSelection().clearAll();
 		_track.clearDeletionMarkers();
 	}
-
 
 	/**
 	 * Receive loaded data and optionally merge with current Track
@@ -625,16 +641,25 @@ public class App
 		if (loadedTrack.getNumPoints() <= 0)
 		{
 			showErrorMessage("error.load.dialogtitle", "error.load.nopoints");
+			// load next file if there's a queue
+			loadNextFile();
 			return;
 		}
 		// Decide whether to load or append
 		if (_track.getNumPoints() > 0)
 		{
 			// ask whether to replace or append
-			int answer = JOptionPane.showConfirmDialog(_frame,
-				I18nManager.getText("dialog.openappend.text"),
-				I18nManager.getText("dialog.openappend.title"),
-				JOptionPane.YES_NO_CANCEL_OPTION);
+			int answer = 0;
+			if (_dataFiles == null || _firstDataFile) {
+				answer = JOptionPane.showConfirmDialog(_frame,
+					I18nManager.getText("dialog.openappend.text"),
+					I18nManager.getText("dialog.openappend.title"),
+					JOptionPane.YES_NO_CANCEL_OPTION);
+			}
+			else {
+				// Automatically append if there's a file load queue
+				answer = JOptionPane.YES_OPTION;
+			}
 			if (answer == JOptionPane.YES_OPTION)
 			{
 				// append data to current Track
@@ -683,6 +708,38 @@ public class App
 		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile") + " '" + inFilename + "'");
 		// update menu
 		_menuManager.informFileLoaded();
+		// load next file if there's a queue
+		loadNextFile();
+	}
+
+	/**
+	 * Inform the app that NO data was loaded, eg cancel pressed
+	 * Only needed if there's another file waiting in the queue
+	 */
+	public void informNoDataLoaded()
+	{
+		// Load next file if there's a queue
+		loadNextFile();
+	}
+
+	/**
+	 * Load the next file in the waiting list, if any
+	 */
+	private void loadNextFile()
+	{
+		_firstDataFile = false;
+		if (_dataFiles == null || _dataFiles.size() == 0) {
+			_dataFiles = null;
+		}
+		else {
+			new Thread(new Runnable() {
+				public void run() {
+					File f = _dataFiles.get(0);
+					_dataFiles.remove(0);
+					_fileLoader.openFile(f);
+				}
+			}).start();
+		}
 	}
 
 
@@ -710,7 +767,7 @@ public class App
 			{
 				UpdateMessageBroker.informSubscribers("" + numPhotosAdded + " " + I18nManager.getText("confirm.jpegload.multi"));
 			}
-			// TODO: Improve message when photo(s) fail to load (eg already added)
+			// MAYBE: Improve message when photo(s) fail to load (eg already added)
 			UpdateMessageBroker.informSubscribers();
 			// update menu
 			_menuManager.informFileLoaded();
@@ -963,5 +1020,21 @@ public class App
 	{
 		JOptionPane.showMessageDialog(_frame, inMessage,
 			I18nManager.getText(inTitleKey), JOptionPane.ERROR_MESSAGE);
+	}
+
+	/**
+	 * @param inViewport viewport object
+	 */
+	public void setViewport(Viewport inViewport)
+	{
+		_viewport = inViewport;
+	}
+
+	/**
+	 * @return current viewport object
+	 */
+	public Viewport getViewport()
+	{
+		return _viewport;
 	}
 }

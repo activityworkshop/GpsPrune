@@ -17,12 +17,15 @@ public class GpxHandler extends XmlHandler
 	private boolean _insideName = false;
 	private boolean _insideElevation = false;
 	private boolean _insideTime = false;
+//	private boolean _insideType = false;
 	private boolean _startSegment = true;
 	private String _name = null, _latitude = null, _longitude = null;
 	private String _elevation = null;
 	private String _time = null;
+//	private String _type = null;
 	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
 
+	// FIXME: Read waypoint type too
 
 	/**
 	 * Receive the start of a tag
@@ -58,6 +61,10 @@ public class GpxHandler extends XmlHandler
 		{
 			_insideTime = true;
 		}
+//		else if (qName.equalsIgnoreCase("type"))
+//		{
+//			_insideType = true;
+//		}
 		else if (qName.equalsIgnoreCase("trkseg"))
 		{
 			_startSegment = true;

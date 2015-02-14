@@ -178,8 +178,8 @@ public class AddTimeOffset extends GenericFunction
 	private long getOffsetSecs()
 	{
 		long offsetSecs = _minuteField.getValue() * 60L
-		+ _hourField.getValue() * 60L * 60L
-		+ _dayField.getValue() * 60L * 60L * 24L;
+		  + _hourField.getValue() * 60L * 60L
+		  + _dayField.getValue() * 60L * 60L * 24L;
 		if (_subtractRadio.isSelected()) {offsetSecs = -offsetSecs;}
 		return offsetSecs;
 	}

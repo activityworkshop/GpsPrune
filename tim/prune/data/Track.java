@@ -22,7 +22,8 @@ public class Track
 	private double[] _yValues = null;
 	private boolean _scaled = false;
 	private int _numPoints = 0;
-	private boolean _mixedData = false;
+	private boolean _hasTrackpoint = false;
+	private boolean _hasWaypoint = false;
 	// Master field list
 	private FieldList _masterFieldList = null;
 	// variable ranges
@@ -154,8 +155,8 @@ public class Track
 		for (int i=0; i<_numPoints; i++)
 		{
 			DataPoint point = _dataPoints[i];
-			// Don't delete waypoints or photo points
-			if (point.isWaypoint() || point.getPhoto() != null || !point.getDeleteFlag())
+			// Don't delete photo points
+			if (point.getPhoto() != null || !point.getDeleteFlag())
 			{
 				newPointArray[numCopied] = point;
 				numCopied++;
@@ -297,31 +298,41 @@ public class Track
 		return foundTimestamp;
 	}
 
-
 	/**
-	 * Merge the track segments within the given range
-	 * @param inStart start index
-	 * @param inEnd end index
-	 * @return true if successful
+	 * Add the given altitude offset to the specified range
+	 * @param inStart start of range
+	 * @param inEnd end of range
+	 * @param inOffset offset to add (-ve to subtract)
+	 * @param inFormat altitude format of offset
+	 * @param inDecimals number of decimal places in offset
+	 * @return true on success
 	 */
-	public boolean mergeTrackSegments(int inStart, int inEnd)
+	public boolean addAltitudeOffset(int inStart, int inEnd, double inOffset,
+	 Altitude.Format inFormat, int inDecimals)
 	{
-		boolean firstTrackPoint = true;
-		// Loop between start and end
-		for (int i=inStart; i<=inEnd; i++) {
-			DataPoint point = getPoint(i);
-			// Set all segments to false apart from first track point
-			if (point != null && !point.isWaypoint()) {
-				point.setSegmentStart(firstTrackPoint);
-				firstTrackPoint = false;
+		// sanity check
+		if (inStart < 0 || inEnd < 0 || inStart >= inEnd || inEnd >= _numPoints) {
+			return false;
+		}
+		boolean foundAlt = false;
+		// Loop over all points within range
+		for (int i=inStart; i<=inEnd; i++)
+		{
+			Altitude alt = _dataPoints[i].getAltitude();
+			if (alt != null && alt.isValid())
+			{
+				// This point has an altitude so add the offset to it
+				foundAlt = true;
+				alt.addOffset(inOffset, inFormat, inDecimals);
 			}
 		}
-		// Find following track point, if any
-		DataPoint nextPoint = getNextTrackPoint(inEnd+1);
-		if (nextPoint != null) {nextPoint.setSegmentStart(true);}
-		UpdateMessageBroker.informSubscribers();
-		return true;
+		// needs to be scaled again
+		_scaled = false;
+		return foundAlt;
 	}
+
+	// TODO: Function to collect and sort photo points by time or photo filename
+	// TODO: Function to convert waypoint names into timestamps
 
 	/**
 	 * Collect all waypoints to the start or end of the track
@@ -445,8 +456,9 @@ public class Track
 	 */
 	public boolean cutAndMoveSection(int inSectionStart, int inSectionEnd, int inMoveTo)
 	{
+		// TODO: Move cut/move into separate function?
 		// Check that indices make sense
-		if (inSectionStart > 0 && inSectionEnd > inSectionStart && inMoveTo > 0
+		if (inSectionStart > 0 && inSectionEnd > inSectionStart && inMoveTo >= 0
 			&& (inMoveTo < inSectionStart || inMoveTo > (inSectionEnd+1)))
 		{
 			// do the cut and move
@@ -457,30 +469,34 @@ public class Track
 			{
 				int sectionLength = inSectionEnd - inSectionStart + 1;
 				// move section to earlier point
-				if (inMoveTo > 0)
+				if (inMoveTo > 0) {
 					System.arraycopy(_dataPoints, 0, newPointArray, 0, inMoveTo); // unchanged points before
+				}
 				System.arraycopy(_dataPoints, inSectionStart, newPointArray, inMoveTo, sectionLength); // moved bit
 				// after insertion point, before moved bit
-				if (inSectionStart > (inMoveTo + 1))
-					System.arraycopy(_dataPoints, inMoveTo, newPointArray, inMoveTo + sectionLength, inSectionStart - inMoveTo);
+				System.arraycopy(_dataPoints, inMoveTo, newPointArray, inMoveTo + sectionLength, inSectionStart - inMoveTo);
 				// after moved bit
-				if (inSectionEnd < (_numPoints - 1))
+				if (inSectionEnd < (_numPoints - 1)) {
 					System.arraycopy(_dataPoints, inSectionEnd+1, newPointArray, inSectionEnd+1, _numPoints - inSectionEnd - 1);
+				}
 			}
 			else
 			{
 				// Move section to later point
-				if (inSectionStart > 0)
+				if (inSectionStart > 0) {
 					System.arraycopy(_dataPoints, 0, newPointArray, 0, inSectionStart); // unchanged points before
+				}
 				// from end of section to move to point
-				if (inMoveTo > (inSectionEnd + 1))
+				if (inMoveTo > (inSectionEnd + 1)) {
 					System.arraycopy(_dataPoints, inSectionEnd+1, newPointArray, inSectionStart, inMoveTo - inSectionEnd - 1);
+				}
 				// moved bit
 				System.arraycopy(_dataPoints, inSectionStart, newPointArray, inSectionStart + inMoveTo - inSectionEnd - 1,
 					inSectionEnd - inSectionStart + 1);
 				// unchanged bit after
-				if (inSectionEnd < (_numPoints - 1))
+				if (inSectionEnd < (_numPoints - 1)) {
 					System.arraycopy(_dataPoints, inMoveTo, newPointArray, inMoveTo, _numPoints - inMoveTo);
+				}
 			}
 			// Copy array references
 			_dataPoints = newPointArray;
@@ -533,7 +549,7 @@ public class Track
 		double latitudeDiff = 0.0, longitudeDiff = 0.0;
 		double totalAltitude = 0;
 		int numAltitudes = 0;
-		Altitude.Format altFormat = Config.getUseMetricUnits()?Altitude.Format.METRES:Altitude.Format.FEET;
+		Altitude.Format altFormat = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET;
 		// loop between start and end points
 		for (int i=inStartIndex; i<= inEndIndex; i++)
 		{
@@ -605,6 +621,7 @@ public class Track
 		if (!_scaled) scalePoints();
 		return _altitudeRange;
 	}
+
 	/**
 	 * @return the number of (valid) points in the track
 	 */
@@ -684,6 +701,8 @@ public class Track
 	 */
 	public boolean hasData(Field inField)
 	{
+		// Don't use this method for altitudes
+		if (inField.equals(Field.ALTITUDE)) {return hasAltitudeData();}
 		return hasData(inField, 0, _numPoints-1);
 	}
 
@@ -713,14 +732,30 @@ public class Track
 		return false;
 	}
 
+	/**
+	 * @return true if track has altitude data (which are not all zero)
+	 */
+	public boolean hasAltitudeData()
+	{
+		return getAltitudeRange().getMaximum() > 0;
+	}
 
 	/**
-	 * @return true if track contains waypoints and trackpoints
+	 * @return true if track contains at least one trackpoint
 	 */
-	public boolean hasMixedData()
+	public boolean hasTrackPoints()
 	{
 		if (!_scaled) scalePoints();
-		return _mixedData;
+		return _hasTrackpoint;
+	}
+
+	/**
+	 * @return true if track contains waypoints
+	 */
+	public boolean hasWaypoints()
+	{
+		if (!_scaled) scalePoints();
+		return _hasWaypoint;
 	}
 
 	/**
@@ -809,7 +844,7 @@ public class Track
 		_latRange = new DoubleRange();
 		_altitudeRange = new AltitudeRange();
 		int p;
-		boolean hasWaypoint = false, hasTrackpoint = false;
+		_hasWaypoint = false; _hasTrackpoint = false;
 		for (p=0; p < getNumPoints(); p++)
 		{
 			DataPoint point = getPoint(p);
@@ -822,12 +857,11 @@ public class Track
 					_altitudeRange.addValue(point.getAltitude());
 				}
 				if (point.isWaypoint())
-					hasWaypoint = true;
+					_hasWaypoint = true;
 				else
-					hasTrackpoint = true;
+					_hasTrackpoint = true;
 			}
 		}
-		_mixedData = hasWaypoint && hasTrackpoint;
 
 		// Loop over points and calculate scales
 		_xValues = new double[getNumPoints()];
@@ -1099,10 +1133,15 @@ public class Track
 			for (int i=0; i<numEdits; i++)
 			{
 				FieldEdit edit = inEditList.getEdit(i);
-				inPoint.setFieldValue(edit.getField(), edit.getValue());
+				Field editField = edit.getField();
+				inPoint.setFieldValue(editField, edit.getValue());
+				// Check that master field list has this field already (maybe point name has been added)
+				if (!_masterFieldList.contains(editField)) {
+					_masterFieldList.extendList(editField);
+				}
 				// check coordinates
-				coordsChanged |= (edit.getField().equals(Field.LATITUDE)
-					|| edit.getField().equals(Field.LONGITUDE) || edit.getField().equals(Field.ALTITUDE));
+				coordsChanged |= (editField.equals(Field.LATITUDE)
+					|| editField.equals(Field.LONGITUDE) || editField.equals(Field.ALTITUDE));
 			}
 			// set photo status if coordinates have changed
 			if (inPoint.getPhoto() != null && coordsChanged)

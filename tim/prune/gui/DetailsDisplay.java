@@ -46,6 +46,7 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _durationLabel = null;
 	private JLabel _altRangeLabel = null, _updownLabel = null;
 	private JLabel _aveSpeedLabel = null, _aveMovingSpeedLabel = null;
+	private JLabel _paceLabel = null;
 
 	// Photo details
 	private JLabel _photoLabel = null;
@@ -138,6 +139,8 @@ public class DetailsDisplay extends GenericDisplay
 		rangeDetailsPanel.add(_aveSpeedLabel);
 		_aveMovingSpeedLabel = new JLabel("");
 		rangeDetailsPanel.add(_aveMovingSpeedLabel);
+		_paceLabel = new JLabel("");
+		rangeDetailsPanel.add(_paceLabel);
 		_altRangeLabel = new JLabel("");
 		rangeDetailsPanel.add(_altRangeLabel);
 		_updownLabel = new JLabel("");
@@ -196,12 +199,12 @@ public class DetailsDisplay extends GenericDisplay
 		lowerPanel.add(unitsLabel);
 		String[] distUnits = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")};
 		_distUnitsDropdown = new JComboBox(distUnits);
-		if (!Config.getUseMetricUnits()) {_distUnitsDropdown.setSelectedIndex(1);}
+		if (!Config.getConfigBoolean(Config.KEY_METRIC_UNITS)) {_distUnitsDropdown.setSelectedIndex(1);}
 		_distUnitsDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				dataUpdated(DataSubscriber.UNITS_CHANGED);
-				Config.setUseMetricUnits(_distUnitsDropdown.getSelectedIndex() == 0);
+				Config.setConfigBoolean(Config.KEY_METRIC_UNITS, _distUnitsDropdown.getSelectedIndex() == 0);
 			}
 		});
 		lowerPanel.add(_distUnitsDropdown);
@@ -245,7 +248,8 @@ public class DetailsDisplay extends GenericDisplay
 				:"");
 			if (currentPoint.getTimestamp().isValid())
 			{
-				if (currentPointIndex > 0 && currentPointIndex < (_trackInfo.getTrack().getNumPoints()-1)) {
+				if (currentPointIndex > 0 && currentPointIndex < (_trackInfo.getTrack().getNumPoints()-1))
+				{
 					DataPoint prevPoint = _trackInfo.getTrack().getPoint(currentPointIndex - 1);
 					DataPoint nextPoint = _trackInfo.getTrack().getPoint(currentPointIndex + 1);
 					if (prevPoint.getTimestamp().isValid() && nextPoint.getTimestamp().isValid())
@@ -286,6 +290,7 @@ public class DetailsDisplay extends GenericDisplay
 			_updownLabel.setText("");
 			_aveSpeedLabel.setText("");
 			_aveMovingSpeedLabel.setText("");
+			_paceLabel.setText("");
 		}
 		else
 		{
@@ -293,19 +298,38 @@ public class DetailsDisplay extends GenericDisplay
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
 			_distanceLabel.setText(LABEL_RANGE_DISTANCE + roundedNumber(selection.getDistance(distUnits)) + " " + distUnitsStr);
-			_movingDistanceLabel.setText(LABEL_RANGE_MOVINGDISTANCE + roundedNumber(selection.getMovingDistance(distUnits)) + " " + distUnitsStr);
+			if (selection.getHasMultipleSegments()) {
+				_movingDistanceLabel.setText(LABEL_RANGE_MOVINGDISTANCE + roundedNumber(selection.getMovingDistance(distUnits)) + " " + distUnitsStr);
+			}
+			else {
+				_movingDistanceLabel.setText(null);
+			}
 			if (selection.getNumSeconds() > 0)
 			{
 				_durationLabel.setText(LABEL_RANGE_DURATION + buildDurationString(selection.getNumSeconds()));
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
 					+ roundedNumber(selection.getDistance(distUnits)/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
-				_aveMovingSpeedLabel.setText(I18nManager.getText("details.range.avemovingspeed") + ": "
-					+ roundedNumber(selection.getMovingDistance(distUnits)/selection.getMovingSeconds()*3600.0) + " " + speedUnitsStr);
+				if (selection.getHasMultipleSegments()) {
+					_aveMovingSpeedLabel.setText(I18nManager.getText("details.range.avemovingspeed") + ": "
+						+ roundedNumber(selection.getMovingDistance(distUnits)/selection.getMovingSeconds()*3600.0) + " " + speedUnitsStr);
+				}
+				else {
+					_aveMovingSpeedLabel.setText(null);
+				}
+				if (Config.getConfigBoolean(Config.KEY_SHOW_PACE)) {
+					_paceLabel.setText(I18nManager.getText("details.range.pace") + ": "
+						+ buildDurationString((long) (selection.getNumSeconds()/selection.getDistance(distUnits)))
+						+ " / " + distUnitsStr);
+				}
+				else {
+					_paceLabel.setText("");
+				}
 			}
 			else {
 				_durationLabel.setText("");
 				_aveSpeedLabel.setText("");
 				_aveMovingSpeedLabel.setText("");
+				_paceLabel.setText("");
 			}
 			String altUnitsLabel = getAltitudeUnitsLabel(selection.getAltitudeFormat());
 			IntegerRange altRange = selection.getAltitudeRange();
@@ -326,7 +350,7 @@ public class DetailsDisplay extends GenericDisplay
 		}
 		// show photo details and thumbnail
 		Photo currentPhoto = _trackInfo.getPhotoList().getPhoto(_trackInfo.getSelection().getCurrentPhotoIndex());
-		if (_track == null || ( (currentPoint == null || currentPoint.getPhoto() == null) && currentPhoto == null))
+		if ((currentPoint == null || currentPoint.getPhoto() == null) && currentPhoto == null)
 		{
 			// no photo, hide details
 			_photoLabel.setText(I18nManager.getText("details.nophoto"));
@@ -338,7 +362,7 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
 			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getFile().getName());
-			_photoLabel.setText(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText());
+			_photoTimestampLabel.setText(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText());
 			_photoConnectedLabel.setText(I18nManager.getText("details.photo.connected") + ": "
 				+ (currentPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
@@ -403,7 +427,7 @@ public class DetailsDisplay extends GenericDisplay
 		if (inNumSecs < 86400L) return "" + (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours")
 			+ " " + ((inNumSecs / 60) % 60) + I18nManager.getText("display.range.time.mins");
 		if (inNumSecs < 432000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days")
-			+ " " + (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours");
+			+ " " + (inNumSecs / 60 / 60) % 24 + I18nManager.getText("display.range.time.hours");
 		if (inNumSecs < 8640000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days");
 		return "big";
 	}

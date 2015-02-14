@@ -144,10 +144,10 @@ public class SetMapBgFunction extends GenericFunction
 	{
 		// Get values from config
 		try {
-			_serverRadios[Config.getMapServerIndex()].setSelected(true);
+			_serverRadios[Config.getConfigInt(Config.KEY_MAPSERVERINDEX)].setSelected(true);
 		}
 		catch (ArrayIndexOutOfBoundsException e) {} // ignore
-		String url = Config.getMapServerUrl();
+		String url = Config.getConfigString(Config.KEY_MAPSERVERURL);
 		if (url != null) {_serverUrl.setText(url);}
 		// Choose default if none selected
 		if (getSelectedServer() < 0) {
@@ -194,8 +194,8 @@ public class SetMapBgFunction extends GenericFunction
 	{
 		int serverNum = getSelectedServer();
 		if (!inputOK()) {serverNum = 0;}
-		Config.setMapServerIndex(serverNum);
-		Config.setMapServerUrl(_serverUrl.getText());
+		Config.setConfigInt(Config.KEY_MAPSERVERINDEX, serverNum);
+		Config.setConfigString(Config.KEY_MAPSERVERURL, _serverUrl.getText());
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 		_dialog.dispose();
 	}

@@ -65,9 +65,11 @@ public class FileSaver
 	private JRadioButton[] _delimiterRadios = null;
 	private JTextField _otherDelimiterText = null;
 	private JCheckBox _headerRowCheckbox = null;
+	private PointTypeSelector _pointTypeSelector = null;
 	private JRadioButton[] _coordUnitsRadios = null;
 	private JRadioButton[] _altitudeUnitsRadios = null;
 	private JRadioButton[] _timestampUnitsRadios = null;
+
 	private static final int[] FORMAT_COORDS = {Coordinate.FORMAT_NONE, Coordinate.FORMAT_DEG_MIN_SEC,
 		Coordinate.FORMAT_DEG_MIN, Coordinate.FORMAT_DEG};
 	private static final Altitude.Format[] FORMAT_ALTS = {Altitude.Format.NO_FORMAT, Altitude.Format.METRES, Altitude.Format.FEET};
@@ -224,13 +226,18 @@ public class FileSaver
 		firstCard.add(Box.createRigidArea(new Dimension(0,10)));
 		_headerRowCheckbox = new JCheckBox(I18nManager.getText("dialog.save.headerrow"), true);
 		firstCard.add(_headerRowCheckbox);
-
 		_cards.add(firstCard, "card1");
 
+		// Second card
 		JPanel secondCard = new JPanel();
 		secondCard.setLayout(new BorderLayout());
 		JPanel secondCardHolder = new JPanel();
 		secondCardHolder.setLayout(new BoxLayout(secondCardHolder, BoxLayout.Y_AXIS));
+		// point type selector
+		secondCardHolder.add(Box.createRigidArea(new Dimension(0,10)));
+		_pointTypeSelector = new PointTypeSelector();
+		_pointTypeSelector.setAlignmentX(JLabel.LEFT_ALIGNMENT);
+		secondCardHolder.add(_pointTypeSelector);
 		JLabel coordLabel = new JLabel(I18nManager.getText("dialog.save.coordinateunits"));
 		coordLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
 		secondCardHolder.add(coordLabel);
@@ -251,7 +258,7 @@ public class FileSaver
 		}
 		coordsUnitsPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		secondCardHolder.add(coordsUnitsPanel);
-		secondCardHolder.add(Box.createRigidArea(new Dimension(0,10)));
+		secondCardHolder.add(Box.createRigidArea(new Dimension(0,7)));
 		// altitude units
 		JLabel altUnitsLabel = new JLabel(I18nManager.getText("dialog.save.altitudeunits"));
 		altUnitsLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
@@ -272,7 +279,7 @@ public class FileSaver
 		}
 		altUnitsPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		secondCardHolder.add(altUnitsPanel);
-		secondCardHolder.add(Box.createRigidArea(new Dimension(0,10)));
+		secondCardHolder.add(Box.createRigidArea(new Dimension(0,7)));
 		// Selection of format of timestamps
 		JLabel timestampLabel = new JLabel(I18nManager.getText("dialog.save.timestampformat"));
 		timestampLabel.setAlignmentX(JLabel.LEFT_ALIGNMENT);
@@ -367,6 +374,7 @@ public class FileSaver
 			default   : _delimiterRadios[4].setSelected(true);
 						_otherDelimiterText.setText("" + inDefaultDelimiter);
 		}
+		_pointTypeSelector.init(_app.getTrackInfo());
 		// set card and enable buttons
 		CardLayout cl = (CardLayout) _cards.getLayout();
 		cl.first(_cards);
@@ -381,6 +389,8 @@ public class FileSaver
 	 */
 	private boolean saveToFile()
 	{
+		// TODO: Shorten method
+		if (!_pointTypeSelector.getAnythingSelected()) {return false;}
 		boolean saveOK = true;
 		FileWriter writer = null;
 		if (_fileChooser == null)
@@ -392,8 +402,9 @@ public class FileSaver
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kml", new String[] {"kml"}));
 			_fileChooser.setAcceptAllFileFilterUsed(true);
 			// start from directory in config which should be set
-			File configDir = Config.getWorkingDirectory();
-			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);}
+			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 		if (_fileChooser.showSaveDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
@@ -466,10 +477,16 @@ public class FileSaver
 					}
 
 					// Loop over points outputting each in turn to buffer
-					int numPoints = _track.getNumPoints();
+					final int numPoints = _track.getNumPoints();
+					int numSaved = 0;
 					for (int p=0; p<numPoints; p++)
 					{
 						DataPoint point = _track.getPoint(p);
+						boolean savePoint = ((point.isWaypoint() && _pointTypeSelector.getWaypointsSelected())
+							|| (!point.isWaypoint() && point.getPhoto()==null && _pointTypeSelector.getTrackpointsSelected())
+							|| (!point.isWaypoint() && point.getPhoto()!=null && _pointTypeSelector.getPhotopointsSelected()));
+						if (!savePoint) {continue;}
+						numSaved++;
 						firstField = true;
 						buffer = new StringBuffer();
 						for (int f=0; f<numFields; f++)
@@ -530,10 +547,10 @@ public class FileSaver
 						writer.write(lineSeparator);
 					}
 					// Store directory in config for later
-					Config.setWorkingDirectory(saveFile.getParentFile());
+					Config.setConfigString(Config.KEY_TRACK_DIR, saveFile.getParentFile().getAbsolutePath());
 					// Save successful
 					UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
-						 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
+						 + " " + numSaved + " " + I18nManager.getText("confirm.save.ok2")
 						 + " " + saveFile.getAbsolutePath());
 					_app.informDataSaved();
 				}
@@ -546,10 +563,8 @@ public class FileSaver
 				finally
 				{
 					// try to close file if it's open
-					try
-					{
-						if (writer != null)
-						{
+					try {
+						if (writer != null) {
 							writer.close();
 						}
 					}

@@ -465,7 +465,7 @@ public class Java3DWindow implements ThreeDWindow
 	private static Group createWaypoint(Point3d inPointPos)
 	{
 		Material mat = getWaypointMaterial();
-		// TODO: sort symbol scaling
+		// MAYBE: sort symbol scaling
 		Sphere dot = new Sphere(0.35f); // * symbolScaling / 100f);
 		return createBall(inPointPos, dot, mat);
 	}
@@ -485,7 +485,7 @@ public class Java3DWindow implements ThreeDWindow
 	private static Group createTrackpoint(Point3d inPointPos, byte inHeightCode)
 	{
 		Material mat = getTrackpointMaterial(inHeightCode);
-		// TODO: sort symbol scaling
+		// MAYBE: sort symbol scaling
 		Sphere dot = new Sphere(0.2f); // * symbolScaling / 100f);
 		return createBall(inPointPos, dot, mat);
 	}

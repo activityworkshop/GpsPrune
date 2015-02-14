@@ -155,7 +155,7 @@ public class DataPoint
 		}
 		else {
 			// use default altitude format from config
-			parseFields(inField, Config.getUseMetricUnits()?Altitude.Format.METRES:Altitude.Format.FEET);
+			parseFields(inField, Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET);
 		}
 	}
 

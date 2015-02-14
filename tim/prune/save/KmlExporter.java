@@ -56,18 +56,25 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private Track _track = null;
 	private JDialog _dialog = null;
 	private JTextField _descriptionField = null;
+	private PointTypeSelector _pointTypeSelector = null;
 	private JCheckBox _altitudesCheckbox = null;
 	private JCheckBox _kmzCheckbox = null;
 	private JCheckBox _exportImagesCheckbox = null;
+	private JLabel _progressLabel = null;
 	private JProgressBar _progressBar = null;
 	private JFileChooser _fileChooser = null;
 	private File _exportFile = null;
+	private JButton _okButton = null;
+	private boolean _cancelPressed = false;
 
 	// Filename of Kml file within zip archive
 	private static final String KML_FILENAME_IN_KMZ = "doc.kml";
-	// Width and height of thumbnail images in Kmz
-	private static final int THUMBNAIL_WIDTH = 240;
-	private static final int THUMBNAIL_HEIGHT = 180;
+	// Default width and height of thumbnail images in Kmz
+	private static final int DEFAULT_THUMBNAIL_WIDTH = 240;
+	private static final int DEFAULT_THUMBNAIL_HEIGHT = 180;
+	// Actual selected width and height of thumbnail images in Kmz
+	private static int THUMBNAIL_WIDTH = 0;
+	private static int THUMBNAIL_HEIGHT = 0;
 
 
 	/**
@@ -101,6 +108,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 			_dialog.pack();
 		}
 		enableCheckboxes();
+		_descriptionField.setEnabled(true);
+		_okButton.setEnabled(true);
+		_progressLabel.setText("");
 		_progressBar.setVisible(false);
 		_dialog.setVisible(true);
 	}
@@ -113,7 +123,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private Component makeDialogComponents()
 	{
 		JPanel dialogPanel = new JPanel();
-		dialogPanel.setLayout(new BorderLayout());
+		dialogPanel.setLayout(new BorderLayout(0, 5));
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		// Make a central panel with the text box and checkboxes
@@ -122,15 +132,22 @@ public class KmlExporter extends GenericFunction implements Runnable
 		descPanel.add(new JLabel(I18nManager.getText("dialog.exportkml.text")));
 		_descriptionField = new JTextField(20);
 		descPanel.add(_descriptionField);
+		descPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(descPanel);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
+		// point type selection
+		_pointTypeSelector = new PointTypeSelector();
+		_pointTypeSelector.setAlignmentX(Component.CENTER_ALIGNMENT);
+		mainPanel.add(_pointTypeSelector);
 		// Checkbox for altitude export
 		_altitudesCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.altitude"));
 		_altitudesCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
+		_altitudesCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_altitudesCheckbox);
 		// Checkboxes for kmz export and image export
 		_kmzCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.kmz"));
 		_kmzCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
+		_kmzCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		_kmzCheckbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -141,29 +158,35 @@ public class KmlExporter extends GenericFunction implements Runnable
 		mainPanel.add(_kmzCheckbox);
 		_exportImagesCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.exportimages"));
 		_exportImagesCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
+		_exportImagesCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_exportImagesCheckbox);
 		mainPanel.add(Box.createVerticalStrut(10));
+		_progressLabel = new JLabel("...");
+		_progressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+		mainPanel.add(_progressLabel);
 		_progressBar = new JProgressBar(0, 100);
 		_progressBar.setVisible(false);
+		_progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_progressBar);
 		mainPanel.add(Box.createVerticalStrut(10));
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton okButton = new JButton(I18nManager.getText("button.ok"));
+		_okButton = new JButton(I18nManager.getText("button.ok"));
 		ActionListener okListener = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				startExport();
 			}
 		};
-		okButton.addActionListener(okListener);
+		_okButton.addActionListener(okListener);
 		_descriptionField.addActionListener(okListener);
-		buttonPanel.add(okButton);
+		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+				_cancelPressed = true;
 				_dialog.dispose();
 			}
 		});
@@ -178,6 +201,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private void enableCheckboxes()
 	{
+		_pointTypeSelector.init(_trackInfo);
 		boolean hasAltitudes = _track.hasData(Field.ALTITUDE);
 		if (!hasAltitudes) {_altitudesCheckbox.setSelected(false);}
 		boolean hasPhotos = _trackInfo.getPhotoList() != null && _trackInfo.getPhotoList().getNumPhotos() > 0;
@@ -191,15 +215,19 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private void startExport()
 	{
-		// OK pressed, so choose output file
+		// OK pressed, now validate selection checkboxes
+		if (!_pointTypeSelector.getAnythingSelected()) {
+			return;
+		}
+		// Choose output file
 		if (_fileChooser == null)
 		{
 			_fileChooser = new JFileChooser();
 			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.kmlkmz", new String[] {"kml", "kmz"}));
 			// start from directory in config which should be set
-			File configDir = Config.getWorkingDirectory();
-			if (configDir != null) {_fileChooser.setCurrentDirectory(configDir);}
+			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 		String requiredExtension = null, otherExtension = null;
 		if (_kmzCheckbox.isSelected())
@@ -239,6 +267,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 				{
 					// New file or overwrite confirmed, so initiate export in separate thread
 					_exportFile = file;
+					_cancelPressed = false;
 					new Thread(this).start();
 				}
 				else
@@ -255,12 +284,23 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
-		// Initialise progress bar
+		// Disable ok button to stop second go
+		_okButton.setEnabled(false);
+		_descriptionField.setEnabled(false);
+		// Initialise progress indicators
+		_progressLabel.setText(I18nManager.getText("confirm.running"));
 		_progressBar.setVisible(true);
 		_progressBar.setValue(0);
 		boolean exportToKmz = _kmzCheckbox.isSelected();
 		boolean exportImages = exportToKmz && _exportImagesCheckbox.isSelected();
 		_progressBar.setMaximum(exportImages?getNumPhotosToExport():1);
+
+		// Determine photo thumbnail size from config
+		THUMBNAIL_WIDTH = Config.getConfigInt(Config.KEY_KMZ_IMAGE_WIDTH);
+		if (THUMBNAIL_WIDTH < DEFAULT_THUMBNAIL_WIDTH) {THUMBNAIL_WIDTH = DEFAULT_THUMBNAIL_WIDTH;}
+		THUMBNAIL_HEIGHT = Config.getConfigInt(Config.KEY_KMZ_IMAGE_HEIGHT);
+		if (THUMBNAIL_HEIGHT < DEFAULT_THUMBNAIL_HEIGHT) {THUMBNAIL_HEIGHT = DEFAULT_THUMBNAIL_HEIGHT;}
+
 		OutputStreamWriter writer = null;
 		ZipOutputStream zipOutputStream = null;
 		try
@@ -275,13 +315,20 @@ public class KmlExporter extends GenericFunction implements Runnable
 			{
 				// kmz requested - need zip output stream
 				zipOutputStream = new ZipOutputStream(new FileOutputStream(_exportFile));
+				// Export images into zip file too if requested
+				if (exportImages)
+				{
+					// Create thumbnails of each photo in turn and add to zip as images/image<n>.jpg
+					// This is done first so that photo sizes are known for later
+					exportThumbnails(zipOutputStream);
+				}
 				writer = new OutputStreamWriter(zipOutputStream);
 				// Make an entry in the zip file for the kml file
 				ZipEntry kmlEntry = new ZipEntry(KML_FILENAME_IN_KMZ);
 				zipOutputStream.putNextEntry(kmlEntry);
 			}
 			// write file
-			int numPoints = exportData(writer, exportImages);
+			final int numPoints = exportData(writer, exportImages);
 			// update progress bar
 			_progressBar.setValue(1);
 
@@ -292,18 +339,12 @@ public class KmlExporter extends GenericFunction implements Runnable
 				writer.flush();
 				// Close off this entry in the zip file
 				zipOutputStream.closeEntry();
-				// Export images into zip file too if requested
-				if (exportImages)
-				{
-					// Create thumbnails of each photo in turn and add to zip as images/image<n>.jpg
-					exportThumbnails(zipOutputStream);
-				}
 			}
 
 			// close file
 			writer.close();
 			// Store directory in config for later
-			Config.setWorkingDirectory(_exportFile.getParentFile());
+			Config.setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
 			// show confirmation
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
@@ -337,6 +378,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private int exportData(OutputStreamWriter inWriter, boolean inExportImages)
 	throws IOException
 	{
+		boolean writeTrack = _pointTypeSelector.getTrackpointsSelected();
+		boolean writeWaypoints = _pointTypeSelector.getWaypointsSelected();
+		boolean writePhotos = _pointTypeSelector.getPhotopointsSelected();
 		inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.1\">\n<Folder>\n");
 		inWriter.write("\t<name>");
 		if (_descriptionField != null && _descriptionField.getText() != null && !_descriptionField.getText().equals(""))
@@ -349,28 +393,34 @@ public class KmlExporter extends GenericFunction implements Runnable
 		}
 		inWriter.write("</name>\n");
 
-		boolean exportAltitudes = _altitudesCheckbox.isSelected();
+		boolean absoluteAltitudes = _altitudesCheckbox.isSelected();
 		int i = 0;
 		DataPoint point = null;
 		boolean hasTrackpoints = false;
-		// Loop over waypoints
+		// Loop over waypoints (if any)
 		boolean writtenPhotoHeader = false;
-		int numPoints = _track.getNumPoints();
+		final int numPoints = _track.getNumPoints();
+		int numSaved = 0;
 		int photoNum = 0;
+		// Loop over waypoints
 		for (i=0; i<numPoints; i++)
 		{
 			point = _track.getPoint(i);
 			// Make a blob for each waypoint
 			if (point.isWaypoint())
 			{
-				exportWaypoint(point, inWriter, exportAltitudes);
+				if (writeWaypoints) {
+					exportWaypoint(point, inWriter, absoluteAltitudes);
+					numSaved++;
+				}
 			}
 			else if (point.getPhoto() == null)
 			{
 				hasTrackpoints = true;
 			}
 			// Make a blob with description for each photo
-			if (point.getPhoto() != null)
+			// Photos have already been written so picture sizes already known
+			if (point.getPhoto() != null && writePhotos)
 			{
 				if (!writtenPhotoHeader)
 				{
@@ -378,19 +428,23 @@ public class KmlExporter extends GenericFunction implements Runnable
 					writtenPhotoHeader = true;
 				}
 				photoNum++;
-				exportPhotoPoint(point, inWriter, inExportImages, photoNum, exportAltitudes);
+				exportPhotoPoint(point, inWriter, inExportImages, photoNum, absoluteAltitudes);
+				numSaved++;
 			}
 		}
 		// Make a line for the track, if there is one
-		if (hasTrackpoints)
+		if (hasTrackpoints && writeTrack)
 		{
 			// Set up strings for start and end of track segment
 			String trackStart = "\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
 				+ "\t\t\t\t<color>cc0000cc</color>\n\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
 				+ "\t\t\t<PolyStyle><color>33cc0000</color></PolyStyle>\n"
 				+ "\t\t</Style>\n\t\t<LineString>\n";
-			if (exportAltitudes) {
+			if (absoluteAltitudes) {
 				trackStart += "\t\t\t<extrude>1</extrude>\n\t\t\t<altitudeMode>absolute</altitudeMode>\n";
+			}
+			else {
+				trackStart += "\t\t\t<altitudeMode>clampToGround</altitudeMode>\n";
 			}
 			trackStart += "\t\t\t<coordinates>";
 			String trackEnd = "\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>";
@@ -409,7 +463,8 @@ public class KmlExporter extends GenericFunction implements Runnable
 				}
 				if (!point.isWaypoint() && point.getPhoto() == null)
 				{
-					exportTrackpoint(point, inWriter, exportAltitudes);
+					exportTrackpoint(point, inWriter);
+					numSaved++;
 					firstTrackpoint = false;
 				}
 			}
@@ -417,7 +472,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 			inWriter.write(trackEnd);
 		}
 		inWriter.write("</Folder>\n</kml>");
-		return numPoints;
+		return numSaved;
 	}
 
 
@@ -425,24 +480,27 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * Export the specified waypoint into the file
 	 * @param inPoint waypoint to export
 	 * @param inWriter writer object
-	 * @param inExportAltitude true to include altitude
+	 * @param inAbsoluteAltitude true for absolute altitude
 	 * @throws IOException on write failure
 	 */
-	private void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inExportAltitude) throws IOException
+	private void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inAbsoluteAltitude) throws IOException
 	{
 		inWriter.write("\t<Placemark>\n\t\t<name>");
 		inWriter.write(inPoint.getWaypointName().trim());
 		inWriter.write("</name>\n");
 		inWriter.write("\t\t<Point>\n");
-		if (inExportAltitude && inPoint.hasAltitude()) {
+		if (inAbsoluteAltitude && inPoint.hasAltitude()) {
 			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
+		}
+		else {
+			inWriter.write("\t\t\t<altitudeMode>clampToGround</altitudeMode>\n");
 		}
 		inWriter.write("\t\t\t<coordinates>");
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(",");
-		if (inExportAltitude && inPoint.hasAltitude()) {
+		if (inPoint.hasAltitude()) {
 			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
@@ -458,11 +516,11 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * @param inWriter writer object
 	 * @param inImageLink flag to set whether to export image links or not
 	 * @param inImageNumber number of image for filename
-	 * @param inExportAltitude true to include altitude
+	 * @param inAbsoluteAltitude true for absolute altitudes
 	 * @throws IOException on write failure
 	 */
 	private void exportPhotoPoint(DataPoint inPoint, Writer inWriter, boolean inImageLink,
-		int inImageNumber, boolean inExportAltitude)
+		int inImageNumber, boolean inAbsoluteAltitude)
 	throws IOException
 	{
 		inWriter.write("\t<Placemark>\n\t\t<name>");
@@ -480,15 +538,19 @@ public class KmlExporter extends GenericFunction implements Runnable
 		}
 		inWriter.write("<styleUrl>#camera_icon</styleUrl>\n");
 		inWriter.write("\t\t<Point>\n");
-		if (inExportAltitude && inPoint.hasAltitude()) {
+		if (inAbsoluteAltitude && inPoint.hasAltitude()) {
 			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
+		}
+		else {
+			inWriter.write("\t\t\t<altitudeMode>clampToGround</altitudeMode>\n");
 		}
 		inWriter.write("\t\t\t<coordinates>");
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(",");
-		if (inExportAltitude && inPoint.hasAltitude()) {
+		// Altitude if point has one
+		if (inPoint.hasAltitude()) {
 			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
@@ -502,16 +564,15 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * Export the specified trackpoint into the file
 	 * @param inPoint trackpoint to export
 	 * @param inWriter writer object
-	 * @param inExportAltitude true to include altitude
 	 */
-	private void exportTrackpoint(DataPoint inPoint, Writer inWriter, boolean inExportAltitude) throws IOException
+	private void exportTrackpoint(DataPoint inPoint, Writer inWriter) throws IOException
 	{
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
-		// Altitude either absolute or locked to ground by Google Earth
+		// Altitude if point has one
 		inWriter.write(",");
-		if (inExportAltitude && inPoint.hasAltitude()) {
+		if (inPoint.hasAltitude()) {
 			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
@@ -539,7 +600,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		DataPoint point = null;
 		int photoNum = 0;
 		// Loop over all points in track
-		for (int i=0; i<numPoints; i++)
+		for (int i=0; i<numPoints && !_cancelPressed; i++)
 		{
 			point = _track.getPoint(i);
 			if (point.getPhoto() != null)
@@ -580,8 +641,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		for (int i=0; i<numPoints; i++)
 		{
 			point = _track.getPoint(i);
-			if (point.getPhoto() != null)
-			{
+			if (point.getPhoto() != null) {
 				numPhotos++;
 			}
 		}

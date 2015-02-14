@@ -183,6 +183,14 @@ public class Photo
 	}
 
 	/**
+	 * @return true if photo is connected to a point
+	 */
+	public boolean isConnected()
+	{
+		return _currentStatus != Status.NOT_CONNECTED;
+	}
+
+	/**
 	 * @return byte array of thumbnail data
 	 */
 	public byte[] getExifThumbnail()

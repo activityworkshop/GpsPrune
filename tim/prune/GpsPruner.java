@@ -4,7 +4,9 @@ import java.awt.event.WindowAdapter;
 import java.awt.BorderLayout;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Locale;
+import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
@@ -16,6 +18,7 @@ import tim.prune.gui.MenuManager;
 import tim.prune.gui.ProfileChart;
 import tim.prune.gui.SelectorDisplay;
 import tim.prune.gui.StatusBar;
+import tim.prune.gui.Viewport;
 import tim.prune.gui.map.MapCanvas;
 
 /**
@@ -26,9 +29,9 @@ import tim.prune.gui.map.MapCanvas;
 public class GpsPruner
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "7";
+	public static final String VERSION_NUMBER = "8";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "136";
+	public static final String BUILD_NUMBER = "155";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -40,19 +43,23 @@ public class GpsPruner
 	public static void main(String[] args)
 	{
 		Locale locale = null;
+		String localeCode = null;
 		String langFilename = null;
 		String configFilename = null;
+		ArrayList<File> dataFiles = new ArrayList<File>();
 		boolean showUsage = false;
 		for (int i=0; i<args.length; i++)
 		{
 			String arg = args[i];
 			if (arg.startsWith("--locale="))
 			{
-				locale = getLanguage(arg.substring(9));
+				localeCode = arg.substring(9);
+				locale = getLanguage(localeCode);
 			}
 			else if (arg.startsWith("--lang="))
 			{
-				locale = getLanguage(arg.substring(7));
+				localeCode = arg.substring(7);
+				locale = getLanguage(localeCode);
 			}
 			else if (arg.startsWith("--langfile="))
 			{
@@ -62,12 +69,20 @@ public class GpsPruner
 			{
 				configFilename = arg.substring(13);
 			}
+			else if (arg.startsWith("--help")) {
+				showUsage = true;
+			}
 			else
 			{
-				if (!arg.startsWith("--help")) {
-					System.out.println("Unknown parameter '" + arg + "'.");
+				// Check if a data file has been given
+				File f = new File(arg);
+				if (f.exists() && f.canRead()) {
+					dataFiles.add(f);
 				}
-				showUsage = true;
+				else {
+					System.out.println("Unknown parameter '" + arg + "'.");
+					showUsage = true;
+				}
 			}
 		}
 		if (showUsage) {
@@ -89,18 +104,29 @@ public class GpsPruner
 		catch (ConfigException ce) {
 			System.err.println("Failed to load config file: " + configFilename);
 		}
-		// Set locale according to Config's language property
-		String langCode = Config.getLanguageCode();
-		if (locale == null && langCode != null) {
-			Locale configLocale = getLanguage(langCode);
-			if (configLocale != null) {locale = configLocale;}
+		if (locale != null) {
+			// Make sure Config holds chosen language
+			Config.setConfigString(Config.KEY_LANGUAGE_CODE, localeCode);
+		}
+		else {
+			// Set locale according to Config's language property
+			String configLang = Config.getConfigString(Config.KEY_LANGUAGE_CODE);
+			if (configLang != null) {
+				Locale configLocale = getLanguage(configLang);
+				if (configLocale != null) {locale = configLocale;}
+			}
 		}
 		I18nManager.init(locale);
 		if (langFilename != null) {
-			I18nManager.addLanguageFile(langFilename);
+			try {
+				I18nManager.addLanguageFile(langFilename);
+			}
+			catch (FileNotFoundException fnfe) {
+				System.err.println("Failed to load language file: " + langFilename);
+			}
 		}
 		// Set up the window and go
-		launch();
+		launch(dataFiles);
 	}
 
 
@@ -127,8 +153,9 @@ public class GpsPruner
 
 	/**
 	 * Launch the main application
+	 * @param inDataFiles list of data files to load on startup
 	 */
-	private static void launch()
+	private static void launch(ArrayList<File> inDataFiles)
 	{
 		JFrame frame = new JFrame("Prune");
 		APP = new App(frame);
@@ -148,6 +175,8 @@ public class GpsPruner
 		UpdateMessageBroker.addSubscriber(rightPanel);
 		MapCanvas mapDisp = new MapCanvas(APP, APP.getTrackInfo());
 		UpdateMessageBroker.addSubscriber(mapDisp);
+		Viewport viewport = new Viewport(mapDisp);
+		APP.setViewport(viewport);
 		ProfileChart profileDisp = new ProfileChart(APP.getTrackInfo());
 		UpdateMessageBroker.addSubscriber(profileDisp);
 		StatusBar statusBar = new StatusBar();
@@ -187,5 +216,8 @@ public class GpsPruner
 		frame.setVisible(true);
 		// Set position of map/profile splitter
 		midPane.setDividerLocation(0.75);
+
+		// Finally, give the files to load to the App
+		APP.loadDataFiles(inDataFiles);
 	}
 }

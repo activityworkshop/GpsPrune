@@ -22,8 +22,6 @@ import javax.swing.event.ListSelectionListener;
 
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
-import tim.prune.data.DataPoint;
-import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -117,7 +115,9 @@ public class SelectorDisplay extends GenericDisplay
 		_photoList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{
-				if (!e.getValueIsAdjusting()) selectPhoto(_photoList.getSelectedIndex());
+				if (!e.getValueIsAdjusting()) {
+					selectPhoto(_photoList.getSelectedIndex());
+				}
 			}});
 		JPanel photoListPanel = new JPanel();
 		photoListPanel.setLayout(new BorderLayout());
@@ -149,7 +149,7 @@ public class SelectorDisplay extends GenericDisplay
 	{
 		if (_track != null && !_ignoreScrollEvents)
 		{
-			_trackInfo.getSelection().selectPoint(inValue);
+			_trackInfo.selectPoint(inValue);
 		}
 	}
 
@@ -217,7 +217,7 @@ public class SelectorDisplay extends GenericDisplay
 		}
 		else
 		{
-			_scroller.setMaximum(_track.getNumPoints() + SCROLLBAR_INTERVAL);
+			_scroller.setMaximum(_track.getNumPoints() -1 + SCROLLBAR_INTERVAL);
 			if (currentPointIndex >= 0)
 				_scroller.setValue(currentPointIndex);
 			_scroller.setEnabled(true);
@@ -246,23 +246,20 @@ public class SelectorDisplay extends GenericDisplay
 				_waypointList.clearSelection();
 			}
 		}
-		// Do the same for the photos
-		if (_photoList.getSelectedIndex() >= 0)
+		// Make sure correct photo is selected
+		if (_photoListModel.getSize() > 0)
 		{
-			DataPoint trackPoint = _trackInfo.getCurrentPoint();
-			Photo selectedPhoto = _photoListModel.getPhoto(_photoList.getSelectedIndex());
-			// Get selected Photo, if it's still there
-			DataPoint photoPoint = null;
-			if (selectedPhoto != null) {
-				photoPoint = _photoListModel.getPhoto(_photoList.getSelectedIndex()).getDataPoint();
-			}
-			// Compare selected photo with selected point
-			if ( (photoPoint != null && (trackPoint == null || !photoPoint.equals(trackPoint)))
-				|| (_trackInfo.getSelection().getCurrentPhotoIndex() < 0) )
+			int photoIndex = _trackInfo.getSelection().getCurrentPhotoIndex();
+			int listSelection = _photoList.getSelectedIndex();
+			// Change listbox selection if indexes not equal
+			if (listSelection != photoIndex)
 			{
-				// photo is selected in list but different from current point - deselect
-				_photoList.clearSelection();
-				_trackInfo.getSelection().deselectPhoto();
+				if (photoIndex < 0) {
+					_photoList.clearSelection();
+				}
+				else {
+					_photoList.setSelectedIndex(photoIndex);
+				}
 			}
 		}
 	}

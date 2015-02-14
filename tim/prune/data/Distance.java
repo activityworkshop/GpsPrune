@@ -57,4 +57,14 @@ public abstract class Distance
 		// default kilometres
 		return inDist / EARTH_RADIUS_KM;
 	}
+
+	/**
+	 * Convert the given distance from metres to miles
+	 * @param inMetres number of metres
+	 * @return number of miles
+	 */
+	public static double convertMetresToMiles(double inMetres)
+	{
+		return inMetres / 1000.0 * CONVERT_KM_TO_MILES;
+	}
 }

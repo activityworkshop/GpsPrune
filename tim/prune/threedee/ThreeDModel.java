@@ -18,7 +18,7 @@ public class ThreeDModel
 	private int _altitudeCap = -1;
 	private double _scaleFactor = 1.0;
 	private double _altFactor = 1.0;
-	// TODO: How to store rods (lifts) in data?
+	// MAYBE: How to store rods (lifts) in data?
 	private byte[] _pointTypes = null;
 	private byte[] _pointHeights = null;
 

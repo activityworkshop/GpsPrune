@@ -61,6 +61,24 @@ public class Altitude
 		_valid = true;
 	}
 
+	/**
+	 * @return an exact copy of this Altitude object
+	 */
+	public Altitude clone()
+	{
+		return new Altitude(_stringValue, _format);
+	}
+
+	/**
+	 * Reset the altitude parameters to the same as the given object
+	 * @param inClone clone object to copy
+	 */
+	public void reset(Altitude inClone)
+	{
+		_value = inClone._value;
+		_format = inClone._format;
+		_valid = inClone._valid;
+	}
 
 	/**
 	 * @return true if the value could be parsed
@@ -114,7 +132,9 @@ public class Altitude
 	public String getStringValue(Format inFormat)
 	{
 		if (!_valid) {return "";}
-		if (inFormat == _format && _stringValue != null && !_stringValue.equals("")) {
+		// Return string value if the same format or "no format" was requested
+		if ((inFormat == _format || inFormat == Format.NO_FORMAT)
+		 && _stringValue != null && !_stringValue.equals("")) {
 			return _stringValue;
 		}
 		return "" + getValue(inFormat);
@@ -154,5 +174,31 @@ public class Altitude
 		// interpolate between start and end
 		int newValue = startValue + (int) ((endValue - startValue) * inFrac);
 		return new Altitude(newValue, altFormat);
+	}
+
+	/**
+	 * Add the given offset to the current altitude
+	 * @param inOffset offset as double
+	 * @param inFormat format of offset, feet or metres
+	 * @param inDecimals number of decimal places
+	 */
+	public void addOffset(double inOffset, Format inFormat, int inDecimals)
+	{
+		// Use the maximum number of decimal places from current value and offset
+		int numDecimals = NumberUtils.getDecimalPlaces(_stringValue);
+		if (numDecimals < inDecimals) {numDecimals = inDecimals;}
+		// Convert offset to correct units
+		double offset = inOffset;
+		if (inFormat != _format)
+		{
+			if (inFormat == Format.FEET)
+				offset = inOffset * CONVERT_FEET_TO_METRES;
+			else
+				offset = inOffset * CONVERT_METRES_TO_FEET;
+		}
+		// Add the offset
+		double newValue = Double.parseDouble(_stringValue.trim()) + offset;
+		_value = (int) newValue;
+		_stringValue = NumberUtils.formatNumber(newValue, numDecimals);
 	}
 }
