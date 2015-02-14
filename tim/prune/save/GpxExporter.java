@@ -6,11 +6,14 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.nio.charset.Charset;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -129,6 +132,14 @@ public class GpxExporter extends GenericFunction implements Runnable
 		mainPanel.add(checkPanel);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
 
+		// close dialog if escape pressed
+		_nameField.addKeyListener(new KeyAdapter() {
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
+			}
+		});
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -144,8 +155,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
+			public void actionPerformed(ActionEvent e) {
 				_dialog.dispose();
 			}
 		});
@@ -492,10 +502,10 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private static String getXmlHeaderString(OutputStreamWriter inWriter)
 	{
 		String encoding = inWriter.getEncoding();
-		final String encodingUpper = encoding.toUpperCase();
-		if (encodingUpper.equals("UTF8") || encodingUpper.equals("UTF-8")) {
-			encoding = "UTF-8";
+		try {
+			encoding =  Charset.forName(encoding).name();
 		}
+		catch (Exception e) {} // ignore failure to find encoding
 		return "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>\n";
 	}
 
