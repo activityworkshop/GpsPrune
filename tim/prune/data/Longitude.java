@@ -20,10 +20,9 @@ public class Longitude extends Coordinate
 	 * @param inValue value of coordinate
 	 * @param inFormat format to use
 	 */
-	protected Longitude(double inValue, int inFormat)
+	public Longitude(double inValue, int inFormat)
 	{
-		super(inValue, inFormat);
-		_cardinal = inValue < 0.0 ? WEST : EAST;
+		super(inValue, inFormat, inValue < 0.0 ? WEST : EAST);
 	}
 
 

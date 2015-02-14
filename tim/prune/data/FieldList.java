@@ -136,6 +136,27 @@ public class FieldList
 
 
 	/**
+	 * Extend the field list to include the specified field
+	 * @param inField Field to add
+	 * @return new index of added Field
+	 */
+	public int extendList(Field inField)
+	{
+		// See if field is already in list
+		int currIndex = getFieldIndex(inField);
+		if (currIndex >= 0) return currIndex;
+		// Need to extend - increase array size
+		int oldNumFields = _fieldArray.length;
+		Field[] fields = new Field[oldNumFields + 1];
+		System.arraycopy(_fieldArray, 0, fields, 0, oldNumFields);
+		_fieldArray = fields;
+		// Add new field and return index
+		_fieldArray[oldNumFields] = inField;
+		return oldNumFields;
+	}
+
+
+	/**
 	 * Convert to String for debug
 	 */
 	public String toString()

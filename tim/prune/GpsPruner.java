@@ -18,8 +18,9 @@ import tim.prune.gui.ProfileChart;
  */
 public class GpsPruner
 {
-	public static final String VERSION_NUMBER = "1";
-	public static final String BUILD_NUMBER = "041";
+	// Version 2, released 29 March 2007, 1 April 2007
+	public static final String VERSION_NUMBER = "2";
+	public static final String BUILD_NUMBER = "056";
 	private static App APP = null;
 
 

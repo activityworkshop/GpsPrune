@@ -128,8 +128,9 @@ public abstract class Coordinate
 	 * Constructor
 	 * @param inValue value of coordinate
 	 * @param inFormat format to use
+	 * @param inCardinal cardinal
 	 */
-	protected Coordinate(double inValue, int inFormat)
+	protected Coordinate(double inValue, int inFormat, int inCardinal)
 	{
 		_asDouble = inValue;
 		// Calculate degrees, minutes, seconds
@@ -140,10 +141,12 @@ public abstract class Coordinate
 		_seconds = (int) numSecs;
 		_fracs = (int) ((numSecs - _seconds) * 10);
 		// Make a string to display on screen
+		_cardinal = inCardinal;
 		_originalFormat = FORMAT_NONE;
 		if (inFormat == FORMAT_NONE) inFormat = FORMAT_DEG_WITHOUT_CARDINAL;
 		_originalString = output(inFormat);
 		_originalFormat = inFormat;
+		_valid = true;
 	}
 
 
@@ -193,7 +196,8 @@ public abstract class Coordinate
 			// format as specified
 			switch (inFormat)
 			{
-				case FORMAT_DEG_MIN_SEC: {
+				case FORMAT_DEG_MIN_SEC:
+				{
 					StringBuffer buffer = new StringBuffer();
 					buffer.append(PRINTABLE_CARDINALS[_cardinal])
 						.append(threeDigitString(_degrees)).append('°')
@@ -202,11 +206,17 @@ public abstract class Coordinate
 						.append(_fracs);
 					answer = buffer.toString(); break;
 				}
-				case FORMAT_DEG_MIN: answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
-					+ (_minutes + _seconds / 60.0 + _fracs / 600.0); break;
+				case FORMAT_DEG_MIN:
+				{
+					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
+						+ (_minutes + _seconds / 60.0 + _fracs / 600.0); break;
+				}
 				case FORMAT_DEG:
-				case FORMAT_DEG_WITHOUT_CARDINAL: answer = (_asDouble<0.0?"-":"")
-				+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 36000.0); break;
+				case FORMAT_DEG_WITHOUT_CARDINAL:
+				{
+					answer = (_asDouble<0.0?"-":"")
+						+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 36000.0); break;
+				}
 			}
 		}
 		return answer;

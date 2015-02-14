@@ -31,6 +31,4 @@ public abstract class Distance
 		return inAngDist * EARTH_RADIUS_KM;
 	}
 
-
-	
 }

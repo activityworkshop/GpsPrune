@@ -19,9 +19,9 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 
 import tim.prune.App;
+import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.TrackInfo;
 
 
@@ -83,16 +83,16 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 	/**
 	 * Override track updating to refresh image
 	 */
-	public void dataUpdated()
+	public void dataUpdated(byte inUpdateType)
 	{
-		// Check if number of points has changed or Track
-		// object has a different signature
-		if (_track.getNumPoints() != _numPoints)
+		// Check if number of points has changed or data has been edited
+		if (_track.getNumPoints() != _numPoints || (inUpdateType & DATA_EDITED) > 0)
 		{
 			_image = null;
+			_lastSelectedPoint = -1;
 			_numPoints = _track.getNumPoints();
 		}
-		super.dataUpdated();
+		super.dataUpdated(inUpdateType);
 	}
 
 
@@ -126,25 +126,25 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 			// Autopan is enabled and a point is selected - work out x and y to see if it's within range
 			x = width/2 + (int) ((_track.getX(selectedPoint) - _offsetX) / _scale * _zoomScale);
 			y = height/2 - (int) ((_track.getY(selectedPoint) - _offsetY) / _scale * _zoomScale);
-			if (x < BORDER_WIDTH)
+			if (x <= BORDER_WIDTH)
 			{
 				// autopan left
 				_offsetX -= (width / 4 - x) * _scale / _zoomScale;
 				_image = null;
 			}
-			else if (x > (width - BORDER_WIDTH))
+			else if (x >= (width - BORDER_WIDTH))
 			{
 				// autopan right
 				_offsetX += (x - width * 3/4) * _scale / _zoomScale;
 				_image = null;
 			}
-			if (y < BORDER_WIDTH)
+			if (y <= BORDER_WIDTH)
 			{
 				// autopan up
 				_offsetY += (height / 4 - y) * _scale / _zoomScale;
 				_image = null;
 			}
-			else if (y > (height - BORDER_WIDTH))
+			else if (y >= (height - BORDER_WIDTH))
 			{
 				// autopan down
 				_offsetY -= (y - height * 3/4) * _scale / _zoomScale;
@@ -197,6 +197,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 			}
 		}
 
+		// Draw rectangle for dragging zoom area
 		if (_zoomDragging)
 		{
 			g.setColor(COLOR_CROSSHAIRS);
@@ -205,6 +206,9 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 			g.drawLine(_zoomDragToX, _zoomDragFromY, _zoomDragToX, _zoomDragToY);
 			g.drawLine(_zoomDragFromX, _zoomDragToY, _zoomDragToX, _zoomDragToY);
 		}
+
+		// Attempt to grab keyboard focus if possible
+		this.requestFocus();
 	}
 
 
@@ -245,7 +249,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = _track.getPoint(i);
-			String waypointName = point.getFieldValue(Field.WAYPT_NAME);
+			String waypointName = point.getWaypointName();
 			if (waypointName != null && !waypointName.equals("") && numWaypointNamesShown < LIMIT_WAYPOINT_NAMES)
 			{
 				x = halfWidth + (int) ((_track.getX(i) - _offsetX) / _scale * _zoomScale);
@@ -359,7 +363,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		_offsetX = 0.0;
 		_offsetY = 0.0;
 		_numPoints = 0;
-		dataUpdated();
+		dataUpdated(DataSubscriber.ALL);
 	}
 
 
@@ -381,7 +385,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 			if (_zoomScale < 0.5) _zoomScale = 0.5;
 		}
 		_numPoints = 0;
-		dataUpdated();
+		dataUpdated(DataSubscriber.ALL);
 	}
 
 
@@ -397,7 +401,8 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		_offsetX = _offsetX - (inRight * panFactor);
 		// Limit pan to sensible range??
 		_numPoints = 0;
-		dataUpdated();
+		_image = null;
+		repaint();
 	}
 
 
@@ -454,6 +459,8 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 				double xZoom = Math.abs(getWidth() * 1.0 / (e.getX() - _zoomDragFromX));
 				double yZoom = Math.abs(getHeight() * 1.0 / (e.getY() - _zoomDragFromY));
 				double extraZoom = (xZoom>yZoom?yZoom:xZoom);
+				// deselect point if selected (to stop autopan)
+				_trackInfo.getSelection().selectPoint(-1);
 				// Pan first to ensure pan occurs with correct scale
 				panMap(yPan, xPan);
 				// Then zoom in and request repaint
@@ -513,7 +520,11 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 			panMap(upwardsPan, rightwardsPan);
 			// Check for delete key to delete current point
 			if (code == KeyEvent.VK_DELETE && _trackInfo.getSelection().getCurrentPointIndex() >= 0)
+			{
 				_app.deleteCurrentPoint();
+				// reset last selected point to trigger autopan
+				_lastSelectedPoint = -1;
+			}
 		}
 	}
 

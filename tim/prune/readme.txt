@@ -1,4 +1,4 @@
-Prune version 1
+Prune version 2
 ===============
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems.
@@ -14,13 +14,23 @@ losses incurred through use of the program, however caused.
 Running
 =======
 
-To run Prune from the jar file, simply call it from a Command Prompt or shell:
-   java -jar prune_1.jar
+To run Prune from the jar file, simply call it from a command prompt or shell:
+   java -jar prune_02.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
 in a file manager window to execute it.  A shortcut, menu item, desktop icon or other link
 can of course be made should you wish.
+
+
+Updates since version 1
+=======================
+
+The following features were added since version 1:
+  - Display of data in 3d view using Java3D library
+  - Export of 3d model to POV format for rendering by povray
+  - Point edit dialog, waypoint name edit dialog
+  - Waypoint list
 
 
 Further information and updates

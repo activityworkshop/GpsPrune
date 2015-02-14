@@ -1,6 +1,10 @@
 package tim.prune.data;
 
+import java.util.List;
+
 import tim.prune.UpdateMessageBroker;
+import tim.prune.edit.FieldEdit;
+import tim.prune.edit.FieldEditList;
 
 
 /**
@@ -219,6 +223,7 @@ public class Track
 	 */
 	public boolean deleteRange(int inStart, int inEnd)
 	{
+		// TODO: Check for deleting photos?
 		if (inStart < 0 || inEnd < 0 || inEnd < inStart)
 		{
 			// no valid range selected so can't delete
@@ -433,6 +438,7 @@ public class Track
 		return true;
 	}
 
+	// TODO: Need to rearrange photo points too?
 
 	/**
 	 * Interpolate extra points between two selected ones
@@ -452,10 +458,26 @@ public class Track
 
 		// Make array of points to insert
 		DataPoint[] insertedPoints = startPoint.interpolate(endPoint, inNumPoints);
-		
+
 		// Insert points into track
-		insertRange(insertedPoints, inStartIndex + 1);
-		return true;
+		return insertRange(insertedPoints, inStartIndex + 1);
+	}
+
+
+	/**
+	 * Append the specified points to the end of the track
+	 * @param inPoints DataPoint objects to add
+	 */
+	public void appendPoints(DataPoint[] inPoints)
+	{
+		// Insert points into track
+		if (inPoints != null && inPoints.length > 0)
+		{
+			insertRange(inPoints, _numPoints);
+		}
+		// needs to be scaled again to recalc x, y
+		_scaled = false;
+		_broker.informSubscribers();
 	}
 
 
@@ -581,6 +603,49 @@ public class Track
 	}
 
 
+	/**
+	 * Collect all the waypoints into the given List
+	 * @param inList List to fill with waypoints
+	 */
+	public void getWaypoints(List inList)
+	{
+		// clear list
+		inList.clear();
+		// loop over points and copy all waypoints into list
+		for (int i=0; i<=_numPoints-1; i++)
+		{
+			if (_dataPoints[i].isWaypoint())
+			{
+				inList.add(_dataPoints[i]);
+			}
+		}
+	}
+	// TODO: Make similar method to get list of photos
+
+
+	/**
+	 * Search for the given Point in the track and return the index
+	 * @param inPoint Point to look for
+	 * @return index of Point, if any or -1 if not found
+	 */
+	public int getPointIndex(DataPoint inPoint)
+	{
+		if (inPoint != null)
+		{
+			// Loop over points in track
+			for (int i=0; i<=_numPoints-1; i++)
+			{
+				if (_dataPoints[i] == inPoint)
+				{
+					return i;
+				}
+			}
+		}
+		// not found
+		return -1;
+	}
+
+
 	///////// Internal processing methods ////////////////
 
 
@@ -604,7 +669,9 @@ public class Track
 				_longRange.addValue(point.getLongitude().getDouble());
 				_latRange.addValue(point.getLatitude().getDouble());
 				if (point.getAltitude().isValid())
+				{
 					_altitudeRange.addValue(point.getAltitude());
+				}
 				if (point.isWaypoint())
 					hasWaypoint = true;
 				else
@@ -789,5 +856,32 @@ public class Track
 		_scaled = false;
 		_broker.informSubscribers();
 		return true;
+	}
+
+
+	/**
+	 * Edit the specified point
+	 * @param inPoint point to edit
+	 * @param inEditList list of edits to make
+	 * @return true if successful
+	 */
+	public boolean editPoint(DataPoint inPoint, FieldEditList inEditList)
+	{
+		if (inPoint != null && inEditList != null && inEditList.getNumEdits() > 0)
+		{
+			// go through edits one by one
+			int numEdits = inEditList.getNumEdits();
+			for (int i=0; i<numEdits; i++)
+			{
+				FieldEdit edit = inEditList.getEdit(i);
+				inPoint.setFieldValue(edit.getField(), edit.getValue());
+			}
+			// possibly needs to be scaled again
+			_scaled = false;
+			// trigger listeners
+			_broker.informSubscribers();
+			return true;
+		}
+		return false;
 	}
 }

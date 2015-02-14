@@ -383,20 +383,28 @@ public class Selection
 	 */
 	private void check()
 	{
-		if (_track != null && _track.getNumPoints() > 0)
+		if (_track != null)
 		{
-			int maxIndex = _track.getNumPoints() - 1;
-			if (_currentPoint > maxIndex)
+			if (_track.getNumPoints() > 0)
 			{
-				_currentPoint = maxIndex;
+				int maxIndex = _track.getNumPoints() - 1;
+				if (_currentPoint > maxIndex)
+				{
+					_currentPoint = maxIndex;
+				}
+				if (_endIndex > maxIndex)
+				{
+					_endIndex = maxIndex;
+				}
+				if (_startIndex > maxIndex)
+				{
+					_startIndex = maxIndex;
+				}
 			}
-			if (_endIndex > maxIndex)
+			else
 			{
-				_endIndex = maxIndex;
-			}
-			if (_startIndex > maxIndex)
-			{
-				_startIndex = maxIndex;
+				// track is empty, clear selections
+				_currentPoint = _startIndex = _endIndex = -1;
 			}
 		}
 		_broker.informSubscribers();

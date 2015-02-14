@@ -10,6 +10,16 @@ public class IntegerRange
 
 
 	/**
+	 * Clear for a new range calculation
+	 */
+	public void clear()
+	{
+		_min = -1;
+		_max = -1;
+	}
+
+
+	/**
 	 * Add a value to the range
 	 * @param inValue value to add, only positive values considered
 	 */

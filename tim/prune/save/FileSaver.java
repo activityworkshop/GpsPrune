@@ -17,6 +17,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -56,6 +57,7 @@ public class FileSaver
 	private JButton _moveUpButton = null, _moveDownButton = null;
 	private JRadioButton[] _delimiterRadios = null;
 	private JTextField _otherDelimiterText = null;
+	private JCheckBox _headerRowCheckbox = null;
 	private JRadioButton[] _coordUnitsRadios = null;
 	private JRadioButton[] _altitudeUnitsRadios = null;
 	private static final int[] FORMAT_COORDS = {Coordinate.FORMAT_NONE, Coordinate.FORMAT_DEG_MIN_SEC,
@@ -214,6 +216,12 @@ public class FileSaver
 		}
 		delimsPanel.add(otherPanel);
 		firstCard.add(delimsPanel);
+
+		// header checkbox
+		firstCard.add(Box.createRigidArea(new Dimension(0,10)));
+		_headerRowCheckbox = new JCheckBox(I18nManager.getText("dialog.save.headerrow"));
+		firstCard.add(_headerRowCheckbox);
+
 		_cards.add(firstCard, "card1");
 
 		JPanel secondCard = new JPanel();
@@ -260,6 +268,7 @@ public class FileSaver
 		}
 		altUnitsPanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 		secondCardHolder.add(altUnitsPanel);
+		// TODO: selection of format of timestamps
 		secondCard.add(secondCardHolder, BorderLayout.NORTH);
 		_cards.add(secondCard, "card2");
 
@@ -270,10 +279,10 @@ public class FileSaver
 		_backButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-			    CardLayout cl = (CardLayout)(_cards.getLayout());
-			    cl.previous(_cards);
-			    _backButton.setEnabled(false);
-			    _nextButton.setEnabled(true);
+				CardLayout cl = (CardLayout)(_cards.getLayout());
+				cl.previous(_cards);
+				_backButton.setEnabled(false);
+				_nextButton.setEnabled(true);
 			}
 		});
 		_backButton.setEnabled(false);
@@ -283,10 +292,10 @@ public class FileSaver
 		_nextButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-			    CardLayout cl = (CardLayout)(_cards.getLayout());
-			    cl.next(_cards);
-			    _backButton.setEnabled(true);
-			    _nextButton.setEnabled(false);
+				CardLayout cl = (CardLayout)(_cards.getLayout());
+				cl.next(_cards);
+				_backButton.setEnabled(true);
+				_nextButton.setEnabled(false);
 			}
 		});
 		buttonPanel.add(_nextButton);
@@ -336,11 +345,20 @@ public class FileSaver
 					coordFormat = FORMAT_COORDS[i];
 			int altitudeFormat = Altitude.FORMAT_NONE;
 			for (int i=0; i<_altitudeUnitsRadios.length; i++)
+			{
 				if (_altitudeUnitsRadios[i].isSelected())
+				{
 					altitudeFormat = FORMAT_ALTS[i];
-			
-			// Check if file exists, don't overwrite any files for v1!
-			if (!saveFile.exists())
+				}
+			}
+
+			// Check if file exists, and confirm overwrite if necessary
+			Object[] buttonTexts = {I18nManager.getText("button.overwrite"), I18nManager.getText("button.cancel")};
+			if (!saveFile.exists() || JOptionPane.showOptionDialog(_parentFrame,
+					I18nManager.getText("dialog.save.overwrite.text"),
+					I18nManager.getText("dialog.save.overwrite.title"), JOptionPane.YES_NO_OPTION,
+					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
+				== JOptionPane.YES_OPTION)
 			{
 				try
 				{
@@ -350,14 +368,39 @@ public class FileSaver
 					char delimiter = getDelimiter();
 					FieldInfo info = null;
 					Field field = null;
+
 					StringBuffer buffer = null;
-					// For now, just spit out to console
-					int numPoints = _track.getNumPoints();
 					int numFields = _model.getRowCount();
+					boolean firstField = true;
+					// Write header row if required
+					if (_headerRowCheckbox.isSelected())
+					{
+						buffer = new StringBuffer();
+						for (int f=0; f<numFields; f++)
+						{
+							info = _model.getFieldInfo(f);
+							if (info.isSelected())
+							{
+								if (!firstField)
+								{
+									// output field separator
+									buffer.append(delimiter);
+								}
+								field = info.getField();
+								buffer.append(field.getName());
+								firstField = false;
+							}
+						}
+						writer.write(buffer.toString());
+						writer.write(lineSeparator);
+					}
+
+					// Loop over points outputting each in turn to buffer
+					int numPoints = _track.getNumPoints();
 					for (int p=0; p<numPoints; p++)
 					{
 						DataPoint point = _track.getPoint(p);
-						boolean firstField = true;
+						firstField = true;
 						buffer = new StringBuffer();
 						for (int f=0; f<numFields; f++)
 						{
@@ -381,11 +424,19 @@ public class FileSaver
 								}
 								else if (field == Field.ALTITUDE)
 								{
-									buffer.append(point.getAltitude().getValue(altitudeFormat));
+									try
+									{
+										buffer.append(point.getAltitude().getValue(altitudeFormat));
+									}
+									catch (NullPointerException npe) {}
 								}
 								else if (field == Field.TIMESTAMP)
 								{
-									buffer.append(point.getTimestamp().getText());
+									try
+									{
+										buffer.append(point.getTimestamp().getText());
+									}
+									catch (NullPointerException npe) {}
 								}
 								else
 								{
@@ -405,7 +456,7 @@ public class FileSaver
 					// Save successful
 					JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.ok1")
 						 + " " + numPoints + " " + I18nManager.getText("dialog.save.ok2")
-						 + saveFile.getAbsolutePath(),
+						 + " " + saveFile.getAbsolutePath(),
 						I18nManager.getText("dialog.save.oktitle"), JOptionPane.INFORMATION_MESSAGE);
 					_app.informDataSaved();
 				}
@@ -432,9 +483,8 @@ public class FileSaver
 			}
 			else
 			{
+				// Overwrite file confirm cancelled
 				saveOK = false;
-				JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.save.fileexists"),
-					I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		return saveOK;

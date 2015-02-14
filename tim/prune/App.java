@@ -1,6 +1,7 @@
 package tim.prune;
 
 import java.util.EmptyStackException;
+import java.util.List;
 import java.util.Stack;
 
 import javax.swing.JFrame;
@@ -10,18 +11,28 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.edit.FieldEditList;
+import tim.prune.edit.PointEditor;
+import tim.prune.edit.PointNameEditor;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.UndoManager;
 import tim.prune.load.FileLoader;
+import tim.prune.load.JpegLoader;
 import tim.prune.save.FileSaver;
 import tim.prune.save.KmlExporter;
+import tim.prune.save.PovExporter;
+import tim.prune.threedee.ThreeDException;
+import tim.prune.threedee.ThreeDWindow;
+import tim.prune.threedee.WindowFactory;
 import tim.prune.undo.UndoCompress;
 import tim.prune.undo.UndoDeleteDuplicates;
 import tim.prune.undo.UndoDeletePoint;
 import tim.prune.undo.UndoDeleteRange;
+import tim.prune.undo.UndoEditPoint;
 import tim.prune.undo.UndoException;
 import tim.prune.undo.UndoInsert;
 import tim.prune.undo.UndoLoad;
+import tim.prune.undo.UndoLoadPhotos;
 import tim.prune.undo.UndoOperation;
 import tim.prune.undo.UndoRearrangeWaypoints;
 import tim.prune.undo.UndoReverseSection;
@@ -39,6 +50,8 @@ public class App
 	private int _lastSavePosition = 0;
 	private MenuManager _menuManager = null;
 	private FileLoader _fileLoader = null;
+	private JpegLoader _jpegLoader = null;
+	private PovExporter _povExporter = null;
 	private Stack _undoStack = null;
 	private UpdateMessageBroker _broker = null;
 	private boolean _reversePointsConfirmed = false;
@@ -48,8 +61,6 @@ public class App
 	public static final int REARRANGE_TO_END     = 1;
 	public static final int REARRANGE_TO_NEAREST = 2;
 
-
-	// TODO: Make waypoint window to allow list of waypoints, edit names etc
 
 	/**
 	 * Constructor
@@ -113,6 +124,17 @@ public class App
 
 
 	/**
+	 * Add a photo or a directory of photos which are already correlated
+	 */
+	public void addPhotos()
+	{
+		if (_jpegLoader == null)
+			_jpegLoader = new JpegLoader(this, _frame);
+		_jpegLoader.openFile();
+	}
+
+
+	/**
 	 * Save the file in the selected format
 	 */
 	public void saveFile()
@@ -149,6 +171,60 @@ public class App
 
 
 	/**
+	 * Export track data as Pov without specifying settings
+	 */
+	public void exportPov()
+	{
+		exportPov(false, 0.0, 0.0, 0.0, 0);
+	}
+
+	/**
+	 * Export track data as Pov and also specify settings
+	 * @param inX X component of unit vector
+	 * @param inY Y component of unit vector
+	 * @param inZ Z component of unit vector
+	 * @param inAltitudeCap altitude cap
+	 */
+	public void exportPov(double inX, double inY, double inZ, int inAltitudeCap)
+	{
+		exportPov(true, inX, inY, inZ, inAltitudeCap);
+	}
+
+	/**
+	 * Export track data as Pov with optional angle specification
+	 * @param inDefineAngles true to define angles, false to ignore
+	 * @param inX X component of unit vector
+	 * @param inY Y component of unit vector
+	 * @param inZ Z component of unit vector
+	 */
+	private void exportPov(boolean inDefineSettings, double inX, double inY, double inZ, int inAltitudeCap)
+	{
+		// Check track has data to export
+		if (_track == null || _track.getNumPoints() <= 0)
+		{
+			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.save.nodata"),
+				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
+		}
+		else
+		{
+			// Make new exporter if necessary
+			if (_povExporter == null)
+			{
+				_povExporter = new PovExporter(this, _frame, _track);
+			}
+			// Specify angles if necessary
+			if (inDefineSettings)
+			{
+				_povExporter.setCameraCoordinates(inX, inY, inZ);
+				_povExporter.setAltitudeCap(inAltitudeCap);
+			}
+			// Initiate export
+			_povExporter.showDialog();
+		}
+	}
+
+
+	/**
 	 * Exit the application if confirmed
 	 */
 	public void exit()
@@ -162,6 +238,62 @@ public class App
 			== JOptionPane.YES_OPTION)
 		{
 			System.exit(0);
+		}
+	}
+
+
+	/**
+	 * Edit the currently selected point
+	 */
+	public void editCurrentPoint()
+	{
+		if (_track != null)
+		{
+			DataPoint currentPoint = _trackInfo.getCurrentPoint();
+			if (currentPoint != null)
+			{
+				// Open point dialog to display details
+				PointEditor editor = new PointEditor(this, _frame);
+				editor.showDialog(_track, currentPoint);
+			}
+		}
+	}
+
+
+	/**
+	 * Complete the point edit
+	 * @param inEditList list of edits
+	 */
+	public void completePointEdit(FieldEditList inEditList, FieldEditList inUndoList)
+	{
+		DataPoint currentPoint = _trackInfo.getCurrentPoint();
+		if (inEditList != null && inEditList.getNumEdits() > 0 && currentPoint != null)
+		{
+			// add information to undo stack
+			UndoOperation undo = new UndoEditPoint(currentPoint, inUndoList);
+			// pass to track for completion
+			if (_track.editPoint(currentPoint, inEditList))
+			{
+				_undoStack.push(undo);
+			}
+		}
+	}
+
+
+	/**
+	 * Edit the name of the currently selected (way)point
+	 */
+	public void editCurrentPointName()
+	{
+		if (_track != null)
+		{
+			DataPoint currentPoint = _trackInfo.getCurrentPoint();
+			if (currentPoint != null)
+			{
+				// Open point dialog to display details
+				PointNameEditor editor = new PointNameEditor(this, _frame);
+				editor.showDialog(_track, currentPoint);
+			}
 		}
 	}
 
@@ -359,9 +491,26 @@ public class App
 	 */
 	public void show3dWindow()
 	{
-		// TODO: open 3d view window
-		JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.function.notimplemented"),
-			I18nManager.getText("error.function.notimplemented.title"), JOptionPane.WARNING_MESSAGE);
+		ThreeDWindow window = WindowFactory.getWindow(this, _frame);
+		if (window == null)
+		{
+			JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.function.nojava3d"),
+				I18nManager.getText("error.function.notavailable.title"), JOptionPane.WARNING_MESSAGE);
+		}
+		else
+		{
+			try
+			{
+				// Pass the track object and show the window
+				window.setTrack(_track);
+				window.show();
+			}
+			catch (ThreeDException e)
+			{
+				JOptionPane.showMessageDialog(_frame, I18nManager.getText("error.3d") + ": " + e.getMessage(),
+					I18nManager.getText("error.3d.title"), JOptionPane.ERROR_MESSAGE);
+			}
+		}
 	}
 
 
@@ -425,6 +574,40 @@ public class App
 		_broker.informSubscribers();
 		// update menu
 		_menuManager.informFileLoaded();
+	}
+
+
+	/**
+	 * Accept a list of loaded photos
+	 * @param inPhotoList List of Photo objects
+	 */
+	public void informPhotosLoaded(List inPhotoList)
+	{
+		if (inPhotoList != null && !inPhotoList.isEmpty())
+		{
+			// TODO: Attempt to restrict loaded photos to current area (if any) ?
+			int numAdded = _trackInfo.addPhotos(inPhotoList);
+			if (numAdded > 0)
+			{
+				_undoStack.add(new UndoLoadPhotos(numAdded));
+			}
+			if (numAdded == 1)
+			{
+				JOptionPane.showMessageDialog(_frame,
+					"" + numAdded + " " + I18nManager.getText("dialog.jpegload.photoadded"),
+					I18nManager.getText("dialog.jpegload.title"), JOptionPane.INFORMATION_MESSAGE);
+			}
+			else
+			{
+				JOptionPane.showMessageDialog(_frame,
+					"" + numAdded + " " + I18nManager.getText("dialog.jpegload.photosadded"),
+					I18nManager.getText("dialog.jpegload.title"), JOptionPane.INFORMATION_MESSAGE);
+			}
+			// TODO: Improve message when photo(s) fail to load (eg already added)
+			_broker.informSubscribers();
+			// update menu
+			_menuManager.informFileLoaded();
+		}
 	}
 
 

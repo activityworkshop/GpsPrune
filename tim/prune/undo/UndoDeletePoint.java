@@ -2,7 +2,6 @@ package tim.prune.undo;
 
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -32,7 +31,7 @@ public class UndoDeletePoint implements UndoOperation
 	public String getDescription()
 	{
 		String desc = I18nManager.getText("undo.deletepoint");
-		String pointName = _point.getFieldValue(Field.WAYPT_NAME);
+		String pointName = _point.getWaypointName();
 		if (pointName != null && !pointName.equals(""))
 			desc = desc + " " + pointName;
 		return desc;
@@ -50,5 +49,6 @@ public class UndoDeletePoint implements UndoOperation
 		{
 			throw new UndoException(getDescription());
 		}
+		// TODO: Reinsert photo into list if necessary
 	}
 }

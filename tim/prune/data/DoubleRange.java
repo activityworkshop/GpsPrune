@@ -11,6 +11,16 @@ public class DoubleRange
 
 
 	/**
+	 * Clear for a new calculation
+	 */
+	public void clear()
+	{
+		_min = _max = 0.0;
+		_empty = true;
+	}
+
+
+	/**
 	 * Add a value to the range
 	 * @param inValue value to add
 	 */

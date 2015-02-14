@@ -71,7 +71,7 @@ public abstract class GenericChart extends GenericDisplay implements MouseListen
 	/**
 	 * Method to inform map that data has changed
 	 */
-	public void dataUpdated()
+	public void dataUpdated(byte inUpdateType)
 	{
 		repaint();
 	}

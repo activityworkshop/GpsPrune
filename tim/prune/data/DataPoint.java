@@ -7,18 +7,18 @@ package tim.prune.data;
  */
 public class DataPoint
 {
-	// Hold these as Strings?  Or FieldValue objects?
+	/** Array of Strings holding raw values */
 	private String[] _fieldValues = null;
-	// list of fields
+	/** list of field definitions */
 	private FieldList _fieldList = null;
-	// Special fields for coordinates
+	/** Special fields for coordinates */
 	private Coordinate _latitude = null, _longitude = null;
 	private Altitude _altitude;
 	private Timestamp _timestamp = null;
+	private Photo _photo = null;
+	private String _waypointName = null;
 	private boolean _pointValid = false;
 
-
-	// TODO: Make it possible to turn track point into waypoint - may need to alter FieldList
 
 	/**
 	 * Constructor
@@ -32,22 +32,32 @@ public class DataPoint
 		_fieldValues = inValueArray;
 		// save list of fields
 		_fieldList = inFieldList;
-
-		// parse fields
-		_latitude = new Latitude(getFieldValue(Field.LATITUDE));
-		_longitude = new Longitude(getFieldValue(Field.LONGITUDE));
-		_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inAltFormat);
-		_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
+		// parse fields into objects
+		parseFields(inAltFormat);
 	}
 
 
 	/**
-	 * Private constructor for artificially generated points (eg interpolated)
+	 * Parse the string values into objects eg Coordinates
+	 * @param inAltFormat altitude format
+	 */
+	private void parseFields(int inAltFormat)
+	{
+		_latitude = new Latitude(getFieldValue(Field.LATITUDE));
+		_longitude = new Longitude(getFieldValue(Field.LONGITUDE));
+		_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inAltFormat);
+		_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
+		_waypointName = getFieldValue(Field.WAYPT_NAME);
+	}
+
+
+	/**
+	 * Constructor for additional points (eg interpolated, photos)
 	 * @param inLatitude latitude
 	 * @param inLongitude longitude
 	 * @param inAltitude altitude
 	 */
-	private DataPoint(Coordinate inLatitude, Coordinate inLongitude, Altitude inAltitude)
+	public DataPoint(Coordinate inLatitude, Coordinate inLongitude, Altitude inAltitude)
 	{
 		// Only these three fields are available
 		_fieldValues = new String[0];
@@ -83,6 +93,46 @@ public class DataPoint
 	}
 
 
+	/**
+	 * Set (or edit) the specified field value
+	 * @param inField Field to set
+	 * @param inValue value to set
+	 */
+	public void setFieldValue(Field inField, String inValue)
+	{
+		// See if this data point already has this field
+		int fieldIndex = _fieldList.getFieldIndex(inField);
+		// Add to field list if necessary
+		if (fieldIndex < 0)
+		{
+			// If value is empty & field doesn't exist then do nothing
+			if (inValue == null || inValue.equals(""))
+			{
+				return;
+			}
+			// value isn't empty so extend field list
+			fieldIndex = _fieldList.extendList(inField);
+		}
+		// Extend array of field values if necessary
+		if (fieldIndex >= _fieldValues.length)
+		{
+			resizeValueArray(fieldIndex);
+		}
+		// Set field value in array
+		_fieldValues[fieldIndex] = inValue;
+		// Change Coordinate, Altitude, Name or Timestamp fields after edit
+		if (_altitude != null)
+		{
+			parseFields(_altitude.getFormat());
+		}
+		else
+		{
+			// use default altitude format of metres
+			parseFields(Altitude.FORMAT_METRES);
+		}
+	}
+
+
 	public Coordinate getLatitude()
 	{
 		return _latitude;
@@ -107,19 +157,22 @@ public class DataPoint
 	{
 		return _timestamp;
 	}
+	public String getWaypointName()
+	{
+		return _waypointName;
+	}
 
 	/**
 	 * @return true if point has a waypoint name
 	 */
 	public boolean isWaypoint()
 	{
-		String name = getFieldValue(Field.WAYPT_NAME);
-		return (name != null && !name.equals(""));
+		return (_waypointName != null && !_waypointName.equals(""));
 	}
 
+
 	/**
-	 * Compare two DataPoint objects to see if they
-	 * are duplicates
+	 * Compare two DataPoint objects to see if they are duplicates
 	 * @param inOther other object to compare
 	 * @return true if the points are equivalent
 	 */
@@ -131,23 +184,42 @@ public class DataPoint
 		{
 			return false;
 		}
+		// Make sure photo points aren't specified as duplicates
+		if (_photo != null) return false;
 		// Compare latitude and longitude
 		if (!_longitude.equals(inOther._longitude) || !_latitude.equals(inOther._latitude))
 		{
 			return false;
 		}
 		// Note that conversion from decimal to dms can make non-identical points into duplicates
-		// Compare description (if any)
-		String name1 = getFieldValue(Field.WAYPT_NAME);
-		String name2 = inOther.getFieldValue(Field.WAYPT_NAME);
-		if (name1 == null || name1.equals(""))
+		// Compare waypoint name (if any)
+		if (!isWaypoint())
 		{
-			return (name2 == null || name2.equals(""));
+			return !inOther.isWaypoint();
 		}
 		else
 		{
-			return (name2 != null && name2.equals(name1));
+			return (inOther._waypointName != null && inOther._waypointName.equals(_waypointName));
 		}
+	}
+
+
+	/**
+	 * Set the photo for this data point
+	 * @param inPhoto Photo object
+	 */
+	public void setPhoto(Photo inPhoto)
+	{
+		_photo = inPhoto;
+	}
+
+
+	/**
+	 * @return associated Photo object
+	 */
+	public Photo getPhoto()
+	{
+		return _photo;
 	}
 
 
@@ -209,5 +281,61 @@ public class DataPoint
 		double answer = 2 * Math.asin(Math.sqrt(firstSine*firstSine + term2));
 		// phew
 		return answer;
+	}
+
+
+	/**
+	 * Resize the value array
+	 * @param inNewIndex new index to allow
+	 */
+	private void resizeValueArray(int inNewIndex)
+	{
+		int newSize = inNewIndex + 1;
+		if (newSize > _fieldValues.length)
+		{
+			String[] newArray = new String[newSize];
+			System.arraycopy(_fieldValues, 0, newArray, 0, _fieldValues.length);
+			_fieldValues = newArray;
+		}
+	}
+
+
+	/**
+	 * @return a clone object with copied data
+	 */
+	public DataPoint clonePoint()
+	{
+		// Copy all values
+		String[] valuesCopy = new String[_fieldValues.length];
+		System.arraycopy(_fieldValues, 0, valuesCopy, 0, _fieldValues.length);
+		// Make new object to hold cloned data
+		DataPoint point = new DataPoint(valuesCopy, _fieldList, _altitude.getFormat());
+		return point;
+	}
+
+
+	/**
+	 * Restore the contents from another point
+	 * @param inOther point containing contents to copy
+	 * @return true if successful
+	 */
+	public boolean restoreContents(DataPoint inOther)
+	{
+		if (inOther != null)
+		{
+			// Copy string values across
+			_fieldValues = inOther._fieldValues;
+			if (_altitude != null)
+			{
+				parseFields(_altitude.getFormat());
+			}
+			else
+			{
+				// use default altitude format of metres
+				parseFields(Altitude.FORMAT_METRES);
+			}
+			return true;
+		}
+		return false;
 	}
 }

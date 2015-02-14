@@ -6,9 +6,17 @@ package tim.prune;
  */
 public interface DataSubscriber
 {
+	public static final byte DATA_ADDED_OR_REMOVED = 1;
+	public static final byte DATA_EDITED           = 2;
+	public static final byte SELECTION_CHANGED     = 4;
+	public static final byte WAYPOINTS_MODIFIED    = 8;
+	public static final byte PHOTOS_MODIFIED       = 16;
+	public static final byte UNITS_CHANGED         = 32;
+	public static final byte ALL                   = 63;
+
 	/**
 	 * Inform clients that data has been updated
 	 */
-	public void dataUpdated();
+	public void dataUpdated(byte inUpdateType);
 
 }

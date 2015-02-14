@@ -17,17 +17,22 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollBar;
+import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.border.EtchedBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
+import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
-import tim.prune.data.Field;
 import tim.prune.data.IntegerRange;
 import tim.prune.data.Selection;
 import tim.prune.data.TrackInfo;
@@ -48,7 +53,7 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _indexLabel = null;
 	private JLabel _latLabel = null, _longLabel = null;
 	private JLabel _altLabel = null, _nameLabel = null;
-	private JLabel _timeLabel = null;
+	private JLabel _timeLabel = null, _photoFileLabel = null;
 	// Scroll bar
 	private JScrollBar _scroller = null;
 	private boolean _ignoreScrollEvents = false;
@@ -60,6 +65,12 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _rangeLabel = null;
 	private JLabel _distanceLabel = null, _durationLabel = null;
 	private JLabel _altRangeLabel = null, _updownLabel = null;
+	// Photos
+	private JList _photoList = null;
+	private PhotoListModel _photoListModel = null;
+	// Waypoints
+	private JList _waypointList = null;
+	private WaypointListModel _waypointListModel = null;
 	// Units
 	private JComboBox _unitsDropdown = null;
 	// Formatter
@@ -113,7 +124,7 @@ public class DetailsDisplay extends GenericDisplay
 		trackDetailsPanel.add(_trackpointsLabel);
 		_filenameLabel = new JLabel("");
 		trackDetailsPanel.add(_filenameLabel);
-		
+
 		// Point details panel
 		JPanel pointDetailsPanel = new JPanel();
 		pointDetailsPanel.setLayout(new BoxLayout(pointDetailsPanel, BoxLayout.Y_AXIS));
@@ -133,6 +144,8 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_altLabel);
 		_timeLabel = new JLabel("");
 		pointDetailsPanel.add(_timeLabel);
+		_photoFileLabel = new JLabel("");
+		pointDetailsPanel.add(_photoFileLabel);
 		_nameLabel = new JLabel("");
 		pointDetailsPanel.add(_nameLabel);
 		pointDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -214,8 +227,36 @@ public class DetailsDisplay extends GenericDisplay
 		otherDetailsPanel.add(_updownLabel);
 		otherDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		// add the main panel at the top
-		add(mainPanel, BorderLayout.NORTH);
+		// Add tab panel for waypoints / photos
+		JPanel waypointsPanel = new JPanel();
+		waypointsPanel.setLayout(new BoxLayout(waypointsPanel, BoxLayout.Y_AXIS));
+		waypointsPanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
+		);
+		JTabbedPane tabPane = new JTabbedPane();
+		_waypointListModel = new WaypointListModel(_trackInfo.getTrack());
+		_waypointList = new JList(_waypointListModel);
+		_waypointList.setVisibleRowCount(5);
+		_waypointList.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e)
+			{
+				if (!e.getValueIsAdjusting()) selectWaypoint(_waypointList.getSelectedIndex());
+			}});
+		tabPane.addTab(I18nManager.getText("details.waypointsphotos.waypoints"), new JScrollPane(_waypointList));
+		_photoListModel = new PhotoListModel(_trackInfo.getPhotoList());
+		_photoList = new JList(_photoListModel);
+		_photoList.setVisibleRowCount(5);
+		_photoList.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e)
+			{
+				if (!e.getValueIsAdjusting()) selectPhoto(_photoList.getSelectedIndex());
+			}});
+		// TODO: Re-add photos list after v2
+		// tabPane.addTab(I18nManager.getText("details.waypointsphotos.photos"), new JScrollPane(_photoList));
+		tabPane.setAlignmentX(Component.LEFT_ALIGNMENT);
+		waypointsPanel.add(tabPane);
+		waypointsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
 		// add the slider, point details, and the other details to the main panel
 		mainPanel.add(buttonPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
@@ -226,6 +267,10 @@ public class DetailsDisplay extends GenericDisplay
 		mainPanel.add(pointDetailsPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
 		mainPanel.add(otherDetailsPanel);
+		mainPanel.add(Box.createVerticalStrut(5));
+		mainPanel.add(waypointsPanel);
+		// add the main panel at the top
+		add(mainPanel, BorderLayout.NORTH);
 
 		// Add units selection
 		JPanel lowerPanel = new JPanel();
@@ -236,7 +281,7 @@ public class DetailsDisplay extends GenericDisplay
 		_unitsDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				dataUpdated();
+				dataUpdated(DataSubscriber.UNITS_CHANGED);
 			}
 		});
 		lowerPanel.add(_unitsDropdown);
@@ -258,9 +303,42 @@ public class DetailsDisplay extends GenericDisplay
 
 
 	/**
+	 * Select the specified photo
+	 * @param inPhotoIndex index of selected photo
+	 */
+	private void selectPhoto(int inPhotoIndex)
+	{
+		if (_photoListModel.getPhoto(inPhotoIndex) != null)
+		{
+			// TODO: Deselect the photo when another point is selected
+			// TODO: show photo thumbnail
+			// select associated point, if any
+			DataPoint point = _photoListModel.getPhoto(inPhotoIndex).getDataPoint();
+			if (point != null)
+			{
+				_trackInfo.selectPoint(point);
+			}
+		}
+	}
+
+
+	/**
+	 * Select the specified waypoint
+	 * @param inWaypointIndex index of selected waypoint
+	 */
+	private void selectWaypoint(int inWaypointIndex)
+	{
+		if (inWaypointIndex >= 0)
+		{
+			_trackInfo.selectPoint(_waypointListModel.getWaypoint(inWaypointIndex));
+		}
+	}
+
+
+	/**
 	 * Notification that Track has been updated
 	 */
-	public void dataUpdated()
+	public void dataUpdated(byte inUpdateType)
 	{
 		// Update track data
 		if (_track == null || _track.getNumPoints() <= 0)
@@ -297,6 +375,7 @@ public class DetailsDisplay extends GenericDisplay
 			_longLabel.setText("");
 			_altLabel.setText("");
 			_timeLabel.setText("");
+			_photoFileLabel.setText("");
 			_nameLabel.setText("");
 		}
 		else
@@ -314,7 +393,14 @@ public class DetailsDisplay extends GenericDisplay
 				_timeLabel.setText(LABEL_POINT_TIMESTAMP + currentPoint.getTimestamp().getText());
 			else
 				_timeLabel.setText("");
-			String name = currentPoint.getFieldValue(Field.WAYPT_NAME);
+			if (currentPoint.getPhoto() != null && currentPoint.getPhoto().getFile() != null)
+			{
+				_photoFileLabel.setText(I18nManager.getText("details.photofile") + ": "
+					+ currentPoint.getPhoto().getFile().getName());
+			}
+			else
+				_photoFileLabel.setText("");
+			String name = currentPoint.getWaypointName();
 			if (name != null && !name.equals(""))
 			{
 				_nameLabel.setText(LABEL_POINT_WAYPOINTNAME + name);
@@ -387,6 +473,37 @@ public class DetailsDisplay extends GenericDisplay
 			{
 				_altRangeLabel.setText("");
 				_updownLabel.setText("");
+			}
+		}
+		// update waypoints and photos if necessary
+		if ((inUpdateType |
+			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.WAYPOINTS_MODIFIED)) > 0)
+		{
+			_waypointListModel.fireChanged();
+		}
+		if ((inUpdateType |
+			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.PHOTOS_MODIFIED)) > 0)
+		{
+			_photoListModel.fireChanged();
+		}
+		// Deselect selected waypoint if selected point has since changed
+		if (_waypointList.getSelectedIndex() >= 0)
+		{
+			if (_trackInfo.getCurrentPoint() == null
+			 || !_waypointListModel.getWaypoint(_waypointList.getSelectedIndex()).equals(_trackInfo.getCurrentPoint()))
+			{
+				// point is selected in list but different from current point - deselect
+				_waypointList.clearSelection();
+			}
+		}
+		// Do the same for the photos
+		if (_photoList.getSelectedIndex() >= 0)
+		{
+			if (_trackInfo.getCurrentPoint() == null
+				|| !_photoListModel.getPhoto(_photoList.getSelectedIndex()).getDataPoint().equals(_trackInfo.getCurrentPoint()))
+			{
+				// photo is selected in list but different from current point - deselect
+				_photoList.clearSelection();
 			}
 		}
 	}

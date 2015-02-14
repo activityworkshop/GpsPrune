@@ -11,6 +11,16 @@ public class AltitudeRange
 
 
 	/**
+	 * Clear the altitude range
+	 */
+	public void clear()
+	{
+		_range.clear();
+		_format = Altitude.FORMAT_NONE;
+	}
+
+
+	/**
 	 * Add a value to the range
 	 * @param inValue value to add, only positive values considered
 	 */

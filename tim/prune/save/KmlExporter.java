@@ -14,7 +14,6 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.Track;
 
 /**
@@ -53,6 +52,7 @@ public class KmlExporter
 			I18nManager.getText("dialog.exportkml.text"),
 			I18nManager.getText("dialog.exportkml.title"),
 			JOptionPane.QUESTION_MESSAGE, null, null, "");
+		// TODO: Make dialog window including colour selection, line width, track description
 		if (description != null)
 		{
 			// OK pressed, so choose output file
@@ -66,7 +66,7 @@ public class KmlExporter
 				}
 				public String getDescription()
 				{
-					return "KML files";
+					return I18nManager.getText("dialog.exportkml.filetype");
 				}
 			});
 			_fileChooser.setAcceptAllFileFilterUsed(false);
@@ -83,14 +83,13 @@ public class KmlExporter
 					{
 						file = new File(file.getAbsolutePath() + ".kml");
 					}
-					// Check if file exists - if so don't overwrite
-					if (file.exists())
-					{
-						JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.save.fileexists"),
-							I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
-						chooseAgain = true;
-					}
-					else
+					// Check if file exists and if necessary prompt for overwrite
+					Object[] buttonTexts = {I18nManager.getText("button.overwrite"), I18nManager.getText("button.cancel")};
+					if (!file.exists() || JOptionPane.showOptionDialog(_parentFrame,
+							I18nManager.getText("dialog.save.overwrite.text"),
+							I18nManager.getText("dialog.save.overwrite.title"), JOptionPane.YES_NO_OPTION,
+							JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
+						== JOptionPane.YES_OPTION)
 					{
 						if (exportFile(file, description.toString()))
 						{
@@ -100,6 +99,10 @@ public class KmlExporter
 						{
 							chooseAgain = true;
 						}
+					}
+					else
+					{
+						chooseAgain = true;
 					}
 				}
 			} while (chooseAgain);
@@ -115,9 +118,10 @@ public class KmlExporter
 	 */
 	private boolean exportFile(File inFile, String inDescription)
 	{
+		FileWriter writer = null;
 		try
 		{
-			FileWriter writer = new FileWriter(inFile);
+			writer = new FileWriter(inFile);
 			writer.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.1\">\n<Folder>\n");
 			writer.write("\t<name>");
 			writer.write(inDescription);
@@ -127,6 +131,7 @@ public class KmlExporter
 			DataPoint point = null;
 			boolean hasTrackpoints = false;
 			// Loop over waypoints
+			boolean writtenPhotoHeader = false;
 			int numPoints = _track.getNumPoints();
 			for (i=0; i<numPoints; i++)
 			{
@@ -134,6 +139,15 @@ public class KmlExporter
 				if (point.isWaypoint())
 				{
 					exportWaypoint(point, writer);
+				}
+				else if (point.getPhoto() != null)
+				{
+					if (!writtenPhotoHeader)
+					{
+						writer.write("<Style id=\"camera_icon\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pal4/icon46.png</href></Icon></IconStyle></Style>");
+						writtenPhotoHeader = true;
+					}
+					exportPhotoPoint(point, writer);
 				}
 				else
 				{
@@ -160,12 +174,16 @@ public class KmlExporter
 			writer.close();
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.ok1")
 				 + " " + numPoints + " " + I18nManager.getText("dialog.save.ok2")
-				 + inFile.getAbsolutePath(),
+				 + " " + inFile.getAbsolutePath(),
 				I18nManager.getText("dialog.save.oktitle"), JOptionPane.INFORMATION_MESSAGE);
 			return true;
 		}
 		catch (IOException ioe)
 		{
+			try {
+				if (writer != null) writer.close();
+			}
+			catch (IOException ioe2) {}
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.save.failed") + ioe.getMessage(),
 				I18nManager.getText("error.save.dialogtitle"), JOptionPane.ERROR_MESSAGE);
 		}
@@ -177,12 +195,34 @@ public class KmlExporter
 	 * Export the specified waypoint into the file
 	 * @param inPoint waypoint to export
 	 * @param inWriter writer object
+	 * @throws IOException on write failure
 	 */
 	private void exportWaypoint(DataPoint inPoint, Writer inWriter) throws IOException
 	{
 		inWriter.write("\t<Placemark>\n\t\t<name>");
-		inWriter.write(inPoint.getFieldValue(Field.WAYPT_NAME).trim());
+		inWriter.write(inPoint.getWaypointName().trim());
 		inWriter.write("</name>\n");
+		inWriter.write("\t\t<Point>\n\t\t\t<coordinates>");
+		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(',');
+		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
+		inWriter.write(",0</coordinates>\n\t\t</Point>\n\t</Placemark>\n");
+	}
+
+
+	/**
+	 * Export the specified photo into the file
+	 * @param inPoint data point including photo
+	 * @param inWriter writer object
+	 * @throws IOException on write failure
+	 */
+	private void exportPhotoPoint(DataPoint inPoint, Writer inWriter) throws IOException
+	{
+		// TODO: Export photos to KML too - for photos need kmz!
+		inWriter.write("\t<Placemark>\n\t\t<name>");
+		inWriter.write(inPoint.getPhoto().getFile().getName());
+		inWriter.write("</name>\n");
+		inWriter.write("<styleUrl>#camera_icon</styleUrl>\n");
 		inWriter.write("\t\t<Point>\n\t\t\t<coordinates>");
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DEG_WITHOUT_CARDINAL));
 		inWriter.write(',');

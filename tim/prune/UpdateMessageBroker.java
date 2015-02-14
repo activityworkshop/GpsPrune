@@ -38,11 +38,21 @@ public class UpdateMessageBroker
 	 */
 	public void informSubscribers()
 	{
+		informSubscribers(DataSubscriber.ALL);
+	}
+
+
+	/**
+	 * Send message to all subscribers
+	 * @param inChange Change that occurred
+	 */
+	public void informSubscribers(byte inChange)
+	{
 		for (int i=0; i<_subscribers.length; i++)
 		{
 			if (_subscribers[i] != null)
 			{
-				_subscribers[i].dataUpdated();
+				_subscribers[i].dataUpdated(inChange);
 			}
 		}
 	}

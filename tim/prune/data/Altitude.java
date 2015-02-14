@@ -79,6 +79,7 @@ public class Altitude
 	 */
 	public int getValue(int inFormat)
 	{
+		// TODO: Fix rounding errors here converting between units - return double?
 		if (inFormat == _format)
 			return _value;
 		if (inFormat == FORMAT_METRES)

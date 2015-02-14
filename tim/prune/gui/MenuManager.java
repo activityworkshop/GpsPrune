@@ -31,9 +31,12 @@ public class MenuManager implements DataSubscriber
 
 	// Menu items which need enabling/disabling
 	JMenuItem _saveItem = null;
-	JMenuItem _exportItem = null;
+	JMenuItem _exportKmlItem = null;
+	JMenuItem _exportPovItem = null;
 	JMenuItem _undoItem = null;
 	JMenuItem _clearUndoItem = null;
+	JMenuItem _editPointItem = null;
+	JMenuItem _editWaypointNameItem = null;
 	JMenuItem _deletePointItem = null;
 	JMenuItem _deleteRangeItem = null;
 	JMenuItem _deleteDuplicatesItem = null;
@@ -71,6 +74,7 @@ public class MenuManager implements DataSubscriber
 	{
 		JMenuBar menubar = new JMenuBar();
 		JMenu fileMenu = new JMenu(I18nManager.getText("menu.file"));
+		// Open file
 		JMenuItem openMenuItem = new JMenuItem(I18nManager.getText("menu.file.open"));
 		openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
 		openMenuItem.addActionListener(new ActionListener() {
@@ -80,6 +84,17 @@ public class MenuManager implements DataSubscriber
 			}
 		});
 		fileMenu.add(openMenuItem);
+		// Add photos
+		JMenuItem addPhotosMenuItem = new JMenuItem(I18nManager.getText("menu.file.addphotos"));
+		addPhotosMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.addPhotos();
+			}
+		});
+		// TODO: Re-add add photos menu item after v2
+		// fileMenu.add(addPhotosMenuItem);
+		// Save
 		_saveItem = new JMenuItem(I18nManager.getText("menu.file.save"), KeyEvent.VK_S);
 		_saveItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -90,15 +105,24 @@ public class MenuManager implements DataSubscriber
 		_saveItem.setEnabled(false);
 		fileMenu.add(_saveItem);
 		// Export
-		_exportItem = new JMenuItem(I18nManager.getText("menu.file.export"));
-		_exportItem.addActionListener(new ActionListener() {
+		_exportKmlItem = new JMenuItem(I18nManager.getText("menu.file.exportkml"));
+		_exportKmlItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.exportKml();
 			}
 		});
-		_exportItem.setEnabled(false);
-		fileMenu.add(_exportItem);
+		_exportKmlItem.setEnabled(false);
+		fileMenu.add(_exportKmlItem);
+		_exportPovItem = new JMenuItem(I18nManager.getText("menu.file.exportpov"));
+		_exportPovItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.exportPov();
+			}
+		});
+		_exportPovItem.setEnabled(false);
+		fileMenu.add(_exportPovItem);
 		fileMenu.addSeparator();
 		JMenuItem exitMenuItem = new JMenuItem(I18nManager.getText("menu.file.exit"));
 		exitMenuItem.addActionListener(new ActionListener() {
@@ -130,6 +154,24 @@ public class MenuManager implements DataSubscriber
 		_clearUndoItem.setEnabled(false);
 		editMenu.add(_clearUndoItem);
 		editMenu.addSeparator();
+		_editPointItem = new JMenuItem(I18nManager.getText("menu.edit.editpoint"));
+		_editPointItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.editCurrentPoint();
+			}
+		});
+		_editPointItem.setEnabled(false);
+		editMenu.add(_editPointItem);
+		_editWaypointNameItem = new JMenuItem(I18nManager.getText("menu.edit.editwaypointname"));
+		_editWaypointNameItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.editCurrentPointName();
+			}
+		});
+		_editWaypointNameItem.setEnabled(false);
+		editMenu.add(_editWaypointNameItem);
 		_deletePointItem = new JMenuItem(I18nManager.getText("menu.edit.deletepoint"));
 		_deletePointItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -240,21 +282,18 @@ public class MenuManager implements DataSubscriber
 		selectMenu.add(_selectNoneItem);
 		menubar.add(selectMenu);
 
-		// Add 3d menu if available
-		if (isJava3dEnabled())
-		{
-			JMenu threeDMenu = new JMenu(I18nManager.getText("menu.3d"));
-			_show3dItem = new JMenuItem(I18nManager.getText("menu.3d.show3d"));
-			_show3dItem.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e)
-				{
-					_app.show3dWindow();
-				}
-			});
-			_show3dItem.setEnabled(false);
-			threeDMenu.add(_show3dItem);
-			menubar.add(threeDMenu);
-		}
+		// Add 3d menu (whether java3d available or not)
+		JMenu threeDMenu = new JMenu(I18nManager.getText("menu.3d"));
+		_show3dItem = new JMenuItem(I18nManager.getText("menu.3d.show3d"));
+		_show3dItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.show3dWindow();
+			}
+		});
+		_show3dItem.setEnabled(false);
+		threeDMenu.add(_show3dItem);
+		menubar.add(threeDMenu);
 
 		// Help menu for About
 		JMenu helpMenu = new JMenu(I18nManager.getText("menu.help"));
@@ -286,33 +325,15 @@ public class MenuManager implements DataSubscriber
 
 
 	/**
-	 * @return true if 3d capability is installed
-	 */
-	private static boolean isJava3dEnabled()
-	{
-		boolean has3d = false;
-		try
-		{
-			Class universeClass = Class.forName("com.sun.j3d.utils.universe.SimpleUniverse");
-			has3d = true;
-		}
-		catch (ClassNotFoundException e)
-		{
-			// no java3d classes available
-		}
-		return has3d;
-	}
-
-
-	/**
 	 * @see tim.prune.DataSubscriber#dataUpdated(tim.prune.data.Track)
 	 */
-	public void dataUpdated()
+	public void dataUpdated(byte inUpdateType)
 	{
 		boolean hasData = (_track != null && _track.getNumPoints() > 0);
 		// set functions which require data
 		_saveItem.setEnabled(hasData);
-		_exportItem.setEnabled(hasData);
+		_exportKmlItem.setEnabled(hasData);
+		_exportPovItem.setEnabled(hasData);
 		_deleteDuplicatesItem.setEnabled(hasData);
 		_compressItem.setEnabled(hasData);
 		_rearrangeMenu.setEnabled(hasData && _track.hasMixedData());
@@ -326,6 +347,8 @@ public class MenuManager implements DataSubscriber
 		_clearUndoItem.setEnabled(hasUndo);
 		// is there a current point?
 		boolean hasPoint = (hasData && _selection.getCurrentPointIndex() >= 0);
+		_editPointItem.setEnabled(hasPoint);
+		_editWaypointNameItem.setEnabled(hasPoint);
 		_deletePointItem.setEnabled(hasPoint);
 		// is there a current range?
 		boolean hasRange = (hasData && _selection.hasRangeSelected());

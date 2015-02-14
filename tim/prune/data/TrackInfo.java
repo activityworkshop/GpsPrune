@@ -1,5 +1,7 @@
 package tim.prune.data;
 
+import java.util.List;
+
 import tim.prune.UpdateMessageBroker;
 
 /**
@@ -12,6 +14,9 @@ public class TrackInfo
 	private Track _track = null;
 	private Selection _selection = null;
 	private FileInfo _fileInfo = null;
+	// TODO: How to store photos? In separate list to be maintained or dynamic? Only store pointless photos?
+	private PhotoList _photoList = null;
+
 
 	/**
 	 * Constructor
@@ -24,6 +29,7 @@ public class TrackInfo
 		_track = inTrack;
 		_selection = new Selection(_track, inBroker);
 		_fileInfo = new FileInfo();
+		_photoList = new PhotoList();
 	}
 
 
@@ -54,6 +60,14 @@ public class TrackInfo
 	}
 
 	/**
+	 * @return the PhotoList object
+	 */
+	public PhotoList getPhotoList()
+	{
+		return _photoList;
+	}
+
+	/**
 	 * Get the currently selected point, if any
 	 * @return DataPoint if single point selected, otherwise null
 	 */
@@ -78,11 +92,62 @@ public class TrackInfo
 
 
 	/**
+	 * Add a List of Photos
+	 * @param inList List containing Photo objects
+	 * @return number of photos added
+	 */
+	public int addPhotos(List inList)
+	{
+		// Firstly count number to add to make array
+		int numPhotosToAdd = 0;
+		if (inList != null && !inList.isEmpty())
+		{
+			for (int i=0; i<inList.size(); i++)
+			{
+				try
+				{
+					Photo photo = (Photo) inList.get(i);
+					if (photo != null && !_photoList.contains(photo))
+					{
+						numPhotosToAdd++;
+					}
+				}
+				catch (ClassCastException ce) {}
+			}
+		}
+		// If there are any photos to add, add them
+		if (numPhotosToAdd > 0)
+		{
+			DataPoint[] dataPoints = new DataPoint[numPhotosToAdd];
+			int pointNum = 0;
+			// Add each Photo in turn
+			for (int i=0; i<inList.size(); i++)
+			{
+				try
+				{
+					Photo photo = (Photo) inList.get(i);
+					if (photo != null && !_photoList.contains(photo))
+					{
+						_photoList.addPhoto(photo);
+						dataPoints[pointNum] = photo.getDataPoint();
+						pointNum++;
+					}
+				}
+				catch (ClassCastException ce) {}
+			}
+			_track.appendPoints(dataPoints);
+		}
+		return numPhotosToAdd;
+	}
+
+
+	/**
 	 * Delete the currently selected range of points
 	 * @return true if successful
 	 */
 	public boolean deleteRange()
 	{
+		// TODO: Check whether to delete photos associated with this range
 		int currPoint = _selection.getCurrentPointIndex();
 		int startSel = _selection.getStart();
 		int endSel = _selection.getEnd();
@@ -101,6 +166,7 @@ public class TrackInfo
 	{
 		if (_track.deletePoint(_selection.getCurrentPointIndex()))
 		{
+			// TODO: Check whether to delete photo associated with this point
 			_selection.modifyPointDeleted();
 			_broker.informSubscribers();
 			return true;
@@ -158,5 +224,18 @@ public class TrackInfo
 		if (success)
 			_selection.selectRangeEnd(_selection.getEnd() + inNumPoints);
 		return success;
+	}
+
+
+	/**
+	 * Select the given DataPoint
+	 * @param inPoint DataPoint object to select
+	 */
+	public void selectPoint(DataPoint inPoint)
+	{
+		// get the index of the given Point
+		int index = _track.getPointIndex(inPoint);
+		// give to selection
+		_selection.selectPoint(index);
 	}
 }

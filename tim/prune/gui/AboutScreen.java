@@ -56,12 +56,13 @@ public class AboutScreen extends JDialog
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext1")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext2")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
+		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 		descPane.setEditable(false);
 		descPane.setOpaque(false);
 		descPane.setAlignmentX(JEditorPane.CENTER_ALIGNMENT);
-		// descPane.setBackground(Color.GRAY);
+
 		mainPanel.add(descPane);
 		mainPanel.add(new JLabel(" "));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));

@@ -20,10 +20,9 @@ public class Latitude extends Coordinate
 	 * @param inValue value of coordinate
 	 * @param inFormat format to use
 	 */
-	protected Latitude(double inValue, int inFormat)
+	public Latitude(double inValue, int inFormat)
 	{
-		super(inValue, inFormat);
-		_cardinal = inValue < 0.0 ? SOUTH : NORTH;
+		super(inValue, inFormat, inValue < 0.0 ? SOUTH : NORTH);
 	}
 
 
