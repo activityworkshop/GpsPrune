@@ -8,7 +8,7 @@ public class UpdateMessageBroker
 {
 	private DataSubscriber[] _subscribers;
 	private int _subscriberNum = 0;
-	private static final int MAXIMUM_NUMBER_SUBSCRIBERS = 4;
+	private static final int MAXIMUM_NUMBER_SUBSCRIBERS = 5;
 
 
 	/**

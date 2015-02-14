@@ -20,7 +20,6 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
-import tim.prune.data.Track;
 
 /**
  * Class to manage the display and editing of waypoint names
@@ -30,7 +29,6 @@ public class PointNameEditor
 	private App _app = null;
 	private JFrame _parentFrame = null;
 	private JDialog _dialog = null;
-	private Track _track = null;
 	private DataPoint _point = null;
 	private JTextField _nameField = null;
 	private JButton _okButton = null;
@@ -50,12 +48,10 @@ public class PointNameEditor
 
 	/**
 	 * Show the edit point name dialog
-	 * @param inTrack track object
 	 * @param inPoint point to edit
 	 */
-	public void showDialog(Track inTrack, DataPoint inPoint)
+	public void showDialog(DataPoint inPoint)
 	{
-		_track = inTrack;
 		_point = inPoint;
 		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.pointnameedit.title"), true);
 		_dialog.setLocationRelativeTo(_parentFrame);
@@ -79,15 +75,34 @@ public class PointNameEditor
 		panel.setLayout(new BorderLayout());
 		// Create GUI layout for point name editor
 		JPanel centrePanel = new JPanel();
-		// centrePanel.set
 		centrePanel.add(new JLabel(I18nManager.getText("dialog.pointnameedit.name") + ":"));
+		// Make listener to react to ok being pressed
+		ActionListener okActionListener = new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				// Check for empty name
+				if (_nameField.getText().length() > 0)
+				{
+					// update App with edit
+					confirmEdit();
+					_dialog.dispose();
+				}
+			}
+		};
 		_nameField = new JTextField(inName, 12);
 		_nameField.addKeyListener(new KeyAdapter() {
-			public void keyTyped(KeyEvent e)
+			public void keyReleased(KeyEvent e)
 			{
-				_okButton.setEnabled(true);
+				// close dialog if escape pressed
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
+				{
+					_dialog.dispose();
+				}
+				// Enable ok button if name not empty
+				_okButton.setEnabled(_nameField.getText().length() > 0);
 			}
 		});
+		_nameField.addActionListener(okActionListener);
 		centrePanel.add(_nameField);
 		panel.add(centrePanel);
 		JPanel rightPanel = new JPanel();
@@ -98,6 +113,7 @@ public class PointNameEditor
 			{
 				_nameField.setText(_nameField.getText().toUpperCase());
 				_okButton.setEnabled(true);
+				_nameField.requestFocus();
 			}
 		});
 		rightPanel.add(upperButton);
@@ -107,6 +123,7 @@ public class PointNameEditor
 			{
 				_nameField.setText(_nameField.getText().toLowerCase());
 				_okButton.setEnabled(true);
+				_nameField.requestFocus();
 			}
 		});
 		rightPanel.add(lowerButton);
@@ -116,6 +133,7 @@ public class PointNameEditor
 			{
 				_nameField.setText(sentenceCase(_nameField.getText()));
 				_okButton.setEnabled(true);
+				_nameField.requestFocus();
 			}
 		});
 		rightPanel.add(sentenceButton);
@@ -133,14 +151,7 @@ public class PointNameEditor
 		lowerPanel.add(cancelButton);
 		_okButton = new JButton(I18nManager.getText("button.ok"));
 		_okButton.setEnabled(false);
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// update App with edit
-				confirmEdit();
-				_dialog.dispose();
-			}
-		});
+		_okButton.addActionListener(okActionListener);
 		lowerPanel.add(_okButton);
 		panel.add(lowerPanel, BorderLayout.SOUTH);
 		return panel;

@@ -41,7 +41,7 @@ public class UndoEditPoint implements UndoOperation
 
 	/**
 	 * Perform the undo operation on the given Track
-	 * @param inTrack Track object on which to perform the operation
+	 * @param inTrackInfo TrackInfo object on which to perform the operation
 	 */
 	public void performUndo(TrackInfo inTrackInfo) throws UndoException
 	{
@@ -51,6 +51,5 @@ public class UndoEditPoint implements UndoOperation
 			// throw exception if failed
 			throw new UndoException(getDescription());
 		}
-		// TODO: Deal with photo if necessary
 	}
 }

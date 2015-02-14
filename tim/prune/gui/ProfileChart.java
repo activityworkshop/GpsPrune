@@ -38,6 +38,7 @@ public class ProfileChart extends GenericChart
 
 	/**
 	 * Override paint method to draw map
+	 * @param g Graphics object
 	 */
 	public void paint(Graphics g)
 	{
@@ -51,7 +52,8 @@ public class ProfileChart extends GenericChart
 			int maxAltitude = altitudeRange.getMaximum();
 
 			// message if no altitudes in track
-			if (minAltitude < 0 || maxAltitude < 0)
+			if (minAltitude < 0 || maxAltitude < 0
+				|| minAltitude == maxAltitude)
 			{
 				g.setColor(COLOR_LINES);
 				g.drawString(I18nManager.getText("display.noaltitudes"), 50, height/2);

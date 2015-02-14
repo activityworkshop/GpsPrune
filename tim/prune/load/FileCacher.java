@@ -96,10 +96,15 @@ public class FileCacher
 		{
 			for (int i=0; i<size; i++)
 			{
-				if (result[i].length() > inMaxWidth)
-					result[i] = result[i].trim();
-				if (result[i].length() > inMaxWidth)
-					result[i] = result[i].substring(0, inMaxWidth);
+				if (result[i] == null)
+					result[i] = "";
+				else
+				{
+					if (result[i].length() > inMaxWidth)
+						result[i] = result[i].trim();
+					if (result[i].length() > inMaxWidth)
+						result[i] = result[i].substring(0, inMaxWidth);
+				}
 			}
 		}
 		return result;

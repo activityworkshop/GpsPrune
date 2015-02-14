@@ -178,11 +178,11 @@ public class ThreeDModel
 
 
 	/**
-	 * @return number of latitude lines
+	 * @return latitude lines
 	 */
-	public int getNumLatitudeLines()
+	public double[] getLatitudeLines()
 	{
-		return _scaler.getLatitudeLines().length;
+		return _scaler.getLatitudeLines();
 	}
 
 	/**
@@ -195,11 +195,11 @@ public class ThreeDModel
 	}
 
 	/**
-	 * @return number of longitude lines
+	 * @return longitude lines
 	 */
-	public int getNumLongitudeLines()
+	public double[] getLongitudeLines()
 	{
-		return _scaler.getLongitudeLines().length;
+		return _scaler.getLongitudeLines();
 	}
 
 	/**

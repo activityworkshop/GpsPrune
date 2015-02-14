@@ -49,7 +49,6 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 	private BufferedImage _image = null;
 	private JPopupMenu _popup = null;
 	private JCheckBoxMenuItem _autoPanMenuItem = null;
-	private String _trackString = null;
 	private int _numPoints = -1;
 	private double _scale;
 	private double _offsetX, _offsetY, _zoomScale;
@@ -153,10 +152,14 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		}
 		_lastSelectedPoint = selectedPoint;
 
+		// Create background if necessary
 		if (_image == null || width != _image.getWidth() || height != _image.getHeight())
 		{
 			createBackgroundImage();
 		}
+		// return if image has been set to null by other thread
+		if (_image == null) {return;}
+
 		// draw buffered image onto g
 		g.drawImage(_image, 0, 0, width, height, COLOR_BG, null);
 
@@ -208,7 +211,7 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		}
 
 		// Attempt to grab keyboard focus if possible
-		this.requestFocus();
+		//this.requestFocus();
 	}
 
 
@@ -250,8 +253,11 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 		{
 			DataPoint point = _track.getPoint(i);
 			String waypointName = point.getWaypointName();
-			if (waypointName != null && !waypointName.equals("") && numWaypointNamesShown < LIMIT_WAYPOINT_NAMES)
+			if (waypointName != null && !waypointName.equals(""))
 			{
+				// escape if nothing more to do
+				if (numWaypointNamesShown >= LIMIT_WAYPOINT_NAMES || _image == null) {break;}
+				// calculate coordinates of point
 				x = halfWidth + (int) ((_track.getX(i) - _offsetX) / _scale * _zoomScale);
 				y = halfHeight - (int) ((_track.getY(i) - _offsetY) / _scale * _zoomScale);
 				if (x > BORDER_WIDTH && x < (width - BORDER_WIDTH)
@@ -305,14 +311,21 @@ public class MapChart extends GenericChart implements MouseWheelListener, KeyLis
 	 */
 	private boolean overlapsPoints(int inX, int inY, int inWidth, int inHeight)
 	{
-		// if (true) return true;
-		for (int x=0; x<inWidth; x++)
+		try
 		{
-			for (int y=0; y<inHeight; y++)
+			// loop over x coordinate of rectangle
+			for (int x=0; x<inWidth; x++)
 			{
-				int pixelColor = _image.getRGB(inX + x, inY - y);
-				if (pixelColor != -1) return true;
+				// loop over y coordinate of rectangle
+				for (int y=0; y<inHeight; y++)
+				{
+					int pixelColor = _image.getRGB(inX + x, inY - y);
+					if (pixelColor != -1) return true;
+				}
 			}
+		}
+		catch (NullPointerException e) {
+			// ignore null pointers, just return false
 		}
 		return false;
 	}

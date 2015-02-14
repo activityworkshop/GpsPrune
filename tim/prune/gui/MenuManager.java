@@ -5,22 +5,26 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
+import tim.prune.data.PhotoList;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 
 /**
- * Class to manage the menu bar,
- * including enabling and disabling the menu items
+ * Class to manage the menu bar and tool bar,
+ * including enabling and disabling the items
  */
 public class MenuManager implements DataSubscriber
 {
@@ -28,28 +32,53 @@ public class MenuManager implements DataSubscriber
 	private App _app = null;
 	private Track _track = null;
 	private Selection _selection = null;
+	private PhotoList _photos = null;
 
 	// Menu items which need enabling/disabling
-	JMenuItem _saveItem = null;
-	JMenuItem _exportKmlItem = null;
-	JMenuItem _exportPovItem = null;
-	JMenuItem _undoItem = null;
-	JMenuItem _clearUndoItem = null;
-	JMenuItem _editPointItem = null;
-	JMenuItem _editWaypointNameItem = null;
-	JMenuItem _deletePointItem = null;
-	JMenuItem _deleteRangeItem = null;
-	JMenuItem _deleteDuplicatesItem = null;
-	JMenuItem _compressItem = null;
-	JMenuItem _interpolateItem = null;
-	JMenuItem _selectAllItem = null;
-	JMenuItem _selectNoneItem = null;
-	JMenuItem _show3dItem = null;
-	JMenuItem _reverseItem = null;
-	JMenu     _rearrangeMenu = null;
-	JMenuItem _rearrangeStartItem = null;
-	JMenuItem _rearrangeEndItem = null;
-	JMenuItem _rearrangeNearestItem = null;
+	private JMenuItem _saveItem = null;
+	private JMenuItem _exportKmlItem = null;
+	private JMenuItem _exportPovItem = null;
+	private JMenuItem _undoItem = null;
+	private JMenuItem _clearUndoItem = null;
+	private JMenuItem _editPointItem = null;
+	private JMenuItem _editWaypointNameItem = null;
+	private JMenuItem _deletePointItem = null;
+	private JMenuItem _deleteRangeItem = null;
+	private JMenuItem _deleteDuplicatesItem = null;
+	private JMenuItem _compressItem = null;
+	private JMenuItem _interpolateItem = null;
+	private JMenuItem _selectAllItem = null;
+	private JMenuItem _selectNoneItem = null;
+	private JMenuItem _selectStartItem = null;
+	private JMenuItem _selectEndItem = null;
+	private JMenuItem _reverseItem = null;
+	private JMenu     _rearrangeMenu = null;
+	private JMenuItem _rearrangeStartItem = null;
+	private JMenuItem _rearrangeEndItem = null;
+	private JMenuItem _rearrangeNearestItem = null;
+	private JMenuItem _show3dItem = null;
+	private JMenuItem _saveExifItem = null;
+	private JMenuItem _connectPhotoItem = null;
+	private JMenuItem _deletePhotoItem = null;
+	// TODO: Does Photo menu require disconnect option?
+
+	// ActionListeners for reuse by menu and toolbar
+	private ActionListener _openFileAction = null;
+	private ActionListener _addPhotoAction = null;
+	private ActionListener _saveAction = null;
+	private ActionListener _undoAction = null;
+	private ActionListener _editPointAction = null;
+	private ActionListener _selectStartAction = null;
+	private ActionListener _selectEndAction = null;
+	private ActionListener _connectPhotoAction = null;
+
+	// Toolbar buttons which need enabling/disabling
+	private JButton _saveButton = null;
+	private JButton _undoButton = null;
+	private JButton _editPointButton = null;
+	private JButton _selectStartButton = null;
+	private JButton _selectEndButton = null;
+	private JButton _connectPhotoButton = null;
 
 
 	/**
@@ -63,6 +92,7 @@ public class MenuManager implements DataSubscriber
 		_app = inApp;
 		_track = inTrackInfo.getTrack();
 		_selection = inTrackInfo.getSelection();
+		_photos = inTrackInfo.getPhotoList();
 	}
 
 
@@ -77,31 +107,33 @@ public class MenuManager implements DataSubscriber
 		// Open file
 		JMenuItem openMenuItem = new JMenuItem(I18nManager.getText("menu.file.open"));
 		openMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, InputEvent.CTRL_DOWN_MASK));
-		openMenuItem.addActionListener(new ActionListener() {
+		_openFileAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.openFile();
 			}
-		});
+		};
+		openMenuItem.addActionListener(_openFileAction);
 		fileMenu.add(openMenuItem);
 		// Add photos
 		JMenuItem addPhotosMenuItem = new JMenuItem(I18nManager.getText("menu.file.addphotos"));
-		addPhotosMenuItem.addActionListener(new ActionListener() {
+		_addPhotoAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.addPhotos();
 			}
-		});
-		// TODO: Re-add add photos menu item after v2
-		// fileMenu.add(addPhotosMenuItem);
+		};
+		addPhotosMenuItem.addActionListener(_addPhotoAction);
+		fileMenu.add(addPhotosMenuItem);
 		// Save
 		_saveItem = new JMenuItem(I18nManager.getText("menu.file.save"), KeyEvent.VK_S);
-		_saveItem.addActionListener(new ActionListener() {
+		_saveAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.saveFile();
 			}
-		});
+		};
+		_saveItem.addActionListener(_saveAction);
 		_saveItem.setEnabled(false);
 		fileMenu.add(_saveItem);
 		// Export
@@ -136,12 +168,13 @@ public class MenuManager implements DataSubscriber
 		JMenu editMenu = new JMenu(I18nManager.getText("menu.edit"));
 		editMenu.setMnemonic(KeyEvent.VK_E);
 		_undoItem = new JMenuItem(I18nManager.getText("menu.edit.undo"));
-		_undoItem.addActionListener(new ActionListener() {
+		_undoAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.beginUndo();
 			}
-		});
+		};
+		_undoItem.addActionListener(_undoAction);
 		_undoItem.setEnabled(false);
 		editMenu.add(_undoItem);
 		_clearUndoItem = new JMenuItem(I18nManager.getText("menu.edit.clearundo"));
@@ -155,12 +188,13 @@ public class MenuManager implements DataSubscriber
 		editMenu.add(_clearUndoItem);
 		editMenu.addSeparator();
 		_editPointItem = new JMenuItem(I18nManager.getText("menu.edit.editpoint"));
-		_editPointItem.addActionListener(new ActionListener() {
+		_editPointAction = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_app.editCurrentPoint();
 			}
-		});
+		};
+		_editPointItem.addActionListener(_editPointAction);
 		_editPointItem.setEnabled(false);
 		editMenu.add(_editPointItem);
 		_editWaypointNameItem = new JMenuItem(I18nManager.getText("menu.edit.editwaypointname"));
@@ -280,7 +314,63 @@ public class MenuManager implements DataSubscriber
 			}
 		});
 		selectMenu.add(_selectNoneItem);
+		selectMenu.addSeparator();
+		_selectStartItem = new JMenuItem(I18nManager.getText("menu.select.start"));
+		_selectStartItem.setEnabled(false);
+		_selectStartAction = new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_selection.selectRangeStart();
+			}
+		};
+		_selectStartItem.addActionListener(_selectStartAction);
+		selectMenu.add(_selectStartItem);
+		_selectEndItem = new JMenuItem(I18nManager.getText("menu.select.end"));
+		_selectEndItem.setEnabled(false);
+		_selectEndAction = new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_selection.selectRangeEnd();
+			}
+		};
+		_selectEndItem.addActionListener(_selectEndAction);
+		selectMenu.add(_selectEndItem);
 		menubar.add(selectMenu);
+
+		// Add photo menu
+		JMenu photoMenu = new JMenu(I18nManager.getText("menu.photo"));
+		addPhotosMenuItem = new JMenuItem(I18nManager.getText("menu.file.addphotos"));
+		addPhotosMenuItem.addActionListener(_addPhotoAction);
+		photoMenu.add(addPhotosMenuItem);
+		_saveExifItem = new JMenuItem(I18nManager.getText("menu.photo.saveexif"));
+		_saveExifItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.saveExif();
+			}
+		});
+		_saveExifItem.setEnabled(false);
+		photoMenu.add(_saveExifItem);
+		_connectPhotoItem = new JMenuItem(I18nManager.getText("menu.photo.connect"));
+		_connectPhotoAction = new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.connectPhotoToPoint();
+			}
+		};
+		_connectPhotoItem.addActionListener(_connectPhotoAction);
+		_connectPhotoItem.setEnabled(false);
+		photoMenu.add(_connectPhotoItem);
+		_deletePhotoItem = new JMenuItem(I18nManager.getText("menu.photo.delete"));
+		_deletePhotoItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.deleteCurrentPhoto();
+			}
+		});
+		_deletePhotoItem.setEnabled(false);
+		photoMenu.add(_deletePhotoItem);
+		menubar.add(photoMenu);
 
 		// Add 3d menu (whether java3d available or not)
 		JMenu threeDMenu = new JMenu(I18nManager.getText("menu.3d"));
@@ -312,6 +402,63 @@ public class MenuManager implements DataSubscriber
 
 
 	/**
+	 * Create a JToolBar containing all toolbar buttons
+	 * @return toolbar containing buttons
+	 */
+	public JToolBar createToolBar()
+	{
+		JToolBar toolbar = new JToolBar();
+		// Add text file
+		JButton openFileButton = new JButton(new ImageIcon(getClass().getResource("images/add_textfile_icon.png")));
+		openFileButton.setToolTipText(I18nManager.getText("menu.file.open"));
+		openFileButton.addActionListener(_openFileAction);
+		toolbar.add(openFileButton);
+		// Add photo
+		JButton addPhotoButton = new JButton(new ImageIcon(getClass().getResource("images/add_photo_icon.png")));
+		addPhotoButton.setToolTipText(I18nManager.getText("menu.file.addphotos"));
+		addPhotoButton.addActionListener(_addPhotoAction);
+		toolbar.add(addPhotoButton);
+		// Save
+		_saveButton = new JButton(new ImageIcon(getClass().getResource("images/save_icon.gif")));
+		_saveButton.setToolTipText(I18nManager.getText("menu.file.save"));
+		_saveButton.addActionListener(_saveAction);
+		_saveButton.setEnabled(false);
+		toolbar.add(_saveButton);
+		// Undo
+		_undoButton = new JButton(new ImageIcon(getClass().getResource("images/undo_icon.gif")));
+		_undoButton.setToolTipText(I18nManager.getText("menu.edit.undo"));
+		_undoButton.addActionListener(_undoAction);
+		_undoButton.setEnabled(false);
+		toolbar.add(_undoButton);
+		// Edit point
+		_editPointButton = new JButton(new ImageIcon(getClass().getResource("images/edit_point_icon.gif")));
+		_editPointButton.setToolTipText(I18nManager.getText("menu.edit.editpoint"));
+		_editPointButton.addActionListener(_editPointAction);
+		_editPointButton.setEnabled(false);
+		toolbar.add(_editPointButton);
+		// Select start, end
+		_selectStartButton = new JButton(new ImageIcon(getClass().getResource("images/set_start_icon.png")));
+		_selectStartButton.setToolTipText(I18nManager.getText("menu.select.start"));
+		_selectStartButton.addActionListener(_selectStartAction);
+		_selectStartButton.setEnabled(false);
+		toolbar.add(_selectStartButton);
+		_selectEndButton = new JButton(new ImageIcon(getClass().getResource("images/set_end_icon.png")));
+		_selectEndButton.setToolTipText(I18nManager.getText("menu.select.end"));
+		_selectEndButton.addActionListener(_selectEndAction);
+		_selectEndButton.setEnabled(false);
+		toolbar.add(_selectEndButton);
+		_connectPhotoButton = new JButton(new ImageIcon(getClass().getResource("images/connect_photo_icon.png")));
+		_connectPhotoButton.setToolTipText(I18nManager.getText("menu.photo.connect"));
+		_connectPhotoButton.addActionListener(_connectPhotoAction);
+		_connectPhotoButton.setEnabled(false);
+		toolbar.add(_connectPhotoButton);
+		// finish off
+		toolbar.setFloatable(false);
+		return toolbar;
+	}
+
+
+	/**
 	 * Method to update menu when file loaded
 	 */
 	public void informFileLoaded()
@@ -332,6 +479,7 @@ public class MenuManager implements DataSubscriber
 		boolean hasData = (_track != null && _track.getNumPoints() > 0);
 		// set functions which require data
 		_saveItem.setEnabled(hasData);
+		_saveButton.setEnabled(hasData);
 		_exportKmlItem.setEnabled(hasData);
 		_exportPovItem.setEnabled(hasData);
 		_deleteDuplicatesItem.setEnabled(hasData);
@@ -344,12 +492,29 @@ public class MenuManager implements DataSubscriber
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
 		_undoItem.setEnabled(hasUndo);
+		_undoButton.setEnabled(hasUndo);
 		_clearUndoItem.setEnabled(hasUndo);
 		// is there a current point?
 		boolean hasPoint = (hasData && _selection.getCurrentPointIndex() >= 0);
 		_editPointItem.setEnabled(hasPoint);
+		_editPointButton.setEnabled(hasPoint);
 		_editWaypointNameItem.setEnabled(hasPoint);
 		_deletePointItem.setEnabled(hasPoint);
+		_selectStartItem.setEnabled(hasPoint);
+		_selectStartButton.setEnabled(hasPoint);
+		_selectEndItem.setEnabled(hasPoint);
+		_selectEndButton.setEnabled(hasPoint);
+		// are there any photos?
+		_saveExifItem.setEnabled(_photos != null && _photos.getNumPhotos() > 0);
+		// is there a current photo?
+		boolean hasPhoto = _photos != null && _photos.getNumPhotos() > 0
+			&& _selection.getCurrentPhotoIndex() >= 0;
+		// connect is only available when current photo is not connected to current point
+		boolean connectAvailable = hasPhoto && hasPoint
+			&& _track.getPoint(_selection.getCurrentPointIndex()).getPhoto() == null;
+		_connectPhotoItem.setEnabled(connectAvailable);
+		_connectPhotoButton.setEnabled(connectAvailable);
+		_deletePhotoItem.setEnabled(hasPhoto);
 		// is there a current range?
 		boolean hasRange = (hasData && _selection.hasRangeSelected());
 		_deleteRangeItem.setEnabled(hasRange);

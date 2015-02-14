@@ -1,7 +1,7 @@
 package tim.prune.threedee;
 
-import java.awt.BorderLayout;
 import java.awt.FlowLayout;
+import java.awt.BorderLayout;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
@@ -55,6 +55,7 @@ public class Java3DWindow implements ThreeDWindow
 	private Track _track = null;
 	private JFrame _parentFrame = null;
 	private JFrame _frame = null;
+	private ThreeDModel _model = null;
 	private OrbitBehavior _orbit = null;
 	private int _altitudeCap = ThreeDModel.MINIMUM_ALTITUDE_CAP;
 
@@ -64,7 +65,6 @@ public class Java3DWindow implements ThreeDWindow
 	// Constants
 	private static final double INITIAL_Y_ROTATION = -25.0;
 	private static final double INITIAL_X_ROTATION = 15.0;
-	private static final int INITIAL_ALTITUDE_CAP = 500;
 	private static final String CARDINALS_FONT = "Arial";
 	private static final int MAX_TRACK_SIZE = 2500; // threshold for warning
 
@@ -185,6 +185,19 @@ public class Java3DWindow implements ThreeDWindow
 				}
 			}});
 		panel.add(renderButton);
+		// Display coordinates of lat/long lines of 3d graph in separate dialog
+		JButton showLinesButton = new JButton(I18nManager.getText("button.showlines"));
+		showLinesButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				double[] latLines = _model.getLatitudeLines();
+				double[] lonLines = _model.getLongitudeLines();
+				LineDialog dialog = new LineDialog(_frame, latLines, lonLines);
+				dialog.showDialog();
+			}
+		});
+		panel.add(showLinesButton);
+		// Close button
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
 		closeButton.addActionListener(new ActionListener()
 		{
@@ -241,8 +254,6 @@ public class Java3DWindow implements ThreeDWindow
 		// Base plane
 		Appearance planeAppearance = null;
 		Box plane = null;
-		Transform3D planeShift = null;
-		TransformGroup planeTrans = null;
 		planeAppearance = new Appearance();
 		planeAppearance.setMaterial(new Material(new Color3f(0.1f, 0.2f, 0.2f),
 		 new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.3f, 0.4f, 0.4f),
@@ -268,15 +279,15 @@ public class Java3DWindow implements ThreeDWindow
 		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"), new Point3f(10f, 0f, 0f), compassFont));
 
 		// create and scale model
-		ThreeDModel model = new ThreeDModel(_track);
-		model.setAltitudeCap(_altitudeCap);
-		model.scale();
+		_model = new ThreeDModel(_track);
+		_model.setAltitudeCap(_altitudeCap);
+		_model.scale();
 
 		// Lat/Long lines
-		objTrans.addChild(createLatLongs(model));
+		objTrans.addChild(createLatLongs(_model));
 
 		// Add points to model
-		objTrans.addChild(createDataPoints(model));
+		objTrans.addChild(createDataPoints(_model));
 
 		// Create lights
 		BoundingSphere bounds =
@@ -339,12 +350,12 @@ public class Java3DWindow implements ThreeDWindow
 	private static Group createLatLongs(ThreeDModel inModel)
 	{
 		Group group = new Group();
-		int numlines = inModel.getNumLatitudeLines();
+		int numlines = inModel.getLatitudeLines().length;
 		for (int i=0; i<numlines; i++)
 		{
 			group.addChild(createLatLine(inModel.getScaledLatitudeLine(i), inModel.getModelSize()));
 		}
-		numlines = inModel.getNumLongitudeLines();
+		numlines = inModel.getLongitudeLines().length;
 		for (int i=0; i<numlines; i++)
 		{
 			group.addChild(createLonLine(inModel.getScaledLongitudeLine(i), inModel.getModelSize()));

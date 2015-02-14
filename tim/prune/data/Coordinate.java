@@ -15,6 +15,9 @@ public abstract class Coordinate
 	public static final int FORMAT_DEG_MIN = 11;
 	public static final int FORMAT_DEG = 12;
 	public static final int FORMAT_DEG_WITHOUT_CARDINAL = 13;
+	public static final int FORMAT_DEG_WHOLE_MIN = 14;
+	public static final int FORMAT_DEG_MIN_SEC_WITH_SPACES = 15;
+	public static final int FORMAT_CARDINAL = 16;
 	public static final int FORMAT_NONE = 19;
 
 	// Instance variables
@@ -134,8 +137,8 @@ public abstract class Coordinate
 	{
 		_asDouble = inValue;
 		// Calculate degrees, minutes, seconds
-		_degrees = (int) inValue;
-		double numMins = (Math.abs(_asDouble)-Math.abs(_degrees)) * 60.0;
+		_degrees = (int) Math.abs(inValue);
+		double numMins = (Math.abs(_asDouble)-_degrees) * 60.0;
 		_minutes = (int) numMins;
 		double numSecs = (numMins - _minutes) * 60.0;
 		_seconds = (int) numSecs;
@@ -204,18 +207,37 @@ public abstract class Coordinate
 						.append(twoDigitString(_minutes)).append('\'')
 						.append(twoDigitString(_seconds)).append('.')
 						.append(_fracs);
-					answer = buffer.toString(); break;
+					answer = buffer.toString();
+					break;
 				}
 				case FORMAT_DEG_MIN:
 				{
 					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
-						+ (_minutes + _seconds / 60.0 + _fracs / 600.0); break;
+						+ (_minutes + _seconds / 60.0 + _fracs / 600.0) + "'";
+					break;
+				}
+				case FORMAT_DEG_WHOLE_MIN:
+				{
+					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "°"
+						+ (int) Math.floor(_minutes + _seconds / 60.0 + _fracs / 600.0 + 0.5) + "'";
+					break;
 				}
 				case FORMAT_DEG:
 				case FORMAT_DEG_WITHOUT_CARDINAL:
 				{
 					answer = (_asDouble<0.0?"-":"")
-						+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 36000.0); break;
+						+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 36000.0);
+					break;
+				}
+				case FORMAT_DEG_MIN_SEC_WITH_SPACES:
+				{
+					answer = "" + _degrees + " " + _minutes + " " + _seconds + "." + _fracs;
+					break;
+				}
+				case FORMAT_CARDINAL:
+				{
+					answer = "" + PRINTABLE_CARDINALS[_cardinal];
+					break;
 				}
 			}
 		}

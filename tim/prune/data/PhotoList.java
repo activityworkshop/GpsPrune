@@ -10,6 +10,24 @@ public class PhotoList
 	private ArrayList _photos = null;
 
 	/**
+	 * Empty constructor
+	 */
+	public PhotoList()
+	{
+		this(null);
+	}
+
+	/**
+	 * Constructor
+	 * @param inList ArrayList containing Photo objects
+	 */
+	private PhotoList(ArrayList inList)
+	{
+		_photos = inList;
+	}
+
+
+	/**
 	 * @return the number of photos in the list
 	 */
 	public int getNumPhotos()
@@ -20,20 +38,54 @@ public class PhotoList
 
 
 	/**
-	 * Add a List of Photos
-	 * @param inList List containing Photo objects
+	 * Add a Photo to the list
+	 * @param inPhoto Photo object to add
 	 */
 	public void addPhoto(Photo inPhoto)
 	{
-		// Make sure array is initialised
-		if (_photos == null)
-		{
-			_photos = new ArrayList();
-		}
-		// Add the photo
 		if (inPhoto != null)
 		{
+			// Make sure array is initialised
+			if (_photos == null)
+			{
+				_photos = new ArrayList();
+			}
+			// Add the photo
 			_photos.add(inPhoto);
+		}
+	}
+
+
+	/**
+	 * Add a Photo to the list
+	 * @param inPhoto Photo object to add
+	 * @param inIndex index at which to add photo
+	 */
+	public void addPhoto(Photo inPhoto, int inIndex)
+	{
+		if (inPhoto != null)
+		{
+			// Make sure array is initialised
+			if (_photos == null)
+			{
+				_photos = new ArrayList();
+			}
+			// Add the photo
+			_photos.add(inIndex, inPhoto);
+		}
+	}
+
+
+	/**
+	 * Remove the selected photo from the list
+	 * @param inIndex index number to remove
+	 */
+	public void deletePhoto(int inIndex)
+	{
+		// Maybe throw exception if this fails?
+		if (_photos != null)
+		{
+			_photos.remove(inIndex);
 		}
 	}
 
@@ -45,19 +97,33 @@ public class PhotoList
 	 */
 	public boolean contains(Photo inPhoto)
 	{
+		return (getPhotoIndex(inPhoto) > -1);
+	}
+
+
+	/**
+	 * Get the index of the given Photo
+	 * @param inPhoto Photo object to check
+	 * @return index of this Photo in the list, or -1 if not found
+	 */
+	public int getPhotoIndex(Photo inPhoto)
+	{
 		// Check if we need to check
-		if (getNumPhotos() <= 0 || inPhoto == null || inPhoto.getFile() == null)
-			return false;
+		int numPhotos = getNumPhotos();
+		if (numPhotos <= 0 || inPhoto == null || inPhoto.getFile() == null)
+			return -1;
 		// Loop around photos in list
-		for (int i=0; i<getNumPhotos(); i++)
+		Photo foundPhoto = null;
+		for (int i=0; i<numPhotos; i++)
 		{
-			if (getPhoto(i) != null && getPhoto(i).equals(inPhoto))
+			foundPhoto = getPhoto(i);
+			if (foundPhoto != null && foundPhoto.equals(inPhoto))
 			{
-				return true;
+				return i;
 			}
 		}
 		// not found
-		return false;
+		return -1;
 	}
 
 
@@ -82,7 +148,7 @@ public class PhotoList
 		if (inIndex <= 0)
 		{
 			// delete whole list
-			_photos.clear();
+			if (_photos != null) {_photos.clear();}
 		}
 		else
 		{
@@ -93,6 +159,7 @@ public class PhotoList
 			}
 		}
 	}
+
 
 	/**
 	 * @return array of file names
@@ -105,5 +172,81 @@ public class PhotoList
 			names[i] = getPhoto(i).getFile().getName();
 		}
 		return names;
+	}
+
+
+	/**
+	 * @return true if photo list contains correlated photos
+	 */
+	public boolean hasCorrelatedPhotos()
+	{
+		int numPhotos = getNumPhotos();
+		boolean hasCorrelated = false;
+		// Loop over photos in list
+		for (int i=0; i<numPhotos && !hasCorrelated; i++)
+		{
+			if (getPhoto(i).getDataPoint() != null)
+				hasCorrelated = true;
+		}
+		return hasCorrelated;
+	}
+
+
+	/**
+	 * Remove all correlated photos from the list
+	 */
+	public void removeCorrelatedPhotos()
+	{
+		int numPhotos = getNumPhotos();
+		if (numPhotos > 0)
+		{
+			// Construct new list to copy into
+			ArrayList listCopy = new ArrayList();
+			// Loop over photos in list
+			for (int i=0; i<numPhotos; i++)
+			{
+				// Copy photo if it has no point
+				Photo photo = getPhoto(i);
+				if (photo != null)
+				{
+					if (photo.getDataPoint() == null)
+						listCopy.add(photo);
+					else
+						photo.resetCachedData();
+				}
+			}
+			// Switch reference to new list
+			_photos = listCopy;
+		}
+	}
+
+
+	/**
+	 * @return clone of photo list contents
+	 */
+	public PhotoList cloneList()
+	{
+		if (_photos == null) return this;
+		return new PhotoList((ArrayList) _photos.clone());
+	}
+
+
+	/**
+	 * Restore contents from other PhotoList
+	 * @param inOther PhotoList with cloned contents
+	 */
+	public void restore(PhotoList inOther)
+	{
+		if (inOther.getNumPhotos() == 0)
+		{
+			// List is empty
+			_photos = null;
+		}
+		else
+		{
+			// Clear array and copy over from other one
+			_photos.clear();
+			_photos.addAll(inOther._photos);
+		}
 	}
 }

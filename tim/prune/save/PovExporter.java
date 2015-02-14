@@ -21,9 +21,9 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.filechooser.FileFilter;
 
-import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.Track;
+import tim.prune.threedee.LineDialog;
 import tim.prune.threedee.ThreeDModel;
 
 /**
@@ -32,7 +32,6 @@ import tim.prune.threedee.ThreeDModel;
  */
 public class PovExporter
 {
-	private App _app = null;
 	private JFrame _parentFrame = null;
 	private Track _track = null;
 	private JDialog _dialog = null;
@@ -49,14 +48,12 @@ public class PovExporter
 
 
 	/**
-	 * Constructor giving App object, frame and track
-	 * @param inApp application object to inform of success
+	 * Constructor giving frame and track
 	 * @param inParentFrame parent frame
 	 * @param inTrack track object to save
 	 */
-	public PovExporter(App inApp, JFrame inParentFrame, Track inTrack)
+	public PovExporter(JFrame inParentFrame, Track inTrack)
 	{
-		_app = inApp;
 		_parentFrame = inParentFrame;
 		_track = inTrack;
 		// Set default camera coordinates
@@ -188,6 +185,22 @@ public class PovExporter
 
 		JPanel flowPanel = new JPanel();
 		flowPanel.add(centralPanel);
+		
+		// show lines button
+		JButton showLinesButton = new JButton(I18nManager.getText("button.showlines"));
+		showLinesButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				// Need to scale model to find lines
+				ThreeDModel model = new ThreeDModel(_track);
+				model.scale();
+				double[] latLines = model.getLatitudeLines();
+				double[] lonLines = model.getLongitudeLines();
+				LineDialog dialog = new LineDialog(_parentFrame, latLines, lonLines);
+				dialog.showDialog();
+			}
+		});
+		flowPanel.add(showLinesButton);
 		panel.add(flowPanel, BorderLayout.CENTER);
 		return panel;
 	}
@@ -204,7 +217,6 @@ public class PovExporter
 		_cameraZ = checkCoordinate(_cameraZField.getText());
 
 		// OK pressed, so choose output file
-		boolean fileSaved = false;
 		if (_fileChooser == null)
 			_fileChooser = new JFileChooser();
 		_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
@@ -244,7 +256,7 @@ public class PovExporter
 					// Export the file
 					if (exportFile(file))
 					{
-						fileSaved = true;
+						// file saved
 					}
 					else
 					{
@@ -479,14 +491,14 @@ public class PovExporter
 	{
 		inWriter.write("// Latitude and longitude lines:");
 		inWriter.write(inLineSeparator);
-		int numlines = inModel.getNumLatitudeLines();
+		int numlines = inModel.getLatitudeLines().length;
 		for (int i=0; i<numlines; i++)
 		{
 			// write cylinder to file
 			inWriter.write("object { lat_line translate <0, 0, " + inModel.getScaledLatitudeLine(i) + "> }");
 			inWriter.write(inLineSeparator);
 		}
-		numlines = inModel.getNumLongitudeLines();
+		numlines = inModel.getLongitudeLines().length;
 		for (int i=0; i<numlines; i++)
 		{
 			// write cylinder to file

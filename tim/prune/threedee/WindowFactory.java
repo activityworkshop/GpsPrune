@@ -31,13 +31,13 @@ public abstract class WindowFactory
 	/**
 	 * @return true if 3d capability is installed
 	 */
-	private static boolean isJava3dEnabled()
+	public static boolean isJava3dEnabled()
 	{
 		boolean has3d = false;
 		try
 		{
 			Class universeClass = Class.forName("com.sun.j3d.utils.universe.SimpleUniverse");
-			has3d = true;
+			has3d = (universeClass != null);
 		}
 		catch (ClassNotFoundException e)
 		{

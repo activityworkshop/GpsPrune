@@ -11,17 +11,20 @@ public class UndoDeletePoint implements UndoOperation
 {
 	private int _pointIndex = -1;
 	private DataPoint _point = null;
+	private int _photoIndex = -1;
 
 
 	/**
 	 * Constructor
-	 * @param inIndex index number of point within track
+	 * @param inPointIndex index number of point within track
 	 * @param inPoint data point
+	 * @param inPhotoIndex index number of photo within photo list
 	 */
-	public UndoDeletePoint(int inIndex, DataPoint inPoint)
+	public UndoDeletePoint(int inPointIndex, DataPoint inPoint, int inPhotoIndex)
 	{
-		_pointIndex = inIndex;
+		_pointIndex = inPointIndex;
 		_point = inPoint;
+		_photoIndex = inPhotoIndex;
 	}
 
 
@@ -40,7 +43,7 @@ public class UndoDeletePoint implements UndoOperation
 
 	/**
 	 * Perform the undo operation on the given Track
-	 * @param inTrack Track object on which to perform the operation
+	 * @param inTrackInfo TrackInfo object on which to perform the operation
 	 */
 	public void performUndo(TrackInfo inTrackInfo) throws UndoException
 	{
@@ -49,6 +52,17 @@ public class UndoDeletePoint implements UndoOperation
 		{
 			throw new UndoException(getDescription());
 		}
-		// TODO: Reinsert photo into list if necessary
+		// Re-attach / Re-insert photo into list if necessary
+		if (_point.getPhoto() != null && _photoIndex > -1)
+		{
+			// Check if photo is still in list
+			if (!inTrackInfo.getPhotoList().contains(_point.getPhoto()))
+			{
+				// photo has been removed - need to reinsert
+				inTrackInfo.getPhotoList().addPhoto(_point.getPhoto(), _photoIndex);
+			}
+			// Ensure that photo is associated with point
+			_point.getPhoto().setDataPoint(_point);
+		}
 	}
 }

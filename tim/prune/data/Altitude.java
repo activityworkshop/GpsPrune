@@ -25,7 +25,7 @@ public class Altitude
 		{
 			try
 			{
-				_value = Integer.parseInt(inString.trim());
+				_value = (int) Double.parseDouble(inString.trim());
 				_format = inFormat;
 				_valid = true;
 			}

@@ -9,6 +9,8 @@ import javax.swing.JOptionPane;
 
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.Photo;
+import tim.prune.data.PhotoList;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.edit.FieldEditList;
@@ -18,6 +20,8 @@ import tim.prune.gui.MenuManager;
 import tim.prune.gui.UndoManager;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
+import tim.prune.load.PhotoMeasurer;
+import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
 import tim.prune.save.KmlExporter;
 import tim.prune.save.PovExporter;
@@ -25,7 +29,9 @@ import tim.prune.threedee.ThreeDException;
 import tim.prune.threedee.ThreeDWindow;
 import tim.prune.threedee.WindowFactory;
 import tim.prune.undo.UndoCompress;
+import tim.prune.undo.UndoConnectPhoto;
 import tim.prune.undo.UndoDeleteDuplicates;
+import tim.prune.undo.UndoDeletePhoto;
 import tim.prune.undo.UndoDeletePoint;
 import tim.prune.undo.UndoDeleteRange;
 import tim.prune.undo.UndoEditPoint;
@@ -51,6 +57,7 @@ public class App
 	private MenuManager _menuManager = null;
 	private FileLoader _fileLoader = null;
 	private JpegLoader _jpegLoader = null;
+	private KmlExporter _exporter = null;
 	private PovExporter _povExporter = null;
 	private Stack _undoStack = null;
 	private UpdateMessageBroker _broker = null;
@@ -91,7 +98,8 @@ public class App
 	 */
 	public boolean hasDataUnsaved()
 	{
-		return _undoStack.size() > _lastSavePosition;
+		return (_undoStack.size() > _lastSavePosition
+			&& (_track.getNumPoints() > 0 || _trackInfo.getPhotoList().getNumPhotos() > 0));
 	}
 
 	/**
@@ -164,8 +172,12 @@ public class App
 		}
 		else
 		{
-			KmlExporter exporter = new KmlExporter(this, _frame, _track);
-			exporter.showDialog();
+			// Invoke the export
+			if (_exporter == null)
+			{
+				_exporter = new KmlExporter(_frame, _trackInfo);
+			}
+			_exporter.showDialog();
 		}
 	}
 
@@ -210,7 +222,7 @@ public class App
 			// Make new exporter if necessary
 			if (_povExporter == null)
 			{
-				_povExporter = new PovExporter(this, _frame, _track);
+				_povExporter = new PovExporter(_frame, _track);
 			}
 			// Specify angles if necessary
 			if (inDefineSettings)
@@ -229,6 +241,9 @@ public class App
 	 */
 	public void exit()
 	{
+		// grab focus
+		_frame.toFront();
+		_frame.requestFocus();
 		// check if ok to exit
 		Object[] buttonTexts = {I18nManager.getText("button.exit"), I18nManager.getText("button.cancel")};
 		if (!hasDataUnsaved()
@@ -292,7 +307,7 @@ public class App
 			{
 				// Open point dialog to display details
 				PointNameEditor editor = new PointNameEditor(this, _frame);
-				editor.showDialog(_track, currentPoint);
+				editor.showDialog(currentPoint);
 			}
 		}
 	}
@@ -308,13 +323,44 @@ public class App
 			DataPoint currentPoint = _trackInfo.getCurrentPoint();
 			if (currentPoint != null)
 			{
+				boolean deletePhoto = false;
+				Photo currentPhoto = currentPoint.getPhoto();
+				if (currentPhoto != null)
+				{
+					// Confirm deletion of photo or decoupling
+					int response = JOptionPane.showConfirmDialog(_frame,
+						I18nManager.getText("dialog.deletepoint.deletephoto") + " " + currentPhoto.getFile().getName(),
+						I18nManager.getText("dialog.deletepoint.title"),
+						JOptionPane.YES_NO_CANCEL_OPTION);
+					if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION)
+					{
+						// cancel pressed- abort delete
+						return;
+					}
+					if (response == JOptionPane.YES_OPTION) {deletePhoto = true;}
+				}
 				// add information to undo stack
 				int pointIndex = _trackInfo.getSelection().getCurrentPointIndex();
-				UndoOperation undo = new UndoDeletePoint(pointIndex, currentPoint);
+				int photoIndex = _trackInfo.getPhotoList().getPhotoIndex(currentPhoto);
+				// Undo object needs to know index of photo in list (if any) to restore
+				UndoOperation undo = new UndoDeletePoint(pointIndex, currentPoint, photoIndex);
 				// call track to delete point
 				if (_trackInfo.deletePoint())
 				{
 					_undoStack.push(undo);
+					if (currentPhoto != null)
+					{
+						// delete photo if necessary
+						if (deletePhoto)
+						{
+							_trackInfo.getPhotoList().deletePhoto(photoIndex);
+						}
+						else
+						{
+							// decouple photo from point
+							currentPhoto.setDataPoint(null);
+						}
+					}
 				}
 			}
 		}
@@ -328,12 +374,77 @@ public class App
 	{
 		if (_track != null)
 		{
-			// add information to undo stack
-			UndoOperation undo = new UndoDeleteRange(_trackInfo);
-			// call track to delete point
-			if (_trackInfo.deleteRange())
+			// Find out if photos should be deleted or not
+			int selStart = _trackInfo.getSelection().getStart();
+			int selEnd = _trackInfo.getSelection().getEnd();
+			if (selStart >= 0 && selEnd >= selStart)
 			{
-				_undoStack.push(undo);
+				int numToDelete = selEnd - selStart + 1;
+				boolean[] deletePhotos = new boolean[numToDelete];
+				Photo[] photosToDelete = new Photo[numToDelete];
+				boolean deleteAll = false;
+				boolean deleteNone = false;
+				String[] questionOptions = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
+					I18nManager.getText("button.yestoall"), I18nManager.getText("button.notoall"),
+					I18nManager.getText("button.cancel")};
+				DataPoint point = null;
+				for (int i=0; i<numToDelete; i++)
+				{
+					point = _trackInfo.getTrack().getPoint(i + selStart);
+					if (point != null && point.getPhoto() != null)
+					{
+						if (deleteAll)
+						{
+							deletePhotos[i] = true;
+							photosToDelete[i] = point.getPhoto();
+						}
+						else if (deleteNone) {deletePhotos[i] = false;}
+						else
+						{
+							int response = JOptionPane.showOptionDialog(_frame,
+								I18nManager.getText("dialog.deletepoint.deletephoto") + " " + point.getPhoto().getFile().getName(),
+								I18nManager.getText("dialog.deletepoint.title"),
+								JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+								questionOptions, questionOptions[1]);
+							// check for cancel or close
+							if (response == 4 || response == -1) {return;}
+							// check for yes or yes to all
+							if (response == 0 || response == 2)
+							{
+								deletePhotos[i] = true;
+								photosToDelete[i] = point.getPhoto();
+								if (response == 2) {deleteAll = true;}
+							}
+							// check for no to all
+							if (response == 3) {deleteNone = true;}
+						}
+					}
+				}
+				// add information to undo stack
+				UndoOperation undo = new UndoDeleteRange(_trackInfo);
+				// delete requested photos
+				for (int i=0; i<numToDelete; i++)
+				{
+					point = _trackInfo.getTrack().getPoint(i + selStart);
+					if (point != null && point.getPhoto() != null)
+					{
+						if (deletePhotos[i])
+						{
+							// delete photo from list
+							_trackInfo.getPhotoList().deletePhoto(_trackInfo.getPhotoList().getPhotoIndex(point.getPhoto()));
+						}
+						else
+						{
+							// decouple from point
+							point.getPhoto().setDataPoint(null);
+						}
+					}
+				}
+				// call track to delete range
+				if (_trackInfo.deleteRange())
+				{
+					_undoStack.push(undo);
+				}
 			}
 		}
 	}
@@ -527,8 +638,10 @@ public class App
 	 */
 	public void selectNone()
 	{
+		// deselect point, range and photo
 		_trackInfo.getSelection().clearAll();
 	}
+
 
 	/**
 	 * Receive loaded data and optionally merge with current Track
@@ -537,6 +650,17 @@ public class App
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, int inAltFormat, String inFilename)
 	{
+		// Check whether loaded array can be properly parsed into a Track
+		Track loadedTrack = new Track(_broker);
+		loadedTrack.load(inFieldArray, inDataArray, inAltFormat);
+		if (loadedTrack.getNumPoints() <= 0)
+		{
+			JOptionPane.showMessageDialog(_frame,
+				I18nManager.getText("error.load.nopoints"),
+				I18nManager.getText("error.load.dialogtitle"),
+				JOptionPane.ERROR_MESSAGE);
+			return;
+		}
 		// Decide whether to load or append
 		if (_track != null && _track.getNumPoints() > 0)
 		{
@@ -548,25 +672,41 @@ public class App
 			if (answer == JOptionPane.YES_OPTION)
 			{
 				// append data to current Track
-				Track loadedTrack = new Track(_broker);
-				loadedTrack.load(inFieldArray, inDataArray, inAltFormat);
 				_undoStack.add(new UndoLoad(_track.getNumPoints(), loadedTrack.getNumPoints()));
 				_track.combine(loadedTrack);
-				_trackInfo.getFileInfo().addFile();
+				// set filename if currently empty
+				if (_trackInfo.getFileInfo().getNumFiles() == 0)
+				{
+					_trackInfo.getFileInfo().setFile(inFilename);
+				}
+				else
+				{
+					_trackInfo.getFileInfo().addFile();
+				}
 			}
 			else if (answer == JOptionPane.NO_OPTION)
 			{
 				// Don't append, replace data
-				_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length));
+				PhotoList photos = null;
+				if (_trackInfo.getPhotoList().hasCorrelatedPhotos())
+				{
+					photos = _trackInfo.getPhotoList().cloneList();
+				}
+				_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length, photos));
 				_lastSavePosition = _undoStack.size();
+				// TODO: Should be possible to reuse the Track object already loaded?
 				_trackInfo.loadTrack(inFieldArray, inDataArray, inAltFormat);
 				_trackInfo.getFileInfo().setFile(inFilename);
+				if (photos != null)
+				{
+					_trackInfo.getPhotoList().removeCorrelatedPhotos();
+				}
 			}
 		}
 		else
 		{
 			// currently no data held, so use received data
-			_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length));
+			_undoStack.add(new UndoLoad(_trackInfo, inDataArray.length, null));
 			_lastSavePosition = _undoStack.size();
 			_trackInfo.loadTrack(inFieldArray, inDataArray, inAltFormat);
 			_trackInfo.getFileInfo().setFile(inFilename);
@@ -585,22 +725,26 @@ public class App
 	{
 		if (inPhotoList != null && !inPhotoList.isEmpty())
 		{
-			// TODO: Attempt to restrict loaded photos to current area (if any) ?
-			int numAdded = _trackInfo.addPhotos(inPhotoList);
-			if (numAdded > 0)
+			int[] numsAdded = _trackInfo.addPhotos(inPhotoList);
+			int numPhotosAdded = numsAdded[0];
+			int numPointsAdded = numsAdded[1];
+			if (numPhotosAdded > 0)
 			{
-				_undoStack.add(new UndoLoadPhotos(numAdded));
+				// Save numbers so load can be undone
+				_undoStack.add(new UndoLoadPhotos(numPhotosAdded, numPointsAdded));
+				// Trigger preloading of photo sizes in separate thread
+				new PhotoMeasurer(_trackInfo.getPhotoList()).measurePhotos();
 			}
-			if (numAdded == 1)
+			if (numPhotosAdded == 1)
 			{
 				JOptionPane.showMessageDialog(_frame,
-					"" + numAdded + " " + I18nManager.getText("dialog.jpegload.photoadded"),
+					"" + numPhotosAdded + " " + I18nManager.getText("dialog.jpegload.photoadded"),
 					I18nManager.getText("dialog.jpegload.title"), JOptionPane.INFORMATION_MESSAGE);
 			}
 			else
 			{
 				JOptionPane.showMessageDialog(_frame,
-					"" + numAdded + " " + I18nManager.getText("dialog.jpegload.photosadded"),
+					"" + numPhotosAdded + " " + I18nManager.getText("dialog.jpegload.photosadded"),
 					I18nManager.getText("dialog.jpegload.title"), JOptionPane.INFORMATION_MESSAGE);
 			}
 			// TODO: Improve message when photo(s) fail to load (eg already added)
@@ -608,6 +752,78 @@ public class App
 			// update menu
 			_menuManager.informFileLoaded();
 		}
+	}
+
+
+	/**
+	 * Connect the current photo to the current point
+	 */
+	public void connectPhotoToPoint()
+	{
+		Photo photo = _trackInfo.getCurrentPhoto();
+		DataPoint point = _trackInfo.getCurrentPoint();
+		if (photo != null && point != null && point.getPhoto() == null)
+		{
+			// connect
+			_undoStack.add(new UndoConnectPhoto(point, photo.getFile().getName()));
+			photo.setDataPoint(point);
+			point.setPhoto(photo);
+			//TODO: Confirm connect (maybe with status in photo panel?)
+		}
+	}
+
+
+	/**
+	 * Remove the current photo, if any
+	 */
+	public void deleteCurrentPhoto()
+	{
+		// Delete the current photo, and optionally its point too, keeping undo information
+		Photo currentPhoto = _trackInfo.getCurrentPhoto();
+		if (currentPhoto != null)
+		{
+			// Photo is selected, see if it has a point or not
+			boolean photoDeleted = false;
+			UndoDeletePhoto undoAction = null;
+			if (currentPhoto.getDataPoint() == null)
+			{
+				// no point attached, so just delete photo
+				undoAction = new UndoDeletePhoto(currentPhoto, _trackInfo.getSelection().getCurrentPhotoIndex(),
+					null, -1);
+				photoDeleted = _trackInfo.deleteCurrentPhoto(false);
+			}
+			else
+			{
+				// point is attached, so need to confirm point deletion
+				undoAction = new UndoDeletePhoto(currentPhoto, _trackInfo.getSelection().getCurrentPhotoIndex(),
+					currentPhoto.getDataPoint(), _trackInfo.getTrack().getPointIndex(currentPhoto.getDataPoint()));
+				int response = JOptionPane.showConfirmDialog(_frame,
+					I18nManager.getText("dialog.deletephoto.deletepoint"),
+					I18nManager.getText("dialog.deletephoto.title"),
+					JOptionPane.YES_NO_CANCEL_OPTION);
+				boolean deletePointToo = (response == JOptionPane.YES_OPTION);
+				// Cancel delete if cancel pressed or dialog closed
+				if (response == JOptionPane.YES_OPTION || response == JOptionPane.NO_OPTION)
+				{
+					photoDeleted = _trackInfo.deleteCurrentPhoto(deletePointToo);
+				}
+			}
+			// Add undo information to stack if necessary
+			if (photoDeleted)
+			{
+				_undoStack.add(undoAction);
+			}
+		}
+	}
+
+
+	/**
+	 * Save the coordinates of photos in their exif data
+	 */
+	public void saveExif()
+	{
+		ExifSaver saver = new ExifSaver(_frame);
+		saver.saveExifInformation(_trackInfo.getPhotoList());
 	}
 
 

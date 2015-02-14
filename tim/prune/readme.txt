@@ -1,4 +1,4 @@
-Prune version 2
+Prune version 3
 ===============
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems.
@@ -15,13 +15,24 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_02.jar
+   java -jar prune_03.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
 in a file manager window to execute it.  A shortcut, menu item, desktop icon or other link
 can of course be made should you wish.
 
+
+Updates since version 2
+=======================
+
+The following features were added since version 2:
+  - Loading of GPX and KML files
+  - Loading of jpeg photos with or without coordinate data
+  - Manual correlation of photos with points
+  - Saving of coordinates in exif data of jpegs
+  - Exporting to KMZ format including thumbnails of photos
+  - Four-panel layout with toolbar
 
 Updates since version 1
 =======================

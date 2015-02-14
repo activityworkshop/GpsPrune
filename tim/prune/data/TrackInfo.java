@@ -14,7 +14,6 @@ public class TrackInfo
 	private Track _track = null;
 	private Selection _selection = null;
 	private FileInfo _fileInfo = null;
-	// TODO: How to store photos? In separate list to be maintained or dynamic? Only store pointless photos?
 	private PhotoList _photoList = null;
 
 
@@ -76,6 +75,15 @@ public class TrackInfo
 		return _track.getPoint(_selection.getCurrentPointIndex());
 	}
 
+	/**
+	 * Get the currently selected photo, if any
+	 * @return Photo if selected, otherwise null
+	 */
+	public Photo getCurrentPhoto()
+	{
+		return _photoList.getPhoto(_selection.getCurrentPhotoIndex());
+	}
+
 
 	/**
 	 * Load the specified data into the Track
@@ -94,12 +102,14 @@ public class TrackInfo
 	/**
 	 * Add a List of Photos
 	 * @param inList List containing Photo objects
-	 * @return number of photos added
+	 * @return array containing number of photos and number of points added
 	 */
-	public int addPhotos(List inList)
+	public int[] addPhotos(List inList)
 	{
-		// Firstly count number to add to make array
+		// TODO: Should photos be sorted at load-time, either by filename or date?
+		// Firstly count number of points and photos to add
 		int numPhotosToAdd = 0;
+		int numPointsToAdd = 0;
 		if (inList != null && !inList.isEmpty())
 		{
 			for (int i=0; i<inList.size(); i++)
@@ -110,6 +120,10 @@ public class TrackInfo
 					if (photo != null && !_photoList.contains(photo))
 					{
 						numPhotosToAdd++;
+						if (photo.getDataPoint() != null)
+						{
+							numPointsToAdd++;
+						}
 					}
 				}
 				catch (ClassCastException ce) {}
@@ -118,8 +132,9 @@ public class TrackInfo
 		// If there are any photos to add, add them
 		if (numPhotosToAdd > 0)
 		{
-			DataPoint[] dataPoints = new DataPoint[numPhotosToAdd];
+			DataPoint[] dataPoints = new DataPoint[numPointsToAdd];
 			int pointNum = 0;
+			boolean hasAltitude = false;
 			// Add each Photo in turn
 			for (int i=0; i<inList.size(); i++)
 			{
@@ -128,16 +143,32 @@ public class TrackInfo
 					Photo photo = (Photo) inList.get(i);
 					if (photo != null && !_photoList.contains(photo))
 					{
+						// Add photo
 						_photoList.addPhoto(photo);
-						dataPoints[pointNum] = photo.getDataPoint();
-						pointNum++;
+						// Add point if there is one
+						if (photo.getDataPoint() != null)
+						{
+							dataPoints[pointNum] = photo.getDataPoint();
+							// Check if any points have altitudes
+							hasAltitude |= (photo.getDataPoint().getAltitude() != null);
+							pointNum++;
+						}
 					}
 				}
 				catch (ClassCastException ce) {}
 			}
-			_track.appendPoints(dataPoints);
+			if (numPointsToAdd > 0)
+			{
+				// add points to track
+				_track.appendPoints(dataPoints);
+				// modify track field list
+				_track.getFieldList().extendList(Field.LATITUDE);
+				_track.getFieldList().extendList(Field.LONGITUDE);
+				if (hasAltitude) {_track.getFieldList().extendList(Field.ALTITUDE);}
+			}
 		}
-		return numPhotosToAdd;
+		int[] result = {numPhotosToAdd, numPointsToAdd};
+		return result;
 	}
 
 
@@ -147,8 +178,6 @@ public class TrackInfo
 	 */
 	public boolean deleteRange()
 	{
-		// TODO: Check whether to delete photos associated with this range
-		int currPoint = _selection.getCurrentPointIndex();
 		int startSel = _selection.getStart();
 		int endSel = _selection.getEnd();
 		boolean answer = _track.deleteRange(startSel, endSel);
@@ -166,12 +195,48 @@ public class TrackInfo
 	{
 		if (_track.deletePoint(_selection.getCurrentPointIndex()))
 		{
-			// TODO: Check whether to delete photo associated with this point
 			_selection.modifyPointDeleted();
 			_broker.informSubscribers();
 			return true;
 		}
 		return false;
+	}
+
+
+	/**
+	 * Delete the currently selected photo and optionally its point too
+	 * @param inPointToo true to also delete associated point
+	 * @return true if delete successful
+	 */
+	public boolean deleteCurrentPhoto(boolean inPointToo)
+	{
+		// delete currently selected photo
+		int photoIndex = _selection.getCurrentPhotoIndex();
+		if (photoIndex >= 0)
+		{
+			Photo photo = _photoList.getPhoto(photoIndex);
+			_photoList.deletePhoto(photoIndex);
+			// has it got a point?
+			if (photo.getDataPoint() != null)
+			{
+				if (inPointToo)
+				{
+					// delete point
+					int pointIndex = _track.getPointIndex(photo.getDataPoint());
+					_track.deletePoint(pointIndex);
+				}
+				else
+				{
+					// disconnect point from photo
+					photo.getDataPoint().setPhoto(null);
+					photo.setDataPoint(null);
+				}
+			}
+			// update subscribers
+			_selection.modifyPointDeleted();
+			_broker.informSubscribers();
+		}
+		return true;
 	}
 
 
@@ -237,5 +302,36 @@ public class TrackInfo
 		int index = _track.getPointIndex(inPoint);
 		// give to selection
 		_selection.selectPoint(index);
+	}
+
+	/**
+	 * Select the given Photo and its point if any
+	 * @param inPhotoIndex index of photo to select
+	 */
+	public void selectPhoto(int inPhotoIndex)
+	{
+		// Find Photo object
+		Photo photo = _photoList.getPhoto(inPhotoIndex);
+		if (photo != null)
+		{
+			// Find point object and its index
+			int pointIndex = _track.getPointIndex(photo.getDataPoint());
+			// give to selection object
+			_selection.selectPhotoAndPoint(inPhotoIndex, pointIndex);
+		}
+		else
+		{
+			// no photo, just reset selection
+			_selection.selectPhotoAndPoint(-1, -1);
+		}
+	}
+
+
+	/**
+	 * Fire a trigger to all data subscribers
+	 */
+	public void triggerUpdate()
+	{
+		_broker.informSubscribers();
 	}
 }

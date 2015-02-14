@@ -24,6 +24,8 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Photo;
+import tim.prune.data.PhotoStatus;
+import tim.prune.data.Timestamp;
 import tim.prune.drew.jpeg.ExifReader;
 import tim.prune.drew.jpeg.JpegData;
 import tim.prune.drew.jpeg.JpegException;
@@ -38,6 +40,7 @@ public class JpegLoader implements Runnable
 	private JFrame _parentFrame = null;
 	private JFileChooser _fileChooser = null;
 	private JCheckBox _subdirCheckbox = null;
+	private JCheckBox _noExifCheckbox = null;
 	private JDialog _progressDialog   = null;
 	private JProgressBar _progressBar = null;
 	private int[] _fileCounts = null;
@@ -56,6 +59,7 @@ public class JpegLoader implements Runnable
 		_parentFrame = inParentFrame;
 	}
 
+
 	/**
 	 * Select an input file and open the GUI frame
 	 * to select load options
@@ -67,9 +71,16 @@ public class JpegLoader implements Runnable
 			_fileChooser = new JFileChooser();
 			_fileChooser.setMultiSelectionEnabled(true);
 			_fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+			_fileChooser.setDialogTitle(I18nManager.getText("menu.file.addphotos"));
 			_subdirCheckbox = new JCheckBox(I18nManager.getText("dialog.jpegload.subdirectories"));
 			_subdirCheckbox.setSelected(true);
-			_fileChooser.setAccessory(_subdirCheckbox);
+			_noExifCheckbox = new JCheckBox(I18nManager.getText("dialog.jpegload.loadjpegswithoutcoords"));
+			_noExifCheckbox.setSelected(true);
+			JPanel panel = new JPanel();
+			panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+			panel.add(_subdirCheckbox);
+			panel.add(_noExifCheckbox);
+			_fileChooser.setAccessory(panel);
 		}
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
@@ -118,40 +129,50 @@ public class JpegLoader implements Runnable
 		// Initialise arrays, errors, summaries
 		_fileCounts = new int[4]; // files, jpegs, exifs, gps
 		_photos = new ArrayList();
-		// Loop over selected files/directories
 		File[] files = _fileChooser.getSelectedFiles();
+		// Loop recursively over selected files/directories to count files
 		int numFiles = countFileList(files, true, _subdirCheckbox.isSelected());
-		// if (false) System.out.println("Found " + numFiles + " files");
+		// Set up the progress bar for this number of files
 		_progressBar.setMaximum(numFiles);
 		_progressBar.setValue(0);
 		_cancelled = false;
+
+		// Process the files recursively and build lists of photos
 		processFileList(files, true, _subdirCheckbox.isSelected());
 		_progressDialog.hide();
-		if (_cancelled) return;
-		// System.out.println("Finished - counts are: " + _fileCounts[0] + ", " + _fileCounts[1] + ", " + _fileCounts[2] + ", " + _fileCounts[3]);
+		if (_cancelled) {return;}
+
+		//System.out.println("Finished - counts are: " + _fileCounts[0] + ", " + _fileCounts[1]
+		//  + ", " + _fileCounts[2] + ", " + _fileCounts[3]);
 		if (_fileCounts[0] == 0)
 		{
+			// No files found at all
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.nofilesfound"),
 				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
 		}
 		else if (_fileCounts[1] == 0)
 		{
+			// No jpegs found
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.nojpegsfound"),
 				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
 		}
-		else if (_fileCounts[2] == 0)
+		else if (!_noExifCheckbox.isSelected() && _fileCounts[2] == 0)
 		{
+			// Need coordinates but no exif found
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.noexiffound"),
 				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
 		}
-		else if (_fileCounts[3] == 0)
+		else if (!_noExifCheckbox.isSelected() && _fileCounts[3] == 0)
 		{
+			// Need coordinates but no gps information found
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.jpegload.nogpsfound"),
 				I18nManager.getText("error.jpegload.dialogtitle"), JOptionPane.ERROR_MESSAGE);
 		}
 		else
 		{
-			// Load information into dialog for confirmation
+			// Found some photos to load
+			// TODO: Load jpeg information into dialog for confirmation?
+			// Pass information back to app
 			_app.informPhotosLoaded(_photos);
 		}
 	}
@@ -182,14 +203,15 @@ public class JpegLoader implements Runnable
 					{
 						// Always process first directory,
 						// only process subdirectories if checkbox selected
-						processDirectory(file, inDescend);
+						File[] files = file.listFiles();
+						processFileList(files, false, inDescend);
 					}
 				}
 				else
 				{
-					// file doesn't exist or isn't readable - record error
+					// file doesn't exist or isn't readable - ignore error
 				}
-				// check for cancel
+				// check for cancel button pressed
 				if (_cancelled) break;
 			}
 		}
@@ -202,52 +224,55 @@ public class JpegLoader implements Runnable
 	 */
 	private void processFile(File inFile)
 	{
+		// Update progress bar
 		_fileCounts[0]++; // file found
 		_progressBar.setValue(_fileCounts[0]);
 		_progressBar.setString("" + _fileCounts[0] + " / " + _progressBar.getMaximum());
 		_progressBar.repaint();
+
+		// Check whether filename corresponds with accepted filenames
+		if (!acceptPhotoFilename(inFile.getName())) {return;}
+
+		// Create Photo object
+		Photo photo = new Photo(inFile);
+		// Try to get information out of exif
 		try
 		{
 			JpegData jpegData = new ExifReader(inFile).extract();
 			_fileCounts[1]++; // jpeg found (no exception thrown)
-//			if (jpegData.getNumErrors() > 0)
-//				System.out.println("Number of errors was: " + jpegData.getNumErrors() + ": " + jpegData.getErrors().get(0));
 			if (jpegData.getExifDataPresent())
-				_fileCounts[2]++; // exif found
+				{_fileCounts[2]++;} // exif found
 			if (jpegData.isValid())
 			{
-//				if (false && jpegData.getTimestamp() != null)
-//					System.out.println("Timestamp is " + jpegData.getTimestamp()[0].toString() + ":" + jpegData.getTimestamp()[1].toString() + ":" + jpegData.getTimestamp()[2].toString());
-//				if (false && jpegData.getDatestamp() != null)
-//					System.out.println("Datestamp is " + jpegData.getDatestamp()[0].toString() + ":" + jpegData.getDatestamp()[1].toString() + ":" + jpegData.getDatestamp()[2].toString());
-				// Make DataPoint and Photo
+				if (jpegData.getDatestamp() != null && jpegData.getTimestamp() != null)
+				{
+					photo.setTimestamp(createTimestamp(jpegData.getDatestamp(), jpegData.getTimestamp()));
+				}
+				// Make DataPoint and attach to Photo
 				DataPoint point = createDataPoint(jpegData);
-				Photo photo = new Photo(inFile);
 				point.setPhoto(photo);
 				photo.setDataPoint(point);
-				_photos.add(photo);
-//				System.out.println("Made photo: " + photo.getFile().getAbsolutePath() + " with the datapoint: "
-//					+ point.getLatitude().output(Latitude.FORMAT_DEG_MIN_SEC) + ", "
-//					+ point.getLongitude().output(Longitude.FORMAT_DEG_MIN_SEC) + ", "
-//					+ point.getAltitude().getValue(Altitude.FORMAT_METRES));
+				photo.setOriginalStatus(PhotoStatus.TAGGED);
 				_fileCounts[3]++;
 			}
 		}
 		catch (JpegException jpe) { // don't list errors, just count them
 		}
-	}
-
-
-	/**
-	 * Process the given directory, by looping over its contents
-	 * and recursively through its subdirectories
-	 * @param inDirectory directory to read
-	 * @param inDescend true to descend subdirectories
-	 */
-	private void processDirectory(File inDirectory, boolean inDescend)
-	{
-		File[] files = inDirectory.listFiles();
-		processFileList(files, false, inDescend);
+		// Use file timestamp if exif timestamp isn't available
+		if (photo.getTimestamp() == null)
+		{
+			photo.setTimestamp(new Timestamp(inFile.lastModified()));
+			//System.out.println("No exif, using timestamp from file: " + inFile.lastModified() + " -> " + photo.getTimestamp().getText());
+		}
+		else
+		{
+			//System.out.println("timestamp from file = " + photo.getTimestamp().getText());
+		}
+		// Add the photo if it's got a point or if pointless photos should be added
+		if (photo.getDataPoint() != null || _noExifCheckbox.isSelected())
+		{
+			_photos.add(photo);
+		}
 	}
 
 
@@ -295,11 +320,15 @@ public class JpegLoader implements Runnable
 		// Create model objects from jpeg data
 		double latval = getCoordinateDoubleValue(inData.getLatitude(),
 			inData.getLatitudeRef() == 'N' || inData.getLatitudeRef() == 'n');
-		Latitude latitude = new Latitude(latval, Latitude.FORMAT_NONE);
+		Latitude latitude = new Latitude(latval, Latitude.FORMAT_DEG_MIN_SEC);
 		double lonval = getCoordinateDoubleValue(inData.getLongitude(),
 			inData.getLongitudeRef() == 'E' || inData.getLongitudeRef() == 'e');
-		Longitude longitude = new Longitude(lonval, Longitude.FORMAT_NONE);
-		Altitude altitude = new Altitude(inData.getAltitude().intValue(), Altitude.FORMAT_METRES);
+		Longitude longitude = new Longitude(lonval, Longitude.FORMAT_DEG_MIN_SEC);
+		Altitude altitude = null;
+		if (inData.getAltitude() != null)
+		{
+			altitude = new Altitude(inData.getAltitude().intValue(), Altitude.FORMAT_METRES);
+		}
 		return new DataPoint(latitude, longitude, altitude);
 	}
 
@@ -320,5 +349,50 @@ public class JpegLoader implements Runnable
 		value = Math.abs(value);
 		if (!isPositive) value = -value;
 		return value;
+	}
+
+
+	/**
+	 * Use the given Rational values to create a timestamp
+	 * @param inDate rationals describing date
+	 * @param inTime rationals describing time
+	 * @return Timestamp object corresponding to inputs
+	 */
+	private static Timestamp createTimestamp(Rational[] inDate, Rational[] inTime)
+	{
+		//System.out.println("Making timestamp for date (" + inDate[0].toString() + "," + inDate[1].toString() + "," + inDate[2].toString() + ") and time ("
+		//	+ inTime[0].toString() + "," + inTime[1].toString() + "," + inTime[2].toString() + ")");
+		return new Timestamp(inDate[0].intValue(), inDate[1].intValue(), inDate[2].intValue(),
+			inTime[0].intValue(), inTime[1].intValue(), inTime[2].intValue());
+	}
+
+
+	/**
+	 * Check whether to accept the given filename
+	 * @param inName name of file
+	 * @return true if accepted, false otherwise
+	 */
+	private static boolean acceptPhotoFilename(String inName)
+	{
+		if (inName != null && inName.length() > 4)
+		{
+			// Check for three-character file extensions jpg and jpe
+			String lastFour = inName.substring(inName.length() - 4).toLowerCase();
+			if (lastFour.equals(".jpg") || lastFour.equals(".jpe"))
+			{
+				return true;
+			}
+			// If not found, check for file extension jpeg
+			if (inName.length() > 5)
+			{
+				String lastFive = inName.substring(inName.length() - 5).toLowerCase();
+				if (lastFive.equals(".jpeg"))
+				{
+					return true;
+				}
+			}
+		}
+		// Not matched so don't accept
+		return false;
 	}
 }

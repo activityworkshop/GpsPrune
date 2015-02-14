@@ -53,6 +53,7 @@ public class Timestamp
 	 */
 	public Timestamp(String inString)
 	{
+		// TODO: Does it really help to store timestamps in seconds rather than ms?
 		if (inString != null && !inString.equals(""))
 		{
 			// Try to parse into a long
@@ -85,7 +86,7 @@ public class Timestamp
 				// Lastly, check garmin offset
 				if (diff4 < smallestDiff)
 				{
-					// milliseconds since garmin offset
+					// seconds since garmin offset
 					_seconds = rawValue + GARTRIP_OFFSET;
 				}
 				_valid = true;
@@ -108,6 +109,41 @@ public class Timestamp
 				}
 			}
 		}
+	}
+
+
+	/**
+	 * Constructor giving each field value individually
+	 * @param inYear year
+	 * @param inMonth month, beginning with 1
+	 * @param inDay day of month, beginning with 1
+	 * @param inHour hour of day, 0-24
+	 * @param inMinute minute
+	 * @param inSecond seconds
+	 */
+	public Timestamp(int inYear, int inMonth, int inDay, int inHour, int inMinute, int inSecond)
+	{
+		Calendar cal = Calendar.getInstance();
+		cal.set(Calendar.YEAR, inYear);
+		cal.set(Calendar.MONTH, inMonth - 1);
+		cal.set(Calendar.DAY_OF_MONTH, inDay);
+		cal.set(Calendar.HOUR_OF_DAY, inHour);
+		cal.set(Calendar.MINUTE, inMinute);
+		cal.set(Calendar.SECOND, inSecond);
+		cal.set(Calendar.MILLISECOND, 0);
+		_seconds = cal.getTimeInMillis() / 1000;
+		_valid = true;
+	}
+
+
+	/**
+	 * Constructor giving millis since 1970
+	 * @param inMillis
+	 */
+	public Timestamp(long inMillis)
+	{
+		_seconds = inMillis / 1000;
+		_valid = true;
 	}
 
 

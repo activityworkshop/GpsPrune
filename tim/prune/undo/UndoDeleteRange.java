@@ -2,6 +2,7 @@ package tim.prune.undo;
 
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
+import tim.prune.data.PhotoList;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -11,6 +12,7 @@ public class UndoDeleteRange implements UndoOperation
 {
 	private int _startIndex = -1;
 	private DataPoint[] _points = null;
+	private PhotoList _photoList = null;
 
 
 	/**
@@ -22,6 +24,7 @@ public class UndoDeleteRange implements UndoOperation
 	{
 		_startIndex = inTrackInfo.getSelection().getStart();
 		_points = inTrackInfo.cloneSelectedRange();
+		_photoList = inTrackInfo.getPhotoList().cloneList();
 	}
 
 
@@ -41,6 +44,17 @@ public class UndoDeleteRange implements UndoOperation
 	 */
 	public void performUndo(TrackInfo inTrackInfo)
 	{
+		// restore photos to how they were before
+		inTrackInfo.getPhotoList().restore(_photoList);
+		// reconnect photos to points
+		for (int i=0; i<_points.length; i++)
+		{
+			DataPoint point = _points[i];
+			if (point != null && point.getPhoto() != null)
+			{
+				point.getPhoto().setDataPoint(point);
+			}
+		}
 		// restore point array into track
 		inTrackInfo.getTrack().insertRange(_points, _startIndex);
 	}

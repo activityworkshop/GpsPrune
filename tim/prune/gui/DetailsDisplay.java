@@ -2,31 +2,19 @@ package tim.prune.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
+import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.text.NumberFormat;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
 import javax.swing.border.EtchedBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
-import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
@@ -34,6 +22,7 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.IntegerRange;
+import tim.prune.data.Photo;
 import tim.prune.data.Selection;
 import tim.prune.data.TrackInfo;
 
@@ -43,34 +32,21 @@ import tim.prune.data.TrackInfo;
  */
 public class DetailsDisplay extends GenericDisplay
 {
-	// App object to be notified of editing commands
-	private App _app = null;
-
-	// Track details
-	private JLabel _trackpointsLabel = null;
-	private JLabel _filenameLabel = null;
 	// Point details
 	private JLabel _indexLabel = null;
 	private JLabel _latLabel = null, _longLabel = null;
 	private JLabel _altLabel = null, _nameLabel = null;
-	private JLabel _timeLabel = null, _photoFileLabel = null;
-	// Scroll bar
-	private JScrollBar _scroller = null;
-	private boolean _ignoreScrollEvents = false;
-	// Button panel
-	private JButton _startRangeButton = null, _endRangeButton = null;
-	private JButton _deletePointButton = null, _deleteRangeButton = null;
+	private JLabel _timeLabel = null;
 
 	// Range details
 	private JLabel _rangeLabel = null;
 	private JLabel _distanceLabel = null, _durationLabel = null;
 	private JLabel _altRangeLabel = null, _updownLabel = null;
-	// Photos
-	private JList _photoList = null;
-	private PhotoListModel _photoListModel = null;
-	// Waypoints
-	private JList _waypointList = null;
-	private WaypointListModel _waypointListModel = null;
+
+	// Photo details
+	private JLabel _photoLabel = null;
+	private PhotoThumbnail _photoThumbnail = null;
+
 	// Units
 	private JComboBox _unitsDropdown = null;
 	// Formatter
@@ -91,39 +67,20 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_RANGE_DESCENT = ", " + I18nManager.getText("details.range.descent") + ": ";
 	private static String LABEL_POINT_ALTITUDE_UNITS = null;
 	private static int LABEL_POINT_ALTITUDE_FORMAT = Altitude.FORMAT_NONE;
-	// scrollbar interval
-	private static final int SCROLLBAR_INTERVAL = 50;
 
 
 	/**
 	 * Constructor
-	 * @param inApp App object for callbacks
 	 * @param inTrackInfo Track info object
 	 */
-	public DetailsDisplay(App inApp, TrackInfo inTrackInfo)
+	public DetailsDisplay(TrackInfo inTrackInfo)
 	{
 		super(inTrackInfo);
-		_app = inApp;
 		setLayout(new BorderLayout());
 
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-		// Track details panel
-		JPanel trackDetailsPanel = new JPanel();
-		trackDetailsPanel.setLayout(new BoxLayout(trackDetailsPanel, BoxLayout.Y_AXIS));
-		trackDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
-		);
-		JLabel trackDetailsLabel = new JLabel(I18nManager.getText("details.trackdetails"));
-		Font biggerFont = trackDetailsLabel.getFont();
-		biggerFont = biggerFont.deriveFont(Font.BOLD, biggerFont.getSize2D() + 2.0f);
-		trackDetailsLabel.setFont(biggerFont);
-		trackDetailsPanel.add(trackDetailsLabel);
-		_trackpointsLabel = new JLabel(I18nManager.getText("details.notrack"));
-		trackDetailsPanel.add(_trackpointsLabel);
-		_filenameLabel = new JLabel("");
-		trackDetailsPanel.add(_filenameLabel);
 
 		// Point details panel
 		JPanel pointDetailsPanel = new JPanel();
@@ -132,6 +89,8 @@ public class DetailsDisplay extends GenericDisplay
 			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
 		);
 		JLabel pointDetailsLabel = new JLabel(I18nManager.getText("details.pointdetails"));
+		Font biggerFont = pointDetailsLabel.getFont();
+		biggerFont = biggerFont.deriveFont(Font.BOLD, biggerFont.getSize2D() + 2.0f);
 		pointDetailsLabel.setFont(biggerFont);
 		pointDetailsPanel.add(pointDetailsLabel);
 		_indexLabel = new JLabel(I18nManager.getText("details.nopointselection"));
@@ -144,138 +103,63 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_altLabel);
 		_timeLabel = new JLabel("");
 		pointDetailsPanel.add(_timeLabel);
-		_photoFileLabel = new JLabel("");
-		pointDetailsPanel.add(_photoFileLabel);
 		_nameLabel = new JLabel("");
 		pointDetailsPanel.add(_nameLabel);
 		pointDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-		// Scroll bar
-		_scroller = new JScrollBar(JScrollBar.HORIZONTAL, 0, SCROLLBAR_INTERVAL, 0, 100);
-		_scroller.addAdjustmentListener(new AdjustmentListener() {
-			public void adjustmentValueChanged(AdjustmentEvent e)
-			{
-				selectPoint(e.getValue());
-			}
-		});
-		_scroller.setEnabled(false);
-
-		// Button panel
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new GridLayout(2, 2, 3, 3));
-		_startRangeButton = new JButton(I18nManager.getText("button.startrange"));
-		_startRangeButton.addActionListener(new ActionListener()
-			{
-				public void actionPerformed(ActionEvent e)
-				{
-					_trackInfo.getSelection().selectRangeStart();
-				}
-			});
-		_startRangeButton.setEnabled(false);
-		buttonPanel.add(_startRangeButton);
-		_endRangeButton = new JButton(I18nManager.getText("button.endrange"));
-		_endRangeButton.addActionListener(new ActionListener()
-			{
-				public void actionPerformed(ActionEvent e)
-				{
-					_trackInfo.getSelection().selectRangeEnd();
-				}
-			});
-		_endRangeButton.setEnabled(false);
-		buttonPanel.add(_endRangeButton);
-		_deletePointButton = new JButton(I18nManager.getText("button.deletepoint"));
-		_deletePointButton.addActionListener(new ActionListener()
-			{
-				public void actionPerformed(ActionEvent e)
-				{
-					_app.deleteCurrentPoint();
-				}
-			});
-		_deletePointButton.setEnabled(false);
-		buttonPanel.add(_deletePointButton);
-		_deleteRangeButton = new JButton(I18nManager.getText("button.deleterange"));
-		_deleteRangeButton.addActionListener(new ActionListener()
-			{
-				public void actionPerformed(ActionEvent e)
-				{
-					_app.deleteSelectedRange();
-				}
-			});
-		_deleteRangeButton.setEnabled(false);
-		buttonPanel.add(_deleteRangeButton);
-		buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		// range details panel
+		JPanel rangeDetailsPanel = new JPanel();
+		rangeDetailsPanel.setLayout(new BoxLayout(rangeDetailsPanel, BoxLayout.Y_AXIS));
+		rangeDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
+		);
+		JLabel rangeDetailsLabel = new JLabel(I18nManager.getText("details.rangedetails"));
+		rangeDetailsLabel.setFont(biggerFont);
+		rangeDetailsPanel.add(rangeDetailsLabel);
+		_rangeLabel = new JLabel(I18nManager.getText("details.norangeselection"));
+		rangeDetailsPanel.add(_rangeLabel);
+		_distanceLabel = new JLabel("");
+		rangeDetailsPanel.add(_distanceLabel);
+		_durationLabel = new JLabel("");
+		rangeDetailsPanel.add(_durationLabel);
+		_altRangeLabel = new JLabel("");
+		rangeDetailsPanel.add(_altRangeLabel);
+		_updownLabel = new JLabel("");
+		rangeDetailsPanel.add(_updownLabel);
+		rangeDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// range details panel
-		JPanel otherDetailsPanel = new JPanel();
-		otherDetailsPanel.setLayout(new BoxLayout(otherDetailsPanel, BoxLayout.Y_AXIS));
-		otherDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
+		JPanel photoDetailsPanel = new JPanel();
+		photoDetailsPanel.setLayout(new BoxLayout(photoDetailsPanel, BoxLayout.Y_AXIS));
+		photoDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
 		);
+		JLabel photoDetailsLabel = new JLabel(I18nManager.getText("details.photodetails"));
+		photoDetailsLabel.setFont(biggerFont);
+		photoDetailsPanel.add(photoDetailsLabel);
+		_photoLabel = new JLabel(I18nManager.getText("details.nophoto"));
+		photoDetailsPanel.add(_photoLabel);
+		_photoThumbnail = new PhotoThumbnail();
+		_photoThumbnail.setVisible(false);
+		_photoThumbnail.setPreferredSize(new Dimension(100, 100));
+		photoDetailsPanel.add(_photoThumbnail);
 
-		JLabel otherDetailsLabel = new JLabel(I18nManager.getText("details.rangedetails"));
-		otherDetailsLabel.setFont(biggerFont);
-		otherDetailsPanel.add(otherDetailsLabel);
-		_rangeLabel = new JLabel(I18nManager.getText("details.norangeselection"));
-		otherDetailsPanel.add(_rangeLabel);
-		_distanceLabel = new JLabel("");
-		otherDetailsPanel.add(_distanceLabel);
-		_durationLabel = new JLabel("");
-		otherDetailsPanel.add(_durationLabel);
-		_altRangeLabel = new JLabel("");
-		otherDetailsPanel.add(_altRangeLabel);
-		_updownLabel = new JLabel("");
-		otherDetailsPanel.add(_updownLabel);
-		otherDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-		// Add tab panel for waypoints / photos
-		JPanel waypointsPanel = new JPanel();
-		waypointsPanel.setLayout(new BoxLayout(waypointsPanel, BoxLayout.Y_AXIS));
-		waypointsPanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
-		);
-		JTabbedPane tabPane = new JTabbedPane();
-		_waypointListModel = new WaypointListModel(_trackInfo.getTrack());
-		_waypointList = new JList(_waypointListModel);
-		_waypointList.setVisibleRowCount(5);
-		_waypointList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e)
-			{
-				if (!e.getValueIsAdjusting()) selectWaypoint(_waypointList.getSelectedIndex());
-			}});
-		tabPane.addTab(I18nManager.getText("details.waypointsphotos.waypoints"), new JScrollPane(_waypointList));
-		_photoListModel = new PhotoListModel(_trackInfo.getPhotoList());
-		_photoList = new JList(_photoListModel);
-		_photoList.setVisibleRowCount(5);
-		_photoList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e)
-			{
-				if (!e.getValueIsAdjusting()) selectPhoto(_photoList.getSelectedIndex());
-			}});
-		// TODO: Re-add photos list after v2
-		// tabPane.addTab(I18nManager.getText("details.waypointsphotos.photos"), new JScrollPane(_photoList));
-		tabPane.setAlignmentX(Component.LEFT_ALIGNMENT);
-		waypointsPanel.add(tabPane);
-		waypointsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-		// add the slider, point details, and the other details to the main panel
-		mainPanel.add(buttonPanel);
-		mainPanel.add(Box.createVerticalStrut(5));
-		mainPanel.add(_scroller);
-		mainPanel.add(Box.createVerticalStrut(5));
-		mainPanel.add(trackDetailsPanel);
-		mainPanel.add(Box.createVerticalStrut(5));
+		// add the details panels to the main panel
 		mainPanel.add(pointDetailsPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
-		mainPanel.add(otherDetailsPanel);
+		mainPanel.add(rangeDetailsPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
-		mainPanel.add(waypointsPanel);
+		mainPanel.add(photoDetailsPanel);
+		mainPanel.add(Box.createVerticalStrut(5));
 		// add the main panel at the top
 		add(mainPanel, BorderLayout.NORTH);
 
 		// Add units selection
 		JPanel lowerPanel = new JPanel();
-		lowerPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-		lowerPanel.add(new JLabel(I18nManager.getText("details.distanceunits") + ": "));
+		lowerPanel.setLayout(new BoxLayout(lowerPanel, BoxLayout.Y_AXIS));
+		JLabel unitsLabel = new JLabel(I18nManager.getText("details.distanceunits") + ": ");
+		unitsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		lowerPanel.add(unitsLabel);
 		String[] distUnits = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")};
 		_unitsDropdown = new JComboBox(distUnits);
 		_unitsDropdown.addActionListener(new ActionListener() {
@@ -285,53 +169,8 @@ public class DetailsDisplay extends GenericDisplay
 			}
 		});
 		lowerPanel.add(_unitsDropdown);
+		_unitsDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
 		add(lowerPanel, BorderLayout.SOUTH);
-	}
-
-
-	/**
-	 * Select the specified point
-	 * @param inValue value to select
-	 */
-	private void selectPoint(int inValue)
-	{
-		if (_track != null && !_ignoreScrollEvents)
-		{
-			_trackInfo.getSelection().selectPoint(inValue);
-		}
-	}
-
-
-	/**
-	 * Select the specified photo
-	 * @param inPhotoIndex index of selected photo
-	 */
-	private void selectPhoto(int inPhotoIndex)
-	{
-		if (_photoListModel.getPhoto(inPhotoIndex) != null)
-		{
-			// TODO: Deselect the photo when another point is selected
-			// TODO: show photo thumbnail
-			// select associated point, if any
-			DataPoint point = _photoListModel.getPhoto(inPhotoIndex).getDataPoint();
-			if (point != null)
-			{
-				_trackInfo.selectPoint(point);
-			}
-		}
-	}
-
-
-	/**
-	 * Select the specified waypoint
-	 * @param inWaypointIndex index of selected waypoint
-	 */
-	private void selectWaypoint(int inWaypointIndex)
-	{
-		if (inWaypointIndex >= 0)
-		{
-			_trackInfo.selectPoint(_waypointListModel.getWaypoint(inWaypointIndex));
-		}
 	}
 
 
@@ -340,30 +179,6 @@ public class DetailsDisplay extends GenericDisplay
 	 */
 	public void dataUpdated(byte inUpdateType)
 	{
-		// Update track data
-		if (_track == null || _track.getNumPoints() <= 0)
-		{
-			_trackpointsLabel.setText(I18nManager.getText("details.notrack"));
-			_filenameLabel.setText("");
-		}
-		else
-		{
-			_trackpointsLabel.setText(I18nManager.getText("details.track.points") + ": "
-				+ _track.getNumPoints());
-			int numFiles = _trackInfo.getFileInfo().getNumFiles();
-			if (numFiles == 1)
-			{
-				_filenameLabel.setText(I18nManager.getText("details.track.file") + ": "
-					+ _trackInfo.getFileInfo().getFilename());
-			}
-			else if (numFiles > 1)
-			{
-				_filenameLabel.setText(I18nManager.getText("details.track.numfiles") + ": "
-					+ numFiles);
-			}
-			else _filenameLabel.setText("");
-		}
-
 		// Update current point data, if any
 		DataPoint currentPoint = _trackInfo.getCurrentPoint();
 		Selection selection = _trackInfo.getSelection();
@@ -375,7 +190,6 @@ public class DetailsDisplay extends GenericDisplay
 			_longLabel.setText("");
 			_altLabel.setText("");
 			_timeLabel.setText("");
-			_photoFileLabel.setText("");
 			_nameLabel.setText("");
 		}
 		else
@@ -393,13 +207,6 @@ public class DetailsDisplay extends GenericDisplay
 				_timeLabel.setText(LABEL_POINT_TIMESTAMP + currentPoint.getTimestamp().getText());
 			else
 				_timeLabel.setText("");
-			if (currentPoint.getPhoto() != null && currentPoint.getPhoto().getFile() != null)
-			{
-				_photoFileLabel.setText(I18nManager.getText("details.photofile") + ": "
-					+ currentPoint.getPhoto().getFile().getName());
-			}
-			else
-				_photoFileLabel.setText("");
 			String name = currentPoint.getWaypointName();
 			if (name != null && !name.equals(""))
 			{
@@ -407,30 +214,6 @@ public class DetailsDisplay extends GenericDisplay
 			}
 			else _nameLabel.setText("");
 		}
-
-		// Update scroller settings
-		_ignoreScrollEvents = true;
-		if (_track == null || _track.getNumPoints() < 2)
-		{
-			// careful to avoid event loops here
-			// _scroller.setValue(0);
-			_scroller.setEnabled(false);
-		}
-		else
-		{
-			_scroller.setMaximum(_track.getNumPoints() + SCROLLBAR_INTERVAL);
-			if (currentPointIndex >= 0)
-				_scroller.setValue(currentPointIndex);
-			_scroller.setEnabled(true);
-		}
-		_ignoreScrollEvents = false;
-
-		// Update button panel
-		boolean hasPoint = (_track != null && currentPointIndex >= 0);
-		_startRangeButton.setEnabled(hasPoint);
-		_endRangeButton.setEnabled(hasPoint);
-		_deletePointButton.setEnabled(hasPoint);
-		_deleteRangeButton.setEnabled(selection.hasRangeSelected());
 
 		// Update range details
 		if (_track == null || !selection.hasRangeSelected())
@@ -475,37 +258,22 @@ public class DetailsDisplay extends GenericDisplay
 				_updownLabel.setText("");
 			}
 		}
-		// update waypoints and photos if necessary
-		if ((inUpdateType |
-			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.WAYPOINTS_MODIFIED)) > 0)
+		// show photo details and thumbnail
+		Photo currentPhoto = _trackInfo.getPhotoList().getPhoto(_trackInfo.getSelection().getCurrentPhotoIndex());
+		if (_track == null || ( (currentPoint == null || currentPoint.getPhoto() == null) && currentPhoto == null))
 		{
-			_waypointListModel.fireChanged();
+			// no photo, hide details
+			_photoLabel.setText(I18nManager.getText("details.nophoto"));
+			_photoThumbnail.setVisible(false);
 		}
-		if ((inUpdateType |
-			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.PHOTOS_MODIFIED)) > 0)
+		else
 		{
-			_photoListModel.fireChanged();
+			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
+			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getFile().getName());
+			_photoThumbnail.setVisible(true);
+			_photoThumbnail.setPhoto(currentPhoto);
 		}
-		// Deselect selected waypoint if selected point has since changed
-		if (_waypointList.getSelectedIndex() >= 0)
-		{
-			if (_trackInfo.getCurrentPoint() == null
-			 || !_waypointListModel.getWaypoint(_waypointList.getSelectedIndex()).equals(_trackInfo.getCurrentPoint()))
-			{
-				// point is selected in list but different from current point - deselect
-				_waypointList.clearSelection();
-			}
-		}
-		// Do the same for the photos
-		if (_photoList.getSelectedIndex() >= 0)
-		{
-			if (_trackInfo.getCurrentPoint() == null
-				|| !_photoListModel.getPhoto(_photoList.getSelectedIndex()).getDataPoint().equals(_trackInfo.getCurrentPoint()))
-			{
-				// photo is selected in list but different from current point - deselect
-				_photoList.clearSelection();
-			}
-		}
+		_photoThumbnail.repaint();
 	}
 
 

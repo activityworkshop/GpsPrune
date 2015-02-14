@@ -13,6 +13,7 @@ public class Selection
 	private int _currentPoint = -1;
 	private boolean _valid = false;
 	private int _startIndex = -1, _endIndex = -1;
+	private int _currentPhotoIndex = -1;
 	private IntegerRange _altitudeRange = null;
 	private int _climb = -1, _descent = -1;
 	private int _altitudeFormat = Altitude.FORMAT_NONE;
@@ -258,6 +259,7 @@ public class Selection
 	{
 		_currentPoint = -1;
 		deselectRange();
+		deselectPhoto();
 	}
 
 
@@ -374,6 +376,47 @@ public class Selection
 			reset();
 		}
 		check();
+	}
+
+
+	/**
+	 * Deselect photo
+	 */
+	public void deselectPhoto()
+	{
+		_currentPhotoIndex = -1;
+		check();
+	}
+
+
+	/**
+	 * Select the specified photo and point
+	 * @param inPhotoIndex index of selected photo in PhotoList
+	 * @param inPointIndex index of selected point
+	 */
+	public void selectPhotoAndPoint(int inPhotoIndex, int inPointIndex)
+	{
+		_currentPhotoIndex = inPhotoIndex;
+		if (inPointIndex > -1)
+		{
+			// select associated point, if any
+			selectPoint(inPointIndex);
+		}
+		else
+		{
+			// Check if not already done
+			check();
+		}
+	}
+
+
+	/**
+	 * @return currently selected photo index
+	 */
+	public int getCurrentPhotoIndex()
+	{
+		// System.out.println("Current photo index = " + _currentPhotoIndex);
+		return _currentPhotoIndex;
 	}
 
 

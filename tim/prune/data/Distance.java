@@ -13,8 +13,8 @@ public abstract class Distance
 	private static final double EARTH_RADIUS_KM = 6372.795;
 	private static final double EARTH_RADIUS_MILES = 3959.8712255;
 	// Conversion constants
-	private static final double CONVERT_KM_TO_MILES = 1.609344;
-	private static final double CONVERT_MILES_TO_KM = 0.621371192;
+	//private static final double CONVERT_KM_TO_MILES = 1.609344;
+	//private static final double CONVERT_MILES_TO_KM = 0.621371192;
 
 
 	/**

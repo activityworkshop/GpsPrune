@@ -17,7 +17,7 @@ public class DataPoint
 	private Timestamp _timestamp = null;
 	private Photo _photo = null;
 	private String _waypointName = null;
-	private boolean _pointValid = false;
+	// private boolean _startOfSegment = false;
 
 
 	/**
@@ -48,6 +48,7 @@ public class DataPoint
 		_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inAltFormat);
 		_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
 		_waypointName = getFieldValue(Field.WAYPT_NAME);
+		// TODO: Parse segment start field (format?)
 	}
 
 
@@ -60,11 +61,15 @@ public class DataPoint
 	public DataPoint(Coordinate inLatitude, Coordinate inLongitude, Altitude inAltitude)
 	{
 		// Only these three fields are available
-		_fieldValues = new String[0];
-		_fieldList = new FieldList();
+		_fieldValues = new String[3];
+		Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE};
+		_fieldList = new FieldList(fields);
 		_latitude = inLatitude;
+		_fieldValues[0] = inLatitude.output(Coordinate.FORMAT_DEG_MIN_SEC);
 		_longitude = inLongitude;
+		_fieldValues[1] = inLongitude.output(Coordinate.FORMAT_DEG_MIN_SEC);
 		_altitude = inAltitude;
+		if (inAltitude != null) {_fieldValues[2] = "" + inAltitude.getValue(Altitude.FORMAT_METRES);}
 		_timestamp = new Timestamp(null);
 	}
 

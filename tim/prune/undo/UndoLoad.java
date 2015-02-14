@@ -2,6 +2,7 @@ package tim.prune.undo;
 
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
+import tim.prune.data.PhotoList;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -13,6 +14,7 @@ public class UndoLoad implements UndoOperation
 	private int _numLoaded = -1;
 	private DataPoint[] _contents = null;
 	private String _previousFilename = null;
+	private PhotoList _photoList = null;
 
 
 	/**
@@ -33,14 +35,16 @@ public class UndoLoad implements UndoOperation
 	 * Constructor for replacing
 	 * @param inOldTrack track being replaced
 	 * @param inNumLoaded number of points loaded
+	 * @param inPhotoList photo list, if any
 	 */
-	public UndoLoad(TrackInfo inOldTrackInfo, int inNumLoaded)
+	public UndoLoad(TrackInfo inOldTrackInfo, int inNumLoaded, PhotoList inPhotoList)
 	{
 		_cropIndex = -1;
 		_numLoaded = inNumLoaded;
 		_contents = inOldTrackInfo.getTrack().cloneContents();
 		if (inOldTrackInfo.getFileInfo().getNumFiles() == 1)
 			_previousFilename = inOldTrackInfo.getFileInfo().getFilename();
+		_photoList = inPhotoList;
 	}
 
 
@@ -76,6 +80,11 @@ public class UndoLoad implements UndoOperation
 		}
 		else
 		{
+			// replace photos how they were
+			if (_photoList != null)
+			{
+				inTrackInfo.getPhotoList().restore(_photoList);
+			}
 			// replace track contents with old
 			if (!inTrackInfo.getTrack().replaceContents(_contents))
 			{

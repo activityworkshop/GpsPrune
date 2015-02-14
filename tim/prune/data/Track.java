@@ -57,6 +57,11 @@ public class Track
 	 */
 	public void load(Field[] inFieldArray, Object[][] inPointArray, int inAltFormat)
 	{
+		if (inFieldArray == null || inPointArray == null)
+		{
+			_numPoints = 0;
+			return;
+		}
 		// copy field list
 		_masterFieldList = new FieldList(inFieldArray);
 		// make DataPoint object from each point in inPointList
@@ -148,7 +153,8 @@ public class Track
 		for (int i=0; i<_numPoints; i++)
 		{
 			boolean keepPoint = true;
-			if (!_dataPoints[i].isWaypoint())
+			// Don't delete waypoints or photo points
+			if (!_dataPoints[i].isWaypoint() && _dataPoints[i].getPhoto() == null)
 			{
 				// go through newPointArray to check for range
 				for (int j=0; j<numCopied && keepPoint; j++)
@@ -223,7 +229,6 @@ public class Track
 	 */
 	public boolean deleteRange(int inStart, int inEnd)
 	{
-		// TODO: Check for deleting photos?
 		if (inStart < 0 || inEnd < 0 || inEnd < inStart)
 		{
 			// no valid range selected so can't delete
@@ -243,7 +248,7 @@ public class Track
 			System.arraycopy(_dataPoints, inEnd + 1, newPointArray, inStart,
 				_numPoints - inEnd - 1);
 		}
-		// Copy points over original array (careful!)
+		// Copy points over original array
 		_dataPoints = newPointArray;
 		_numPoints -= numToDelete;
 		// needs to be scaled again
@@ -438,7 +443,6 @@ public class Track
 		return true;
 	}
 
-	// TODO: Need to rearrange photo points too?
 
 	/**
 	 * Interpolate extra points between two selected ones
@@ -614,13 +618,12 @@ public class Track
 		// loop over points and copy all waypoints into list
 		for (int i=0; i<=_numPoints-1; i++)
 		{
-			if (_dataPoints[i].isWaypoint())
+			if (_dataPoints[i] != null && _dataPoints[i].isWaypoint())
 			{
 				inList.add(_dataPoints[i]);
 			}
 		}
 	}
-	// TODO: Make similar method to get list of photos
 
 
 	/**
@@ -869,14 +872,24 @@ public class Track
 	{
 		if (inPoint != null && inEditList != null && inEditList.getNumEdits() > 0)
 		{
+			// remember if coordinates have changed
+			boolean coordsChanged = false;
 			// go through edits one by one
 			int numEdits = inEditList.getNumEdits();
 			for (int i=0; i<numEdits; i++)
 			{
 				FieldEdit edit = inEditList.getEdit(i);
 				inPoint.setFieldValue(edit.getField(), edit.getValue());
+				// check coordinates
+				coordsChanged |= (edit.getField().equals(Field.LATITUDE)
+					|| edit.getField().equals(Field.LONGITUDE) || edit.getField().equals(Field.ALTITUDE));
 			}
-			// possibly needs to be scaled again
+			// set photo status if coordinates have changed
+			if (inPoint.getPhoto() != null && coordsChanged)
+			{
+				inPoint.getPhoto().setCurrentStatus(PhotoStatus.CONNECTED);
+			}
+			// point possibly needs to be scaled again
 			_scaled = false;
 			// trigger listeners
 			_broker.informSubscribers();
