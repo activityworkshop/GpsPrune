@@ -1,5 +1,5 @@
-Prune version 11
-================
+Prune version 11.1
+==================
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_11.jar
+   java -jar prune_11.1.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,7 +25,16 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_11.jar --lang=DE
+   java -jar prune_11.1.jar --lang=DE
+
+New with version 11.1
+=====================
+
+The following were added since version 11:
+  - Bugfix for exporting non-ASCII characters to a GPX file on a non-UTF8 system
+  - Bugfix for freeing file resources when GPX load fails
+  - Bugfix for resizing photo thumbnail
+  - Menu item for deselecting current photo
 
 New with version 11
 ===================

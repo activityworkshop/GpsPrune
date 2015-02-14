@@ -107,8 +107,9 @@ public class FileLoader
 		}
 		// Check file type to see if it's xml or just normal text
 		String fileExtension = inFile.getName().toLowerCase();
-		if (fileExtension.length() > 4)
-			{fileExtension = fileExtension.substring(fileExtension.length() - 4);}
+		if (fileExtension.length() > 4) {
+			fileExtension = fileExtension.substring(fileExtension.length() - 4);
+		}
 		if (fileExtension.equals(".kml") || fileExtension.equals(".gpx")
 			|| fileExtension.equals(".xml"))
 		{

@@ -80,6 +80,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _distanceItem = null;
 	private JMenuItem _fullRangeDetailsItem = null;
 	private JMenuItem _saveExifItem = null;
+	private JMenuItem _selectNoPhotoItem = null;
 	private JMenuItem _connectPhotoItem = null;
 	private JMenuItem _deletePhotoItem = null;
 	private JMenuItem _disconnectPhotoItem = null;
@@ -589,6 +590,15 @@ public class MenuManager implements DataSubscriber
 		_ignoreExifThumb = makeMenuItem(FunctionLibrary.FUNCTION_IGNORE_EXIF_THUMB);
 		_ignoreExifThumb.setEnabled(false);
 		photoMenu.add(_ignoreExifThumb);
+		_selectNoPhotoItem = new JMenuItem(I18nManager.getText("menu.range.none"));
+		_selectNoPhotoItem.setEnabled(false);
+		_selectNoPhotoItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				_app.getTrackInfo().selectPhoto(-1);
+			}
+		});
+		photoMenu.add(_selectNoPhotoItem);
 		photoMenu.addSeparator();
 		// correlate all photos
 		_correlatePhotosItem = makeMenuItem(FunctionLibrary.FUNCTION_CORRELATE_PHOTOS);
@@ -844,6 +854,7 @@ public class MenuManager implements DataSubscriber
 		_rotatePhotoLeft.setEnabled(hasPhoto);
 		_rotatePhotoRight.setEnabled(hasPhoto);
 		_ignoreExifThumb.setEnabled(hasPhoto && currentPhoto != null && currentPhoto.getExifThumbnail() != null);
+		_selectNoPhotoItem.setEnabled(hasPhoto);
 		// is there a current range?
 		boolean hasRange = (hasData && _selection.hasRangeSelected());
 		_deleteRangeItem.setEnabled(hasRange);

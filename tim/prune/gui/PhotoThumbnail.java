@@ -7,6 +7,7 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import tim.prune.I18nManager;
 import tim.prune.data.Photo;
@@ -88,10 +89,19 @@ public class PhotoThumbnail extends JPanel implements Runnable
 				int horizOffset = (getWidth() - scaleWidth) / 2;
 				int vertOffset = (getHeight() - scaleHeight) / 2;
 				inG.drawImage(scaled, horizOffset, vertOffset, scaleWidth, scaleHeight, null);
-				if (getHeight() < getWidth())
+				if (getHeight() < getWidth() || getHeight() > usableWidth)
 				{
-					setPreferredSize(new Dimension(usableWidth, usableWidth));
+					Dimension newsize = new Dimension(usableWidth, usableWidth);
+					setPreferredSize(newsize);
+					setSize(newsize);
 					invalidate();
+					// Schedule a relayout because the size has changed
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							try {Thread.sleep(200);} catch (InterruptedException e) {}
+							getParent().getParent().getParent().validate();
+						}
+					});
 				}
 			}
 		}

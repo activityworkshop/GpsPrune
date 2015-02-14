@@ -1,6 +1,8 @@
 package tim.prune.load.xml;
 
 import java.io.File;
+import java.io.FileInputStream;
+
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -61,11 +63,13 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	 */
 	public void run()
 	{
+		FileInputStream inStream = null;
 		try
 		{
 			// Construct a SAXParser and use this as a default handler
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			saxParser.parse(_file, this);
+			inStream = new FileInputStream(_file);
+			saxParser.parse(inStream, this);
 
 			// Check whether handler was properly instantiated
 			if (_handler == null)
@@ -85,6 +89,11 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 		}
 		catch (Exception e)
 		{
+			// clean up file stream
+			try {
+				inStream.close();
+			}
+			catch (Exception e2) {}
 			// Show error dialog
 			_app.showErrorMessageNoLookup("error.load.dialogtitle",
 				I18nManager.getText("error.load.othererror") + " " + e.getMessage());

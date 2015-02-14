@@ -290,8 +290,9 @@ public class GpxExporter extends GenericFunction implements Runnable
 		// Instantiate source file cachers in case we want to copy output
 		GpxCacherList gpxCachers = null;
 		if (inUseCopy) gpxCachers = new GpxCacherList(inInfo.getFileInfo());
-		// Write or copy header
-		inWriter.write(getHeaderString(gpxCachers));
+		// Write or copy headers
+		inWriter.write(getXmlHeaderString(inWriter));
+		inWriter.write(getGpxHeaderString(gpxCachers));
 		// Name field
 		String trackName = "PruneTrack";
 		if (inName != null && !inName.equals(""))
@@ -303,12 +304,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		}
 		// Description field
 		inWriter.write("\t<desc>");
-		if (inDesc != null && !inDesc.equals("")) {
-			inWriter.write(inDesc);
-		}
-		else {
-			inWriter.write("Export from Prune");
-		}
+		inWriter.write((inDesc != null && !inDesc.equals(""))?inDesc:"Export from Prune");
 		inWriter.write("</desc>\n");
 
 		int i = 0;
@@ -489,11 +485,26 @@ public class GpxExporter extends GenericFunction implements Runnable
 	}
 
 	/**
-	 * Get the header string for the gpx
+	 * Get the header string for the xml document including encoding
+	 * @param inWriter writer object
+	 * @return header string defining encoding
+	 */
+	private static String getXmlHeaderString(OutputStreamWriter inWriter)
+	{
+		String encoding = inWriter.getEncoding();
+		final String encodingUpper = encoding.toUpperCase();
+		if (encodingUpper.equals("UTF8") || encodingUpper.equals("UTF-8")) {
+			encoding = "UTF-8";
+		}
+		return "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>\n";
+	}
+
+	/**
+	 * Get the header string for the gpx tag
 	 * @param inCachers cacher list to ask for headers, if available
 	 * @return header string from cachers or as default
 	 */
-	private static String getHeaderString(GpxCacherList inCachers)
+	private static String getGpxHeaderString(GpxCacherList inCachers)
 	{
 		String gpxHeader = null;
 		if (inCachers != null) {gpxHeader = inCachers.getFirstHeader();}
@@ -505,7 +516,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 				+ " xmlns=\"http://www.topografix.com/GPX/1/0\""
 				+ " xsi:schemaLocation=\"http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd\">\n";
 		}
-		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + gpxHeader + "\n";
+		return gpxHeader + "\n";
 	}
 
 	/**
