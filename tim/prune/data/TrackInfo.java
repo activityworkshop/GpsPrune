@@ -92,10 +92,10 @@ public class TrackInfo
 	}
 
 	/**
-	 * Get the currently selected audio file, if any
-	 * @return AudioFile if selected, otherwise null
+	 * Get the currently selected audio clip, if any
+	 * @return AudioClip if selected, otherwise null
 	 */
-	public AudioFile getCurrentAudio() {
+	public AudioClip getCurrentAudio() {
 		return _audioList.getAudio(_selection.getCurrentAudioIndex());
 	}
 
@@ -165,12 +165,12 @@ public class TrackInfo
 	 * @param inSet Set containing Audio objects
 	 * @return number of audio objects added
 	 */
-	public int addAudios(Set<AudioFile> inSet)
+	public int addAudios(Set<AudioClip> inSet)
 	{
 		int numAudiosAdded = 0;
 		if (inSet != null && !inSet.isEmpty())
 		{
-			for (AudioFile audio : inSet)
+			for (AudioClip audio : inSet)
 			{
 				if (audio != null && !_audioList.contains(audio))
 				{
@@ -208,7 +208,6 @@ public class TrackInfo
 		if (_track.deletePoint(_selection.getCurrentPointIndex()))
 		{
 			_selection.modifyPointDeleted();
-			UpdateMessageBroker.informSubscribers();
 			return true;
 		}
 		return false;
@@ -260,7 +259,7 @@ public class TrackInfo
 		int audioIndex = _selection.getCurrentAudioIndex();
 		if (audioIndex >= 0)
 		{
-			AudioFile audio = _audioList.getAudio(audioIndex);
+			AudioClip audio = _audioList.getAudio(audioIndex);
 			_audioList.deleteAudio(audioIndex);
 			// has it got a point?
 			if (audio.getDataPoint() != null)
@@ -375,6 +374,18 @@ public class TrackInfo
 	}
 
 	/**
+	 * Increment the selected point index by the given increment
+	 * @param inPointIncrement +1 for next point, -1 for previous etc
+	 */
+	public void incrementPointIndex(int inPointIncrement)
+	{
+		int index = _selection.getCurrentPointIndex() + inPointIncrement;
+		if (index < 0) index = 0;
+		else if (index >= _track.getNumPoints()) index = _track.getNumPoints()-1;
+		selectPoint(index);
+	}
+
+	/**
 	 * Select the data point with the given index
 	 * @param inPointIndex index of DataPoint to select, or -1 for none
 	 */
@@ -400,7 +411,7 @@ public class TrackInfo
 			audioIndex = _audioList.getAudioIndex(selectedPoint.getAudio());
 		}
 		else if (audioIndex < 0 || _audioList.getAudio(audioIndex).isConnected()) {
-			// deselect current audio file
+			// deselect current audio clip
 			audioIndex = -1;
 		}
 		// give to selection
@@ -439,7 +450,7 @@ public class TrackInfo
 				pointIndex = -1;
 			}
 		}
-		// Has the new point got an audio file?
+		// Has the new point got an audio clip?
 		DataPoint selectedPoint = _track.getPoint(pointIndex);
 		int audioIndex = _selection.getCurrentAudioIndex();
 		if (selectedPoint != null) {
@@ -460,7 +471,7 @@ public class TrackInfo
 	{
 		if (_selection.getCurrentAudioIndex() == inAudioIndex) {return;}
 		// Audio selection takes priority, deselecting point if necessary
-		AudioFile audio = _audioList.getAudio(inAudioIndex);
+		AudioClip audio = _audioList.getAudio(inAudioIndex);
 		int pointIndex = _selection.getCurrentPointIndex();
 		DataPoint currPoint = getCurrentPoint();
 		if (audio != null)

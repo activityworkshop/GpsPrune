@@ -9,7 +9,6 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -22,7 +21,6 @@ import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.image.BufferedImage;
-import java.awt.image.RescaleOp;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -171,16 +169,22 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_topPanel.setLayout(new FlowLayout());
 		_topPanel.setOpaque(false);
 		// Make slider for transparency
-		_transparencySlider = new JSlider(0, 5, 0);
+		_transparencySlider = new JSlider(-6, 6, 0);
 		_transparencySlider.setPreferredSize(new Dimension(100, 20));
 		_transparencySlider.setMajorTickSpacing(1);
 		_transparencySlider.setSnapToTicks(true);
 		_transparencySlider.setOpaque(false);
+		_transparencySlider.setValue(0);
 		_transparencySlider.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e)
 			{
-				_recalculate = true;
-				repaint();
+				int val = _transparencySlider.getValue();
+				if (val == 1 || val == -1)
+					_transparencySlider.setValue(0);
+				else {
+					_recalculate = true;
+					repaint();
+				}
 			}
 		});
 		_transparencySlider.setFocusable(false); // stop slider from stealing keyboard focus
@@ -339,7 +343,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_yRange = new DoubleRange(MapUtils.getYFromLatitude(_latRange.getMinimum()),
 			MapUtils.getYFromLatitude(_latRange.getMaximum()));
 		_mapPosition.zoomToXY(_xRange.getMinimum(), _xRange.getMaximum(), _yRange.getMinimum(), _yRange.getMaximum(),
-				getWidth(), getHeight());
+			getWidth(), getHeight());
 	}
 
 
@@ -487,15 +491,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					}
 				}
 
-				// Make maps brighter / fainter
-				final float[] scaleFactors = {1.0f, 1.05f, 1.1f, 1.2f, 1.6f, 2.2f};
-				final float scaleFactor = scaleFactors[_transparencySlider.getValue()];
-				if (scaleFactor > 1.0f)
+				// Make maps brighter / fainter according to slider
+				final int brightnessIndex = Math.max(1, _transparencySlider.getValue()) - 1;
+				if (brightnessIndex > 0)
 				{
-					RenderingHints hints = new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-					hints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-					RescaleOp op = new RescaleOp(scaleFactor, 0, hints);
-					op.filter(_mapImage, _mapImage);
+					final int[] alphas = {0, 40, 80, 120, 160, 210};
+					Color bgColor = Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND);
+					bgColor = new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), alphas[brightnessIndex]);
+					g.setColor(bgColor);
+					g.fillRect(0, 0, getWidth(), getHeight());
 				}
 			}
 		}
@@ -532,11 +536,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private int paintPoints(Graphics inG)
 	{
 		// Set up colours
-		final Color pointColour = Config.getColourScheme().getColour(ColourScheme.IDX_POINT);
-		final Color rangeColour = Config.getColourScheme().getColour(ColourScheme.IDX_SELECTION);
-		final Color currentColour = Config.getColourScheme().getColour(ColourScheme.IDX_PRIMARY);
-		final Color secondColour = Config.getColourScheme().getColour(ColourScheme.IDX_SECONDARY);
-		final Color textColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
+		final ColourScheme cs = Config.getColourScheme();
+		final int[] opacities = {255, 190, 130, 80, 40, 0};
+		int opacity = 255;
+		if (_transparencySlider.getValue() < 0)
+			opacity = opacities[-1 - _transparencySlider.getValue()];
+		final Color pointColour  = makeTransparentColour(cs.getColour(ColourScheme.IDX_POINT), opacity);
+		final Color rangeColour  = makeTransparentColour(cs.getColour(ColourScheme.IDX_SELECTION), opacity);
+		final Color currentColour = makeTransparentColour(cs.getColour(ColourScheme.IDX_PRIMARY), opacity);
+		final Color secondColour = makeTransparentColour(cs.getColour(ColourScheme.IDX_SECONDARY), opacity);
+		final Color textColour   = makeTransparentColour(cs.getColour(ColourScheme.IDX_TEXT), opacity);
 
 		// try to set line width for painting
 		if (inG instanceof Graphics2D)
@@ -740,6 +749,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		return false;
 	}
 
+	/**
+	 * Make a semi-transparent colour for drawing with
+	 * @param inColour base colour (fully opaque)
+	 * @param inOpacity opacity where 0=invisible and 255=full
+	 * @return new colour object
+	 */
+	private static Color makeTransparentColour(Color inColour, int inOpacity)
+	{
+		if (inOpacity > 240) return inColour;
+		return new Color(inColour.getRed(), inColour.getGreen(), inColour.getBlue(), inOpacity);
+	}
 
 	/**
 	 * Inform that tiles have been updated and the map can be repainted
@@ -869,7 +889,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						point.setSegmentStart(false);
 					}
 				}
-				else if (inE.getClickCount() == 2) {
+				else if (inE.getClickCount() == 2)
+				{
 					// double click
 					if (_drawMode == MODE_DEFAULT) {
 						panMap(inE.getX() - getWidth()/2, inE.getY() - getHeight()/2);
@@ -927,8 +948,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		if (_drawMode == MODE_ZOOM_RECT && Math.abs(_dragToX - _dragFromX) > 20
 			&& Math.abs(_dragToY - _dragFromY) > 20)
 		{
-			//System.out.println("Finished zoom: " + _dragFromX + ", " + _dragFromY + " to " + _dragToX + ", " + _dragToY);
 			_mapPosition.zoomToPixels(_dragFromX, _dragToX, _dragFromY, _dragToY, getWidth(), getHeight());
+		}
+		if (_drawMode == MODE_ZOOM_RECT) {
 			_drawMode = MODE_DEFAULT;
 		}
 		_dragFromX = _dragFromY = -1;
@@ -1024,6 +1046,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// Check for Ctrl key (for Linux/Win) or meta key (Clover key for Mac)
 		if (inE.isControlDown() || inE.isMetaDown())
 		{
+			// Shift as well makes things faster
+			final int pointIncrement = inE.isShiftDown()?3:1;
 			// Check for arrow keys to zoom in and out
 			if (code == KeyEvent.VK_UP)
 				zoomIn();
@@ -1031,9 +1055,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				zoomOut();
 			// Key nav for next/prev point
 			else if (code == KeyEvent.VK_LEFT && currPointIndex > 0)
-				_trackInfo.selectPoint(currPointIndex-1);
+				_trackInfo.incrementPointIndex(-pointIncrement);
 			else if (code == KeyEvent.VK_RIGHT)
-				_trackInfo.selectPoint(currPointIndex+1);
+				_trackInfo.incrementPointIndex(pointIncrement);
 			else if (code == KeyEvent.VK_PAGE_UP)
 				_trackInfo.selectPoint(Checker.getPreviousSegmentStart(
 					_trackInfo.getTrack(), _trackInfo.getSelection().getCurrentPointIndex()));

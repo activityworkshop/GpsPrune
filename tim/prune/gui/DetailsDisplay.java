@@ -27,7 +27,7 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
@@ -63,6 +63,7 @@ public class DetailsDisplay extends GenericDisplay
 	private PhotoThumbnail _photoThumbnail = null;
 	private JLabel _photoTimestampLabel = null;
 	private JLabel _photoConnectedLabel = null;
+	private JLabel _photoBearingLabel = null;
 	private JPanel _rotationButtons = null;
 
 	// Audio details
@@ -160,6 +161,8 @@ public class DetailsDisplay extends GenericDisplay
 		_photoDetailsPanel.add(_photoTimestampLabel);
 		_photoConnectedLabel = new JLabel("");
 		_photoDetailsPanel.add(_photoConnectedLabel);
+		_photoBearingLabel = new JLabel("");
+		_photoDetailsPanel.add(_photoBearingLabel);
 		_photoThumbnail = new PhotoThumbnail();
 		_photoThumbnail.setVisible(false);
 		_photoThumbnail.setPreferredSize(new Dimension(100, 100));
@@ -381,17 +384,24 @@ public class DetailsDisplay extends GenericDisplay
 			_photoLabel.setText(I18nManager.getText("details.nophoto"));
 			_photoTimestampLabel.setText("");
 			_photoConnectedLabel.setText("");
+			_photoBearingLabel.setText("");
 			_photoThumbnail.setVisible(false);
 			_rotationButtons.setVisible(false);
 		}
 		else
 		{
 			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
-			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getFile().getName());
-			_photoTimestampLabel.setText(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText());
+			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getName());
+			_photoTimestampLabel.setText(currentPhoto.hasTimestamp()?(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText()):"");
 			_photoConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
 				+ (currentPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
+			if (currentPhoto.getBearing() >= 0.0 && currentPhoto.getBearing() <= 360.0)
+			{
+				_photoBearingLabel.setText(I18nManager.getText("details.photo.bearing") + ": "
+					+ (int) currentPhoto.getBearing() + " \u00B0");
+			}
+			else _photoBearingLabel.setText("");
 			_photoThumbnail.setVisible(true);
 			_photoThumbnail.setPhoto(currentPhoto);
 			_rotationButtons.setVisible(true);
@@ -401,7 +411,7 @@ public class DetailsDisplay extends GenericDisplay
 
 		// audio details
 		_audioDetailsPanel.setVisible(_trackInfo.getAudioList().getNumAudios() > 0);
-		AudioFile currentAudio = _trackInfo.getAudioList().getAudio(_trackInfo.getSelection().getCurrentAudioIndex());
+		AudioClip currentAudio = _trackInfo.getAudioList().getAudio(_trackInfo.getSelection().getCurrentAudioIndex());
 		if (currentAudio == null) {
 			_audioLabel.setText(I18nManager.getText("details.noaudio"));
 			_audioTimestampLabel.setText("");
@@ -410,8 +420,8 @@ public class DetailsDisplay extends GenericDisplay
 		}
 		else
 		{
-			_audioLabel.setText(LABEL_AUDIO_FILE + currentAudio.getFile().getName());
-			_audioTimestampLabel.setText(LABEL_POINT_TIMESTAMP + currentAudio.getTimestamp().getText());
+			_audioLabel.setText(LABEL_AUDIO_FILE + currentAudio.getName());
+			_audioTimestampLabel.setText(currentAudio.hasTimestamp()?(LABEL_POINT_TIMESTAMP + currentAudio.getTimestamp().getText()):"");
 			int audioLength = currentAudio.getLengthInSeconds();
 			_audioLengthLabel.setText(audioLength < 0?"":LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(audioLength));
 			_audioConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "

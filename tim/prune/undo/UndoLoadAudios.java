@@ -8,7 +8,7 @@ import tim.prune.data.TrackInfo;
  */
 public class UndoLoadAudios implements UndoOperation
 {
-	/** Number of audio files added */
+	/** Number of audio clips added */
 	private int _numAudios = -1;
 
 

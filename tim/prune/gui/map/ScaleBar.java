@@ -10,7 +10,7 @@ import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
 
 /**
- * Class to show a scale bar on the main map of Prune
+ * Class to show a scale bar on the main map of GpsPrune
  */
 public class ScaleBar extends JPanel
 {

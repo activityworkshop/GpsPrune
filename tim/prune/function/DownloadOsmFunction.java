@@ -243,7 +243,7 @@ public class DownloadOsmFunction extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
-		final String url = "http://www.informationfreeway.org/api/0.6/map?bbox=" +
+		final String url = "http://xapi.openstreetmap.org/api/0.6/map?bbox=" +
 			_latLonLabels[1].getText() + "," + _latLonLabels[3].getText() + "," +
 			_latLonLabels[2].getText() + "," + _latLonLabels[0].getText();
 
@@ -263,8 +263,7 @@ public class DownloadOsmFunction extends GenericFunction implements Runnable
 		}
 		catch (MalformedURLException mue) {}
 		catch (IOException ioe) {
-			// TODO: throw exception or show dialog
-			System.out.println("Exception: " + ioe.getClass().getName());
+			_app.showErrorMessageNoLookup(getNameKey(), ioe.getClass().getName() + " - " + ioe.getMessage());
 		}
 		// clean up streams
 		finally {

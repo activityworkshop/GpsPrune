@@ -26,23 +26,23 @@ import tim.prune.gui.map.MapCanvas;
 import tim.prune.gui.profile.ProfileChart;
 
 /**
- * Prune is a tool to visualize, edit, convert and prune GPS data
+ * GpsPrune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or http://activityworkshop.net
- * This software is copyright activityworkshop.net 2006-2010 and made available through the Gnu GPL version 2.
+ * This software is copyright activityworkshop.net 2006-2011 and made available through the Gnu GPL version 2.
  * For license details please see the included license.txt.
- * GpsPruner is the main entry point to the application, including initialisation and launch
+ * GpsPrune is the main entry point to the application, including initialisation and launch
  */
-public class GpsPruner
+public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "12.1";
+	public static final String VERSION_NUMBER = "13";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "224";
+	public static final String BUILD_NUMBER = "240";
 	/** Static reference to App object */
 	private static App APP = null;
 
 	/** Program name, used for Frame title and for Macs also on the system bar */
-	private static final String PROGRAM_NAME = "Prune";
+	private static final String PROGRAM_NAME = "GpsPrune";
 
 
 	/**
@@ -200,7 +200,7 @@ public class GpsPruner
 		UpdateMessageBroker.addSubscriber(profileDisp);
 		StatusBar statusBar = new StatusBar();
 		UpdateMessageBroker.addSubscriber(statusBar);
-		UpdateMessageBroker.informSubscribers("Prune v" + VERSION_NUMBER);
+		UpdateMessageBroker.informSubscribers("GpsPrune v" + VERSION_NUMBER);
 
 		// Arrange in the frame using split panes
 		JSplitPane midSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, mapDisp, profileDisp);
@@ -235,6 +235,8 @@ public class GpsPruner
 		frame.setVisible(true);
 		// Set position of map/profile splitter
 		midSplit.setDividerLocation(0.75);
+		// Update menu (only needed for recent file list)
+		UpdateMessageBroker.informSubscribers();
 
 		// Make a full screen toggler
 		SidebarController fsc = new SidebarController(new Component[] {leftPanel, profileDisp, rightPanel},

@@ -156,7 +156,8 @@ public class CompressTrackFunction extends GenericFunction
 			new DuplicatePointAlgorithm(_track, details, changeListener),
 			new ClosePointsAlgorithm(_track, details, changeListener),
 			new WackyPointAlgorithm(_track, details, changeListener),
-			new SingletonAlgorithm(_track, details, changeListener)
+			new SingletonAlgorithm(_track, details, changeListener),
+			new DouglasPeuckerAlgorithm(_track, details, changeListener)
 		};
 	}
 

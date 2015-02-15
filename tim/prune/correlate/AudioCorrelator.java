@@ -11,17 +11,17 @@ import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.AudioList;
 import tim.prune.data.DataPoint;
-import tim.prune.data.MediaFile;
+import tim.prune.data.MediaObject;
 import tim.prune.data.MediaList;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
 import tim.prune.undo.UndoCorrelateAudios;
 
 /**
- * Class to manage the automatic correlation of audio files to points
+ * Class to manage the automatic correlation of audio clips to points
  * which is very similar to the PhotoCorrelator apart from the clip lengths
  */
 public class AudioCorrelator extends Correlator
@@ -92,7 +92,7 @@ public class AudioCorrelator extends Correlator
 	{
 		for (int i=0; i<inAudios.getNumMedia(); i++)
 		{
-			AudioFile a = inAudios.getAudio(i);
+			AudioClip a = inAudios.getAudio(i);
 			if (a.getLengthInSeconds() > 0) {return true;}
 		}
 		return false;
@@ -113,13 +113,13 @@ public class AudioCorrelator extends Correlator
 		int numAudios = audios.getNumAudios();
 		for (int i=0; i<numAudios; i++)
 		{
-			AudioFile audio = audios.getAudio(i);
+			AudioClip audio = audios.getAudio(i);
 			PointMediaPair pair = getPointPairForMedia(_app.getTrackInfo().getTrack(), audio, inTimeDiff);
 			MediaPreviewTableRow row = new MediaPreviewTableRow(pair);
 			// Don't try to correlate audios which don't have points either side
 			boolean correlateAudio = pair.isValid();
 			// Don't select audios which already have a point
-			if (audio.getCurrentStatus() != AudioFile.Status.NOT_CONNECTED) {correlateAudio = false;}
+			if (audio.getCurrentStatus() != AudioClip.Status.NOT_CONNECTED) {correlateAudio = false;}
 			// Check time limits, distance limits
 			if (timeLimit != null && correlateAudio) {
 				long numSecs = pair.getMinSeconds();
@@ -161,11 +161,11 @@ public class AudioCorrelator extends Correlator
 	/**
 	 * @return modified timestamp of specified media object
 	 */
-	protected Timestamp getMediaTimestamp(MediaFile inMedia)
+	protected Timestamp getMediaTimestamp(MediaObject inMedia)
 	{
 		Timestamp tstamp = super.getMediaTimestamp(inMedia);
 		try {
-			AudioFile audio = (AudioFile) inMedia;
+			AudioClip audio = (AudioClip) inMedia;
 			int audioLength = audio.getLengthInSeconds();
 			// Each option is worth half the length of the audio clip, so need to divide by 2
 			int secsToAdd = audioLength *
@@ -203,11 +203,11 @@ public class AudioCorrelator extends Correlator
 				if (pair.getMinSeconds() == 0L)
 				{
 					// exact match
-					AudioFile pointAudio = pair.getPointBefore().getAudio();
+					AudioClip pointAudio = pair.getPointBefore().getAudio();
 					if (pointAudio == null)
 					{
 						// photo coincides with audioless point so connect the two
-						pair.getPointBefore().setAudio((AudioFile) pair.getMedia());
+						pair.getPointBefore().setAudio((AudioClip) pair.getMedia());
 						pair.getMedia().setDataPoint(pair.getPointBefore());
 					}
 					else if (pointAudio.equals(pair.getMedia())) {
@@ -253,7 +253,7 @@ public class AudioCorrelator extends Correlator
 					if (pointToAdd != null)
 					{
 						// link audio to point
-						pointToAdd.setAudio((AudioFile) pair.getMedia());
+						pointToAdd.setAudio((AudioClip) pair.getMedia());
 						pair.getMedia().setDataPoint(pointToAdd);
 						// set to start of segment so not joined in track
 						pointToAdd.setSegmentStart(true);

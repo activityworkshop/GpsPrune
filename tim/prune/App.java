@@ -9,31 +9,34 @@ import java.util.Stack;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
-import tim.prune.data.AudioFile;
 import tim.prune.data.Checker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.LatLonRectangle;
-import tim.prune.data.MediaFile;
 import tim.prune.data.NumberUtils;
 import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
+import tim.prune.data.RecentFile;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.data.SourceInfo.FILE_TYPE;
+import tim.prune.function.AsyncMediaLoader;
+import tim.prune.function.SaveConfig;
 import tim.prune.function.SelectTracksFunction;
 import tim.prune.function.browser.BrowserLauncher;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.function.edit.PointEditor;
-import tim.prune.gui.SidebarController;
 import tim.prune.gui.MenuManager;
+import tim.prune.gui.SidebarController;
 import tim.prune.gui.UndoManager;
 import tim.prune.gui.Viewport;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
-import tim.prune.load.MediaHelper;
+import tim.prune.load.MediaLinkInfo;
 import tim.prune.load.TrackNameList;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
@@ -60,6 +63,7 @@ public class App
 	private Viewport _viewport = null;
 	private ArrayList<File> _dataFiles = null;
 	private boolean _firstDataFile = true;
+	private boolean _busyLoading = false;
 
 
 	/**
@@ -209,6 +213,10 @@ public class App
 				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 			== JOptionPane.YES_OPTION)
 		{
+			// save settings
+			if (Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS)) {
+				new SaveConfig(this).silentSave();
+			}
 			System.exit(0);
 		}
 	}
@@ -270,7 +278,7 @@ public class App
 			{
 				// Confirm deletion of photo or decoupling
 				int response = JOptionPane.showConfirmDialog(_frame,
-					I18nManager.getText("dialog.deletepoint.deletephoto") + " " + currentPhoto.getFile().getName(),
+					I18nManager.getText("dialog.deletepoint.deletephoto") + " " + currentPhoto.getName(),
 					I18nManager.getText("dialog.deletepoint.title"),
 					JOptionPane.YES_NO_CANCEL_OPTION);
 				if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION)
@@ -304,6 +312,7 @@ public class App
 						// decouple photo from point
 						currentPhoto.setDataPoint(null);
 					}
+					UpdateMessageBroker.informSubscribers();
 				}
 				// Confirm
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.deletepoint.single"));
@@ -317,82 +326,80 @@ public class App
 	 */
 	public void deleteSelectedRange()
 	{
-		if (_track != null)
+		if (_track == null) return;
+		// Find out if photos should be deleted or not
+		int selStart = _trackInfo.getSelection().getStart();
+		int selEnd = _trackInfo.getSelection().getEnd();
+		if (selStart >= 0 && selEnd >= selStart)
 		{
-			// Find out if photos should be deleted or not
-			int selStart = _trackInfo.getSelection().getStart();
-			int selEnd = _trackInfo.getSelection().getEnd();
-			if (selStart >= 0 && selEnd >= selStart)
+			int numToDelete = selEnd - selStart + 1;
+			boolean[] deletePhotos = new boolean[numToDelete];
+			Photo[] photosToDelete = new Photo[numToDelete];
+			boolean deleteAll = false;
+			boolean deleteNone = false;
+			String[] questionOptions = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
+				I18nManager.getText("button.yestoall"), I18nManager.getText("button.notoall"),
+				I18nManager.getText("button.cancel")};
+			DataPoint point = null;
+			for (int i=0; i<numToDelete; i++)
 			{
-				int numToDelete = selEnd - selStart + 1;
-				boolean[] deletePhotos = new boolean[numToDelete];
-				Photo[] photosToDelete = new Photo[numToDelete];
-				boolean deleteAll = false;
-				boolean deleteNone = false;
-				String[] questionOptions = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
-					I18nManager.getText("button.yestoall"), I18nManager.getText("button.notoall"),
-					I18nManager.getText("button.cancel")};
-				DataPoint point = null;
-				for (int i=0; i<numToDelete; i++)
+				point = _trackInfo.getTrack().getPoint(i + selStart);
+				if (point != null && point.getPhoto() != null)
 				{
-					point = _trackInfo.getTrack().getPoint(i + selStart);
-					if (point != null && point.getPhoto() != null)
+					if (deleteAll)
 					{
-						if (deleteAll)
+						deletePhotos[i] = true;
+						photosToDelete[i] = point.getPhoto();
+					}
+					else if (deleteNone) {deletePhotos[i] = false;}
+					else
+					{
+						int response = JOptionPane.showOptionDialog(_frame,
+							I18nManager.getText("dialog.deletepoint.deletephoto") + " " + point.getPhoto().getName(),
+							I18nManager.getText("dialog.deletepoint.title"),
+							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null,
+							questionOptions, questionOptions[1]);
+						// check for cancel or close
+						if (response == 4 || response == -1) {return;}
+						// check for yes or yes to all
+						if (response == 0 || response == 2)
 						{
 							deletePhotos[i] = true;
 							photosToDelete[i] = point.getPhoto();
+							if (response == 2) {deleteAll = true;}
 						}
-						else if (deleteNone) {deletePhotos[i] = false;}
-						else
-						{
-							int response = JOptionPane.showOptionDialog(_frame,
-								I18nManager.getText("dialog.deletepoint.deletephoto") + " " + point.getPhoto().getFile().getName(),
-								I18nManager.getText("dialog.deletepoint.title"),
-								JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-								questionOptions, questionOptions[1]);
-							// check for cancel or close
-							if (response == 4 || response == -1) {return;}
-							// check for yes or yes to all
-							if (response == 0 || response == 2)
-							{
-								deletePhotos[i] = true;
-								photosToDelete[i] = point.getPhoto();
-								if (response == 2) {deleteAll = true;}
-							}
-							// check for no to all
-							if (response == 3) {deleteNone = true;}
-						}
+						// check for no to all
+						if (response == 3) {deleteNone = true;}
 					}
 				}
-				// add information to undo stack
-				UndoDeleteRange undo = new UndoDeleteRange(_trackInfo);
-				// delete requested photos
-				for (int i=0; i<numToDelete; i++)
+			}
+			// add information to undo stack
+			UndoDeleteRange undo = new UndoDeleteRange(_trackInfo);
+			// delete requested photos
+			for (int i=0; i<numToDelete; i++)
+			{
+				point = _trackInfo.getTrack().getPoint(i + selStart);
+				if (point != null && point.getPhoto() != null)
 				{
-					point = _trackInfo.getTrack().getPoint(i + selStart);
-					if (point != null && point.getPhoto() != null)
+					if (deletePhotos[i])
 					{
-						if (deletePhotos[i])
-						{
-							// delete photo from list
-							_trackInfo.getPhotoList().deletePhoto(_trackInfo.getPhotoList().getPhotoIndex(point.getPhoto()));
-						}
-						else
-						{
-							// decouple from point
-							point.getPhoto().setDataPoint(null);
-						}
+						// delete photo from list
+						_trackInfo.getPhotoList().deletePhoto(_trackInfo.getPhotoList().getPhotoIndex(point.getPhoto()));
+					}
+					else
+					{
+						// decouple from point
+						point.getPhoto().setDataPoint(null);
 					}
 				}
-				// call track to delete range
-				if (_trackInfo.deleteRange())
-				{
-					_undoStack.push(undo);
-					// Confirm
-					UpdateMessageBroker.informSubscribers("" + numToDelete + " "
-						+ I18nManager.getText("confirm.deletepoint.multi"));
-				}
+			}
+			// call track to delete range
+			if (_trackInfo.deleteRange())
+			{
+				_undoStack.push(undo);
+				// Confirm
+				UpdateMessageBroker.informSubscribers("" + numToDelete + " "
+					+ I18nManager.getText("confirm.deletepoint.multi"));
 			}
 		}
 	}
@@ -667,11 +674,11 @@ public class App
 	 * @param inAltFormat altitude format
 	 * @param inSourceInfo information about the source of the data
 	 * @param inTrackNameList information about the track names
-	 * @param inLinkArray array of links to photo/audio files
+	 * @param inLinkInfo links to photo/audio clips
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
 		Altitude.Format inAltFormat, SourceInfo inSourceInfo,
-		TrackNameList inTrackNameList, String[] inLinkArray)
+		TrackNameList inTrackNameList, MediaLinkInfo inLinkInfo)
 	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
@@ -688,28 +695,21 @@ public class App
 			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.open.contentsdoubled"),
 				I18nManager.getText("function.open"), JOptionPane.WARNING_MESSAGE);
 		}
-		// Attach photos and/or audio files to points
-		if (inLinkArray != null)
+
+		_busyLoading = true;
+		// Attach photos and/or audio clips to points
+		if (inLinkInfo != null)
 		{
-			for (int i=0; i<inLinkArray.length; i++)
-			{
-				if (inLinkArray[i] != null)
-				{
-					MediaFile mf = MediaHelper.createMediaFile(inLinkArray[i]);
-					if (mf != null) {
-						loadedTrack.getPoint(i).attachMedia(mf);
-						mf.setOriginalStatus(MediaFile.Status.TAGGED);
-						mf.setCurrentStatus(MediaFile.Status.TAGGED);
-					}
-				}
+			String[] linkArray = inLinkInfo.getLinkArray();
+			if (linkArray != null) {
+				new AsyncMediaLoader(this, inLinkInfo.getZipFile(), linkArray, loadedTrack).begin();
 			}
 		}
 		// Look at TrackNameList, decide whether to filter or not
 		if (inTrackNameList != null && inTrackNameList.getNumTracks() > 1)
 		{
 			// Launch a dialog to let the user choose which tracks to load, then continue
-			new SelectTracksFunction(this, inFieldArray, inDataArray, inAltFormat, inSourceInfo,
-				inTrackNameList).begin();
+			new SelectTracksFunction(this, loadedTrack, inSourceInfo, inTrackNameList).begin();
 		}
 		else {
 			// go directly to load
@@ -747,9 +747,6 @@ public class App
 				undo.setNumPhotosAudios(_trackInfo.getPhotoList().getNumPhotos(), _trackInfo.getAudioList().getNumAudios());
 				_undoStack.add(undo);
 				_track.combine(inLoadedTrack);
-				// Add photos and audios (if any in loaded track) to list(s)
-				MediaHelper.addMediaFromTrack(_track, _trackInfo.getPhotoList(), Photo.class);
-				MediaHelper.addMediaFromTrack(_track, _trackInfo.getAudioList(), AudioFile.class);
 				// set source information
 				inSourceInfo.populatePointObjects(_track, inLoadedTrack.getNumPoints());
 				_trackInfo.getFileInfo().addSource(inSourceInfo);
@@ -771,9 +768,6 @@ public class App
 				_trackInfo.getFileInfo().replaceSource(inSourceInfo);
 				_trackInfo.getPhotoList().removeCorrelatedPhotos();
 				_trackInfo.getAudioList().removeCorrelatedAudios();
-				// Add photos and audios (if any in loaded track) to list(s)
-				MediaHelper.addMediaFromTrack(_track, _trackInfo.getPhotoList(), Photo.class);
-				MediaHelper.addMediaFromTrack(_track, _trackInfo.getAudioList(), AudioFile.class);
 			}
 		}
 		else
@@ -787,16 +781,18 @@ public class App
 			_track.load(inLoadedTrack);
 			inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
 			_trackInfo.getFileInfo().addSource(inSourceInfo);
-			// Add photos and audios (if any in loaded track) to list(s)
-			MediaHelper.addMediaFromTrack(_track, _trackInfo.getPhotoList(), Photo.class);
-			MediaHelper.addMediaFromTrack(_track, _trackInfo.getAudioList(), AudioFile.class);
 		}
+		// Update config before subscribers are told
+		boolean isRegularLoad = (inSourceInfo.getFileType() != FILE_TYPE.GPSBABEL);
+		Config.getRecentFileList().addFile(new RecentFile(inSourceInfo.getFile(), isRegularLoad));
 		UpdateMessageBroker.informSubscribers();
 		// Update status bar
 		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile")
 			+ " '" + inSourceInfo.getName() + "'");
 		// update menu
 		_menuManager.informFileLoaded();
+		// Remove busy lock
+		_busyLoading = false;
 		// load next file if there's a queue
 		loadNextFile();
 	}
@@ -1033,5 +1029,10 @@ public class App
 	public void toggleSidebars()
 	{
 		_sidebarController.toggle();
+	}
+
+	/** @return true if App is currently busy with loading data */
+	public boolean isBusyLoading() {
+		return _busyLoading;
 	}
 }

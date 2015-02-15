@@ -2,7 +2,7 @@ package tim.prune.gui;
 
 import javax.swing.AbstractListModel;
 
-import tim.prune.data.MediaFile;
+import tim.prune.data.MediaObject;
 import tim.prune.data.MediaList;
 
 /**
@@ -33,9 +33,9 @@ public class MediaListModel extends AbstractListModel
 	 */
 	public Object getElementAt(int inIndex)
 	{
-		MediaFile m = _media.getMedia(inIndex);
+		MediaObject m = _media.getMedia(inIndex);
 		// * means modified since loading
-		return (m.getCurrentStatus() == m.getOriginalStatus()?"":"* ") + m.getFile().getName();
+		return (m.getCurrentStatus() == m.getOriginalStatus()?"":"* ") + m.getName();
 	}
 
 	/**

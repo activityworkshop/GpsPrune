@@ -26,6 +26,8 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 	private static final int MAX_RESULTS = 20;
 	/** Maximum distance from point in km */
 	private static final int MAX_DISTANCE = 15;
+	/** Username to use for geonames queries */
+	private static final String GEONAMES_USERNAME = "gpsprune";
 
 
 	/**
@@ -77,10 +79,11 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 		String descMessage = "";
 		InputStream inStream = null;
 
-		// Example http://ws.geonames.org/findNearbyWikipedia?lat=47&lng=9
-		String urlString = "http://ws.geonames.org/findNearbyWikipedia?lat=" +
+		// Example http://api.geonames.org/findNearbyWikipedia?lat=47&lng=9
+		String urlString = "http://api.geonames.org/findNearbyWikipedia?lat=" +
 			lat + "&lng=" + lon + "&maxRows=" + MAX_RESULTS
-			+ "&radius=" + MAX_DISTANCE + "&lang=" + I18nManager.getText("wikipedia.lang");
+			+ "&radius=" + MAX_DISTANCE + "&lang=" + I18nManager.getText("wikipedia.lang")
+			+ "&username=" + GEONAMES_USERNAME;
 		// Parse the returned XML with a special handler
 		GetWikipediaXmlHandler xmlHandler = new GetWikipediaXmlHandler();
 		try
@@ -106,7 +109,15 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 			descMessage = I18nManager.getText("dialog.gpsies.nonefound");
 		}
 		_statusLabel.setText(descMessage);
+		// Show error message if any
+		if (trackList == null || trackList.size() == 0) {
+			String error = xmlHandler.getErrorMessage();
+			if (error != null && !error.equals("")) {
+				_app.showErrorMessageNoLookup(getNameKey(), error);
+			}
+		}
 	}
+
 
 	/**
 	 * Load the selected track or point

@@ -5,6 +5,7 @@ import java.io.File;
 import com.drew.lang.Rational;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifDirectory;
 import com.drew.metadata.exif.ExifReader;
 import com.drew.metadata.exif.GpsDirectory;
@@ -12,7 +13,7 @@ import com.drew.metadata.exif.GpsDirectory;
 /**
  * Class to act as a gateway into the external exif library functions.
  * This should be the only class with dependence on the lib-metadata-extractor-java
- * classes (which are NOT delivered with Prune).
+ * classes (which are NOT delivered with GpsPrune).
  * This class will not compile without this extra dependency (but is not required if
  * the ExifGateway uses the InternalExifLibrary instead).
  * Should not be included if the internal library will be used (from jpeg.drew package).
@@ -60,16 +61,29 @@ public class ExternalExifLibrary implements ExifLibrary
 					data.setAltitudeRef(altRef);
 				}
 
-				// Timestamp and datestamp (if present)
-				final int TAG_GPS_DATESTAMP = 0x001d;
-				if (gpsdir.containsTag(GpsDirectory.TAG_GPS_TIME_STAMP) && gpsdir.containsTag(TAG_GPS_DATESTAMP))
+				try
 				{
-					Rational[] times = gpsdir.getRationalArray(GpsDirectory.TAG_GPS_TIME_STAMP);
-					data.setGpsTimestamp(new int[] {times[0].intValue(), times[1].intValue(),
-						times[2].intValue()});
-					Rational[] dates = gpsdir.getRationalArray(TAG_GPS_DATESTAMP);
-					if (dates != null) {
-						data.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
+					// Timestamp and datestamp (if present)
+					final int TAG_GPS_DATESTAMP = 0x001d;
+					if (gpsdir.containsTag(GpsDirectory.TAG_GPS_TIME_STAMP) && gpsdir.containsTag(TAG_GPS_DATESTAMP))
+					{
+						Rational[] times = gpsdir.getRationalArray(GpsDirectory.TAG_GPS_TIME_STAMP);
+						data.setGpsTimestamp(new int[] {times[0].intValue(), times[1].intValue(),
+							times[2].intValue()});
+						Rational[] dates = gpsdir.getRationalArray(TAG_GPS_DATESTAMP);
+						if (dates != null) {
+							data.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
+						}
+					}
+				}
+				catch (MetadataException me) {} // ignore, use other tags instead
+
+				// Image bearing (if present)
+				if (gpsdir.containsTag(GpsDirectory.TAG_GPS_IMG_DIRECTION) && gpsdir.containsTag(GpsDirectory.TAG_GPS_IMG_DIRECTION_REF))
+				{
+					Rational bearing = gpsdir.getRational(GpsDirectory.TAG_GPS_IMG_DIRECTION);
+					if (bearing != null) {
+						data.setBearing(bearing.doubleValue());
 					}
 				}
 			}
@@ -108,6 +122,7 @@ public class ExternalExifLibrary implements ExifLibrary
 		}
 		catch (Exception e) {
 			// Exception reading metadata, just ignore it
+			//System.err.println("Error: " + e.getClass().getName() + " - " + e.getMessage());
 		}
 		return data;
 	}

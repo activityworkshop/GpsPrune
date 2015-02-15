@@ -36,7 +36,7 @@ public class DisconnectPhotoFunction extends GenericFunction
 		if (photo != null && photo.getDataPoint() != null)
 		{
 			DataPoint point = photo.getDataPoint();
-			UndoDisconnectMedia undo = new UndoDisconnectMedia(point, true, false, photo.getFile().getName());
+			UndoDisconnectMedia undo = new UndoDisconnectMedia(point, true, false, photo.getName());
 			// disconnect
 			photo.setDataPoint(null);
 			point.setPhoto(null);

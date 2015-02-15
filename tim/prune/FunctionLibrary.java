@@ -11,7 +11,8 @@ import tim.prune.function.gpsies.GetGpsiesFunction;
 import tim.prune.function.gpsies.UploadGpsiesFunction;
 import tim.prune.function.srtm.LookupSrtmFunction;
 import tim.prune.load.AudioLoader;
-import tim.prune.load.GpsLoader;
+import tim.prune.load.BabelLoadFromFile;
+import tim.prune.load.BabelLoadFromGps;
 import tim.prune.save.GpsSaver;
 import tim.prune.save.GpxExporter;
 import tim.prune.save.KmlExporter;
@@ -29,6 +30,7 @@ public abstract class FunctionLibrary
 	public static SvgExporter FUNCTION_SVGEXPORT     = null;
 	public static GenericFunction FUNCTION_GPSLOAD  = null;
 	public static GenericFunction FUNCTION_GPSSAVE  = null;
+	public static GenericFunction FUNCTION_IMPORTBABEL = null;
 	public static GenericFunction FUNCTION_SAVECONFIG  = null;
 	public static GenericFunction FUNCTION_EDIT_WAYPOINT_NAME = null;
 	public static RearrangeWaypointsFunction FUNCTION_REARRANGE_WAYPOINTS = null;
@@ -88,8 +90,9 @@ public abstract class FunctionLibrary
 		FUNCTION_KMLEXPORT = new KmlExporter(inApp);
 		FUNCTION_POVEXPORT = new PovExporter(inApp);
 		FUNCTION_SVGEXPORT = new SvgExporter(inApp);
-		FUNCTION_GPSLOAD   = new GpsLoader(inApp);
+		FUNCTION_GPSLOAD   = new BabelLoadFromGps(inApp);
 		FUNCTION_GPSSAVE   = new GpsSaver(inApp);
+		FUNCTION_IMPORTBABEL = new BabelLoadFromFile(inApp);
 		FUNCTION_SAVECONFIG = new SaveConfig(inApp);
 		FUNCTION_EDIT_WAYPOINT_NAME = new PointNameEditor(inApp);
 		FUNCTION_REARRANGE_WAYPOINTS = new RearrangeWaypointsFunction(inApp);

@@ -130,7 +130,7 @@ public class SelectorDisplay extends GenericDisplay
 		_photoListPanel = makeListPanel("details.lists.photos", _photoList);
 		// don't add photo list (because there aren't any photos yet)
 
-		// List for audio files
+		// List for audio clips
 		_audioListModel = new MediaListModel(_trackInfo.getAudioList());
 		_audioList = new JList(_audioListModel);
 		_audioList.addListSelectionListener(new ListSelectionListener() {
@@ -181,8 +181,8 @@ public class SelectorDisplay extends GenericDisplay
 	}
 
 	/**
-	 * Select the specified audio file
-	 * @param inIndex index of selected audio file
+	 * Select the specified audio clip
+	 * @param inIndex index of selected audio clip
 	 */
 	private void selectAudio(int inIndex)
 	{
@@ -289,7 +289,7 @@ public class SelectorDisplay extends GenericDisplay
 				}
 			}
 		}
-		// Same for audio files
+		// Same for audio clips
 		if (_audioListModel.getSize() > 0)
 		{
 			int audioIndex = _trackInfo.getSelection().getCurrentAudioIndex();

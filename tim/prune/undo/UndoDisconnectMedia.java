@@ -1,7 +1,7 @@
 package tim.prune.undo;
 
 import tim.prune.I18nManager;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
@@ -13,7 +13,7 @@ public class UndoDisconnectMedia implements UndoOperation
 {
 	private DataPoint _point = null;
 	private Photo _photo = null;
-	private AudioFile _audio = null;
+	private AudioClip _audio = null;
 	private String _filename = null;
 
 

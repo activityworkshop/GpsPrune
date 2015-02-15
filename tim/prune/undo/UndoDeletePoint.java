@@ -65,7 +65,9 @@ public class UndoDeletePoint implements UndoOperation
 				inTrackInfo.getPhotoList().addPhoto(_point.getPhoto(), _photoIndex);
 			}
 			// Ensure that photo is associated with point
-			_point.getPhoto().setDataPoint(_point);
+			if (_point.getPhoto().getDataPoint() != _point) {
+				_point.getPhoto().setDataPoint(_point);
+			}
 		}
 		// Restore previous status of following track point if necessary
 		if (!_segmentStart)

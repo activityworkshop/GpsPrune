@@ -148,7 +148,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 					// calculate maximum thumbnail size
 					Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, DEFAULT_THUMB_SIZE, DEFAULT_THUMB_SIZE);
 					// Make icon to load image into
-					Image image = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
+					Image image = _photo.createImageIcon().getImage();
 					// save scaled, smoothed thumbnail for reuse
 					_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
 					image = null;
@@ -157,7 +157,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 			}
 		}
 		else {
-			_thumbnail = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
+			_thumbnail = _photo.createImageIcon().getImage();
 		}
 		_loadingImage = false;
 		repaint();

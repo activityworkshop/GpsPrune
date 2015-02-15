@@ -7,8 +7,8 @@ import java.util.ArrayList;
  */
 public abstract class MediaList
 {
-	/** list of media file objects */
-	protected ArrayList<MediaFile> _media = null;
+	/** list of media objects */
+	protected ArrayList<MediaObject> _media = null;
 
 
 	/**
@@ -22,11 +22,11 @@ public abstract class MediaList
 	 * Constructor
 	 * @param inList ArrayList containing media objects
 	 */
-	protected MediaList(ArrayList<MediaFile> inList)
+	protected MediaList(ArrayList<MediaObject> inList)
 	{
 		_media = inList;
 		if (_media == null) {
-			_media = new ArrayList<MediaFile>();
+			_media = new ArrayList<MediaObject>();
 		}
 	}
 
@@ -41,7 +41,7 @@ public abstract class MediaList
 	 * Add an object to the list
 	 * @param inObject object to add
 	 */
-	public void addMedia(MediaFile inObject)
+	public void addMedia(MediaObject inObject)
 	{
 		if (inObject != null) {
 			_media.add(inObject);
@@ -53,7 +53,7 @@ public abstract class MediaList
 	 * @param inObject object to add
 	 * @param inIndex index at which to add
 	 */
-	public void addMedia(MediaFile inObject, int inIndex)
+	public void addMedia(MediaObject inObject, int inIndex)
 	{
 		if (inObject != null) {
 			_media.add(inIndex, inObject);
@@ -77,7 +77,7 @@ public abstract class MediaList
 	 * @param inMedia media object to check
 	 * @return true if it's already in the list
 	 */
-	public boolean contains(MediaFile inMedia) {
+	public boolean contains(MediaObject inMedia) {
 		return (getMediaIndex(inMedia) > -1);
 	}
 
@@ -87,16 +87,16 @@ public abstract class MediaList
 	 * @param inMedia object to check
 	 * @return index of this object in the list, or -1 if not found
 	 */
-	public int getMediaIndex(MediaFile inMedia)
+	public int getMediaIndex(MediaObject inMedia)
 	{
 		// Check if we need to check
 		final int num = getNumMedia();
-		if (num <= 0 || inMedia == null || inMedia.getFile() == null)
+		if (num <= 0 || inMedia == null)
 			return -1;
 		// Loop over list
 		for (int i=0; i<num; i++)
 		{
-			MediaFile m = _media.get(i);
+			MediaObject m = _media.get(i);
 			if (m != null && m.equals(inMedia)) {
 				return i;
 			}
@@ -111,7 +111,7 @@ public abstract class MediaList
 	 * @param inIndex index number, starting at 0
 	 * @return specified object
 	 */
-	public MediaFile getMedia(int inIndex)
+	public MediaObject getMedia(int inIndex)
 	{
 		if (inIndex < 0 || inIndex >= getNumMedia()) return null;
 		return _media.get(inIndex);
@@ -147,7 +147,7 @@ public abstract class MediaList
 		final int num = getNumMedia();
 		String[] names = new String[num];
 		for (int i=0; i<num; i++) {
-			names[i] = getMedia(i).getFile().getName();
+			names[i] = getMedia(i).getName();
 		}
 		return names;
 	}
@@ -158,7 +158,7 @@ public abstract class MediaList
 	 */
 	public boolean hasCorrelatedMedia()
 	{
-		for (MediaFile m : _media) {
+		for (MediaObject m : _media) {
 			if (m.getDataPoint() != null) {
 				return true;
 			}
@@ -171,7 +171,7 @@ public abstract class MediaList
 	 */
 	public boolean hasUncorrelatedMedia()
 	{
-		for (MediaFile m : _media) {
+		for (MediaObject m : _media) {
 			if (m.getDataPoint() == null) {
 				return true;
 			}
@@ -188,9 +188,9 @@ public abstract class MediaList
 		if (getNumMedia() > 0)
 		{
 			// Construct new list to copy into
-			ArrayList<MediaFile> listCopy = new ArrayList<MediaFile>();
+			ArrayList<MediaObject> listCopy = new ArrayList<MediaObject>();
 			// Loop over list
-			for (MediaFile m : _media)
+			for (MediaObject m : _media)
 			{
 				// Copy media if it has no point
 				if (m != null)
@@ -204,6 +204,19 @@ public abstract class MediaList
 			// Switch reference to new list
 			_media = listCopy;
 		}
+	}
+
+	/**
+	 * @return true if any of the media objects have Files
+	 */
+	public boolean hasMediaWithFile()
+	{
+		for (MediaObject m: _media) {
+			if (m.getFile() != null) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

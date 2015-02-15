@@ -45,6 +45,7 @@ import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.RecentFile;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.ColourChooser;
@@ -52,6 +53,7 @@ import tim.prune.gui.ColourPatch;
 import tim.prune.gui.DialogCloser;
 import tim.prune.gui.ImageUtils;
 import tim.prune.load.GenericFileFilter;
+import tim.prune.save.xml.XmlUtils;
 
 /**
  * Class to export track information
@@ -378,7 +380,10 @@ public class KmlExporter extends GenericFunction implements Runnable
 			_imageDimensions = null;
 			// Store directory in config for later
 			Config.setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
+			// Add to recent file list
+			Config.getRecentFileList().addFile(new RecentFile(_exportFile, true));
 			// show confirmation
+			UpdateMessageBroker.informSubscribers();
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
 				 + " " + _exportFile.getAbsolutePath());
@@ -422,7 +427,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 			inWriter.write(_descriptionField.getText());
 		}
 		else {
-			inWriter.write("Export from Prune");
+			inWriter.write("Export from GpsPrune");
 		}
 		inWriter.write("</name>\n");
 
@@ -472,7 +477,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 				exportPhotoPoint(point, inWriter, inExportImages, i, photoNum, absoluteAltitudes);
 				numSaved++;
 			}
-			// Make a blob with description for each audio file
+			// Make a blob with description for each audio clip
 			if (point.getAudio() != null && writeAudios && writeCurrentPoint)
 			{
 				if (!writtenAudioHeader)
@@ -552,7 +557,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inAbsoluteAltitude) throws IOException
 	{
 		String name = inPoint.getWaypointName().trim();
-		exportNamedPoint(inPoint, inWriter, name, null, null, inAbsoluteAltitude);
+		exportNamedPoint(inPoint, inWriter, name, inPoint.getFieldValue(Field.DESCRIPTION), null, inAbsoluteAltitude);
 	}
 
 
@@ -565,8 +570,11 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private void exportAudioPoint(DataPoint inPoint, Writer inWriter, boolean inAbsoluteAltitude) throws IOException
 	{
-		String name = inPoint.getAudio().getFile().getName();
-		String desc = inPoint.getAudio().getFile().getAbsolutePath();
+		String name = inPoint.getAudio().getName();
+		String desc = null;
+		if (inPoint.getAudio().getFile() != null) {
+			desc = inPoint.getAudio().getFile().getAbsolutePath();
+		}
 		exportNamedPoint(inPoint, inWriter, name, desc, "audio_icon", inAbsoluteAltitude);
 	}
 
@@ -585,7 +593,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		int inPointNumber, int inImageNumber, boolean inAbsoluteAltitude)
 	throws IOException
 	{
-		String name = inPoint.getPhoto().getFile().getName();
+		String name = inPoint.getPhoto().getName();
 		String desc = null;
 		if (inImageLink)
 		{
@@ -593,7 +601,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 			// Create html for the thumbnail images
 			desc = "<![CDATA[<br/><table border='0'><tr><td><center><img src='images/image"
 				+ inImageNumber + ".jpg' width='" + imageSize.width + "' height='" + imageSize.height + "'></center></td></tr>"
-				+ "<tr><td><center>" + inPoint.getPhoto().getFile().getName() + "</center></td></tr></table>]]>";
+				+ "<tr><td><center>" + name + "</center></td></tr></table>]]>";
 		}
 		// Export point
 		exportNamedPoint(inPoint, inWriter, name, desc, "camera_icon", inAbsoluteAltitude);
@@ -620,9 +628,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 		if (inDesc != null)
 		{
 			// Write out description
-			inWriter.write("<description>");
-			inWriter.write(inDesc);
-			inWriter.write("</description>");
+			inWriter.write("\t\t<description>");
+			inWriter.write(XmlUtils.fixCdata(inDesc));
+			inWriter.write("</description>\n");
 		}
 		if (inStyle != null)
 		{
@@ -714,9 +722,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 				ZipEntry entry = new ZipEntry("images/image" + photoNum + ".jpg");
 				inZipStream.putNextEntry(entry);
 				// Load image and write to outstream
-				ImageIcon icon = new ImageIcon(point.getPhoto().getFile().getAbsolutePath());
+				ImageIcon icon = point.getPhoto().createImageIcon();
 
-				// Scale and smooth image to required size
+				// Scale image to required size TODO: should it also be smoothed, or only if it's smaller than a certain size?
 				BufferedImage bufferedImage = ImageUtils.rotateImage(icon.getImage(),
 					inThumbWidth, inThumbHeight, point.getPhoto().getRotationDegrees());
 				// Store image dimensions so that it doesn't have to be calculated again for the points

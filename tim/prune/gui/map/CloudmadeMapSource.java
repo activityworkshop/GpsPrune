@@ -7,7 +7,7 @@ public class CloudmadeMapSource extends OsmMapSource
 {
 	/** Selected style number */
 	private String _style = null;
-	/** Server prefix including API-key unique to Prune application */
+	/** Server prefix including API-key unique to GpsPrune application */
 	private static final String SERVER_PREFIX = "tile.cloudmade.com/03d86b66f51f4a3b8c236ac06f2a2e57/";
 
 	/**

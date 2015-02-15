@@ -62,9 +62,9 @@ public abstract class IconManager
 	public static final String ROTATE_RIGHT = "rotate_right_icon.png";
 	/** Icon for showing photo popup */
 	public static final String SHOW_DETAILS = "show_details_icon.gif";
-	/** Icon for playing audio file */
+	/** Icon for playing audio clip */
 	public static final String PLAY_AUDIO = "play_audio.gif";
-	/** Icon for stopping the current audio file */
+	/** Icon for stopping the current audio clip */
 	public static final String STOP_AUDIO = "stop_audio.gif";
 
 	/**

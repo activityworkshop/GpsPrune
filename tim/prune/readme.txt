@@ -1,23 +1,23 @@
-Prune version 12
-================
+GpsPrune version 13
+===================
 
-Prune is an application for viewing, editing and managing coordinate data from GPS systems,
+GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
-Full details can be found at http://activityworkshop.net/software/prune/
+Full details can be found at http://activityworkshop.net/software/gpsprune/
 
-Prune is copyright 2006-2010 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2011 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
-Prune comes without warranty and without guarantee - the authors cannot be held responsible for
+GpsPrune comes without warranty and without guarantee - the authors cannot be held responsible for
 losses incurred through use of the program, however caused.
 
 
 Running
 =======
 
-To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_12.jar
+To run GpsPrune from the jar file, simply call it from a command prompt or shell:
+   java -jar gpsprune_13.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,7 +25,24 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_12.jar --lang=DE
+   java -jar gpsprune_13.jar --lang=DE
+
+
+New with version 13
+===================
+The following features were added since version 12:
+  - Name change from Prune to GpsPrune
+  - Handling of description field for waypoints
+  - Opening of images from within kmz files, zip files and from http links
+  - Compression using Douglas-Peucker algorithm
+  - Option to save settings automatically on exit
+  - Dialog to show the local tile cache, report sizes and allow deletion
+    of tiles, either deleting whole tilesets or individual tiles older than
+    a specified number of days
+  - Checkbox on GPX export to specify UTF-8 rather than default system encoding
+  - Importing of files through GPSBabel
+  - List of recently used files in the menu
+  - Display of bearing at which a photo was taken (display only)
 
 New with version 12
 ===================
@@ -182,8 +199,8 @@ To obtain the source code (if it wasn't included in your jar file), or for furth
 please visit the website:  http://activityworkshop.net/
 
 You will find there user guides, screenshots and demo videos illustrating the major features.
-As Prune is further developed, subsequent versions of the program will also be made freely
+As GpsPrune is further developed, subsequent versions of the program will also be made freely
 available at this website.
 
-You can also provide feedback on Prune, and find out more about contributing to the development,
+You can also provide feedback on GpsPrune, and find out more about contributing to the development,
 especially with regard to language translations.

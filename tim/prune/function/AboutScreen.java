@@ -32,7 +32,7 @@ import javax.swing.JTextArea;
 import tim.prune.App;
 import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
-import tim.prune.GpsPruner;
+import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
 import tim.prune.jpeg.ExifGateway;
 import tim.prune.threedee.WindowFactory;
@@ -81,14 +81,14 @@ public class AboutScreen extends GenericFunction
 		JPanel aboutPanel = new JPanel();
 		aboutPanel.setLayout(new BoxLayout(aboutPanel, BoxLayout.Y_AXIS));
 		aboutPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		JLabel titleLabel = new JLabel("Prune");
+		JLabel titleLabel = new JLabel("GpsPrune");
 		titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
 		titleLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		aboutPanel.add(titleLabel);
-		JLabel versionLabel = new JLabel(I18nManager.getText("dialog.about.version") + ": " + GpsPruner.VERSION_NUMBER);
+		JLabel versionLabel = new JLabel(I18nManager.getText("dialog.about.version") + ": " + GpsPrune.VERSION_NUMBER);
 		versionLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		aboutPanel.add(versionLabel);
-		JLabel buildLabel = new JLabel(I18nManager.getText("dialog.about.build") + ": " + GpsPruner.BUILD_NUMBER);
+		JLabel buildLabel = new JLabel(I18nManager.getText("dialog.about.build") + ": " + GpsPrune.BUILD_NUMBER);
 		buildLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 		aboutPanel.add(buildLabel);
 		aboutPanel.add(new JLabel(" "));
@@ -99,7 +99,7 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
 			.append("\u010de\u0161tina, deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, magyar,<br>" +
 				" nederlands, polski, portugu\u00EAs, \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean),<br>" +
-				" schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, rom\u00E2n\u0103, afrikaans, bahasa indonesia, farsi</p>");
+				" schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, rom\u00E2n\u0103, afrikaans, bahasa indonesia</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));

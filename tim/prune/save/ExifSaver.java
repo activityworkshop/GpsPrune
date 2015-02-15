@@ -296,6 +296,10 @@ public class ExifSaver implements Runnable
 	 */
 	private boolean savePhoto(Photo inPhoto, boolean inOverwriteFlag, boolean inForceFlag)
 	{
+		// If photos don't have a file, then can't save them
+		if (inPhoto.getFile() == null) {
+			return false;
+		}
 		// Check whether photo file still exists
 		if (!inPhoto.getFile().exists())
 		{

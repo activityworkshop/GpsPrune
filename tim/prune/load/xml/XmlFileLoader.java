@@ -14,6 +14,7 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
 import tim.prune.data.SourceInfo;
+import tim.prune.load.MediaLinkInfo;
 
 /**
  * Class for handling loading of Xml files, and passing the
@@ -85,7 +86,8 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 				SourceInfo sourceInfo = new SourceInfo(_file,
 					(_handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
 				_app.informDataLoaded(_handler.getFieldArray(), _handler.getDataArray(),
-					Altitude.Format.METRES, sourceInfo, _handler.getTrackNameList(), _handler.getLinkArray());
+					Altitude.Format.METRES, sourceInfo, _handler.getTrackNameList(),
+					new MediaLinkInfo(_handler.getLinkArray()));
 			}
 		}
 		catch (Exception e)

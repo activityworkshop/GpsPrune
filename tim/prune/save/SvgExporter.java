@@ -316,7 +316,7 @@ public class SvgExporter extends Export3dFunction
 	{
 		inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>");
 		inWriter.write(inLineSeparator);
-		inWriter.write("<!-- Svg file produced by Prune - see http://activityworkshop.net/ -->");
+		inWriter.write("<!-- Svg file produced by GpsPrune - see http://activityworkshop.net/ -->");
 		inWriter.write(inLineSeparator);
 		inWriter.write("<svg width=\"800\" height=\"700\">");
 		inWriter.write(inLineSeparator);

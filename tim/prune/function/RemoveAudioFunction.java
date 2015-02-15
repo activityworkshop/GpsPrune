@@ -5,11 +5,11 @@ import javax.swing.JOptionPane;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.undo.UndoDeleteAudio;
 
 /**
- * Function to remove the currently selected audio file
+ * Function to remove the currently selected audio clip
  */
 public class RemoveAudioFunction extends GenericFunction
 {
@@ -32,7 +32,7 @@ public class RemoveAudioFunction extends GenericFunction
 	public void begin()
 	{
 		// Delete the current audio, and optionally its point too, keeping undo information
-		AudioFile currentAudio = _app.getTrackInfo().getCurrentAudio();
+		AudioClip currentAudio = _app.getTrackInfo().getCurrentAudio();
 		if (currentAudio != null)
 		{
 			// Audio is selected, see if it has a point or not
@@ -61,7 +61,7 @@ public class RemoveAudioFunction extends GenericFunction
 			}
 			// Add undo information to stack if necessary
 			if (deleted) {
-				_app.completeFunction(undoAction, currentAudio.getFile().getName() + " " + I18nManager.getText("confirm.media.removed"));
+				_app.completeFunction(undoAction, currentAudio.getName() + " " + I18nManager.getText("confirm.media.removed"));
 			}
 		}
 	}

@@ -17,6 +17,7 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 	private ArrayList<GpsiesTrack> _trackList = null;
 	private GpsiesTrack _track = null;
 	private String _lat = null, _lon = null;
+	private String _errorMessage = null;
 
 
 	/**
@@ -32,6 +33,9 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 			_track = new GpsiesTrack();
 			_lat = null;
 			_lon = null;
+		}
+		else if (inTagName.equals("status")) {
+			_errorMessage = inAttributes.getValue("message");
 		}
 		else _value = null;
 		super.startElement(inUri, inLocalName, inTagName, inAttributes);
@@ -89,5 +93,12 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 	public ArrayList<GpsiesTrack> getTrackList()
 	{
 		return _trackList;
+	}
+
+	/**
+	 * @return error message, if any
+	 */
+	public String getErrorMessage() {
+		return _errorMessage;
 	}
 }

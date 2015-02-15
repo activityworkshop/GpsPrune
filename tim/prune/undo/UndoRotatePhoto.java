@@ -31,7 +31,7 @@ public class UndoRotatePhoto implements UndoOperation
 	 */
 	public String getDescription()
 	{
-		return I18nManager.getText("undo.rotatephoto") + " " + _photo.getFile().getName();
+		return I18nManager.getText("undo.rotatephoto") + " " + _photo.getName();
 	}
 
 

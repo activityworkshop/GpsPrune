@@ -126,7 +126,8 @@ public class MapTileManager implements ImageObserver
 		if (useDisk)
 		{
 			tile = DiskTileCacher.getTile(diskCachePath, _mapSource.makeFilePath(inLayer, _zoom, inX, inY), onlineMode);
-			if (tile != null) {
+			if (tile != null)
+			{
 				// Pass tile to memory cache
 				tempCache.setTile(tile, inX, inY);
 				if (tile.getWidth(this) > 0) {return tile;}
@@ -139,11 +140,13 @@ public class MapTileManager implements ImageObserver
 			try
 			{
 				URL tileUrl = new URL(_mapSource.makeURL(inLayer, _zoom, inX, inY));
-				if (useDisk) {
-					// Copy image directly from URL stream to disk cache
-					DiskTileCacher.saveTile(tileUrl, diskCachePath, _mapSource.makeFilePath(inLayer, _zoom, inX, inY), this);
+				if (useDisk && DiskTileCacher.saveTile(tileUrl, diskCachePath,
+					_mapSource.makeFilePath(inLayer, _zoom, inX, inY), this))
+				{
+					// Image now copied directly from URL stream to disk cache
 				}
-				else {
+				else
+				{
 					// Load image asynchronously, using observer
 					tile = Toolkit.getDefaultToolkit().createImage(tileUrl);
 					// Pass to memory cache

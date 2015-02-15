@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Properties;
 
+import tim.prune.data.RecentFileList;
+
 
 /**
  * Abstract class to hold application-wide configuration
@@ -17,9 +19,12 @@ public abstract class Config
 	private static Properties _configValues = new Properties();
 	/** Colour scheme object is also part of config */
 	private static ColourScheme _colourScheme = new ColourScheme();
+	/** Recently-used file list */
+	private static RecentFileList _recentFiles = new RecentFileList();
 
 	/** Default config file */
-	private static final File DEFAULT_CONFIG_FILE = new File(".pruneconfig");
+	public static final File DEFAULT_CONFIG_FILE = new File(".pruneconfig");
+	public static final File HOME_CONFIG_FILE = new File(System.getProperty("user.home"), ".pruneconfig");
 
 	/** Key for track directory */
 	public static final String KEY_TRACK_DIR = "prune.trackdirectory";
@@ -63,6 +68,10 @@ public abstract class Config
 	public static final String KEY_LINE_WIDTH = "prune.linewidth";
 	/** Key for kml track colour */
 	public static final String KEY_KML_TRACK_COLOUR = "prune.kmltrackcolour";
+	/** Key for autosaving settings */
+	public static final String KEY_AUTOSAVE_SETTINGS = "prune.autosavesettings";
+	/** Key for recently used files */
+	public static final String KEY_RECENT_FILES = "prune.recentfiles";
 
 
 	/**
@@ -70,11 +79,21 @@ public abstract class Config
 	 */
 	public static void loadDefaultFile()
 	{
-		try
+		if (DEFAULT_CONFIG_FILE.exists())
 		{
-			loadFile(DEFAULT_CONFIG_FILE);
+			try {
+				loadFile(DEFAULT_CONFIG_FILE);
+				return;
+			}
+			catch (ConfigException ce) {} // ignore
 		}
-		catch (ConfigException ce) {} // ignore
+		if (HOME_CONFIG_FILE.exists())
+		{
+			try {
+				loadFile(HOME_CONFIG_FILE);
+			}
+			catch (ConfigException ce) {} // ignore
+		}
 	}
 
 
@@ -107,6 +126,7 @@ public abstract class Config
 		// Save all properties from file
 		_configValues.putAll(props);
 		_colourScheme.loadFromHex(_configValues.getProperty(KEY_COLOUR_SCHEME));
+		_recentFiles = new RecentFileList(_configValues.getProperty(KEY_RECENT_FILES));
 		if (loadFailed) {
 			throw new ConfigException();
 		}
@@ -130,6 +150,7 @@ public abstract class Config
 		props.put(KEY_GPSBABEL_PATH, "gpsbabel");
 		props.put(KEY_KMZ_IMAGE_WIDTH, "240");
 		props.put(KEY_KMZ_IMAGE_HEIGHT, "240");
+		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		return props;
 	}
 
@@ -158,6 +179,8 @@ public abstract class Config
 	 */
 	public static Properties getAllConfig()
 	{
+		// Update recently-used files
+		_configValues.setProperty(KEY_RECENT_FILES, _recentFiles.getConfigString());
 		return _configValues;
 	}
 
@@ -167,6 +190,14 @@ public abstract class Config
 	public static ColourScheme getColourScheme()
 	{
 		return _colourScheme;
+	}
+
+	/**
+	 * @return list of recently used files
+	 */
+	public static RecentFileList getRecentFileList()
+	{
+		return _recentFiles;
 	}
 
 	/**

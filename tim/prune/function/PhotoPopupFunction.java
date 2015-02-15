@@ -71,8 +71,8 @@ public class PhotoPopupFunction extends GenericFunction
 	{
 		_frame.setVisible(false);
 		Photo photo = _app.getTrackInfo().getCurrentPhoto();
-		_frame.setTitle(photo.getFile().getName());
-		_label.setText("'" + photo.getFile().getName() + "' ("
+		_frame.setTitle(photo.getName());
+		_label.setText("'" + photo.getName() + "' ("
 			+ photo.getWidth() + " x " + photo.getHeight() + ")");
 		_photoThumb.setPhoto(photo);
 	}

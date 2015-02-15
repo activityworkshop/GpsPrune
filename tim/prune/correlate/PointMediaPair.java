@@ -1,14 +1,14 @@
 package tim.prune.correlate;
 
 import tim.prune.data.DataPoint;
-import tim.prune.data.MediaFile;
+import tim.prune.data.MediaObject;
 
 /**
  * Class to hold a pair of points used to hold the result of correlation
  */
 public class PointMediaPair
 {
-	private MediaFile _media = null;
+	private MediaObject _media = null;
 	private DataPoint _pointBefore = null;
 	private DataPoint _pointAfter = null;
 	private long _secondsBefore = 1L;
@@ -19,7 +19,7 @@ public class PointMediaPair
 	 * Constructor
 	 * @param inMedia media object
 	 */
-	public PointMediaPair(MediaFile inMedia) {
+	public PointMediaPair(MediaObject inMedia) {
 		_media = inMedia;
 	}
 
@@ -58,7 +58,7 @@ public class PointMediaPair
 	/**
 	 * @return Media object
 	 */
-	public MediaFile getMedia() {
+	public MediaObject getMedia() {
 		return _media;
 	}
 

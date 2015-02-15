@@ -9,17 +9,17 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.undo.UndoLoadAudios;
 
 /**
- * Class to manage the loading of audio files
+ * Class to manage the loading of audio clips
  */
 public class AudioLoader extends GenericFunction
 {
 	private JFileChooser _fileChooser = null;
 	private GenericFileFilter _fileFilter = null;
-	private TreeSet<AudioFile> _fileList = null;
+	private TreeSet<AudioClip> _fileList = null;
 
 
 	/**
@@ -58,7 +58,7 @@ public class AudioLoader extends GenericFunction
 		// Show file dialog to choose file / directory(ies)
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
-			_fileList = new TreeSet<AudioFile>(new MediaSorter());
+			_fileList = new TreeSet<AudioClip>(new MediaSorter());
 			processFileList(_fileChooser.getSelectedFiles());
 			final int numFiles = _fileList.size();
 			if (numFiles == 0) {
@@ -87,7 +87,7 @@ public class AudioLoader extends GenericFunction
 			{
 				if (file.isFile()) {
 					if (_fileFilter.accept(file)) {
-						_fileList.add(new AudioFile(file));
+						_fileList.add(new AudioClip(file));
 					}
 				}
 				else if (file.isDirectory()) {

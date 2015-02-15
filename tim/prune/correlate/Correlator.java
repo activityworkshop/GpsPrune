@@ -30,7 +30,7 @@ import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.Field;
-import tim.prune.data.MediaFile;
+import tim.prune.data.MediaObject;
 import tim.prune.data.MediaList;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
@@ -194,10 +194,10 @@ public abstract class Correlator extends GenericFunction
 		int numMedia = mediaList.getNumMedia();
 		for (int i=0; i<numMedia; i++)
 		{
-			MediaFile media = mediaList.getMedia(i);
+			MediaObject media = mediaList.getMedia(i);
 			// For working out time differences, can't use media which already had point information
 			if (media.getDataPoint() != null && media.getDataPoint().hasTimestamp()
-				&& media.getOriginalStatus() == MediaFile.Status.NOT_CONNECTED)
+				&& media.getOriginalStatus() == MediaObject.Status.NOT_CONNECTED)
 			{
 				// Calculate time difference, add to table model
 				long timeDiff = getMediaTimestamp(media).getSecondsSince(media.getDataPoint().getTimestamp());
@@ -583,7 +583,7 @@ public abstract class Correlator extends GenericFunction
 	 * @param inTimeDiff time difference to use for time offsets
 	 * @param inFirstMedia first media object to use for calculating timezone
 	 */
-	protected void setupPreviewCard(TimeDifference inTimeDiff, MediaFile inFirstMedia)
+	protected void setupPreviewCard(TimeDifference inTimeDiff, MediaObject inFirstMedia)
 	{
 		_previewEnabled = false;
 		TimeDifference timeDiff = inTimeDiff;
@@ -619,7 +619,7 @@ public abstract class Correlator extends GenericFunction
 	 * @param inMedia media object
 	 * @return normally just returns the media timestamp, overridden by audio correlator
 	 */
-	protected Timestamp getMediaTimestamp(MediaFile inMedia)
+	protected Timestamp getMediaTimestamp(MediaObject inMedia)
 	{
 		return inMedia.getTimestamp();
 	}
@@ -631,7 +631,7 @@ public abstract class Correlator extends GenericFunction
 	 * @param inOffset time offset to apply
 	 * @return point pair resulting from correlation
 	 */
-	protected PointMediaPair getPointPairForMedia(Track inTrack, MediaFile inMedia, TimeDifference inOffset)
+	protected PointMediaPair getPointPairForMedia(Track inTrack, MediaObject inMedia, TimeDifference inOffset)
 	{
 		PointMediaPair pair = new PointMediaPair(inMedia);
 		// Add/subtract offset to media timestamp

@@ -62,7 +62,7 @@ public class RemovePhotoFunction extends GenericFunction
 			}
 			// Add undo information to stack if necessary
 			if (photoDeleted) {
-				_app.completeFunction(undoAction, currentPhoto.getFile().getName() + " " + I18nManager.getText("confirm.media.removed"));
+				_app.completeFunction(undoAction, currentPhoto.getName() + " " + I18nManager.getText("confirm.media.removed"));
 			}
 		}
 	}

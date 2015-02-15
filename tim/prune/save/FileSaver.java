@@ -40,6 +40,7 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
+import tim.prune.data.RecentFile;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.load.GenericFileFilter;
@@ -527,7 +528,10 @@ public class FileSaver
 				}
 				// Store directory in config for later
 				Config.setConfigString(Config.KEY_TRACK_DIR, saveFile.getParentFile().getAbsolutePath());
+				// Add to recent file list
+				Config.getRecentFileList().addFile(new RecentFile(inSaveFile, true));
 				// Save successful
+				UpdateMessageBroker.informSubscribers();
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 					 + " " + numSaved + " " + I18nManager.getText("confirm.save.ok2")
 					 + " " + saveFile.getAbsolutePath());

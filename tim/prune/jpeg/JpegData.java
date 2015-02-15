@@ -21,6 +21,7 @@ public class JpegData
 	private String _digitizedTimestamp = null;
 	private int _orientationCode = -1;
 	private byte[] _thumbnail = null;
+	private double _bearing = -1.0;
 	private ArrayList<String> _errors = null;
 
 
@@ -145,6 +146,15 @@ public class JpegData
 		}
 	}
 
+	/**
+	 * Set the bearing (0 - 360)
+	 * @param inBearing bearing in degrees
+	 */
+	public void setBearing(double inBearing)
+	{
+		_bearing = inBearing;
+	}
+
 	/** @return latitude ref as char */
 	public char getLatitudeRef() { return _latitudeRef; }
 	/** @return latitude as array of 3 Rationals */
@@ -169,6 +179,8 @@ public class JpegData
 	public String getOriginalTimestamp() { return _originalTimestamp; }
 	/** @return digitized timestamp as string */
 	public String getDigitizedTimestamp() { return _digitizedTimestamp; }
+	/** @return bearing in degrees or -1 */
+	public double getBearing() { return _bearing; }
 
 	/**
 	 * Set the thumbnail

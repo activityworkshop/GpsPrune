@@ -60,7 +60,7 @@ public abstract class Coordinate
 			inString = inString.trim();
 			strLen = inString.length();
 		}
-		if (strLen > 1)
+		if (strLen > 0)
 		{
 			// Check for cardinal character either at beginning or end
 			boolean hasCardinal = true;
@@ -98,8 +98,11 @@ public abstract class Coordinate
 							numFields++;
 							denoms[numFields-1] = 1;
 						}
-						fields[numFields-1] = fields[numFields-1] * 10 + (currChar - '0');
-						denoms[numFields-1] *= 10;
+						if (denoms[numFields-1] < 1E18) // ignore trailing characters if too big for long
+						{
+							fields[numFields-1] = fields[numFields-1] * 10 + (currChar - '0');
+							denoms[numFields-1] *= 10;
+						}
 					}
 					else
 					{

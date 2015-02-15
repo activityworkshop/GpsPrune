@@ -18,7 +18,7 @@ public class PhotoList extends MediaList
 	 * Constructor
 	 * @param inList ArrayList containing Photo objects
 	 */
-	private PhotoList(ArrayList<MediaFile> inList) {
+	private PhotoList(ArrayList<MediaObject> inList) {
 		super(inList);
 	}
 
@@ -28,7 +28,7 @@ public class PhotoList extends MediaList
 	public PhotoList cloneList()
 	{
 		if (getNumMedia() == 0) return this;
-		ArrayList<MediaFile> listCopy = new ArrayList<MediaFile>();
+		ArrayList<MediaObject> listCopy = new ArrayList<MediaObject>();
 		listCopy.addAll(_media);
 		return new PhotoList(listCopy);
 	}

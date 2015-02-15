@@ -3,13 +3,19 @@ package tim.prune.data;
 import java.io.File;
 
 /**
- * Class to represent a general media file for correlation.
- * Subclasses are currently Photo and AudioFile
+ * Class to represent a general media object for correlation.
+ * Subclasses are currently Photo and AudioClip
  */
-public abstract class MediaFile
+public abstract class MediaObject
 {
-	/** File where media is stored */
+	/** File where media is stored (if any) */
 	protected File _file = null;
+	/** Name of file */
+	protected String _name = null;
+	/** Cached data if downloaded */
+	protected byte[] _data = null;
+	/** URL if media came from net */
+	protected String _url = null;
 	/** Timestamp, if any */
 	protected Timestamp _timestamp = null;
 	/** Associated DataPoint if correlated */
@@ -20,7 +26,8 @@ public abstract class MediaFile
 	private Status _currentStatus = Status.NOT_CONNECTED;
 
 	/** Connection status */
-	public enum Status {
+	public enum Status
+	{
 		/** Media is not connected to any point */
 		NOT_CONNECTED,
 		/** Media has been connected to a point since it was loaded */
@@ -35,10 +42,27 @@ public abstract class MediaFile
 	 * @param inFile file object
 	 * @param inStamp timestamp object
 	 */
-	public MediaFile(File inFile, Timestamp inStamp)
+	public MediaObject(File inFile, Timestamp inStamp)
 	{
 		_file = inFile;
+		_name = inFile.getName();
+		_data = null;
 		_timestamp = inStamp;
+	}
+
+	/**
+	 * Constructor for byte arrays
+	 * @param inData byte array containing data
+	 * @param inName name of object
+	 * @param inUrl source url of object or null
+	 */
+	public MediaObject(byte[] inData, String inName, String inUrl)
+	{
+		_file = null;
+		_data = inData;
+		_name = inName;
+		_url = inUrl;
+		_timestamp = null;
 	}
 
 	/**
@@ -46,6 +70,11 @@ public abstract class MediaFile
 	 */
 	public File getFile() {
 		return _file;
+	}
+
+	/** @return media name */
+	public String getName() {
+		return _name;
 	}
 
 	/**
@@ -63,10 +92,26 @@ public abstract class MediaFile
 	}
 
 	/**
+	 * @return byte data of media
+	 */
+	public byte[] getByteData() {
+		return _data;
+	}
+
+	/**
+	 * @return source Url (or null)
+	 */
+	public String getUrl() {
+		return _url;
+	}
+
+	/**
 	 * @return true if details are valid (might not have timestamp)
 	 */
-	public boolean isValid() {
-		return _file != null && _file.exists() && _file.canRead();
+	public boolean isValid()
+	{
+		return ((_file != null && _file.exists() && _file.canRead())
+			|| (_data != null && _data.length > 0));
 	}
 
 	/**
@@ -77,14 +122,21 @@ public abstract class MediaFile
 	}
 
 	/**
-	 * Check if this object refers to the same File as another
-	 * @param inOther other MediaFile object
-	 * @return true if the Files are the same
+	 * Check if this object refers to the same object as another
+	 * @param inOther other MediaObject
+	 * @return true if the objects are the same
 	 */
-	public boolean equals(MediaFile inOther)
+	public boolean equals(MediaObject inOther)
 	{
-		return (inOther != null && inOther.getFile() != null && getFile() != null
-			&& inOther.getFile().equals(getFile()));
+		if (_file != null)
+		{
+			// compare file objects
+			return (inOther != null && inOther.getFile() != null && getFile() != null
+				&& inOther.getFile().equals(getFile()));
+		}
+		// compare data arrays
+		return (inOther != null && _name != null && inOther._name != null && _name.equals(inOther._name)
+			&& _data != null && inOther._data != null && _data.length == inOther._data.length);
 	}
 
 	/**
@@ -143,7 +195,7 @@ public abstract class MediaFile
 	}
 
 	/**
-	 * @return true if file is connected to a point
+	 * @return true if this object is connected to a point
 	 */
 	public boolean isConnected()
 	{
@@ -151,7 +203,7 @@ public abstract class MediaFile
 	}
 
 	/**
-	 * Reset any cached data held by the media file (eg thumbnail)
+	 * Reset any cached data (eg thumbnail)
 	 */
 	public void resetCachedData() {}
 }

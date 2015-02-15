@@ -3,7 +3,7 @@ package tim.prune.data;
 import java.util.ArrayList;
 
 /**
- * Class to hold a list of audio files, using the MediaList superclass
+ * Class to hold a list of audio clips, using the MediaList superclass
  */
 public class AudioList extends MediaList
 {
@@ -16,9 +16,9 @@ public class AudioList extends MediaList
 
 	/**
 	 * Constructor
-	 * @param inList ArrayList containing audio file objects
+	 * @param inList ArrayList containing audio clip objects
 	 */
-	private AudioList(ArrayList<MediaFile> inList) {
+	private AudioList(ArrayList<MediaObject> inList) {
 		super(inList);
 	}
 
@@ -28,37 +28,37 @@ public class AudioList extends MediaList
 	public AudioList cloneList()
 	{
 		if (getNumMedia() == 0) return this;
-		ArrayList<MediaFile> listCopy = new ArrayList<MediaFile>();
+		ArrayList<MediaObject> listCopy = new ArrayList<MediaObject>();
 		listCopy.addAll(_media);
 		return new AudioList(listCopy);
 	}
 
 	/**
-	 * @return the number of audio files in the list
+	 * @return the number of audio clips in the list
 	 */
 	public int getNumAudios() {
 		return getNumMedia();
 	}
 
 	/**
-	 * Add an audio file to the list
+	 * Add an audio clip to the list
 	 * @param inAudio object to add
 	 */
-	public void addAudio(AudioFile inAudio) {
+	public void addAudio(AudioClip inAudio) {
 		addMedia(inAudio);
 	}
 
 	/**
-	 * Add an audio file to the list
+	 * Add an audio clip to the list
 	 * @param inAudio object to add
 	 * @param inIndex index at which to add
 	 */
-	public void addAudio(AudioFile inAudio, int inIndex) {
+	public void addAudio(AudioClip inAudio, int inIndex) {
 		addMedia(inAudio, inIndex);
 	}
 
 	/**
-	 * Remove the selected audio file from the list
+	 * Remove the selected audio clip from the list
 	 * @param inIndex index number to remove
 	 */
 	public void deleteAudio(int inIndex) {
@@ -66,11 +66,11 @@ public class AudioList extends MediaList
 	}
 
 	/**
-	 * Get the index of the given audio file
+	 * Get the index of the given audio clip
 	 * @param inAudio object to check
 	 * @return index of this object in the list, or -1 if not found
 	 */
-	public int getAudioIndex(AudioFile inAudio) {
+	public int getAudioIndex(AudioClip inAudio) {
 		return getMediaIndex(inAudio);
 	}
 
@@ -79,8 +79,8 @@ public class AudioList extends MediaList
 	 * @param inIndex index number, starting at 0
 	 * @return specified object
 	 */
-	public AudioFile getAudio(int inIndex) {
-		return (AudioFile) getMedia(inIndex);
+	public AudioClip getAudio(int inIndex) {
+		return (AudioClip) getMedia(inIndex);
 	}
 
 	/**

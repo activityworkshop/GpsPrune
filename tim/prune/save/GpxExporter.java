@@ -16,6 +16,7 @@ import java.nio.charset.Charset;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -24,26 +25,30 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import javax.swing.border.EtchedBorder;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
-import tim.prune.GpsPruner;
+import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
-import tim.prune.data.MediaFile;
+import tim.prune.data.MediaObject;
 import tim.prune.data.Photo;
+import tim.prune.data.RecentFile;
 import tim.prune.data.Timestamp;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.DialogCloser;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.save.xml.GpxCacherList;
+import tim.prune.save.xml.XmlUtils;
 
 
 /**
@@ -59,10 +64,13 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private PointTypeSelector _pointTypeSelector = null;
 	private JCheckBox _timestampsCheckbox = null;
 	private JCheckBox _copySourceCheckbox = null;
+	private JPanel _encodingsPanel = null;
+	private JRadioButton _useSystemRadio = null, _forceUtf8Radio = null;
 	private File _exportFile = null;
+	private static String _systemEncoding = null;
 
 	/** this program name */
-	private static final String GPX_CREATOR = "Prune v" + GpsPruner.VERSION_NUMBER + " activityworkshop.net";
+	private static final String GPX_CREATOR = "GpsPrune v" + GpsPrune.VERSION_NUMBER + " activityworkshop.net";
 
 
 	/**
@@ -91,10 +99,16 @@ public class GpxExporter extends GenericFunction implements Runnable
 			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			_systemEncoding = getSystemEncoding();
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
 		}
 		_pointTypeSelector.init(_app.getTrackInfo());
+		_encodingsPanel.setVisible(!isSystemUtf8());
+		if (!isSystemUtf8()) {
+			_useSystemRadio.setText(I18nManager.getText("dialog.exportgpx.encoding.system")
+				+ " (" + (_systemEncoding == null ? "unknown" : _systemEncoding) + ")");
+		}
 		_dialog.setVisible(true);
 	}
 
@@ -109,7 +123,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		dialogPanel.setLayout(new BorderLayout());
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		// Make a central panel with the text boxes
+		// Make a panel for the name/desc text boxes
 		JPanel descPanel = new JPanel();
 		descPanel.setLayout(new GridLayout(2, 2));
 		descPanel.add(new JLabel(I18nManager.getText("dialog.exportgpx.name")));
@@ -132,6 +146,28 @@ public class GpxExporter extends GenericFunction implements Runnable
 		_copySourceCheckbox.setSelected(true);
 		checkPanel.add(_copySourceCheckbox);
 		mainPanel.add(checkPanel);
+		// panel for selecting character encoding
+		_encodingsPanel = new JPanel();
+		if (!isSystemUtf8())
+		{
+			// only add this panel if system isn't utf8 (or can't be identified yet)
+			_encodingsPanel.setBorder(BorderFactory.createCompoundBorder(
+				BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(4, 4, 4, 4)));
+			_encodingsPanel.setLayout(new BorderLayout());
+			_encodingsPanel.add(new JLabel(I18nManager.getText("dialog.exportgpx.encoding")), BorderLayout.NORTH);
+			JPanel radioPanel = new JPanel();
+			radioPanel.setLayout(new FlowLayout());
+			ButtonGroup radioGroup = new ButtonGroup();
+			_useSystemRadio = new JRadioButton(I18nManager.getText("dialog.exportgpx.encoding.system"));
+			_forceUtf8Radio = new JRadioButton(I18nManager.getText("dialog.exportgpx.encoding.utf8"));
+			radioGroup.add(_useSystemRadio);
+			radioGroup.add(_forceUtf8Radio);
+			radioPanel.add(_useSystemRadio);
+			radioPanel.add(_forceUtf8Radio);
+			_useSystemRadio.setSelected(true);
+			_encodingsPanel.add(radioPanel, BorderLayout.CENTER);
+			mainPanel.add(_encodingsPanel);
+		}
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
 
 		// close dialog if escape pressed
@@ -168,7 +204,8 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private void startExport()
 	{
 		// OK pressed, so check selections
-		if (!_pointTypeSelector.getAnythingSelected()) {
+		if (!_pointTypeSelector.getAnythingSelected())
+		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.notypesselected"),
 				I18nManager.getText("dialog.saveoptions.title"), JOptionPane.WARNING_MESSAGE);
 			return;
@@ -182,6 +219,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 			new Thread(this).start();
 		}
 	}
+
 
 	/**
 	 * Select a GPX file to save to
@@ -234,6 +272,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		return saveFile;
 	}
 
+
 	/**
 	 * Run method for controlling separate thread for exporting
 	 */
@@ -242,8 +281,11 @@ public class GpxExporter extends GenericFunction implements Runnable
 		OutputStreamWriter writer = null;
 		try
 		{
-			// normal writing to file
-			writer = new OutputStreamWriter(new FileOutputStream(_exportFile));
+			// normal writing to file - firstly specify UTF8 encoding if requested
+			if (_forceUtf8Radio != null && _forceUtf8Radio.isSelected())
+				writer = new OutputStreamWriter(new FileOutputStream(_exportFile), "UTF-8");
+			else
+				writer = new OutputStreamWriter(new FileOutputStream(_exportFile));
 			final boolean[] saveFlags = {_pointTypeSelector.getTrackpointsSelected(), _pointTypeSelector.getWaypointsSelected(),
 				_pointTypeSelector.getPhotopointsSelected(), _pointTypeSelector.getAudiopointsSelected(),
 				_pointTypeSelector.getJustSelection(), _timestampsCheckbox.isSelected()};
@@ -255,7 +297,10 @@ public class GpxExporter extends GenericFunction implements Runnable
 			writer.close();
 			// Store directory in config for later
 			Config.setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
+			// Add to recent file list
+			Config.getRecentFileList().addFile(new RecentFile(_exportFile, true));
 			// Show confirmation
+			UpdateMessageBroker.informSubscribers();
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 				 + " " + numPoints + " " + I18nManager.getText("confirm.save.ok2")
 				 + " " + _exportFile.getAbsolutePath());
@@ -300,7 +345,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		inWriter.write(getXmlHeaderString(inWriter));
 		inWriter.write(getGpxHeaderString(gpxCachers));
 		// Name field
-		String trackName = "PruneTrack";
+		String trackName = "GpsPruneTrack";
 		if (inName != null && !inName.equals(""))
 		{
 			trackName = inName;
@@ -310,7 +355,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		}
 		// Description field
 		inWriter.write("\t<desc>");
-		inWriter.write((inDesc != null && !inDesc.equals(""))?inDesc:"Export from Prune");
+		inWriter.write((inDesc != null && !inDesc.equals(""))?inDesc:"Export from GpsPrune");
 		inWriter.write("</desc>\n");
 
 		int i = 0;
@@ -333,21 +378,20 @@ public class GpxExporter extends GenericFunction implements Runnable
 		for (i=0; i<numPoints; i++)
 		{
 			point = inInfo.getTrack().getPoint(i);
-			if (!exportSelection || (i>=selStart && i<=selEnd)) {
+			if (!exportSelection || (i>=selStart && i<=selEnd))
+			{
 				// Make a wpt element for each waypoint
-				if (point.isWaypoint()) {
-					if (exportWaypoints)
-					{
-						String pointSource = (inUseCopy?getPointSource(gpxCachers, point):null);
-						if (pointSource != null) {
-							inWriter.write(pointSource);
-							inWriter.write('\n');
-						}
-						else {
-							exportWaypoint(point, inWriter, exportTimestamps, exportPhotos, exportAudios);
-						}
-						numSaved++;
+				if (point.isWaypoint() && exportWaypoints)
+				{
+					String pointSource = (inUseCopy?getPointSource(gpxCachers, point):null);
+					if (pointSource != null) {
+						inWriter.write(pointSource);
+						inWriter.write('\n');
 					}
+					else {
+						exportWaypoint(point, inWriter, exportTimestamps, exportPhotos, exportAudios);
+					}
+					numSaved++;
 				}
 			}
 		}
@@ -368,6 +412,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		inWriter.write("</gpx>\n");
 		return numSaved;
 	}
+
 
 	/**
 	 * Loop through the track outputting the relevant track points
@@ -451,7 +496,12 @@ public class GpxExporter extends GenericFunction implements Runnable
 		source = replaceGpxTags(source, "lon=\"", "\"", inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		source = replaceGpxTags(source, "<ele>", "</ele>", inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		source = replaceGpxTags(source, "<time>", "</time>", inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
-		if (inPoint.isWaypoint()) {source = replaceGpxTags(source, "<name>", "</name>", inPoint.getWaypointName());}  // only for waypoints
+		if (inPoint.isWaypoint())
+		{
+			source = replaceGpxTags(source, "<name>", "</name>", inPoint.getWaypointName());
+			source = replaceGpxTags(source, "<description>", "</description>",
+				XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION)));
+		}
 		// photo / audio links
 		if (source != null && (inPoint.hasMedia() || source.indexOf("</link>") > 0)) {
 			source = replaceMediaLinks(source, makeMediaLink(inPoint));
@@ -494,6 +544,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		return null;
 	}
 
+
 	/**
 	 * Replace the media tags in the given XML string
 	 * @param inSource source XML for point
@@ -531,6 +582,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		return null;
 	}
 
+
 	/**
 	 * Get the header string for the xml document including encoding
 	 * @param inWriter writer object
@@ -538,12 +590,65 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 */
 	private static String getXmlHeaderString(OutputStreamWriter inWriter)
 	{
+		return "<?xml version=\"1.0\" encoding=\"" + getEncoding(inWriter) + "\"?>\n";
+	}
+
+
+	/**
+	 * Get the default system encoding using a writer
+	 * @param inWriter writer object
+	 * @return string defining encoding
+	 */
+	private static String getEncoding(OutputStreamWriter inWriter)
+	{
 		String encoding = inWriter.getEncoding();
 		try {
 			encoding =  Charset.forName(encoding).name();
 		}
 		catch (Exception e) {} // ignore failure to find encoding
-		return "<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>\n";
+		// Hack to fix bugs with Mac OSX (which reports MacRoman but is actually UTF-8)
+		if (encoding == null || encoding.toLowerCase().startsWith("macroman")) {
+			encoding = "UTF-8";
+		}
+		return encoding;
+	}
+
+
+	/**
+	 * Use a temporary file to obtain the name of the default system encoding
+	 * @return name of default system encoding, or null if write failed
+	 */
+	private static String getSystemEncoding()
+	{
+		File tempFile = null;
+		String encoding = null;
+		try
+		{
+			tempFile = File.createTempFile("prune", null);
+			OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(tempFile));
+			encoding = getEncoding(writer);
+			writer.close();
+		}
+		catch (IOException e) {} // value stays null
+		// Delete temp file
+		if (tempFile != null && tempFile.exists()) {
+			if (!tempFile.delete()) {
+				System.err.println("Cannot delete temp file: " + tempFile.getAbsolutePath());
+			}
+		}
+		// If writing failed (eg permissions) then just ask system for default
+		if (encoding == null) encoding = Charset.defaultCharset().name();
+		return encoding;
+	}
+
+	/**
+	 * Creates temp file if necessary to check system encoding
+	 * @return true if system uses UTF-8 by default
+	 */
+	private static boolean isSystemUtf8()
+	{
+		if (_systemEncoding == null) _systemEncoding = getSystemEncoding();
+		return (_systemEncoding != null && _systemEncoding.toUpperCase().equals("UTF-8"));
 	}
 
 	/**
@@ -565,6 +670,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		}
 		return gpxHeader + "\n";
 	}
+
 
 	/**
 	 * Export the specified waypoint into the file
@@ -602,6 +708,14 @@ public class GpxExporter extends GenericFunction implements Runnable
 		inWriter.write("\t\t<name>");
 		inWriter.write(inPoint.getWaypointName().trim());
 		inWriter.write("</name>\n");
+		// description, if any
+		String desc = XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION));
+		if (desc != null && !desc.equals(""))
+		{
+			inWriter.write("\t\t<description>");
+			inWriter.write(desc);
+			inWriter.write("</description>\n");
+		}
 		// Media links, if any
 		if (inPhoto && inPoint.getPhoto() != null)
 		{
@@ -672,6 +786,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		inWriter.write("</trkpt>\n");
 	}
 
+
 	/**
 	 * Make the xml for the media link(s)
 	 * @param inPoint point to generate text for
@@ -680,7 +795,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private static String makeMediaLink(DataPoint inPoint)
 	{
 		Photo photo = inPoint.getPhoto();
-		AudioFile audio = inPoint.getAudio();
+		AudioClip audio = inPoint.getAudio();
 		if (photo == null && audio == null) {
 			return null;
 		}
@@ -699,8 +814,15 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * @param inMedia media item, either photo or audio
 	 * @return link for this media
 	 */
-	private static String makeMediaLink(MediaFile inMedia)
+	private static String makeMediaLink(MediaObject inMedia)
 	{
-		return "<link href=\"" + inMedia.getFile().getAbsolutePath() + "\"><text>" + inMedia.getFile().getName() + "</text></link>";
+		if (inMedia.getFile() != null)
+			// file link
+			return "<link href=\"" + inMedia.getFile().getAbsolutePath() + "\"><text>" + inMedia.getName() + "</text></link>";
+		if (inMedia.getUrl() != null)
+			// url link
+			return "<link href=\"" + inMedia.getUrl() + "\"><text>" + inMedia.getName() + "</text></link>";
+		// No link available, must have been loaded from zip file - no link possible
+		return "";
 	}
 }

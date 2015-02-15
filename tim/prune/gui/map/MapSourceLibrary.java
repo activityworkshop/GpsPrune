@@ -41,8 +41,8 @@ public abstract class MapSourceLibrary
 		_sourceList.add(new OsmMapSource("Mapnik", "http://tile.openstreetmap.org/"));
 		_sourceList.add(new OsmMapSource("Osma", "http://tah.openstreetmap.org/Tiles/tile/"));
 		_sourceList.add(new OsmMapSource("Cyclemap", "http://andy.sandbox.cloudmade.com/tiles/cycle/"));
-		_sourceList.add(new OsmMapSource("Reitkarte", "http://topo.geofabrik.de/hills/",
-			"http://topo.openstreetmap.de/topo/", 18));
+		_sourceList.add(new OsmMapSource("Reitkarte", "http://wanderreitkarte.de/hills/",
+			"http://topo2.wanderreitkarte.de/topo/", 18));
 		_sourceList.add(new MffMapSource("Mapsforfree", "http://maps-for-free.com/layer/relief/", ".jpg",
 			"http://maps-for-free.com/layer/water/", ".gif", 11));
 		_sourceList.add(new CloudmadeMapSource("Pale Dawn", "998", 18));

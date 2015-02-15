@@ -1,7 +1,7 @@
 package tim.prune.undo;
 
 import tim.prune.I18nManager;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.DataPoint;
 import tim.prune.data.TrackInfo;
 
@@ -60,9 +60,9 @@ public class UndoCorrelateAudios implements UndoOperation
 		// restore audio association
 		for (int i=0; i<_audioPoints.length; i++)
 		{
-			AudioFile audio = inTrackInfo.getAudioList().getAudio(i);
+			AudioClip audio = inTrackInfo.getAudioList().getAudio(i);
 			// Only need to look at connected ones, since correlation wouldn't disconnect
-			if (audio.getCurrentStatus() == AudioFile.Status.CONNECTED)
+			if (audio.getCurrentStatus() == AudioClip.Status.CONNECTED)
 			{
 				DataPoint prevPoint = _audioPoints[i];
 				DataPoint currPoint = audio.getDataPoint();

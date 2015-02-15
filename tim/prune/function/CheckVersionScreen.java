@@ -11,12 +11,12 @@ import javax.swing.JOptionPane;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
-import tim.prune.GpsPruner;
+import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
 import tim.prune.function.browser.BrowserLauncher;
 
 /**
- * Class to check the version of Prune
+ * Class to check the version of GpsPrune
  * and show an appropriate dialog
  */
 public class CheckVersionScreen extends GenericFunction
@@ -42,7 +42,7 @@ public class CheckVersionScreen extends GenericFunction
 	 */
 	public void begin()
 	{
-		final String filePathStart = "http://activityworkshop.net/software/prune/prune_versioncheck_";
+		final String filePathStart = "http://activityworkshop.net/software/gpsprune/gpsprune_versioncheck_";
 		final String filePathEnd = ".txt";
 		String latestVer = null;
 		String nextVersion = null;
@@ -51,7 +51,7 @@ public class CheckVersionScreen extends GenericFunction
 		try
 		{
 			// Load properties from the url on the server
-			InputStream inStream = new URL(filePathStart + GpsPruner.VERSION_NUMBER + filePathEnd).openStream();
+			InputStream inStream = new URL(filePathStart + GpsPrune.VERSION_NUMBER + filePathEnd).openStream();
 			props.load(inStream);
 
 			// Extract the three fields we want, ignore others
@@ -68,7 +68,7 @@ public class CheckVersionScreen extends GenericFunction
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.checkversion.error"),
 				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
 		}
-		else if (latestVer.equals(GpsPruner.VERSION_NUMBER))
+		else if (latestVer.equals(GpsPrune.VERSION_NUMBER))
 		{
 			// Version on the server is the same as this one
 			String displayMessage = I18nManager.getText("dialog.checkversion.uptodate");
@@ -106,7 +106,7 @@ public class CheckVersionScreen extends GenericFunction
 				== JOptionPane.YES_OPTION)
 			{
 				// User selected to launch home page
-				BrowserLauncher.launchBrowser("http://activityworkshop.net/software/prune/download.html");
+				BrowserLauncher.launchBrowser("http://activityworkshop.net/software/gpsprune/download.html");
 			}
 		}
 	}

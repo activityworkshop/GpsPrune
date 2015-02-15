@@ -68,28 +68,29 @@ public class DiskTileCacher implements Runnable
 	 * @param inBasePath base path to disk cache
 	 * @param inTilePath relative path to this tile
 	 * @param inObserver observer to inform when load complete
+	 * @return true if successful, false for failure
 	 */
-	public static void saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver)
+	public static boolean saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver)
 	{
-		if (inBasePath == null || inTilePath == null) {return;}
+		if (inBasePath == null || inTilePath == null) {return false;}
 		// save file if possible
 		File basePath = new File(inBasePath);
 		if (!basePath.exists() || !basePath.isDirectory() || !basePath.canWrite()) {
-			//System.err.println("Can't write");
 			// Can't write to base path
-			return;
+			return false;
 		}
 		File tileFile = new File(basePath, inTilePath);
 		// Check if this file is already being loaded
-		if (!isBeingLoaded(tileFile))
+		if (isBeingLoaded(tileFile)) {return true;}
+
+		File dir = tileFile.getParentFile();
+		// Start a new thread to load the image if necessary
+		if ((dir.exists() || dir.mkdirs()) && dir.canWrite())
 		{
-			File dir = tileFile.getParentFile();
-			// Start a new thread to load the image if necessary
-			if (dir.exists() || dir.mkdirs())
-			{
-				new DiskTileCacher(inUrl, tileFile, inObserver);
-			}
+			new DiskTileCacher(inUrl, tileFile, inObserver);
+			return true;
 		}
+		return false; // couldn't write the file
 	}
 
 	/**

@@ -194,17 +194,21 @@ public class RearrangePhotosFunction extends GenericFunction
 	private static void sortPhotos(DataPoint[] inPhotos, boolean inSortByFile)
 	{
 		Comparator<DataPoint> comparator = null;
-		if (inSortByFile) {
+		if (inSortByFile)
+		{
 			// sort by filename
 			comparator = new Comparator<DataPoint>() {
 				public int compare(DataPoint inP1, DataPoint inP2) {
 					if (inP2 == null) return -1; // all nulls at end
 					if (inP1 == null) return 1;
+					if (inP1.getPhoto().getFile() == null || inP2.getPhoto().getFile() == null)
+						return inP1.getPhoto().getName().compareTo(inP2.getPhoto().getName());
 					return inP1.getPhoto().getFile().compareTo(inP2.getPhoto().getFile());
 				}
 			};
 		}
-		else {
+		else
+		{
 			// sort by photo timestamp
 			comparator = new Comparator<DataPoint>() {
 				public int compare(DataPoint inP1, DataPoint inP2) {

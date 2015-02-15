@@ -2,7 +2,7 @@ package tim.prune.undo;
 
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.DataPoint;
 import tim.prune.data.TrackInfo;
 
@@ -12,7 +12,7 @@ import tim.prune.data.TrackInfo;
 public class UndoDeleteAudio implements UndoOperation
 {
 	private int _audioIndex = -1;
-	private AudioFile _audio = null;
+	private AudioClip _audio = null;
 	private int _pointIndex = -1;
 	private DataPoint _point = null;
 
@@ -24,7 +24,7 @@ public class UndoDeleteAudio implements UndoOperation
 	 * @param inPoint data point
 	 * @param inPointIndex index number of point within track
 	 */
-	public UndoDeleteAudio(AudioFile inAudio, int inAudioIndex, DataPoint inPoint, int inPointIndex)
+	public UndoDeleteAudio(AudioClip inAudio, int inAudioIndex, DataPoint inPoint, int inPointIndex)
 	{
 		_audio = inAudio;
 		_audioIndex = inAudioIndex;
@@ -37,7 +37,7 @@ public class UndoDeleteAudio implements UndoOperation
 	 * @return description of operation including filename
 	 */
 	public String getDescription() {
-		return I18nManager.getText("undo.removeaudio") + " " + _audio.getFile().getName();
+		return I18nManager.getText("undo.removeaudio") + " " + _audio.getName();
 	}
 
 

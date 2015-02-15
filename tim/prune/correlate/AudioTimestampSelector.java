@@ -14,7 +14,7 @@ import tim.prune.I18nManager;
 
 /**
  * GUI element to allow the selection of timestamp options
- * for audio file correlation
+ * for audio clip correlation
  */
 public class AudioTimestampSelector extends JPanel
 {

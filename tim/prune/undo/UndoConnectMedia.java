@@ -2,7 +2,7 @@ package tim.prune.undo;
 
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
@@ -62,7 +62,7 @@ public class UndoConnectMedia implements UndoOperation
 		if (_audioFilename != null)
 		{
 			// Disconnect audio
-			AudioFile audio = _point.getAudio();
+			AudioClip audio = _point.getAudio();
 			if (audio != null)
 			{
 				_point.setAudio(null);

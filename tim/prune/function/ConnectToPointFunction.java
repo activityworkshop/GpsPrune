@@ -5,14 +5,14 @@ import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
 import tim.prune.undo.UndoConnectMedia;
 import tim.prune.undo.UndoOperation;
 
 /**
- * Function to connect either a photo or an audio file to the current point
+ * Function to connect either a photo or an audio clip to the current point
  */
 public class ConnectToPointFunction extends GenericFunction
 {
@@ -38,7 +38,7 @@ public class ConnectToPointFunction extends GenericFunction
 	{
 		Photo photo = _app.getTrackInfo().getCurrentPhoto();
 		DataPoint point = _app.getTrackInfo().getCurrentPoint();
-		AudioFile audio = _app.getTrackInfo().getCurrentAudio();
+		AudioClip audio = _app.getTrackInfo().getCurrentAudio();
 		boolean connectPhoto = (point != null && photo != null && point.getPhoto() == null);
 		boolean connectAudio = (point != null && audio != null && point.getAudio() == null);
 
@@ -46,8 +46,8 @@ public class ConnectToPointFunction extends GenericFunction
 			// TODO: Let user choose whether to connect photo/audio or both
 		}
 		// Make undo object
-		UndoOperation undo = new UndoConnectMedia(point, connectPhoto?photo.getFile().getName():null,
-			connectAudio?audio.getFile().getName():null);
+		UndoOperation undo = new UndoConnectMedia(point, connectPhoto?photo.getName():null,
+			connectAudio?audio.getName():null);
 		// Connect the media
 		if (connectPhoto) {
 			photo.setDataPoint(point);

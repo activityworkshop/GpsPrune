@@ -3,12 +3,14 @@ package tim.prune.function.gpsies;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import tim.prune.App;
+import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
 import tim.prune.load.xml.XmlFileLoader;
 import tim.prune.load.xml.ZipFileLoader;
@@ -23,6 +25,8 @@ public class GetGpsiesFunction extends GenericDownloaderFunction
 	private static final int RESULTS_PER_PAGE = 20;
 	/** Maximum number of results to get */
 	private static final int MAX_RESULTS = 60;
+	/** New API key (specific to this program) */
+	private static final String GPSIES_API_KEY = "oumgvvbckiwpvsnb";
 
 
 	/**
@@ -69,16 +73,19 @@ public class GetGpsiesFunction extends GenericDownloaderFunction
 		// Loop for each page of the results
 		do
 		{
-			String urlString = "http://www.gpsies.com/api.do?BBOX=" +
+			String urlString = "http://ws.gpsies.com/api.do?BBOX=" +
 				coords[1] + "," + coords[0] + "," + coords[3] + "," + coords[2] +
-				"&limit=" + RESULTS_PER_PAGE + "&resultPage=" + currPage;
+				"&limit=" + RESULTS_PER_PAGE + "&resultPage=" + currPage +
+				"&key=" + GPSIES_API_KEY;
 			// Parse the returned XML with a special handler
 			GpsiesXmlHandler xmlHandler = new GpsiesXmlHandler();
 			try
 			{
 				url = new URL(urlString);
 				SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-				inStream = url.openStream();
+				URLConnection conn = url.openConnection();
+				conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
+				inStream = conn.getInputStream();
 				saxParser.parse(inStream, xmlHandler);
 			}
 			catch (Exception e) {

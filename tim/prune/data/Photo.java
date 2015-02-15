@@ -8,14 +8,16 @@ import javax.swing.ImageIcon;
 /**
  * Class to represent a photo and link to DataPoint
  */
-public class Photo extends MediaFile
+public class Photo extends MediaObject
 {
 	/** Size of original image */
 	private Dimension _size = null;
 	/** rotation flag (clockwise from 0 to 3) */
 	private int _rotation = 0;
 	// TODO: Need to store caption for image?
-	// thumbnail for image (from exif)
+	/** Bearing, if any */
+	private double _bearing = -1.0;
+	/** thumbnail for image (from exif) */
 	private byte[] _exifThumbnail = null;
 
 	/**
@@ -28,11 +30,26 @@ public class Photo extends MediaFile
 	}
 
 	/**
+	 * Constructor using data, eg from zip file or URL
+	 * @param inData data as byte array
+	 * @param inName name of file from which it came
+	 * @param inUrl url from which it came (or null)
+	 */
+	public Photo(byte[] inData, String inName, String inUrl)
+	{
+		super(inData, inName, inUrl);
+	}
+
+	/**
 	 * Calculate the size of the image (slow)
 	 */
 	private void calculateSize()
 	{
-		ImageIcon icon = new ImageIcon(_file.getAbsolutePath());
+		ImageIcon icon = null;
+		if (_file != null)
+			icon = new ImageIcon(_file.getAbsolutePath());
+		else
+			icon = new ImageIcon(_data);
 		int width = icon.getIconWidth();
 		int height = icon.getIconHeight();
 		if (width > 0 && height > 0)
@@ -57,11 +74,7 @@ public class Photo extends MediaFile
 	 */
 	public int getWidth()
 	{
-		if (_size == null)
-		{
-			calculateSize();
-			if (_size == null) {return -1;}
-		}
+		if (getSize() == null) {return -1;}
 		return _size.width;
 	}
 
@@ -70,11 +83,7 @@ public class Photo extends MediaFile
 	 */
 	public int getHeight()
 	{
-		if (_size == null)
-		{
-			calculateSize();
-			if (_size == null) {return -1;}
-		}
+		if (getSize() == null) {return -1;}
 		return _size.height;
 	}
 
@@ -129,5 +138,31 @@ public class Photo extends MediaFile
 	public int getRotationDegrees()
 	{
 		return _rotation * 90;
+	}
+
+	/**
+	 * @return a new image icon for the whole image
+	 */
+	public ImageIcon createImageIcon()
+	{
+		if (_file != null) {
+			return new ImageIcon(_file.getAbsolutePath());
+		}
+		if (_data != null) {
+			return new ImageIcon(_data);
+		}
+		return null;
+	}
+
+	/**
+	 * @param inValue bearing in degrees, 0 to 360
+	 */
+	public void setBearing(double inValue) {
+		_bearing = inValue;
+	}
+
+	/** @return bearing in degrees */
+	public double getBearing() {
+		return _bearing;
 	}
 }

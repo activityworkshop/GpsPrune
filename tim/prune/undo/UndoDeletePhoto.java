@@ -38,7 +38,7 @@ public class UndoDeletePhoto implements UndoOperation
 	 */
 	public String getDescription()
 	{
-		String desc = I18nManager.getText("undo.removephoto") + " " + _photo.getFile().getName();
+		String desc = I18nManager.getText("undo.removephoto") + " " + _photo.getName();
 		return desc;
 	}
 

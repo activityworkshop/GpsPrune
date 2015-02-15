@@ -22,7 +22,7 @@ public class PhotoTableEntry
 		_photo = inPhoto;
 		if (inPhoto != null)
 		{
-			_photoName = inPhoto.getFile().getName();
+			_photoName = inPhoto.getName();
 			_status = getStatusString(inPhoto.getOriginalStatus(), inPhoto.getCurrentStatus());
 		}
 	}

@@ -1,6 +1,6 @@
 package tim.prune.correlate;
 
-import tim.prune.data.MediaFile;
+import tim.prune.data.MediaObject;
 import tim.prune.data.TimeDifference;
 
 /**
@@ -9,7 +9,7 @@ import tim.prune.data.TimeDifference;
  */
 public class MediaSelectionTableRow
 {
-	private MediaFile _media = null;
+	private MediaObject _media = null;
 	private TimeDifference _timeDiff = null;
 
 	/**
@@ -17,7 +17,7 @@ public class MediaSelectionTableRow
 	 * @param inMedia media item
 	 * @param inNumSecs number of seconds time difference as long
 	 */
-	public MediaSelectionTableRow(MediaFile inMedia, long inNumSecs)
+	public MediaSelectionTableRow(MediaObject inMedia, long inNumSecs)
 	{
 		_media = inMedia;
 		_timeDiff = new TimeDifference(inNumSecs);
@@ -26,7 +26,7 @@ public class MediaSelectionTableRow
 	/**
 	 * @return Media object
 	 */
-	public MediaFile getMedia() {
+	public MediaObject getMedia() {
 		return _media;
 	}
 

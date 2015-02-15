@@ -1,20 +1,13 @@
 package tim.prune.load;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.TreeSet;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
@@ -27,13 +20,14 @@ import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Photo;
 import tim.prune.data.Timestamp;
+import tim.prune.function.Cancellable;
 import tim.prune.jpeg.ExifGateway;
 import tim.prune.jpeg.JpegData;
 
 /**
  * Class to manage the loading of Jpegs and dealing with the GPS data from them
  */
-public class JpegLoader implements Runnable
+public class JpegLoader implements Runnable, Cancellable
 {
 	private App _app = null;
 	private JFrame _parentFrame = null;
@@ -42,8 +36,7 @@ public class JpegLoader implements Runnable
 	private JCheckBox _subdirCheckbox = null;
 	private JCheckBox _noExifCheckbox = null;
 	private JCheckBox _outsideAreaCheckbox = null;
-	private JDialog _progressDialog   = null;
-	private JProgressBar _progressBar = null;
+	private MediaLoadProgressDialog _progressDialog = null;
 	private int[] _fileCounts = null;
 	private boolean _cancelled = false;
 	private LatLonRectangle _trackRectangle = null;
@@ -101,45 +94,16 @@ public class JpegLoader implements Runnable
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
 			// Bring up dialog before starting
-			if (_progressDialog == null) {
-				createProgressDialog();
-			}
-			// reset dialog and show it
-			_progressBar.setValue(0);
-			_progressBar.setString("");
-			_progressDialog.setVisible(true);
+			_progressDialog = new MediaLoadProgressDialog(_parentFrame, this);
+			_progressDialog.show();
 			// start thread for processing
 			new Thread(this).start();
 		}
 	}
 
-
-	/**
-	 * Create the dialog to show the progress
-	 */
-	private void createProgressDialog()
-	{
-		_progressDialog = new JDialog(_parentFrame, I18nManager.getText("dialog.jpegload.progress.title"));
-		_progressDialog.setLocationRelativeTo(_parentFrame);
-		_progressBar = new JProgressBar(0, 100);
-		_progressBar.setValue(0);
-		_progressBar.setStringPainted(true);
-		_progressBar.setString("");
-		JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-		panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-		panel.add(new JLabel(I18nManager.getText("dialog.jpegload.progress")));
-		panel.add(_progressBar);
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_cancelled = true;
-			}
-		});
-		panel.add(cancelButton);
-		_progressDialog.getContentPane().add(panel);
-		_progressDialog.pack();
+	/** Cancel */
+	public void cancel() {
+		_cancelled = true;
 	}
 
 
@@ -155,14 +119,12 @@ public class JpegLoader implements Runnable
 		// Loop recursively over selected files/directories to count files
 		int numFiles = countFileList(files, true, _subdirCheckbox.isSelected());
 		// Set up the progress bar for this number of files
-		_progressBar.setMaximum(numFiles);
-		_progressBar.setValue(0);
+		_progressDialog.showProgress(0, numFiles);
 		_cancelled = false;
 
 		// Process the files recursively and build lists of photos
 		processFileList(files, true, _subdirCheckbox.isSelected());
-		_progressDialog.setVisible(false);
-		_progressDialog.dispose(); // Sometimes dialog doesn't disappear without this dispose
+		_progressDialog.close();
 		if (_cancelled) {return;}
 
 		if (_fileCounts[0] == 0)
@@ -196,29 +158,27 @@ public class JpegLoader implements Runnable
 	 */
 	private void processFileList(File[] inFiles, boolean inFirstDir, boolean inDescend)
 	{
-		if (inFiles != null)
+		if (inFiles == null) return;
+		// Loop over elements in array
+		for (int i=0; i<inFiles.length && !_cancelled; i++)
 		{
-			// Loop over elements in array
-			for (int i=0; i<inFiles.length && !_cancelled; i++)
+			File file = inFiles[i];
+			if (file.exists() && file.canRead())
 			{
-				File file = inFiles[i];
-				if (file.exists() && file.canRead())
+				// Check whether it's a file or a directory
+				if (file.isFile())
 				{
-					// Check whether it's a file or a directory
-					if (file.isFile())
-					{
-						processFile(file);
-					}
-					else if (file.isDirectory() && (inFirstDir || inDescend))
-					{
-						// Always process first directory,
-						// only process subdirectories if checkbox selected
-						File[] files = file.listFiles();
-						processFileList(files, false, inDescend);
-					}
+					processFile(file);
 				}
-				// if file doesn't exist or isn't readable - ignore
+				else if (file.isDirectory() && (inFirstDir || inDescend))
+				{
+					// Always process first directory,
+					// only process subdirectories if checkbox selected
+					File[] files = file.listFiles();
+					processFileList(files, false, inDescend);
+				}
 			}
+			// if file doesn't exist or isn't readable - ignore
 		}
 	}
 
@@ -231,9 +191,7 @@ public class JpegLoader implements Runnable
 	{
 		// Update progress bar
 		_fileCounts[0]++; // file found
-		_progressBar.setValue(_fileCounts[0]);
-		_progressBar.setString("" + _fileCounts[0] + " / " + _progressBar.getMaximum());
-		_progressBar.repaint();
+		_progressDialog.showProgress(_fileCounts[0], -1);
 
 		// Check whether filename corresponds with accepted filenames
 		if (!_fileFilter.acceptFilename(inFile.getName())) {return;}
@@ -289,6 +247,8 @@ public class JpegLoader implements Runnable
 			photo.setExifThumbnail(jpegData.getThumbnailImage());
 			// Also extract orientation tag for setting rotation state of photo
 			photo.setRotation(jpegData.getRequiredRotation());
+			// Set bearing, if any
+			photo.setBearing(jpegData.getBearing());
 		}
 		// Use file timestamp if exif timestamp isn't available
 		if (timestamp == null) {

@@ -9,6 +9,7 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.Altitude;
 import tim.prune.data.SourceInfo;
+import tim.prune.load.MediaLinkInfo;
 
 /**
  * Class to handle the loading of gzipped xml files
@@ -48,15 +49,18 @@ public class GzipFileLoader
 			if (handler == null) {
 				_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");
 			}
-			else {
+			else
+			{
 				// Send back to app
 				SourceInfo sourceInfo = new SourceInfo(inFile,
 					(handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
 				_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-					Altitude.Format.METRES, sourceInfo, handler.getTrackNameList(), handler.getLinkArray());
+					Altitude.Format.METRES, sourceInfo, handler.getTrackNameList(),
+					new MediaLinkInfo(inFile, handler.getLinkArray()));
 			}
 		}
-		catch (Exception e) {
+		catch (Exception e)
+		{
 			// Error occurred, could be a non-xml file borking the parser
 			_app.showErrorMessageNoLookup("error.load.dialogtitle",
 				I18nManager.getText("error.load.othererror") + " " + e.getClass().getName());

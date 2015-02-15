@@ -46,6 +46,19 @@ public class Track
 		_scaled = false;
 	}
 
+	/**
+	 * Constructor using fields and points from another Track
+	 * @param inFieldList Field list from another Track object
+	 * @param inPoints (edited) point array
+	 */
+	public Track(FieldList inFieldList, DataPoint[] inPoints)
+	{
+		_masterFieldList = inFieldList;
+		_dataPoints = inPoints;
+		if (_dataPoints == null) _dataPoints = new DataPoint[0];
+		_numPoints = _dataPoints.length;
+		_scaled = false;
+	}
 
 	/**
 	 * Load method, for initialising and reinitialising data
@@ -966,6 +979,7 @@ public class Track
 	 */
 	public DataPoint getPreviousTrackPoint(int inStartIndex)
 	{
+		// end index is given as _numPoints but actually it just counts down to -1
 		return getNextTrackPoint(inStartIndex, _numPoints, false);
 	}
 
@@ -1177,5 +1191,19 @@ public class Track
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * @param inPoint point to check
+	 * @return true if this track contains the given point
+	 */
+	public boolean containsPoint(DataPoint inPoint)
+	{
+		if (inPoint == null) return false;
+		for (int i=0; i < getNumPoints(); i++)
+		{
+			if (getPoint(i) == inPoint) return true;
+		}
+		return false; // not found
 	}
 }

@@ -45,11 +45,11 @@ public class SetLanguage extends GenericFunction
 		"espa\u00F1ol", "fran\u00E7ais", "italiano", "magyar", "nederlands", "polski",
 		"portugu\u00EAs", "\u4e2d\u6587 (chinese)", "\u65E5\u672C\u8A9E (japanese)",
 		"\uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean)", "schwiizerd\u00FC\u00FCtsch", "t\u00FCrk\u00E7e",
-		"rom\u00E2n\u0103", "afrikaans", "bahasa indonesia", "farsi"
+		"rom\u00E2n\u0103", "afrikaans", "bahasa indonesia"
 	};
 	/** Associated language codes (must be in same order as names!) */
 	private static final String[] LANGUAGE_CODES = {"cz", "de", "en", "es", "fr", "it", "hu",
-		"nl", "pl", "pt", "zh", "ja", "ko", "de_ch", "tr", "ro", "af", "in", "fa"
+		"nl", "pl", "pt", "zh", "ja", "ko", "de_ch", "tr", "ro", "af", "in"
 	};
 
 
@@ -327,8 +327,10 @@ public class SetLanguage extends GenericFunction
 	 */
 	private void showEndMessage()
 	{
+		final String messageKey = Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS)?
+			"dialog.setlanguage.endmessagewithautosave":"dialog.setlanguage.endmessage";
 		JOptionPane.showMessageDialog(_parentFrame,
-			I18nManager.getText("dialog.setlanguage.endmessage"),
+			I18nManager.getText(messageKey),
 			I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
 	}
 }

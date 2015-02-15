@@ -5,7 +5,7 @@ import tim.prune.FunctionLibrary;
 import tim.prune.GenericFunction;
 
 /**
- * Class to stop playing the current audio file
+ * Class to stop playing the current audio clip
  */
 public class StopAudioFunction extends GenericFunction
 {

@@ -38,8 +38,11 @@ public class WaypointListModel extends AbstractListModel
 	 */
 	public Object getElementAt(int inIndex)
 	{
-		if (inIndex < 0 || inIndex >= getSize()) return "";
-		return _waypoints.get(inIndex).getWaypointName();
+		DataPoint p = null;
+		if (inIndex < 0 || inIndex >= getSize()
+			|| _waypoints == null || (p = _waypoints.get(inIndex)) == null)
+			return "";
+		return p.getWaypointName();
 	}
 
 	/**

@@ -24,6 +24,7 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
+import tim.prune.function.cache.ManageCacheFunction;
 
 /**
  * Class to show the popup window for setting the path to disk cache
@@ -34,7 +35,7 @@ public class DiskCacheConfig extends GenericFunction
 	private JCheckBox _cacheCheckbox = null;
 	private JTextField _cacheDirBox = null;
 	private JButton _browseButton = null;
-	private JButton _okButton = null;
+	private JButton _okButton = null, _manageButton = null;
 	private boolean _initialCheckState = false;
 	private String _initialCacheDir = null;
 
@@ -67,7 +68,7 @@ public class DiskCacheConfig extends GenericFunction
 		_cacheCheckbox = new JCheckBox(I18nManager.getText("dialog.diskcache.save"));
 		_cacheCheckbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				enableOk();
+				enableButtons();
 			}
 		});
 		topPanel.add(_cacheCheckbox);
@@ -75,12 +76,12 @@ public class DiskCacheConfig extends GenericFunction
 		// dir panel
 		JPanel dirPanel = new JPanel();
 		dirPanel.setLayout(new BorderLayout());
-		dirPanel.add(new JLabel(I18nManager.getText("dialog.diskcache.dir")), BorderLayout.WEST);
+		dirPanel.add(new JLabel(I18nManager.getText("dialog.diskcache.dir") + " : "), BorderLayout.WEST);
 		_cacheDirBox = new JTextField(24);
 		_cacheDirBox.addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent arg0) {
 				super.keyReleased(arg0);
-				enableOk();
+				enableButtons();
 			}
 		});
 		dirPanel.add(_cacheDirBox, BorderLayout.CENTER);
@@ -91,20 +92,23 @@ public class DiskCacheConfig extends GenericFunction
 			}
 		});
 		dirPanel.add(_browseButton, BorderLayout.EAST);
-		dialogPanel.add(dirPanel, BorderLayout.CENTER);
+		// holder panel so it doesn't expand vertically
+		JPanel dirHolderPanel = new JPanel();
+		dirHolderPanel.setLayout(new BorderLayout());
+		dirHolderPanel.add(dirPanel, BorderLayout.NORTH);
+		dialogPanel.add(dirHolderPanel, BorderLayout.CENTER);
 
-		// Cancel button at the bottom
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		// OK, Cancel buttons at the bottom right
+		JPanel buttonPanelr = new JPanel();
+		buttonPanelr.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener()
-		{
+		_okButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				finish();
 			}
 		});
-		buttonPanel.add(_okButton);
+		buttonPanelr.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -112,17 +116,36 @@ public class DiskCacheConfig extends GenericFunction
 				_dialog.dispose();
 			}
 		});
-		buttonPanel.add(cancelButton);
+		buttonPanelr.add(cancelButton);
+
+		// Manage button at the bottom left
+		JPanel buttonPanell = new JPanel();
+		buttonPanell.setLayout(new FlowLayout(FlowLayout.LEFT));
+		_manageButton = new JButton(I18nManager.getText("button.manage"));
+		_manageButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				finish();
+				new ManageCacheFunction(_app).begin();
+			}
+		});
+		buttonPanell.add(_manageButton);
+		// Put them together
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.setLayout(new BorderLayout());
+		buttonPanel.add(buttonPanelr, BorderLayout.EAST);
+		buttonPanel.add(buttonPanell, BorderLayout.WEST);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
 	}
 
 	/**
-	 * Enable or disable the ok button according to what's changed
+	 * Enable or disable the buttons according to what's changed
 	 */
-	private void enableOk()
+	private void enableButtons()
 	{
-		boolean checkState = _cacheCheckbox.isSelected();
+		final boolean checkState = _cacheCheckbox.isSelected();
+		final String path = _cacheDirBox.getText();
 		_cacheDirBox.setEditable(checkState);
 		_browseButton.setEnabled(checkState);
 		boolean ok = false;
@@ -131,9 +154,9 @@ public class DiskCacheConfig extends GenericFunction
 		else {
 			// If checkbox has been switched off then enable
 			if (!checkState) {ok = true;}
-			else {
+			else
+			{
 				// checkbox is on, check value
-				String path = _cacheDirBox.getText();
 				if (path.equals("") || (_initialCacheDir != null && path.equals(_initialCacheDir))) {
 					// Value blank or same as before
 					ok = false;
@@ -144,6 +167,14 @@ public class DiskCacheConfig extends GenericFunction
 			}
 		}
 		_okButton.setEnabled(ok);
+		// Manage button needs a valid cache
+		boolean cacheDirGood = false;
+		if (checkState && !path.equals(""))
+		{
+			File dir = new File(path);
+			cacheDirGood = dir.exists() && dir.canRead() && dir.isDirectory();
+		}
+		_manageButton.setEnabled(cacheDirGood);
 	}
 
 	/**
@@ -162,7 +193,7 @@ public class DiskCacheConfig extends GenericFunction
 		String currPath = Config.getConfigString(Config.KEY_DISK_CACHE);
 		_cacheCheckbox.setSelected(currPath != null);
 		_cacheDirBox.setText(currPath==null?"":currPath);
-		enableOk();
+		enableButtons();
 		// Remember current state
 		_initialCheckState = _cacheCheckbox.isSelected();
 		_dialog.setVisible(true);
@@ -182,7 +213,7 @@ public class DiskCacheConfig extends GenericFunction
 		{
 			_cacheDirBox.setText(chooser.getSelectedFile().getAbsolutePath());
 		}
-		enableOk();
+		enableButtons();
 	}
 
 	/**

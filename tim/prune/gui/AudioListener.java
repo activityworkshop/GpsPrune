@@ -10,7 +10,7 @@ import tim.prune.function.PlayAudioFunction;
 
 /**
  * Class to update the supplied progress bar on the basis of
- * the currently playing audio file (if any)
+ * the currently playing audio clip (if any)
  */
 public class AudioListener implements Runnable, ActionListener
 {

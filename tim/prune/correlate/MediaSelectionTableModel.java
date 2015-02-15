@@ -3,7 +3,7 @@ package tim.prune.correlate;
 import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 import tim.prune.I18nManager;
-import tim.prune.data.MediaFile;
+import tim.prune.data.MediaObject;
 
 
 /**
@@ -82,7 +82,7 @@ public class MediaSelectionTableModel extends AbstractTableModel
 	{
 		// MAYBE: only show time of photos (not date) if dates all identical
 		MediaSelectionTableRow row = _list.get(inRowIndex);
-		if (inColumnIndex == 0) return row.getMedia().getFile().getName();
+		if (inColumnIndex == 0) return row.getMedia().getName();
 		else if (inColumnIndex == 1) return row.getMedia().getTimestamp().getText();
 		else if (inColumnIndex == 2) return row.getTimeDiff().getDescription();
 		return (row.getTimeDiff().getIsPositive() ? I18nManager.getText("dialog.about.yes") :
@@ -102,7 +102,7 @@ public class MediaSelectionTableModel extends AbstractTableModel
 	 * @param inMedia item to add
 	 * @param inTimeDiff time difference
 	 */
-	public void addMedia(MediaFile inMedia, long inTimeDiff)
+	public void addMedia(MediaObject inMedia, long inTimeDiff)
 	{
 		_list.add(new MediaSelectionTableRow(inMedia, inTimeDiff));
 	}

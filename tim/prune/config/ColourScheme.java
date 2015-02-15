@@ -3,7 +3,7 @@ package tim.prune.config;
 import java.awt.Color;
 
 /**
- * Class to hold a colour scheme for Prune, including
+ * Class to hold a colour scheme for GpsPrune, including
  * colours for background, points, selections and texts
  */
 public class ColourScheme

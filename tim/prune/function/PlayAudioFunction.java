@@ -1,5 +1,6 @@
 package tim.prune.function;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import javax.sound.sampled.AudioInputStream;
@@ -8,9 +9,10 @@ import javax.sound.sampled.Clip;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
+import tim.prune.data.AudioClip;
 
 /**
- * Class to play the current audio file
+ * Class to play the current audio clip
  */
 public class PlayAudioFunction extends GenericFunction implements Runnable
 {
@@ -49,12 +51,13 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
-		File audioFile = _app.getTrackInfo().getCurrentAudio().getFile();
+		AudioClip audio = _app.getTrackInfo().getCurrentAudio();
+		File audioFile = audio.getFile();
 		boolean played = false;
-		if (audioFile.exists() && audioFile.isFile() && audioFile.canRead())
+		if (audioFile != null && audioFile.exists() && audioFile.isFile() && audioFile.canRead())
 		{
 			// First choice is to play using java
-			played = playClip(audioFile);
+			played = playClip(audio);
 			// Second choice is to try the Desktop library from java 6, if available
 			if (!played) {
 				try {
@@ -84,6 +87,10 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 				}
 			}
 		}
+		else if (audioFile == null && audio.getByteData() != null) {
+			// Try to play audio clip using byte array (can't use Desktop or Runtime)
+			played = playClip(audio);
+		}
 		if (!played)
 		{
 			// If still not worked, show error message
@@ -93,16 +100,21 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 
 	/**
 	 * Try to play the sound file using built-in java libraries
+	 * @param inAudio audio clip to play
 	 * @return true if play was successful
 	 */
-	private boolean playClip(File inFile)
+	private boolean playClip(AudioClip inClip)
 	{
 		boolean success = false;
 		AudioInputStream audioInputStream = null;
 		_clip = null;
 		try
 		{
-			audioInputStream = AudioSystem.getAudioInputStream(inFile);
+			if (inClip.getFile() != null)
+				audioInputStream = AudioSystem.getAudioInputStream(inClip.getFile());
+			else if (inClip.getByteData() != null)
+				audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(inClip.getByteData()));
+			else return false;
 			_clip = AudioSystem.getClip();
 			_clip.open(audioInputStream);
 			// play the clip
@@ -110,6 +122,7 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 			_clip.drain();
 			success = true;
 		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + " - " + e.getMessage());
 		} finally {
 			// close the stream to clean up
 			try {

@@ -128,28 +128,46 @@ public class SaveConfig extends GenericFunction
 	private void finish()
 	{
 		File configFile = Config.getConfigFile();
-		if (configFile == null) {configFile = new File(".pruneconfig");}
+		if (configFile == null) {configFile = Config.HOME_CONFIG_FILE;}
 		JFileChooser chooser = new JFileChooser(configFile.getAbsoluteFile().getParent());
 		chooser.setSelectedFile(configFile);
 		int response = chooser.showSaveDialog(_parentFrame);
 		if (response == JFileChooser.APPROVE_OPTION)
 		{
 			File saveFile = chooser.getSelectedFile();
-			FileOutputStream outStream = null;
-			try
-			{
-				outStream = new FileOutputStream(saveFile);
-				Config.getAllConfig().store(outStream, "Prune config file");
-			}
-			catch (IOException ioe) {
-				_app.showErrorMessageNoLookup(getNameKey(),
-					I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
-			}
-			finally {
-				try {outStream.close();} catch (Exception e) {}
-			}
+			saveConfig(saveFile);
 		}
 		_dialog.dispose();
 		_dialog = null;
+	}
+
+	/**
+	 * Autosave the settings file without any prompts
+	 */
+	public void silentSave()
+	{
+		saveConfig(Config.getConfigFile());
+	}
+
+	/**
+	 * Actually save the config file
+	 * @param inSaveFile file to save to
+	 */
+	private void saveConfig(File inSaveFile)
+	{
+		FileOutputStream outStream = null;
+		try
+		{
+			outStream = new FileOutputStream(inSaveFile);
+			Config.getAllConfig().store(outStream, "GpsPrune config file");
+		}
+		catch (IOException ioe) {
+			_app.showErrorMessageNoLookup(getNameKey(),
+				I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
+		}
+		catch (NullPointerException npe) {} // no config file given
+		finally {
+			try {outStream.close();} catch (Exception e) {}
+		}
 	}
 }

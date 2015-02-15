@@ -104,6 +104,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				_cancelled = true;
+				_dialog.dispose();
 			}
 		});
 		buttonPanel.add(cancelButton);
@@ -178,6 +179,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		_progressBar.setMaximum(inTileList.size());
 		_progressBar.setIndeterminate(inTileList.size() <= 1);
 		_progressBar.setValue(0);
+		String errorMessage = null;
 		// Get urls for each tile
 		URL[] urls = TileFinder.getUrls(inTileList);
 		for (int t=0; t<inTileList.size() && !_cancelled; t++)
@@ -185,8 +187,8 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			if (urls[t] != null)
 			{
 				SrtmTile tile = inTileList.get(t);
-				// System.out.println("tile " + t + " of " + tileList.size() + " = " + urls[t].toString());
-				try {
+				try
+				{
 					_progressBar.setValue(t);
 					final int ARRLENGTH = 1201*1201;
 					int[] heights = new int[ARRLENGTH];
@@ -247,11 +249,12 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 					}
 				}
 				catch (IOException ioe) {
-					//System.err.println("eek - " + ioe.getMessage());
+					errorMessage = ioe.getClass().getName() + " - " + ioe.getMessage();
 				}
 			}
 		}
 		_dialog.dispose();
+		if (_cancelled) {return;}
 		if (numAltitudesFound > 0)
 		{
 			// Inform app including undo information
@@ -259,6 +262,9 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_ADDED_OR_REMOVED);
 			_app.completeFunction(undo, I18nManager.getText("confirm.lookupsrtm1") + " " + numAltitudesFound
 				+ " " + I18nManager.getText("confirm.lookupsrtm2"));
+		}
+		else if (errorMessage != null) {
+			_app.showErrorMessageNoLookup(getNameKey(), errorMessage);
 		}
 		else if (inTileList.size() > 0) {
 			_app.showErrorMessage(getNameKey(), "error.lookupsrtm.nonefound");

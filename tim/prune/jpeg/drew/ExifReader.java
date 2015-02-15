@@ -85,6 +85,8 @@ public class ExifReader
 	private static final int TAG_THUMBNAIL_LENGTH = 0x0202;
 	/** Orientation of image */
 	private static final int TAG_ORIENTATION = 0x0112;
+	/** Bearing direction of image */
+	private static final int TAG_BEARING = 0x0011;
 
 
 	/**
@@ -369,13 +371,20 @@ public class ExifReader
 					if (dates != null) {
 						inMetadata.setGpsDatestamp(new int[] {dates[0].intValue(), dates[1].intValue(), dates[2].intValue()});
 					}
-					else {
+					else
+					{
 						// Not in rational array format, but maybe as String?
 						String date = readString(inTagValueOffset, inFormatCode, inComponentCount);
 						if (date != null && date.length() == 10) {
 							inMetadata.setGpsDatestamp(new int[] {Integer.parseInt(date.substring(0, 4)),
 								Integer.parseInt(date.substring(5, 7)), Integer.parseInt(date.substring(8))});
 						}
+					}
+					break;
+				case TAG_BEARING:
+					Rational val = readRational(inTagValueOffset, inFormatCode, inComponentCount);
+					if (val != null) {
+						inMetadata.setBearing(val.doubleValue());
 					}
 					break;
 				default: // ignore all other tags

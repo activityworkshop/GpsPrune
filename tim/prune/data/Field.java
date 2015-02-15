@@ -17,12 +17,13 @@ public class Field
 	public static final Field TIMESTAMP = new Field("fieldname.timestamp", true);
 	public static final Field WAYPT_NAME = new Field("fieldname.waypointname", true);
 	public static final Field WAYPT_TYPE = new Field("fieldname.waypointtype", true);
+	public static final Field DESCRIPTION = new Field("fieldname.description", true);
 	public static final Field NEW_SEGMENT = new Field("fieldname.newsegment", true);
 
 	// TODO: Field for photo filename, ability to load (from text) and save (to text)
 
 	private static final Field[] ALL_AVAILABLE_FIELDS = {
-		LATITUDE, LONGITUDE, ALTITUDE, TIMESTAMP, WAYPT_NAME, WAYPT_TYPE, NEW_SEGMENT,
+		LATITUDE, LONGITUDE, ALTITUDE, TIMESTAMP, WAYPT_NAME, WAYPT_TYPE, DESCRIPTION, NEW_SEGMENT,
 		new Field(I18nManager.getText("fieldname.custom"))
 	};
 

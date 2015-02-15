@@ -377,7 +377,7 @@ public class PovExporter extends Export3dFunction
 	private void writeStartOfFile(FileWriter inWriter, double inModelSize, String inLineSeparator)
 	throws IOException
 	{
-		inWriter.write("// Pov file produced by Prune - see http://activityworkshop.net/");
+		inWriter.write("// Pov file produced by GpsPrune - see http://activityworkshop.net/");
 		inWriter.write(inLineSeparator);
 		inWriter.write(inLineSeparator);
 		// Select font based on user input

@@ -41,7 +41,7 @@ public class HelpScreen extends GenericFunction
 			== JOptionPane.YES_OPTION)
 		{
 			// User selected to launch home page
-			BrowserLauncher.launchBrowser("http://activityworkshop.net/software/prune/index.html");
+			BrowserLauncher.launchBrowser("http://activityworkshop.net/software/gpsprune/index.html");
 		}
 	}
 }

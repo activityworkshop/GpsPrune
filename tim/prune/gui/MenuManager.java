@@ -20,8 +20,10 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
-import tim.prune.data.AudioFile;
+import tim.prune.data.AudioClip;
 import tim.prune.data.Photo;
+import tim.prune.data.RecentFile;
+import tim.prune.data.RecentFileList;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
@@ -45,6 +47,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _exportGpxItem = null;
 	private JMenuItem _exportPovItem = null;
 	private JMenuItem _exportSvgItem = null;
+	private JMenu     _recentFileMenu = null;
 	private JMenuItem _undoItem = null;
 	private JMenuItem _clearUndoItem = null;
 	private JMenuItem _editPointItem = null;
@@ -97,6 +100,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _correlateAudiosItem = null;
 	private JMenuItem _selectNoAudioItem = null;
 	private JCheckBoxMenuItem _onlineCheckbox = null;
+	private JCheckBoxMenuItem _autosaveSettingsCheckbox = null;
 
 	// ActionListeners for reuse by menu and toolbar
 	private ActionListener _openFileAction = null;
@@ -160,6 +164,9 @@ public class MenuManager implements DataSubscriber
 		};
 		openMenuItem.addActionListener(_openFileAction);
 		fileMenu.add(openMenuItem);
+		// import through gpsbabel
+		JMenuItem importBabelItem = makeMenuItem(FunctionLibrary.FUNCTION_IMPORTBABEL);
+		fileMenu.add(importBabelItem);
 		// Add photos
 		JMenuItem addPhotosMenuItem = new JMenuItem(I18nManager.getText("menu.file.addphotos"));
 		_addPhotoAction = new ActionListener() {
@@ -169,9 +176,13 @@ public class MenuManager implements DataSubscriber
 		};
 		addPhotosMenuItem.addActionListener(_addPhotoAction);
 		fileMenu.add(addPhotosMenuItem);
-		// Add audio files
+		// Add audio clips
 		JMenuItem addAudioMenuItem = makeMenuItem(FunctionLibrary.FUNCTION_LOAD_AUDIO);
 		fileMenu.add(addAudioMenuItem);
+		// recent files
+		_recentFileMenu = new JMenu(I18nManager.getText("menu.file.recentfiles"));
+		_recentFileMenu.setEnabled(false);
+		fileMenu.add(_recentFileMenu);
 		fileMenu.addSeparator();
 		// Load from GPS
 		JMenuItem loadFromGpsMenuItem = makeMenuItem(FunctionLibrary.FUNCTION_GPSLOAD);
@@ -213,6 +224,7 @@ public class MenuManager implements DataSubscriber
 		});
 		fileMenu.add(exitMenuItem);
 		menubar.add(fileMenu);
+
 		// Track menu
 		JMenu trackMenu = new JMenu(I18nManager.getText("menu.track"));
 		setAltKey(trackMenu, "altkey.menu.track");
@@ -449,6 +461,7 @@ public class MenuManager implements DataSubscriber
 				_app.toggleSidebars();
 			}
 		});
+		sidebarsCheckbox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0)); // shortcut F11
 		viewMenu.add(sidebarsCheckbox);
 		// 3d
 		_show3dItem = makeMenuItem(FunctionLibrary.FUNCTION_3D, false);
@@ -570,14 +583,14 @@ public class MenuManager implements DataSubscriber
 		// connect audio
 		_connectAudioItem = makeMenuItem(FunctionLibrary.FUNCTION_CONNECT_TO_POINT, false);
 		audioMenu.add(_connectAudioItem);
-		// Disconnect current audio file
+		// Disconnect current audio clip
 		_disconnectAudioItem = makeMenuItem(FunctionLibrary.FUNCTION_DISCONNECT_AUDIO, false);
 		audioMenu.add(_disconnectAudioItem);
-		// Remove current audio file
+		// Remove current audio clip
 		_removeAudioItem = makeMenuItem(FunctionLibrary.FUNCTION_REMOVE_AUDIO, false);
 		audioMenu.add(_removeAudioItem);
 		audioMenu.addSeparator();
-		// Correlate audio files
+		// Correlate audio clips
 		_correlateAudiosItem = makeMenuItem(FunctionLibrary.FUNCTION_CORRELATE_AUDIOS, false);
 		audioMenu.add(_correlateAudiosItem);
 		menubar.add(audioMenu);
@@ -613,6 +626,15 @@ public class MenuManager implements DataSubscriber
 		settingsMenu.addSeparator();
 		// Save configuration
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SAVECONFIG));
+		_autosaveSettingsCheckbox = new JCheckBoxMenuItem(
+			I18nManager.getText("menu.settings.autosave"), false);
+		_autosaveSettingsCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS));
+		_autosaveSettingsCheckbox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Config.setConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS, _autosaveSettingsCheckbox.isSelected());
+			}
+		});
+		settingsMenu.add(_autosaveSettingsCheckbox);
 		menubar.add(settingsMenu);
 
 		// Help menu
@@ -832,11 +854,11 @@ public class MenuManager implements DataSubscriber
 		_duplicatePointItem.setEnabled(hasPoint);
 		// are there any photos?
 		boolean anyPhotos = _app.getTrackInfo().getPhotoList().getNumPhotos() > 0;
-		_saveExifItem.setEnabled(anyPhotos);
+		_saveExifItem.setEnabled(anyPhotos && _app.getTrackInfo().getPhotoList().hasMediaWithFile());
 		// is there a current photo, audio?
 		Photo currentPhoto = _app.getTrackInfo().getCurrentPhoto();
 		boolean hasPhoto = currentPhoto != null;
-		AudioFile currentAudio = _app.getTrackInfo().getCurrentAudio();
+		AudioClip currentAudio = _app.getTrackInfo().getCurrentAudio();
 		boolean hasAudio = currentAudio != null;
 		// connect is available if (photo/audio) and point selected, and media has no point
 		boolean connectAvailable = (hasPhoto && hasPoint && currentPhoto.getDataPoint() == null)
@@ -880,6 +902,41 @@ public class MenuManager implements DataSubscriber
 		boolean mapsOn = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
 		if (_mapCheckbox.isSelected() != mapsOn) {
 			_mapCheckbox.setSelected(mapsOn);
+		}
+		// Are there any recently-used files?
+		RecentFileList rfl = Config.getRecentFileList();
+		final int numRecentFiles = rfl.getNumEntries();
+		final boolean hasRecentFiles = numRecentFiles > 0;
+		_recentFileMenu.setEnabled(hasRecentFiles);
+		if (hasRecentFiles)
+		{
+			int numItems = _recentFileMenu.getMenuComponentCount();
+			if (numItems == numRecentFiles)
+			{
+				// Right number of items, just change texts
+				for (int i=0; i<numRecentFiles; i++)
+				{
+					JMenuItem item = _recentFileMenu.getItem(i);
+					item.setText(rfl.getFile(i)==null?"":rfl.getFile(i).getFile().getName());
+					item.setToolTipText(rfl.getFile(i)==null?null:rfl.getFile(i).getFile().getAbsolutePath());
+				}
+			}
+			else
+			{
+				// Rebuild menus
+				_recentFileMenu.removeAll();
+				for (int i=0; i<rfl.getSize(); i++)
+				{
+					RecentFile rf = rfl.getFile(i);
+					if (rf != null && rf.isValid())
+					{
+						JMenuItem menuItem = new JMenuItem(rf.getFile().getName());
+						menuItem.setToolTipText(rf.getFile().getAbsolutePath());
+						menuItem.addActionListener(new RecentFileTrigger(_app, i));
+						_recentFileMenu.add(menuItem);
+					}
+				}
+			}
 		}
 	}
 

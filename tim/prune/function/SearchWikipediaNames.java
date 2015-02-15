@@ -1,7 +1,9 @@
 package tim.prune.function;
 
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
@@ -26,6 +28,8 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 	private String _searchTerm = null;
 	/** Maximum number of results to get */
 	private static final int MAX_RESULTS = 20;
+	/** Username to use for geonames queries */
+	private static final String GEONAMES_USERNAME = "gpsprune";
 
 	/**
 	 * Constructor
@@ -88,9 +92,16 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 		else {
 			lang = "en";
 		}
+		// Replace awkward characters with character equivalents
+		String searchTerm;
+		try {
+			searchTerm = URLEncoder.encode(_searchTerm, "UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			searchTerm = _searchTerm;
+		}
 		// Example http://ws.geonames.org/wikipediaSearch?q=london&maxRows=10
-		String urlString = "http://ws.geonames.org/wikipediaSearch?title=" + _searchTerm + "&maxRows=" + MAX_RESULTS
-			+ "&lang=" + lang;
+		String urlString = "http://api.geonames.org/wikipediaSearch?title=" + searchTerm
+			+ "&maxRows=" + MAX_RESULTS + "&lang=" + lang + "&username=" + GEONAMES_USERNAME;
 		// Parse the returned XML with a special handler
 		GetWikipediaXmlHandler xmlHandler = new GetWikipediaXmlHandler();
 		try

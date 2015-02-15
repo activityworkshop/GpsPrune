@@ -30,28 +30,35 @@ public class AltitudeData extends ProfileData
 		initArrays();
 		_hasData = false;
 		_altitudeFormat = Altitude.Format.NO_FORMAT;
-		if (_track != null) {
+		if (_track != null)
+		{
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
-				DataPoint point = _track.getPoint(i);
-				if (point != null && point.hasAltitude())
+				try
 				{
-					// Point has an altitude - if it's the first one, use its format
-					if (_altitudeFormat == Altitude.Format.NO_FORMAT)
+					DataPoint point = _track.getPoint(i);
+					if (point != null && point.hasAltitude())
 					{
-						_altitudeFormat = point.getAltitude().getFormat();
-						_minValue = _maxValue = point.getAltitude().getValue();
+						// Point has an altitude - if it's the first one, use its format
+						if (_altitudeFormat == Altitude.Format.NO_FORMAT)
+						{
+							_altitudeFormat = point.getAltitude().getFormat();
+							_minValue = _maxValue = point.getAltitude().getValue();
+						}
+						// Store the value and maintain max and min values
+						double value = point.getAltitude().getValue(_altitudeFormat);
+						_pointValues[i] = value;
+						if (value < _minValue) {_minValue = value;}
+						if (value > _maxValue) {_maxValue = value;}
+	
+						_hasData = true;
+						_pointHasData[i] = true;
 					}
-					// Store the value and maintain max and min values
-					double value = point.getAltitude().getValue(_altitudeFormat);
-					_pointValues[i] = value;
-					if (value < _minValue) {_minValue = value;}
-					if (value > _maxValue) {_maxValue = value;}
-
-					_hasData = true;
-					_pointHasData[i] = true;
+					else _pointHasData[i] = false;
 				}
-				else _pointHasData[i] = false;
+				catch (ArrayIndexOutOfBoundsException obe)
+				{} // must be due to the track size changing during calculation
+				   // assume that a redraw will be triggered
 			}
 		}
 	}

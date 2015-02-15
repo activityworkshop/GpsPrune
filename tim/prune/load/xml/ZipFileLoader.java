@@ -13,6 +13,7 @@ import javax.xml.parsers.SAXParserFactory;
 import tim.prune.App;
 import tim.prune.data.Altitude;
 import tim.prune.data.SourceInfo;
+import tim.prune.load.MediaLinkInfo;
 
 /**
  * Class to handle the loading of zipped xml files
@@ -62,12 +63,14 @@ public class ZipFileLoader
 						if (handler == null) {
 							_app.showErrorMessage("error.load.dialogtitle", "error.load.othererror");
 						}
-						else {
+						else
+						{
 							// Send back to app
 							SourceInfo sourceInfo = new SourceInfo(inFile,
 								(handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
 							_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-								Altitude.Format.METRES, sourceInfo, handler.getTrackNameList(), handler.getLinkArray());
+								Altitude.Format.METRES, sourceInfo, handler.getTrackNameList(),
+								new MediaLinkInfo(inFile, handler.getLinkArray()));
 							xmlFound = true;
 						}
 					}
@@ -110,7 +113,8 @@ public class ZipFileLoader
 						if (handler == null) {
 							_app.showErrorMessage("error.load.dialogtitle", "error.load.othererror");
 						}
-						else {
+						else
+						{
 							// Send back to app
 							_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
 								Altitude.Format.METRES, new SourceInfo("gpsies", SourceInfo.FILE_TYPE.GPSIES),

@@ -87,7 +87,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
 		MediaPreviewTableRow row = _list.get(inRowIndex);
-		if (inColumnIndex == 0) return row.getMedia().getFile().getName();
+		if (inColumnIndex == 0) return row.getMedia().getName();
 		else if (inColumnIndex == 1) {
 			return row.getMedia().getTimestamp().getText();
 		}

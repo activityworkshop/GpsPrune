@@ -380,7 +380,7 @@ public class Charter extends GenericFunction
 		FileWriter tempFileWriter = null;
 		try {
 			tempFileWriter = new FileWriter(tempFile);
-			tempFileWriter.write("# Temporary data file for Prune charts\n\n");
+			tempFileWriter.write("# Temporary data file for GpsPrune charts\n\n");
 			for (int i=0; i<inTrack.getNumPoints(); i++) {
 				if (xValues.hasData(i) && yValues.hasData(i)) {
 					tempFileWriter.write("" + xValues.getData(i) + ", " + yValues.getData(i) + "\n");

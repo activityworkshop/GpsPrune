@@ -19,8 +19,8 @@ public class DataPoint
 	private Timestamp _timestamp = null;
 	/** Attached photo */
 	private Photo _photo = null;
-	/** Attached audio file */
-	private AudioFile _audio = null;
+	/** Attached audio clip */
+	private AudioClip _audio = null;
 	private String _waypointName = null;
 	private boolean _startOfSegment = false;
 	private boolean _markedForDeletion = false;
@@ -315,10 +315,10 @@ public class DataPoint
 	}
 
 	/**
-	 * Set the audio file for this point
+	 * Set the audio clip for this point
 	 * @param inAudio audio object
 	 */
-	public void setAudio(AudioFile inAudio) {
+	public void setAudio(AudioClip inAudio) {
 		_audio = inAudio;
 		_modifyCount++;
 	}
@@ -326,23 +326,23 @@ public class DataPoint
 	/**
 	 * @return associated audio object
 	 */
-	public AudioFile getAudio() {
+	public AudioClip getAudio() {
 		return _audio;
 	}
 
 	/**
 	 * Attach the given media object according to type
-	 * @param inMedia either a photo or an audio file
+	 * @param inMedia either a photo or an audio clip
 	 */
-	public void attachMedia(MediaFile inMedia)
+	public void attachMedia(MediaObject inMedia)
 	{
 		if (inMedia != null) {
 			if (inMedia instanceof Photo) {
 				setPhoto((Photo) inMedia);
 				inMedia.setDataPoint(this);
 			}
-			else if (inMedia instanceof AudioFile) {
-				setAudio((AudioFile) inMedia);
+			else if (inMedia instanceof AudioClip) {
+				setAudio((AudioClip) inMedia);
 				inMedia.setDataPoint(this);
 			}
 		}

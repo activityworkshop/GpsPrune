@@ -125,6 +125,7 @@ public class SourceInfo
 		for (int i=0; i<_points.length && (idx < 0); i++) {
 			if (_points[i] == inPoint) {idx = i;}
 		}
+		if (idx == -1) {return idx;}             // point not found
 		if (_pointIndices == null) {return idx;} // All points loaded
 		return _pointIndices[idx]; // use point index mapping
 	}
