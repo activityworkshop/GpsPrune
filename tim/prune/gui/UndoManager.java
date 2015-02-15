@@ -28,7 +28,7 @@ public class UndoManager
 {
 	private App _app;
 	private JDialog _dialog;
-	private JList _actionList;
+	private JList<String> _actionList;
 
 
 	/**
@@ -52,7 +52,7 @@ public class UndoManager
 		{
 			undoActions[i] = undoStack.elementAt(undoStack.size()-1-i).getDescription();
 		}
-		_actionList = new JList(undoActions);
+		_actionList = new JList<String>(undoActions);
 		_actionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		_actionList.setSelectedIndex(0);
 		_actionList.addListSelectionListener(new ListSelectionListener()

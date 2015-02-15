@@ -73,6 +73,8 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _addAltitudeOffsetItem = null;
 	private JMenuItem _mergeSegmentsItem = null;
 	private JMenu     _rearrangeMenu = null;
+	private JMenuItem _splitSegmentsItem = null;
+	private JMenuItem _sewSegmentsItem = null;
 	private JMenuItem _cutAndMoveItem = null;
 	private JMenuItem _convertNamesToTimesItem = null;
 	private JMenuItem _deleteFieldValuesItem = null;
@@ -83,8 +85,10 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _getGpsiesItem = null;
 	private JMenuItem _uploadGpsiesItem = null;
 	private JMenuItem _lookupSrtmItem = null;
+	private JMenuItem _downloadSrtmItem = null;
 	private JMenuItem _lookupWikipediaItem = null;
 	private JMenuItem _downloadOsmItem = null;
+	private JMenuItem _getWeatherItem = null;
 	private JMenuItem _distanceItem = null;
 	private JMenuItem _fullRangeDetailsItem = null;
 	private JMenuItem _estimateTimeItem = null;
@@ -235,6 +239,34 @@ public class MenuManager implements DataSubscriber
 		fileMenu.add(exitMenuItem);
 		menubar.add(fileMenu);
 
+		////////////////////////////////////////////////////
+		// Online menu
+		JMenu onlineMenu = new JMenu(I18nManager.getText("menu.online"));
+		setAltKey(onlineMenu, "altkey.menu.online");
+		// SRTM
+		_lookupSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_SRTM, false);
+		onlineMenu.add(_lookupSrtmItem);
+		_downloadSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_SRTM, false);
+		onlineMenu.add(_downloadSrtmItem);
+		// Get gpsies tracks
+		_getGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_GPSIES, false);
+		onlineMenu.add(_getGpsiesItem);
+		// Upload to gpsies
+		_uploadGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_UPLOAD_GPSIES, false);
+		onlineMenu.add(_uploadGpsiesItem);
+		onlineMenu.addSeparator();
+		_lookupWikipediaItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_WIKIPEDIA, false);
+		onlineMenu.add(_lookupWikipediaItem);
+		JMenuItem searchWikipediaNamesItem = makeMenuItem(FunctionLibrary.FUNCTION_SEARCH_WIKIPEDIA);
+		onlineMenu.add(searchWikipediaNamesItem);
+		_downloadOsmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_OSM, false);
+		onlineMenu.add(_downloadOsmItem);
+		onlineMenu.addSeparator();
+		_getWeatherItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_WEATHER_FORECAST, false);
+		onlineMenu.add(_getWeatherItem);
+		menubar.add(onlineMenu);
+
+		////////////////////////////////////////////////////
 		// Track menu
 		JMenu trackMenu = new JMenu(I18nManager.getText("menu.track"));
 		setAltKey(trackMenu, "altkey.menu.track");
@@ -306,20 +338,12 @@ public class MenuManager implements DataSubscriber
 		rearrangeNearestItem.setEnabled(true);
 		_rearrangeMenu.add(rearrangeNearestItem);
 		trackMenu.add(_rearrangeMenu);
-		// Get gpsies tracks
-		_getGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_GPSIES, false);
-		trackMenu.add(_getGpsiesItem);
-		// Upload to gpsies
-		_uploadGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_UPLOAD_GPSIES, false);
-		trackMenu.add(_uploadGpsiesItem);
-		_lookupSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_SRTM, false);
-		trackMenu.add(_lookupSrtmItem);
-		_lookupWikipediaItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_WIKIPEDIA, false);
-		trackMenu.add(_lookupWikipediaItem);
-		JMenuItem searchWikipediaNamesItem = makeMenuItem(FunctionLibrary.FUNCTION_SEARCH_WIKIPEDIA);
-		trackMenu.add(searchWikipediaNamesItem);
-		_downloadOsmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_OSM, false);
-		trackMenu.add(_downloadOsmItem);
+		// Split track segments
+		_splitSegmentsItem = makeMenuItem(FunctionLibrary.FUNCTION_SPLIT_SEGMENTS, false);
+		trackMenu.add(_splitSegmentsItem);
+		// Sew track segments
+		_sewSegmentsItem = makeMenuItem(FunctionLibrary.FUNCTION_SEW_SEGMENTS, false);
+		trackMenu.add(_sewSegmentsItem);
 		trackMenu.addSeparator();
 		_learnEstimationParams = makeMenuItem(FunctionLibrary.FUNCTION_LEARN_ESTIMATION_PARAMS, false);
 		trackMenu.add(_learnEstimationParams);
@@ -854,6 +878,8 @@ public class MenuManager implements DataSubscriber
 		_markRectangleItem.setEnabled(hasData);
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeMenu.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
+		_splitSegmentsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3);
+		_sewSegmentsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3);
 		_selectAllItem.setEnabled(hasData);
 		_selectNoneItem.setEnabled(hasData);
 		_show3dItem.setEnabled(hasMultiplePoints);
@@ -865,7 +891,10 @@ public class MenuManager implements DataSubscriber
 		_lookupSrtmItem.setEnabled(hasData);
 		_lookupWikipediaItem.setEnabled(hasData);
 		_downloadOsmItem.setEnabled(hasData);
+		_getWeatherItem.setEnabled(hasData);
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
+		// have we got a cache?
+		_downloadSrtmItem.setEnabled(hasData && Config.getConfigString(Config.KEY_DISK_CACHE) != null);
 
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();

@@ -17,6 +17,8 @@ public class MarkPointsInRectangleFunction extends GenericFunction
 	private double _minLat = 0.0, _maxLat = 0.0;
 	/** Minimum and maximum longitude values of rectangle */
 	private double _minLon = 0.0, _maxLon = 0.0;
+	/** flag to remember whether the automatic deletion has been set to always */
+	private boolean _automaticallyDelete = false;
 
 
 	/**
@@ -26,6 +28,11 @@ public class MarkPointsInRectangleFunction extends GenericFunction
 	public MarkPointsInRectangleFunction(App inApp)
 	{
 		super(inApp);
+	}
+
+	/** @return name key */
+	public String getNameKey() {
+		return "menu.track.markrectangle";
 	}
 
 	/**
@@ -89,15 +96,25 @@ public class MarkPointsInRectangleFunction extends GenericFunction
 		// Inform subscribers to update display
 		UpdateMessageBroker.informSubscribers();
 		// Confirm message showing how many marked
-		if (numMarked > 0) {
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.compress.confirm1")
-				+ " " + numMarked + " " + I18nManager.getText("dialog.compress.confirm2"),
-				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		if (numMarked > 0)
+		{
+			// Allow calling of delete function with one click
+			final String[] buttonTexts = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
+				I18nManager.getText("button.always")};
+			int answer = _automaticallyDelete ? JOptionPane.YES_OPTION :
+				JOptionPane.showOptionDialog(_parentFrame,
+				I18nManager.getTextWithNumber("dialog.compress.confirm", numMarked),
+				I18nManager.getText(getNameKey()), JOptionPane.YES_NO_CANCEL_OPTION,
+				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1]);
+			if (answer == JOptionPane.CANCEL_OPTION) {_automaticallyDelete = true;} // "always" is third option
+			if (_automaticallyDelete || answer == JOptionPane.YES_OPTION)
+			{
+				new Thread(new Runnable() {
+					public void run() {
+						_app.finishCompressTrack();
+					}
+				}).start();
+			}
 		}
-	}
-
-	/** @return name key */
-	public String getNameKey() {
-		return "menu.track.markrectangle";
 	}
 }

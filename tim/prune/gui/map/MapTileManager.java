@@ -7,18 +7,23 @@ import java.net.URL;
 
 import tim.prune.config.Config;
 
+
 /**
  * Class responsible for managing the map tiles,
  * including invoking the correct memory cacher(s) and/or disk cacher(s)
  */
 public class MapTileManager implements ImageObserver
 {
-	/** Parent object to inform when tiles received */
-	private MapCanvas _parent = null;
+	/** Consumer object to inform when tiles received */
+	private TileConsumer _consumer = null;
 	/** Current map source */
 	private MapSource _mapSource = null;
 	/** Array of tile caches, one per layer */
 	private MemTileCacher[] _tempCaches = null;
+	/** Flag for whether to download any tiles or just pull from disk */
+	private boolean _downloadTiles = true;
+	/** Flag for whether to return incomplete images or just pass to tile cache until they're done */
+	private boolean _returnIncompleteImages = false;
 	/** Number of layers */
 	private int _numLayers = -1;
 	/** Current zoom level */
@@ -29,14 +34,11 @@ public class MapTileManager implements ImageObserver
 
 	/**
 	 * Constructor
-	 * @param inParent parent canvas to be informed of updates
+	 * @param inConsumer consumer object to be notified
 	 */
-	public MapTileManager(MapCanvas inParent)
+	public MapTileManager(TileConsumer inConsumer)
 	{
-		_parent = inParent;
-		// Adjust the index of the selected map source
-		adjustSelectedMap();
-		resetConfig();
+		_consumer = inConsumer;
 	}
 
 	/**
@@ -47,15 +49,21 @@ public class MapTileManager implements ImageObserver
 	 */
 	public void centreMap(int inZoom, int inTileX, int inTileY)
 	{
-		_zoom = inZoom;
-		// Calculate number of tiles = 2^^zoom
-		_numTileIndices = 1 << _zoom;
+		setZoom(inZoom);
 		// Pass params onto all memory cachers
 		if (_tempCaches != null) {
 			for (int i=0; i<_tempCaches.length; i++) {
 				_tempCaches[i].centreMap(inZoom, inTileX, inTileY);
 			}
 		}
+	}
+
+	/** @param inZoom zoom level to set */
+	public void setZoom(int inZoom)
+	{
+		_zoom = inZoom;
+		// Calculate number of tiles = 2^^zoom
+		_numTileIndices = 1 << _zoom;
 	}
 
 	/**
@@ -66,6 +74,21 @@ public class MapTileManager implements ImageObserver
 		// Ask current map source what maximum zoom is
 		int maxZoom = (_mapSource == null?0:_mapSource.getMaxZoomLevel());
 		return (_zoom > maxZoom);
+	}
+
+	/**
+	 * Enable or disable tile downloading
+	 * @param inEnabled true to enable downloading, false to just get tiles from disk
+	 */
+	public void enableTileDownloading(boolean inEnabled)
+	{
+		_downloadTiles = inEnabled;
+	}
+
+	/** Configure to return incomplete images instead of going via caches (and another call) */
+	public void setReturnIncompleteImages()
+	{
+		_returnIncompleteImages = true;
 	}
 
 	/**
@@ -91,35 +114,22 @@ public class MapTileManager implements ImageObserver
 	}
 
 	/**
-	 * Reset the map source configuration, apparently it has changed
+	 * @param inSourceNum selected map source index
 	 */
-	public void resetConfig()
+	public void setMapSource(int inSourceNum)
 	{
-		int sourceNum = Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX);
-		_mapSource = MapSourceLibrary.getSource(sourceNum);
-		if (_mapSource == null) {_mapSource = MapSourceLibrary.getSource(0);}
-		clearMemoryCaches();
-		_numLayers = _mapSource.getNumLayers();
+		setMapSource(MapSourceLibrary.getSource(inSourceNum));
 	}
 
 	/**
-	 * Adjust the index of the selected map
-	 * (only required if config was loaded from a previous version of GpsPrune)
+	 * @param inMapSource selected map source
 	 */
-	private void adjustSelectedMap()
+	public void setMapSource(MapSource inMapSource)
 	{
-		int sourceNum = Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX);
-		int prevNumFixed = Config.getConfigInt(Config.KEY_NUM_FIXED_MAPS);
-		// Number of fixed maps not specified in version <=13, default to 6
-		if (prevNumFixed == 0) prevNumFixed = 6;
-		int currNumFixed = MapSourceLibrary.getNumFixedSources();
-		// Only need to do something if the number has changed
-		if (currNumFixed != prevNumFixed && (sourceNum >= prevNumFixed || sourceNum >= currNumFixed))
-		{
-			sourceNum += (currNumFixed - prevNumFixed);
-			Config.setConfigInt(Config.KEY_MAPSOURCE_INDEX, sourceNum);
-		}
-		Config.setConfigInt(Config.KEY_NUM_FIXED_MAPS, currNumFixed);
+		_mapSource = inMapSource;
+		if (_mapSource == null) {_mapSource = MapSourceLibrary.getSource(0);}
+		clearMemoryCaches();
+		_numLayers = _mapSource.getNumLayers();
 	}
 
 	/**
@@ -131,22 +141,29 @@ public class MapTileManager implements ImageObserver
 	}
 
 	/**
+	 * Get a tile from the currently selected map source
 	 * @param inLayer layer number, starting from 0
 	 * @param inX x index of tile
 	 * @param inY y index of tile
+	 * @param inDownloadIfNecessary true to download the file if it's not available
 	 * @return selected tile if already loaded, or null otherwise
 	 */
-	public Image getTile(int inLayer, int inX, int inY)
+	public Image getTile(int inLayer, int inX, int inY, boolean inDownloadIfNecessary)
 	{
 		if (inY < 0 || inY >= _numTileIndices) return null;
 		// Wrap tile indices which are too big or too small
 		inX = ((inX % _numTileIndices) + _numTileIndices) % _numTileIndices;
 
 		// Check first in memory cache for tile
-		MemTileCacher tempCache = _tempCaches[inLayer]; // Should probably guard against nulls and array indexes here
-		Image tile = tempCache.getTile(inX, inY);
-		if (tile != null) {
-			return tile;
+		Image tile = null;
+		MemTileCacher tempCache = null;
+		if (_tempCaches != null)
+		{
+			tempCache = _tempCaches[inLayer]; // Should probably guard array indexes here
+			tile = tempCache.getTile(inX, inY);
+			if (tile != null) {
+				return tile;
+			}
 		}
 
 		// Tile wasn't in memory, but maybe it's in disk cache (if there is one)
@@ -158,18 +175,23 @@ public class MapTileManager implements ImageObserver
 			tile = DiskTileCacher.getTile(diskCachePath, _mapSource.makeFilePath(inLayer, _zoom, inX, inY), onlineMode);
 			if (tile != null)
 			{
+				if (_returnIncompleteImages) {return tile;}
 				// Pass tile to memory cache
-				tempCache.setTile(tile, inX, inY, _zoom);
+				if (tempCache != null) {
+					tempCache.setTile(tile, inX, inY, _zoom);
+				}
 				if (tile.getWidth(this) > 0) {return tile;}
 				return null;
 			}
+			// else System.out.println("DTC gave null tile for " + _zoom + ", " + inX + ", " + inY);
 		}
 		// Tile wasn't in memory or on disk, so if online let's get it
-		if (onlineMode)
+		if (onlineMode && _downloadTiles && inDownloadIfNecessary)
 		{
 			try
 			{
 				URL tileUrl = new URL(_mapSource.makeURL(inLayer, _zoom, inX, inY));
+				// System.out.println("Going to fetch: " + tileUrl);
 				if (useDisk && DiskTileCacher.saveTile(tileUrl, diskCachePath,
 					_mapSource.makeFilePath(inLayer, _zoom, inX, inY), this))
 				{
@@ -178,7 +200,6 @@ public class MapTileManager implements ImageObserver
 				else
 				{
 					// Load image asynchronously, using observer
-					// tile = Toolkit.getDefaultToolkit().createImage(tileUrl);
 					// In order to set the http user agent, need to use a TileDownloader instead
 					TileDownloader.triggerLoad(this, tileUrl, inLayer, inX, inY, _zoom);
 				}
@@ -203,7 +224,7 @@ public class MapTileManager implements ImageObserver
 		boolean loaded = (infoflags & ImageObserver.ALLBITS) > 0;
 		boolean error = (infoflags & ImageObserver.ERROR) > 0;
 		if (loaded || error) {
-			_parent.tilesUpdated(loaded);
+			_consumer.tilesUpdated(loaded);
 		}
 		return !loaded;
 	}
@@ -218,7 +239,7 @@ public class MapTileManager implements ImageObserver
 	 */
 	public void notifyImageLoaded(Image inTile, int inLayer, int inX, int inY, int inZoom)
 	{
-		if (inTile != null)
+		if (inTile != null && _tempCaches != null)
 		{
 			MemTileCacher tempCache = _tempCaches[inLayer]; // Should probably guard against nulls and array indexes here
 			if (tempCache.getTile(inX, inY) == null)
@@ -227,6 +248,9 @@ public class MapTileManager implements ImageObserver
 				tempCache.setTile(inTile, inX, inY, inZoom);
 				inTile.getWidth(this); // trigger imageUpdate when image is ready
 			}
+		}
+		else if (inTile != null) {
+			inTile.getWidth(this);
 		}
 	}
 }

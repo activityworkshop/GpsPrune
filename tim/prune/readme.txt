@@ -1,11 +1,11 @@
-GpsPrune version 15.2
-=====================
+GpsPrune version 16
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
 Full details can be found at http://activityworkshop.net/software/gpsprune/
 
-GpsPrune is copyright 2006-2013 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2014 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_15.2.jar
+   java -jar gpsprune_16.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,20 +25,21 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_15.2.jar --lang=DE
+   java -jar gpsprune_16.jar --lang=DE
 
 
-New with version 15.2
+New with version 16
 =====================
 The following features were added since version 15:
-  - Improved translations
-  - Fixed bug with speed charts using gnuplot
-  - Fixed bug with dragging a mid-point within a selection
-  - Fixed bug with duplicate entries in profile popup menu
-  - Fixed bug with loading zoom level of custom map sources
+  - Extend povray output using terrain and/or map image
+  - Extend java3d output using terrain and/or map image
+  - Weather forecasts
+  - Splitting a track into segments based on distance or time
+  - Sewing track segments together
+  - Function to download and save SRTM tiles
 
 New with version 15
-===================
+=====================
 The following features were added since version 14:
   - Extend povray output using map image on base plane
   - Export an image of the map and track at a selected zoom level
@@ -52,7 +53,7 @@ The following features were added since version 14:
   - Allow loading of speeds and vertical speeds from text files
 
 New with version 14
-===================
+=====================
 The following features were added since version 13:
   - Dragging of existing points
   - Creation of new points by dragging the halfway point between two points

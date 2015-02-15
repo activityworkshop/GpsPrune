@@ -89,6 +89,7 @@ public class UndoCutAndMove implements UndoOperation
 		if (_moveTrackPoint != null) {
 			_moveTrackPoint.setSegmentStart(_moveToSegmentFlag);
 		}
+		inTrackInfo.getSelection().clearAll();
 		UpdateMessageBroker.informSubscribers();
 	}
 }

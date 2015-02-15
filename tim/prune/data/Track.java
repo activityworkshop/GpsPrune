@@ -316,13 +316,13 @@ public class Track
 		// Loop over all points within range
 		for (int i=inStart; i<=inEnd; i++)
 		{
-			Timestamp timestamp = _dataPoints[i].getTimestamp();
-			if (timestamp != null)
+			DataPoint p = _dataPoints[i];
+			if (p != null && p.hasTimestamp())
 			{
 				// This point has a timestamp so add the offset to it
 				foundTimestamp = true;
-				timestamp.addOffset(inOffset);
-				_dataPoints[i].setModified(inUndo);
+				p.addTimeOffset(inOffset);
+				p.setModified(inUndo);
 			}
 		}
 		return foundTimestamp;
@@ -348,13 +348,13 @@ public class Track
 		// Loop over all points within range
 		for (int i=inStart; i<=inEnd; i++)
 		{
-			Altitude alt = _dataPoints[i].getAltitude();
-			if (alt != null && alt.isValid())
+			DataPoint p = _dataPoints[i];
+			if (p != null && p.hasAltitude())
 			{
 				// This point has an altitude so add the offset to it
 				foundAlt = true;
-				alt.addOffset(inOffset, inUnit, inDecimals);
-				_dataPoints[i].setModified(false);
+				p.addAltitudeOffset(inOffset, inUnit, inDecimals);
+				p.setModified(false);
 			}
 		}
 		// needs to be scaled again

@@ -1,5 +1,7 @@
 package tim.prune.function.srtm;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -13,35 +15,44 @@ import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
+import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Track;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.ProgressDialog;
+import tim.prune.tips.TipManager;
 import tim.prune.undo.UndoLookupSrtm;
 
 /**
- * Class to provide a lookup function for point altitudes
- * using the Space Shuttle's SRTM data files.
- * HGT files are downloaded into memory via HTTP and point altitudes
- * can then be interpolated from the 3m grid data.
+ * Class to provide a lookup function for point altitudes using the Space
+ * Shuttle's SRTM data files. HGT files are downloaded into memory via HTTP and
+ * point altitudes can then be interpolated from the 3m grid data.
  */
 public class LookupSrtmFunction extends GenericFunction implements Runnable
 {
 	/** Progress dialog */
-	ProgressDialog _progress = null;
+	private ProgressDialog _progress = null;
+	/** Track to process */
+	private Track _track = null;
+	/** Flag for whether this is a real track or a terrain one */
+	private boolean _normalTrack = true;
+	/** Flag set when any tiles had to be downloaded (rather than just loaded locally) */
+	private boolean _hadToDownload = false;
+	/** Flag to check whether this function is currently running or not */
+	private boolean _running = false;
 
 	/** Expected size of hgt file in bytes */
 	private static final long HGT_SIZE = 2884802L;
 	/** Altitude below which is considered void */
 	private static final int VOID_VAL = -32768;
 
-
 	/**
 	 * Constructor
-	 * @param inApp App object
+	 * @param inApp  App object
 	 */
-	public LookupSrtmFunction(App inApp)
-	{
+	public LookupSrtmFunction(App inApp) {
 		super(inApp);
 	}
 
@@ -51,19 +62,38 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	}
 
 	/**
-	 * Begin the lookup
+	 * Begin the lookup using the normal track
 	 */
-	public void begin()
+	public void begin() {
+		begin(_app.getTrackInfo().getTrack(), true);
+	}
+
+	/**
+	 * Begin the lookup with an alternative track
+	 * @param inAlternativeTrack
+	 */
+	public void begin(Track inAlternativeTrack) {
+		begin(inAlternativeTrack, false);
+	}
+
+	/**
+	 * Begin the function with the given parameters
+	 * @param inTrack track to process
+	 * @param inNormalTrack true if this is a "normal" track, false for an artificially constructed one such as for terrain
+	 */
+	private void begin(Track inTrack, boolean inNormalTrack)
 	{
-		if (_progress == null)
-		{
+		_running = true;
+		_hadToDownload = false;
+		if (_progress == null) {
 			_progress = new ProgressDialog(_parentFrame, getNameKey());
 		}
 		_progress.show();
+		_track = inTrack;
+		_normalTrack = inNormalTrack;
 		// start new thread for time-consuming part
 		new Thread(this).start();
 	}
-
 
 	/**
 	 * Run method using separate thread
@@ -71,16 +101,15 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	public void run()
 	{
 		// Compile list of tiles to get
-		Track track = _app.getTrackInfo().getTrack();
 		ArrayList<SrtmTile> tileList = new ArrayList<SrtmTile>();
 		boolean hasZeroAltitudePoints = false;
 		boolean hasNonZeroAltitudePoints = false;
 		// First, loop to see what kind of points we have
-		for (int i=0; i<track.getNumPoints(); i++)
+		for (int i = 0; i < _track.getNumPoints(); i++)
 		{
-			if (track.getPoint(i).hasAltitude())
+			if (_track.getPoint(i).hasAltitude())
 			{
-				if (track.getPoint(i).getAltitude().getValue() == 0) {
+				if (_track.getPoint(i).getAltitude().getValue() == 0) {
 					hasZeroAltitudePoints = true;
 				}
 				else {
@@ -99,14 +128,16 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		}
 
 		// Now loop again to extract the required tiles
-		for (int i=0; i<track.getNumPoints(); i++)
+		for (int i = 0; i < _track.getNumPoints(); i++)
 		{
 			// Consider points which don't have altitudes or have zero values
-			if (!track.getPoint(i).hasAltitude() || (overwriteZeros && track.getPoint(i).getAltitude().getValue() == 0))
+			if (!_track.getPoint(i).hasAltitude()
+				|| (overwriteZeros && _track.getPoint(i).getAltitude().getValue() == 0))
 			{
-				SrtmTile tile = new SrtmTile(track.getPoint(i));
+				SrtmTile tile = new SrtmTile(_track.getPoint(i));
 				boolean alreadyGot = false;
-				for (int t=0; t<tileList.size(); t++) {
+				for (int t = 0; t < tileList.size(); t++)
+				{
 					if (tileList.get(t).equals(tile)) {
 						alreadyGot = true;
 					}
@@ -115,7 +146,14 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			}
 		}
 		lookupValues(tileList, overwriteZeros);
+		// Finished
+		_running = false;
+		// Show tip if lots of online lookups were necessary
+		if (_hadToDownload) {
+			_app.showTip(TipManager.Tip_DownloadSrtm);
+		}
 	}
+
 
 	/**
 	 * Lookup the values from SRTM data
@@ -124,12 +162,14 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 */
 	private void lookupValues(ArrayList<SrtmTile> inTileList, boolean inOverwriteZeros)
 	{
-		Track track = _app.getTrackInfo().getTrack();
 		UndoLookupSrtm undo = new UndoLookupSrtm(_app.getTrackInfo());
 		int numAltitudesFound = 0;
 		// Update progress bar
-		_progress.setMaximum(inTileList.size());
-		_progress.setValue(0);
+		if (_progress != null)
+		{
+			_progress.setMaximum(inTileList.size());
+			_progress.setValue(0);
+		}
 		String errorMessage = null;
 		// Get urls for each tile
 		URL[] urls = TileFinder.getUrls(inTileList);
@@ -140,40 +180,49 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 				SrtmTile tile = inTileList.get(t);
 				try
 				{
+					// Set progress
 					_progress.setValue(t);
-					final int ARRLENGTH = 1201*1201;
+					final int ARRLENGTH = 1201 * 1201;
 					int[] heights = new int[ARRLENGTH];
 					// Open zipinputstream on url and check size
-					ZipInputStream inStream = new ZipInputStream(urls[t].openStream());
-					ZipEntry entry = inStream.getNextEntry();
-					boolean entryOk = (entry.getSize() == HGT_SIZE);
-					if (entryOk)
+					ZipInputStream inStream = getStreamToHgtFile(urls[t]);
+					boolean entryOk = false;
+					if (inStream != null)
 					{
-						// Read entire file contents into one byte array
-						for (int i=0; i<ARRLENGTH; i++) {
-							heights[i] = inStream.read()*256 + inStream.read();
-							if (heights[i] >= 32768) {heights[i] -= 65536;}
+						ZipEntry entry = inStream.getNextEntry();
+						entryOk = (entry != null && entry.getSize() == HGT_SIZE);
+						if (entryOk)
+						{
+							// Read entire file contents into one byte array
+							for (int i = 0; i < ARRLENGTH; i++)
+							{
+								heights[i] = inStream.read() * 256 + inStream.read();
+								if (heights[i] >= 32768) {heights[i] -= 65536;}
+							}
 						}
+						// else {
+						//	System.out.println("length not ok: " + entry.getSize());
+						// }
+						// Close stream from url
+						inStream.close();
 					}
-					//else {
-					//	System.out.println("length not ok: " + entry.getSize());
-					//}
-					// Close stream from url
-					inStream.close();
 
 					if (entryOk)
 					{
 						// Loop over all points in track, try to apply altitude from array
-						for (int p=0; p<track.getNumPoints(); p++)
+						for (int p = 0; p < _track.getNumPoints(); p++)
 						{
-							DataPoint point = track.getPoint(p);
-							if (!point.hasAltitude() || (inOverwriteZeros && point.getAltitude().getValue() == 0)) {
+							DataPoint point = _track.getPoint(p);
+							if (!point.hasAltitude()
+								|| (inOverwriteZeros && point.getAltitude().getValue() == 0))
+							{
 								if (new SrtmTile(point).equals(tile))
 								{
 									double x = (point.getLongitude().getDouble() - tile.getLongitude()) * 1200;
 									double y = 1201 - (point.getLatitude().getDouble() - tile.getLatitude()) * 1200;
 									int idx1 = ((int)y)*1201 + (int)x;
-									try {
+									try
+									{
 										int[] fouralts = {heights[idx1], heights[idx1+1], heights[idx1-1201], heights[idx1-1200]};
 										int numVoids = (fouralts[0]==VOID_VAL?1:0) + (fouralts[1]==VOID_VAL?1:0)
 											+ (fouralts[2]==VOID_VAL?1:0) + (fouralts[3]==VOID_VAL?1:0);
@@ -186,33 +235,43 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 											case 3: altitude = averageNonVoid(fouralts); break;
 											default: altitude = VOID_VAL;
 										}
-										if (altitude != VOID_VAL) {
+										if (altitude != VOID_VAL)
+										{
 											point.setFieldValue(Field.ALTITUDE, ""+altitude, false);
+											// depending on settings, this value may have been added as feet, we need to force metres
+											point.getAltitude().reset(new Altitude((int)altitude, UnitSetLibrary.UNITS_METRES));
 											numAltitudesFound++;
 										}
 									}
 									catch (ArrayIndexOutOfBoundsException obe) {
-										//System.err.println("lat=" + point.getLatitude().getDouble() + ", x=" + x + ", y=" + y + ", idx=" + idx1);
+										// System.err.println("lat=" + point.getLatitude().getDouble() + ", x=" + x + ", y=" + y + ", idx=" + idx1);
 									}
 								}
 							}
 						}
 					}
 				}
-				catch (IOException ioe) {
-					errorMessage = ioe.getClass().getName() + " - " + ioe.getMessage();
+				catch (IOException ioe) {errorMessage = ioe.getClass().getName() + " - " + ioe.getMessage();
 				}
 			}
 		}
+
 		_progress.dispose();
-		if (_progress.isCancelled()) {return;}
+		if (_progress.isCancelled()) {
+			return;
+		}
+
 		if (numAltitudesFound > 0)
 		{
 			// Inform app including undo information
-			track.requestRescale();
+			_track.requestRescale();
 			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_ADDED_OR_REMOVED);
-			_app.completeFunction(undo, I18nManager.getText("confirm.lookupsrtm1") + " " + numAltitudesFound
-				+ " " + I18nManager.getText("confirm.lookupsrtm2"));
+			// Don't update app if we're doing another track
+			if (_normalTrack)
+			{
+				_app.completeFunction(undo,
+					I18nManager.getTextWithNumber("confirm.lookupsrtm", numAltitudesFound));
+			}
 		}
 		else if (errorMessage != null) {
 			_app.showErrorMessageNoLookup(getNameKey(), errorMessage);
@@ -223,6 +282,35 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		else {
 			_app.showErrorMessage(getNameKey(), "error.lookupsrtm.nonerequired");
 		}
+	}
+
+	/**
+	 * See whether the SRTM file is already available locally first, then try online
+	 * @param inUrl URL for online resource
+	 * @return ZipInputStream either on the local file or on the downloaded zip file
+	 */
+	private ZipInputStream getStreamToHgtFile(URL inUrl)
+	throws IOException
+	{
+		String diskCachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
+		if (diskCachePath != null)
+		{
+			File srtmDir = new File(diskCachePath, "srtm");
+			if (srtmDir.exists() && srtmDir.isDirectory() && srtmDir.canRead())
+			{
+				File srtmFile = new File(srtmDir, new File(inUrl.getFile()).getName());
+				if (srtmFile.exists() && srtmFile.isFile() && srtmFile.canRead())
+				{
+					// System.out.println("Lookup: Using file " + srtmFile.getAbsolutePath());
+					// File found, use this one
+					return new ZipInputStream(new FileInputStream(srtmFile));
+				}
+			}
+		}
+		// System.out.println("Lookup: Trying online: " + inUrl.toString());
+		_hadToDownload = true;
+		// MAYBE: Only download if we're in online mode?
+		return new ZipInputStream(inUrl.openStream());
 	}
 
 	/**
@@ -249,7 +337,8 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	private static int[] fixVoid(int[] inAltitudes)
 	{
 		int[] fixed = new int[inAltitudes.length];
-		for (int i=0; i<inAltitudes.length; i++) {
+		for (int i = 0; i < inAltitudes.length; i++)
+		{
 			if (inAltitudes[i] == VOID_VAL) {
 				fixed[i] = (int) Math.round(averageNonVoid(inAltitudes));
 			}
@@ -269,13 +358,23 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	{
 		double totalAltitude = 0.0;
 		int numAlts = 0;
-		for (int i=0; i<inAltitudes.length; i++) {
-			if (inAltitudes[i] != VOID_VAL) {
+		for (int i = 0; i < inAltitudes.length; i++)
+		{
+			if (inAltitudes[i] != VOID_VAL)
+			{
 				totalAltitude += inAltitudes[i];
 				numAlts++;
 			}
 		}
 		if (numAlts < 1) {return VOID_VAL;}
 		return totalAltitude / numAlts;
+	}
+
+	/**
+	 * @return true if a thread is currently running
+	 */
+	public boolean isRunning()
+	{
+		return _running;
 	}
 }

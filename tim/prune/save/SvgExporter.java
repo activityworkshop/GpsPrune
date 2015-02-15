@@ -86,12 +86,17 @@ public class SvgExporter extends Export3dFunction
 	 */
 	public void begin()
 	{
-		// Make dialog window to select angles, colours etc
+		// Make dialog window to select input parameters
 		if (_dialog == null)
 		{
 			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogComponents());
+		}
+		// Get exaggeration factor from config
+		final int exaggFactor = Config.getConfigInt(Config.KEY_HEIGHT_EXAGGERATION);
+		if (exaggFactor > 0) {
+			_altFactor = exaggFactor / 100.0;
 		}
 
 		// Set angles
@@ -228,6 +233,8 @@ public class SvgExporter extends Export3dFunction
 					{
 						// file saved - store directory in config for later
 						Config.setConfigString(Config.KEY_TRACK_DIR, file.getParentFile().getAbsolutePath());
+						// also store exaggeration
+						Config.setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_altFactor * 100));
 					}
 					else {
 						// export failed so need to choose again

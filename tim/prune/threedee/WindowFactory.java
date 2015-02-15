@@ -45,9 +45,13 @@ public abstract class WindowFactory
 		{
 			// no java3d classes available
 		}
+		catch (NoClassDefFoundError nfe)
+		{
+			// no java3d classes available
+		}
 		catch (UnsatisfiedLinkError ule)
 		{
-			// java3d available but somehow incompatible?
+			// java3d classes found but no native components
 		}
 		return has3d;
 	}

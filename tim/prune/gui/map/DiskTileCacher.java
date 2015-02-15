@@ -63,7 +63,9 @@ public class DiskTileCacher implements Runnable
 				try {
 					image = Toolkit.getDefaultToolkit().createImage(tileFile.getAbsolutePath());
 				}
-				catch (Exception e) {}
+				catch (Exception e) {
+					System.err.println("createImage: " + e.getClass().getName() + " _ " + e.getMessage());
+				}
 			}
 		}
 		return image;
@@ -110,7 +112,12 @@ public class DiskTileCacher implements Runnable
 	private static boolean isBeingLoaded(File inFile)
 	{
 		File tempFile = new File(inFile.getAbsolutePath() + ".temp");
-		return tempFile.exists();
+		if (!tempFile.exists()) {
+			return false;
+		}
+		// File exists, so check if it was created recently
+		final long fileAge = System.currentTimeMillis() - tempFile.lastModified();
+		return fileAge < 1000000L; // overwrite if the temp file is still there after 1000s
 	}
 
 	/**
@@ -125,7 +132,7 @@ public class DiskTileCacher implements Runnable
 		// Use a synchronized block across all threads to make sure this url is only fetched once
 		synchronized (DiskTileCacher.class)
 		{
-			if (tempFile.exists()) {return;}
+			if (tempFile.exists()) {tempFile.delete();}
 			try {
 				if (!tempFile.createNewFile()) {return;}
 			}

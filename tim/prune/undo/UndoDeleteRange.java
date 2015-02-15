@@ -9,7 +9,7 @@ import tim.prune.data.TrackInfo;
 /**
  * Operation to undo a delete of a range of points
  */
-public class UndoDeleteRange implements UndoOperation
+public class UndoDeleteRange extends UndoDeleteOperation
 {
 	/**
 	 * Inner class to hold a single range information set
@@ -39,6 +39,14 @@ public class UndoDeleteRange implements UndoOperation
 		public boolean isValid()
 		{
 			return _startIndex >= 0 && _points != null && _points.length > 0;
+		}
+
+		/**
+		 * @return end index of range
+		 */
+		public int getEndIndex()
+		{
+			return _startIndex + _points.length - 1;
 		}
 	}
 
@@ -141,6 +149,13 @@ public class UndoDeleteRange implements UndoOperation
 		// Undo both the ranges
 		performUndo(inTrackInfo, _rangeInfo1);
 		performUndo(inTrackInfo, _rangeInfo2);
+		// If there's a current point/range selected, maybe need to adjust start and/or end
+		if (_rangeInfo1 != null && _rangeInfo1.isValid()) {
+			modifySelection(inTrackInfo, _rangeInfo1._startIndex, _rangeInfo1.getEndIndex());
+		}
+		if (_rangeInfo2 != null && _rangeInfo2.isValid()) {
+			modifySelection(inTrackInfo, _rangeInfo2._startIndex, _rangeInfo2.getEndIndex());
+		}
 	}
 
 	/**

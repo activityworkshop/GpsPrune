@@ -82,8 +82,8 @@ public class DetailsDisplay extends GenericDisplay
 	private JPanel _playAudioPanel = null;
 
 	// Units
-	private JComboBox _coordFormatDropdown = null;
-	private JComboBox _distUnitsDropdown = null;
+	private JComboBox<String> _coordFormatDropdown = null;
+	private JComboBox<String> _distUnitsDropdown = null;
 
 	// Cached labels
 	private static final String LABEL_POINT_SELECTED = I18nManager.getText("details.index.selected") + ": ";
@@ -243,7 +243,7 @@ public class DetailsDisplay extends GenericDisplay
 		lowerPanel.add(coordFormatLabel);
 		String[] coordFormats = {I18nManager.getText("units.original"), I18nManager.getText("units.degminsec"),
 			I18nManager.getText("units.degmin"), I18nManager.getText("units.deg")};
-		_coordFormatDropdown = new JComboBox(coordFormats);
+		_coordFormatDropdown = new JComboBox<String>(coordFormats);
 		_coordFormatDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -256,7 +256,7 @@ public class DetailsDisplay extends GenericDisplay
 		unitsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		lowerPanel.add(unitsLabel);
 		// Make dropdown for distance units
-		_distUnitsDropdown = new JComboBox();
+		_distUnitsDropdown = new JComboBox<String>();
 		final UnitSet currUnits = Config.getUnitSet();
 		for (int i=0; i<UnitSetLibrary.getNumUnitSets(); i++) {
 			_distUnitsDropdown.addItem(I18nManager.getText(UnitSetLibrary.getUnitSet(i).getDistanceUnit().getNameKey()));
@@ -394,12 +394,13 @@ public class DetailsDisplay extends GenericDisplay
 			_rangeLabel.setText(LABEL_RANGE_SELECTED
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
-			_distanceLabel.setText(LABEL_RANGE_DISTANCE + DisplayUtils.roundedNumber(selection.getDistance()) + " " + distUnitsStr);
-			if (selection.getNumSeconds() > 0)
+			_distanceLabel.setText(LABEL_RANGE_DISTANCE + DisplayUtils.roundedNumber(selection.getMovingDistance()) + " " + distUnitsStr);
+			final long numMovingSeconds = selection.getMovingSeconds();
+			if (numMovingSeconds > 0L)
 			{
-				_durationLabel.setText(LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(selection.getNumSeconds()));
+				_durationLabel.setText(LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(numMovingSeconds));
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
-					+ DisplayUtils.roundedNumber(selection.getDistance()/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
+					+ DisplayUtils.roundedNumber(selection.getMovingDistance()/numMovingSeconds*3600.0) + " " + speedUnitsStr);
 			}
 			else {
 				_durationLabel.setText("");

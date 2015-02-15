@@ -110,7 +110,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 			int startIndex = i * sampleSize;
 			RangeStats stats = getRangeStats(track, startIndex, startIndex + sampleSize, prevStartIndex);
 			if (stats != null && stats.getMovingDistanceKilometres() > 1.0
-				&& !stats.getTimestampsIncomplete()
+				&& !stats.getTimestampsIncomplete() && !stats.getTimestampsOutOfSequence()
 				&& stats.getTotalDurationInSeconds() > 100
 				&& stats.getStartIndex() > prevStartIndex)
 			{

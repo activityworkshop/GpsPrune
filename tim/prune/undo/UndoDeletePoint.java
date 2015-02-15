@@ -7,7 +7,7 @@ import tim.prune.data.TrackInfo;
 /**
  * Operation to undo a delete of a single point
  */
-public class UndoDeletePoint implements UndoOperation
+public class UndoDeletePoint extends UndoDeleteOperation
 {
 	private int _pointIndex = -1;
 	private DataPoint _point = null;
@@ -89,5 +89,7 @@ public class UndoDeletePoint implements UndoOperation
 				nextTrackPoint.setSegmentStart(false);
 			}
 		}
+		// If there's a current point or range selected, maybe need to adjust start and/or end
+		modifySelection(inTrackInfo, _pointIndex, _pointIndex);
 	}
 }

@@ -32,7 +32,7 @@ public class SelectTracksFunction extends GenericFunction
 	private SourceInfo _sourceInfo = null;
 	private TrackNameList _trackNameList = null;
 	private JDialog _dialog = null;
-	private JList _trackList = null;
+	private JList<String> _trackList = null;
 
 	/**
 	 * Constructor
@@ -82,7 +82,7 @@ public class SelectTracksFunction extends GenericFunction
 			}
 			names[i] = name + " (" + _trackNameList.getNumPointsInTrack(i) + ")";
 		}
-		_trackList = new JList(names);
+		_trackList = new JList<String>(names);
 		_trackList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		mainPanel.add(new JScrollPane(_trackList), BorderLayout.CENTER);
 		// select all button

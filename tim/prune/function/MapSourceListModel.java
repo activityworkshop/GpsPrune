@@ -8,7 +8,7 @@ import tim.prune.gui.map.MapSourceLibrary;
 /**
  * Class to act as list model for the map source list
  */
-public class MapSourceListModel extends AbstractListModel
+public class MapSourceListModel extends AbstractListModel<String>
 {
 	/**
 	 * @see javax.swing.ListModel#getSize()
@@ -21,7 +21,7 @@ public class MapSourceListModel extends AbstractListModel
 	/**
 	 * @see javax.swing.ListModel#getElementAt(int)
 	 */
-	public Object getElementAt(int inIndex)
+	public String getElementAt(int inIndex)
 	{
 		if (inIndex < 0 || inIndex >= getSize()) return "";
 		return MapSourceLibrary.getSource(inIndex).getName();

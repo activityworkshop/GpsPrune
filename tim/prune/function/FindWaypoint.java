@@ -34,7 +34,7 @@ public class FindWaypoint extends GenericFunction
 	private WaypointNameMatcher _nameMatcher = null;
 	private JDialog _dialog = null;
 	private JTextField _searchField = null;
-	private JList _pointList = null;
+	private JList<String> _pointList = null;
 	private JButton _okButton = null;
 
 
@@ -108,7 +108,7 @@ public class FindWaypoint extends GenericFunction
 
 		// middle panel with list
 		_nameMatcher = new WaypointNameMatcher();
-		_pointList = new JList(_nameMatcher);
+		_pointList = new JList<String>(_nameMatcher);
 		_pointList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{

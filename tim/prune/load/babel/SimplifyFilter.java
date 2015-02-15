@@ -31,7 +31,7 @@ public class SimplifyFilter extends FilterDefinition
 
 	private WholeNumberField _maxPointsField = null;
 	private DecimalNumberField _distField = null;
-	private JComboBox _distUnitsCombo = null;
+	private JComboBox<String> _distUnitsCombo = null;
 	private JRadioButton _crossTrackRadio = null;
 	private JRadioButton _lengthRadio = null;
 	private JRadioButton _relativeRadio = null;
@@ -65,7 +65,7 @@ public class SimplifyFilter extends FilterDefinition
 		_distField = new DecimalNumberField();
 		_distField.addKeyListener(_paramChangeListener);
 		gridPanel.add(_distField);
-		_distUnitsCombo = new JComboBox(new String[] {
+		_distUnitsCombo = new JComboBox<String>(new String[] {
 			I18nManager.getText(UnitSetLibrary.UNITS_KILOMETRES.getNameKey()),
 			I18nManager.getText(UnitSetLibrary.UNITS_MILES.getNameKey())
 		});

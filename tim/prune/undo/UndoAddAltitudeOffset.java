@@ -57,8 +57,7 @@ public class UndoAddAltitudeOffset implements UndoOperation
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = inTrackInfo.getTrack().getPoint(i+_startIndex);
-			point.getAltitude().reset(_altitudes[i]);
-			point.setModified(true);
+			point.resetAltitude(_altitudes[i]);
 		}
 		_altitudes = null;
 		inTrackInfo.getSelection().markInvalid();

@@ -45,6 +45,18 @@ public class DoubleRange
 		_empty = false;
 	}
 
+	/**
+	 * Combine this range with another one
+	 * @param inOtherRange other range to add to this one
+	 */
+	public void combine(DoubleRange inOtherRange)
+	{
+		if (inOtherRange != null && inOtherRange.getRange() > 1.0)
+		{
+			addValue(inOtherRange.getMinimum());
+			addValue(inOtherRange.getMaximum());
+		}
+	}
 
 	/**
 	 * @return true if data values were found

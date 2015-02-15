@@ -41,7 +41,7 @@ public class BabelLoadFromFile extends BabelLoader
 	// Label for filename
 	private JLabel _inputFileLabel = null;
 	// Dropdown for format of file
-	private JComboBox _formatDropdown = null;
+	private JComboBox<String> _formatDropdown = null;
 	// Last used file suffix
 	private String _lastSuffix = null;
 
@@ -133,7 +133,7 @@ public class BabelLoadFromFile extends BabelLoader
 		grid.add(_inputFileLabel);
 		JLabel formatLabel = new JLabel(I18nManager.getText("dialog.gpsload.format"));
 		grid.add(formatLabel);
-		_formatDropdown = new JComboBox(BabelFileFormats.getDescriptions());
+		_formatDropdown = new JComboBox<String>(BabelFileFormats.getDescriptions());
 		grid.add(_formatDropdown);
 		gridPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		gridPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 5, 20));
@@ -226,10 +226,8 @@ public class BabelLoadFromFile extends BabelLoader
 	 */
 	protected void saveConfigValues()
 	{
-		// Save the filter string (but don't remove it if it's now blank)
+		// Save the filter string, clear it if it's now blank
 		final String filter = _filterPanel.getFilterString();
-		if (filter != null && !filter.equals("")) {
-			Config.setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
-		}
+		Config.setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
 	}
 }

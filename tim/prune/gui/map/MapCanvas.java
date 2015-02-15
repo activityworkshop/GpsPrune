@@ -31,6 +31,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JSlider;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -57,12 +58,13 @@ import tim.prune.function.compress.MarkPointsInRectangleFunction;
 import tim.prune.function.edit.FieldEdit;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
+import tim.prune.tips.TipManager;
 
 /**
  * Class for the map canvas, to display a background map and draw on it
  */
 public class MapCanvas extends JPanel implements MouseListener, MouseMotionListener, DataSubscriber,
-	KeyListener, MouseWheelListener
+	KeyListener, MouseWheelListener, TileConsumer
 {
 	/** App object for callbacks */
 	private App _app = null;
@@ -292,6 +294,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		add(_scaleBar, BorderLayout.SOUTH);
 		// Make popup menu
 		makePopup();
+		// Get currently selected map from Config, pass to MapTileManager
+		_tileManager.setMapSource(Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX));
 	}
 
 
@@ -508,8 +512,19 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		g.fillRect(0, 0, getWidth(), getHeight());
 
 		// Check whether maps are on or not
-		boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		final boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
 		_mapCheckBox.setSelected(showMap);
+		// Check whether disk cache is on or not
+		final boolean usingDiskCache = Config.getConfigString(Config.KEY_DISK_CACHE) != null;
+		// Show tip to recommend setting up a cache
+		if (showMap && !usingDiskCache && Config.getConfigBoolean(Config.KEY_ONLINE_MODE))
+		{
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					_app.showTip(TipManager.Tip_UseAMapCache);
+				}
+			});
+		}
 
 		// reset error message
 		if (!showMap) {_shownOsmErrorAlready = false;}
@@ -544,7 +559,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						// Loop over layers
 						for (int l=0; l<numLayers; l++)
 						{
-							Image image = _tileManager.getTile(l, tileX, tileY);
+							Image image = _tileManager.getTile(l, tileX, tileY, true);
 							if (image != null) {
 								g.drawImage(image, x, y, 256, 256, null);
 							}
@@ -860,22 +875,25 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 * Inform that tiles have been updated and the map can be repainted
 	 * @param inIsOk true if data loaded ok, false for error
 	 */
-	public synchronized void tilesUpdated(boolean inIsOk)
+	public void tilesUpdated(boolean inIsOk)
 	{
-		// Show message if loading failed (but not too many times)
-		if (!inIsOk && !_shownOsmErrorAlready && _mapCheckBox.isSelected())
+		synchronized(this)
 		{
-			_shownOsmErrorAlready = true;
-			// use separate thread to show message about failing to load osm images
-			new Thread(new Runnable() {
-				public void run() {
-					try {Thread.sleep(500);} catch (InterruptedException ie) {}
-					_app.showErrorMessage("error.osmimage.dialogtitle", "error.osmimage.failed");
-				}
-			}).start();
+			// Show message if loading failed (but not too many times)
+			if (!inIsOk && !_shownOsmErrorAlready && _mapCheckBox.isSelected())
+			{
+				_shownOsmErrorAlready = true;
+				// use separate thread to show message about failing to load osm images
+				new Thread(new Runnable() {
+					public void run() {
+						try {Thread.sleep(500);} catch (InterruptedException ie) {}
+						_app.showErrorMessage("error.osmimage.dialogtitle", "error.osmimage.failed");
+					}
+				}).start();
+			}
+			_recalculate = true;
+			repaint();
 		}
-		_recalculate = true;
-		repaint();
 	}
 
 	/**
@@ -1168,7 +1186,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			_app.setCurrentMode(App.AppMode.NORMAL);
 			_drawMode = MODE_DEFAULT;
 			// Call a function to mark the points
-			MarkPointsInRectangleFunction marker = new MarkPointsInRectangleFunction(_app);
+			MarkPointsInRectangleFunction marker = (MarkPointsInRectangleFunction) FunctionLibrary.FUNCTION_MARK_IN_RECTANGLE;
 			double lon1 = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(_dragFromX, getWidth()));
 			double lat1 = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(_dragFromY, getHeight()));
 			double lon2 = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(_dragToX, getWidth()));
@@ -1298,7 +1316,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			_checkBounds = true;
 		}
 		if ((inUpdateType & DataSubscriber.MAPSERVER_CHANGED) > 0) {
-			_tileManager.resetConfig();
+			// Get the selected map source index and pass to tile manager
+			_tileManager.setMapSource(Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX));
 		}
 		if ((inUpdateType & (DataSubscriber.DATA_ADDED_OR_REMOVED + DataSubscriber.DATA_EDITED)) > 0) {
 			_midpoints.updateData(_track);

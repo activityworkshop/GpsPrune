@@ -365,8 +365,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		if (totalDeleted > 0)
 		{
 			// Show confirmation message
-			JOptionPane.showMessageDialog(_dialog, I18nManager.getText("dialog.diskcache.deleted1")
-				+ " " + totalDeleted + " " + I18nManager.getText("dialog.diskcache.deleted2"),
+			JOptionPane.showMessageDialog(_dialog, I18nManager.getTextWithNumber("dialog.diskcache.deleted", totalDeleted),
 				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
 			// reload model
 			_cards.first(_cardPanel);

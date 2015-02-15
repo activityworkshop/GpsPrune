@@ -12,6 +12,7 @@ import tim.prune.data.Track;
 public class ThreeDModel
 {
 	private Track _track = null;
+	private Track _terrainTrack = null;
 	private PointScaler _scaler = null;
 	private double _scaleFactor = 1.0;
 	private double _altFactor = 1.0;
@@ -37,6 +38,14 @@ public class ThreeDModel
 
 
 	/**
+	 * @param inTrack terrain track to set
+	 */
+	public void setTerrain(Track inTrack)
+	{
+		_terrainTrack = inTrack;
+	}
+
+	/**
 	 * @return the number of points in the model
 	 */
 	public int getNumPoints()
@@ -50,9 +59,7 @@ public class ThreeDModel
 	 */
 	public void setAltitudeFactor(double inFactor)
 	{
-		if (inFactor >= 1.0) {
-			_altFactor = inFactor;
-		}
+		_altFactor = inFactor;
 	}
 
 	/**
@@ -70,6 +77,7 @@ public class ThreeDModel
 	{
 		// Use PointScaler to sort out x and y values
 		_scaler = new PointScaler(_track);
+		_scaler.addTerrain(_terrainTrack);
 		_scaler.scale(); // Add 10% border
 
 		// cap altitude scale factor if it's too big
@@ -77,7 +85,7 @@ public class ThreeDModel
 		if (maxAlt > 0.5)
 		{
 			// capped
-			//System.out.println("Capped alt factor from " + _altFactor + " to " + (_altFactor * 0.5 / maxAlt));
+			// System.out.println("Capped alt factor from " + _altFactor + " to " + (_altFactor * 0.5 / maxAlt));
 			_altFactor = _altFactor * 0.5 / maxAlt;
 		}
 
@@ -134,9 +142,44 @@ public class ThreeDModel
 	{
 		// if no altitude, just return 0
 		double altVal = _scaler.getAltValue(inIndex);
-		if (altVal < 0) return 0;
+		if (altVal <= 0.0) return 0.0;
 		// scale according to exaggeration factor
 		return altVal * _altFactor * _externalScaleFactor;
+	}
+
+
+	/**
+	 * Get the scaled horizontal value for the specified terrain point
+	 * @param inIndex index of point
+	 * @return scaled horizontal value
+	 */
+	public double getScaledTerrainHorizValue(int inIndex)
+	{
+		return _scaler.getTerrainHorizValue(inIndex) * _scaleFactor * _externalScaleFactor;
+	}
+
+	/**
+	 * Get the scaled vertical value for the specified terrain point
+	 * @param inIndex index of point
+	 * @return scaled vertical value
+	 */
+	public double getScaledTerrainVertValue(int inIndex)
+	{
+		return _scaler.getTerrainVertValue(inIndex) * _scaleFactor * _externalScaleFactor;
+	}
+
+	/**
+	 * Get the scaled altitude value for the specified terrain point
+	 * @param inIndex index of point
+	 * @return scaled altitude value
+	 */
+	public double getScaledTerrainValue(int inIndex)
+	{
+		// if no altitude, just return 0
+		double altVal = _scaler.getTerrainAltValue(inIndex);
+		if (altVal <= 0.0) return 0.0;
+		// don't scale by scale factor, needs to be unscaled
+		return altVal * _altFactor;
 	}
 
 

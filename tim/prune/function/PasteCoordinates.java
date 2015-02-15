@@ -43,7 +43,7 @@ public class PasteCoordinates extends GenericFunction
 	private JTextField _nameField = null;
 	private JTextField _coordField = null;
 	private JButton _okButton = null;
-	private JComboBox _altUnitsDropDown;
+	private JComboBox<String> _altUnitsDropDown;
 
 
 	/**
@@ -122,7 +122,7 @@ public class PasteCoordinates extends GenericFunction
 		formatLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		grid.add(formatLabel);
 		final String[] altunits = {I18nManager.getText("units.metres"), I18nManager.getText("units.feet")};
-		_altUnitsDropDown = new JComboBox(altunits);
+		_altUnitsDropDown = new JComboBox<String>(altunits);
 		grid.add(_altUnitsDropDown);
 		// Waypoint name
 		JLabel nameLabel = new JLabel(I18nManager.getText("dialog.pointnameedit.name"));

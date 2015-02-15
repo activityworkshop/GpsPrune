@@ -10,7 +10,7 @@ import tim.prune.data.Track;
  * Class to deal with the matching of waypoint names
  * and the representation in a list
  */
-public class WaypointNameMatcher extends AbstractListModel
+public class WaypointNameMatcher extends AbstractListModel<String>
 {
 	private ArrayList<DataPoint> _waypoints = null;
 	private int _numPoints = 0;
@@ -73,7 +73,7 @@ public class WaypointNameMatcher extends AbstractListModel
 	/**
 	 * @see javax.swing.ListModel#getElementAt(int)
 	 */
-	public Object getElementAt(int inIndex)
+	public String getElementAt(int inIndex)
 	{
 		return _matches.get(inIndex).getWaypointName();
 	}

@@ -42,5 +42,6 @@ public abstract class UndoReorder implements UndoOperation
 	{
 		// restore track to previous values
 		inTrackInfo.getTrack().replaceContents(_contents);
+		inTrackInfo.getSelection().clearAll();
 	}
 }

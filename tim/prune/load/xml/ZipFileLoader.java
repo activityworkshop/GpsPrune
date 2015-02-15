@@ -56,8 +56,8 @@ public class ZipFileLoader
 					if (suffix.equals(".kml") || suffix.equals(".gpx") || suffix.equals(".xml"))
 					{
 						_xmlLoader.reset();
-						SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-						saxParser.parse(file.getInputStream(entry), _xmlLoader);
+						// Parse the stream using either Xerces or java classes
+						_xmlLoader.parseXmlStream(file.getInputStream(entry));
 						XmlHandler handler = _xmlLoader.getHandler();
 						if (handler == null) {
 							_app.showErrorMessage("error.load.dialogtitle", "error.load.othererror");

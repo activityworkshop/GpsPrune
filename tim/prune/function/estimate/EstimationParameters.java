@@ -62,6 +62,19 @@ public class EstimationParameters
 	}
 
 	/**
+	 * @return true if this set of parameters is the same as the default set
+	 */
+	public boolean sameAsDefaults()
+	{
+		EstimationParameters defaultParams = new EstimationParameters();
+		return _flatMins == defaultParams._flatMins
+			&& _gentleClimbMins == defaultParams._gentleClimbMins
+			&& _steepClimbMins == defaultParams._steepClimbMins
+			&& _gentleDescentMins == defaultParams._gentleDescentMins
+			&& _steepDescentMins  == defaultParams._steepDescentMins;
+	}
+
+	/**
 	 * Populate the values from the config, which means all values are metric
 	 * @param inString semicolon-separated string of five parameters
 	 */

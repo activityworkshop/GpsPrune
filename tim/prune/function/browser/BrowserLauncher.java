@@ -26,12 +26,15 @@ public abstract class BrowserLauncher
 		{
 			// which exists, so try browsers in turn
 			String[] browsersToTry = {"firefox", "iceweasel", "konqueror", "opera", "epiphany",
-				"mozilla", "safari", "google-chrome", "lynx"};
+				"mozilla", "chromium", "midori", "safari", "lynx"};
 			String browserFound = null;
-			for (int i=0; i<browsersToTry.length && browserFound == null; i++)
+			for (String browser : browsersToTry)
 			{
-				if (commandExists(browsersToTry[i]))
-					browserFound = browsersToTry[i];
+				if (commandExists(browser))
+				{
+					browserFound = browser;
+					break;
+				}
 			}
 			if (browserFound != null) {
 				_browserCommand = new String[] {browserFound, null};

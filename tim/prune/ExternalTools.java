@@ -16,6 +16,8 @@ public abstract class ExternalTools
 	public static final int TOOL_GPSBABEL = 1;
 	/** Constant for Gnuplot */
 	public static final int TOOL_GNUPLOT  = 2;
+	/** Constant for Xerces xml library */
+	public static final int TOOL_XERCES   = 3;
 	/** Config keys in order that the tools are defined above */
 	private static final String[] CONFIG_KEYS = {Config.KEY_EXIFTOOL_PATH, Config.KEY_GPSBABEL_PATH, Config.KEY_GNUPLOT_PATH};
 	/** Verification flags for the tools in the order defined above */
@@ -37,6 +39,15 @@ public abstract class ExternalTools
 				if (toolPath != null && toolPath.length() > 0) {
 					return check(toolPath + " " + VERIFY_FLAGS[inToolNum]);
 				}
+				break;
+			case TOOL_XERCES:
+				try {
+					return Class.forName("org.apache.xerces.parsers.SAXParser").getClassLoader() != null;
+				}
+				catch (ClassNotFoundException e) {
+					// System.err.println(e.getClass().getName() + " : " + e.getMessage());
+				}
+				break;
 		}
 		// Not found
 		return false;

@@ -7,6 +7,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -72,9 +73,14 @@ public class ProgressDialog
 		JPanel dialogPanel = new JPanel();
 		dialogPanel.setLayout(new BorderLayout());
 		dialogPanel.add(new JLabel(I18nManager.getText("confirm.running")), BorderLayout.NORTH);
+		// Centre panel with an empty border
+		JPanel centrePanel = new JPanel();
+		centrePanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+		centrePanel.setLayout(new BorderLayout());
 		_progressBar = new JProgressBar();
 		_progressBar.setPreferredSize(new Dimension(250, 30));
-		dialogPanel.add(_progressBar, BorderLayout.CENTER);
+		centrePanel.add(_progressBar, BorderLayout.CENTER);
+		dialogPanel.add(centrePanel, BorderLayout.CENTER);
 		// Cancel button at the bottom
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));

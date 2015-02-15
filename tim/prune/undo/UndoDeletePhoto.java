@@ -9,7 +9,7 @@ import tim.prune.data.TrackInfo;
 /**
  * Operation to undo a delete of a single photo, either with or without point
  */
-public class UndoDeletePhoto implements UndoOperation
+public class UndoDeletePhoto extends UndoDeleteOperation
 {
 	private int _photoIndex = -1;
 	private Photo _photo = null;
@@ -58,6 +58,8 @@ public class UndoDeletePhoto implements UndoOperation
 			{
 				throw new UndoException(getDescription());
 			}
+			// Change the current point/range selection if required
+			modifySelection(inTrackInfo, _pointIndex, _pointIndex);
 		}
 		else
 		{

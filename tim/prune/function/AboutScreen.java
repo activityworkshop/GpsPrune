@@ -130,7 +130,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(System.getProperty("java.runtime.version")),
 			1, 1);
 		// Create install labels to be populated later
-		final int NUM_INSTALL_CHECKS = 4;
+		final int NUM_INSTALL_CHECKS = 5;
 		_installedLabels = new JLabel[NUM_INSTALL_CHECKS];
 		for (int i=0; i<NUM_INSTALL_CHECKS; i++) {
 			_installedLabels[i] = new JLabel("...");
@@ -151,13 +151,15 @@ public class AboutScreen extends GenericFunction
 			new JLabel(I18nManager.getText("dialog.about.systeminfo.gnuplot") + " : "),
 			0, 5);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[3], 1, 5);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints, new JLabel("Xerces : "), 0, 6);
+		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[4], 1, 6);
 		// Exif library
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.systeminfo.exiflib") + " : "),
-			0, 6);
+			0, 7);
 		final String exiflibkey = "dialog.about.systeminfo.exiflib." + ExifGateway.getDescriptionKey();
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText(exiflibkey)), 1, 6);
+			new JLabel(I18nManager.getText(exiflibkey)), 1, 7);
 		_tabs.add(I18nManager.getText("dialog.about.systeminfo"), sysInfoPanel);
 
 		// Third pane for credits
@@ -198,7 +200,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d, Gy\u00F6rgy,"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" HooAU, Sergey"),
+			new JLabel(" HooAU, Sergey, P\u00E9ter, serhijdubyk"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
@@ -210,13 +212,13 @@ public class AboutScreen extends GenericFunction
 			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
 			0, 8);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Debian Linux, Sun Java, Eclipse, Svn, Gimp, Inkscape"),
+			new JLabel("Debian Linux, Sun Java, OpenJDK, Eclipse, Svn, Gimp, Inkscape"),
 			1, 8);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
 			0, 9);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Openstreetmap, Povray, Exiftool, Google Earth, Gpsbabel, Gnuplot"),
+			new JLabel("Openstreetmap, Povray, Exiftool, Gpsbabel, Gnuplot"),
 			1, 9);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
@@ -380,7 +382,8 @@ public class AboutScreen extends GenericFunction
 		String yesText = I18nManager.getText("dialog.about.yes");
 		String noText = I18nManager.getText("dialog.about.no");
 		_installedLabels[0].setText(WindowFactory.isJava3dEnabled()?yesText:noText);
-		final int[] tools = {ExternalTools.TOOL_EXIFTOOL, ExternalTools.TOOL_GPSBABEL, ExternalTools.TOOL_GNUPLOT};
+		final int[] tools = {ExternalTools.TOOL_EXIFTOOL, ExternalTools.TOOL_GPSBABEL,
+			ExternalTools.TOOL_GNUPLOT, ExternalTools.TOOL_XERCES};
 		for (int i=0; i<tools.length; i++) {
 			_installedLabels[i+1].setText(ExternalTools.isToolInstalled(tools[i])?yesText:noText);
 		}

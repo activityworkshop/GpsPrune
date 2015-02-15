@@ -17,8 +17,8 @@ public class Selection
 	private int _currentPhotoIndex = -1;
 	private int _currentAudioIndex = -1;
 	private AltitudeRange _altitudeRange = null;
-	private long _totalSeconds = 0L, _movingSeconds = 0L;
-	private double _angDistance = -1.0, _angMovingDistance = -1.0;
+	private long _movingSeconds = 0L;
+	private double _angMovingDistance = -1.0;
 
 
 	/**
@@ -65,7 +65,8 @@ public class Selection
 	{
 		final int numPoints = _track.getNumPoints();
 		// Recheck if the number of points has changed
-		if (numPoints != _prevNumPoints) {
+		if (numPoints != _prevNumPoints)
+		{
 			_prevNumPoints = numPoints;
 			check();
 		}
@@ -73,11 +74,10 @@ public class Selection
 		{
 			_altitudeRange = new AltitudeRange();
 			Altitude altitude = null;
-			Timestamp time = null, startTime = null, endTime = null;
-			Timestamp previousTime = null;
+			Timestamp time = null, previousTime = null;
 			DataPoint lastPoint = null, currPoint = null;
-			_angDistance = 0.0; _angMovingDistance = 0.0;
-			_totalSeconds = 0L; _movingSeconds = 0L;
+			_angMovingDistance = 0.0;
+			_movingSeconds = 0L;
 			// Loop over points in selection
 			for (int i=_startIndex; i<=_endIndex; i++)
 			{
@@ -86,14 +86,17 @@ public class Selection
 				// Ignore waypoints in altitude calculations
 				if (!currPoint.isWaypoint() && altitude.isValid())
 				{
-					_altitudeRange.addValue(altitude);
+					if (currPoint.getSegmentStart()) {
+						_altitudeRange.ignoreValue(altitude);
+					}
+					else {
+						_altitudeRange.addValue(altitude);
+					}
 				}
-				// Store the first and last timestamp in the range
+				// Compare timestamps within the segments
 				time = currPoint.getTimestamp();
 				if (time.isValid())
 				{
-					if (startTime == null || startTime.isAfter(time)) startTime = time;
-					if (endTime == null || time.isAfter(endTime)) endTime = time;
 					// add moving time
 					if (!currPoint.getSegmentStart() && previousTime != null && time.isAfter(previousTime)) {
 						_movingSeconds += time.getSecondsSince(previousTime);
@@ -106,16 +109,12 @@ public class Selection
 					if (lastPoint != null)
 					{
 						double radians = DataPoint.calculateRadiansBetween(lastPoint, currPoint);
-						_angDistance += radians;
 						if (!currPoint.getSegmentStart()) {
 							_angMovingDistance += radians;
 						}
 					}
 					lastPoint = currPoint;
 				}
-			}
-			if (endTime != null) {
-				_totalSeconds = endTime.getSecondsSince(startTime);
 			}
 		}
 		_valid = true;
@@ -152,29 +151,12 @@ public class Selection
 
 
 	/**
-	 * @return number of seconds spanned by selection
-	 */
-	public long getNumSeconds()
-	{
-		if (!_valid) recalculate();
-		return _totalSeconds;
-	}
-
-	/**
 	 * @return number of seconds spanned by segments within selection
 	 */
 	public long getMovingSeconds()
 	{
 		if (!_valid) recalculate();
 		return _movingSeconds;
-	}
-
-	/**
-	 * @return distance of Selection in specified units
-	 */
-	public double getDistance()
-	{
-		return Distance.convertRadiansToDistance(_angDistance);
 	}
 
 	/**

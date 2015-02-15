@@ -7,8 +7,12 @@ package tim.prune;
 public abstract class UpdateMessageBroker
 {
 	private static final int MAXIMUM_NUMBER_SUBSCRIBERS = 6;
+	/** Array of all subscribers */
 	private static DataSubscriber[] _subscribers = new DataSubscriber[MAXIMUM_NUMBER_SUBSCRIBERS];
+	/** Counter of the number of subscribers added so far */
 	private static int _subscriberNum = 0;
+	/** Enable/disabled flag */
+	private static boolean _enabled = true;
 
 
 	/**
@@ -21,6 +25,14 @@ public abstract class UpdateMessageBroker
 		_subscriberNum++;
 	}
 
+	/**
+	 * Enable or disable the messaging (to allow temporary disabling for multiple operations)
+	 * @param inEnabled false to disable, true to enable again
+	 */
+	public static void enableMessaging(boolean inEnabled)
+	{
+		_enabled = inEnabled;
+	}
 
 	/**
 	 * Send a message to all subscribers that
@@ -39,6 +51,7 @@ public abstract class UpdateMessageBroker
 	public static void informSubscribers(byte inChange)
 	{
 		// TODO: Launch separate thread so that whatever caused the inform can finish
+		if (!_enabled) return;
 		for (int i=0; i<_subscribers.length; i++)
 		{
 			if (_subscribers[i] != null)
@@ -54,6 +67,7 @@ public abstract class UpdateMessageBroker
 	 */
 	public static void informSubscribers(String inMessage)
 	{
+		if (!_enabled) return;
 		for (int i=0; i<_subscribers.length; i++)
 		{
 			if (_subscribers[i] != null)

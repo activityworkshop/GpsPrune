@@ -16,6 +16,7 @@ import java.io.IOException;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -23,10 +24,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.border.EtchedBorder;
 
 import tim.prune.App;
-import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.ColourScheme;
@@ -34,24 +33,26 @@ import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.DoubleRange;
 import tim.prune.data.Track;
+import tim.prune.gui.BaseImageDefinitionPanel;
 import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.WholeNumberField;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.gui.map.MapUtils;
 import tim.prune.load.GenericFileFilter;
+import tim.prune.threedee.ImageDefinition;
 
 /**
  * Class to handle the exporting of map images, optionally with track data drawn on top.
  * This allows images larger than the screen to be generated.
  */
-public class ImageExporter extends GenericFunction implements DataSubscriber
+public class ImageExporter extends GenericFunction implements BaseImageConsumer
 {
 	private JDialog   _dialog = null;
 	private JCheckBox _drawDataCheckbox = null;
+	private JCheckBox _drawTrackPointsCheckbox = null;
 	private WholeNumberField _textScaleField = null;
-	private JLabel    _baseImageLabel = null;
-	private BaseImageConfigDialog _baseImageConfig = null;
+	private BaseImageDefinitionPanel _baseImagePanel = null;
 	private JFileChooser _fileChooser = null;
 	private JButton   _okButton = null;
 
@@ -83,10 +84,6 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 			_dialog.pack();
 			_textScaleField.setValue(100);
 		}
-		// Make base image dialog too
-		if (_baseImageConfig == null) {
-			_baseImageConfig = new BaseImageConfigDialog(this, _dialog, _app.getTrackInfo().getTrack());
-		}
 
 		// Check if there is a cache to use
 		if (!BaseImageConfigDialog.isImagePossible())
@@ -95,7 +92,8 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 			return;
 		}
 
-		updateBaseImageDetails();
+		_baseImagePanel.updateBaseImageDetails();
+		baseImageChanged();
 		// Show dialog
 		_dialog.setVisible(true);
 	}
@@ -111,6 +109,15 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 		// Checkbox for drawing track or not
 		_drawDataCheckbox = new JCheckBox(I18nManager.getText("dialog.exportimage.drawtrack"));
 		_drawDataCheckbox.setSelected(true); // draw by default
+		// Also whether to draw track points or not
+		_drawTrackPointsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportimage.drawtrackpoints"));
+		_drawTrackPointsCheckbox.setSelected(true);
+		// Add listener to en/disable trackpoints checkbox
+		_drawDataCheckbox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				_drawTrackPointsCheckbox.setEnabled(_drawDataCheckbox.isSelected());
+			}
+		});
 
 		// TODO: Maybe have other controls such as line width, symbol scale factor
 		JPanel controlsPanel = new JPanel();
@@ -128,7 +135,7 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 			public void actionPerformed(ActionEvent e)
 			{
 				doExport();
-				MapGrouter.clearMapImage();
+				_baseImagePanel.getGrouter().clearMapImage();
 				_dialog.dispose();
 			}
 		});
@@ -137,7 +144,7 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				MapGrouter.clearMapImage();
+				_baseImagePanel.getGrouter().clearMapImage();
 				_dialog.dispose();
 			}
 		});
@@ -150,96 +157,41 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 			{
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					_dialog.dispose();
-					MapGrouter.clearMapImage();
+					_baseImagePanel.getGrouter().clearMapImage();
 				}
 			}
 		};
 		_drawDataCheckbox.addKeyListener(closer);
 
 		// Panel for the base image
-		JPanel imagePanel = new JPanel();
-		imagePanel.setLayout(new BorderLayout(10, 4));
-		imagePanel.add(new JLabel(I18nManager.getText("dialog.exportpov.baseimage") + ": "), BorderLayout.WEST);
-		_baseImageLabel = new JLabel("Typical sourcename");
-		imagePanel.add(_baseImageLabel, BorderLayout.CENTER);
-		JButton baseImageButton = new JButton(I18nManager.getText("button.edit"));
-		baseImageButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				changeBaseImage();
-			}
-		});
-		baseImageButton.addKeyListener(closer);
-		imagePanel.add(baseImageButton, BorderLayout.EAST);
-		imagePanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(4, 4, 4, 4))
-		);
+		_baseImagePanel = new BaseImageDefinitionPanel(this, _dialog, _app.getTrackInfo().getTrack());
+
+		// Panel for the checkboxes at the top
+		JPanel checkPanel = new JPanel();
+		checkPanel.setLayout(new BoxLayout(checkPanel, BoxLayout.Y_AXIS));
+		checkPanel.add(_drawDataCheckbox);
+		checkPanel.add(_drawTrackPointsCheckbox);
 
 		// add these panels to the holder panel
 		JPanel holderPanel = new JPanel();
 		holderPanel.setLayout(new BorderLayout(5, 5));
-		holderPanel.add(_drawDataCheckbox, BorderLayout.NORTH);
+		holderPanel.add(checkPanel, BorderLayout.NORTH);
 		holderPanel.add(controlsPanel, BorderLayout.CENTER);
-		holderPanel.add(imagePanel, BorderLayout.SOUTH);
+		holderPanel.add(_baseImagePanel, BorderLayout.SOUTH);
 		holderPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 
 		panel.add(holderPanel, BorderLayout.NORTH);
 		return panel;
 	}
 
-	/**
-	 * Change the base image by calling the BaseImageConfigDialog
-	 */
-	private void changeBaseImage()
-	{
-		// Check if there is a cache to use
-		if (BaseImageConfigDialog.isImagePossible())
-		{
-			// Show new dialog to choose image details
-			_baseImageConfig.beginWithImageYes();
-		}
-	}
-
-	/**
-	 * Callback from base image config dialog
-	 */
-	public void dataUpdated(byte inUpdateType)
-	{
-		updateBaseImageDetails();
-	}
-
-	/** Not required */
-	public void actionCompleted(String inMessage) {
-	}
-
-	/**
-	 * Update the description label according to the selected base image details
-	 */
-	private void updateBaseImageDetails()
-	{
-		String desc = null;
-		if (_baseImageConfig.useImage())
-		{
-			MapSource source = MapSourceLibrary.getSource(_baseImageConfig.getSourceIndex());
-			if (source != null) {
-				desc = source.getName() + " ("
-					+ _baseImageConfig.getZoomLevel() + ")";
-			}
-		}
-		if (desc == null) {
-			desc = I18nManager.getText("dialog.about.no");
-		}
-		_baseImageLabel.setText(desc);
-		_okButton.setEnabled(_baseImageConfig.useImage() && _baseImageConfig.getFoundData()
-			&& MapGrouter.isZoomLevelOk(_app.getTrackInfo().getTrack(), _baseImageConfig.getZoomLevel()));
-	}
 
 	/**
 	 * Select the file and export data to it
 	 */
 	private void doExport()
 	{
-		// OK pressed, so choose output file
 		_okButton.setEnabled(false);
+		// OK pressed, so choose output file
 		if (_fileChooser == null)
 		{
 			_fileChooser = new JFileChooser();
@@ -296,9 +248,11 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 	private boolean exportFile(File inPngFile)
 	{
 		// Get the image file from the grouter
-		MapSource source = MapSourceLibrary.getSource(_baseImageConfig.getSourceIndex());
-		GroutedImage baseImage = MapGrouter.getMapImage(_app.getTrackInfo().getTrack(), source,
-			_baseImageConfig.getZoomLevel());
+		ImageDefinition imageDef = _baseImagePanel.getImageDefinition();
+		MapSource source = MapSourceLibrary.getSource(imageDef.getSourceIndex());
+		MapGrouter grouter = _baseImagePanel.getGrouter();
+		GroutedImage baseImage = grouter.getMapImage(_app.getTrackInfo().getTrack(), source,
+			imageDef.getZoom());
 		if (baseImage == null || !baseImage.isValid())
 		{
 			_app.showErrorMessage(getNameKey(), "dialog.exportpov.cannotmakebaseimage");
@@ -332,9 +286,9 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 		// Work out x, y limits for drawing
 		DoubleRange xRange = inImage.getXRange();
 		DoubleRange yRange = inImage.getYRange();
-		int zoomFactor = 1 << _baseImageConfig.getZoomLevel();
+		final int zoomFactor = 1 << _baseImagePanel.getImageDefinition().getZoom();
 		Graphics g = inImage.getImage().getGraphics();
-		// TODO: Set colour, line width
+		// TODO: Set line width, style etc
 		g.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
 
 		// Loop over points
@@ -355,8 +309,11 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 					// draw from previous point to this one
 					g.drawLine(prevX, prevY, px, py);
 				}
-				// draw this point
-				g.drawRect(px-2, py-2, 3, 3);
+				// Only draw points if requested
+				if (_drawTrackPointsCheckbox.isSelected())
+				{
+					g.drawRect(px-2, py-2, 3, 3);
+				}
 				// save coordinates
 				prevX = px; prevY = py;
 			}
@@ -450,5 +407,17 @@ public class ImageExporter extends GenericFunction implements DataSubscriber
 		// Maybe draw note at the bottom, export from GpsPrune?  Filename?
 		// Note: Differences from main map: No mapPosition (modifying position and visible points),
 		//       no selection, no opacities, maybe different scale/text factors
+	}
+
+	/**
+	 * Base image has changed, need to enable/disable ok button
+	 */
+	public void baseImageChanged()
+	{
+		final boolean useImage = _baseImagePanel.getImageDefinition().getUseImage();
+		final int zoomLevel = _baseImagePanel.getImageDefinition().getZoom();
+		final boolean okEnabled = useImage && _baseImagePanel.getFoundData()
+			&& MapGrouter.isZoomLevelOk(_app.getTrackInfo().getTrack(), zoomLevel);
+		_okButton.setEnabled(okEnabled);
 	}
 }

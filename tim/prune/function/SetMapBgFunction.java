@@ -37,7 +37,7 @@ import tim.prune.gui.map.MapSourceLibrary;
 public class SetMapBgFunction extends GenericFunction
 {
 	private JDialog _dialog = null;
-	private JList _list = null;
+	private JList<String> _list = null;
 	private MapSourceListModel _listModel = null;
 	private String _initialSource = null;
 	private JButton _okButton = null, _cancelButton = null;
@@ -96,7 +96,7 @@ public class SetMapBgFunction extends GenericFunction
 		dialogPanel.add(introLabel, BorderLayout.NORTH);
 		// list box
 		_listModel = new MapSourceListModel();
-		_list = new JList(_listModel);
+		_list = new JList<String>(_listModel);
 		_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		dialogPanel.add(new JScrollPane(_list), BorderLayout.CENTER);
 		_list.addListSelectionListener(new ListSelectionListener() {

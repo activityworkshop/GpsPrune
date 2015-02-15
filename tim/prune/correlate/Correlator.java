@@ -37,6 +37,7 @@ import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.tips.TipManager;
 
 /**
  * Abstract superclass of the two correlator functions
@@ -45,7 +46,6 @@ public abstract class Correlator extends GenericFunction
 {
 	protected JDialog _dialog;
 	private CardStack _cards = null;
-	private JLabel _tipLabel = null;
 	private JTable _selectionTable = null;
 	protected JTable _previewTable = null;
 	private boolean _previewEnabled = false; // flag required to enable preview function on final panel
@@ -55,7 +55,7 @@ public abstract class Correlator extends GenericFunction
 	private JRadioButton _timeLimitRadio = null, _distLimitRadio = null;
 	private JTextField _limitMinBox = null, _limitSecBox = null;
 	private JTextField _limitDistBox = null;
-	private JComboBox _distUnitsDropdown = null;
+	private JComboBox<String> _distUnitsDropdown = null;
 	private JButton _nextButton = null, _backButton = null;
 	protected JButton _okButton = null;
 
@@ -117,7 +117,9 @@ public abstract class Correlator extends GenericFunction
 		_cards.showCard(card);
 		showCard(0); // does set up and next/prev enabling
 		_okButton.setEnabled(false);
-		_tipLabel.setVisible(!isCardEnabled(1));
+		if (!isCardEnabled(1)) {
+			_app.showTip(TipManager.Tip_ManuallyCorrelateOne);
+		}
 		_dialog.setVisible(true);
 	}
 
@@ -339,9 +341,6 @@ public abstract class Correlator extends GenericFunction
 		card2.setLayout(new BorderLayout());
 		JPanel card2Top = new JPanel();
 		card2Top.setLayout(new BoxLayout(card2Top, BoxLayout.Y_AXIS));
-		_tipLabel = new JLabel(I18nManager.getText("dialog.correlate.options.tip"));
-		_tipLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 5, 6));
-		card2Top.add(_tipLabel);
 		JLabel introLabel = new JLabel(I18nManager.getText("dialog.correlate.options.intro"));
 		introLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 5, 6));
 		card2Top.add(introLabel);
@@ -400,7 +399,7 @@ public abstract class Correlator extends GenericFunction
 		noTimeLimitRadio.addItemListener(optionsChangedListener);
 		noTimeLimitRadio.addActionListener(radioListener);
 		timeLimitPanel.add(noTimeLimitRadio);
-		_timeLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.timelimit") + " : ");
+		_timeLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.timelimit") + ": ");
 		_timeLimitRadio.addItemListener(optionsChangedListener);
 		_timeLimitRadio.addActionListener(radioListener);
 		timeLimitPanel.add(_timeLimitRadio);
@@ -421,7 +420,7 @@ public abstract class Correlator extends GenericFunction
 		noDistLimitRadio.addItemListener(optionsChangedListener);
 		noDistLimitRadio.addActionListener(radioListener);
 		distLimitPanel.add(noDistLimitRadio);
-		_distLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.distancelimit"));
+		_distLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.distancelimit") + ": ");
 		_distLimitRadio.addItemListener(optionsChangedListener);
 		_distLimitRadio.addActionListener(radioListener);
 		distLimitPanel.add(_distLimitRadio);
@@ -431,7 +430,7 @@ public abstract class Correlator extends GenericFunction
 		distLimitPanel.add(_limitDistBox);
 		String[] distUnitsOptions = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.metres"),
 			I18nManager.getText("units.miles")};
-		_distUnitsDropdown = new JComboBox(distUnitsOptions);
+		_distUnitsDropdown = new JComboBox<String>(distUnitsOptions);
 		_distUnitsDropdown.addItemListener(optionsChangedListener);
 		distLimitPanel.add(_distUnitsDropdown);
 		limitsPanel.add(distLimitPanel);

@@ -49,13 +49,13 @@ public class TextFileLoader
 	private JLabel _statusLabel = null;
 	private DelimiterInfo[] _delimiterInfos = null;
 	private FileCacher _fileCacher = null;
-	private JList _snippetBox = null;
+	private JList<String> _snippetBox = null;
 	private FileExtractTableModel _fileExtractTableModel = null;
 	private JTable _fieldTable;
 	private FieldSelectionTableModel _fieldTableModel = null;
-	private JComboBox _altitudeUnitsDropdown = null;
-	private JComboBox _hSpeedUnitsDropdown = null;
-	private JComboBox _vSpeedUnitsDropdown = null;
+	private JComboBox<String> _altitudeUnitsDropdown = null;
+	private JComboBox<String> _hSpeedUnitsDropdown = null;
+	private JComboBox<String> _vSpeedUnitsDropdown = null;
 	private JRadioButton _vSpeedUpwardsRadio = null;
 	private ComponentHider _componentHider = null;
 	private int _selectedField = -1;
@@ -326,7 +326,7 @@ public class TextFileLoader
 		delimsPanel.add(_statusLabel);
 		firstCard.add(delimsPanel, BorderLayout.SOUTH);
 		// load snippet to show first few lines
-		_snippetBox = new JList(_fileCacher.getSnippet(SNIPPET_SIZE, MAX_SNIPPET_WIDTH));
+		_snippetBox = new JList<String>(_fileCacher.getSnippet(SNIPPET_SIZE, MAX_SNIPPET_WIDTH));
 		_snippetBox.setEnabled(false);
 		firstCard.add(makeLabelledPanel("dialog.openoptions.filesnippet", _snippetBox), BorderLayout.CENTER);
 
@@ -414,7 +414,7 @@ public class TextFileLoader
 		JLabel altLabel = new JLabel(I18nManager.getText("dialog.openoptions.altitudeunits") + ": ");
 		altGrid.add(altLabel);
 		String[] altUnits = {I18nManager.getText("units.metres"), I18nManager.getText("units.feet")};
-		_altitudeUnitsDropdown = new JComboBox(altUnits);
+		_altitudeUnitsDropdown = new JComboBox<String>(altUnits);
 		altGrid.add(_altitudeUnitsDropdown);
 		holderPanel.add(altUnitsPanel);
 		// Horizontal speed
@@ -423,7 +423,7 @@ public class TextFileLoader
 		speedPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("fieldname.speed")));
 		JLabel speedLabel = new JLabel(I18nManager.getText("dialog.openoptions.speedunits") + ": ");
 		speedGrid.add(speedLabel);
-		_hSpeedUnitsDropdown = new JComboBox();
+		_hSpeedUnitsDropdown = new JComboBox<String>();
 		for (Unit spUnit : UnitSetLibrary.ALL_SPEED_UNITS) {
 			_hSpeedUnitsDropdown.addItem(I18nManager.getText(spUnit.getNameKey()));
 		}
@@ -435,7 +435,7 @@ public class TextFileLoader
 		vSpeedPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("fieldname.verticalspeed")));
 		JLabel vSpeedLabel = new JLabel(I18nManager.getText("dialog.openoptions.vertspeedunits") + ": ");
 		vSpeedGrid.add(vSpeedLabel);
-		_vSpeedUnitsDropdown = new JComboBox();
+		_vSpeedUnitsDropdown = new JComboBox<String>();
 		for (Unit spUnit : UnitSetLibrary.ALL_SPEED_UNITS) {
 			_vSpeedUnitsDropdown.addItem(I18nManager.getText(spUnit.getNameKey()));
 		}
@@ -587,7 +587,7 @@ public class TextFileLoader
 		_fieldTableModel.updateData(startFieldArray);
 		_fieldTable.setModel(_fieldTableModel);
 		// add dropdowns to second column
-		JComboBox fieldTypesBox = new JComboBox();
+		JComboBox<String> fieldTypesBox = new JComboBox<String>();
 		String[] fieldNames = Field.getFieldNames();
 		for (int i=0; i<fieldNames.length; i++)
 		{

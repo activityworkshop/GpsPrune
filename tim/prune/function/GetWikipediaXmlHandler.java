@@ -9,7 +9,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import tim.prune.function.gpsies.GpsiesTrack;
 
 /**
- * XML handler for dealing with XML returned from gpsies.com
+ * XML handler for dealing with XML returned from the geonames api
  */
 public class GetWikipediaXmlHandler extends DefaultHandler
 {
@@ -71,7 +71,7 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 			catch (NumberFormatException nfe) {}
 		}
 		else if (inTagName.equals("wikipediaUrl")) {
-			_track.setWebUrl(_value);
+			_track.setWebUrl(_value.replaceFirst("http://", "https://"));
 		}
 		super.endElement(inUri, inLocalName, inTagName);
 	}

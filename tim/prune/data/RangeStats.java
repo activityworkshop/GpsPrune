@@ -9,6 +9,7 @@ import tim.prune.config.Config;
  */
 public class RangeStats
 {
+	// MAYBE: Split into basic stats (quick to calculate, for detailsdisplay) and full stats (for other two)
 	private boolean _valid = false;
 	private int     _numPoints   = 0;
 	private int     _startIndex = 0, _endIndex = 0;
@@ -17,7 +18,8 @@ public class RangeStats
 	private AltitudeRange _gentleAltitudeRange = null, _steepAltitudeRange = null;
 	private Timestamp _earliestTimestamp = null, _latestTimestamp = null;
 	private long _movingMilliseconds = 0L;
-	private boolean _timestampsIncomplete = false;
+	private boolean _timesIncomplete = false;
+	private boolean _timesOutOfSequence = false;
 	private double _totalDistanceRads = 0.0, _movingDistanceRads = 0.0;
 	// Note, maximum speed is not calculated here, use the SpeedData method instead
 
@@ -123,12 +125,14 @@ public class RangeStats
 				if (!p.getSegmentStart() && prevPoint != null && prevPoint.hasTimestamp())
 				{
 					long millisLater = p.getTimestamp().getMillisecondsSince(prevPoint.getTimestamp());
-					if (millisLater < 0) {_timestampsIncomplete = true;}
-					_movingMilliseconds += millisLater;
+					if (millisLater < 0) {_timesOutOfSequence = true;}
+					else {
+						_movingMilliseconds += millisLater;
+					}
 				}
 			}
-			else if (!p.getSegmentStart()) {
-				_timestampsIncomplete = true;
+			else {
+				_timesIncomplete = true;
 			}
 
 			prevPoint = p;
@@ -207,9 +211,14 @@ public class RangeStats
 		return _movingMilliseconds / 1000;
 	}
 
-	/** @return true if any timestamps are missing or out of sequence */
+	/** @return true if any timestamps are missing */
 	public boolean getTimestampsIncomplete() {
-		return _timestampsIncomplete;
+		return _timesIncomplete;
+	}
+
+	/** @return true if any timestamps are out of sequence */
+	public boolean getTimestampsOutOfSequence() {
+		return _timesOutOfSequence;
 	}
 
 	/** @return total distance in the current distance units (km or mi) */

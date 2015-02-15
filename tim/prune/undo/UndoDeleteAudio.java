@@ -9,7 +9,7 @@ import tim.prune.data.TrackInfo;
 /**
  * Operation to undo a delete of a single audio item, either with or without point
  */
-public class UndoDeleteAudio implements UndoOperation
+public class UndoDeleteAudio extends UndoDeleteOperation
 {
 	private int _audioIndex = -1;
 	private AudioClip _audio = null;
@@ -55,6 +55,8 @@ public class UndoDeleteAudio implements UndoOperation
 			if (!inTrackInfo.getTrack().insertPoint(_point, _pointIndex)) {
 				throw new UndoException(getDescription());
 			}
+			// Change the current point/range selection if required
+			modifySelection(inTrackInfo, _pointIndex, _pointIndex);
 		}
 		else
 		{

@@ -3,8 +3,6 @@ package tim.prune.load.xml;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.zip.GZIPInputStream;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.SourceInfo;
@@ -42,8 +40,8 @@ public class GzipFileLoader
 		{
 			istream = new GZIPInputStream(new FileInputStream(inFile));
 			_xmlLoader.reset();
-			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			saxParser.parse(istream, _xmlLoader);
+			// Parse the stream using either Xerces or java classes
+			_xmlLoader.parseXmlStream(istream);
 			XmlHandler handler = _xmlLoader.getHandler();
 			if (handler == null) {
 				_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");

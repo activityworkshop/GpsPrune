@@ -49,7 +49,7 @@ public class FileCacher
 				{
 					if (currLine.indexOf('\0') >= 0)
 					{
-						try {reader.close();} catch (IOException ioe2) {}
+						reader.close();
 						return; // it's a binary file, shouldn't use this cacher
 					}
 					if (currLine.trim().length() > 0)

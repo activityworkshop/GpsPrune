@@ -41,6 +41,7 @@ import tim.prune.load.MediaLinkInfo;
 import tim.prune.load.TrackNameList;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
+import tim.prune.tips.TipManager;
 import tim.prune.undo.*;
 
 
@@ -118,6 +119,22 @@ public class App
 	{
 		return _undoStack;
 	}
+
+
+	/**
+	 * Show the specified tip if appropriate
+	 * @param inTipNumber tip number from TipManager
+	 */
+	public void showTip(int inTipNumber)
+	{
+		String key = TipManager.fireTipTrigger(inTipNumber);
+		if (key != null && !key.equals(""))
+		{
+			JOptionPane.showMessageDialog(_frame, I18nManager.getText(key),
+				I18nManager.getText("tip.title"), JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+
 
 	/**
 	 * Load the specified data files one by one
@@ -511,8 +528,8 @@ public class App
 		// ensure track's field list contains point's fields
 		_track.extendFieldList(inPoint.getFieldList());
 		_trackInfo.selectPoint(inIndex);
-		final int selStart = _trackInfo.getSelection().getStart(); 
-		final int selEnd   = _trackInfo.getSelection().getEnd(); 
+		final int selStart = _trackInfo.getSelection().getStart();
+		final int selEnd   = _trackInfo.getSelection().getEnd();
 		if (selStart < inIndex && selEnd > inIndex)
 		{
 			// Extend end of selection by 1

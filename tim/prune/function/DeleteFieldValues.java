@@ -33,7 +33,7 @@ import tim.prune.undo.UndoDeleteFieldValues;
 public class DeleteFieldValues extends GenericFunction
 {
 	private JDialog _dialog = null;
-	private JList _fieldList = null;
+	private JList<String> _fieldList = null;
 	private FieldListModel _listModel = null;
 	private JButton _okButton = null;
 
@@ -88,7 +88,7 @@ public class DeleteFieldValues extends GenericFunction
 		dialogPanel.setLayout(new BorderLayout());
 		dialogPanel.add(new JLabel(I18nManager.getText("dialog.deletefieldvalues.intro")), BorderLayout.NORTH);
 		// List in centre
-		_fieldList = new JList(new String[] {"First field", "Second field"});
+		_fieldList = new JList<String>(new String[] {"First field", "Second field"});
 		// These entries will be replaced by the initDialog method
 		_fieldList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_fieldList.addListSelectionListener(new ListSelectionListener() {

@@ -43,11 +43,11 @@ public class AddMapSourceDialog
 	private JTextField _oNameField = null;
 	private JTextField _baseUrlField = null, _topUrlField = null;
 	private JRadioButton[] _baseTypeRadios = null, _topTypeRadios = null;
-	private JComboBox _oZoomCombo = null;
+	private JComboBox<Integer> _oZoomCombo = null;
 	// controls for cloudmade panel
 	private JTextField _cNameField = null;
 	private JTextField _cStyleField = null;
-	private JComboBox _cZoomCombo = null;
+	private JComboBox<Integer> _cZoomCombo = null;
 	private JButton _okButton = null;
 
 	/** array of file types */
@@ -181,9 +181,9 @@ public class AddMapSourceDialog
 		// Max zoom
 		c.gridx = 0; c.gridy = 3;
 		gbPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.maxzoom")), c);
-		_oZoomCombo = new JComboBox();
+		_oZoomCombo = new JComboBox<Integer>();
 		for (int i=10; i<=20; i++) {
-			_oZoomCombo.addItem("" + i);
+			_oZoomCombo.addItem(i);
 		}
 		// zoom dropdown needs listener to call enableOk()
 		_oZoomCombo.addActionListener(okEnabler);
@@ -208,9 +208,9 @@ public class AddMapSourceDialog
 		_cStyleField.addKeyListener(keyListener);
 		cloudGridPanel.add(_cStyleField);
 		cloudGridPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.maxzoom")));
-		_cZoomCombo = new JComboBox();
+		_cZoomCombo = new JComboBox<Integer>();
 		for (int i=10; i<=20; i++) {
-			_cZoomCombo.addItem("" + i);
+			_cZoomCombo.addItem(i);
 		}
 		cloudGridPanel.add(_cZoomCombo);
 		cloudPanel.add(cloudGridPanel, BorderLayout.NORTH);

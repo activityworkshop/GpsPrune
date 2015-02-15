@@ -10,7 +10,7 @@ public class SrtmTile
 {
 	/** Latitude in degrees north/south */
 	private int _latitude = 0;
-	/** Longitude ini degrees east/west */
+	/** Longitude in degrees east/west */
 	private int _longitude = 0;
 
 	/**
@@ -23,6 +23,17 @@ public class SrtmTile
 		_latitude = (int) Math.floor(latitude.getDouble());
 		Coordinate longitude = inPoint.getLongitude();
 		_longitude = (int) Math.floor(longitude.getDouble());
+	}
+
+	/**
+	 * Constructor working out the tile for a single point
+	 * @param inLatitude latitude in degrees
+	 * @param inLongitude longitude in degrees
+	 */
+	public SrtmTile(int inLatitude, int inLongitude)
+	{
+		_latitude = inLatitude;
+		_longitude = inLongitude;
 	}
 
 	/**

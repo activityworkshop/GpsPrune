@@ -8,7 +8,7 @@ import tim.prune.data.MediaList;
 /**
  * Class to act as list model for the photo list and audio list
  */
-public class MediaListModel extends AbstractListModel
+public class MediaListModel extends AbstractListModel<String>
 {
 	/** media list */
 	MediaList _media = null;
@@ -31,7 +31,7 @@ public class MediaListModel extends AbstractListModel
 	/**
 	 * @see javax.swing.ListModel#getElementAt(int)
 	 */
-	public Object getElementAt(int inIndex)
+	public String getElementAt(int inIndex)
 	{
 		MediaObject m = _media.getMedia(inIndex);
 		// * means modified since loading

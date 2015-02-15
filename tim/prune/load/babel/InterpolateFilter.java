@@ -28,7 +28,7 @@ public class InterpolateFilter extends FilterDefinition
 	}
 
 	private DecimalNumberField _distField = null;
-	private JComboBox _distUnitsCombo = null;
+	private JComboBox<String> _distUnitsCombo = null;
 	private WholeNumberField _secondsField = null;
 
 
@@ -55,7 +55,7 @@ public class InterpolateFilter extends FilterDefinition
 		_distField = new DecimalNumberField();
 		_distField.addKeyListener(_paramChangeListener);
 		gridPanel.add(_distField);
-		_distUnitsCombo = new JComboBox(new String[] {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")});
+		_distUnitsCombo = new JComboBox<String>(new String[] {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")});
 		gridPanel.add(_distUnitsCombo);
 		gridPanel.add(new JLabel(I18nManager.getText("dialog.gpsbabel.filter.interpolate.time")));
 		_secondsField = new WholeNumberField(4);

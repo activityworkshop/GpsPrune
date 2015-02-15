@@ -14,6 +14,20 @@ public interface ThreeDWindow
 	 */
 	public void setTrack(Track inTrack);
 
+	/**
+	 * @param inFactor altitude factor to use
+	 */
+	public void setAltitudeFactor(double inFactor);
+
+	/**
+	 * @param inDefinition image definition (image or not, source, zoom)
+	 */
+	public void setBaseImageParameters(ImageDefinition inDefinition);
+
+	/**
+	 * @param inDefinition terrain definition (terrain or not, resolution)
+	 */
+	public void setTerrainParameters(TerrainDefinition inDefinition);
 
 	/**
 	 * Show the window

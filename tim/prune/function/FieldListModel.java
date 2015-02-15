@@ -7,7 +7,7 @@ import tim.prune.data.Field;
 /**
  * Class to act as a list model for the delete field values function
  */
-public class FieldListModel extends AbstractListModel
+public class FieldListModel extends AbstractListModel<String>
 {
 	/** ArrayList containing fields */
 	private ArrayList<Field> _fields = new ArrayList<Field>();
@@ -34,7 +34,7 @@ public class FieldListModel extends AbstractListModel
 	 * @param inRow row number
 	 * @return String for specified row
 	 */
-	public Object getElementAt(int inRow)
+	public String getElementAt(int inRow)
 	{
 		if (inRow < 0 || inRow >= getSize()) {return null;}
 		return _fields.get(inRow).getName();

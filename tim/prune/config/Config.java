@@ -7,6 +7,7 @@ import java.util.Properties;
 import tim.prune.data.RecentFileList;
 import tim.prune.data.UnitSet;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.gui.map.MapSourceLibrary;
 
 
 /**
@@ -80,6 +81,8 @@ public abstract class Config
 	public static final String KEY_RECENT_FILES = "prune.recentfiles";
 	/** Key for estimation parameters */
 	public static final String KEY_ESTIMATION_PARAMS = "prune.estimationparams";
+	/** Key for 3D exaggeration factor */
+	public static final String KEY_HEIGHT_EXAGGERATION = "prune.heightexaggeration";
 
 
 	/** Initialise the default properties */
@@ -142,6 +145,8 @@ public abstract class Config
 		_colourScheme.loadFromHex(_configValues.getProperty(KEY_COLOUR_SCHEME));
 		_recentFiles = new RecentFileList(_configValues.getProperty(KEY_RECENT_FILES));
 		_unitSet = UnitSetLibrary.getUnitSet(_configValues.getProperty(KEY_UNITSET_KEY));
+		// Adjust map source index if necessary
+		adjustSelectedMap();
 
 		if (loadFailed) {
 			throw new ConfigException();
@@ -167,7 +172,28 @@ public abstract class Config
 		props.put(KEY_KMZ_IMAGE_SIZE, "240");
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
+		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
 		return props;
+	}
+
+	/**
+	 * Adjust the index of the selected map
+	 * (only required if config was loaded from a previous version of GpsPrune)
+	 */
+	private static void adjustSelectedMap()
+	{
+		int sourceNum = getConfigInt(Config.KEY_MAPSOURCE_INDEX);
+		int prevNumFixed = getConfigInt(Config.KEY_NUM_FIXED_MAPS);
+		// Number of fixed maps not specified in version <=13, default to 6
+		if (prevNumFixed == 0) prevNumFixed = 6;
+		int currNumFixed = MapSourceLibrary.getNumFixedSources();
+		// Only need to do something if the number has changed
+		if (currNumFixed != prevNumFixed && (sourceNum >= prevNumFixed || sourceNum >= currNumFixed))
+		{
+			sourceNum += (currNumFixed - prevNumFixed);
+			setConfigInt(Config.KEY_MAPSOURCE_INDEX, sourceNum);
+		}
+		setConfigInt(Config.KEY_NUM_FIXED_MAPS, currNumFixed);
 	}
 
 	/**

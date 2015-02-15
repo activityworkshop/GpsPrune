@@ -31,7 +31,7 @@ public class DiscardFilter extends FilterDefinition
 
 	private WholeNumberField _hdopField = null;
 	private WholeNumberField _vdopField = null;
-	private JComboBox _combineDopsCombo = null;
+	private JComboBox<String> _combineDopsCombo = null;
 	private WholeNumberField _numSatsField = null;
 	private JCheckBox _noFixCheckbox = null;
 	private JCheckBox _unknownFixCheckbox = null;
@@ -65,7 +65,7 @@ public class DiscardFilter extends FilterDefinition
 		_hdopField = new WholeNumberField(2);
 		_hdopField.addKeyListener(_paramChangeListener);
 		dopPanel.add(_hdopField);
-		_combineDopsCombo = new JComboBox(new String[] {I18nManager.getText("logic.and"), I18nManager.getText("logic.or")});
+		_combineDopsCombo = new JComboBox<String>(new String[] {I18nManager.getText("logic.and"), I18nManager.getText("logic.or")});
 		dopPanel.add(_combineDopsCombo);
 		dopPanel.add(new JLabel(I18nManager.getText("dialog.gpsbabel.filter.discard.vdop"), SwingConstants.RIGHT));
 		_vdopField = new WholeNumberField(2);

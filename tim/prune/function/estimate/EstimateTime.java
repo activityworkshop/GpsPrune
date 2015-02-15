@@ -29,6 +29,7 @@ import tim.prune.data.Unit;
 import tim.prune.gui.DecimalNumberField;
 import tim.prune.gui.DisplayUtils;
 import tim.prune.gui.GuiGridLayout;
+import tim.prune.tips.TipManager;
 
 /**
  * Class to calculate and show the results of estimating (hike) time for the current range
@@ -86,7 +87,8 @@ public class EstimateTime extends GenericFunction
 		}
 		if (_dialog == null)
 		{
-			// TODO: Check whether params are at default, show tip message if unaltered?
+			// First time in, check whether params are at default, show tip message if unaltered
+			showTip();
 			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -359,5 +361,17 @@ public class EstimateTime extends GenericFunction
 			Config.setConfigString(Config.KEY_ESTIMATION_PARAMS, params.toConfigString());
 		}
 		_dialog.dispose();
+	}
+
+	/**
+	 * Show a tip to use the learn function, if appropriate
+	 */
+	private void showTip()
+	{
+		EstimationParameters currParams = new EstimationParameters(
+			Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
+		if (currParams.sameAsDefaults()) {
+			_app.showTip(TipManager.Tip_LearnTimeParams);
+		}
 	}
 }

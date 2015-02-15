@@ -36,7 +36,7 @@ import tim.prune.load.GenericFileFilter;
 public class SetLanguage extends GenericFunction
 {
 	private JDialog _dialog = null;
-	private JComboBox _languageDropDown = null;
+	private JComboBox<String> _languageDropDown = null;
 	private JTextField _langFileBox = null;
 	private int _startIndex = 0;
 
@@ -45,11 +45,11 @@ public class SetLanguage extends GenericFunction
 		"espa\u00F1ol", "fran\u00E7ais", "italiano", "magyar", "nederlands", "polski",
 		"portugu\u00EAs", "\u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian)", "\u4e2d\u6587 (chinese)", "\u65E5\u672C\u8A9E (japanese)",
 		"\uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean)", "schwiizerd\u00FC\u00FCtsch", "t\u00FCrk\u00E7e",
-		"afrikaans", "rom\u00E2n\u0103"
+		"afrikaans", "rom\u00E2n\u0103", "\u0443\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430 \u043c\u043e\u0432\u0430 (ukrainian)"
 	};
 	/** Associated language codes (must be in same order as names!) */
 	private static final String[] LANGUAGE_CODES = {"cz", "de", "en", "en_us", "es", "fr", "it", "hu",
-		"nl", "pl", "pt", "ru", "zh", "ja", "ko", "de_ch", "tr", "af", "ro"
+		"nl", "pl", "pt", "ru", "zh", "ja", "ko", "de_ch", "tr", "af", "ro", "uk"
 	};
 
 
@@ -99,7 +99,7 @@ public class SetLanguage extends GenericFunction
 		builtinPanel.setLayout(new BoxLayout(builtinPanel, BoxLayout.X_AXIS));
 		builtinPanel.add(new JLabel(I18nManager.getText("dialog.setlanguage.language") + " : "));
 		// Language dropdown
-		_languageDropDown = new JComboBox(LANGUAGE_NAMES);
+		_languageDropDown = new JComboBox<String>(LANGUAGE_NAMES);
 		builtinPanel.add(_languageDropDown);
 		builtinPanel.add(Box.createHorizontalGlue());
 		JButton selectLangButton = new JButton(I18nManager.getText("button.select"));

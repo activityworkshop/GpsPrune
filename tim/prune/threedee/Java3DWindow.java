@@ -1,7 +1,7 @@
 package tim.prune.threedee;
 
-import java.awt.FlowLayout;
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
@@ -18,14 +18,18 @@ import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
 import javax.media.j3d.Font3D;
 import javax.media.j3d.FontExtrusion;
+import javax.media.j3d.GeometryArray;
 import javax.media.j3d.GraphicsConfigTemplate3D;
 import javax.media.j3d.Group;
 import javax.media.j3d.Material;
 import javax.media.j3d.PointLight;
+import javax.media.j3d.QuadArray;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Text3D;
+import javax.media.j3d.Texture;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
+import javax.media.j3d.TriangleStripArray;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -34,18 +38,24 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Matrix3d;
 import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
+import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3d;
-
-import com.sun.j3d.utils.behaviors.vp.OrbitBehavior;
-import com.sun.j3d.utils.geometry.Box;
-import com.sun.j3d.utils.geometry.Cylinder;
-import com.sun.j3d.utils.geometry.Sphere;
-import com.sun.j3d.utils.universe.SimpleUniverse;
 
 import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
+import tim.prune.function.srtm.LookupSrtmFunction;
+import tim.prune.gui.map.MapSourceLibrary;
+import tim.prune.save.GroutedImage;
+import tim.prune.save.MapGrouter;
+
+import com.sun.j3d.utils.behaviors.vp.OrbitBehavior;
+import com.sun.j3d.utils.geometry.Box;
+import com.sun.j3d.utils.geometry.Cylinder;
+import com.sun.j3d.utils.geometry.Sphere;
+import com.sun.j3d.utils.image.TextureLoader;
+import com.sun.j3d.utils.universe.SimpleUniverse;
 
 
 /**
@@ -58,7 +68,10 @@ public class Java3DWindow implements ThreeDWindow
 	private JFrame _frame = null;
 	private ThreeDModel _model = null;
 	private OrbitBehavior _orbit = null;
-	private double _altFactor = 5.0;
+	private double _altFactor = -1.0;
+	private ImageDefinition _imageDefinition = null;
+	private GroutedImage _baseImage = null;
+	private TerrainDefinition _terrainDefinition = null;
 
 	/** only prompt about big track size once */
 	private static boolean TRACK_SIZE_WARNING_GIVEN = false;
@@ -90,23 +103,44 @@ public class Java3DWindow implements ThreeDWindow
 		_track = inTrack;
 	}
 
+	/**
+	 * @param inFactor altitude factor to use
+	 */
+	public void setAltitudeFactor(double inFactor)
+	{
+		_altFactor = inFactor;
+	}
+
+	/**
+	 * Set the parameters for the base image and do the grouting already
+	 * (setTrack should already be called by now)
+	 */
+	public void setBaseImageParameters(ImageDefinition inDefinition)
+	{
+		_imageDefinition = inDefinition;
+		if (inDefinition != null && inDefinition.getUseImage())
+		{
+			_baseImage = new MapGrouter().createMapImage(_track, MapSourceLibrary.getSource(inDefinition.getSourceIndex()),
+				inDefinition.getZoom());
+		}
+		else _baseImage = null;
+	}
+
+	/**
+	 * Set the terrain parameters
+	 */
+	public void setTerrainParameters(TerrainDefinition inDefinition)
+	{
+		_terrainDefinition = inDefinition;
+	}
 
 	/**
 	 * Show the window
 	 */
 	public void show() throws ThreeDException
 	{
-		// Get the altitude exaggeration to use
-		Object factorString = JOptionPane.showInputDialog(_parentFrame,
-			I18nManager.getText("dialog.3d.altitudefactor"),
-			I18nManager.getText("dialog.3d.title"),
-			JOptionPane.QUESTION_MESSAGE, null, null, _altFactor);
-		if (factorString == null) return;
-		try {
-			_altFactor = Double.parseDouble(factorString.toString());
-		}
-		catch (Exception e) {} // Ignore parse errors
-		if (_altFactor < 1.0) {_altFactor = 1.0;}
+		// Make sure altitude exaggeration is positive
+		if (_altFactor < 0.0) {_altFactor = 1.0;}
 
 		// Set up the graphics config
 		GraphicsConfiguration config = SimpleUniverse.getPreferredConfiguration();
@@ -270,6 +304,64 @@ public class Java3DWindow implements ThreeDWindow
 		plane = new Box(10f, 0.04f, 10f, planeAppearance);
 		objTrans.addChild(plane);
 
+		// Image on top of base plane, if specified
+		final boolean showTerrain = _terrainDefinition != null && _terrainDefinition.getUseTerrain();
+		if (_baseImage != null && !showTerrain)
+		{
+			QuadArray baseSquare = new QuadArray (4, QuadArray.COORDINATES | GeometryArray.TEXTURE_COORDINATE_2);
+			baseSquare.setCoordinate(0, new Point3f(-10f, 0.05f, -10f));
+			baseSquare.setCoordinate(1, new Point3f(-10f, 0.05f, 10f));
+			baseSquare.setCoordinate(2, new Point3f( 10f, 0.05f, 10f));
+			baseSquare.setCoordinate(3, new Point3f( 10f, 0.05f, -10f));
+			// and set anchor points for the texture
+			baseSquare.setTextureCoordinate(0, 0, new TexCoord2f(0.0f, 1.0f));
+			baseSquare.setTextureCoordinate(0, 1, new TexCoord2f(0.0f, 0.0f));
+			baseSquare.setTextureCoordinate(0, 2, new TexCoord2f(1.0f, 0.0f));
+			baseSquare.setTextureCoordinate(0, 3, new TexCoord2f(1.0f, 1.0f));
+			// Set appearance including image
+			Appearance baseAppearance = new Appearance();
+			Texture mapImage = new TextureLoader(_baseImage.getImage(), _frame).getTexture();
+			baseAppearance.setTexture(mapImage);
+			objTrans.addChild(new Shape3D(baseSquare, baseAppearance));
+		}
+
+		// Create model containing track information
+		_model = new ThreeDModel(_track);
+		_model.setAltitudeFactor(_altFactor);
+
+		if (showTerrain)
+		{
+			// TODO: Is it maybe possible to cache the last terrainTrack?
+			//       (if the dataTrack and the resolution haven't changed)
+			// Construct the terrain track according to these extents and the grid size
+			TerrainHelper terrainHelper = new TerrainHelper(_terrainDefinition.getGridSize());
+			Track terrainTrack = terrainHelper.createGridTrack(_track);
+			// Get the altitudes from SRTM for all the points in the track
+			LookupSrtmFunction srtmLookup = (LookupSrtmFunction) FunctionLibrary.FUNCTION_LOOKUP_SRTM;
+			srtmLookup.begin(terrainTrack);
+			while (srtmLookup.isRunning())
+			{
+				try {
+					Thread.sleep(750);  // just polling in a wait loop isn't ideal but simple
+				}
+				catch (InterruptedException e) {}
+			}
+
+			// Fix the voids
+			terrainHelper.fixVoids(terrainTrack);
+
+			// Give the terrain definition to the _model as well
+			_model.setTerrain(terrainTrack);
+			_model.scale();
+
+			objTrans.addChild(createTerrain(_model, terrainHelper, _baseImage));
+		}
+		else
+		{
+			// No terrain, so just scale the model as it is
+			_model.scale();
+		}
+
 		// N, S, E, W
 		GeneralPath bevelPath = new GeneralPath();
 		bevelPath.moveTo(0.0f, 0.0f);
@@ -288,11 +380,6 @@ public class Java3DWindow implements ThreeDWindow
 		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.s"), new Point3f(0f, 0f, 10f), compassFont));
 		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.w"), new Point3f(-11f, 0f, 0f), compassFont));
 		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"), new Point3f(10f, 0f, 0f), compassFont));
-
-		// create and scale model
-		_model = new ThreeDModel(_track);
-		_model.setAltitudeFactor(_altFactor);
-		_model.scale();
 
 		// Add points to model
 		objTrans.addChild(createDataPoints(_model));
@@ -407,7 +494,9 @@ public class Java3DWindow implements ThreeDWindow
 	}
 
 
-	/** @return track point object */
+	/**
+	 * @return track point object
+	 */
 	private static Group createTrackpoint(Point3d inPointPos, byte inHeightCode)
 	{
 		Material mat = getTrackpointMaterial(inHeightCode);
@@ -417,7 +506,9 @@ public class Java3DWindow implements ThreeDWindow
 	}
 
 
-	/** @return Material object for track points with the appropriate colour for the height */
+	/**
+	 * @return Material object for track points with the appropriate colour for the height
+	 */
 	private static Material getTrackpointMaterial(byte inHeightCode)
 	{
 		// create default material
@@ -473,6 +564,50 @@ public class Java3DWindow implements ThreeDWindow
 		return group;
 	}
 
+	/**
+	 * Create a java3d Shape for the terrain
+	 * @param inModel threedModel
+	 * @param inHelper terrain helper
+	 * @param inBaseImage base image for shape, or null for no image
+	 * @return Shape3D object
+	 */
+	private static Shape3D createTerrain(ThreeDModel inModel, TerrainHelper inHelper, GroutedImage inBaseImage)
+	{
+		final int numNodes = inHelper.getGridSize();
+		final int RESULT_SIZE = numNodes * (numNodes * 2 - 2);
+		final int GEOMETRY_COLOURING_TYPE = (inBaseImage == null ? GeometryArray.COLOR_3 : GeometryArray.TEXTURE_COORDINATE_2);
+
+		int[] stripData = inHelper.getStripLengths();
+		TriangleStripArray tsa = new TriangleStripArray(RESULT_SIZE, GeometryArray.COORDINATES | GEOMETRY_COLOURING_TYPE,
+			stripData);
+		// Get the scaled terrainTrack coordinates (or just heights) from the model
+		final int nSquared = numNodes * numNodes;
+		Point3d[] rawPoints = new Point3d[nSquared];
+		for (int i=0; i<nSquared; i++)
+		{
+			double height = inModel.getScaledTerrainValue(i) * MODEL_SCALE_FACTOR;
+			rawPoints[i] = new Point3d(inModel.getScaledTerrainHorizValue(i) * MODEL_SCALE_FACTOR,
+				Math.max(height, 0.05), // make sure it's above the box
+				-inModel.getScaledTerrainVertValue(i) * MODEL_SCALE_FACTOR);
+		}
+		tsa.setCoordinates(0, inHelper.getTerrainCoordinates(rawPoints));
+
+		Appearance tAppearance = new Appearance();
+		if (inBaseImage != null)
+		{
+			tsa.setTextureCoordinates(0, 0, inHelper.getTextureCoordinates());
+			Texture mapImage = new TextureLoader(inBaseImage.getImage()).getTexture();
+			tAppearance.setTexture(mapImage);
+		}
+		else
+		{
+			Color3f[] colours = new Color3f[RESULT_SIZE];
+			Color3f terrainColour = new Color3f(0.1f, 0.2f, 0.2f);
+			for (int i=0; i<RESULT_SIZE; i++) {colours[i] = terrainColour;}
+			tsa.setColors(0, colours);
+		}
+		return new Shape3D(tsa, tAppearance);
+	}
 
 	/**
 	 * Calculate the angles and call them back to the app
@@ -495,9 +630,13 @@ public class Java3DWindow implements ThreeDWindow
 		Point3d result = new Point3d();
 		secondTran.transform(point, result);
 		firstTran.transform(result);
-		// Callback settings to pov export function
+
+		// Give the settings to the rendering function
 		inFunction.setCameraCoordinates(result.x, result.y, result.z);
 		inFunction.setAltitudeExaggeration(_altFactor);
+		inFunction.setTerrainDefinition(_terrainDefinition); // ignored by svg, used by pov
+		inFunction.setImageDefinition(_imageDefinition);     // ignored by svg, used by pov
+
 		inFunction.begin();
 	}
 }

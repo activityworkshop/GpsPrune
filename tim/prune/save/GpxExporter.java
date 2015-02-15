@@ -694,6 +694,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inCachers != null) {gpxHeader = inCachers.getFirstHeader();}
 		if (gpxHeader == null || gpxHeader.length() < 5)
 		{
+			// TODO: Consider changing this to default to GPX 1.1
 			// Create default (1.0) header
 			gpxHeader = "<gpx version=\"1.0\" creator=\"" + GPX_CREATOR
 				+ "\"\n xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n"

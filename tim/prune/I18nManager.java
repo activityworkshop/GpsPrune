@@ -115,4 +115,22 @@ public abstract class I18nManager
 		// return the key itself
 		return inKey;
 	}
+
+	/**
+	 * Lookup the given key and return the associated text, formatting with the number
+	 * @param inKey key to lookup (text should contain a %d)
+	 * @param inNumber number to substitute into the %d
+	 * @return associated text, or the key if not found
+	 */
+	public static String getTextWithNumber(String inKey, int inNumber)
+	{
+		String localText = getText(inKey);
+		try
+		{
+			localText = String.format(localText, inNumber);
+		}
+		catch (Exception e)
+		{} // printf formatting didn't work, maybe the placeholders are wrong?
+		return localText;
+	}
 }

@@ -2,14 +2,19 @@ package tim.prune.load.xml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
@@ -66,13 +71,19 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	public void run()
 	{
 		FileInputStream inStream = null;
+		boolean success = false;
 		try
 		{
-			// Construct a SAXParser and use this as a default handler
-			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			inStream = new FileInputStream(_file);
-			saxParser.parse(inStream, this);
+			success = parseXmlStream(inStream);
+		}
+		catch (FileNotFoundException fnfe) {}
 
+		// Clean up the stream, don't need it any more
+		try {inStream.close();} catch (IOException e2) {}
+
+		if (success)
+		{
 			// Check whether handler was properly instantiated
 			if (_handler == null)
 			{
@@ -90,17 +101,46 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 					new MediaLinkInfo(_handler.getLinkArray()));
 			}
 		}
-		catch (Exception e)
-		{
-			// Show error dialog
-			_app.showErrorMessageNoLookup("error.load.dialogtitle",
-				I18nManager.getText("error.load.othererror") + " " + e.getMessage());
-		}
-		finally {
-			try {inStream.close();} catch (IOException e2) {}
-		}
 	}
 
+
+	/**
+	 * Try both Xerces and the built-in java classes to parse the given xml stream
+	 * @param inStream input stream from file / zip / gzip
+	 * @return true on success, false if both xerces and built-in parser failed
+	 */
+	public boolean parseXmlStream(InputStream inStream)
+	{
+		boolean success = false;
+		// Firstly, try to use xerces to parse the xml (will throw an exception if not available)
+		try
+		{
+			XMLReader xmlReader = XMLReaderFactory.createXMLReader("org.apache.xerces.parsers.SAXParser");
+			xmlReader.setContentHandler(this);
+			xmlReader.parse(new InputSource(inStream));
+			success = true; // worked
+		}
+		catch (Exception e) {} // don't care too much if it didn't work, there's a backup
+
+		// If that didn't work, try the built-in classes (which work for xml1.0 but handling for 1.1 contains bugs)
+		if (!success)
+		{
+			try
+			{
+				// Construct a SAXParser and use this as a default handler
+				SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
+				saxParser.parse(inStream, this);
+				success = true;
+			}
+			catch (Exception e)
+			{
+				// Show error dialog
+				_app.showErrorMessageNoLookup("error.load.dialogtitle",
+					I18nManager.getText("error.load.othererror") + " " + e.getMessage());
+			}
+		}
+		return success;
+	}
 
 	/**
 	 * Receive a tag

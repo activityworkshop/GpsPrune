@@ -38,13 +38,6 @@ public class GroutedImage
 	}
 
 	/**
-	 * @return true if all the required tiles were found
-	 */
-	public boolean isComplete() {
-		return _numTilesMissing == 0;
-	}
-
-	/**
 	 * @return the pixel dimensions of the result image
 	 */
 	public int getImageSize()

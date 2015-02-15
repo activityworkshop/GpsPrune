@@ -52,8 +52,7 @@ public class DecimalNumberField extends JTextField
 	 */
 	public DecimalNumberField()
 	{
-		super(6);
-		setDocument(new DecimalNumberDocument(false));
+		this(false);
 	}
 
 	/**

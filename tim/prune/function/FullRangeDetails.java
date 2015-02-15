@@ -251,7 +251,8 @@ public class FullRangeDetails extends GenericFunction
 		final boolean isMultiSegments = (stats.getNumSegments() > 1);
 		// Set visibility of third column accordingly
 		_movingDistanceLabel.setVisible(isMultiSegments);
-		_movingDurationLabel.setVisible(isMultiSegments);
+		_movingDurationLabel.setVisible(isMultiSegments || stats.getTimestampsOutOfSequence());
+		// FIXME: What to show if timestamps are out of sequence? Warning message?
 		_movingClimbLabel.setVisible(isMultiSegments);
 		_movingDescentLabel.setVisible(isMultiSegments);
 		_movingSpeedLabel.setVisible(isMultiSegments);

@@ -43,15 +43,15 @@ public class SelectorDisplay extends GenericDisplay
 	private int _visiblePanels = 1;
 	// Waypoints
 	private JPanel _waypointListPanel = null;
-	private JList _waypointList = null;
+	private JList<String> _waypointList = null;
 	private WaypointListModel _waypointListModel = null;
 	// Photos
 	private JPanel _photoListPanel = null;
-	private JList _photoList = null;
+	private JList<String> _photoList = null;
 	private MediaListModel _photoListModel = null;
 	// Audio files
 	private JPanel _audioListPanel = null;
-	private JList _audioList = null;
+	private JList<String> _audioList = null;
 	private MediaListModel _audioListModel = null;
 
 	// scrollbar interval
@@ -106,7 +106,7 @@ public class SelectorDisplay extends GenericDisplay
 			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
 		);
 		_waypointListModel = new WaypointListModel(_trackInfo.getTrack());
-		_waypointList = new JList(_waypointListModel);
+		_waypointList = new JList<String>(_waypointListModel);
 		_waypointList.setVisibleRowCount(NUM_LIST_ENTRIES);
 		_waypointList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
@@ -118,7 +118,7 @@ public class SelectorDisplay extends GenericDisplay
 		_listsPanel.add(_waypointListPanel);
 		// photo list
 		_photoListModel = new MediaListModel(_trackInfo.getPhotoList());
-		_photoList = new JList(_photoListModel);
+		_photoList = new JList<String>(_photoListModel);
 		_photoList.setVisibleRowCount(NUM_LIST_ENTRIES);
 		_photoList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
@@ -132,7 +132,7 @@ public class SelectorDisplay extends GenericDisplay
 
 		// List for audio clips
 		_audioListModel = new MediaListModel(_trackInfo.getAudioList());
-		_audioList = new JList(_audioListModel);
+		_audioList = new JList<String>(_audioListModel);
 		_audioList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{
@@ -313,7 +313,7 @@ public class SelectorDisplay extends GenericDisplay
 	 * @param inList list object
 	 * @return panel object
 	 */
-	private static JPanel makeListPanel(String inNameKey, JList inList)
+	private static JPanel makeListPanel(String inNameKey, JList<String> inList)
 	{
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout());

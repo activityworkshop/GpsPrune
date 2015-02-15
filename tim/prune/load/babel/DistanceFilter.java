@@ -27,7 +27,7 @@ public class DistanceFilter extends FilterDefinition
 	}
 
 	private DecimalNumberField _distField = null;
-	private JComboBox _distUnitsCombo = null;
+	private JComboBox<String> _distUnitsCombo = null;
 	private WholeNumberField _secondsField = null;
 
 
@@ -54,7 +54,7 @@ public class DistanceFilter extends FilterDefinition
 		_distField = new DecimalNumberField();
 		_distField.addKeyListener(_paramChangeListener);
 		gridPanel.add(_distField);
-		_distUnitsCombo = new JComboBox(new String[] {I18nManager.getText("units.metres"), I18nManager.getText("units.feet")});
+		_distUnitsCombo = new JComboBox<String>(new String[] {I18nManager.getText("units.metres"), I18nManager.getText("units.feet")});
 		gridPanel.add(_distUnitsCombo);
 		gridPanel.add(new JLabel(I18nManager.getText("dialog.gpsbabel.filter.distance.time")));
 		_secondsField = new WholeNumberField(4);

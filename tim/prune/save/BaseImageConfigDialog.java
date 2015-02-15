@@ -1,7 +1,6 @@
 package tim.prune.save;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -18,22 +17,23 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 
-import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.Track;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
+import tim.prune.threedee.ImageDefinition;
 
 /**
  * Dialog to let you choose the parameters for a base image
- * (source and zoom)
+ * (source and zoom) including preview
  */
 public class BaseImageConfigDialog implements Runnable
 {
 	/** Parent to notify */
-	private DataSubscriber _parent = null;
+	private BaseImageConsumer _parent = null;
 	/** Parent dialog for position */
 	private JDialog _parentDialog = null;
 	/** Track to use for preview image */
@@ -45,25 +45,27 @@ public class BaseImageConfigDialog implements Runnable
 	/** Panel to hold the other controls */
 	private JPanel _mainPanel = null;
 	/** Dropdown for map source */
-	private JComboBox _mapSourceDropdown = null;
+	private JComboBox<String> _mapSourceDropdown = null;
 	/** Dropdown for zoom levels */
-	private JComboBox _zoomDropdown = null;
-	/** Warning label that image is incomplete */
-	private JLabel _imageIncompleteLabel = null;
+	private JComboBox<String> _zoomDropdown = null;
+	/** Button to trigger a download of the missing map tiles */
+	private JButton _downloadTilesButton = null;
+	/** Progress bar for downloading additional tiles */
+	private JProgressBar _progressBar = null;
 	/** Label for number of tiles found */
 	private JLabel _tilesFoundLabel = null;
 	/** Label for image size in pixels */
 	private JLabel _imageSizeLabel = null;
 	/** Image preview panel */
 	private ImagePreviewPanel _previewPanel = null;
+	/** Grouter, used to avoid regenerating images */
+	private MapGrouter _grouter = new MapGrouter();
 	/** OK button, needs to be enabled/disabled */
 	private JButton _okButton = null;
 	/** Flag for rebuilding dialog, don't bother refreshing and recalculating */
 	private boolean _rebuilding = false;
 	/** Cached values to allow cancellation of dialog */
-	private boolean        _useImage = false;
-	private int            _sourceIndex = 0;
-	private int            _zoomLevel = 0;
+	private ImageDefinition _imageDef = new ImageDefinition();
 
 
 	/**
@@ -72,7 +74,7 @@ public class BaseImageConfigDialog implements Runnable
 	 * @param inParentDialog parent dialog
 	 * @param inTrack track object
 	 */
-	public BaseImageConfigDialog(DataSubscriber inParent, JDialog inParentDialog, Track inTrack)
+	public BaseImageConfigDialog(BaseImageConsumer inParent, JDialog inParentDialog, Track inTrack)
 	{
 		_parent = inParent;
 		_parentDialog = inParentDialog;
@@ -81,6 +83,17 @@ public class BaseImageConfigDialog implements Runnable
 		_dialog.getContentPane().add(makeDialogComponents());
 		_dialog.pack();
 		_track = inTrack;
+	}
+
+	/**
+	 * @param inDefinition image definition object from previous dialog
+	 */
+	public void setImageDefinition(ImageDefinition inDefinition)
+	{
+		_imageDef = inDefinition;
+		if (_imageDef == null) {
+			_imageDef = new ImageDefinition();
+		}
 	}
 
 	/**
@@ -110,26 +123,29 @@ public class BaseImageConfigDialog implements Runnable
 	private void initDialog()
 	{
 		_rebuilding = true;
-		_useImageCheckbox.setSelected(_useImage);
+		_useImageCheckbox.setSelected(_imageDef.getUseImage());
 		// Populate the dropdown of map sources from the library in case it has changed
 		_mapSourceDropdown.removeAllItems();
 		for (int i=0; i<MapSourceLibrary.getNumSources(); i++)
 		{
 			_mapSourceDropdown.addItem(MapSourceLibrary.getSource(i).getName());
 		}
-		if (_sourceIndex < 0 || _sourceIndex >= _mapSourceDropdown.getItemCount()) {
-			_sourceIndex = 0;
+		int sourceIndex = _imageDef.getSourceIndex();
+		if (sourceIndex < 0 || sourceIndex >= _mapSourceDropdown.getItemCount()) {
+			sourceIndex = 0;
 		}
-		_mapSourceDropdown.setSelectedIndex(_sourceIndex);
+		_mapSourceDropdown.setSelectedIndex(sourceIndex);
 
 		// Zoom level
-		if (_useImage)
+		int zoomLevel = _imageDef.getZoom();
+		if (_imageDef.getUseImage())
 		{
 			for (int i=0; i<_zoomDropdown.getItemCount(); i++)
 			{
 				String item = _zoomDropdown.getItemAt(i).toString();
 				try {
-					if (Integer.parseInt(item) == _zoomLevel) {
+					if (Integer.parseInt(item) == zoomLevel)
+					{
 						_zoomDropdown.setSelectedIndex(i);
 						break;
 					}
@@ -154,8 +170,11 @@ public class BaseImageConfigDialog implements Runnable
 			currentZoom = Integer.parseInt(_zoomDropdown.getSelectedItem().toString());
 		}
 		catch (Exception nfe) {}
+		// First time in, the dropdown might be empty but we still might have a zoom in the definition
+		if (_zoomDropdown.getItemCount() == 0) {
+			currentZoom = _imageDef.getZoom();
+		}
 		// Get the extent of the track so we can work out how big the images are going to be for each zoom level
-		// System.out.println("Ranges are: x=" + _track.getXRange().getRange() + ", y=" +  _track.getYRange().getRange());
 		final double xyExtent = Math.max(_track.getXRange().getRange(), _track.getYRange().getRange());
 		int zoomToSelect = -1;
 
@@ -248,24 +267,10 @@ public class BaseImageConfigDialog implements Runnable
 
 
 	/**
-	 * @return true if image has been selected
+	 * @return image definition object
 	 */
-	public boolean useImage() {
-		return _useImage;
-	}
-
-	/**
-	 * @return index of selected image source
-	 */
-	public int getSourceIndex() {
-		return _sourceIndex;
-	}
-
-	/**
-	 * @return selected zoom level
-	 */
-	public int getZoomLevel() {
-		return _zoomLevel;
+	public ImageDefinition getImageDefinition() {
+		return _imageDef;
 	}
 
 	/**
@@ -296,7 +301,7 @@ public class BaseImageConfigDialog implements Runnable
 		JLabel sourceLabel = new JLabel(I18nManager.getText("dialog.baseimage.mapsource") + ": ");
 		sourceLabel.setHorizontalAlignment(JLabel.RIGHT);
 		controlsPanel.add(sourceLabel);
-		_mapSourceDropdown = new JComboBox();
+		_mapSourceDropdown = new JComboBox<String>();
 		_mapSourceDropdown.addItem("name of map source");
 		// Add listener to dropdown to change zoom levels
 		_mapSourceDropdown.addActionListener(new ActionListener() {
@@ -309,7 +314,7 @@ public class BaseImageConfigDialog implements Runnable
 		JLabel zoomLabel = new JLabel(I18nManager.getText("dialog.baseimage.zoom") + ": ");
 		zoomLabel.setHorizontalAlignment(JLabel.RIGHT);
 		controlsPanel.add(zoomLabel);
-		_zoomDropdown = new JComboBox();
+		_zoomDropdown = new JComboBox<String>();
 		// Add action listener to enable ok button when zoom changed
 		_zoomDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
@@ -331,10 +336,21 @@ public class BaseImageConfigDialog implements Runnable
 		// Label panel on right
 		JPanel labelPanel = new JPanel();
 		labelPanel.setLayout(new BorderLayout());
-		_imageIncompleteLabel = new JLabel(I18nManager.getText("dialog.baseimage.incomplete"));
-		_imageIncompleteLabel.setForeground(Color.RED);
-		_imageIncompleteLabel.setVisible(false);
-		labelPanel.add(_imageIncompleteLabel, BorderLayout.NORTH);
+		JPanel downloadPanel = new JPanel();
+		downloadPanel.setLayout(new BorderLayout(4, 4));
+		_downloadTilesButton = new JButton(I18nManager.getText("button.load"));
+		_downloadTilesButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				downloadRemainingTiles();
+			}
+		});
+		_downloadTilesButton.setVisible(false);
+		downloadPanel.add(_downloadTilesButton, BorderLayout.NORTH);
+		_progressBar = new JProgressBar();
+		_progressBar.setIndeterminate(true);
+		_progressBar.setVisible(false);
+		downloadPanel.add(_progressBar, BorderLayout.SOUTH);
+		labelPanel.add(downloadPanel, BorderLayout.NORTH);
 		JPanel labelGridPanel = new JPanel();
 		labelGridPanel.setLayout(new GridLayout(0, 2, 10, 4));
 		labelGridPanel.add(new JLabel(I18nManager.getText("dialog.baseimage.tiles") + ": "));
@@ -401,7 +417,7 @@ public class BaseImageConfigDialog implements Runnable
 	private void updateImagePreview()
 	{
 		// Clear labels
-		_imageIncompleteLabel.setVisible(false);
+		_downloadTilesButton.setVisible(false);
 		_tilesFoundLabel.setText("");
 		_imageSizeLabel.setText("");
 		if (_useImageCheckbox.isSelected() && _mapSourceDropdown.getSelectedIndex() >= 0
@@ -423,17 +439,11 @@ public class BaseImageConfigDialog implements Runnable
 	private void storeValues()
 	{
 		// Store values of controls in variables
-		_useImage = _useImageCheckbox.isSelected();
-		_sourceIndex = _mapSourceDropdown.getSelectedIndex();
-		try {
-			String zoomStr = _zoomDropdown.getSelectedItem().toString();
-			_zoomLevel = Integer.parseInt(zoomStr);
-		}
-		catch (Exception nfe) {
-			_zoomLevel = 0;
-		}
-		// Call parent to retrieve values
-		_parent.dataUpdated(DataSubscriber.ALL);
+		_imageDef.setUseImage(_useImageCheckbox.isSelected(),
+			_mapSourceDropdown.getSelectedIndex(),
+			getSelectedZoomLevel());
+		// Inform parent that details have changed
+		_parent.baseImageChanged();
 	}
 
 	/**
@@ -447,16 +457,11 @@ public class BaseImageConfigDialog implements Runnable
 		final int zoomIndex = _zoomDropdown.getSelectedIndex();
 		if (!_useImageCheckbox.isSelected() || mapIndex < 0 || zoomIndex < 0) {return;}
 
-		// Get the map source and zoom level
+		// Get the map source from the index
 		MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
-		int zoomLevel = 0;
-		try {
-			zoomLevel = Integer.parseInt(_zoomDropdown.getSelectedItem().toString());
-		}
-		catch (Exception e) {}
 
 		// Use the Grouter to create an image (slow, blocks thread)
-		GroutedImage groutedImage = MapGrouter.createMapImage(_track, mapSource, zoomLevel);
+		GroutedImage groutedImage = _grouter.createMapImage(_track, mapSource, getSelectedZoomLevel());
 
 		// If the dialog hasn't changed, pass the generated image to the preview panel
 		if (_useImageCheckbox.isSelected()
@@ -465,8 +470,11 @@ public class BaseImageConfigDialog implements Runnable
 			&& groutedImage != null)
 		{
 			_previewPanel.setImage(groutedImage);
+			final int numTilesRemaining = groutedImage.getNumTilesTotal() - groutedImage.getNumTilesUsed();
+			final boolean offerDownload = numTilesRemaining > 0 && numTilesRemaining < 50;
 			// Set values of labels
-			_imageIncompleteLabel.setVisible(!groutedImage.isComplete());
+			_downloadTilesButton.setVisible(offerDownload);
+			_downloadTilesButton.setEnabled(offerDownload);
 			_tilesFoundLabel.setText(groutedImage.getNumTilesUsed() + " / " + groutedImage.getNumTilesTotal());
 			if (groutedImage.getImageSize() > 0) {
 				_imageSizeLabel.setText("" + groutedImage.getImageSize());
@@ -479,10 +487,25 @@ public class BaseImageConfigDialog implements Runnable
 		{
 			_previewPanel.setImage(null);
 			// Clear labels
-			_imageIncompleteLabel.setVisible(false);
+			_downloadTilesButton.setVisible(false);
 			_tilesFoundLabel.setText("");
 			_imageSizeLabel.setText("");
 		}
+	}
+
+	/**
+	 * @return zoom level selected in the dropdown
+	 */
+	private int getSelectedZoomLevel()
+	{
+		int zoomLevel = 0;
+		try {
+			zoomLevel = Integer.parseInt(_zoomDropdown.getSelectedItem().toString());
+		}
+		catch (Exception e) {
+			System.err.println("Exception: " + e.getClass().getName() + " : " + e.getMessage());
+		}
+		return zoomLevel;
 	}
 
 	/**
@@ -490,6 +513,52 @@ public class BaseImageConfigDialog implements Runnable
 	 */
 	public boolean getFoundData()
 	{
-		return _useImage && _zoomLevel > 0 && _previewPanel != null && _previewPanel.getTilesFound();
+		return _imageDef.getUseImage() && _imageDef.getZoom() > 0
+			&& _previewPanel != null && _previewPanel.getTilesFound();
+	}
+
+	/**
+	 * @return true if selected zoom is valid for the current track (based only on pixel size)
+	 */
+	public boolean isSelectedZoomValid()
+	{
+		final double xyExtent = Math.max(_track.getXRange().getRange(), _track.getYRange().getRange());
+		// How many pixels does this give?
+		final int zoomFactor = 1 << _imageDef.getZoom();
+		final int pixCount = (int) (xyExtent * zoomFactor * 256);
+		return (pixCount > 100     // less than this isn't worth it
+			&& pixCount < 4000);   // don't want to run out of memory
+	}
+
+	/**
+	 * @return the map grouter for retrieval of generated image
+	 */
+	public MapGrouter getGrouter()
+	{
+		return _grouter;
+	}
+
+	/**
+	 * @return method triggered by "download" button, to asynchronously download the missing tiles
+	 */
+	private void downloadRemainingTiles()
+	{
+		_downloadTilesButton.setEnabled(false);
+		new Thread(new Runnable() {
+			public void run()
+			{
+				_progressBar.setVisible(true);
+				// Use a grouter to get all tiles from the TileManager, including downloading
+				MapGrouter grouter = new MapGrouter();
+				final int mapIndex = _mapSourceDropdown.getSelectedIndex();
+				if (!_useImageCheckbox.isSelected() || mapIndex < 0) {return;}
+				MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
+				grouter.createMapImage(_track, mapSource, getSelectedZoomLevel(), true);
+				_progressBar.setVisible(false);
+				// And then refresh the dialog
+				_grouter.clearMapImage();
+				updateImagePreview();
+			}
+		}).start();
 	}
 }

@@ -138,7 +138,7 @@ public class DataPoint
 	 * @param inIndex index number starting at zero
 	 * @return field value, or null if not found
 	 */
-	public String getFieldValue(int inIndex)
+	private String getFieldValue(int inIndex)
 	{
 		if (_fieldValues == null || inIndex < 0 || inIndex >= _fieldValues.length)
 			return null;
@@ -338,6 +338,46 @@ public class DataPoint
 		return (inOther._waypointName != null && inOther._waypointName.equals(_waypointName));
 	}
 
+	/**
+	 * Add an altitude offset to this point, and keep the point's string value in sync
+	 * @param inOffset offset as double
+	 * @param inUnit unit of offset, feet or metres
+	 * @param inDecimals number of decimal places
+	 */
+	public void addAltitudeOffset(double inOffset, Unit inUnit, int inDecimals)
+	{
+		if (hasAltitude())
+		{
+			_altitude.addOffset(inOffset, inUnit, inDecimals);
+			_fieldValues[_fieldList.getFieldIndex(Field.ALTITUDE)] = _altitude.getStringValue(null);
+			setModified(false);
+		}
+	}
+
+	/**
+	 * Reset the altitude to the previous value (by an undo)
+	 * @param inClone altitude object cloned from earlier
+	 */
+	public void resetAltitude(Altitude inClone)
+	{
+		_altitude.reset(inClone);
+		_fieldValues[_fieldList.getFieldIndex(Field.ALTITUDE)] = _altitude.getStringValue(null);
+		setModified(true);
+	}
+
+	/**
+	 * Add a time offset to this point
+	 * @param inOffset offset to add (-ve to subtract)
+	 */
+	public void addTimeOffset(long inOffset)
+	{
+		if (hasTimestamp())
+		{
+			_timestamp.addOffset(inOffset);
+			_fieldValues[_fieldList.getFieldIndex(Field.TIMESTAMP)] = _timestamp.getText();
+			setModified(false);
+		}
+	}
 
 	/**
 	 * Set the photo for this data point

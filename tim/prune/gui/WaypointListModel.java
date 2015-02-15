@@ -9,7 +9,7 @@ import tim.prune.data.Track;
 /**
  * Class to act as list model for the waypoint list
  */
-public class WaypointListModel extends AbstractListModel
+public class WaypointListModel extends AbstractListModel<String>
 {
 	Track _track = null;
 	ArrayList<DataPoint> _waypoints = null;
@@ -36,7 +36,7 @@ public class WaypointListModel extends AbstractListModel
 	/**
 	 * @see javax.swing.ListModel#getElementAt(int)
 	 */
-	public Object getElementAt(int inIndex)
+	public String getElementAt(int inIndex)
 	{
 		DataPoint p = null;
 		if (inIndex < 0 || inIndex >= getSize()

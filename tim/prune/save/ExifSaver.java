@@ -265,20 +265,17 @@ public class ExifSaver implements Runnable
 		}
 		_progressBar.setVisible(false);
 		// Show confirmation
-		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.saveexif.ok1") + " "
-			+ numSaved + " " + I18nManager.getText("confirm.saveexif.ok2"));
+		UpdateMessageBroker.informSubscribers(I18nManager.getTextWithNumber("confirm.saveexif.ok", numSaved));
 		if (numFailed > 0)
 		{
 			JOptionPane.showMessageDialog(_parentFrame,
-				I18nManager.getText("error.saveexif.failed1") + " " + numFailed + " "
-				+ I18nManager.getText("error.saveexif.failed2"),
+				I18nManager.getTextWithNumber("error.saveexif.failed", numFailed),
 				I18nManager.getText("dialog.saveexif.title"), JOptionPane.ERROR_MESSAGE);
 		}
 		if (numForced > 0)
 		{
 			JOptionPane.showMessageDialog(_parentFrame,
-				I18nManager.getText("error.saveexif.forced1") + " " + numForced + " "
-				+ I18nManager.getText("error.saveexif.forced2"),
+				I18nManager.getTextWithNumber("error.saveexif.forced", numForced),
 				I18nManager.getText("dialog.saveexif.title"), JOptionPane.WARNING_MESSAGE);
 		}
 		// close dialog, all finished

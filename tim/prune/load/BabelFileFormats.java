@@ -11,7 +11,7 @@ public abstract class BabelFileFormats
 	/**
 	 * @return an object array for the format descriptions
 	 */
-	public static Object[] getDescriptions() {
+	public static String[] getDescriptions() {
 		return getColumn(0);
 	}
 

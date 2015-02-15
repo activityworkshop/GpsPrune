@@ -60,8 +60,10 @@ public class TileDownloader implements Runnable
 		if (inManager != null && inUrl != null)
 		{
 			String url = inUrl.toString();
+			// System.out.println("Trigger load: " + url);
 			if (!BLOCKED_URLS.contains(url) && !LOADING_URLS.contains(url))
 			{
+				// System.out.println("Not blocked: " + url);
 				LOADING_URLS.add(url);
 				new Thread(new TileDownloader(inManager, inUrl, inLayer, inX, inY, inZoom)).start();
 			}
@@ -76,6 +78,7 @@ public class TileDownloader implements Runnable
 		InputStream in = null;
 		try
 		{
+			// System.out.println("TD Running thread to get: " + _url.toString());
 			// Set http user agent on connection
 			URLConnection conn = _url.openConnection();
 			conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);

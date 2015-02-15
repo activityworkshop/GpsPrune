@@ -26,27 +26,30 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.border.EtchedBorder;
 
 import tim.prune.App;
-import tim.prune.DataSubscriber;
+import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.NumberUtils;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
+import tim.prune.function.srtm.LookupSrtmFunction;
+import tim.prune.gui.BaseImageDefinitionPanel;
 import tim.prune.gui.DialogCloser;
+import tim.prune.gui.TerrainDefinitionPanel;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.load.GenericFileFilter;
+import tim.prune.threedee.ImageDefinition;
+import tim.prune.threedee.TerrainHelper;
 import tim.prune.threedee.ThreeDModel;
 
 /**
  * Class to export a 3d scene of the track to a specified Pov file
- * Note: Subscriber interface only used for callback from image config dialog
  */
-public class PovExporter extends Export3dFunction implements DataSubscriber
+public class PovExporter extends Export3dFunction
 {
 	private Track _track = null;
 	private JDialog _dialog = null;
@@ -55,9 +58,10 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 	private JTextField _cameraXField = null, _cameraYField = null, _cameraZField = null;
 	private JTextField _fontName = null, _altitudeFactorField = null;
 	private JRadioButton _ballsAndSticksButton = null;
-	private JLabel _baseImageLabel = null;
-	private JButton _baseImageButton = null;
-	private BaseImageConfigDialog _baseImageConfig = null;
+	/** Panel for defining the base image */
+	private BaseImageDefinitionPanel _baseImagePanel = null;
+	/** Component for defining the terrain */
+	private TerrainDefinitionPanel _terrainPanel = null;
 
 	// defaults
 	private static final double DEFAULT_CAMERA_DISTANCE = 30.0;
@@ -107,17 +111,17 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 	 */
 	public void begin()
 	{
-		// Make dialog window to select angles, colours etc
+		// Make dialog window to select inputs
 		if (_dialog == null)
 		{
 			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogComponents());
 		}
-		// Make base image dialog
-		if (_baseImageConfig == null)
-		{
-			_baseImageConfig = new BaseImageConfigDialog(this, _dialog, _track);
+		// Get exaggeration factor from config
+		final int exaggFactor = Config.getConfigInt(Config.KEY_HEIGHT_EXAGGERATION);
+		if (exaggFactor > 0) {
+			_altFactor = exaggFactor / 100.0;
 		}
 
 		// Set angles
@@ -125,7 +129,14 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		_cameraYField.setText(_cameraY);
 		_cameraZField.setText(_cameraZ);
 		_altitudeFactorField.setText("" + _altFactor);
-		updateBaseImageDetails();
+		// Pass terrain and image def parameters (if any) to the panels
+		if (_terrainDef != null) {
+			_terrainPanel.initTerrainParameters(_terrainDef);
+		}
+		if (_imageDef != null) {
+			_baseImagePanel.initImageParameters(_imageDef);
+		}
+		_baseImagePanel.updateBaseImageDetails();
 		// Show dialog
 		_dialog.pack();
 		_dialog.setVisible(true);
@@ -150,8 +161,14 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		okButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				doExport();
-				MapGrouter.clearMapImage();
+				// Need to launch export in new thread
+				new Thread(new Runnable() {
+					public void run()
+					{
+						doExport();
+						_baseImagePanel.getGrouter().clearMapImage();
+					}
+				}).start();
 				_dialog.dispose();
 			}
 		});
@@ -160,7 +177,7 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				MapGrouter.clearMapImage();
+				_baseImagePanel.getGrouter().clearMapImage();
 				_dialog.dispose();
 			}
 		});
@@ -223,26 +240,10 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		group.add(_ballsAndSticksButton); group.add(tubesButton);
 		stylePanel.add(radioPanel);
 
-		// Panel for the base image
-		JPanel imagePanel = new JPanel();
-		imagePanel.setLayout(new BorderLayout(10, 4));
-		imagePanel.add(new JLabel(I18nManager.getText("dialog.exportpov.baseimage") + ": "), BorderLayout.WEST);
-		_baseImageLabel = new JLabel("Typical sourcename");
-		imagePanel.add(_baseImageLabel, BorderLayout.CENTER);
-		_baseImageButton = new JButton(I18nManager.getText("button.edit"));
-		_baseImageButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				changeBaseImage();
-			}
-		});
-		imagePanel.add(_baseImageButton, BorderLayout.EAST);
-		// Put these image controls inside a holder panel with an outline
-		JPanel imageHolderPanel = new JPanel();
-		imageHolderPanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(4, 4, 4, 4))
-		);
-		imageHolderPanel.setLayout(new BorderLayout());
-		imageHolderPanel.add(imagePanel, BorderLayout.NORTH);
+		// Panel for the base image (parent is null because we don't need callback)
+		_baseImagePanel = new BaseImageDefinitionPanel(null, _dialog, _track);
+		// Panel for the terrain definition
+		_terrainPanel = new TerrainDefinitionPanel();
 
 		// add these panels to the holder panel
 		JPanel holderPanel = new JPanel();
@@ -253,48 +254,15 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		boxPanel.add(Box.createVerticalStrut(4));
 		boxPanel.add(stylePanel);
 		boxPanel.add(Box.createVerticalStrut(4));
-		boxPanel.add(imageHolderPanel);
+		boxPanel.add(_terrainPanel);
+		boxPanel.add(Box.createVerticalStrut(4));
+		boxPanel.add(_baseImagePanel);
 		holderPanel.add(boxPanel, BorderLayout.CENTER);
 
 		panel.add(holderPanel, BorderLayout.CENTER);
 		return panel;
 	}
 
-	/**
-	 * Change the base image by calling the BaseImageConfigDialog
-	 */
-	private void changeBaseImage()
-	{
-		// Check if there is a cache to use
-		if (BaseImageConfigDialog.isImagePossible())
-		{
-			// Show new dialog to choose image details
-			_baseImageConfig.begin();
-		}
-		else {
-			_app.showErrorMessage(getNameKey(), "dialog.exportimage.noimagepossible");
-		}
-	}
-
-	/**
-	 * Update the description label according to the selected base image details
-	 */
-	private void updateBaseImageDetails()
-	{
-		String desc = null;
-		if (_baseImageConfig.useImage())
-		{
-			MapSource source = MapSourceLibrary.getSource(_baseImageConfig.getSourceIndex());
-			if (source != null) {
-				desc = source.getName() + " ("
-					+ _baseImageConfig.getZoomLevel() + ")";
-			}
-		}
-		if (desc == null) {
-			desc = I18nManager.getText("dialog.about.no");
-		}
-		_baseImageLabel.setText(desc);
-	}
 
 	/**
 	 * Select the file and export data to it
@@ -333,20 +301,26 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 				}
 				final int nameLen = povFile.getName().length() - 4;
 				final File imageFile = new File(povFile.getParentFile(), povFile.getName().substring(0, nameLen) + "_base.png");
-				final boolean imageExists = _baseImageConfig.useImage() && imageFile.exists();
+				final File terrainFile = new File(povFile.getParentFile(), povFile.getName().substring(0, nameLen) + "_terrain.png");
+				final boolean imageExists = _baseImagePanel.getImageDefinition().getUseImage() && imageFile.exists();
+				final boolean terrainFileExists = _terrainPanel.getUseTerrain() && terrainFile.exists();
+
 				// Check if files exist and if necessary prompt for overwrite
 				Object[] buttonTexts = {I18nManager.getText("button.overwrite"), I18nManager.getText("button.cancel")};
-				if ((!povFile.exists() && !imageExists) || JOptionPane.showOptionDialog(_parentFrame,
+				if ((!povFile.exists() && !imageExists && !terrainFileExists)
+					|| JOptionPane.showOptionDialog(_parentFrame,
 						I18nManager.getText("dialog.save.overwrite.text"),
 						I18nManager.getText("dialog.save.overwrite.title"), JOptionPane.YES_NO_OPTION,
 						JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 					== JOptionPane.YES_OPTION)
 				{
-					// Export the file
-					if (exportFile(povFile, imageFile))
+					// Export the file(s)
+					if (exportFiles(povFile, imageFile, terrainFile))
 					{
 						// file saved - store directory in config for later
 						Config.setConfigString(Config.KEY_TRACK_DIR, povFile.getParentFile().getAbsolutePath());
+						// also store exaggeration
+						Config.setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_altFactor * 100));
 					}
 					else
 					{
@@ -365,12 +339,13 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 
 
 	/**
-	 * Export the track data to the specified file
+	 * Export the data to the specified file(s)
 	 * @param inPovFile File object to save pov file to
 	 * @param inImageFile file object to save image to
+	 * @param inTerrainFile file object to save terrain to
 	 * @return true if successful
 	 */
-	private boolean exportFile(File inPovFile, File inImageFile)
+	private boolean exportFiles(File inPovFile, File inImageFile, File inTerrainFile)
 	{
 		FileWriter writer = null;
 		// find out the line separator for this system
@@ -383,20 +358,23 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 			try
 			{
 				// try to use given altitude cap
-				double altFactor = Double.parseDouble(_altitudeFactorField.getText());
-				model.setAltitudeFactor(altFactor);
+				double givenFactor = Double.parseDouble(_altitudeFactorField.getText());
+				if (givenFactor > 0.0) _altFactor = givenFactor;
 			}
 			catch (NumberFormatException nfe) { // parse failed, reset
-				_altitudeFactorField.setText("1.0");
+				_altitudeFactorField.setText("" + _altFactor);
 			}
-			model.scale();
+			model.setAltitudeFactor(_altFactor);
 
-			boolean useImage = _baseImageConfig.useImage();
+			// Write base image if necessary
+			ImageDefinition imageDef = _baseImagePanel.getImageDefinition();
+			boolean useImage = imageDef.getUseImage();
 			if (useImage)
 			{
 				// Get base image from grouter
-				MapSource mapSource = MapSourceLibrary.getSource(_baseImageConfig.getSourceIndex());
-				GroutedImage baseImage = MapGrouter.getMapImage(_track, mapSource, _baseImageConfig.getZoomLevel());
+				MapSource mapSource = MapSourceLibrary.getSource(imageDef.getSourceIndex());
+				MapGrouter grouter = _baseImagePanel.getGrouter();
+				GroutedImage baseImage = grouter.getMapImage(_track, mapSource, imageDef.getZoom());
 				try
 				{
 					useImage = ImageIO.write(baseImage.getImage(), "png", inImageFile);
@@ -410,9 +388,39 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 				}
 			}
 
+			boolean useTerrain = _terrainPanel.getUseTerrain();
+			if (useTerrain)
+			{
+				TerrainHelper terrainHelper = new TerrainHelper(_terrainPanel.getGridSize());
+				Track terrainTrack = terrainHelper.createGridTrack(_track);
+				// Get the altitudes from SRTM for all the points in the track
+				LookupSrtmFunction srtmLookup = (LookupSrtmFunction) FunctionLibrary.FUNCTION_LOOKUP_SRTM;
+				srtmLookup.begin(terrainTrack);
+				while (srtmLookup.isRunning())
+				{
+					try {
+						Thread.sleep(750);  // just polling in a wait loop isn't ideal but simple
+					}
+					catch (InterruptedException e) {}
+				}
+				// Fix the voids
+				terrainHelper.fixVoids(terrainTrack);
+
+				model.setTerrain(terrainTrack);
+				model.scale();
+
+				// Call TerrainHelper to write out the data from the model
+				terrainHelper.writeHeightMap(model, inTerrainFile);
+			}
+			else
+			{
+				// No terrain required, so just scale the model as it is
+				model.scale();
+			}
+
 			// Create file and write basics
 			writer = new FileWriter(inPovFile);
-			writeStartOfFile(writer, lineSeparator, useImage ? inImageFile : null);
+			writeStartOfFile(writer, lineSeparator, useImage ? inImageFile : null, useTerrain ? inTerrainFile : null);
 
 			// write out points
 			if (_ballsAndSticksButton.isSelected()) {
@@ -451,12 +459,15 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 	 * @param inWriter Writer to use for writing file
 	 * @param inLineSeparator line separator to use
 	 * @param inImageFile image file to reference (or null if none)
+	 * @param inTerrainFile terrain file to reference (or null if none)
 	 * @throws IOException on file writing error
 	 */
-	private void writeStartOfFile(FileWriter inWriter, String inLineSeparator, File inImageFile)
+	private void writeStartOfFile(FileWriter inWriter, String inLineSeparator, File inImageFile, File inTerrainFile)
 	throws IOException
 	{
-		inWriter.write("// Pov file produced by GpsPrune - see http://activityworkshop.net/");
+		inWriter.write("// Pov file produced by GpsPrune - see http://gpsprune.activityworkshop.net/");
+		inWriter.write(inLineSeparator);
+		inWriter.write("#version 3.6;");
 		inWriter.write(inLineSeparator);
 		inWriter.write(inLineSeparator);
 		// Select font based on user input
@@ -471,16 +482,19 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 
 		// Make the definition of the base plane depending on whether there's an image or not
 		final boolean useImage = (inImageFile != null);
-		final String boxDefinition = (inImageFile == null ?
-			"   <-10.0, -0.15, -10.0>," + inLineSeparator
-				+ "   <10.0, 0.15, 10.0>" + inLineSeparator
-				+ "   pigment { color rgb <0.5 0.75 0.8> }"
-			:
+		final boolean useImageOnBox = useImage && (inTerrainFile == null);
+		final String boxDefinition = (useImageOnBox ?
 			"   <0, 0, 0>, <1, 1, 0.001>" + inLineSeparator
 				+ "   pigment {image_map { png \"" + inImageFile.getName() + "\" map_type 0 interpolate 2 once } }" + inLineSeparator
 				+ "   scale 20.0 rotate <90, 0, 0>" + inLineSeparator
-				+ "   translate <-10.0, 0, -10.0>");
+				+ "   translate <-10.0, 0, -10.0>"
+			: "   <-10.0, -0.15, -10.0>," + inLineSeparator
+				+ "   <10.0, 0.0, 10.0>" + inLineSeparator
+				+ "   pigment { color rgb <0.5 0.75 0.8> }");
 		// TODO: Maybe could use the same geometry for the imageless case, would simplify code a bit
+
+		// Definition of terrain shape if any
+		final String terrainDefinition = makeTerrainString(inTerrainFile, inImageFile, inLineSeparator);
 
 		// Set up output
 		String[] outputLines = {
@@ -574,6 +588,8 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		  "box {",
 		  boxDefinition,
 		  "}", "",
+		  // terrain
+		  terrainDefinition,
 		// write cardinals
 		  "// Cardinal letters N,S,E,W",
 		  "text {",
@@ -612,6 +628,31 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		}
 	}
 
+	/**
+	 * Make a description of the height_field object for the terrain, depending on terrain and image
+	 * @param inTerrainFile terrain file, or null if none
+	 * @param inImageFile image file, or null if none
+	 * @param inLineSeparator line separator
+	 * @return String for inserting into pov file
+	 */
+	private static String makeTerrainString(File inTerrainFile, File inImageFile, String inLineSeparator)
+	{
+		if (inTerrainFile == null) {return "";}
+		StringBuilder sb = new StringBuilder();
+		sb.append("//Terrain").append(inLineSeparator)
+			.append("height_field {").append(inLineSeparator)
+			.append("\tpng \"").append(inTerrainFile.getName()).append("\" smooth").append(inLineSeparator)
+			.append("\tfinish {diffuse 0.7 phong 0.2}").append(inLineSeparator);
+		if (inImageFile != null) {
+			sb.append("\tpigment {image_map { png \"").append(inImageFile.getName()).append("\"  } rotate x*90}").append(inLineSeparator);
+		}
+		else {
+			sb.append("\tpigment {color rgb <0.55 0.7 0.55> }").append(inLineSeparator);
+		}
+		sb.append("\tscale 20.0").append(inLineSeparator)
+			.append("\ttranslate <-10.0, 0, -10.0>").append(inLineSeparator).append("}");
+		return sb.toString();
+	}
 
 	/**
 	 * Write out all the data points to the file in the balls-and-sticks style
@@ -875,17 +916,5 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 			}
 		}
 		return segmentList;
-	}
-
-	/**
-	 * Callback from base image config dialog
-	 */
-	public void dataUpdated(byte inUpdateType)
-	{
-		updateBaseImageDetails();
-	}
-
-	/** Not required */
-	public void actionCompleted(String inMessage) {
 	}
 }

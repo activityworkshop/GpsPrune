@@ -1,11 +1,11 @@
 package tim.prune.save;
 
-import tim.prune.config.Config;
 import tim.prune.data.DoubleRange;
 import tim.prune.data.Track;
 import tim.prune.data.TrackExtents;
-import tim.prune.gui.map.DiskTileCacher;
 import tim.prune.gui.map.MapSource;
+import tim.prune.gui.map.MapTileManager;
+import tim.prune.gui.map.TileConsumer;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -17,15 +17,15 @@ import java.awt.image.BufferedImage;
  * Class to handle the sticking together (grouting) of map tiles
  * to create a single map image for the current track
  */
-public abstract class MapGrouter
+public class MapGrouter implements TileConsumer
 {
 	/** The most recently produced image */
-	private static GroutedImage _lastGroutedImage = null;
+	private GroutedImage _lastGroutedImage = null;
 
 	/**
 	 * Clear the last image, it's not needed any more
 	 */
-	public static void clearMapImage() {
+	public void clearMapImage() {
 		_lastGroutedImage = null;
 	}
 
@@ -36,7 +36,20 @@ public abstract class MapGrouter
 	 * @param inZoom selected zoom level
 	 * @return grouted image, or null if no image could be created
 	 */
-	public static GroutedImage createMapImage(Track inTrack, MapSource inMapSource, int inZoom)
+	public GroutedImage createMapImage(Track inTrack, MapSource inMapSource, int inZoom)
+	{
+		return createMapImage(inTrack, inMapSource, inZoom, false);
+	}
+
+	/**
+	 * Grout the required map tiles together according to the track's extent
+	 * @param inTrack track object
+	 * @param inMapSource map source to use (may have one or two layers)
+	 * @param inZoom selected zoom level
+	 * @param inDownload true to download tiles, false (by default) to just pull from disk
+	 * @return grouted image, or null if no image could be created
+	 */
+	public GroutedImage createMapImage(Track inTrack, MapSource inMapSource, int inZoom, boolean inDownload)
 	{
 		// Get the extents of the track including a standard (10%) border around the data
 		TrackExtents extents = new TrackExtents(inTrack);
@@ -44,8 +57,6 @@ public abstract class MapGrouter
 		DoubleRange xRange = extents.getXRange();
 		DoubleRange yRange = extents.getYRange();
 
-		// Get path to disk cache
-		final String cachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
 		// Work out which tiles are required
 		final int zoomFactor = 1 << inZoom;
 		final int minTileX = (int) (xRange.getMinimum() * zoomFactor);
@@ -55,7 +66,7 @@ public abstract class MapGrouter
 
 		// Work out how big the final image will be, create a BufferedImage
 		final int pixCount = (int) (extents.getXRange().getRange() * zoomFactor * 256);
-		if (pixCount < 2) {return null;}
+		if (pixCount < 2 || inZoom == 0) {return null;}
 		BufferedImage resultImage = new BufferedImage(pixCount, pixCount, BufferedImage.TYPE_INT_RGB);
 		Graphics g = resultImage.getGraphics();
 		g.setColor(Color.WHITE);
@@ -63,8 +74,16 @@ public abstract class MapGrouter
 		// Work out where to start drawing the tiles on the image
 		int xOffset = (int) ((minTileX - xRange.getMinimum() * zoomFactor) * 256);
 
+		// Make a map tile manager to load (or download) the tiles
+		MapTileManager tileManager = new MapTileManager(this);
+		tileManager.setMapSource(inMapSource);
+		tileManager.enableTileDownloading(inDownload);
+		tileManager.setReturnIncompleteImages();
+		tileManager.setZoom(inZoom);
+
 		int numTilesUsed = 0;
 		int numTilesMissing = 0;
+
 		// Loop over the tiles
 		for (int x = minTileX; x <= maxTileX; x++)
 		{
@@ -73,13 +92,25 @@ public abstract class MapGrouter
 			{
 				for (int layer=0; layer < inMapSource.getNumLayers(); layer++)
 				{
-					Image tile = DiskTileCacher.getTile(cachePath, inMapSource.makeFilePath(layer, inZoom, x, y), false);
+					Image tile = tileManager.getTile(layer, x, y, true);
+					// If we're downloading tiles, wait until the tile isn't null
+					int waitCount = 0;
+					while (tile == null && inDownload && waitCount < 3)
+					{
+						// System.out.println("wait " + waitCount + " for tile to be not null");
+						try {Thread.sleep(250);} catch (InterruptedException e) {}
+						tile = tileManager.getTile(layer, x, y, false); // don't request another download
+						waitCount++;
+					}
+					// See if there's a tile or not
 					if (tile != null)
 					{
 						// Wait until tile is available (loaded asynchronously)
-						while (tile.getWidth(null) < 0) {
+						while (tile.getWidth(null) < 0 && !inDownload)
+						{
+							// System.out.println("Wait for tile width");
 							try {
-								Thread.sleep(100);
+								Thread.sleep(inDownload ? 500 : 100);
 							}
 							catch (InterruptedException ie) {}
 						}
@@ -88,7 +119,11 @@ public abstract class MapGrouter
 						numTilesUsed++;
 						g.drawImage(tile, xOffset, yOffset, null);
 					}
-					else numTilesMissing++;
+					else
+					{
+						// null tile, that means it's either not available or really slow to start downloading
+						numTilesMissing++;
+					}
 				}
 				yOffset += 256;
 			}
@@ -112,7 +147,7 @@ public abstract class MapGrouter
 	 * @param inZoom selected zoom level
 	 * @return grouted image, or null if no image could be created
 	 */
-	public static GroutedImage getMapImage(Track inTrack, MapSource inMapSource, int inZoom)
+	public synchronized GroutedImage getMapImage(Track inTrack, MapSource inMapSource, int inZoom)
 	{
 		if (_lastGroutedImage == null) {
 			_lastGroutedImage = createMapImage(inTrack, inMapSource, inZoom);
@@ -135,5 +170,11 @@ public abstract class MapGrouter
 		final int zoomFactor = 1 << inZoom;
 		final int pixCount = (int) (extents.getXRange().getRange() * zoomFactor * 256);
 		return pixCount > 2 && pixCount < 4000;
+	}
+
+	/** React to tiles being updated by the tile manager */
+	public void tilesUpdated(boolean inIsOk)
+	{
+		// Doesn't need any action
 	}
 }
