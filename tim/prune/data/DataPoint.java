@@ -38,6 +38,8 @@ public class DataPoint
 		_fieldValues = inValueArray;
 		// save list of fields
 		_fieldList = inFieldList;
+		// Remove double quotes around values
+		removeQuotes(_fieldValues);
 		// parse fields into objects
 		parseFields(null, inAltFormat);
 	}
@@ -164,7 +166,7 @@ public class DataPoint
 		}
 		else {
 			// use default altitude format from config
-			parseFields(inField, Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET);
+			parseFields(inField, Config.getUnitSet().getDefaultAltitudeFormat());
 		}
 	}
 
@@ -364,6 +366,25 @@ public class DataPoint
 	}
 
 	/**
+	 * @return name of attached photo and/or audio
+	 */
+	public String getMediaName()
+	{
+		String mediaName = null;
+		if (_photo != null) mediaName = _photo.getName();
+		if (_audio != null)
+		{
+			if (mediaName == null) {
+				mediaName = _audio.getName();
+			}
+			else {
+				mediaName = mediaName + ", " + _audio.getName();
+			}
+		}
+		return mediaName;
+	}
+
+	/**
 	 * Interpolate a set of points between this one and the given one
 	 * @param inEndPoint end point of interpolation
 	 * @param inNumPoints number of points to generate
@@ -456,6 +477,41 @@ public class DataPoint
 		return point;
 	}
 
+
+	/**
+	 * Remove all single and double quotes surrounding each value
+	 * @param inValues array of values
+	 */
+	private static void removeQuotes(String[] inValues)
+	{
+		if (inValues == null) {return;}
+		for (int i=0; i<inValues.length; i++)
+		{
+			inValues[i] = removeQuotes(inValues[i]);
+		}
+	}
+
+	/**
+	 * Remove any single or double quotes surrounding a value
+	 * @param inValue value to modify
+	 * @return modified String
+	 */
+	private static String removeQuotes(String inValue)
+	{
+		if (inValue == null) {return inValue;}
+		final int len = inValue.length();
+		if (len <= 1) {return inValue;}
+		// get the first and last characters
+		final char firstChar = inValue.charAt(0);
+		final char lastChar  = inValue.charAt(len-1);
+		if (firstChar == lastChar)
+		{
+			if (firstChar == '\"' || firstChar == '\'') {
+				return inValue.substring(1, len-1);
+			}
+		}
+		return inValue;
+	}
 
 	/**
 	 * Get string for debug

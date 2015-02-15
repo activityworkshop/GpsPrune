@@ -6,9 +6,9 @@ import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 
 /**
- * Operation to undo a track compression
+ * Operation to undo the deletion of marked points
  */
-public class UndoCompress implements UndoOperation
+public class UndoDeleteMarked implements UndoOperation
 {
 	private DataPoint[] _contents = null;
 	protected int _numPointsDeleted = -1;
@@ -19,7 +19,7 @@ public class UndoCompress implements UndoOperation
 	 * Constructor
 	 * @param inTrack track contents to copy
 	 */
-	public UndoCompress(Track inTrack)
+	public UndoDeleteMarked(Track inTrack)
 	{
 		_contents = inTrack.cloneContents();
 		// Copy boolean segment start flags
@@ -46,7 +46,7 @@ public class UndoCompress implements UndoOperation
 	 */
 	public String getDescription()
 	{
-		String desc = I18nManager.getText("undo.compress");
+		String desc = I18nManager.getText("undo.deletemarked");
 		if (_numPointsDeleted > 0)
 			desc = desc + " (" + _numPointsDeleted + ")";
 		return desc;
@@ -64,7 +64,7 @@ public class UndoCompress implements UndoOperation
 		// Copy boolean segment start flags
 		Track track = inTrackInfo.getTrack();
 		if (_segmentStarts.length != track.getNumPoints())
-			throw new UndoException("Cannot undo compress - track length no longer matches");
+			throw new UndoException("Cannot undo delete - track length no longer matches");
 		for (int i=0; i<_segmentStarts.length; i++) {
 			track.getPoint(i).setSegmentStart(_segmentStarts[i]);
 		}

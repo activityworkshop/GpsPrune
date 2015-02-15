@@ -312,7 +312,7 @@ public class PovExporter extends Export3dFunction
 	{
 		FileWriter writer = null;
 		// find out the line separator for this system
-		String lineSeparator = System.getProperty("line.separator");
+		final String lineSeparator = System.getProperty("line.separator");
 		try
 		{
 			// create and scale model
@@ -436,7 +436,7 @@ public class PovExporter extends Export3dFunction
 		  "  sphere {",
 		  "   <0, 0, 0>, 0.3", // size should depend on model size
 		  "   texture {",
-		  "      pigment {color rgb <0.2 1.0 0.2>}",
+		  "      pigment {color rgb <0.1 0.6 0.1>}", // dark green
 		  "      finish { phong 1 }",
 		  "   }",
 		  " }",
@@ -444,7 +444,7 @@ public class PovExporter extends Export3dFunction
 		  "  sphere {",
 		  "   <0, 0, 0>, 0.3", // size should depend on model size
 		  "   texture {",
-		  "      pigment {color rgb <0.6 1.0 0.2>}",
+		  "      pigment {color rgb <0.4 0.9 0.2>}", // green
 		  "      finish { phong 1 }",
 		  "   }",
 		  " }",
@@ -452,7 +452,7 @@ public class PovExporter extends Export3dFunction
 		  "  sphere {",
 		  "   <0, 0, 0>, 0.3", // size should depend on model size
 		  "   texture {",
-		  "      pigment {color rgb <1.0 1.0 0.1>}",
+		  "      pigment {color rgb <0.7 0.8 0.2>}", // yellow
 		  "      finish { phong 1 }",
 		  "   }",
 		  " }",
@@ -460,7 +460,7 @@ public class PovExporter extends Export3dFunction
 		  "  sphere {",
 		  "   <0, 0, 0>, 0.3", // size should depend on model size
 		  "   texture {",
-		  "      pigment {color rgb <1.0 1.0 1.0>}",
+		  "      pigment {color rgb <0.5 0.8 0.6>}", // greeny
 		  "      finish { phong 1 }",
 		  "   }",
 		  " }",
@@ -468,7 +468,15 @@ public class PovExporter extends Export3dFunction
 		  "  sphere {",
 		  "   <0, 0, 0>, 0.3", // size should depend on model size
 		  "   texture {",
-		  "      pigment {color rgb <0.1 1.0 1.0>}",
+		  "      pigment {color rgb <0.2 0.9 0.9>}", // cyan
+		  "      finish { phong 1 }",
+		  "   }",
+		  " }",
+		  "#declare track_sphere5 =",
+		  "  sphere {",
+		  "   <0, 0, 0>, 0.3", // size should depend on model size
+		  "   texture {",
+		  "      pigment {color rgb <1.0 1.0 1.0>}", // white
 		  "      finish { phong 1 }",
 		  "   }",
 		  " }",
@@ -533,7 +541,7 @@ public class PovExporter extends Export3dFunction
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private void writeLatLongLines(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
+	private static void writeLatLongLines(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
 	throws IOException
 	{
 		inWriter.write("// Latitude and longitude lines:");
@@ -563,7 +571,7 @@ public class PovExporter extends Export3dFunction
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private void writeDataPointsBallsAndSticks(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
+	private static void writeDataPointsBallsAndSticks(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
 	throws IOException
 	{
 		inWriter.write("// Data points:");
@@ -605,7 +613,7 @@ public class PovExporter extends Export3dFunction
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private void writeDataPointsTubesAndWalls(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
+	private static void writeDataPointsTubesAndWalls(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
 	throws IOException
 	{
 		inWriter.write("// Data points:");
@@ -757,7 +765,7 @@ public class PovExporter extends Export3dFunction
 	 */
 	private static byte checkHeightCode(byte inCode)
 	{
-		final byte maxHeightCode = 4;
+		final byte maxHeightCode = 5;
 		if (inCode < 0) return 0;
 		if (inCode > maxHeightCode) return maxHeightCode;
 		return inCode;

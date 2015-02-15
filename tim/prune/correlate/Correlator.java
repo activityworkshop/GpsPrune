@@ -35,6 +35,8 @@ import tim.prune.data.MediaList;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSetLibrary;
 
 /**
  * Abstract superclass of the two correlator functions
@@ -312,8 +314,10 @@ public abstract class Correlator extends GenericFunction
 	{
 		JPanel card = new JPanel();
 		card.setLayout(new BorderLayout(10, 10));
-		card.add(new JLabel(I18nManager.getText(
-			"dialog.correlate." + getMediaTypeKey() + "select.intro")), BorderLayout.NORTH);
+		JLabel introLabel = new JLabel(I18nManager.getText(
+			"dialog.correlate." + getMediaTypeKey() + "select.intro"));
+		introLabel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
+		card.add(introLabel, BorderLayout.NORTH);
 		// table doesn't have model yet - that will be attached later
 		_selectionTable = new JTable();
 		JScrollPane photoScrollPane = new JScrollPane(_selectionTable);
@@ -368,7 +372,7 @@ public abstract class Correlator extends GenericFunction
 		offsetPanelBot.setLayout(new FlowLayout());
 		offsetPanelBot.setBorder(null);
 		_mediaLaterOption = new JRadioButton(I18nManager.getText("dialog.correlate.options." + getMediaTypeKey() + "later"));
-		_pointLaterOption = new JRadioButton(I18nManager.getText("dialog.correlate.options.pointlaterphoto"));
+		_pointLaterOption = new JRadioButton(I18nManager.getText("dialog.correlate.options.pointlater" + getMediaTypeKey()));
 		_mediaLaterOption.addItemListener(optionsChangedListener);
 		_pointLaterOption.addItemListener(optionsChangedListener);
 		ButtonGroup laterGroup = new ButtonGroup();
@@ -380,6 +384,12 @@ public abstract class Correlator extends GenericFunction
 		offsetPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		card2Top.add(offsetPanel);
 
+		// listener for radio buttons
+		ActionListener radioListener = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				enableEditBoxes();
+			}
+		};
 		// time limits section
 		JPanel limitsPanel = new JPanel();
 		limitsPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("dialog.correlate.options.limitspanel")));
@@ -388,9 +398,11 @@ public abstract class Correlator extends GenericFunction
 		timeLimitPanel.setLayout(new FlowLayout());
 		JRadioButton noTimeLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.notimelimit"));
 		noTimeLimitRadio.addItemListener(optionsChangedListener);
+		noTimeLimitRadio.addActionListener(radioListener);
 		timeLimitPanel.add(noTimeLimitRadio);
 		_timeLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.timelimit") + " : ");
 		_timeLimitRadio.addItemListener(optionsChangedListener);
+		_timeLimitRadio.addActionListener(radioListener);
 		timeLimitPanel.add(_timeLimitRadio);
 		groupRadioButtons(noTimeLimitRadio, _timeLimitRadio);
 		_limitMinBox = new JTextField(3);
@@ -407,9 +419,11 @@ public abstract class Correlator extends GenericFunction
 		distLimitPanel.setLayout(new FlowLayout());
 		JRadioButton noDistLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.nodistancelimit"));
 		noDistLimitRadio.addItemListener(optionsChangedListener);
+		noDistLimitRadio.addActionListener(radioListener);
 		distLimitPanel.add(noDistLimitRadio);
 		_distLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.distancelimit"));
 		_distLimitRadio.addItemListener(optionsChangedListener);
+		_distLimitRadio.addActionListener(radioListener);
 		distLimitPanel.add(_distLimitRadio);
 		groupRadioButtons(noDistLimitRadio, _distLimitRadio);
 		_limitDistBox = new JTextField(4);
@@ -517,6 +531,18 @@ public abstract class Correlator extends GenericFunction
 	}
 
 	/**
+	 * Enable or disable the edit boxes according to the radio button selections
+	 */
+	private void enableEditBoxes()
+	{
+		// enable/disable text field for distance input
+		_limitDistBox.setEnabled(_distLimitRadio.isSelected());
+		// and for time limits
+		_limitMinBox.setEnabled(_timeLimitRadio.isSelected());
+		_limitSecBox.setEnabled(_timeLimitRadio.isSelected());
+	}
+
+	/**
 	 * Parse the time limit values entered and validate them
 	 * @return TimeDifference object describing limit
 	 */
@@ -557,9 +583,9 @@ public abstract class Correlator extends GenericFunction
 	/**
 	 * @return the selected distance units from the dropdown
 	 */
-	protected Distance.Units getSelectedDistanceUnits()
+	protected Unit getSelectedDistanceUnits()
 	{
-		final Distance.Units[] distUnits = {Distance.Units.KILOMETRES, Distance.Units.METRES, Distance.Units.MILES};
+		final Unit[] distUnits = {UnitSetLibrary.UNITS_KILOMETRES, UnitSetLibrary.UNITS_METRES, UnitSetLibrary.UNITS_MILES};
 		return distUnits[_distUnitsDropdown.getSelectedIndex()];
 	}
 
@@ -604,6 +630,7 @@ public abstract class Correlator extends GenericFunction
 		_mediaLaterOption.setSelected(timeDiff.getIsPositive());
 		_pointLaterOption.setSelected(!timeDiff.getIsPositive());
 		_previewEnabled = true;
+		enableEditBoxes();
 		createPreview(timeDiff, true);
 	}
 
@@ -635,19 +662,22 @@ public abstract class Correlator extends GenericFunction
 	protected PointMediaPair getPointPairForMedia(Track inTrack, MediaObject inMedia, TimeDifference inOffset)
 	{
 		PointMediaPair pair = new PointMediaPair(inMedia);
-		// Add/subtract offset to media timestamp
-		Timestamp mediaStamp = getMediaTimestamp(inMedia).createMinusOffset(inOffset);
-		int numPoints = inTrack.getNumPoints();
-		for (int i=0; i<numPoints; i++)
+		if (inMedia.hasTimestamp())
 		{
-			DataPoint point = inTrack.getPoint(i);
-			if (point.getPhoto() == null && point.getAudio() == null)
+			// Add/subtract offset to media timestamp
+			Timestamp mediaStamp = getMediaTimestamp(inMedia).createMinusOffset(inOffset);
+			int numPoints = inTrack.getNumPoints();
+			for (int i=0; i<numPoints; i++)
 			{
-				Timestamp pointStamp = point.getTimestamp();
-				if (pointStamp != null && pointStamp.isValid())
+				DataPoint point = inTrack.getPoint(i);
+				if (point.getPhoto() == null && point.getAudio() == null)
 				{
-					long numSeconds = pointStamp.getSecondsSince(mediaStamp);
-					pair.addPoint(point, numSeconds);
+					Timestamp pointStamp = point.getTimestamp();
+					if (pointStamp != null && pointStamp.isValid())
+					{
+						long numSeconds = pointStamp.getSecondsSince(mediaStamp);
+						pair.addPoint(point, numSeconds);
+					}
 				}
 			}
 		}

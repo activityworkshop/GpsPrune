@@ -127,9 +127,10 @@ public class Java3DWindow implements ThreeDWindow
 		Object[] buttonTexts = {I18nManager.getText("button.continue"), I18nManager.getText("button.cancel")};
 		if (_track.getNumPoints() > MAX_TRACK_SIZE && !TRACK_SIZE_WARNING_GIVEN)
 		{
-			if (JOptionPane.showOptionDialog(_frame,
+			// FIXME: Change text reference from exportpov to java3d
+			if (JOptionPane.showOptionDialog(_parentFrame,
 					I18nManager.getText("dialog.exportpov.warningtracksize"),
-					I18nManager.getText("function.exportpov"), JOptionPane.OK_CANCEL_OPTION,
+					I18nManager.getText("function.show3d"), JOptionPane.OK_CANCEL_OPTION,
 					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 				== JOptionPane.OK_OPTION)
 			{

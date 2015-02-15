@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 public class Timestamp
 {
 	private boolean _valid = false;
-	private long _seconds = 0L;
+	private long _milliseconds = 0L;
 	private String _text = null;
 	private String _timeText = null;
 
@@ -25,6 +25,8 @@ public class Timestamp
 	private static final DateFormat ISO_8601_FORMAT_NOZ = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
+	private static final Pattern ISO8601_FRACTIONAL_PATTERN
+		= Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{1,3})Z?");
 	private static final Pattern GENERAL_TIMESTAMP_PATTERN
 		= Pattern.compile("(\\d{4})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})");
 	private static long SECS_SINCE_1970 = 0L;
@@ -40,6 +42,27 @@ public class Timestamp
 	public static final int FORMAT_LOCALE = 1;
 	/** Specifies ISO 8601 timestamp format */
 	public static final int FORMAT_ISO_8601 = 2;
+
+	/** Identifier for the parsing strategy to use */
+	private enum ParseType
+	{
+		NONE,
+		ISO8601_FRACTIONAL,
+		LONG,
+		FIXED_FORMAT0,
+		FIXED_FORMAT1,
+		FIXED_FORMAT2,
+		FIXED_FORMAT3,
+		FIXED_FORMAT4,
+		FIXED_FORMAT5,
+		FIXED_FORMAT6,
+		GENERAL_STRING
+	}
+
+	/** Array of parse types to loop through (first one is changed to last successful type) */
+	private static ParseType[] ALL_PARSE_TYPES = {ParseType.NONE, ParseType.ISO8601_FRACTIONAL, ParseType.LONG,
+		ParseType.FIXED_FORMAT0, ParseType.FIXED_FORMAT1, ParseType.FIXED_FORMAT2, ParseType.FIXED_FORMAT3,
+		ParseType.FIXED_FORMAT4, ParseType.FIXED_FORMAT5, ParseType.FIXED_FORMAT6, ParseType.GENERAL_STRING};
 
 	// Static block to initialise offsets
 	static
@@ -69,51 +92,116 @@ public class Timestamp
 	 */
 	public Timestamp(String inString)
 	{
-		// TODO: Does it really help to store timestamps in seconds rather than ms?
+		_valid = false;
 		if (inString != null && !inString.equals(""))
 		{
-			// Try to parse into a long
-			try
+			// Try each of the parse types in turn
+			for (ParseType type : ALL_PARSE_TYPES)
 			{
-				long rawValue = Long.parseLong(inString.trim());
-				_seconds = getSeconds(rawValue);
-				_valid = true;
-			}
-			catch (NumberFormatException nfe)
-			{
-				// String is not a long, so try a date/time string instead
-				// try each of the date formatters in turn
-				Date date = null;
-				for (int i=0; i<ALL_DATE_FORMATS.length && !_valid; i++)
+				if (parseString(inString, type))
 				{
-					try
-					{
-						date = ALL_DATE_FORMATS[i].parse(inString);
-						CALENDAR.setTime(date);
-						_seconds = CALENDAR.getTimeInMillis() / 1000L;
-						_valid = true;
-					}
-					catch (ParseException e) {}
+					ALL_PARSE_TYPES[0] = type;
+					_valid = true;
+					return;
 				}
-				if (!_valid && inString.length() == 19)
+			}
+		}
+	}
+
+	/**
+	 * Try to parse the given string in the specified way
+	 * @param inString String to parse
+	 * @param inType parse type to use
+	 * @return true if successful
+	 */
+	private boolean parseString(String inString, ParseType inType)
+	{
+		if (inString == null || inString.equals("")) {
+			return false;
+		}
+		switch (inType)
+		{
+			case NONE: return false;
+			case LONG:
+				// Try to parse into a long
+				try
+				{
+					long rawValue = Long.parseLong(inString.trim());
+					_milliseconds = getMilliseconds(rawValue);
+					return true;
+				}
+				catch (NumberFormatException nfe)
+				{}
+				break;
+
+			case ISO8601_FRACTIONAL:
+				final Matcher fmatcher = ISO8601_FRACTIONAL_PATTERN.matcher(inString);
+				if (fmatcher.matches())
+				{
+					try {
+						_milliseconds = getMilliseconds(Integer.parseInt(fmatcher.group(1)), // year
+							Integer.parseInt(fmatcher.group(2)), // month
+							Integer.parseInt(fmatcher.group(3)), // day
+							Integer.parseInt(fmatcher.group(4)), // hour
+							Integer.parseInt(fmatcher.group(5)), // minute
+							Integer.parseInt(fmatcher.group(6)), // second
+							fmatcher.group(7));                  // fractional seconds
+						return true;
+					}
+					catch (NumberFormatException nfe) {}
+				}
+				break;
+
+			case FIXED_FORMAT0: return parseString(inString, ALL_DATE_FORMATS[0]);
+			case FIXED_FORMAT1: return parseString(inString, ALL_DATE_FORMATS[1]);
+			case FIXED_FORMAT2: return parseString(inString, ALL_DATE_FORMATS[2]);
+			case FIXED_FORMAT3: return parseString(inString, ALL_DATE_FORMATS[3]);
+			case FIXED_FORMAT4: return parseString(inString, ALL_DATE_FORMATS[4]);
+			case FIXED_FORMAT5: return parseString(inString, ALL_DATE_FORMATS[5]);
+			case FIXED_FORMAT6: return parseString(inString, ALL_DATE_FORMATS[6]);
+
+			case GENERAL_STRING:
+				if (inString.length() == 19)
 				{
 					final Matcher matcher = GENERAL_TIMESTAMP_PATTERN.matcher(inString);
 					if (matcher.matches())
 					{
 						try {
-							_seconds = getSeconds(Integer.parseInt(matcher.group(1)),
+							_milliseconds = getMilliseconds(Integer.parseInt(matcher.group(1)),
 								Integer.parseInt(matcher.group(2)),
 								Integer.parseInt(matcher.group(3)),
 								Integer.parseInt(matcher.group(4)),
 								Integer.parseInt(matcher.group(5)),
-								Integer.parseInt(matcher.group(6)));
-							_valid = true;
+								Integer.parseInt(matcher.group(6)),
+								null); // no fractions of a second
+							return true;
 						}
 						catch (NumberFormatException nfe2) {} // parse shouldn't fail if matcher matched
 					}
 				}
-			}
+				return false;
 		}
+		return false;
+	}
+
+
+	/**
+	 * Try to parse the given string with the given date format
+	 * @param inString String to parse
+	 * @param inDateFormat Date format to use
+	 * @return true if successful
+	 */
+	private boolean parseString(String inString, DateFormat inDateFormat)
+	{
+		try
+		{
+			Date date = inDateFormat.parse(inString);
+			CALENDAR.setTime(date);
+			_milliseconds = CALENDAR.getTimeInMillis();
+			return true;
+		}
+		catch (ParseException e) {}
+		return false;
 	}
 
 
@@ -128,7 +216,7 @@ public class Timestamp
 	 */
 	public Timestamp(int inYear, int inMonth, int inDay, int inHour, int inMinute, int inSecond)
 	{
-		_seconds = getSeconds(inYear, inMonth, inDay, inHour, inMinute, inSecond);
+		_milliseconds = getMilliseconds(inYear, inMonth, inDay, inHour, inMinute, inSecond, null);
 		_valid = true;
 	}
 
@@ -139,22 +227,24 @@ public class Timestamp
 	 */
 	public Timestamp(long inMillis)
 	{
-		_seconds = inMillis / 1000;
+		_milliseconds = inMillis;
 		_valid = true;
 	}
 
 
 	/**
-	 * Convert the given timestamp parameters into a number of seconds
+	 * Convert the given timestamp parameters into a number of milliseconds
 	 * @param inYear year
 	 * @param inMonth month, beginning with 1
 	 * @param inDay day of month, beginning with 1
 	 * @param inHour hour of day, 0-24
 	 * @param inMinute minute
 	 * @param inSecond seconds
-	 * @return number of seconds
+	 * @param inFraction fractions of a second
+	 * @return number of milliseconds
 	 */
-	private static long getSeconds(int inYear, int inMonth, int inDay, int inHour, int inMinute, int inSecond)
+	private static long getMilliseconds(int inYear, int inMonth, int inDay,
+		int inHour, int inMinute, int inSecond, String inFraction)
 	{
 		Calendar cal = Calendar.getInstance();
 		cal.set(Calendar.YEAR, inYear);
@@ -163,16 +253,30 @@ public class Timestamp
 		cal.set(Calendar.HOUR_OF_DAY, inHour);
 		cal.set(Calendar.MINUTE, inMinute);
 		cal.set(Calendar.SECOND, inSecond);
-		cal.set(Calendar.MILLISECOND, 0);
-		return cal.getTimeInMillis() / 1000;
+		int millis = 0;
+		if (inFraction != null)
+		{
+			try {
+				int frac = Integer.parseInt(inFraction);
+				final int fracLen = inFraction.length();
+				switch (fracLen) {
+					case 1: millis = frac * 100; break;
+					case 2: millis = frac * 10;  break;
+					case 3: millis = frac;       break;
+				}
+			}
+			catch (NumberFormatException nfe) {} // ignore errors, millis stay at 0
+		}
+		cal.set(Calendar.MILLISECOND, millis);
+		return cal.getTimeInMillis();
 	}
 
 	/**
-	 * Convert the given long parameters into a number of seconds
+	 * Convert the given long parameters into a number of millisseconds
 	 * @param inRawValue long value representing seconds / milliseconds
-	 * @return number of seconds
+	 * @return number of milliseconds
 	 */
-	private static long getSeconds(long inRawValue)
+	private static long getMilliseconds(long inRawValue)
 	{
 		// check for each format possibility and pick nearest
 		long diff1 = Math.abs(SECS_SINCE_1970 - inRawValue);
@@ -182,28 +286,28 @@ public class Timestamp
 
 		// Start off with "seconds since 1970" format
 		long smallestDiff = diff1;
-		long seconds = inRawValue;
+		long millis = inRawValue * 1000;
 		// Now check millis since 1970
 		if (diff2 < smallestDiff)
 		{
 			// milliseconds since 1970
-			seconds = inRawValue / 1000L;
+			millis = inRawValue;
 			smallestDiff = diff2;
 		}
 		// Now millis since 1990
 		if (diff3 < smallestDiff)
 		{
 			// milliseconds since 1990
-			seconds = inRawValue / 1000L + TWENTY_YEARS_IN_SECS;
+			millis = inRawValue + TWENTY_YEARS_IN_SECS * 1000L;
 			smallestDiff = diff3;
 		}
 		// Lastly, check gartrip offset
 		if (diff4 < smallestDiff)
 		{
 			// seconds since gartrip offset
-			seconds = inRawValue + GARTRIP_OFFSET;
+			millis = (inRawValue + GARTRIP_OFFSET) * 1000L;
 		}
-		return seconds;
+		return millis;
 	}
 
 	/**
@@ -216,11 +320,11 @@ public class Timestamp
 
 	/**
 	 * @param inOther other Timestamp
-	 * @return true if this one is after the other
+	 * @return true if this one is at least a second after the other
 	 */
 	public boolean isAfter(Timestamp inOther)
 	{
-		return _seconds > inOther._seconds;
+		return getSecondsSince(inOther) > 0L;
 	}
 
 	/**
@@ -230,7 +334,35 @@ public class Timestamp
 	 */
 	public long getSecondsSince(Timestamp inOther)
 	{
-		return _seconds - inOther._seconds;
+		return (_milliseconds - inOther._milliseconds) / 1000L;
+	}
+
+	/**
+	 * Calculate the difference between two Timestamps in milliseconds
+	 * @param inOther other, earlier Timestamp
+	 * @return number of millisseconds since other timestamp
+	 */
+	public long getMillisecondsSince(Timestamp inOther)
+	{
+		return _milliseconds - inOther._milliseconds;
+	}
+
+	/**
+	 * @param inOther other timestamp to compare
+	 * @return true if they're equal to the nearest second
+	 */
+	public boolean isEqual(Timestamp inOther)
+	{
+		return getSecondsSince(inOther) == 0L;
+	}
+
+	/**
+	 * @param inOther other Timestamp
+	 * @return true if this one is before the other
+	 */
+	public boolean isBefore(Timestamp inOther)
+	{
+		return getSecondsSince(inOther) < 0L;
 	}
 
 	/**
@@ -239,7 +371,7 @@ public class Timestamp
 	 */
 	public void addOffset(long inOffset)
 	{
-		_seconds += inOffset;
+		_milliseconds += (inOffset * 1000L);
 		_text = null;
 	}
 
@@ -260,7 +392,7 @@ public class Timestamp
 	 */
 	public Timestamp createPlusOffset(long inSeconds)
 	{
-		return new Timestamp((_seconds + inSeconds) * 1000L);
+		return new Timestamp(_milliseconds + (inSeconds * 1000L));
 	}
 
 
@@ -271,7 +403,7 @@ public class Timestamp
 	 */
 	public Timestamp createMinusOffset(TimeDifference inOffset)
 	{
-		return new Timestamp((_seconds - inOffset.getTotalSeconds()) * 1000L);
+		return new Timestamp(_milliseconds - (inOffset.getTotalSeconds() * 1000L));
 	}
 
 
@@ -321,7 +453,7 @@ public class Timestamp
 	 */
 	private String format(DateFormat inFormat)
 	{
-		CALENDAR.setTimeInMillis(_seconds * 1000L);
+		CALENDAR.setTimeInMillis(_milliseconds);
 		return inFormat.format(CALENDAR.getTime());
 	}
 
@@ -331,7 +463,7 @@ public class Timestamp
 	public Calendar getCalendar()
 	{
 		Calendar cal = Calendar.getInstance();
-		cal.setTimeInMillis(_seconds * 1000L);
+		cal.setTimeInMillis(_milliseconds);
 		return cal;
 	}
 }

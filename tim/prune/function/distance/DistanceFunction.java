@@ -7,6 +7,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
@@ -122,6 +124,17 @@ public class DistanceFunction extends GenericFunction
 		scrollPane.setPreferredSize(new Dimension(200, 250));
 		mainPanel.add(scrollPane);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
+
+		// close window if escape pressed
+		KeyAdapter escListener = new KeyAdapter() {
+			public void keyReleased(KeyEvent inE) {
+				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
+			}
+		};
+		_pointTable.addKeyListener(escListener);
+		distTable.addKeyListener(escListener);
 
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();

@@ -596,7 +596,7 @@ public class FileSaver
 			{
 				if (inTimestampFormat == Timestamp.FORMAT_ORIGINAL) {
 					// output original string
-					inBuffer.append(inPoint.getFieldValue(Field.TIMESTAMP));
+					inBuffer.append(inPoint.getTimestamp().getText(Timestamp.FORMAT_ORIGINAL));
 				}
 				else {
 					// format value accordingly

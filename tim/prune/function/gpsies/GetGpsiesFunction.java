@@ -63,7 +63,6 @@ public class GetGpsiesFunction extends GenericDownloaderFunction
 		_statusLabel.setText(I18nManager.getText("confirm.running"));
 		// Act on callback to update list and send another request if necessary
 		double[] coords = _app.getViewport().getBounds();
-		// Example http://www.gpsies.com/api.do?BBOX=10,51,12,53&limit=20&trackTypes=jogging&filetype=kml&device=Run.GPS
 		int currPage = 1;
 
 		ArrayList<GpsiesTrack> trackList = null;
@@ -73,6 +72,7 @@ public class GetGpsiesFunction extends GenericDownloaderFunction
 		// Loop for each page of the results
 		do
 		{
+			// Example http://ws.gpsies.com/api.do?BBOX=10,51,12,53&limit=20&resultPage=1&key=oumgvvbckiwpvsnb
 			String urlString = "http://ws.gpsies.com/api.do?BBOX=" +
 				coords[1] + "," + coords[0] + "," + coords[3] + "," + coords[2] +
 				"&limit=" + RESULTS_PER_PAGE + "&resultPage=" + currPage +
@@ -112,23 +112,30 @@ public class GetGpsiesFunction extends GenericDownloaderFunction
 	}
 
 	/**
-	 * Load the selected track or point
+	 * Load the selected track(s)
 	 */
 	protected void loadSelected()
 	{
-		// Find the row selected in the table and get the corresponding track
-		int rowNum = _trackTable.getSelectedRow();
-		if (rowNum >= 0 && rowNum < _trackListModel.getRowCount())
+		// Find the row(s) selected in the table and get the corresponding track
+		int numSelected = _trackTable.getSelectedRowCount();
+		if (numSelected < 1) return;
+		int[] rowNums = _trackTable.getSelectedRows();
+		for (int i=0; i<numSelected; i++)
 		{
-			String url = _trackListModel.getTrack(rowNum).getDownloadLink();
-			XmlFileLoader xmlLoader = new XmlFileLoader(_app);
-			ZipFileLoader loader = new ZipFileLoader(_app, xmlLoader);
-			try
+			int rowNum = rowNums[i];
+			if (rowNum >= 0 && rowNum < _trackListModel.getRowCount())
 			{
-				loader.openStream(new URL(url).openStream());
-			}
-			catch (IOException ioe) {
-				System.err.println("IO Exception : " + ioe.getMessage());
+				String url = _trackListModel.getTrack(rowNum).getDownloadLink();
+				XmlFileLoader xmlLoader = new XmlFileLoader(_app);
+				ZipFileLoader loader = new ZipFileLoader(_app, xmlLoader);
+				if (i>0) _app.autoAppendNextFile();
+				try
+				{
+					loader.openStream(new URL(url).openStream());
+				}
+				catch (IOException ioe) {
+					System.err.println("IO Exception : " + ioe.getMessage());
+				}
 			}
 		}
 		// Close the dialog

@@ -185,21 +185,6 @@ public class TrackInfo
 	}
 
 	/**
-	 * Delete the currently selected range of points
-	 * @return true if successful
-	 */
-	public boolean deleteRange()
-	{
-		int startSel = _selection.getStart();
-		int endSel = _selection.getEnd();
-		boolean answer = _track.deleteRange(startSel, endSel);
-		// clear range selection
-		_selection.modifyRangeDeleted();
-		return answer;
-	}
-
-
-	/**
 	 * Delete the currently selected point
 	 * @return true if point deleted
 	 */
@@ -335,20 +320,6 @@ public class TrackInfo
 		return true;
 	}
 
-	/**
-	 * Interpolate extra points between two selected ones
-	 * @param inNumPoints num points to insert
-	 * @return true if successful
-	 */
-	public boolean interpolate(int inNumPoints)
-	{
-		boolean success = _track.interpolate(_selection.getStart(), inNumPoints);
-		if (success) {
-			_selection.selectRangeEnd(_selection.getEnd() + inNumPoints);
-		}
-		return success;
-	}
-
 
 	/**
 	 * Average selected points to create a new one
@@ -453,11 +424,13 @@ public class TrackInfo
 		// Has the new point got an audio clip?
 		DataPoint selectedPoint = _track.getPoint(pointIndex);
 		int audioIndex = _selection.getCurrentAudioIndex();
-		if (selectedPoint != null) {
-			if (selectedPoint.getAudio() != null) audioIndex = _audioList.getAudioIndex(selectedPoint.getAudio());
+		if (selectedPoint != null && selectedPoint.getAudio() != null) {
+			// New point has an audio, so select it
+			audioIndex = _audioList.getAudioIndex(selectedPoint.getAudio());
 		}
-		else {
-			if (selectedPoint != currPoint && currPoint.getAudio() != null) {audioIndex = -1;}
+		else if (currPoint != null && selectedPoint != currPoint && currPoint.getAudio() != null) {
+			// Old point had an audio, so deselect it
+			audioIndex = -1;
 		}
 		// give to selection object
 		_selection.selectPointPhotoAudio(pointIndex, inPhotoIndex, audioIndex);
@@ -496,11 +469,13 @@ public class TrackInfo
 		// Has the new point got a photo?
 		DataPoint selectedPoint = _track.getPoint(pointIndex);
 		int photoIndex = _selection.getCurrentPhotoIndex();
-		if (selectedPoint != null) {
-			if (selectedPoint.getPhoto() != null) photoIndex = _photoList.getPhotoIndex(selectedPoint.getPhoto());
+		if (selectedPoint != null && selectedPoint.getPhoto() != null) {
+			// New point has a photo, so select it
+			photoIndex = _photoList.getPhotoIndex(selectedPoint.getPhoto());
 		}
-		else {
-			if (selectedPoint != currPoint && currPoint.getPhoto() != null) {photoIndex = -1;}
+		else if (currPoint != null && selectedPoint != currPoint && currPoint.getPhoto() != null) {
+			// Old point had a photo, so deselect it
+			photoIndex = -1;
 		}
 		// give to selection object
 		_selection.selectPointPhotoAudio(pointIndex, photoIndex, inAudioIndex);

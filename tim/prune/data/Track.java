@@ -3,7 +3,6 @@ package tim.prune.data;
 import java.util.List;
 
 import tim.prune.UpdateMessageBroker;
-import tim.prune.config.Config;
 import tim.prune.function.edit.FieldEdit;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.map.MapUtils;
@@ -27,7 +26,6 @@ public class Track
 	// Master field list
 	private FieldList _masterFieldList = null;
 	// variable ranges
-	private AltitudeRange _altitudeRange = null;
 	private DoubleRange _latRange = null, _longRange = null;
 	private DoubleRange _xRange = null, _yRange = null;
 
@@ -580,7 +578,7 @@ public class Track
 		double latitudeDiff = 0.0, longitudeDiff = 0.0;
 		double totalAltitude = 0;
 		int numAltitudes = 0;
-		Altitude.Format altFormat = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET;
+		Altitude.Format altFormat = Altitude.Format.NO_FORMAT;
 		// loop between start and end points
 		for (int i=inStartIndex; i<= inEndIndex; i++)
 		{
@@ -589,6 +587,9 @@ public class Track
 			longitudeDiff += (currPoint.getLongitude().getDouble() - firstLongitude);
 			if (currPoint.hasAltitude()) {
 				totalAltitude += currPoint.getAltitude().getValue(altFormat);
+				// Use altitude format of first valid altitude
+				if (altFormat == Altitude.Format.NO_FORMAT)
+					altFormat = currPoint.getAltitude().getFormat();
 				numAltitudes++;
 			}
 		}
@@ -641,16 +642,6 @@ public class Track
 			return _dataPoints[inPointNum];
 		}
 		return null;
-	}
-
-
-	/**
-	 * @return altitude range of points as AltitudeRange object
-	 */
-	public AltitudeRange getAltitudeRange()
-	{
-		if (!_scaled) scalePoints();
-		return _altitudeRange;
 	}
 
 	/**
@@ -873,10 +864,9 @@ public class Track
 	 */
 	private void scalePoints()
 	{
-		// Loop through all points in track, to see limits of lat, long and altitude
+		// Loop through all points in track, to see limits of lat, long
 		_longRange = new DoubleRange();
 		_latRange = new DoubleRange();
-		_altitudeRange = new AltitudeRange();
 		int p;
 		_hasWaypoint = false; _hasTrackpoint = false;
 		for (p=0; p < getNumPoints(); p++)
@@ -886,10 +876,6 @@ public class Track
 			{
 				_longRange.addValue(point.getLongitude().getDouble());
 				_latRange.addValue(point.getLatitude().getDouble());
-				if (point.getAltitude().isValid())
-				{
-					_altitudeRange.addValue(point.getAltitude());
-				}
 				if (point.isWaypoint())
 					_hasWaypoint = true;
 				else
@@ -930,16 +916,21 @@ public class Track
 	{
 		int nearestPoint = 0;
 		double nearestDist = -1.0;
-		double currDist;
+		double mDist, yDist;
 		for (int i=0; i < getNumPoints(); i++)
 		{
 			if (!inJustTrackPoints || !_dataPoints[i].isWaypoint())
 			{
-				currDist = Math.abs(_xValues[i] - inX) + Math.abs(_yValues[i] - inY);
-				if (currDist < nearestDist || nearestDist < 0.0)
+				yDist = Math.abs(_yValues[i] - inY);
+				if (yDist < nearestDist || nearestDist < 0.0)
 				{
-					nearestPoint = i;
-					nearestDist = currDist;
+					// y dist is within range, so check x too
+					mDist = yDist + getMinXDist(_xValues[i] - inX);
+					if (mDist < nearestDist || nearestDist < 0.0)
+					{
+						nearestPoint = i;
+						nearestDist = mDist;
+					}
 				}
 			}
 		}
@@ -949,6 +940,16 @@ public class Track
 			return -1;
 		}
 		return nearestPoint;
+	}
+
+	/**
+	 * @param inX x value of point
+	 * @return minimum wrapped value
+	 */
+	private static final double getMinXDist(double inX)
+	{
+		// TODO: Can use some kind of floor here?
+		return Math.min(Math.min(Math.abs(inX), Math.abs(inX-1.0)), Math.abs(inX+1.0));
 	}
 
 	/**

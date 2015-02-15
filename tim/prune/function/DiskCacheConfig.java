@@ -235,7 +235,12 @@ public class DiskCacheConfig extends GenericFunction
 					I18nManager.getText(getNameKey()), JOptionPane.WARNING_MESSAGE);
 				return;
 			}
-			// TODO: Check path is writeable too, and give warning if not
+			// Check that the cache path is writable too, and give warning if not
+			if (cacheDir.exists() && cacheDir.isDirectory() && !cacheDir.canWrite())
+			{
+				JOptionPane.showMessageDialog(_dialog, I18nManager.getText("dialog.diskcache.cannotwrite"),
+					I18nManager.getText(getNameKey()), JOptionPane.WARNING_MESSAGE);
+			}
 		}
 		Config.setConfigString(Config.KEY_DISK_CACHE, cachePath);
 		// inform subscribers so that tiles are wiped from memory and refetched

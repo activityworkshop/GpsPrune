@@ -1,6 +1,8 @@
 package tim.prune.undo;
 
 import tim.prune.I18nManager;
+import tim.prune.data.DataPoint;
+import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -49,6 +51,18 @@ public class UndoLoadPhotos implements UndoOperation
 		{
 			cropIndex = inTrackInfo.getTrack().getNumPoints() - _numPoints;
 			inTrackInfo.getTrack().cropTo(cropIndex);
+		}
+		else
+		{
+			// Loop through the points (if any) and detach them
+			for (int i=0; i<_numPhotos; i++)
+			{
+				Photo photo = inTrackInfo.getPhotoList().getPhoto(inTrackInfo.getPhotoList().getNumPhotos() - 1 - i);
+				if (photo.isConnected()) {
+					DataPoint point = photo.getDataPoint();
+					if (point != null) {point.setPhoto(null);}
+				}
+			}
 		}
 		// crop photo list to previous size
 		cropIndex = inTrackInfo.getPhotoList().getNumPhotos() - _numPhotos;

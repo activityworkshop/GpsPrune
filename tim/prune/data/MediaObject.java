@@ -106,6 +106,15 @@ public abstract class MediaObject
 	}
 
 	/**
+	 * @return the full path to the media, either filename or url
+	 */
+	public String getFullPath()
+	{
+		if (_file != null) return _file.getAbsolutePath();
+		return getUrl();
+	}
+
+	/**
 	 * @return true if details are valid (might not have timestamp)
 	 */
 	public boolean isValid()

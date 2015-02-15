@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.util.Properties;
 
 import tim.prune.data.RecentFileList;
+import tim.prune.data.UnitSet;
+import tim.prune.data.UnitSetLibrary;
 
 
 /**
@@ -21,6 +23,8 @@ public abstract class Config
 	private static ColourScheme _colourScheme = new ColourScheme();
 	/** Recently-used file list */
 	private static RecentFileList _recentFiles = new RecentFileList();
+	/** Current unit set */
+	private static UnitSet _unitSet = UnitSetLibrary.getUnitSet(null);
 
 	/** Default config file */
 	public static final File DEFAULT_CONFIG_FILE = new File(".pruneconfig");
@@ -40,8 +44,8 @@ public abstract class Config
 	public static final String KEY_GPS_FORMAT = "prune.gpsformat";
 	/** Key for Povray font */
 	public static final String KEY_POVRAY_FONT = "prune.povrayfont";
-	/** Key for metric/imperial */
-	public static final String KEY_METRIC_UNITS = "prune.metricunits";
+	/** Key for the selected unit set */
+	public static final String KEY_UNITSET_KEY  = "prune.unitsetkey";
 	/** Key for index of map source */
 	public static final String KEY_MAPSOURCE_INDEX = "prune.mapsource";
 	/** Key for number of fixed map sources */
@@ -135,6 +139,8 @@ public abstract class Config
 		_configValues.putAll(props);
 		_colourScheme.loadFromHex(_configValues.getProperty(KEY_COLOUR_SCHEME));
 		_recentFiles = new RecentFileList(_configValues.getProperty(KEY_RECENT_FILES));
+		_unitSet = UnitSetLibrary.getUnitSet(_configValues.getProperty(KEY_UNITSET_KEY));
+
 		if (loadFailed) {
 			throw new ConfigException();
 		}
@@ -159,6 +165,7 @@ public abstract class Config
 		props.put(KEY_KMZ_IMAGE_WIDTH, "240");
 		props.put(KEY_KMZ_IMAGE_HEIGHT, "240");
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
+		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		return props;
 	}
 
@@ -287,9 +294,9 @@ public abstract class Config
 	 */
 	public static boolean isKeyBoolean(String inKey)
 	{
-		// Only two boolean keys so far
+		// Only one boolean key so far (after metric flag was removed)
 		return inKey != null && (
-			inKey.equals(KEY_METRIC_UNITS) || inKey.equals(KEY_SHOW_MAP));
+			inKey.equals(KEY_SHOW_MAP));
 	}
 
 	/**
@@ -298,5 +305,19 @@ public abstract class Config
 	public static void updateColourScheme()
 	{
 		setConfigString(KEY_COLOUR_SCHEME, _colourScheme.toString());
+	}
+
+	/**
+	 * @return the current unit set
+	 */
+	public static UnitSet getUnitSet() {
+		return _unitSet;
+	}
+
+	public static void selectUnitSet(int inIndex)
+	{
+		_unitSet = UnitSetLibrary.getUnitSet(inIndex);
+		// Set name of set in config
+		setConfigString(KEY_UNITSET_KEY, _unitSet.getNameKey());
 	}
 }

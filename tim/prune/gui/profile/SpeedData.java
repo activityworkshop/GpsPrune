@@ -1,20 +1,16 @@
 package tim.prune.gui.profile;
 
 import tim.prune.I18nManager;
-import tim.prune.config.Config;
-import tim.prune.data.DataPoint;
-import tim.prune.data.Distance;
+import tim.prune.data.SpeedCalculator;
+import tim.prune.data.SpeedValue;
 import tim.prune.data.Track;
-import tim.prune.data.Distance.Units;
+import tim.prune.data.UnitSet;
 
 /**
  * Class to provide a source of speed data for the profile chart
  */
 public class SpeedData extends ProfileData
 {
-	/** Flag for metric units */
-	private boolean _metric = true;
-
 	/**
 	 * Constructor
 	 * @param inTrack track object
@@ -26,41 +22,28 @@ public class SpeedData extends ProfileData
 	/**
 	 * Get the data and populate the instance arrays
 	 */
-	public void init()
+	public void init(UnitSet inUnitSet)
 	{
+		setUnitSet(inUnitSet);
 		initArrays();
-		_metric = Config.getConfigBoolean(Config.KEY_METRIC_UNITS);
 		_hasData = false;
 		_minValue = _maxValue = 0.0;
-		if (_track != null) {
-			DataPoint prevPrevPoint = null, prevPoint = null, point = null;
+		SpeedValue speed = new SpeedValue();
+		if (_track != null)
+		{
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
-				point = _track.getPoint(i);
-				if (prevPrevPoint != null && prevPrevPoint.hasTimestamp()
-					&& prevPoint != null && prevPoint.hasTimestamp()
-					&& point != null && point.hasTimestamp())
+				// Get the speed either from the speed value or from the distances and timestamps
+				SpeedCalculator.calculateSpeed(_track, i, speed);
+				if (speed.isValid())
 				{
-					// All three points have timestamps
-					double seconds = point.getTimestamp().getSecondsSince(prevPrevPoint.getTimestamp());
-					if (seconds > 0)
-					{
-						double distInRads = DataPoint.calculateRadiansBetween(prevPrevPoint, prevPoint)
-							+ DataPoint.calculateRadiansBetween(prevPoint, point);
-						double dist = Distance.convertRadiansToDistance(distInRads, _metric?Units.KILOMETRES:Units.MILES);
-						// Store the value and maintain max and min values
-						double value = dist / seconds * 60.0 * 60.0;
-						_pointValues[i-1] = value;
-						if (value < _minValue || _minValue == 0.0) {_minValue = value;}
-						if (value > _maxValue) {_maxValue = value;}
-
-						_hasData = true;
-						_pointHasData[i-1] = true;
-					}
+					double speedValue = speed.getValue();
+					_pointValues[i] = speedValue;
+					if (speedValue < _minValue || _minValue == 0.0) {_minValue = speedValue;}
+					if (speedValue > _maxValue) {_maxValue = speedValue;}
+					_hasData = true;
 				}
-				// Exchange points
-				prevPrevPoint = prevPoint;
-				prevPoint = point;
+				_pointHasData[i] = speed.isValid();
 			}
 		}
 	}
@@ -71,7 +54,7 @@ public class SpeedData extends ProfileData
 	public String getLabel()
 	{
 		return I18nManager.getText("fieldname.speed") + " ("
-			+ I18nManager.getText(_metric?"units.kmh":"units.mph") + ")";
+			+ I18nManager.getText(_unitSet.getSpeedUnit().getShortnameKey()) + ")";
 	}
 
 	/**

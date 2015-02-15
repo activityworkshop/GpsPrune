@@ -278,6 +278,11 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
+		// Instantiate source file cachers in case we want to copy output
+		GpxCacherList gpxCachers = null;
+		if (_copySourceCheckbox.isSelected()) {
+			gpxCachers = new GpxCacherList(_trackInfo.getFileInfo());
+		}
 		OutputStreamWriter writer = null;
 		try
 		{
@@ -291,7 +296,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 				_pointTypeSelector.getJustSelection(), _timestampsCheckbox.isSelected()};
 			// write file
 			final int numPoints = exportData(writer, _trackInfo, _nameField.getText(),
-				_descriptionField.getText(), saveFlags, _copySourceCheckbox.isSelected());
+				_descriptionField.getText(), saveFlags, gpxCachers);
 
 			// close file
 			writer.close();
@@ -331,19 +336,16 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * @param inName name of track (optional)
 	 * @param inDesc description of track (optional)
 	 * @param inSaveFlags array of booleans to export tracks, waypoints, photos, audios, selection, timestamps
-	 * @param inUseCopy true to copy source if available
+	 * @param inGpxCachers list of Gpx cachers containing input data
 	 * @return number of points written
 	 * @throws IOException if io errors occur on write
 	 */
 	public static int exportData(OutputStreamWriter inWriter, TrackInfo inInfo, String inName,
-		String inDesc, boolean[] inSaveFlags, boolean inUseCopy) throws IOException
+		String inDesc, boolean[] inSaveFlags, GpxCacherList inGpxCachers) throws IOException
 	{
-		// Instantiate source file cachers in case we want to copy output
-		GpxCacherList gpxCachers = null;
-		if (inUseCopy) gpxCachers = new GpxCacherList(inInfo.getFileInfo());
 		// Write or copy headers
 		inWriter.write(getXmlHeaderString(inWriter));
-		final String gpxHeader = getGpxHeaderString(gpxCachers);
+		final String gpxHeader = getGpxHeaderString(inGpxCachers);
 		final boolean isVersion1_1 = (gpxHeader.toUpperCase().indexOf("GPX/1/1") > 0);
 		inWriter.write(gpxHeader);
 		// Name field
@@ -375,8 +377,13 @@ public class GpxExporter extends GenericFunction implements Runnable
 				// Make a wpt element for each waypoint
 				if (point.isWaypoint() && exportWaypoints)
 				{
-					String pointSource = (inUseCopy?getPointSource(gpxCachers, point):null);
-					if (pointSource != null) {
+					String pointSource = (inGpxCachers == null? null : getPointSource(inGpxCachers, point));
+					if (pointSource != null)
+					{
+						// If timestamp checkbox is off, strip time
+						if (!exportTimestamps) {
+							pointSource = stripTime(pointSource);
+						}
 						inWriter.write(pointSource);
 						inWriter.write('\n');
 					}
@@ -392,12 +399,12 @@ public class GpxExporter extends GenericFunction implements Runnable
 		{
 			// Output all route points (if any)
 			numSaved += writeTrackPoints(inWriter, inInfo, exportSelection, exportTrackpoints, exportPhotos,
-				exportAudios, exportTimestamps, true, gpxCachers, "<rtept", "\t<rte><number>1</number>\n",
+				exportAudios, exportTimestamps, true, inGpxCachers, "<rtept", "\t<rte><number>1</number>\n",
 				null, "\t</rte>\n");
 			// Output all track points, if any
 			String trackStart = "\t<trk><name>" + trackName + "</name><number>1</number><trkseg>\n";
 			numSaved += writeTrackPoints(inWriter, inInfo, exportSelection, exportTrackpoints, exportPhotos,
-				exportAudios, exportTimestamps, false, gpxCachers, "<trkpt", trackStart,
+				exportAudios, exportTimestamps, false, inGpxCachers, "<trkpt", trackStart,
 				"\t</trkseg>\n\t<trkseg>\n", "\t</trkseg></trk>\n");
 		}
 
@@ -487,7 +494,12 @@ public class GpxExporter extends GenericFunction implements Runnable
 							inWriter.write(inSegmentTag);
 						}
 						if (numSaved == 0) {inWriter.write(inStartTag);}
-						if (pointSource != null) {
+						if (pointSource != null)
+						{
+							// If timestamps checkbox is off, strip the time
+							if (!exportTimestamps) {
+								pointSource = stripTime(pointSource);
+							}
 							inWriter.write(pointSource);
 							inWriter.write('\n');
 						}
@@ -630,10 +642,6 @@ public class GpxExporter extends GenericFunction implements Runnable
 			encoding =  Charset.forName(encoding).name();
 		}
 		catch (Exception e) {} // ignore failure to find encoding
-		// Hack to fix bugs with Mac OSX (which reports MacRoman but is actually UTF-8)
-		if (encoding == null || encoding.toLowerCase().startsWith("macroman")) {
-			encoding = "UTF-8";
-		}
 		return encoding;
 	}
 
@@ -848,5 +856,16 @@ public class GpxExporter extends GenericFunction implements Runnable
 			return "<link href=\"" + inMedia.getUrl() + "\"><text>" + inMedia.getName() + "</text></link>";
 		// No link available, must have been loaded from zip file - no link possible
 		return "";
+	}
+
+
+	/**
+	 * Strip the time from a GPX point source string
+	 * @param inPointSource point source to copy
+	 * @return point source with timestamp removed
+	 */
+	private static String stripTime(String inPointSource)
+	{
+		return inPointSource.replaceAll("<time>.*?</time>", "");
 	}
 }

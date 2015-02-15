@@ -70,15 +70,19 @@ public abstract class ImageUtils
 	 */
 	public static Dimension getThumbnailSize(int inOrigWidth, int inOrigHeight, int inMaxWidth, int inMaxHeight)
 	{
-		assert(inMaxWidth > 0 && inMaxHeight > 0);
+		if (inMaxWidth <= 0 || inMaxHeight <= 0) {return new Dimension(1, 1);}
 		// work out maximum zoom ratio available so that thumbnail isn't too big
 		double xZoom = inMaxWidth * 1.0 / inOrigWidth;
 		double yZoom = inMaxHeight * 1.0 / inOrigHeight;
 		double zoom = (xZoom > yZoom?yZoom:xZoom);
 		// Don't make thumbnail bigger than picture
 		if (zoom > 1.0) {return new Dimension(inOrigWidth, inOrigHeight);}
+
 		// calculate new width and height
-		return new Dimension ((int) (zoom * inOrigWidth), (int) (zoom * inOrigHeight));
+		final int xSize = (int) (zoom * inOrigWidth);
+		final int ySize = (int) (zoom * inOrigHeight);
+		if (xSize <= 0 || ySize <= 0) {return new Dimension(1, 1);}
+		return new Dimension (xSize, ySize);
 	}
 
 

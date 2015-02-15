@@ -28,16 +28,16 @@ import tim.prune.gui.profile.ProfileChart;
 /**
  * GpsPrune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or http://activityworkshop.net
- * This software is copyright activityworkshop.net 2006-2011 and made available through the Gnu GPL version 2.
+ * This software is copyright activityworkshop.net 2006-2012 and made available through the Gnu GPL version 2.
  * For license details please see the included license.txt.
  * GpsPrune is the main entry point to the application, including initialisation and launch
  */
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "13.4";
+	public static final String VERSION_NUMBER = "14";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "244c";
+	public static final String BUILD_NUMBER = "265a";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -87,7 +87,7 @@ public class GpsPrune
 			{
 				// Check if a data file has been given
 				File f = new File(arg);
-				if (f.exists() && f.canRead()) {
+				if (f.exists() && f.isFile() && f.canRead()) {
 					dataFiles.add(f);
 				}
 				else
@@ -258,8 +258,11 @@ public class GpsPrune
 	private static String makeUnknownParameterString(String inParam)
 	{
 		File file = new File(inParam);
-		if (file.exists()) {
-			return (file.canRead() ? "Something wrong with file" : "Cannot read file") + " '" + inParam + "'";
+		if (file.exists())
+		{
+			if (file.isDirectory()) return "'" + inParam + "' is a directory";
+			if (!file.canRead())    return "Cannot read file '" + inParam + "'";
+			return "Something wrong with file '" + inParam + "'";
 		}
 		do
 		{

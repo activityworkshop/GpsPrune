@@ -9,9 +9,9 @@ public class MapPosition
 	private static final int MAP_TILE_SIZE = 256;
 
 	/** x position (scale depends on zoom) */
-	private long _xPosition = 0L;
+	private int _xPosition = 0;
 	/** y position (scale depends on zoom) */
-	private long _yPosition = 0L;
+	private int _yPosition = 0;
 
 	/** Zoom level, from 2 to max */
 	private int _zoom = 12;
@@ -48,10 +48,19 @@ public class MapPosition
 		}
 		if (requiredZoom < 2) requiredZoom = 2;
 		// Set position
-		_zoom = requiredZoom;
-		_zoomFactor = 1 << _zoom;
+		setZoom(requiredZoom);
 		_xPosition = transformToPixels((inMinX + inMaxX) / 2.0);
 		_yPosition = transformToPixels((inMinY + inMaxY) / 2.0);
+	}
+
+	/**
+	 * Ensure that zoom and zoomFactor remain in sync
+	 * @param inZoom zoom level to set
+	 */
+	private void setZoom(int inZoom)
+	{
+		_zoom = inZoom;
+		_zoomFactor = 1 << _zoom;
 	}
 
 	/**
@@ -80,8 +89,7 @@ public class MapPosition
 				break;
 			}
 		}
-		_zoom = requiredZoom;
-		_zoomFactor = 1 << _zoom;
+		setZoom(requiredZoom);
 		// Set position
 		_xPosition = (_xPosition - inWidth/2 + (inMinX + inMaxX) / 2) * multFactor;
 		_yPosition = (_yPosition - inHeight/2 + (inMinY + inMaxY) / 2) * multFactor;
@@ -92,7 +100,7 @@ public class MapPosition
 	 * @param inValue value to transform
 	 * @return pixels
 	 */
-	private long transformToPixels(double inValue)
+	private int transformToPixels(double inValue)
 	{
 		return transformToPixels(inValue, _zoom);
 	}
@@ -103,9 +111,9 @@ public class MapPosition
 	 * @param inZoom zoom value to use
 	 * @return pixels
 	 */
-	private static long transformToPixels(double inValue, int inZoom)
+	private static int transformToPixels(double inValue, int inZoom)
 	{
-		return (long) (inValue * MAP_TILE_SIZE * (1 << inZoom));
+		return (int) (inValue * MAP_TILE_SIZE * (1 << inZoom));
 	}
 
 	/**
@@ -137,7 +145,7 @@ public class MapPosition
 	 */
 	public int getXFromCentre(double inValue)
 	{
-		return (int) (transformToPixels(inValue) - _xPosition);
+		return transformToPixels(inValue) - _xPosition;
 	}
 
 	/**
@@ -147,7 +155,7 @@ public class MapPosition
 	 */
 	public int getYFromCentre(double inValue)
 	{
-		return (int) (transformToPixels(inValue) - _yPosition);
+		return transformToPixels(inValue) - _yPosition;
 	}
 
 	/**
@@ -209,19 +217,19 @@ public class MapPosition
 	 * @param inPosition position of point
 	 * @return tile index for that point
 	 */
-	private int getTileIndex(long inPosition)
+	private int getTileIndex(int inPosition)
 	{
-		return (int) (inPosition / MAP_TILE_SIZE);
+		return inPosition / MAP_TILE_SIZE;
 	}
 
 	/**
 	 * @param inPosition position of point
 	 * @return pixel offset for that point
 	 */
-	private int getDisplayOffset(long inPosition)
+	private int getDisplayOffset(int inPosition)
 	{
-		return (int) (inPosition % MAP_TILE_SIZE);
-		// Maybe >> 8 would be slightly faster?
+		return inPosition % MAP_TILE_SIZE;
+		// I thought that &255 would be slightly faster, but it gives the wrong result
 	}
 
 	/**
@@ -231,8 +239,7 @@ public class MapPosition
 	{
 		if (_zoom < MAX_ZOOM)
 		{
-			_zoom++;
-			_zoomFactor = 1 << _zoom;
+			setZoom(_zoom + 1);
 			_xPosition *= 2;
 			_yPosition *= 2;
 		}
@@ -243,10 +250,9 @@ public class MapPosition
 	 */
 	public void zoomOut()
 	{
-		if (_zoom >= 2)
+		if (_zoom >= 3)
 		{
-			_zoom--;
-			_zoomFactor = 1 << _zoom;
+			setZoom(_zoom - 1);
 			_xPosition /= 2;
 			_yPosition /= 2;
 		}

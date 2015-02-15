@@ -1,8 +1,12 @@
 package tim.prune.function;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
 import javax.sound.sampled.Clip;
@@ -58,38 +62,33 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 		{
 			// First choice is to play using java
 			played = playClip(audio);
-			// Second choice is to try the Desktop library from java 6, if available
+			// If this didn't work, then try to play the file another way
 			if (!played) {
-				try {
-					Class<?> d = Class.forName("java.awt.Desktop");
-					d.getDeclaredMethod("open", new Class[] {File.class}).invoke(
-						d.getDeclaredMethod("getDesktop").invoke(null), new Object[] {audioFile});
-					//above code mimics: Desktop.getDesktop().open(audioFile);
-					played = true;
-				}
-				catch (Exception ignore) {
-					played = false;
-				}
-			}
-			// If the Desktop call failed, need to try backup methods
-			if (!played)
-			{
-				// If system looks like a Mac, try open command
-				String osName = System.getProperty("os.name").toLowerCase();
-				boolean isMacOsx = osName.indexOf("mac os") >= 0 || osName.indexOf("darwin") >= 0;
-				if (isMacOsx) {
-					String[] command = new String[] {"open", audioFile.getAbsolutePath()};
-					try {
-						Runtime.getRuntime().exec(command);
-						played = true;
-					}
-					catch (IOException ioe) {}
-				}
+				played = playAudioFile(audioFile);
 			}
 		}
-		else if (audioFile == null && audio.getByteData() != null) {
-			// Try to play audio clip using byte array (can't use Desktop or Runtime)
+		else if (audioFile == null && audio.getByteData() != null)
+		{
+			// Try to play audio clip using byte array
 			played = playClip(audio);
+			// If this didn't work, then need to copy the byte data to a file and play it from there
+			if (!played)
+			{
+				try
+				{
+					String suffix = getSuffix(audio.getName());
+					File tempFile = File.createTempFile("gpsaudio", suffix);
+					tempFile.deleteOnExit();
+					// Copy byte data to this file
+					BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(tempFile));
+					bos.write(audio.getByteData(), 0, audio.getByteData().length);
+					bos.close();
+					played = playAudioFile(tempFile);
+				}
+				catch (IOException ignore) {
+					System.err.println("Error: " + ignore.getClass().getName() + " - " + ignore.getMessage());
+				}
+			}
 		}
 		if (!played)
 		{
@@ -135,6 +134,54 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 	}
 
 	/**
+	 * Try to play the specified audio file
+	 * @param inFile file to play
+	 * @return true if play was successful
+	 */
+	private boolean playAudioFile(File inFile)
+	{
+		boolean played = false;
+		// Try the Desktop library from java 6, if available
+		if (!played)
+		{
+			try
+			{
+				Class<?> d = Class.forName("java.awt.Desktop");
+				d.getDeclaredMethod("open", new Class[] {File.class}).invoke(
+					d.getDeclaredMethod("getDesktop").invoke(null), new Object[] {inFile});
+				//above code mimics: Desktop.getDesktop().open(audioFile);
+				played = true;
+			}
+			catch (InvocationTargetException e) {
+				System.err.println("ITE: " + e.getCause().getClass().getName() + " - " + e.getCause().getMessage());
+				played = false;
+			}
+			catch (Exception ignore) {
+				System.err.println(ignore.getClass().getName() + " - " + ignore.getMessage());
+				played = false;
+			}
+		}
+
+		// If the Desktop call failed, need to try backup methods
+		if (!played)
+		{
+			// If system looks like a Mac, try the open command
+			String osName = System.getProperty("os.name").toLowerCase();
+			boolean isMacOsx = osName.indexOf("mac os") >= 0 || osName.indexOf("darwin") >= 0;
+			if (isMacOsx)
+			{
+				String[] command = new String[] {"open", inFile.getAbsolutePath()};
+				try {
+					Runtime.getRuntime().exec(command);
+					played = true;
+				}
+				catch (IOException ioe) {}
+			}
+		}
+		return played;
+	}
+
+	/**
 	 * Try to stop a currently playing clip
 	 */
 	public void stopClip()
@@ -162,5 +209,17 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 			}
 		}
 		return percent;
+	}
+
+	/**
+	 * @param inName name of audio file
+	 * @return suffix (rest of name after the dot) - expect mp3, wav, ogg
+	 */
+	private static final String getSuffix(String inName)
+	{
+		if (inName == null || inName.equals("")) {return ".tmp";}
+		final int dotPos = inName.lastIndexOf('.');
+		if (dotPos < 0) {return inName;} // no dot found
+		return inName.substring(dotPos);
 	}
 }

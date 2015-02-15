@@ -3,6 +3,7 @@ package tim.prune.gui.map;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.FontMetrics;
@@ -44,11 +45,17 @@ import tim.prune.data.Checker;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.DoubleRange;
+import tim.prune.data.Field;
+import tim.prune.data.FieldList;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
+import tim.prune.data.MidpointData;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.function.compress.MarkPointsInRectangleFunction;
+import tim.prune.function.edit.FieldEdit;
+import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
 
 /**
@@ -65,6 +72,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private TrackInfo _trackInfo = null;
 	/** Selection object */
 	private Selection _selection = null;
+	/** Object to keep track of midpoints */
+	private MidpointData _midpoints = null;
+	/** Index of point clicked at mouseDown */
+	private int _clickedPoint = -1;
 	/** Previously selected point */
 	private int _prevSelectedPoint = -1;
 	/** Tile manager */
@@ -81,6 +92,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private JCheckBox _autopanCheckBox = null;
 	/** Checkbox for connecting track points */
 	private JCheckBox _connectCheckBox = null;
+	/** Checkbox for enable edit mode */
+	private JCheckBox _editmodeCheckBox = null;
 	/** Right-click popup menu */
 	private JPopupMenu _popup = null;
 	/** Top component panel */
@@ -97,18 +110,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private boolean _checkBounds = false;
 	/** Map position */
 	private MapPosition _mapPosition = null;
-	/** x coordinate of drag from point */
-	private int _dragFromX = -1;
-	/** y coordinate of drag from point */
-	private int _dragFromY = -1;
-	/** x coordinate of drag to point */
-	private int _dragToX = -1;
-	/** y coordinate of drag to point */
-	private int _dragToY = -1;
-	/** x coordinate of popup menu */
-	private int _popupMenuX = -1;
-	/** y coordinate of popup menu */
-	private int _popupMenuY = -1;
+	/** coordinates of drag from point */
+	private int _dragFromX = -1, _dragFromY = -1;
+	/** coordinates of drag to point */
+	private int _dragToX = -1, _dragToY = -1;
+	/** coordinates of popup menu */
+	private int _popupMenuX = -1, _popupMenuY = -1;
 	/** Flag to prevent showing too often the error message about loading maps */
 	private boolean _shownOsmErrorAlready = false;
 	/** Current drawing mode */
@@ -129,6 +136,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private static final int MODE_ZOOM_RECT = 1;
 	private static final int MODE_DRAW_POINTS_START = 2;
 	private static final int MODE_DRAW_POINTS_CONT = 3;
+	private static final int MODE_DRAG_POINT = 4;
+	private static final int MODE_CREATE_MIDPOINT = 5;
+	private static final int MODE_MARK_RECTANGLE = 6;
+
+	private static final int INDEX_UNKNOWN  = -2;
+
 
 	/**
 	 * Constructor
@@ -141,6 +154,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_trackInfo = inTrackInfo;
 		_track = inTrackInfo.getTrack();
 		_selection = inTrackInfo.getSelection();
+		_midpoints = new MidpointData();
 		_mapPosition = new MapPosition();
 		addMouseListener(this);
 		addMouseMotionListener(this);
@@ -163,6 +177,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				_recalculate = true;
 				Config.setConfigBoolean(Config.KEY_SHOW_MAP, e.getStateChange() == ItemEvent.SELECTED);
 				UpdateMessageBroker.informSubscribers(); // to let menu know
+				// If the track is only partially visible and you turn the map off, make the track fully visible again
+				if (e.getStateChange() == ItemEvent.DESELECTED && _transparencySlider.getValue() < 0) {
+					_transparencySlider.setValue(0);
+				}
 			}
 		};
 		_topPanel = new OverlayPanel();
@@ -224,6 +242,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_connectCheckBox.addItemListener(itemListener);
 		_connectCheckBox.setFocusable(false); // stop button from stealing keyboard focus
 		_topPanel.add(_connectCheckBox);
+
+		// Add checkbox button for edit mode or not
+		_editmodeCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.EDIT_MODE_BUTTON), false);
+		_editmodeCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.EDIT_MODE_BUTTON_ON));
+		_editmodeCheckBox.setOpaque(false);
+		_editmodeCheckBox.setToolTipText(I18nManager.getText("menu.map.editmode"));
+		_editmodeCheckBox.addItemListener(itemListener);
+		_editmodeCheckBox.setFocusable(false); // stop button from stealing keyboard focus
+		_topPanel.add(_editmodeCheckBox);
 
 		// Add zoom in, zoom out buttons
 		_sidePanel = new OverlayPanel();
@@ -396,23 +423,38 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if (_mapImage != null) {
 				inG.drawImage(_mapImage, 0, 0, getWidth(), getHeight(), null);
 			}
-			// Draw the zoom rectangle if necessary
-			if (_drawMode == MODE_ZOOM_RECT)
+
+			switch (_drawMode)
 			{
-				inG.setColor(Color.RED);
-				inG.drawLine(_dragFromX, _dragFromY, _dragFromX, _dragToY);
-				inG.drawLine(_dragFromX, _dragFromY, _dragToX, _dragFromY);
-				inG.drawLine(_dragToX, _dragFromY, _dragToX, _dragToY);
-				inG.drawLine(_dragFromX, _dragToY, _dragToX, _dragToY);
-			}
-			else if (_drawMode == MODE_DRAW_POINTS_CONT)
-			{
-				// draw line to mouse position to show drawing mode
-				inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
-				int prevIndex = _track.getNumPoints()-1;
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(prevIndex));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(prevIndex));
-				inG.drawLine(px, py, _dragToX, _dragToY);
+				case MODE_DRAG_POINT:
+					drawDragLines(inG, _selection.getCurrentPointIndex()-1, _selection.getCurrentPointIndex()+1);
+					break;
+
+				case MODE_CREATE_MIDPOINT:
+					drawDragLines(inG, _clickedPoint-1, _clickedPoint);
+					break;
+
+				case MODE_ZOOM_RECT:
+				case MODE_MARK_RECTANGLE:
+					if (_dragFromX != -1 && _dragFromY != -1)
+					{
+						// Draw the zoom rectangle if necessary
+						inG.setColor(Color.RED);
+						inG.drawLine(_dragFromX, _dragFromY, _dragFromX, _dragToY);
+						inG.drawLine(_dragFromX, _dragFromY, _dragToX, _dragFromY);
+						inG.drawLine(_dragToX, _dragFromY, _dragToX, _dragToY);
+						inG.drawLine(_dragFromX, _dragToY, _dragToX, _dragToY);
+					}
+					break;
+					
+				case MODE_DRAW_POINTS_CONT:
+					// draw line to mouse position to show drawing mode
+					inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
+					int prevIndex = _track.getNumPoints()-1;
+					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(prevIndex));
+					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(prevIndex));
+					inG.drawLine(px, py, _dragToX, _dragToY);
+					break;
 			}
 		}
 		else
@@ -545,6 +587,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		final Color secondColour = makeTransparentColour(cs.getColour(ColourScheme.IDX_SECONDARY), opacity);
 		final Color textColour   = makeTransparentColour(cs.getColour(ColourScheme.IDX_TEXT), opacity);
 
+		final int winWidth  = getWidth();
+		final int winHeight = getHeight();
+		final int halfWinWidth  = winWidth / 2;
+		final int halfWinHeight = winHeight / 2;
+
+		final int numPoints = _track.getNumPoints();
+		final int[] xPixels = new int[numPoints];
+		final int[] yPixels = new int[numPoints];
+
 		// try to set line width for painting
 		if (inG instanceof Graphics2D)
 		{
@@ -560,11 +611,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		boolean prevPointVisible = false, currPointVisible = false;
 		boolean anyWaypoints = false;
 		boolean isWaypoint = false;
-		for (int i=0; i<_track.getNumPoints(); i++)
+		for (int i=0; i<numPoints; i++)
 		{
-			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
-			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
-			currPointVisible = px >= 0 && px < getWidth() && py >= 0 && py < getHeight();
+			// Calculate pixel position of point from its x, y coordinates
+			int px = halfWinWidth  + _mapPosition.getXFromCentre(_track.getX(i));
+			int py = halfWinHeight + _mapPosition.getYFromCentre(_track.getY(i));
+			px = wrapLongitudeValue(px, winWidth, _mapPosition.getZoom());
+			// Remember these calculated pixel values so they don't have to be recalculated
+			xPixels[i] = px; yPixels[i] = py;
+
+			currPointVisible = px >= 0 && px < winWidth && py >= 0 && py < winHeight;
 			isWaypoint = _track.getPoint(i).isWaypoint();
 			anyWaypoints = anyWaypoints || isWaypoint;
 			if (currPointVisible)
@@ -600,16 +656,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		inG.setColor(textColour);
 		FontMetrics fm = inG.getFontMetrics();
 		int nameHeight = fm.getHeight();
-		int width = getWidth();
-		int height = getHeight();
-		if (anyWaypoints) {
+		if (anyWaypoints)
+		{
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
 				if (_track.getPoint(i).isWaypoint())
 				{
-					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
-					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
-					if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
+					int px = xPixels[i];
+					int py = yPixels[i];
+					if (px >= 0 && px < winWidth && py >= 0 && py < winHeight)
 					{
 						inG.fillRect(px-3, py-3, 6, 6);
 						pointsPainted++;
@@ -621,9 +676,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			{
 				if (_track.getPoint(i).isWaypoint())
 				{
-					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
-					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
-					if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
+					int px = xPixels[i];
+					int py = yPixels[i];
+					if (px >= 0 && px < winWidth && py >= 0 && py < winHeight)
 					{
 						// Figure out where to draw waypoint name so it doesn't obscure track
 						String waypointName = _track.getPoint(i).getWaypointName();
@@ -640,8 +695,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 							// Check each direction in turn right left up down
 							for (int a=0; a<4; a++)
 							{
-								if (nameXs[a] > 0 && (nameXs[a] + nameWidth) < width
-									&& nameYs[a] < height && (nameYs[a] - nameHeight) > 0
+								if (nameXs[a] > 0 && (nameXs[a] + nameWidth) < winWidth
+									&& nameYs[a] < winHeight && (nameYs[a] - nameHeight) > 0
 									&& !overlapsPoints(nameXs[a], nameYs[a], nameWidth, nameHeight, textColour))
 								{
 									// Found a rectangle to fit - draw name here and quit
@@ -661,9 +716,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		{
 			if (_track.getPoint(i).hasMedia())
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
-				if (px >= 0 && px < getWidth() && py >= 0 && py < getHeight())
+				int px = xPixels[i];
+				int py = yPixels[i];
+				if (px >= 0 && px < winWidth && py >= 0 && py < winHeight)
 				{
 					inG.drawRect(px-1, py-1, 2, 2);
 					inG.drawRect(px-2, py-2, 4, 4);
@@ -678,30 +733,85 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			inG.setColor(rangeColour);
 			for (int i=_selection.getStart(); i<=_selection.getEnd(); i++)
 			{
-				int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(i));
-				int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(i));
+				int px = xPixels[i];
+				int py = yPixels[i];
 				inG.drawRect(px-1, py-1, 2, 2);
 			}
 		}
 
-		// Draw selected point, crosshairs
+		// Draw crosshairs at selected point
 		int selectedPoint = _selection.getCurrentPointIndex();
 		if (selectedPoint >= 0)
 		{
-			int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(selectedPoint));
-			int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(selectedPoint));
+			int px = xPixels[selectedPoint];
+			int py = yPixels[selectedPoint];
 			inG.setColor(currentColour);
 			// crosshairs
-			inG.drawLine(px, 0, px, getHeight());
-			inG.drawLine(0, py, getWidth(), py);
-			// oval
-			inG.drawOval(px - 2, py - 2, 4, 4);
-			inG.drawOval(px - 3, py - 3, 6, 6);
+			inG.drawLine(px, 0, px, winHeight);
+			inG.drawLine(0, py, winWidth, py);
 		}
 		// Return the number of points painted
 		return pointsPainted;
 	}
 
+	/**
+	 * Wrap the given pixel value if appropriate and possible
+	 * @param inPx Pixel x coordinate
+	 * @param inWinWidth window width in pixels
+	 * @param inZoom zoom level
+	 * @return modified pixel x coordinate
+	 */
+	private static int wrapLongitudeValue(int inPx, int inWinWidth, int inZoom)
+	{
+		if (inPx > inWinWidth)
+		{
+			// Pixel is too far right, could we wrap it back onto the screen?
+			int px = inPx;
+			while (px > inWinWidth) {
+				px -= (256 << inZoom);
+			}
+			if (px >= 0) {
+				return px; // successfully wrapped back onto the screen
+			}
+		}
+		else if (inPx < 0)
+		{
+			// Pixel is too far left, could we wrap it back onto the screen?
+			int px = inPx;
+			while (px < 0) {
+				px += (256 << inZoom);
+			}
+			if (px < inWinWidth) {
+				return px; // successfully wrapped back onto the screen
+			}
+		}
+		// Either it's already on the screen or couldn't be wrapped
+		return inPx;
+	}
+
+	/**
+	 * Draw the lines while dragging a point
+	 * @param inG graphics object
+	 * @param inPrevIndex index of point to draw from
+	 * @param inNextIndex index of point to draw to
+	 */
+	private void drawDragLines(Graphics inG, int inPrevIndex, int inNextIndex)
+	{
+		inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
+		// line from prev point to cursor
+		if (inPrevIndex > -1 && !_track.getPoint(inPrevIndex+1).getSegmentStart())
+		{
+			final int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(inPrevIndex));
+			final int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(inPrevIndex));
+			inG.drawLine(px, py, _dragToX, _dragToY);
+		}
+		if (inNextIndex < _track.getNumPoints() && !_track.getPoint(inNextIndex).getSegmentStart())
+		{
+			final int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(inNextIndex));
+			final int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(inNextIndex));
+			inG.drawLine(px, py, _dragToX, _dragToY);
+		}
+	}
 
 	/**
 	 * Tests whether there are any dark pixels within the specified x,y rectangle
@@ -828,6 +938,48 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	}
 
 	/**
+	 * Move a DataPoint object to the given mouse coordinates
+	 * @param startX start x coordinate of mouse
+	 * @param startY start y coordinate of mouse
+	 * @param endX end x coordinate of mouse
+	 * @param endY end y coordinate of mouse
+	 */
+	private void movePointToMouse(int startX, int startY, int endX, int endY )
+	{
+		double lat1 = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(startY, getHeight()));
+		double lon1 = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(startX, getWidth()));
+		double lat_delta = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(endY, getHeight())) - lat1;
+		double lon_delta = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(endX, getWidth())) - lon1;
+
+		DataPoint point = _trackInfo.getCurrentPoint();
+		if (point == null) {
+			return;
+		}
+
+		// Make lists for edit and undo, and add each changed field in turn
+		FieldEditList editList = new FieldEditList();
+		FieldEditList undoList = new FieldEditList();
+
+		// Check field list
+		FieldList fieldList = _track.getFieldList();
+		int numFields = fieldList.getNumFields();
+		for (int i=0; i<numFields; i++)
+		{
+			Field field = fieldList.getField(i);
+			if (field == Field.LATITUDE) {
+				editList.addEdit(new FieldEdit(field, Double.toString(point.getLatitude().getDouble() + lat_delta)));
+				undoList.addEdit(new FieldEdit(field, point.getFieldValue(Field.LATITUDE)));
+			}
+			else if (field == Field.LONGITUDE) {
+				editList.addEdit(new FieldEdit(field, Double.toString(point.getLongitude().getDouble() + lon_delta)));
+				undoList.addEdit(new FieldEdit(field, point.getFieldValue(Field.LONGITUDE)));
+			}
+		}
+		_app.completePointEdit(editList, undoList);
+	}
+
+
+	/**
 	 * @see javax.swing.JComponent#getMinimumSize()
 	 */
 	public Dimension getMinimumSize()
@@ -861,10 +1013,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					// single click
 					if (_drawMode == MODE_DEFAULT)
 					{
-						int pointIndex = _track.getNearestPointIndex(
+						int pointIndex = _clickedPoint;
+						if (pointIndex == INDEX_UNKNOWN)
+						{
+							// index hasn't been calculated yet
+							pointIndex = _track.getNearestPointIndex(
 							 _mapPosition.getXFromPixels(inE.getX(), getWidth()),
 							 _mapPosition.getYFromPixels(inE.getY(), getHeight()),
 							 _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY), false);
+						}
 						// Extend selection for shift-click
 						if (inE.isShiftDown()) {
 							_trackInfo.extendSelection(pointIndex);
@@ -907,6 +1064,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				_popup.show(this, _popupMenuX, _popupMenuY);
 			}
 		}
+		// Reset app mode
+		_app.setCurrentMode(App.AppMode.NORMAL);
+		if (_drawMode == MODE_MARK_RECTANGLE) _drawMode = MODE_DEFAULT;
 	}
 
 	/**
@@ -928,12 +1088,55 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	}
 
 	/**
-	 * Ignore mouse pressed events
+	 * React to mouse pressed events to initiate a point drag
 	 * @see java.awt.event.MouseListener#mousePressed(java.awt.event.MouseEvent)
 	 */
 	public void mousePressed(MouseEvent inE)
 	{
-		// ignore
+		_clickedPoint = INDEX_UNKNOWN;
+		if (_track == null || _track.getNumPoints() <= 0)
+			return;
+		if (!inE.isMetaDown())
+		{
+			// Left mouse drag - check if point is near; if so select it for dragging
+			if (_drawMode == MODE_DEFAULT)
+			{
+				/* Drag points if edit mode is enabled OR ALT is pressed */
+				if (_editmodeCheckBox.isSelected() || inE.isAltDown() || inE.isAltGraphDown())
+				{
+					final double clickX = _mapPosition.getXFromPixels(inE.getX(), getWidth());
+					final double clickY = _mapPosition.getYFromPixels(inE.getY(), getHeight());
+					final double clickSens = _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY);
+					_clickedPoint = _track.getNearestPointIndex(clickX, clickY, clickSens, false);
+
+					if (_clickedPoint >= 0)
+					{
+						// TODO: maybe use another color of the cross or remove the cross while dragging???
+
+						_trackInfo.selectPoint(_clickedPoint);
+						if (_trackInfo.getCurrentPoint() != null)
+						{
+							_drawMode = MODE_DRAG_POINT;
+							_dragFromX = _dragToX = inE.getX();
+							_dragFromY = _dragToY = inE.getY();
+						}
+					}
+					else
+					{
+						// Not a click on a point, so check half-way between two (connected) trackpoints
+						int midpointIndex = _midpoints.getNearestPointIndex(clickX, clickY, clickSens);
+						if (midpointIndex > 0)
+						{
+							_drawMode = MODE_CREATE_MIDPOINT;
+							_clickedPoint = midpointIndex;
+							_dragFromX = _dragToX = inE.getX();
+							_dragFromY = _dragToY = inE.getY();
+						}
+					}
+				}
+			}
+		}
+		// else right-press ignored
 	}
 
 	/**
@@ -943,13 +1146,48 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	public void mouseReleased(MouseEvent inE)
 	{
 		_recalculate = true;
-		if (_drawMode == MODE_ZOOM_RECT && Math.abs(_dragToX - _dragFromX) > 20
-			&& Math.abs(_dragToY - _dragFromY) > 20)
+
+		if (_drawMode == MODE_DRAG_POINT)
 		{
-			_mapPosition.zoomToPixels(_dragFromX, _dragToX, _dragFromY, _dragToY, getWidth(), getHeight());
-		}
-		if (_drawMode == MODE_ZOOM_RECT) {
+			if (Math.abs(_dragToX - _dragFromX) > 2
+				|| Math.abs(_dragToY - _dragFromY) > 2)
+			{
+				movePointToMouse(_dragFromX, _dragFromY, _dragToX, _dragToY );
+			}
 			_drawMode = MODE_DEFAULT;
+		}
+		else if (_drawMode == MODE_CREATE_MIDPOINT)
+		{
+			_drawMode = MODE_DEFAULT;
+			_app.createPoint(createPointFromClick(_dragToX, _dragToY), _clickedPoint);
+		}
+		else if (_drawMode == MODE_ZOOM_RECT)
+		{
+			if (Math.abs(_dragToX - _dragFromX) > 20
+			 && Math.abs(_dragToY - _dragFromY) > 20)
+			{
+				_mapPosition.zoomToPixels(_dragFromX, _dragToX, _dragFromY, _dragToY, getWidth(), getHeight());
+			}
+			_drawMode = MODE_DEFAULT;
+		}
+		else if (_drawMode == MODE_MARK_RECTANGLE)
+		{
+			// Reset app mode
+			_app.setCurrentMode(App.AppMode.NORMAL);
+			_drawMode = MODE_DEFAULT;
+			// Call a function to mark the points
+			MarkPointsInRectangleFunction marker = new MarkPointsInRectangleFunction(_app);
+			double lon1 = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(_dragFromX, getWidth()));
+			double lat1 = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(_dragFromY, getHeight()));
+			double lon2 = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(_dragToX, getWidth()));
+			double lat2 = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(_dragToY, getHeight()));
+			// Invalidate rectangle if pixel coords are (-1,-1)
+			if (_dragFromX < 0 || _dragFromY < 0) {
+				lon1 = lon2;
+				lat1 = lat2;
+			}
+			marker.setRectCoords(lon1, lat1, lon2, lat2);
+			marker.begin();
 		}
 		_dragFromX = _dragFromY = -1;
 		repaint();
@@ -963,19 +1201,40 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	{
 		if (!inE.isMetaDown())
 		{
-			// Left mouse drag - pan map by appropriate amount
-			if (_dragFromX != -1)
+			// Left mouse drag - either drag the point or pan the map
+			if (_drawMode == MODE_DRAG_POINT || _drawMode == MODE_CREATE_MIDPOINT)
 			{
-				panMap(_dragFromX - inE.getX(), _dragFromY - inE.getY());
+				// move point
+				_dragToX = inE.getX();
+				_dragToY = inE.getY();
 				_recalculate = true;
 				repaint();
 			}
-			_dragFromX = _dragToX = inE.getX();
-			_dragFromY = _dragToY = inE.getY();
+			else if (_drawMode == MODE_MARK_RECTANGLE)
+			{
+				// draw a rectangle for marking points
+				if (_dragFromX == -1) {
+					_dragFromX = inE.getX();
+					_dragFromY = inE.getY();
+				}
+				_dragToX = inE.getX();
+				_dragToY = inE.getY();
+				repaint();
+			}
+			else
+			{
+				// regular left-drag pans map by appropriate amount
+				if (_dragFromX != -1)
+				{
+					panMap(_dragFromX - inE.getX(), _dragFromY - inE.getY());
+				}
+				_dragFromX = _dragToX = inE.getX();
+				_dragFromY = _dragToY = inE.getY();
+			}
 		}
 		else
 		{
-			// Right-click and drag - draw rectangle and control zoom
+			// Right-click and drag - update rectangle
 			_drawMode = MODE_ZOOM_RECT;
 			if (_dragFromX == -1) {
 				_dragFromX = inE.getX();
@@ -993,12 +1252,37 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	public void mouseMoved(MouseEvent inEvent)
 	{
+		boolean useCrosshairs = false;
+		boolean useResize     = false;
 		// Ignore unless we're drawing points
 		if (_drawMode == MODE_DRAW_POINTS_CONT)
 		{
 			_dragToX = inEvent.getX();
 			_dragToY = inEvent.getY();
 			repaint();
+		}
+		else if (_drawMode == MODE_MARK_RECTANGLE) {
+			useResize = true;
+		}
+		else if (_editmodeCheckBox.isSelected() || inEvent.isAltDown() || inEvent.isAltGraphDown())
+		{
+			// Try to find a point or a midpoint at this location, and if there is one
+			// then change the cursor to crosshairs
+			final double clickX = _mapPosition.getXFromPixels(inEvent.getX(), getWidth());
+			final double clickY = _mapPosition.getYFromPixels(inEvent.getY(), getHeight());
+			final double clickSens = _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY);
+			useCrosshairs = (_track.getNearestPointIndex(clickX, clickY, clickSens, false) >= 0
+				|| _midpoints.getNearestPointIndex(clickX, clickY, clickSens) >= 0
+			);
+		}
+		if (useCrosshairs && !isCursorSet()) {
+			setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
+		}
+		else if (useResize && !isCursorSet()) {
+			setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+		}
+		else if (!useCrosshairs && !useResize && isCursorSet()) {
+			setCursor(null);
 		}
 	}
 
@@ -1023,6 +1307,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 		if ((inUpdateType & DataSubscriber.MAPSERVER_CHANGED) > 0) {
 			_tileManager.resetConfig();
+		}
+		if ((inUpdateType & (DataSubscriber.DATA_ADDED_OR_REMOVED + DataSubscriber.DATA_EDITED)) > 0) {
+			_midpoints.updateData(_track);
+		}
+		// See if rect mode has been activated
+		if (_app.getCurrentMode() == App.AppMode.DRAWRECT)
+		{
+			_drawMode = MODE_MARK_RECTANGLE;
+			if (!isCursorSet()) {
+				setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+			}
 		}
 		repaint();
 		// enable or disable components

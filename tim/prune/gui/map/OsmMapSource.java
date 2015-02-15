@@ -1,5 +1,6 @@
 package tim.prune.gui.map;
 
+import java.util.regex.Matcher;
 import tim.prune.I18nManager;
 
 /**
@@ -145,7 +146,9 @@ public class OsmMapSource extends MapSource
 	 */
 	public String makeURL(int inLayerNum, int inZoom, int inX, int inY)
 	{
-		return _baseUrls[inLayerNum] + inZoom + "/" + inX + "/" + inY + "." + getFileExtension(inLayerNum);
+		// Check if the base url has a [1234], if so replace at random
+		return pickServerUrl(_baseUrls[inLayerNum])
+			+ inZoom + "/" + inX + "/" + inY + "." + getFileExtension(inLayerNum);
 	}
 
 	/**
@@ -156,6 +159,35 @@ public class OsmMapSource extends MapSource
 		return _maxZoom;
 	}
 
+	/**
+	 * If the base url contains something like [1234], then pick a server
+	 * @param inBaseUrl base url
+	 * @return modified base url
+	 */
+	protected static final String pickServerUrl(String inBaseUrl)
+	{
+		if (inBaseUrl == null || inBaseUrl.indexOf('[') < 0) {
+			return inBaseUrl;
+		}
+		// Check for [.*] (once only)
+		// Only need to support one, make things a bit easier
+		final Matcher matcher = WILD_PATTERN.matcher(inBaseUrl);
+		// if not, return base url unchanged
+		if (!matcher.matches()) {
+			return inBaseUrl;
+		}
+		// if so, pick one at random and replace in the String
+		final String match = matcher.group(2);
+		final int numMatches = match.length();
+		String server = null;
+		if (numMatches > 0)
+		{
+			int matchNum = (int) Math.floor(Math.random() * numMatches);
+			server = "" + match.charAt(matchNum);
+		}
+		final String result = matcher.group(1) + (server==null?"":server) + matcher.group(3);
+		return result;
+	}
 
 	/**
 	 * @return semicolon-separated list of all fields

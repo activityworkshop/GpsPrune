@@ -16,9 +16,7 @@ public class Selection
 	private int _startIndex = -1, _endIndex = -1;
 	private int _currentPhotoIndex = -1;
 	private int _currentAudioIndex = -1;
-	private IntegerRange _altitudeRange = null;
-	private int _climb = -1, _descent = -1;
-	private Altitude.Format _altitudeFormat = Altitude.Format.NO_FORMAT;
+	private AltitudeRange _altitudeRange = null;
 	private long _totalSeconds = 0L, _movingSeconds = 0L;
 	private double _angDistance = -1.0, _angMovingDistance = -1.0;
 	private int _numSegments = 0;
@@ -66,7 +64,6 @@ public class Selection
 	 */
 	private void recalculate()
 	{
-		_altitudeFormat = Altitude.Format.NO_FORMAT;
 		_numSegments = 0;
 		final int numPoints = _track.getNumPoints();
 		// Recheck if the number of points has changed
@@ -76,18 +73,14 @@ public class Selection
 		}
 		if (numPoints > 0 && hasRangeSelected())
 		{
-			_altitudeRange = new IntegerRange();
-			_climb = 0;
-			_descent = 0;
+			_altitudeRange = new AltitudeRange();
 			Altitude altitude = null;
 			Timestamp time = null, startTime = null, endTime = null;
 			Timestamp previousTime = null;
 			DataPoint lastPoint = null, currPoint = null;
 			_angDistance = 0.0; _angMovingDistance = 0.0;
 			_totalSeconds = 0L; _movingSeconds = 0L;
-			int altValue = 0;
-			int lastAltValue = 0;
-			boolean foundAlt = false;
+			// Loop over points in selection
 			for (int i=_startIndex; i<=_endIndex; i++)
 			{
 				currPoint = _track.getPoint(i);
@@ -95,19 +88,7 @@ public class Selection
 				// Ignore waypoints in altitude calculations
 				if (!currPoint.isWaypoint() && altitude.isValid())
 				{
-					altValue = altitude.getValue(_altitudeFormat);
-					if (_altitudeFormat == Altitude.Format.NO_FORMAT)
-						_altitudeFormat = altitude.getFormat();
-					_altitudeRange.addValue(altValue);
-					if (foundAlt)
-					{
-						if (altValue > lastAltValue)
-							_climb += (altValue - lastAltValue);
-						else
-							_descent += (lastAltValue - altValue);
-					}
-					lastAltValue = altValue;
-					foundAlt = true;
+					_altitudeRange.addValue(altitude);
 				}
 				// Store the first and last timestamp in the range
 				time = currPoint.getTimestamp();
@@ -167,41 +148,13 @@ public class Selection
 		return _endIndex;
 	}
 
-
-	/**
-	 * @return the altitude format, ie feet or metres
-	 */
-	public Altitude.Format getAltitudeFormat()
-	{
-		return _altitudeFormat;
-	}
-
 	/**
 	 * @return altitude range
 	 */
-	public IntegerRange getAltitudeRange()
+	public AltitudeRange getAltitudeRange()
 	{
 		if (!_valid) recalculate();
 		return _altitudeRange;
-	}
-
-
-	/**
-	 * @return climb
-	 */
-	public int getClimb()
-	{
-		if (!_valid) recalculate();
-		return _climb;
-	}
-
-	/**
-	 * @return descent
-	 */
-	public int getDescent()
-	{
-		if (!_valid) recalculate();
-		return _descent;
 	}
 
 
@@ -224,21 +177,19 @@ public class Selection
 	}
 
 	/**
-	 * @param inUnits distance units to use, from class Distance
 	 * @return distance of Selection in specified units
 	 */
-	public double getDistance(Distance.Units inUnits)
+	public double getDistance()
 	{
-		return Distance.convertRadiansToDistance(_angDistance, inUnits);
+		return Distance.convertRadiansToDistance(_angDistance);
 	}
 
 	/**
-	 * @param inUnits distance units to use, from class Distance
-	 * @return moving distance of Selection in specified units
+	 * @return moving distance of Selection in current units
 	 */
-	public double getMovingDistance(Distance.Units inUnits)
+	public double getMovingDistance()
 	{
-		return Distance.convertRadiansToDistance(_angMovingDistance, inUnits);
+		return Distance.convertRadiansToDistance(_angMovingDistance);
 	}
 
 	/**

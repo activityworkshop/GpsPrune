@@ -5,7 +5,6 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
-import java.util.Comparator;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -193,32 +192,7 @@ public class RearrangePhotosFunction extends GenericFunction
 	 */
 	private static void sortPhotos(DataPoint[] inPhotos, boolean inSortByFile)
 	{
-		Comparator<DataPoint> comparator = null;
-		if (inSortByFile)
-		{
-			// sort by filename
-			comparator = new Comparator<DataPoint>() {
-				public int compare(DataPoint inP1, DataPoint inP2) {
-					if (inP2 == null) return -1; // all nulls at end
-					if (inP1 == null) return 1;
-					if (inP1.getPhoto().getFile() == null || inP2.getPhoto().getFile() == null)
-						return inP1.getPhoto().getName().compareTo(inP2.getPhoto().getName());
-					return inP1.getPhoto().getFile().compareTo(inP2.getPhoto().getFile());
-				}
-			};
-		}
-		else
-		{
-			// sort by photo timestamp
-			comparator = new Comparator<DataPoint>() {
-				public int compare(DataPoint inP1, DataPoint inP2) {
-					if (inP2 == null) return -1; // all nulls at end
-					if (inP1 == null) return 1;
-					long secDiff = inP1.getPhoto().getTimestamp().getSecondsSince(inP2.getPhoto().getTimestamp());
-					return (secDiff<0?-1:(secDiff==0?0:1));
-				}
-			};
-		}
-		Arrays.sort(inPhotos, comparator);
+		PhotoComparer comparer = new PhotoComparer(inSortByFile ? PhotoComparer.SortMode.SORTBY_NAME : PhotoComparer.SortMode.SORTBY_TIME);
+		Arrays.sort(inPhotos, comparer);
 	}
 }

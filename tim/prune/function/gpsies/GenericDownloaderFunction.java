@@ -18,7 +18,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -112,21 +111,20 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 			public void valueChanged(ListSelectionEvent e) {
 				if (!e.getValueIsAdjusting())
 				{
-					if (_trackTable.getSelectedRow() >= 0
-					 && _trackTable.getSelectedRow() < _trackListModel.getRowCount())
+					final int numSelected = _trackTable.getSelectedRowCount();
+					if (numSelected > 0)
 					{
-						_loadButton.setEnabled(true);
-						_showButton.setEnabled(true);
 						setDescription(_trackListModel.getTrack(_trackTable.getSelectedRow()).getDescription());
 						_descriptionBox.setCaretPosition(0);
 					}
 					else {
 						_descriptionBox.setText("");
 					}
+					_loadButton.setEnabled(numSelected > 0);
+					_showButton.setEnabled(numSelected == 1);
 				}
 			}
 		});
-		_trackTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION); // only allow one to be selected
 		_trackTable.getColumnModel().getColumn(0).setPreferredWidth(300);
 		if (_trackListModel.getColumnCount() > 1) {
 			_trackTable.getColumnModel().getColumn(1).setPreferredWidth(70);

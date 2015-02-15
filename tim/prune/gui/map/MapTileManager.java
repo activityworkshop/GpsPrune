@@ -1,7 +1,6 @@
 package tim.prune.gui.map;
 
 import java.awt.Image;
-import java.awt.Toolkit;
 import java.awt.image.ImageObserver;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -24,8 +23,6 @@ public class MapTileManager implements ImageObserver
 	private int _numLayers = -1;
 	/** Current zoom level */
 	private int _zoom = 0;
-	/** Currently blocked zoom level, to prevent looping for non-existent images */
-	private int _blockedZoom = 0;
 	/** Number of tiles in each direction for this zoom level */
 	private int _numTileIndices = 1;
 
@@ -141,8 +138,9 @@ public class MapTileManager implements ImageObserver
 	 */
 	public Image getTile(int inLayer, int inX, int inY)
 	{
-		// Check tile boundaries
-		if (inX < 0 || inX >= _numTileIndices || inY < 0 || inY >= _numTileIndices) return null;
+		if (inY < 0 || inY >= _numTileIndices) return null;
+		// Wrap tile indices which are too big or too small
+		inX = ((inX % _numTileIndices) + _numTileIndices) % _numTileIndices;
 
 		// Check first in memory cache for tile
 		MemTileCacher tempCache = _tempCaches[inLayer]; // Should probably guard against nulls and array indexes here
@@ -161,15 +159,14 @@ public class MapTileManager implements ImageObserver
 			if (tile != null)
 			{
 				// Pass tile to memory cache
-				tempCache.setTile(tile, inX, inY);
+				tempCache.setTile(tile, inX, inY, _zoom);
 				if (tile.getWidth(this) > 0) {return tile;}
 				return null;
 			}
 		}
 		// Tile wasn't in memory or on disk, so if online let's get it
-		if (onlineMode && _blockedZoom != _zoom)
+		if (onlineMode)
 		{
-			_blockedZoom = 0; // reset to try again
 			try
 			{
 				URL tileUrl = new URL(_mapSource.makeURL(inLayer, _zoom, inX, inY));
@@ -181,10 +178,9 @@ public class MapTileManager implements ImageObserver
 				else
 				{
 					// Load image asynchronously, using observer
-					tile = Toolkit.getDefaultToolkit().createImage(tileUrl);
-					// Pass to memory cache
-					_tempCaches[inLayer].setTile(tile, inX, inY);
-					if (tile.getWidth(this) > 0) {return tile;}
+					// tile = Toolkit.getDefaultToolkit().createImage(tileUrl);
+					// In order to set the http user agent, need to use a TileDownloader instead
+					TileDownloader.triggerLoad(this, tileUrl, inLayer, inX, inY, _zoom);
 				}
 			}
 			catch (MalformedURLException urle) {} // ignore
@@ -206,12 +202,31 @@ public class MapTileManager implements ImageObserver
 	{
 		boolean loaded = (infoflags & ImageObserver.ALLBITS) > 0;
 		boolean error = (infoflags & ImageObserver.ERROR) > 0;
-		if (error) {
-			_blockedZoom = _zoom;
-		}
 		if (loaded || error) {
 			_parent.tilesUpdated(loaded);
 		}
 		return !loaded;
+	}
+
+	/**
+	 * Callback method from TileDownloader to let us know that an image has been loaded
+	 * @param inTile Loaded Image object
+	 * @param inLayer layer index from 0
+	 * @param inX x coordinate of tile
+	 * @param inY y coordinate of tile
+	 * @param inZoom zoom level of loaded image
+	 */
+	public void notifyImageLoaded(Image inTile, int inLayer, int inX, int inY, int inZoom)
+	{
+		if (inTile != null)
+		{
+			MemTileCacher tempCache = _tempCaches[inLayer]; // Should probably guard against nulls and array indexes here
+			if (tempCache.getTile(inX, inY) == null)
+			{
+				// Check with cache that the zoom level is still valid
+				tempCache.setTile(inTile, inX, inY, inZoom);
+				inTile.getWidth(this); // trigger imageUpdate when image is ready
+			}
+		}
 	}
 }

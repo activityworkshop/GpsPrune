@@ -1,5 +1,5 @@
-GpsPrune version 13.4
-=====================
+GpsPrune version 14
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_13.4.jar
+   java -jar gpsprune_14.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,41 +25,18 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_13.4.jar --lang=DE
+   java -jar gpsprune_14.jar --lang=DE
 
 
-New with version 13.4
-=====================
-The following features were added since version 13.3:
-  - Fix for empty settings
-  - Fix for file suffixes of cached tiles
-  - Removed Osma source as tiles@home has been discontinued
-
-New with version 13.3
-=====================
-The following features were added since version 13.2:
-  - Completion of Italian translations
-  - Fix for exporting track names to version 1.1 gpx files
-  - Changed OpenCycleMap url
-  - Added diagnostics if unrecognised command-line parameter wasn't a valid file
-  - Improve error handling when tile downloading fails
-  - Fix for editing a cloudmade source
-
-New with version 13.2
-=====================
-The following features were added since version 13.1:
-  - Russian translation
-  - Fix for loading kml with placemarks with multiple coordinate lists
-  - Fix for exporting descriptions to version 1.1 gpx files
-
-New with version 13.1
+New with version 14
 =====================
 The following features were added since version 13:
-  - Allow loading of photos and audio using relative paths from the gpx/kml file
-  - Cosmetic fixes to make the map controls more visible
-  - Allow osm-style map sources to use gifs or jpgs as well as pngs
-  - Allow edit of custom map sources
-  - Addition of a few more built-in map sources, such as hikebikemap and openseamap
+  - Dragging of existing points
+  - Creation of new points by dragging the halfway point between two points
+  - Nautical miles option including knots
+  - Full range details dialog
+  - Extension of interpolation function
+  - Selecting points within a rectangle to delete
 
 New with version 13
 ===================
@@ -76,6 +53,8 @@ The following features were added since version 12:
   - Importing of files through GPSBabel
   - List of recently used files in the menu
   - Display of bearing at which a photo was taken (display only)
+  - Allow edit of custom map sources
+  - Russian translation
 
 New with version 12
 ===================

@@ -280,7 +280,7 @@ public class UploadGpsiesFunction extends GenericFunction
 				public void run() {
 					boolean[] saveFlags = {true, true, true, true, false, true}; // export everything
 					try {
-						GpxExporter.exportData(_writer, _app.getTrackInfo(), _nameField.getText(), null, saveFlags, false);
+						GpxExporter.exportData(_writer, _app.getTrackInfo(), _nameField.getText(), null, saveFlags, null);
 					} catch (IOException e) {}
 					finally {
 						try {_writer.close();} catch (IOException e) {}

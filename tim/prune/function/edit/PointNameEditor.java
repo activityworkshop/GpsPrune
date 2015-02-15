@@ -125,16 +125,16 @@ public class PointNameEditor extends GenericFunction
 			}
 		});
 		rightPanel.add(lowerButton);
-		JButton sentenceButton = new JButton(I18nManager.getText("dialog.pointnameedit.sentencecase"));
-		sentenceButton.addActionListener(new ActionListener() {
+		JButton titleButton = new JButton(I18nManager.getText("dialog.pointnameedit.titlecase"));
+		titleButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_nameField.setText(sentenceCase(_nameField.getText()));
+				_nameField.setText(titleCase(_nameField.getText()));
 				_okButton.setEnabled(true);
 				_nameField.requestFocus();
 			}
 		});
-		rightPanel.add(sentenceButton);
+		rightPanel.add(titleButton);
 		panel.add(rightPanel, BorderLayout.EAST);
 		// Bottom panel for OK, cancel buttons
 		JPanel lowerPanel = new JPanel();
@@ -167,11 +167,11 @@ public class PointNameEditor extends GenericFunction
 	}
 
 	/**
-	 * Turn a String into sentence case by capitalizing each word
+	 * Turn a String into title case by capitalizing each word
 	 * @param inString String to convert
 	 * @return capitalized String
 	 */
-	private static String sentenceCase(String inString)
+	private static String titleCase(String inString)
 	{
 		// Check first for empty strings
 		if (inString == null || inString.equals(""))

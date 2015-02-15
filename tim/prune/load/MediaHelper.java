@@ -88,7 +88,11 @@ public abstract class MediaHelper
 		}
 
 		// If we haven't got a result by now, try to load plain file
-		File file = (inSourceFile == null ? new File(inPath) : new File(inSourceFile.getParent(), inPath));
+		File file = new File(inPath);
+		if (inSourceFile != null && !file.isAbsolute()) {
+			file = new File(inSourceFile.getParent(), inPath);
+		}
+		// awkward construction because new File(startPath, absolutePath) doesn't work
 		return createMediaObject(file);
 	}
 

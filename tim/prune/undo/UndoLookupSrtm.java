@@ -29,9 +29,11 @@ public class UndoLookupSrtm implements UndoOperation
 		// Make arrays of points and altitudes
 		_points = new DataPoint[numPoints];
 		_altitudes = new String[numPoints];
-		for (int i=0; i<numPoints; i++) {
+		for (int i=0; i<numPoints; i++)
+		{
 			DataPoint point = track.getPoint(i);
-			if (!point.hasAltitude() || point.getAltitude().getValue() == 0) {
+			if (!point.hasAltitude() || point.getAltitude().getValue() == 0)
+			{
 				_points[i] = point;
 				if (point.hasAltitude()) {
 					_altitudes[i] = point.getFieldValue(Field.ALTITUDE);

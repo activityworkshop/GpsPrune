@@ -4,7 +4,8 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
 import tim.prune.I18nManager;
-import tim.prune.data.Distance;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSetLibrary;
 
 /**
  * Class to act as the table model for the correlation preview table
@@ -16,7 +17,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 	/** ArrayList containing TableRow objects */
 	private ArrayList<MediaPreviewTableRow> _list = new ArrayList<MediaPreviewTableRow>();
 	/** Distance units */
-	private Distance.Units _distanceUnits = Distance.Units.KILOMETRES;
+	private Unit _distanceUnits = UnitSetLibrary.UNITS_KILOMETRES;
 	/** Number formatter */
 	private static final NumberFormat FORMAT_ONE_DP = NumberFormat.getNumberInstance();
 
@@ -89,7 +90,10 @@ public class MediaPreviewTableModel extends AbstractTableModel
 		MediaPreviewTableRow row = _list.get(inRowIndex);
 		if (inColumnIndex == 0) return row.getMedia().getName();
 		else if (inColumnIndex == 1) {
-			return row.getMedia().getTimestamp().getText();
+			if (row.getMedia().hasTimestamp()) {
+				return row.getMedia().getTimestamp().getText();
+			}
+			return ""; // media doesn't have a timestamp
 		}
 		else if (inColumnIndex == 2) {
 			if (row.getPointPair().isValid()) {
@@ -110,7 +114,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 	/**
 	 * @param inUnits the distance units to use
 	 */
-	public void setDistanceUnits(Distance.Units inUnits)
+	public void setDistanceUnits(Unit inUnits)
 	{
 		_distanceUnits = inUnits;
 	}

@@ -18,6 +18,7 @@ import javax.swing.JTextField;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.Field;
 
@@ -69,7 +70,7 @@ public class AddAltitudeOffset extends GenericFunction
 			_dialog.pack();
 		}
 		// Set label according to altitude units
-		setLabelText(selStart, selEnd);
+		setLabelText();
 		// Select the contents of the edit field
 		_editField.selectAll();
 		_dialog.setVisible(true);
@@ -148,20 +149,11 @@ public class AddAltitudeOffset extends GenericFunction
 
 	/**
 	 * Set the label text according to the current units
-	 * @param inStart start index of selection
-	 * @param inEnd end index of selection
 	 */
-	private void setLabelText(int inStart, int inEnd)
+	private void setLabelText()
 	{
-		_altFormat = Altitude.Format.NO_FORMAT;
-		for (int i=inStart; i<=inEnd && _altFormat==Altitude.Format.NO_FORMAT; i++)
-		{
-			Altitude alt = _app.getTrackInfo().getTrack().getPoint(i).getAltitude();
-			if (alt != null) {
-				_altFormat = alt.getFormat();
-			}
-		}
-		if (_altFormat==Altitude.Format.NO_FORMAT) {
+		_altFormat = Altitude.Format.FEET;
+		if (Config.getUnitSet().getAltitudeUnit().isStandard()) {
 			_altFormat = Altitude.Format.METRES;
 		}
 		final String unitKey = (_altFormat==Altitude.Format.METRES?"units.metres.short":"units.feet.short");

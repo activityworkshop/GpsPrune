@@ -47,8 +47,8 @@ public class MemTileCacher
 		// Mark boundaries as invalid
 		for (int i=0; i<GRID_SIZE; i++)
 		{
-			_tiles[getArrayIndex(_tileX + GRID_SIZE/2 + 1, _tileY + i - GRID_SIZE/2)] = null;
-			_tiles[getArrayIndex(_tileX + i - GRID_SIZE/2, _tileY + GRID_SIZE/2 + 1)] = null;
+			_tiles[getArrayIndexNoWrap(_tileX + GRID_SIZE/2 + 1, _tileY + i - GRID_SIZE/2)] = null;
+			_tiles[getArrayIndexNoWrap(_tileX + i - GRID_SIZE/2, _tileY + GRID_SIZE/2 + 1)] = null;
 		}
 	}
 
@@ -66,18 +66,34 @@ public class MemTileCacher
 	}
 
 	/**
-	 * Get the array index for the given coordinates
+	 * Get the array index for the given coordinates, including regular lon wrapping
 	 * @param inX x coord of tile
 	 * @param inY y coord of tile
 	 * @return array index
 	 */
 	private int getArrayIndex(int inX, int inY)
 	{
-		//System.out.println("Getting array index for (" + inX + ", " + inY + ") where the centre is at ("  + _tileX + ", " + _tileY
-		//	+ ") and grid coords (" + _gridCentreX + ", " + _gridCentreY + ")");
+		final int tileSpan = 1 << _zoom;
+		int deltaX = (inX - _tileX);
+		while (deltaX > (tileSpan/2))  {deltaX -= tileSpan;}
+		while (deltaX < (-tileSpan/2)) {deltaX += tileSpan;}
+
+		int x = getCacheCoordinate(deltaX + _gridCentreX);
+		int y = getCacheCoordinate(inY - _tileY + _gridCentreY);
+		return (x + y * GRID_SIZE);
+	}
+
+	/**
+	 * Get the array index for the given coordinates, without wrapping x coords
+	 * (used for deletion to avoid deleting the wrong tile)
+	 * @param inX x coord of tile
+	 * @param inY y coord of tile
+	 * @return array index
+	 */
+	private int getArrayIndexNoWrap(int inX, int inY)
+	{
 		int x = getCacheCoordinate(inX - _tileX + _gridCentreX);
 		int y = getCacheCoordinate(inY - _tileY + _gridCentreY);
-		//System.out.println("Transformed to (" + x + ", " + y + ")");
 		return (x + y * GRID_SIZE);
 	}
 
@@ -86,7 +102,6 @@ public class MemTileCacher
 	 */
 	public void clearAll()
 	{
-		// Clear all images if zoom changed
 		for (int i=0; i<_tiles.length; i++) {
 			_tiles[i] = null;
 		}
@@ -107,9 +122,13 @@ public class MemTileCacher
 	 * @param inTile image to save
 	 * @param inX x coordinate of tile
 	 * @param inY y coordinate of tile
+	 * @param inZoom zoom level
 	 */
-	public void setTile(Image inTile, int inX, int inY)
+	public void setTile(Image inTile, int inX, int inY, int inZoom)
 	{
-		_tiles[getArrayIndex(inX, inY)] = inTile;
+		// Ignore images received for a different zoom level
+		if (inZoom == _zoom) {
+			_tiles[getArrayIndex(inX, inY)] = inTile;
+		}
 	}
 }

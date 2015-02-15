@@ -62,8 +62,12 @@ public class App
 	private boolean _mangleTimestampsConfirmed = false;
 	private Viewport _viewport = null;
 	private ArrayList<File> _dataFiles = null;
-	private boolean _firstDataFile = true;
+	private boolean _autoAppendNextFile = false;
 	private boolean _busyLoading = false;
+	private AppMode _appMode = AppMode.NORMAL;
+
+	/** Enum for the app mode - currently only two options but may expand later */
+	public enum AppMode {NORMAL, DRAWRECT};
 
 
 	/**
@@ -123,14 +127,15 @@ public class App
 		if (inDataFiles == null || inDataFiles.size() == 0) {
 			_dataFiles = null;
 		}
-		else {
+		else
+		{
 			_dataFiles = inDataFiles;
 			File f = _dataFiles.get(0);
 			_dataFiles.remove(0);
 			// Start load of specified file
 			if (_fileLoader == null)
 				_fileLoader = new FileLoader(this, _frame);
-			_firstDataFile = true;
+			_autoAppendNextFile = false; // prompt for append
 			_fileLoader.openFile(f);
 		}
 	}
@@ -144,6 +149,7 @@ public class App
 	{
 		_undoStack.add(inUndo);
 		UpdateMessageBroker.informSubscribers(inConfirmText);
+		setCurrentMode(AppMode.NORMAL);
 	}
 
 	/**
@@ -272,6 +278,7 @@ public class App
 		DataPoint currentPoint = _trackInfo.getCurrentPoint();
 		if (currentPoint != null)
 		{
+			// Check for photo
 			boolean deletePhoto = false;
 			Photo currentPhoto = currentPoint.getPhoto();
 			if (currentPhoto != null)
@@ -291,10 +298,11 @@ public class App
 			// store necessary information to undo it later
 			int pointIndex = _trackInfo.getSelection().getCurrentPointIndex();
 			int photoIndex = _trackInfo.getPhotoList().getPhotoIndex(currentPhoto);
+			int audioIndex = _trackInfo.getAudioList().getAudioIndex(currentPoint.getAudio());
 			DataPoint nextTrackPoint = _trackInfo.getTrack().getNextTrackPoint(pointIndex + 1);
 			// Construct Undo object
 			UndoOperation undo = new UndoDeletePoint(pointIndex, currentPoint, photoIndex,
-				nextTrackPoint != null && nextTrackPoint.getSegmentStart());
+				audioIndex, nextTrackPoint != null && nextTrackPoint.getSegmentStart());
 			// call track to delete point
 			if (_trackInfo.deletePoint())
 			{
@@ -312,94 +320,15 @@ public class App
 						// decouple photo from point
 						currentPhoto.setDataPoint(null);
 					}
-					UpdateMessageBroker.informSubscribers();
+					UpdateMessageBroker.informSubscribers(DataSubscriber.PHOTOS_MODIFIED);
+				}
+				// Delete audio object (without bothering to ask)
+				if (audioIndex > -1) {
+					_trackInfo.getAudioList().deleteAudio(audioIndex);
 				}
 				// Confirm
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.deletepoint.single"));
-			}
-		}
-	}
-
-
-	/**
-	 * Delete the currently selected range
-	 */
-	public void deleteSelectedRange()
-	{
-		if (_track == null) return;
-		// Find out if photos should be deleted or not
-		int selStart = _trackInfo.getSelection().getStart();
-		int selEnd = _trackInfo.getSelection().getEnd();
-		if (selStart >= 0 && selEnd >= selStart)
-		{
-			int numToDelete = selEnd - selStart + 1;
-			boolean[] deletePhotos = new boolean[numToDelete];
-			Photo[] photosToDelete = new Photo[numToDelete];
-			boolean deleteAll = false;
-			boolean deleteNone = false;
-			String[] questionOptions = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
-				I18nManager.getText("button.yestoall"), I18nManager.getText("button.notoall"),
-				I18nManager.getText("button.cancel")};
-			DataPoint point = null;
-			for (int i=0; i<numToDelete; i++)
-			{
-				point = _trackInfo.getTrack().getPoint(i + selStart);
-				if (point != null && point.getPhoto() != null)
-				{
-					if (deleteAll)
-					{
-						deletePhotos[i] = true;
-						photosToDelete[i] = point.getPhoto();
-					}
-					else if (deleteNone) {deletePhotos[i] = false;}
-					else
-					{
-						int response = JOptionPane.showOptionDialog(_frame,
-							I18nManager.getText("dialog.deletepoint.deletephoto") + " " + point.getPhoto().getName(),
-							I18nManager.getText("dialog.deletepoint.title"),
-							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-							questionOptions, questionOptions[1]);
-						// check for cancel or close
-						if (response == 4 || response == -1) {return;}
-						// check for yes or yes to all
-						if (response == 0 || response == 2)
-						{
-							deletePhotos[i] = true;
-							photosToDelete[i] = point.getPhoto();
-							if (response == 2) {deleteAll = true;}
-						}
-						// check for no to all
-						if (response == 3) {deleteNone = true;}
-					}
-				}
-			}
-			// add information to undo stack
-			UndoDeleteRange undo = new UndoDeleteRange(_trackInfo);
-			// delete requested photos
-			for (int i=0; i<numToDelete; i++)
-			{
-				point = _trackInfo.getTrack().getPoint(i + selStart);
-				if (point != null && point.getPhoto() != null)
-				{
-					if (deletePhotos[i])
-					{
-						// delete photo from list
-						_trackInfo.getPhotoList().deletePhoto(_trackInfo.getPhotoList().getPhotoIndex(point.getPhoto()));
-					}
-					else
-					{
-						// decouple from point
-						point.getPhoto().setDataPoint(null);
-					}
-				}
-			}
-			// call track to delete range
-			if (_trackInfo.deleteRange())
-			{
-				_undoStack.push(undo);
-				// Confirm
-				UpdateMessageBroker.informSubscribers("" + numToDelete + " "
-					+ I18nManager.getText("confirm.deletepoint.multi"));
+				UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_ADDED_OR_REMOVED);
 			}
 		}
 	}
@@ -410,7 +339,7 @@ public class App
 	 */
 	public void finishCompressTrack()
 	{
-		UndoCompress undo = new UndoCompress(_track);
+		UndoDeleteMarked undo = new UndoDeleteMarked(_track);
 		// call track to do compress
 		int numPointsDeleted = _trackInfo.deleteMarkedPoints();
 		// add to undo stack if successful
@@ -422,7 +351,7 @@ public class App
 				 + (numPointsDeleted==1?I18nManager.getText("confirm.deletepoint.single"):I18nManager.getText("confirm.deletepoint.multi")));
 		}
 		else {
-			showErrorMessage("function.compress", "dialog.compress.nonefound");
+			showErrorMessage("function.compress", "dialog.deletemarked.nonefound");
 		}
 	}
 
@@ -529,29 +458,6 @@ public class App
 
 
 	/**
-	 * Interpolate the two selected points
-	 */
-	public void interpolateSelection()
-	{
-		// Get number of points to add
-		Object numPointsStr = JOptionPane.showInputDialog(_frame,
-			I18nManager.getText("dialog.interpolate.parameter.text"),
-			I18nManager.getText("dialog.interpolate.title"),
-			JOptionPane.QUESTION_MESSAGE, null, null, "");
-		int numPoints = parseNumber(numPointsStr);
-		if (numPoints <= 0) return;
-
-		UndoInsert undo = new UndoInsert(_trackInfo.getSelection().getStart() + 1,
-			numPoints);
-		// call track to interpolate
-		if (_trackInfo.interpolate(numPoints))
-		{
-			_undoStack.add(undo);
-		}
-	}
-
-
-	/**
 	 * Average the selected points
 	 */
 	public void averageSelection()
@@ -570,7 +476,7 @@ public class App
 
 
 	/**
-	 * Create a new point at the given position
+	 * Create a new point at the end of the track
 	 * @param inPoint point to add
 	 */
 	public void createPoint(DataPoint inPoint)
@@ -584,6 +490,26 @@ public class App
 		// ensure track's field list contains point's fields
 		_track.extendFieldList(inPoint.getFieldList());
 		_trackInfo.selectPoint(_trackInfo.getTrack().getNumPoints()-1);
+		// update listeners
+		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.createpoint"));
+	}
+
+
+	/**
+	 * Create a new point before the given position
+	 * @param inPoint point to add
+	 * @param inIndex index of following point
+	 */
+	public void createPoint(DataPoint inPoint, int inIndex)
+	{
+		// create undo object
+		UndoInsert undo = new UndoInsert(inIndex, 1);
+		_undoStack.add(undo);
+		// add point to track
+		_track.insertPoint(inPoint, inIndex);
+		// ensure track's field list contains point's fields
+		_track.extendFieldList(inPoint.getFieldList());
+		_trackInfo.selectPoint(inIndex);
 		// update listeners
 		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.createpoint"));
 	}
@@ -636,19 +562,6 @@ public class App
 		// deselect point, range and photo
 		_trackInfo.getSelection().clearAll();
 		_track.clearDeletionMarkers();
-	}
-
-	/**
-	 * Receive loaded data and start load
-	 * @param inFieldArray array of fields
-	 * @param inDataArray array of data
-	 * @param inAltFormat altitude format
-	 * @param inSourceInfo information about the source of the data
-	 */
-	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
-		Altitude.Format inAltFormat, SourceInfo inSourceInfo)
-	{
-		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inSourceInfo, null, null);
 	}
 
 	/**
@@ -715,6 +628,7 @@ public class App
 			// go directly to load
 			informDataLoaded(loadedTrack, inSourceInfo);
 		}
+		setCurrentMode(AppMode.NORMAL);
 	}
 
 
@@ -730,16 +644,19 @@ public class App
 		{
 			// ask whether to replace or append
 			int answer = 0;
-			if (_dataFiles == null || _firstDataFile) {
+			if (_autoAppendNextFile) {
+				// Automatically append the next file
+				answer = JOptionPane.YES_OPTION;
+			}
+			else {
+				// Ask whether to append or not
 				answer = JOptionPane.showConfirmDialog(_frame,
 					I18nManager.getText("dialog.openappend.text"),
 					I18nManager.getText("dialog.openappend.title"),
 					JOptionPane.YES_NO_CANCEL_OPTION);
 			}
-			else {
-				// Automatically append if there's a file load queue
-				answer = JOptionPane.YES_OPTION;
-			}
+			_autoAppendNextFile = false; // reset flag to cancel autoappend
+
 			if (answer == JOptionPane.YES_OPTION)
 			{
 				// append data to current Track
@@ -808,11 +725,19 @@ public class App
 	}
 
 	/**
+	 * External trigger to automatically append the next loaded file
+	 * instead of prompting to replace or append
+	 */
+	public void autoAppendNextFile()
+	{
+		_autoAppendNextFile = true;
+	}
+
+	/**
 	 * Load the next file in the waiting list, if any
 	 */
 	private void loadNextFile()
 	{
-		_firstDataFile = false;
 		if (_dataFiles == null || _dataFiles.size() == 0) {
 			_dataFiles = null;
 		}
@@ -821,6 +746,7 @@ public class App
 				public void run() {
 					File f = _dataFiles.get(0);
 					_dataFiles.remove(0);
+					_autoAppendNextFile = true;
 					_fileLoader.openFile(f);
 				}
 			}).start();
@@ -941,31 +867,11 @@ public class App
 			showErrorMessageNoLookup("error.undofailed.title",
 				I18nManager.getText("error.undofailed.text") + " : " + ue.getMessage());
 			_undoStack.clear();
-			UpdateMessageBroker.informSubscribers();
 		}
 		catch (EmptyStackException empty) {}
+		UpdateMessageBroker.informSubscribers();
 	}
 
-
-	/**
-	 * Helper method to parse an Object into an integer
-	 * @param inObject object, eg from dialog
-	 * @return int value given
-	 */
-	private static int parseNumber(Object inObject)
-	{
-		int num = 0;
-		if (inObject != null)
-		{
-			try
-			{
-				num = Integer.parseInt(inObject.toString());
-			}
-			catch (NumberFormatException nfe)
-			{}
-		}
-		return num;
-	}
 
 	/**
 	 * Show a map url in an external browser
@@ -1034,5 +940,15 @@ public class App
 	/** @return true if App is currently busy with loading data */
 	public boolean isBusyLoading() {
 		return _busyLoading;
+	}
+
+	/** @return current app mode */
+	public AppMode getCurrentMode() {
+		return _appMode;
+	}
+
+	/** @param inMode the current app mode */
+	public void setCurrentMode(AppMode inMode) {
+		_appMode = inMode;
 	}
 }

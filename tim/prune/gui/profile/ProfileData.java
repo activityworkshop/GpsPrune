@@ -1,6 +1,7 @@
 package tim.prune.gui.profile;
 
 import tim.prune.data.Track;
+import tim.prune.data.UnitSet;
 
 /**
  * Abstract class for all sources of profile data,
@@ -10,6 +11,8 @@ public abstract class ProfileData
 {
 	/** Track object */
 	protected final Track _track;
+	/** Unit set to use */
+	protected UnitSet _unitSet = null;
 	/** Flag for availability of any data */
 	protected boolean _hasData = false;
 	/** Array of booleans for data per point */
@@ -74,7 +77,15 @@ public abstract class ProfileData
 	/**
 	 * Get the data from the track and populate the value arrays
 	 */
-	public abstract void init();
+	public abstract void init(UnitSet inUnitSet);
+
+	/**
+	 * Set the UnitSet to use for the calculations
+	 * @param inUnitSet unit set
+	 */
+	protected void setUnitSet(UnitSet inUnitSet) {
+		_unitSet = inUnitSet;
+	}
 
 	/**
 	 * @return text for label including units

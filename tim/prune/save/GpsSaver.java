@@ -273,7 +273,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 		// Generate the GPX file and send to the GPS
 		OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
 		boolean[] saveFlags = {true, true, true, true, false, true}; // export everything
-		GpxExporter.exportData(writer, _app.getTrackInfo(), trackName, null, saveFlags, false);
+		GpxExporter.exportData(writer, _app.getTrackInfo(), trackName, null, saveFlags, null);
 		writer.close();
 
 		// Read the error stream to see if there's a better error message there

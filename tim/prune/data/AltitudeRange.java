@@ -6,9 +6,24 @@ package tim.prune.data;
  */
 public class AltitudeRange
 {
+	/** Range of altitudes in metres */
 	private IntegerRange _range = new IntegerRange();
-	private Altitude.Format _format = Altitude.Format.NO_FORMAT;
+	/** Empty flag */
+	private boolean _empty;
+	/** Previous metric value */
+	private int _prevValue;
+	/** Total climb in metres */
+	private double _climb;
+	/** Total descent in metres */
+	private double _descent;
 
+
+	/**
+	 * Constructor
+	 */
+	public AltitudeRange() {
+		clear();
+	}
 
 	/**
 	 * Clear the altitude range
@@ -16,7 +31,10 @@ public class AltitudeRange
 	public void clear()
 	{
 		_range.clear();
-		_format = Altitude.Format.NO_FORMAT;
+		_climb = 0.0;
+		_descent = 0.0;
+		_empty = true;
+		_prevValue = 0;
 	}
 
 
@@ -26,17 +44,33 @@ public class AltitudeRange
 	 */
 	public void addValue(Altitude inAltitude)
 	{
-		if (inAltitude != null)
+		if (inAltitude != null && inAltitude.isValid())
 		{
-			int altValue = inAltitude.getValue(_format);
+			int altValue = (int) inAltitude.getMetricValue();
 			_range.addValue(altValue);
-			if (_format == Altitude.Format.NO_FORMAT)
+			// Compare with previous value if any
+			if (!_empty)
 			{
-				_format = inAltitude.getFormat();
+				if (altValue > _prevValue)
+					_climb += (altValue - _prevValue);
+				else
+					_descent += (_prevValue - altValue);
 			}
+			_prevValue = altValue;
+			_empty = false;
 		}
 	}
 
+	/**
+	 * Reset the climb/descent calculations starting from the given value
+	 * @param inAltitude altitude value
+	 */
+	public void ignoreValue(Altitude inAltitude)
+	{
+		// If we set the empty flag to true, that has the same effect as restarting a segment
+		_empty = true;
+		addValue(inAltitude);
+	}
 
 	/**
 	 * @return true if altitude range found
@@ -48,28 +82,40 @@ public class AltitudeRange
 
 
 	/**
+	 * @param inUnit altitude units to use
 	 * @return minimum value, or -1 if none found
 	 */
-	public int getMinimum()
+	public int getMinimum(Unit inUnit)
 	{
-		return _range.getMinimum();
+		if (_range.getMinimum() <= 0) return _range.getMinimum();
+		return (int) (_range.getMinimum() * inUnit.getMultFactorFromStd());
 	}
 
-
 	/**
+	 * @param inUnit altitude units to use
 	 * @return maximum value, or -1 if none found
 	 */
-	public int getMaximum()
+	public int getMaximum(Unit inUnit)
 	{
-		return _range.getMaximum();
+		if (_range.getMaximum() <= 0) return _range.getMaximum();
+		return (int) (_range.getMaximum() * inUnit.getMultFactorFromStd());
 	}
 
+	/**
+	 * @param inUnit altitude units to use
+	 * @return total climb
+	 */
+	public int getClimb(Unit inUnit)
+	{
+		return (int) (_climb * inUnit.getMultFactorFromStd());
+	}
 
 	/**
-	 * @return the altitude format used
+	 * @param inUnit altitude units to use
+	 * @return total descent
 	 */
-	public Altitude.Format getFormat()
+	public int getDescent(Unit inUnit)
 	{
-		return _format;
+		return (int) (_descent * inUnit.getMultFactorFromStd());
 	}
 }

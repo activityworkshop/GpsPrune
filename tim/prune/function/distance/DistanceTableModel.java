@@ -4,6 +4,7 @@ import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
+import tim.prune.data.Unit;
 
 /**
  * Class to hold the table model for the distances table
@@ -12,10 +13,6 @@ public class DistanceTableModel extends GenericTableModel
 {
 	/** Distances */
 	private double[] _distances = null;
-	/** Metric distances? */
-	private boolean _useMetric = true;
-	/** Previous value of metric flag (to spot changes) */
-	private boolean _prevUseMetric = false;
 	/** Column heading */
 	private static final String _toColLabel = I18nManager.getText("dialog.distances.column.to");
 	/** Column heading (depends on metric/imperial settings) */
@@ -68,9 +65,10 @@ public class DistanceTableModel extends GenericTableModel
 	 */
 	public void recalculate(int inIndex)
 	{
-		// Use metric or not?
-		_useMetric = Config.getConfigBoolean(Config.KEY_METRIC_UNITS);
-		_distanceLabel = getDistanceLabel(_useMetric);
+		// Which units to use?
+		Unit distUnit = Config.getUnitSet().getDistanceUnit();
+		_distanceLabel = I18nManager.getText("fieldname.distance") + " (" +
+			I18nManager.getText(distUnit.getShortnameKey()) + ")";
 		// Initialize array of distances
 		int numRows = getRowCount();
 		if (_distances == null || _distances.length != numRows) {
@@ -83,26 +81,10 @@ public class DistanceTableModel extends GenericTableModel
 			}
 			else {
 				double rads = DataPoint.calculateRadiansBetween(fromPoint, _pointList.get(i));
-				_distances[i] = Distance.convertRadiansToDistance(rads, _useMetric?Distance.Units.KILOMETRES:Distance.Units.MILES);
+				_distances[i] = Distance.convertRadiansToDistance(rads);
 			}
 		}
-		// Let table know that it has to refresh data (and maybe refresh column headings too)
-		if (_useMetric == _prevUseMetric) {
-			fireTableDataChanged();
-		}
-		else {
-			fireTableStructureChanged();
-		}
-		_prevUseMetric = _useMetric;
-	}
-
-	/**
-	 * @param inMetric true to use metric distances
-	 * @return distance label for column heading
-	 */
-	private static String getDistanceLabel(boolean inMetric)
-	{
-		return I18nManager.getText("fieldname.distance") + " (" +
-			I18nManager.getText(inMetric?"units.kilometres.short" : "units.miles.short") + ")";
+		// Let table know that it has to refresh data (and might as well refresh column headings too)
+		fireTableStructureChanged();
 	}
 }

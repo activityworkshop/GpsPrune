@@ -72,6 +72,7 @@ public class RecentFile
 	public boolean isSameFile(RecentFile inOther)
 	{
 		return inOther != null && isValid() && inOther.isValid()
-			&& _file.equals(inOther._file);
+			&& (_file.equals(inOther._file) || _file.getAbsolutePath().equals(inOther._file.getAbsolutePath()));
+		// Note that the file.equals should be sufficient but sometimes it returns false even if the absolute paths are identical
 	}
 }

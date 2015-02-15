@@ -5,7 +5,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.TrackInfo;
 
 /**
- * Operation to undo an insertion (eg interpolate, average)
+ * Operation to undo an insertion (eg average)
  */
 public class UndoInsert implements UndoOperation
 {

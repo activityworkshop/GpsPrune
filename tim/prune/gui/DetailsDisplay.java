@@ -26,16 +26,19 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
+import tim.prune.data.AltitudeRange;
 import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Distance;
 import tim.prune.data.Field;
-import tim.prune.data.IntegerRange;
 import tim.prune.data.Photo;
 import tim.prune.data.Selection;
+import tim.prune.data.SpeedCalculator;
+import tim.prune.data.SpeedValue;
 import tim.prune.data.TrackInfo;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSet;
+import tim.prune.data.UnitSetLibrary;
 
 /**
  * Class to hold point details and selection details
@@ -47,7 +50,8 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _indexLabel = null;
 	private JLabel _latLabel = null, _longLabel = null;
 	private JLabel _altLabel = null;
-	private JLabel _timeLabel = null, _speedLabel = null;
+	private JLabel _timeLabel = null;
+	private JLabel _speedLabel = null, _vSpeedLabel = null;
 	private JLabel _nameLabel = null, _typeLabel = null;
 
 	// Range details
@@ -60,6 +64,7 @@ public class DetailsDisplay extends GenericDisplay
 	// Photo details
 	private JPanel _photoDetailsPanel = null;
 	private JLabel _photoLabel = null;
+	private JLabel _photoPathLabel = null;
 	private PhotoThumbnail _photoThumbnail = null;
 	private JLabel _photoTimestampLabel = null;
 	private JLabel _photoConnectedLabel = null;
@@ -69,6 +74,7 @@ public class DetailsDisplay extends GenericDisplay
 	// Audio details
 	private JPanel _audioDetailsPanel = null;
 	private JLabel _audioLabel = null;
+	private JLabel _audioPathLabel = null;
 	private JLabel _audioConnectedLabel = null;
 	private JLabel _audioTimestampLabel = null;
 	private JLabel _audioLengthLabel = null;
@@ -89,6 +95,8 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_POINT_TIMESTAMP = I18nManager.getText("fieldname.timestamp") + ": ";
 	private static final String LABEL_POINT_WAYPOINTNAME = I18nManager.getText("fieldname.waypointname") + ": ";
 	private static final String LABEL_POINT_WAYPOINTTYPE = I18nManager.getText("fieldname.waypointtype") + ": ";
+	private static final String LABEL_POINT_SPEED        = I18nManager.getText("fieldname.speed") + ": ";
+	private static final String LABEL_POINT_VERTSPEED    = I18nManager.getText("fieldname.verticalspeed") + ": ";
 	private static final String LABEL_RANGE_SELECTED = I18nManager.getText("details.range.selected") + ": ";
 	private static final String LABEL_RANGE_DURATION = I18nManager.getText("fieldname.duration") + ": ";
 	private static final String LABEL_RANGE_DISTANCE = I18nManager.getText("fieldname.distance") + ": ";
@@ -96,8 +104,7 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_RANGE_CLIMB = I18nManager.getText("details.range.climb") + ": ";
 	private static final String LABEL_RANGE_DESCENT = ", " + I18nManager.getText("details.range.descent") + ": ";
 	private static final String LABEL_AUDIO_FILE = I18nManager.getText("details.audio.file") + ": ";
-	private static String LABEL_POINT_ALTITUDE_UNITS = null;
-	private static Altitude.Format LABEL_POINT_ALTITUDE_FORMAT = Altitude.Format.NO_FORMAT;
+	private static final String LABEL_FULL_PATH = I18nManager.getText("details.media.fullpath") + ": ";
 
 
 	/**
@@ -130,6 +137,8 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_timeLabel);
 		_speedLabel = new JLabel("");
 		pointDetailsPanel.add(_speedLabel);
+		_vSpeedLabel = new JLabel("");
+		pointDetailsPanel.add(_vSpeedLabel);
 		_nameLabel = new JLabel("");
 		pointDetailsPanel.add(_nameLabel);
 		_typeLabel = new JLabel("");
@@ -156,6 +165,8 @@ public class DetailsDisplay extends GenericDisplay
 		_photoDetailsPanel = makeDetailsPanel("details.photodetails", biggerFont);
 		_photoLabel = new JLabel(I18nManager.getText("details.nophoto"));
 		_photoDetailsPanel.add(_photoLabel);
+		_photoPathLabel = new JLabel("");
+		_photoDetailsPanel.add(_photoPathLabel);
 		_photoTimestampLabel = new JLabel("");
 		_photoTimestampLabel.setMinimumSize(new Dimension(120, 10));
 		_photoDetailsPanel.add(_photoTimestampLabel);
@@ -185,6 +196,8 @@ public class DetailsDisplay extends GenericDisplay
 		_audioDetailsPanel = makeDetailsPanel("details.audiodetails", biggerFont);
 		_audioLabel = new JLabel(I18nManager.getText("details.noaudio"));
 		_audioDetailsPanel.add(_audioLabel);
+		_audioPathLabel = new JLabel("");
+		_audioDetailsPanel.add(_audioPathLabel);
 		_audioTimestampLabel = new JLabel("");
 		_audioTimestampLabel.setMinimumSize(new Dimension(120, 10));
 		_audioDetailsPanel.add(_audioTimestampLabel);
@@ -241,13 +254,17 @@ public class DetailsDisplay extends GenericDisplay
 		JLabel unitsLabel = new JLabel(I18nManager.getText("details.distanceunits") + ": ");
 		unitsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		lowerPanel.add(unitsLabel);
-		String[] distUnits = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.miles")};
-		_distUnitsDropdown = new JComboBox(distUnits);
-		if (!Config.getConfigBoolean(Config.KEY_METRIC_UNITS)) {_distUnitsDropdown.setSelectedIndex(1);}
+		// Make dropdown for distance units
+		_distUnitsDropdown = new JComboBox();
+		final UnitSet currUnits = Config.getUnitSet();
+		for (int i=0; i<UnitSetLibrary.getNumUnitSets(); i++) {
+			_distUnitsDropdown.addItem(I18nManager.getText(UnitSetLibrary.getUnitSet(i).getDistanceUnit().getNameKey()));
+			if (UnitSetLibrary.getUnitSet(i) == currUnits) {_distUnitsDropdown.setSelectedIndex(i);}
+		}
 		_distUnitsDropdown.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				Config.setConfigBoolean(Config.KEY_METRIC_UNITS, _distUnitsDropdown.getSelectedIndex() == 0);
+				Config.selectUnitSet(_distUnitsDropdown.getSelectedIndex());
 				UpdateMessageBroker.informSubscribers(DataSubscriber.UNITS_CHANGED);
 			}
 		});
@@ -269,9 +286,9 @@ public class DetailsDisplay extends GenericDisplay
 		if ((inUpdateType | DATA_ADDED_OR_REMOVED) > 0) selection.markInvalid();
 		int currentPointIndex = selection.getCurrentPointIndex();
 		_speedLabel.setText("");
-		Distance.Units distUnits = _distUnitsDropdown.getSelectedIndex()==0?Distance.Units.KILOMETRES:Distance.Units.MILES;
-		String distUnitsStr = I18nManager.getText(_distUnitsDropdown.getSelectedIndex()==0?"units.kilometres.short":"units.miles.short");
-		String speedUnitsStr = I18nManager.getText(_distUnitsDropdown.getSelectedIndex()==0?"units.kmh":"units.mph");
+		UnitSet unitSet = UnitSetLibrary.getUnitSet(_distUnitsDropdown.getSelectedIndex());
+		String distUnitsStr = I18nManager.getText(unitSet.getDistanceUnit().getShortnameKey());
+		String speedUnitsStr = I18nManager.getText(unitSet.getSpeedUnit().getShortnameKey());
 		if (_track == null || currentPoint == null)
 		{
 			_indexLabel.setText(I18nManager.getText("details.nopointselection"));
@@ -281,6 +298,8 @@ public class DetailsDisplay extends GenericDisplay
 			_timeLabel.setText("");
 			_nameLabel.setText("");
 			_typeLabel.setText("");
+			_speedLabel.setText("");
+			_vSpeedLabel.setText("");
 		}
 		else
 		{
@@ -289,34 +308,42 @@ public class DetailsDisplay extends GenericDisplay
 				+ " " + _track.getNumPoints());
 			_latLabel.setText(makeCoordinateLabel(LABEL_POINT_LATITUDE, currentPoint.getLatitude(), _coordFormatDropdown.getSelectedIndex()));
 			_longLabel.setText(makeCoordinateLabel(LABEL_POINT_LONGITUDE, currentPoint.getLongitude(), _coordFormatDropdown.getSelectedIndex()));
+			Unit altUnit = Config.getUnitSet().getAltitudeUnit();
 			_altLabel.setText(currentPoint.hasAltitude()?
-				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getValue() + getAltitudeUnitsLabel(currentPoint.getAltitude().getFormat()))
-				:"");
-			if (currentPoint.getTimestamp().isValid())
-			{
-				if (currentPointIndex > 0 && currentPointIndex < (_trackInfo.getTrack().getNumPoints()-1))
-				{
-					DataPoint prevPoint = _trackInfo.getTrack().getPoint(currentPointIndex - 1);
-					DataPoint nextPoint = _trackInfo.getTrack().getPoint(currentPointIndex + 1);
-					if (prevPoint.getTimestamp().isValid() && nextPoint.getTimestamp().isValid())
-					{
-						// use total distance and total time between neighbouring points
-						long diff = nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp());
-						if (diff < 1000 && diff > 0)
-						{
-							double rads = DataPoint.calculateRadiansBetween(prevPoint, currentPoint) +
-								DataPoint.calculateRadiansBetween(currentPoint, nextPoint);
-							double dist = Distance.convertRadiansToDistance(rads, distUnits);
-							String speed = roundedNumber(3600 * dist / diff) + " " + speedUnitsStr;
-							_speedLabel.setText(I18nManager.getText("fieldname.speed") + ": " + speed);
-						}
-					}
-				}
+				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getValue(altUnit) + " " +
+				I18nManager.getText(altUnit.getShortnameKey()))
+				: "");
+			if (currentPoint.hasTimestamp()) {
 				_timeLabel.setText(LABEL_POINT_TIMESTAMP + currentPoint.getTimestamp().getText());
 			}
 			else {
 				_timeLabel.setText("");
 			}
+
+			// Speed can come from either timestamps and distances, or speed values in data
+			SpeedValue speedValue = new SpeedValue();
+			SpeedCalculator.calculateSpeed(_track, currentPointIndex, speedValue);
+			if (speedValue.isValid())
+			{
+				String speed = roundedNumber(speedValue.getValue()) + " " + speedUnitsStr;
+				_speedLabel.setText(LABEL_POINT_SPEED + speed);
+			}
+			else {
+				_speedLabel.setText("");
+			}
+
+			// Now do the vertical speed in the same way
+			SpeedCalculator.calculateVerticalSpeed(_track, currentPointIndex, speedValue);
+			if (speedValue.isValid())
+			{
+				String vSpeedUnitsStr = I18nManager.getText(unitSet.getVerticalSpeedUnit().getShortnameKey());
+				String speed = roundedNumber(speedValue.getValue()) + " " + vSpeedUnitsStr;
+				_vSpeedLabel.setText(LABEL_POINT_VERTSPEED + speed);
+			}
+			else {
+				_vSpeedLabel.setText("");
+			}
+
 			// Waypoint name
 			final String name = currentPoint.getWaypointName();
 			if (name != null && !name.equals(""))
@@ -347,27 +374,28 @@ public class DetailsDisplay extends GenericDisplay
 			_rangeLabel.setText(LABEL_RANGE_SELECTED
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
-			_distanceLabel.setText(LABEL_RANGE_DISTANCE + roundedNumber(selection.getDistance(distUnits)) + " " + distUnitsStr);
+			_distanceLabel.setText(LABEL_RANGE_DISTANCE + roundedNumber(selection.getDistance()) + " " + distUnitsStr);
 			if (selection.getNumSeconds() > 0)
 			{
 				_durationLabel.setText(LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(selection.getNumSeconds()));
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
-					+ roundedNumber(selection.getDistance(distUnits)/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
+					+ roundedNumber(selection.getDistance()/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
 			}
 			else {
 				_durationLabel.setText("");
 				_aveSpeedLabel.setText("");
 			}
-			String altUnitsLabel = getAltitudeUnitsLabel(selection.getAltitudeFormat());
-			IntegerRange altRange = selection.getAltitudeRange();
-			if (altRange.getMinimum() >= 0 && altRange.getMaximum() >= 0)
+			AltitudeRange altRange = selection.getAltitudeRange();
+			Unit altUnit = Config.getUnitSet().getAltitudeUnit();
+			String altUnitsLabel = I18nManager.getText(altUnit.getShortnameKey());
+			if (altRange.hasRange())
 			{
 				_altRangeLabel.setText(LABEL_RANGE_ALTITUDE
-					+ altRange.getMinimum() + altUnitsLabel + " "
+					+ altRange.getMinimum(altUnit) + altUnitsLabel + " "
 					+ I18nManager.getText("details.altitude.to") + " "
-					+ altRange.getMaximum() + altUnitsLabel);
-				_updownLabel.setText(LABEL_RANGE_CLIMB + selection.getClimb() + altUnitsLabel
-					+ LABEL_RANGE_DESCENT + selection.getDescent() + altUnitsLabel);
+					+ altRange.getMaximum(altUnit) + altUnitsLabel);
+				_updownLabel.setText(LABEL_RANGE_CLIMB + altRange.getClimb(altUnit) + altUnitsLabel
+					+ LABEL_RANGE_DESCENT + altRange.getDescent(altUnit) + altUnitsLabel);
 			}
 			else
 			{
@@ -382,6 +410,8 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			// no photo, hide details
 			_photoLabel.setText(I18nManager.getText("details.nophoto"));
+			_photoPathLabel.setText("");
+			_photoPathLabel.setToolTipText("");
 			_photoTimestampLabel.setText("");
 			_photoConnectedLabel.setText("");
 			_photoBearingLabel.setText("");
@@ -392,6 +422,10 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
 			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getName());
+			String fullPath = currentPhoto.getFullPath();
+			String shortPath = shortenPath(fullPath);
+			_photoPathLabel.setText(fullPath == null ? "" : LABEL_FULL_PATH + shortPath);
+			_photoPathLabel.setToolTipText(currentPhoto.getFullPath());
 			_photoTimestampLabel.setText(currentPhoto.hasTimestamp()?(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText()):"");
 			_photoConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
 				+ (currentPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
@@ -412,8 +446,11 @@ public class DetailsDisplay extends GenericDisplay
 		// audio details
 		_audioDetailsPanel.setVisible(_trackInfo.getAudioList().getNumAudios() > 0);
 		AudioClip currentAudio = _trackInfo.getAudioList().getAudio(_trackInfo.getSelection().getCurrentAudioIndex());
-		if (currentAudio == null) {
+		if (currentAudio == null)
+		{
 			_audioLabel.setText(I18nManager.getText("details.noaudio"));
+			_audioPathLabel.setText("");
+			_audioPathLabel.setToolTipText("");
 			_audioTimestampLabel.setText("");
 			_audioLengthLabel.setText("");
 			_audioConnectedLabel.setText("");
@@ -421,6 +458,10 @@ public class DetailsDisplay extends GenericDisplay
 		else
 		{
 			_audioLabel.setText(LABEL_AUDIO_FILE + currentAudio.getName());
+			String fullPath = currentAudio.getFullPath();
+			String shortPath = shortenPath(fullPath);
+			_audioPathLabel.setText(fullPath == null ? "" : LABEL_FULL_PATH + shortPath);
+			_audioPathLabel.setToolTipText(fullPath == null ? "" : fullPath);
 			_audioTimestampLabel.setText(currentAudio.hasTimestamp()?(LABEL_POINT_TIMESTAMP + currentAudio.getTimestamp().getText()):"");
 			int audioLength = currentAudio.getLengthInSeconds();
 			_audioLengthLabel.setText(audioLength < 0?"":LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(audioLength));
@@ -429,22 +470,6 @@ public class DetailsDisplay extends GenericDisplay
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
 		}
 		_playAudioPanel.setVisible(currentAudio != null);
-	}
-
-
-	/**
-	 * Choose the appropriate altitude units label for the specified format
-	 * @param inFormat altitude format
-	 * @return language-sensitive string
-	 */
-	private static String getAltitudeUnitsLabel(Altitude.Format inFormat)
-	{
-		if (inFormat == LABEL_POINT_ALTITUDE_FORMAT && LABEL_POINT_ALTITUDE_UNITS != null)
-			return LABEL_POINT_ALTITUDE_UNITS;
-		LABEL_POINT_ALTITUDE_FORMAT = inFormat;
-		if (inFormat == Altitude.Format.METRES)
-			return " " + I18nManager.getText("units.metres.short");
-		return " " + I18nManager.getText("units.feet.short");
 	}
 
 
@@ -549,5 +574,23 @@ public class DetailsDisplay extends GenericDisplay
 		button.setMargin(new Insets(0, 2, 0, 2));
 		button.addActionListener(new FunctionLauncher(inFunction));
 		return button;
+	}
+
+	/**
+	 * @param inFullPath full file path or URL to be shortened
+	 * @return shortened string from beginning of path
+	 */
+	private static String shortenPath(String inFullPath)
+	{
+		// Chop off the home path if possible
+		final String homePath = System.getProperty("user.home").toLowerCase();
+		if (inFullPath != null && inFullPath.toLowerCase().startsWith(homePath)) {
+			inFullPath = inFullPath.substring(homePath.length()+1);
+		}
+		if (inFullPath == null || inFullPath.length() < 21) {
+			return inFullPath;
+		}
+		// path is too long
+		return inFullPath.substring(0, 20) + "...";
 	}
 }

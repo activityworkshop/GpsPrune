@@ -27,12 +27,16 @@ public abstract class MapUtils
 
 	/**
 	 * Transform an x coordinate into a longitude
-	 * @param inX scaled X value from 0 to 1
+	 * @param inX scaled X value from 0(-180deg) to 1(+180deg)
 	 * @return longitude in degrees
 	 */
 	public static double getLongitudeFromX(double inX)
 	{
-		return inX * 360.0 - 180.0;
+		// Ensure x is really between 0 and 1 (to wrap longitudes)
+		double x = ((inX % 1.0) + 1.0) % 1.0;
+		// Note: First %1.0 restricts range to (-1,1), then +1.0 shifts to (0,2)
+		// Finally, %1.0 to give (0,1)
+		return x * 360.0 - 180.0;
 	}
 
 	/**

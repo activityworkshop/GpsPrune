@@ -20,10 +20,15 @@ public class Field
 	public static final Field DESCRIPTION = new Field("fieldname.description", true);
 	public static final Field NEW_SEGMENT = new Field("fieldname.newsegment", true);
 
+	public static final Field SPEED          = new Field("fieldname.speed", true);
+	public static final Field VERTICAL_SPEED = new Field("fieldname.verticalspeed", true);
+
 	// TODO: Field for photo filename, ability to load (from text) and save (to text)
 
+	/** List of all the available fields */
 	private static final Field[] ALL_AVAILABLE_FIELDS = {
 		LATITUDE, LONGITUDE, ALTITUDE, TIMESTAMP, WAYPT_NAME, WAYPT_TYPE, DESCRIPTION, NEW_SEGMENT,
+		SPEED, VERTICAL_SPEED,
 		new Field(I18nManager.getText("fieldname.custom"))
 	};
 

@@ -8,6 +8,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.HashSet;
+
+import tim.prune.GpsPrune;
 
 /**
  * Class to control the reading and saving of map tiles
@@ -23,6 +27,8 @@ public class DiskTileCacher implements Runnable
 	private ImageObserver _observer = null;
 	/** Time limit to cache images for */
 	private static final long CACHE_TIME_LIMIT = 20 * 24 * 60 * 60 * 1000; // 20 days in ms
+	/** Hashset of all blocked / 404 tiles to avoid requesting them again */
+	private static final HashSet<String> BLOCKED_URLS = new HashSet<String>();
 
 	/**
 	 * Private constructor
@@ -49,7 +55,8 @@ public class DiskTileCacher implements Runnable
 		if (inBasePath == null) {return null;}
 		File tileFile = new File(inBasePath, inTilePath);
 		Image image = null;
-		if (tileFile.exists() && tileFile.canRead() && tileFile.length() > 0) {
+		if (tileFile.exists() && tileFile.canRead() && tileFile.length() > 0)
+		{
 			long fileStamp = tileFile.lastModified();
 			if (!inCheckAge || ((System.currentTimeMillis()-fileStamp) < CACHE_TIME_LIMIT))
 			{
@@ -72,7 +79,6 @@ public class DiskTileCacher implements Runnable
 	 */
 	public static boolean saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver)
 	{
-		// TODO: Check that these are getting blocked properly
 		if (inBasePath == null || inTilePath == null) {return false;}
 		// save file if possible
 		File basePath = new File(inBasePath);
@@ -83,6 +89,8 @@ public class DiskTileCacher implements Runnable
 		File tileFile = new File(basePath, inTilePath);
 		// Check if this file is already being loaded
 		if (isBeingLoaded(tileFile)) {return true;}
+		// Check if it has already failed
+		if (BLOCKED_URLS.contains(inUrl.toString())) {return true;}
 
 		File dir = tileFile.getParentFile();
 		// Start a new thread to load the image if necessary
@@ -115,7 +123,8 @@ public class DiskTileCacher implements Runnable
 		FileOutputStream out = null;
 		File tempFile = new File(_file.getAbsolutePath() + ".temp");
 		// Use a synchronized block across all threads to make sure this url is only fetched once
-		synchronized (DiskTileCacher.class) {
+		synchronized (DiskTileCacher.class)
+		{
 			if (tempFile.exists()) {return;}
 			try {
 				if (!tempFile.createNewFile()) {return;}
@@ -126,14 +135,20 @@ public class DiskTileCacher implements Runnable
 		{
 			// Open streams from URL and to file
 			out = new FileOutputStream(tempFile);
-			in = _url.openStream();
+			// Set http user agent on connection
+			URLConnection conn = _url.openConnection();
+			conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
+			in = conn.getInputStream();
 			int d = 0;
 			// Loop over each byte in the stream (maybe buffering is more efficient?)
 			while ((d = in.read()) >= 0) {
 				out.write(d);
 			}
 			finished = true;
-		} catch (IOException e) {}
+		} catch (IOException e) {
+			System.err.println("ioe: " + e.getClass().getName() + " - " + e.getMessage());
+			BLOCKED_URLS.add(_url.toString());
+		}
 		finally
 		{
 			// clean up files

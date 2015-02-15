@@ -172,7 +172,7 @@ public abstract class MediaList
 	public boolean hasUncorrelatedMedia()
 	{
 		for (MediaObject m : _media) {
-			if (m.getDataPoint() == null) {
+			if (m.getDataPoint() == null && m.hasTimestamp()) {
 				return true;
 			}
 		}

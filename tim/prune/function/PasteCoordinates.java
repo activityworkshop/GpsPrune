@@ -75,8 +75,8 @@ public class PasteCoordinates extends GenericFunction
 		// MAYBE: Paste clipboard into the edit field
 		_coordField.setText("");
 		_nameField.setText("");
-		boolean metric = Config.getConfigBoolean(Config.KEY_METRIC_UNITS);
-		_altUnitsDropDown.setSelectedIndex(metric?0:1);
+		boolean useMetres = (Config.getUnitSet().getDefaultAltitudeFormat() == Altitude.Format.METRES);
+		_altUnitsDropDown.setSelectedIndex(useMetres?0:1);
 		enableOK();
 		_dialog.setVisible(true);
 	}

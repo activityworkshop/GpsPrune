@@ -11,6 +11,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import tim.prune.App;
@@ -169,14 +170,27 @@ public class CompressTrackFunction extends GenericFunction
 	{
 		boolean[] deleteFlags = preview();
 		// All flags are now combined in deleteFlags array
+		int numMarked = 0;
 		for (int i=0; i<deleteFlags.length; i++)
 		{
 			DataPoint point = _track.getPoint(i);
-			point.setMarkedForDeletion(deleteFlags[i] && !point.hasMedia());
+			boolean deletePoint = deleteFlags[i] && !point.hasMedia();
+			point.setMarkedForDeletion(deletePoint);
+			if (deletePoint) numMarked++;
 		}
 
 		// Close dialog and inform listeners
 		UpdateMessageBroker.informSubscribers();
 		_dialog.dispose();
+		// Show confirmation dialog with OK button (not status bar message)
+		if (numMarked > 0) {
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.compress.confirm1")
+				+ " " + numMarked + " " + I18nManager.getText("dialog.compress.confirm2"),
+				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		}
+		else {
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.compress.confirmnone"),
+				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 }

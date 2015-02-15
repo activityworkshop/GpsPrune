@@ -12,6 +12,7 @@ public class UndoDeletePoint implements UndoOperation
 	private int _pointIndex = -1;
 	private DataPoint _point = null;
 	private int _photoIndex = -1;
+	private int _audioIndex = -1;
 	private boolean _segmentStart = false;
 
 
@@ -20,13 +21,16 @@ public class UndoDeletePoint implements UndoOperation
 	 * @param inPointIndex index number of point within track
 	 * @param inPoint data point
 	 * @param inPhotoIndex index number of photo within photo list
+	 * @param inAudioIndex index number of audio within audio list
 	 * @param inSegmentStart true if following track point starts new segment
 	 */
-	public UndoDeletePoint(int inPointIndex, DataPoint inPoint, int inPhotoIndex, boolean inSegmentStart)
+	public UndoDeletePoint(int inPointIndex, DataPoint inPoint, int inPhotoIndex, int inAudioIndex,
+		boolean inSegmentStart)
 	{
 		_pointIndex = inPointIndex;
 		_point = inPoint;
 		_photoIndex = inPhotoIndex;
+		_audioIndex = inAudioIndex;
 		_segmentStart = inSegmentStart;
 	}
 
@@ -68,6 +72,13 @@ public class UndoDeletePoint implements UndoOperation
 			if (_point.getPhoto().getDataPoint() != _point) {
 				_point.getPhoto().setDataPoint(_point);
 			}
+		}
+		// Re-add audio as well if necessary
+		if (_point.getAudio() != null && _audioIndex > -1)
+		{
+			// add audio object to list
+			inTrackInfo.getAudioList().addAudio(_point.getAudio(), _audioIndex);
+			_point.getAudio().setDataPoint(_point);
 		}
 		// Restore previous status of following track point if necessary
 		if (!_segmentStart)

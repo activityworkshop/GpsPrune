@@ -83,7 +83,9 @@ public class MediaSelectionTableModel extends AbstractTableModel
 		// MAYBE: only show time of photos (not date) if dates all identical
 		MediaSelectionTableRow row = _list.get(inRowIndex);
 		if (inColumnIndex == 0) return row.getMedia().getName();
-		else if (inColumnIndex == 1) return row.getMedia().getTimestamp().getText();
+		else if (inColumnIndex == 1) {
+			return (row.getMedia().hasTimestamp() ? row.getMedia().getTimestamp().getText() : "");
+		}
 		else if (inColumnIndex == 2) return row.getTimeDiff().getDescription();
 		return (row.getTimeDiff().getIsPositive() ? I18nManager.getText("dialog.about.yes") :
 			I18nManager.getText("dialog.about.no"));

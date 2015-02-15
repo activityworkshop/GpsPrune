@@ -395,18 +395,13 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 				if (subdir.isDirectory()) {
 					numDeleted += deleteFilesFrom(subdir, inMaxDays);
 				}
-				else if (subdir.isFile() && subdir.exists())
+				else if (subdir.isFile() && subdir.exists() && _TILEFILTER.accept(subdir))
 				{
-					boolean isTileFile = _TILEFILTER.accept(subdir);
-					boolean isBadFile = !isTileFile && subdir.getName().toLowerCase().endsWith("png");
-					if (isTileFile || isBadFile)
+					long fileAge = (now - subdir.lastModified()) / 1000 / 60 / 60 / 24;
+					if (inMaxDays < 0 || fileAge > inMaxDays)
 					{
-						long fileAge = (now - subdir.lastModified()) / 1000 / 60 / 60 / 24;
-						if (inMaxDays < 0 || fileAge > inMaxDays || isBadFile)
-						{
-							if (subdir.delete()) {
-								numDeleted++;
-							}
+						if (subdir.delete()) {
+							numDeleted++;
 						}
 					}
 				}

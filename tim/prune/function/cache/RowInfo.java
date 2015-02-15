@@ -86,6 +86,7 @@ public class RowInfo
 
 	/**
 	 * Mark that an unexpected file or directory was found
+	 * TODO: Is this needed?
 	 */
 	public void foundUnexpected() {
 		_unexpected = true;

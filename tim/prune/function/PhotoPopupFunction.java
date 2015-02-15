@@ -61,7 +61,14 @@ public class PhotoPopupFunction extends GenericFunction
 			_frame.setLocationRelativeTo(_parentFrame);
 		}
 		initFrame();
-		_frame.setVisible(true);
+		final Photo photo = _app.getTrackInfo().getCurrentPhoto();
+		if (photo.getWidth() <= 0 || photo.getHeight() <= 0) {
+			_app.showErrorMessageNoLookup(getNameKey(), I18nManager.getText("error.showphoto.failed")
+			 + " : " + photo.getName());
+		}
+		else {
+			_frame.setVisible(true);
+		}
 	}
 
 	/**

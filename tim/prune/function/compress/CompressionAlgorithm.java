@@ -78,6 +78,7 @@ public abstract class CompressionAlgorithm
 		if (isActivated())
 		{
 			// Run the compression and set the deletion flags
+			_trackDetails.initialise();
 			numDeleted = compress(inFlags);
 			_summaryLabel.setValue(numDeleted);
 		}

@@ -1,19 +1,15 @@
 package tim.prune.gui.profile;
 
 import tim.prune.I18nManager;
-import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
+import tim.prune.data.UnitSet;
 
 /**
  * Class to provide a source of altitude data for the profile chart
  */
 public class AltitudeData extends ProfileData
 {
-	/** Altitude format for values */
-	private Altitude.Format _altitudeFormat = Altitude.Format.NO_FORMAT;
-
-
 	/**
 	 * Constructor
 	 * @param inTrack track object
@@ -25,11 +21,13 @@ public class AltitudeData extends ProfileData
 	/**
 	 * Get the data and populate the instance arrays
 	 */
-	public void init()
+	public void init(UnitSet inUnitSet)
 	{
+		setUnitSet(inUnitSet);
 		initArrays();
 		_hasData = false;
-		_altitudeFormat = Altitude.Format.NO_FORMAT;
+		// multiplication factor for unit conversion
+		final double multFactor = _unitSet.getAltitudeUnit().getMultFactorFromStd();
 		if (_track != null)
 		{
 			for (int i=0; i<_track.getNumPoints(); i++)
@@ -39,17 +37,11 @@ public class AltitudeData extends ProfileData
 					DataPoint point = _track.getPoint(i);
 					if (point != null && point.hasAltitude())
 					{
-						// Point has an altitude - if it's the first one, use its format
-						if (_altitudeFormat == Altitude.Format.NO_FORMAT)
-						{
-							_altitudeFormat = point.getAltitude().getFormat();
-							_minValue = _maxValue = point.getAltitude().getValue();
-						}
-						// Store the value and maintain max and min values
-						double value = point.getAltitude().getValue(_altitudeFormat);
+						// Point has an altitude - store value and maintain max and min values
+						double value = point.getAltitude().getMetricValue() * multFactor;
 						_pointValues[i] = value;
-						if (value < _minValue) {_minValue = value;}
-						if (value > _maxValue) {_maxValue = value;}
+						if (value < _minValue || !_hasData) {_minValue = value;}
+						if (value > _maxValue || !_hasData) {_maxValue = value;}
 
 						_hasData = true;
 						_pointHasData[i] = true;
@@ -69,7 +61,7 @@ public class AltitudeData extends ProfileData
 	public String getLabel()
 	{
 		return I18nManager.getText("fieldname.altitude") + " ("
-			+ I18nManager.getText(_altitudeFormat==Altitude.Format.FEET?"units.feet.short":"units.metres.short")
+			+ I18nManager.getText(_unitSet.getAltitudeUnit().getShortnameKey())
 			+ ")";
 	}
 

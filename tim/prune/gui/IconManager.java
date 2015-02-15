@@ -28,6 +28,10 @@ public abstract class IconManager
 	public static final String POINTS_CONNECTED_BUTTON = "points_connected.gif";
 	/** Icon for points disconnected icon on main map display */
 	public static final String POINTS_DISCONNECTED_BUTTON = "points_disconnected.gif";
+	 /** Icon for edit mode button on main map display when not selected */
+	public static final String EDIT_MODE_BUTTON = "drag_points_icon.gif";
+	 /** Icon for edit mode button on main map display when selected */
+	public static final String EDIT_MODE_BUTTON_ON = "drag_points_icon_on.gif";
 	/** Icon for zoom in button on main map display */
 	public static final String ZOOM_IN_BUTTON = "zoom_in.gif";
 	/** Icon for zoom out button on main map display */

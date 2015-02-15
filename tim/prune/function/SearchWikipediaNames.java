@@ -130,22 +130,29 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 		_statusLabel.setText(descMessage);
 	}
 
+
 	/**
-	 * Load the selected track or point
+	 * Load the selected point(s)
 	 */
 	protected void loadSelected()
 	{
-		// Find the row selected in the table and get the corresponding track
-		int rowNum = _trackTable.getSelectedRow();
-		if (rowNum >= 0 && rowNum < _trackListModel.getRowCount())
+		// Find the rows selected in the table and get the corresponding coords
+		int numSelected = _trackTable.getSelectedRowCount();
+		if (numSelected < 1) return;
+		int[] rowNums = _trackTable.getSelectedRows();
+		for (int i=0; i<numSelected; i++)
 		{
-			String coords = _trackListModel.getTrack(rowNum).getDownloadLink();
-			String[] latlon = coords.split(",");
-			if (latlon.length == 2)
+			int rowNum = rowNums[i];
+			if (rowNum >= 0 && rowNum < _trackListModel.getRowCount())
 			{
-				DataPoint point = new DataPoint(new Latitude(latlon[0]), new Longitude(latlon[1]), null);
-				point.setFieldValue(Field.WAYPT_NAME, _trackListModel.getTrack(rowNum).getTrackName(), false);
-				_app.createPoint(point);
+				String coords = _trackListModel.getTrack(rowNum).getDownloadLink();
+				String[] latlon = coords.split(",");
+				if (latlon.length == 2)
+				{
+					DataPoint point = new DataPoint(new Latitude(latlon[0]), new Longitude(latlon[1]), null);
+					point.setFieldValue(Field.WAYPT_NAME, _trackListModel.getTrack(rowNum).getTrackName(), false);
+					_app.createPoint(point);
+				}
 			}
 		}
 		// Close the dialog

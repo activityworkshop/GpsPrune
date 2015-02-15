@@ -29,13 +29,13 @@ import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.Field;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
-import tim.prune.data.Distance.Units;
+import tim.prune.gui.profile.SpeedData;
+import tim.prune.gui.profile.VerticalSpeedData;
 import tim.prune.load.GenericFileFilter;
 
 /**
@@ -219,7 +219,7 @@ public class Charter extends GenericFunction
 	private boolean setupDialog(Track inTrack)
 	{
 		boolean hasTimes = inTrack.hasData(Field.TIMESTAMP);
-		boolean hasAltitudes = inTrack.getAltitudeRange().hasRange();
+		boolean hasAltitudes = inTrack.hasAltitudeData();
 		_timeRadio.setEnabled(hasTimes);
 
 		// Add checks to prevent choosing unavailable combinations
@@ -397,9 +397,15 @@ public class Charter extends GenericFunction
 			catch (Exception e) {}
 		}
 
+		// Sort out units to use
+		final String distLabel = I18nManager.getText(Config.getUnitSet().getDistanceUnit().getShortnameKey());
+		final String altLabel  = I18nManager.getText(Config.getUnitSet().getAltitudeUnit().getShortnameKey());
+		final String speedLabel = I18nManager.getText(Config.getUnitSet().getSpeedUnit().getShortnameKey());
+		final String vertSpeedLabel = I18nManager.getText(Config.getUnitSet().getVerticalSpeedUnit().getShortnameKey());
+
 		// Set x axis label
 		if (inDistance) {
-			inWriter.write("set xlabel '" + I18nManager.getText("fieldname.distance") + " (" + getUnitsLabel("units.kilometres.short", "units.miles.short") + ")'\n");
+			inWriter.write("set xlabel '" + I18nManager.getText("fieldname.distance") + " (" + distLabel + ")'\n");
 		}
 		else {
 			inWriter.write("set xlabel '" + I18nManager.getText("fieldname.time") + " (" + I18nManager.getText("units.hours") + ")'\n");
@@ -410,36 +416,24 @@ public class Charter extends GenericFunction
 		switch (inYaxis)
 		{
 		case 0: // y axis is distance
-			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.distance") + " (" + getUnitsLabel("units.kilometres.short", "units.miles.short") + ")'\n");
+			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.distance") + " (" + distLabel + ")'\n");
 			chartTitle = I18nManager.getText("fieldname.distance");
 			break;
 		case 1: // y axis is altitude
-			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.altitude") + " (" + getUnitsLabel("units.metres.short", "units.feet.short") + ")'\n");
+			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.altitude") + " (" + altLabel + ")'\n");
 			chartTitle = I18nManager.getText("fieldname.altitude");
 			break;
 		case 2: // y axis is speed
-			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.speed") + " (" + getUnitsLabel("units.kmh", "units.mph") + ")'\n");
+			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.speed") + " (" + speedLabel + ")'\n");
 			chartTitle = I18nManager.getText("fieldname.speed");
 			break;
 		case 3: // y axis is vertical speed
-			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.verticalspeed") + " (" + getUnitsLabel("units.metrespersec", "units.feetpersec") + ")'\n");
+			inWriter.write("set ylabel '" + I18nManager.getText("fieldname.verticalspeed") + " (" + vertSpeedLabel + ")'\n");
 			chartTitle = I18nManager.getText("fieldname.verticalspeed");
 			break;
 		}
 		inWriter.write("set style fill solid 0.5 border -1\n");
 		inWriter.write("plot '" + tempFile.getAbsolutePath() + "' title '" + chartTitle + "' with filledcurve y1=0 lt rgb \"#009000\"\n");
-	}
-
-	/**
-	 * Get the units label for the given keys
-	 * @param inMetric key if metric
-	 * @param inImperial key if imperial
-	 * @return display label with appropriate text
-	 */
-	private static String getUnitsLabel(String inMetric, String inImperial)
-	{
-		String key = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?inMetric:inImperial;
-		return I18nManager.getText(key);
 	}
 
 
@@ -461,11 +455,10 @@ public class Charter extends GenericFunction
 			{
 				totalRads += DataPoint.calculateRadiansBetween(prevPoint, currPoint);
 			}
-			if (Config.getConfigBoolean(Config.KEY_METRIC_UNITS)) {
-				values.setData(i, Distance.convertRadiansToDistance(totalRads, Units.KILOMETRES));
-			} else {
-				values.setData(i, Distance.convertRadiansToDistance(totalRads, Units.MILES));
-			}
+
+			// distance values use currently configured units
+			values.setData(i, Distance.convertRadiansToDistance(totalRads));
+
 			prevPoint = currPoint;
 		}
 		return values;
@@ -506,10 +499,10 @@ public class Charter extends GenericFunction
 	private static ChartSeries getAltitudeValues(Track inTrack)
 	{
 		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
-		Altitude.Format altFormat = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET;
+		final double multFactor = Config.getUnitSet().getAltitudeUnit().getMultFactorFromStd();
 		for (int i=0; i<inTrack.getNumPoints(); i++) {
 			if (inTrack.getPoint(i).hasAltitude()) {
-				values.setData(i, inTrack.getPoint(i).getAltitude().getValue(altFormat));
+				values.setData(i, inTrack.getPoint(i).getAltitude().getMetricValue() * multFactor);
 			}
 		}
 		return values;
@@ -522,31 +515,17 @@ public class Charter extends GenericFunction
 	 */
 	private static ChartSeries getSpeedValues(Track inTrack)
 	{
-		// Calculate speeds and fill in in values array
-		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
-		DataPoint prevPoint = null, currPoint = null, nextPoint = null;
-		DataPoint[] points = getDataPoints(inTrack, false);
-		final boolean useMetric = Config.getConfigBoolean(Config.KEY_METRIC_UNITS);
+		// Calculate speeds using the same formula as the profile chart
+		SpeedData speeds = new SpeedData(inTrack);
+
+		final int numPoints = inTrack.getNumPoints();
+		ChartSeries values = new ChartSeries(numPoints);
 		// Loop over collected points
-		for (int i=1; i<(points.length-1); i++)
+		for (int i=0; i<numPoints; i++)
 		{
-			prevPoint = points[i-1];
-			currPoint = points[i];
-			nextPoint = points[i+1];
-			if (prevPoint != null && currPoint != null && nextPoint != null
-				&& nextPoint.getTimestamp().isAfter(currPoint.getTimestamp())
-				&& currPoint.getTimestamp().isAfter(prevPoint.getTimestamp()))
+			if (speeds.hasData(i))
 			{
-				// Calculate average speed between prevPoint and nextPoint
-				double rads = DataPoint.calculateRadiansBetween(prevPoint, currPoint)
-					+ DataPoint.calculateRadiansBetween(currPoint, nextPoint);
-				double time = nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp()) / 60.0 / 60.0;
-				// Convert to distance and pass to chartseries
-				if (useMetric) {
-					values.setData(i, Distance.convertRadiansToDistance(rads, Units.KILOMETRES) / time);
-				} else {
-					values.setData(i, Distance.convertRadiansToDistance(rads, Units.MILES) / time);
-				}
+				values.setData(i, speeds.getData(i));
 			}
 		}
 		return values;
@@ -559,56 +538,20 @@ public class Charter extends GenericFunction
 	 */
 	private static ChartSeries getVertSpeedValues(Track inTrack)
 	{
-		// Calculate speeds and fill in in values array
-		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
-		Altitude.Format altFormat = Config.getConfigBoolean(Config.KEY_METRIC_UNITS)?Altitude.Format.METRES:Altitude.Format.FEET;
-		DataPoint prevPoint = null, currPoint = null, nextPoint = null;
-		DataPoint[] points = getDataPoints(inTrack, true); // require that points have altitudes too
+		// Calculate speeds using the same formula as the profile chart
+		VerticalSpeedData speeds = new VerticalSpeedData(inTrack);
+
+		final int numPoints = inTrack.getNumPoints();
+		ChartSeries values = new ChartSeries(numPoints);
 		// Loop over collected points
-		for (int i=1; i<(points.length-1); i++)
+		for (int i=0; i<numPoints; i++)
 		{
-			prevPoint = points[i-1];
-			currPoint = points[i];
-			nextPoint = points[i+1];
-			if (prevPoint != null && currPoint != null && nextPoint != null
-				&& nextPoint.getTimestamp().isAfter(currPoint.getTimestamp())
-				&& currPoint.getTimestamp().isAfter(prevPoint.getTimestamp()))
+			if (speeds.hasData(i))
 			{
-				// Calculate average vertical speed between prevPoint and nextPoint
-				double vspeed = (nextPoint.getAltitude().getValue(altFormat) - prevPoint.getAltitude().getValue(altFormat))
-				 * 1.0 / nextPoint.getTimestamp().getSecondsSince(prevPoint.getTimestamp());
-				values.setData(i, vspeed);
+				values.setData(i, speeds.getData(i));
 			}
 		}
 		return values;
-	}
-
-
-	/**
-	 * Get an array of DataPoints with data for the charts
-	 * @param inTrack track object containing points
-	 * @param inRequireAltitudes true if only points with altitudes are considered
-	 * @return array of points with contiguous non-null elements (<= size) with timestamps
-	 */
-	private static DataPoint[] getDataPoints(Track inTrack, boolean inRequireAltitudes)
-	{
-		DataPoint[] points = new DataPoint[inTrack.getNumPoints()];
-		DataPoint currPoint = null;
-		int pointNum = 0;
-		// Loop over all points
-		for (int i=0; i<inTrack.getNumPoints(); i++)
-		{
-			currPoint = inTrack.getPoint(i);
-			if (currPoint != null && !currPoint.isWaypoint() && currPoint.hasTimestamp()
-				&& (!inRequireAltitudes || currPoint.hasAltitude()))
-			{
-				points[pointNum] = currPoint;
-				pointNum++;
-			}
-		}
-		// Any elements at the end of the array will stay null
-		// Also note, chronological order is not checked
-		return points;
 	}
 
 

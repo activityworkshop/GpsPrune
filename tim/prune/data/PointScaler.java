@@ -84,7 +84,7 @@ public class PointScaler
 			DataPoint p2 = new DataPoint(new Latitude(latRange.getMaximum(), Coordinate.FORMAT_DEG),
 				new Longitude(_lonMedian, Coordinate.FORMAT_DEG), null);
 			double horizDist = Distance.convertRadiansToDistance(
-				DataPoint.calculateRadiansBetween(p1, p2), Distance.Units.METRES);
+				DataPoint.calculateRadiansBetween(p1, p2), UnitSetLibrary.UNITS_METRES); // both in m
 			_altFactor = 1.0 / horizDist;
 
 			// create new arrays for scaled values

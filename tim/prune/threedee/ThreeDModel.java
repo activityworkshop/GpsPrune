@@ -14,14 +14,13 @@ public class ThreeDModel
 {
 	private Track _track = null;
 	private PointScaler _scaler = null;
-	private double _modelSize;
 	private double _scaleFactor = 1.0;
 	private double _altFactor = 1.0;
 	// MAYBE: How to store rods (lifts) in data?
 	private byte[] _pointTypes = null;
 	private byte[] _pointHeights = null;
 
-	private static final double DEFAULT_MODEL_SIZE = 10.0;
+	private static final double MODEL_SIZE = 10.0;
 
 	// Constants for point types
 	public static final byte POINT_TYPE_WAYPOINT      = 1;
@@ -35,20 +34,7 @@ public class ThreeDModel
 	 */
 	public ThreeDModel(Track inTrack)
 	{
-		this(inTrack, DEFAULT_MODEL_SIZE);
-	}
-
-
-	/**
-	 * Constructor
-	 * @param inTrack Track object
-	 * @param inSize model size
-	 */
-	public ThreeDModel(Track inTrack, double inSize)
-	{
 		_track = inTrack;
-		_modelSize = inSize;
-		if (_modelSize <= 0.0) _modelSize = DEFAULT_MODEL_SIZE;
 	}
 
 
@@ -86,19 +72,19 @@ public class ThreeDModel
 			if (_scaler.getMaximumHoriz() > _scaler.getMaximumVert())
 			{
 				// scale limited by longitude
-				_scaleFactor = _modelSize / _scaler.getMaximumHoriz();
+				_scaleFactor = MODEL_SIZE / _scaler.getMaximumHoriz();
 			}
 			else
 			{
 				// scale limited by latitude
-				_scaleFactor = _modelSize / _scaler.getMaximumVert();
+				_scaleFactor = MODEL_SIZE / _scaler.getMaximumVert();
 			}
 		}
 		// cap altitude scale factor if it's too big
 		double maxScaledAlt = _scaler.getMaxScaledAlt() * _altFactor;
-		if (maxScaledAlt > _modelSize) {
+		if (maxScaledAlt > MODEL_SIZE) {
 			// capped
-			_altFactor = _altFactor * _modelSize / maxScaledAlt;
+			_altFactor = _altFactor * MODEL_SIZE / maxScaledAlt;
 		}
 		// calculate lat/long lines
 		_scaler.calculateLatLongLines();
@@ -219,6 +205,6 @@ public class ThreeDModel
 	 */
 	public double getModelSize()
 	{
-		return _modelSize;
+		return MODEL_SIZE;
 	}
 }

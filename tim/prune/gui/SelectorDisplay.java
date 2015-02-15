@@ -253,7 +253,7 @@ public class SelectorDisplay extends GenericDisplay
 		{
 			_waypointListModel.fireChanged();
 		}
-		if ((inUpdateType |
+		if ((inUpdateType &
 			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.PHOTOS_MODIFIED)) > 0)
 		{
 			_photoListModel.fireChanged();

@@ -92,7 +92,8 @@ public class NmeaFileLoader
 		if (messages.size() > 0)
 		{
 			_app.informDataLoaded(getFieldArray(), makeDataArray(messages),
-				Altitude.Format.METRES, new SourceInfo(inFile, SourceInfo.FILE_TYPE.NMEA));
+				Altitude.Format.METRES, new SourceInfo(inFile, SourceInfo.FILE_TYPE.NMEA),
+				null);
 		}
 	}
 

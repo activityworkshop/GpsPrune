@@ -54,7 +54,9 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _editWaypointNameItem = null;
 	private JMenuItem _deletePointItem = null;
 	private JMenuItem _deleteRangeItem = null;
+	private JMenuItem _cropTrackItem = null;
 	private JMenuItem _compressItem = null;
+	private JMenuItem _markRectangleItem = null;
 	private JMenuItem _deleteMarkedPointsItem = null;
 	private JMenuItem _interpolateItem = null;
 	private JMenuItem _averageItem = null;
@@ -109,7 +111,6 @@ public class MenuManager implements DataSubscriber
 	private ActionListener _undoAction = null;
 	private ActionListener _editPointAction = null;
 	private ActionListener _deletePointAction = null;
-	private ActionListener _deleteRangeAction = null;
 	private ActionListener _selectStartAction = null;
 	private ActionListener _selectEndAction = null;
 
@@ -119,6 +120,7 @@ public class MenuManager implements DataSubscriber
 	private JButton _editPointButton = null;
 	private JButton _deletePointButton = null;
 	private JButton _deleteRangeButton = null;
+	private JButton _cutAndMoveButton = null;
 	private JButton _selectStartButton = null;
 	private JButton _selectEndButton = null;
 	private JButton _connectButton = null;
@@ -250,6 +252,15 @@ public class MenuManager implements DataSubscriber
 		_compressItem = makeMenuItem(FunctionLibrary.FUNCTION_COMPRESS, false);
 		setShortcut(_compressItem, "shortcut.menu.edit.compress");
 		trackMenu.add(_compressItem);
+		_markRectangleItem = new JMenuItem(I18nManager.getText("menu.track.markrectangle"));
+		_markRectangleItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				_app.setCurrentMode(App.AppMode.DRAWRECT);
+				UpdateMessageBroker.informSubscribers();
+			}
+		});
+		_markRectangleItem.setEnabled(false);
+		trackMenu.add(_markRectangleItem);
 		_deleteMarkedPointsItem = new JMenuItem(I18nManager.getText("menu.track.deletemarked"));
 		_deleteMarkedPointsItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -343,15 +354,10 @@ public class MenuManager implements DataSubscriber
 		_selectEndItem.addActionListener(_selectEndAction);
 		rangeMenu.add(_selectEndItem);
 		rangeMenu.addSeparator();
-		_deleteRangeItem = new JMenuItem(I18nManager.getText("menu.range.deleterange"));
-		_deleteRangeAction = new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.deleteSelectedRange();
-			}
-		};
-		_deleteRangeItem.addActionListener(_deleteRangeAction);
-		_deleteRangeItem.setEnabled(false);
+		_deleteRangeItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_RANGE, false);
 		rangeMenu.add(_deleteRangeItem);
+		_cropTrackItem = makeMenuItem(FunctionLibrary.FUNCTION_CROP_TRACK, false);
+		rangeMenu.add(_cropTrackItem);
 		_reverseItem = new JMenuItem(I18nManager.getText("menu.range.reverse"));
 		_reverseItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -375,13 +381,7 @@ public class MenuManager implements DataSubscriber
 		_deleteFieldValuesItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_FIELD_VALUES, false);
 		rangeMenu.add(_deleteFieldValuesItem);
 		rangeMenu.addSeparator();
-		_interpolateItem = new JMenuItem(I18nManager.getText("menu.range.interpolate"));
-		_interpolateItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.interpolateSelection();
-			}
-		});
-		_interpolateItem.setEnabled(false);
+		_interpolateItem = makeMenuItem(FunctionLibrary.FUNCTION_INTERPOLATE, false);
 		rangeMenu.add(_interpolateItem);
 		_averageItem = new JMenuItem(I18nManager.getText("menu.range.average"));
 		_averageItem.addActionListener(new ActionListener() {
@@ -449,8 +449,8 @@ public class MenuManager implements DataSubscriber
 		_mapCheckbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				Config.setConfigBoolean(Config.KEY_SHOW_MAP, _mapCheckbox.isSelected());
-				UpdateMessageBroker.informSubscribers();
-			}
+				UpdateMessageBroker.informSubscribers(MAPSERVER_CHANGED);
+ 			}
 		});
 		viewMenu.add(_mapCheckbox);
 		// Turn off the sidebars
@@ -761,10 +761,24 @@ public class MenuManager implements DataSubscriber
 		toolbar.add(_deletePointButton);
 		// Delete range
 		_deleteRangeButton = new JButton(IconManager.getImageIcon(IconManager.DELETE_RANGE));
-		_deleteRangeButton.setToolTipText(I18nManager.getText("menu.range.deleterange"));
-		_deleteRangeButton.addActionListener(_deleteRangeAction);
+		_deleteRangeButton.setToolTipText(I18nManager.getText("function.deleterange"));
+		_deleteRangeButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				FunctionLibrary.FUNCTION_DELETE_RANGE.begin();
+			}
+		});
 		_deleteRangeButton.setEnabled(false);
 		toolbar.add(_deleteRangeButton);
+		// Cut and move
+		_cutAndMoveButton = new JButton(IconManager.getImageIcon(IconManager.CUT_AND_MOVE));
+		_cutAndMoveButton.setToolTipText(I18nManager.getText("menu.range.cutandmove"));
+		_cutAndMoveButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				_app.cutAndMoveSelection();
+			}
+		});
+		_cutAndMoveButton.setEnabled(false);
+		toolbar.add(_cutAndMoveButton);
 		// Select start, end
 		_selectStartButton = new JButton(IconManager.getImageIcon(IconManager.SET_RANGE_START));
 		_selectStartButton.setToolTipText(I18nManager.getText("menu.range.start"));
@@ -821,6 +835,7 @@ public class MenuManager implements DataSubscriber
 		_exportPovItem.setEnabled(hasData);
 		_exportSvgItem.setEnabled(hasData);
 		_compressItem.setEnabled(hasData);
+		_markRectangleItem.setEnabled(hasData);
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeMenu.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
 		_selectAllItem.setEnabled(hasData);
@@ -884,8 +899,8 @@ public class MenuManager implements DataSubscriber
 		boolean hasRange = (hasData && _selection.hasRangeSelected());
 		_deleteRangeItem.setEnabled(hasRange);
 		_deleteRangeButton.setEnabled(hasRange);
-		_interpolateItem.setEnabled(hasRange
-			&& (_selection.getEnd() - _selection.getStart()) == 1);
+		_cropTrackItem.setEnabled(hasRange);
+		_interpolateItem.setEnabled(hasRange);
 		_averageItem.setEnabled(hasRange);
 		_mergeSegmentsItem.setEnabled(hasRange);
 		_reverseItem.setEnabled(hasRange);
@@ -895,9 +910,11 @@ public class MenuManager implements DataSubscriber
 		_deleteFieldValuesItem.setEnabled(hasRange);
 		_fullRangeDetailsItem.setEnabled(hasRange);
 		// Is the currently selected point outside the current range?
-		_cutAndMoveItem.setEnabled(hasRange && hasPoint &&
+		boolean canCutAndMove = hasRange && hasPoint &&
 			(_selection.getCurrentPointIndex() < _selection.getStart()
-				|| _selection.getCurrentPointIndex() > (_selection.getEnd()+1)));
+			|| _selection.getCurrentPointIndex() > (_selection.getEnd()+1));
+		_cutAndMoveItem.setEnabled(canCutAndMove);
+		_cutAndMoveButton.setEnabled(canCutAndMove);
 		// Has the map been switched on/off?
 		boolean mapsOn = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
 		if (_mapCheckbox.isSelected() != mapsOn) {

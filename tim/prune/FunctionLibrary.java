@@ -36,6 +36,9 @@ public abstract class FunctionLibrary
 	public static RearrangeWaypointsFunction FUNCTION_REARRANGE_WAYPOINTS = null;
 	public static GenericFunction FUNCTION_REARRANGE_PHOTOS = null;
 	public static GenericFunction FUNCTION_COMPRESS = null;
+	public static GenericFunction FUNCTION_DELETE_RANGE = null;
+	public static GenericFunction FUNCTION_CROP_TRACK = null;
+	public static GenericFunction FUNCTION_INTERPOLATE = null;
 	public static GenericFunction FUNCTION_LOOKUP_SRTM = null;
 	public static GenericFunction FUNCTION_LOOKUP_WIKIPEDIA = null;
 	public static GenericFunction FUNCTION_SEARCH_WIKIPEDIA = null;
@@ -98,6 +101,9 @@ public abstract class FunctionLibrary
 		FUNCTION_REARRANGE_WAYPOINTS = new RearrangeWaypointsFunction(inApp);
 		FUNCTION_REARRANGE_PHOTOS = new RearrangePhotosFunction(inApp);
 		FUNCTION_COMPRESS = new CompressTrackFunction(inApp);
+		FUNCTION_DELETE_RANGE = new DeleteSelectedRangeFunction(inApp);
+		FUNCTION_CROP_TRACK = new CropToSelection(inApp);
+		FUNCTION_INTERPOLATE = new InterpolateFunction(inApp);
 		FUNCTION_LOOKUP_SRTM = new LookupSrtmFunction(inApp);
 		FUNCTION_LOOKUP_WIKIPEDIA = new GetWikipediaFunction(inApp);
 		FUNCTION_SEARCH_WIKIPEDIA = new SearchWikipediaNames(inApp);

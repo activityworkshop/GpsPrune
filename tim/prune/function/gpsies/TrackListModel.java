@@ -7,7 +7,7 @@ import javax.swing.table.AbstractTableModel;
 
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
-import tim.prune.data.Distance;
+import tim.prune.data.Unit;
 
 /**
  * Model for list of tracks from gpsies.com
@@ -77,12 +77,11 @@ public class TrackListModel extends AbstractTableModel
 		GpsiesTrack track = _trackList.get(inRowNum);
 		if (inColNum == 0) {return track.getTrackName();}
 		double lengthM = track.getLength();
-		if (Config.getConfigBoolean(Config.KEY_METRIC_UNITS)) {
-			return _distanceFormatter.format(lengthM / 1000.0) + " " + I18nManager.getText("units.kilometres.short");
-		}
-		// must be imperial
-		return _distanceFormatter.format(Distance.convertMetresToMiles(lengthM))
-			+ " " + I18nManager.getText("units.miles.short");
+		// convert to current distance units
+		Unit distUnit = Config.getUnitSet().getDistanceUnit();
+		double length = lengthM * distUnit.getMultFactorFromStd();
+		// Make text
+		return _distanceFormatter.format(length) + " " + I18nManager.getText(distUnit.getShortnameKey());
 	}
 
 	/**
@@ -92,10 +91,15 @@ public class TrackListModel extends AbstractTableModel
 	public void addTracks(ArrayList<GpsiesTrack> inList)
 	{
 		if (_trackList == null) {_trackList = new ArrayList<GpsiesTrack>();}
+		final int prevCount = _trackList.size();
 		if (inList != null && inList.size() > 0) {
 			_trackList.addAll(inList);
 		}
-		fireTableDataChanged();
+		final int updatedCount = _trackList.size();
+		if (prevCount <= 0)
+			fireTableDataChanged();
+		else
+			fireTableRowsInserted(prevCount, updatedCount-1);
 	}
 
 	/**

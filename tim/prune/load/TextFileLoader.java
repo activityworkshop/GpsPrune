@@ -538,7 +538,7 @@ public class TextFileLoader
 		// give data to App
 		SourceInfo sourceInfo = new SourceInfo(_file, SourceInfo.FILE_TYPE.TEXT);
 		_app.informDataLoaded(_fieldTableModel.getFieldArray(),
-			_fileExtractTableModel.getData(), altitudeFormat, sourceInfo);
+			_fileExtractTableModel.getData(), altitudeFormat, sourceInfo, null);
 		// clear up file cacher
 		_fileCacher.clear();
 		// dispose of dialog

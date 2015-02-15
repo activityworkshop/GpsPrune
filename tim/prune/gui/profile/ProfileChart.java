@@ -33,7 +33,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	private JPopupMenu _popup = null;
 
 	/** Possible scales to use */
-	private static final int[] LINE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50, 10, 5};
+	private static final int[] LINE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50, 10, 5, 2, 1};
 	/** Border width around black line */
 	private static final int BORDER_WIDTH = 6;
 	/** Minimum size for profile chart in pixels */
@@ -41,7 +41,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	/** Colour to use for text if no data found */
 	private static final Color COLOR_NODATA_TEXT = Color.GRAY;
 	/** Chart type */
-	private static enum ChartType {ALTITUDE, SPEED};
+	private static enum ChartType {ALTITUDE, SPEED, VERT_SPEED};
 
 
 	/**
@@ -54,7 +54,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		_data = new AltitudeData(inTrackInfo.getTrack());
 		addMouseListener(this);
 		setLayout(new FlowLayout(FlowLayout.LEFT));
-		_label = new JLabel("Altitude");
+		_label = new JLabel("Altitude"); // text will be replaced later
 		add(_label);
 		makePopup();
 	}
@@ -79,7 +79,6 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		paintBackground(g, colourScheme);
 		if (_track != null && _track.getNumPoints() > 0)
 		{
-			_data.init();
 			_label.setText(_data.getLabel());
 			int width = getWidth();
 			int height = getHeight();
@@ -121,17 +120,26 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			// horizontal lines for scale - set to round numbers eg 500
 			int lineScale = getLineScale(minValue, maxValue);
 			int scaleValue = (int) (minValue/lineScale + 1) * lineScale;
+			if (minValue < 0.0) {scaleValue -= lineScale;}
 			int x = 0, y = 0;
+			final int zeroY = height - BORDER_WIDTH - (int) (yScaleFactor * (0.0 - minValue));
+
 			double value = 0.0;
-			if (lineScale > 1)
+			g.setColor(lineColour);
+			if (lineScale >= 1)
 			{
-				g.setColor(lineColour);
 				while (scaleValue < maxValue)
 				{
 					y = height - BORDER_WIDTH - (int) (yScaleFactor * (scaleValue - minValue));
 					g.drawLine(BORDER_WIDTH + 1, y, width - BORDER_WIDTH - 1, y);
 					scaleValue += lineScale;
 				}
+			}
+			else if (minValue < 0.0)
+			{
+				// just draw zero line
+				y = zeroY;
+				g.drawLine(BORDER_WIDTH + 1, y, width - BORDER_WIDTH - 1, y);
 			}
 
 			try
@@ -148,8 +156,22 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 					if (_data.hasData(p))
 					{
 						value = _data.getData(p);
-						y = (int) (yScaleFactor * (value - minValue));
-						g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
+						// Normal case is the minimum value greater than zero
+						if (minValue >= 0)
+						{
+							y = (int) (yScaleFactor * (value - minValue));
+							g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
+						}
+						else if (value >= 0.0) {
+							// Bar upwards from the zero line
+							y = height-BORDER_WIDTH - (int) (yScaleFactor * (value - minValue));
+							g.fillRect(BORDER_WIDTH+x, y, barWidth, zeroY - y);
+						}
+						else {
+							// Bar downwards from the zero line
+							int barHeight = (int) (yScaleFactor * value);
+							g.fillRect(BORDER_WIDTH+x, zeroY, barWidth, -barHeight);
+						}
 					}
 				}
 				// current point (make sure it's drawn last)
@@ -170,10 +192,11 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			catch (NullPointerException npe) { // ignore, probably due to data being changed
 			}
 			// Draw numbers on top of the graph to mark scale
-			if (lineScale > 1)
+			if (lineScale >= 1)
 			{
 				int textHeight = g.getFontMetrics().getHeight();
 				scaleValue = (int) (minValue / lineScale + 1) * lineScale;
+				if (minValue < 0.0) {scaleValue -= lineScale;}
 				y = 0;
 				g.setColor(currentColour);
 				while (scaleValue < maxValue)
@@ -242,6 +265,13 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 				changeView(ChartType.SPEED);
 			}});
 		_popup.add(speedItem);
+		JMenuItem vertSpeedItem = new JMenuItem(I18nManager.getText("fieldname.verticalspeed"));
+		vertSpeedItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e)
+			{
+				changeView(ChartType.VERT_SPEED);
+			}});
+		_popup.add(vertSpeedItem);
 	}
 
 	/**
@@ -252,7 +282,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	 */
 	private int getLineScale(double inMin, double inMax)
 	{
-		if ((inMax - inMin) < 5 || inMax < 0) {
+		if ((inMax - inMin) < 2.0) {
 			return -1;
 		}
 		int numScales = LINE_SCALES.length;
@@ -275,7 +305,10 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	 */
 	public void dataUpdated(byte inUpdateType)
 	{
-		_data.init();
+		// Try not to recalculate all the values unless necessary
+		if (inUpdateType != SELECTION_CHANGED) {
+			_data.init(Config.getUnitSet());
+		}
 		repaint();
 	}
 
@@ -324,7 +357,10 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		else if (inType == ChartType.SPEED && !(_data instanceof SpeedData)) {
 			_data = new SpeedData(_track);
 		}
-		_data.init();
+		else if (inType == ChartType.VERT_SPEED && !(_data instanceof VerticalSpeedData)) {
+			_data = new VerticalSpeedData(_track);
+		}
+		_data.init(Config.getUnitSet());
 		repaint();
 	}
 

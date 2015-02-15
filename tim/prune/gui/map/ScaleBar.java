@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import tim.prune.I18nManager;
 import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
+import tim.prune.data.Unit;
 
 /**
  * Class to show a scale bar on the main map of GpsPrune
@@ -59,8 +60,8 @@ public class ScaleBar extends JPanel
 		if (_zoomLevel > -1)
 		{
 			try {
-				boolean useMetric = Config.getConfigBoolean(Config.KEY_METRIC_UNITS);
-				double drightSide = LEFT_OFFSET + _metricPixels[_zoomLevel] * (useMetric?1:1.609);
+				final double distScaleFactor = Config.getUnitSet().getDistanceUnit().getMultFactorFromStd();
+				double drightSide = LEFT_OFFSET + _metricPixels[_zoomLevel] / 1000.0 / distScaleFactor;
 				int scale = _scales[_zoomLevel];
 
 				// work out cos(latitude) from y position, and apply to scale
@@ -102,7 +103,7 @@ public class ScaleBar extends JPanel
 				inG.drawLine(rightSide, Y_OFFSET+1, rightSide, Y_OFFSET-TICK_HEIGHT);
 				inG.drawLine(rightSide+1, Y_OFFSET+1, rightSide+1, Y_OFFSET-TICK_HEIGHT);
 				// text
-				String text = getScaleText(scale, useMetric);
+				String text = getScaleText(scale, Config.getUnitSet().getDistanceUnit());
 				inG.setColor(blankColour);
 				inG.drawString(text, rightSide+MARGIN_WIDTH-1, Y_OFFSET);
 				inG.drawString(text, rightSide+MARGIN_WIDTH+1, Y_OFFSET);
@@ -118,22 +119,19 @@ public class ScaleBar extends JPanel
 	/**
 	 * Get the scale text for the given scale
 	 * @param inScale scale number
-	 * @param inUseMetric true to use km/m, false for miles/ft
+	 * @param inDistUnit distance unit
 	 * @return scale text as string
 	 */
-	private static String getScaleText(int inScale, boolean inUseMetric)
+	private static String getScaleText(int inScale, Unit inDistUnit)
 	{
 		if (inScale > 0) {
 			// Positive scale means km or miles
 			return "" + inScale	+ " " +
-				I18nManager.getText(inUseMetric?"units.kilometres.short":"units.miles.short");
+				I18nManager.getText(inDistUnit.getShortnameKey());
 		}
-		if (inUseMetric) {
-			// negative scale means m
-			return "" + (-1000 / inScale) + " " + I18nManager.getText("units.metres.short");
-		}
-		// fallen through to feet
-		return "" + (-5280 / inScale) + " " + I18nManager.getText("units.feet.short");
+		// negative scale means a fraction
+		return "" + (-1.0 / inScale) + " " + I18nManager.getText(inDistUnit.getShortnameKey());
+		// might be nice to say 100m instead of 0.1km, 275ft instead of 0.2miles, etc - need to be done by Unit itself?
 	}
 
 	/**

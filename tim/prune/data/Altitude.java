@@ -21,8 +21,8 @@ public class Altitude
 	}
 
 	/** Constants for conversion */
-	private static final double CONVERT_FEET_TO_METRES = 0.3048;
-	private static final double CONVERT_METRES_TO_FEET = 3.28084;
+	private static final double CONVERT_METRES_TO_FEET = UnitSetLibrary.UNITS_FEET.getMultFactorFromStd();
+	private static final double CONVERT_FEET_TO_METRES = 1 / CONVERT_METRES_TO_FEET;
 
 	/** Constant for no altitude value */
 	public static final Altitude NONE = new Altitude(null, Format.NO_FORMAT);
@@ -75,6 +75,7 @@ public class Altitude
 	 */
 	public void reset(Altitude inClone)
 	{
+		_stringValue = inClone._stringValue;
 		_value = inClone._value;
 		_format = inClone._format;
 		_valid = inClone._valid;
@@ -97,6 +98,14 @@ public class Altitude
 		return _value;
 	}
 
+	/**
+	 * @param inAltUnit altitude units to use
+	 * @return rounded value in specified units
+	 */
+	public int getValue(Unit inAltUnit)
+	{
+		return (int) (getMetricValue() * inAltUnit.getMultFactorFromStd());
+	}
 
 	/**
 	 * @return format of number
@@ -121,6 +130,17 @@ public class Altitude
 			return (int) (_value * CONVERT_FEET_TO_METRES);
 		if (inFormat == Format.FEET)
 			return (int) (_value * CONVERT_METRES_TO_FEET);
+		return _value;
+	}
+
+	/**
+	 * @return value of altitude in metres, used for calculations and charts
+	 */
+	public double getMetricValue()
+	{
+		if (_format == Format.FEET) {
+			return _value / UnitSetLibrary.UNITS_FEET.getMultFactorFromStd();
+		}
 		return _value;
 	}
 
@@ -196,6 +216,8 @@ public class Altitude
 			else
 				offset = inOffset * CONVERT_METRES_TO_FEET;
 		}
+		// FIXME: The following will fail if _stringValue is null - not sure how it can get in that state!
+		if (_stringValue == null) System.err.println("*** Altitude.addOffset - how did the string value get to be null?");
 		// Add the offset
 		double newValue = Double.parseDouble(_stringValue.trim()) + offset;
 		_value = (int) newValue;
