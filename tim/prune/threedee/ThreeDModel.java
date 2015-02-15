@@ -1,6 +1,5 @@
 package tim.prune.threedee;
 
-import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
 import tim.prune.data.PointScaler;
 import tim.prune.data.Track;
@@ -16,11 +15,10 @@ public class ThreeDModel
 	private PointScaler _scaler = null;
 	private double _scaleFactor = 1.0;
 	private double _altFactor = 1.0;
+	private double _externalScaleFactor = 1.0;
 	// MAYBE: How to store rods (lifts) in data?
 	private byte[] _pointTypes = null;
 	private byte[] _pointHeights = null;
-
-	private static final double MODEL_SIZE = 10.0;
 
 	// Constants for point types
 	public static final byte POINT_TYPE_WAYPOINT      = 1;
@@ -58,36 +56,30 @@ public class ThreeDModel
 	}
 
 	/**
+	 * @param inSize size of model
+	 */
+	public void setModelSize(double inSize)
+	{
+		_externalScaleFactor = inSize;
+	}
+
+	/**
 	 * Scale all points and calculate factors
 	 */
 	public void scale()
 	{
 		// Use PointScaler to sort out x and y values
 		_scaler = new PointScaler(_track);
-		_scaler.scale();
-		// Calculate scale factor to fit within box
-		_scaleFactor = 1.0;
-		if (_scaler.getMaximumHoriz() > 0.0 || _scaler.getMaximumVert() > 0.0)
-		{
-			if (_scaler.getMaximumHoriz() > _scaler.getMaximumVert())
-			{
-				// scale limited by longitude
-				_scaleFactor = MODEL_SIZE / _scaler.getMaximumHoriz();
-			}
-			else
-			{
-				// scale limited by latitude
-				_scaleFactor = MODEL_SIZE / _scaler.getMaximumVert();
-			}
-		}
+		_scaler.scale(); // Add 10% border
+
 		// cap altitude scale factor if it's too big
-		double maxScaledAlt = _scaler.getMaxScaledAlt() * _altFactor;
-		if (maxScaledAlt > MODEL_SIZE) {
+		double maxAlt = _scaler.getAltitudeRange() * _altFactor;
+		if (maxAlt > 0.5)
+		{
 			// capped
-			_altFactor = _altFactor * MODEL_SIZE / maxScaledAlt;
+			//System.out.println("Capped alt factor from " + _altFactor + " to " + (_altFactor * 0.5 / maxAlt));
+			_altFactor = _altFactor * 0.5 / maxAlt;
 		}
-		// calculate lat/long lines
-		_scaler.calculateLatLongLines();
 
 		// calculate point types and height codes
 		calculatePointTypes();
@@ -108,7 +100,7 @@ public class ThreeDModel
 			DataPoint point = _track.getPoint(i);
 			_pointTypes[i] = (point.isWaypoint()?POINT_TYPE_WAYPOINT:
 				(point.getSegmentStart()?POINT_TYPE_SEGMENT_START:POINT_TYPE_NORMAL_POINT));
-			_pointHeights[i] = (byte) (point.getAltitude().getValue(Altitude.Format.METRES) / 500);
+			_pointHeights[i] = (byte) (point.getAltitude().getMetricValue() / 500);
 		}
 	}
 
@@ -120,7 +112,7 @@ public class ThreeDModel
 	 */
 	public double getScaledHorizValue(int inIndex)
 	{
-		return _scaler.getHorizValue(inIndex) * _scaleFactor;
+		return _scaler.getHorizValue(inIndex) * _scaleFactor * _externalScaleFactor;
 	}
 
 	/**
@@ -130,7 +122,7 @@ public class ThreeDModel
 	 */
 	public double getScaledVertValue(int inIndex)
 	{
-		return _scaler.getVertValue(inIndex) * _scaleFactor;
+		return _scaler.getVertValue(inIndex) * _scaleFactor * _externalScaleFactor;
 	}
 
 	/**
@@ -144,43 +136,9 @@ public class ThreeDModel
 		double altVal = _scaler.getAltValue(inIndex);
 		if (altVal < 0) return 0;
 		// scale according to exaggeration factor
-		return altVal * _altFactor;
+		return altVal * _altFactor * _externalScaleFactor;
 	}
 
-
-	/**
-	 * @return latitude lines
-	 */
-	public double[] getLatitudeLines()
-	{
-		return _scaler.getLatitudeLines();
-	}
-
-	/**
-	 * @param inIndex index of line, starting at 0
-	 * @return scaled position of latitude line
-	 */
-	public double getScaledLatitudeLine(int inIndex)
-	{
-		return _scaler.getScaledLatitudeLines()[inIndex] * _scaleFactor;
-	}
-
-	/**
-	 * @return longitude lines
-	 */
-	public double[] getLongitudeLines()
-	{
-		return _scaler.getLongitudeLines();
-	}
-
-	/**
-	 * @param inIndex index of line, starting at 0
-	 * @return scaled position of longitude line
-	 */
-	public double getScaledLongitudeLine(int inIndex)
-	{
-		return _scaler.getScaledLongitudeLines()[inIndex] * _scaleFactor;
-	}
 
 	/**
 	 * @param inIndex index of point, starting at 0
@@ -198,13 +156,5 @@ public class ThreeDModel
 	public byte getPointHeightCode(int inIndex)
 	{
 		return _pointHeights[inIndex];
-	}
-
-	/**
-	 * @return the current model size
-	 */
-	public double getModelSize()
-	{
-		return MODEL_SIZE;
 	}
 }

@@ -105,9 +105,21 @@ public class AddMapSourceDialog
 		KeyAdapter keyListener = new KeyAdapter() {
 			public void keyReleased(KeyEvent e) {
 				super.keyReleased(e);
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_addDialog.dispose();
+				}
+				else {
+					enableOK();
+				}
+			}
+		};
+		// Listener for any gui changes (to enable ok when anything changes on an edit)
+		ActionListener okEnabler = new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
 				enableOK();
 			}
 		};
+
 		// openstreetmap panel
 		JPanel osmPanel = new JPanel();
 		osmPanel.setLayout(new BorderLayout());
@@ -144,6 +156,8 @@ public class AddMapSourceDialog
 			radioGroup.add(_baseTypeRadios[i]);
 			c.gridx = 2+i; c.weightx = 0.0;
 			gbPanel.add(_baseTypeRadios[i], c);
+			// Each type radio needs listener to call enableOk()
+			_baseTypeRadios[i].addActionListener(okEnabler);
 		}
 
 		// Top layer
@@ -161,6 +175,8 @@ public class AddMapSourceDialog
 			radioGroup.add(_topTypeRadios[i]);
 			c.gridx = 2+i; c.weightx = 0.0;
 			gbPanel.add(_topTypeRadios[i], c);
+			// Each type radio needs listener to call enableOk()
+			_topTypeRadios[i].addActionListener(okEnabler);
 		}
 		// Max zoom
 		c.gridx = 0; c.gridy = 3;
@@ -169,6 +185,8 @@ public class AddMapSourceDialog
 		for (int i=10; i<=20; i++) {
 			_oZoomCombo.addItem("" + i);
 		}
+		// zoom dropdown needs listener to call enableOk()
+		_oZoomCombo.addActionListener(okEnabler);
 		c.gridx = 1;
 		gbPanel.add(_oZoomCombo, c);
 		osmPanel.add(gbPanel, BorderLayout.NORTH);

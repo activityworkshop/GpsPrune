@@ -58,7 +58,7 @@ public class Java3DWindow implements ThreeDWindow
 	private JFrame _frame = null;
 	private ThreeDModel _model = null;
 	private OrbitBehavior _orbit = null;
-	private double _altFactor = 50.0;
+	private double _altFactor = 5.0;
 
 	/** only prompt about big track size once */
 	private static boolean TRACK_SIZE_WARNING_GIVEN = false;
@@ -68,6 +68,7 @@ public class Java3DWindow implements ThreeDWindow
 	private static final double INITIAL_X_ROTATION = 15.0;
 	private static final String CARDINALS_FONT = "Arial";
 	private static final int MAX_TRACK_SIZE = 2500; // threshold for warning
+	private static final double MODEL_SCALE_FACTOR = 20.0;
 
 
 	/**
@@ -127,9 +128,8 @@ public class Java3DWindow implements ThreeDWindow
 		Object[] buttonTexts = {I18nManager.getText("button.continue"), I18nManager.getText("button.cancel")};
 		if (_track.getNumPoints() > MAX_TRACK_SIZE && !TRACK_SIZE_WARNING_GIVEN)
 		{
-			// FIXME: Change text reference from exportpov to java3d
 			if (JOptionPane.showOptionDialog(_parentFrame,
-					I18nManager.getText("dialog.exportpov.warningtracksize"),
+					I18nManager.getText("dialog.3d.warningtracksize"),
 					I18nManager.getText("function.show3d"), JOptionPane.OK_CANCEL_OPTION,
 					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 				== JOptionPane.OK_OPTION)
@@ -191,18 +191,7 @@ public class Java3DWindow implements ThreeDWindow
 				}
 			}});
 		panel.add(svgButton);
-		// Display coordinates of lat/long lines of 3d graph in separate dialog
-		JButton showLinesButton = new JButton(I18nManager.getText("button.showlines"));
-		showLinesButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				double[] latLines = _model.getLatitudeLines();
-				double[] lonLines = _model.getLongitudeLines();
-				LineDialog dialog = new LineDialog(_frame, latLines, lonLines);
-				dialog.showDialog();
-			}
-		});
-		panel.add(showLinesButton);
+
 		// Close button
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
 		closeButton.addActionListener(new ActionListener()
@@ -305,9 +294,6 @@ public class Java3DWindow implements ThreeDWindow
 		_model.setAltitudeFactor(_altFactor);
 		_model.scale();
 
-		// Lat/Long lines
-		objTrans.addChild(createLatLongs(_model));
-
 		// Add points to model
 		objTrans.addChild(createDataPoints(_model));
 
@@ -361,70 +347,6 @@ public class Java3DWindow implements ThreeDWindow
 
 
 	/**
-	 * Create all the latitude and longitude lines on the base plane
-	 * @param inModel model containing data
-	 * @return Group object containing cylinders for lat and long lines
-	 */
-	private static Group createLatLongs(ThreeDModel inModel)
-	{
-		Group group = new Group();
-		int numlines = inModel.getLatitudeLines().length;
-		for (int i=0; i<numlines; i++)
-		{
-			group.addChild(createLatLine(inModel.getScaledLatitudeLine(i), inModel.getModelSize()));
-		}
-		numlines = inModel.getLongitudeLines().length;
-		for (int i=0; i<numlines; i++)
-		{
-			group.addChild(createLonLine(inModel.getScaledLongitudeLine(i), inModel.getModelSize()));
-		}
-		return group;
-	}
-
-
-	/**
-	 * Make a single latitude line for the specified latitude
-	 * @param inLatitude latitude in scaled units
-	 * @param inSize size of model, for length of line
-	 * @return Group object containing cylinder for latitude line
-	 */
-	private static Group createLatLine(double inLatitude, double inSize)
-	{
-		Cylinder latline = new Cylinder(0.1f, (float) (inSize*2));
-		Transform3D horizShift = new Transform3D();
-		horizShift.setTranslation(new Vector3d(0.0, 0.0, -inLatitude));
-		TransformGroup horizTrans = new TransformGroup(horizShift);
-		Transform3D zRot = new Transform3D();
-		zRot.rotZ(Math.toRadians(90.0));
-		TransformGroup zTrans = new TransformGroup(zRot);
-		horizTrans.addChild(zTrans);
-		zTrans.addChild(latline);
-		return horizTrans;
-	}
-
-
-	/**
-	 * Make a single longitude line for the specified longitude
-	 * @param inLongitude longitude in scaled units
-	 * @param inSize size of model, for length of line
-	 * @return Group object containing cylinder for longitude line
-	 */
-	private static Group createLonLine(double inLongitude, double inSize)
-	{
-		Cylinder lonline = new Cylinder(0.1f, (float) (inSize*2));
-		Transform3D horizShift = new Transform3D();
-		horizShift.setTranslation(new Vector3d(inLongitude, 0.0, 0.0));
-		TransformGroup horizTrans = new TransformGroup(horizShift);
-		Transform3D xRot = new Transform3D();
-		xRot.rotX(Math.toRadians(90.0));
-		TransformGroup xTrans = new TransformGroup(xRot);
-		horizTrans.addChild(xTrans);
-		xTrans.addChild(lonline);
-		return horizTrans;
-	}
-
-
-	/**
 	 * Make a Group of the data points to be added
 	 * @param inModel model containing data
 	 * @return Group object containing spheres, rods etc
@@ -442,15 +364,18 @@ public class Java3DWindow implements ThreeDWindow
 				// Add waypoint
 				// Note that x, y and z are horiz, altitude, -vert
 				group.addChild(createWaypoint(new Point3d(
-					inModel.getScaledHorizValue(i), inModel.getScaledAltValue(i), -inModel.getScaledVertValue(i))));
+					inModel.getScaledHorizValue(i) * MODEL_SCALE_FACTOR,
+					inModel.getScaledAltValue(i)   * MODEL_SCALE_FACTOR,
+					-inModel.getScaledVertValue(i) * MODEL_SCALE_FACTOR)));
 			}
 			else
 			{
 				// Add colour-coded track point
 				// Note that x, y and z are horiz, altitude, -vert
 				group.addChild(createTrackpoint(new Point3d(
-					inModel.getScaledHorizValue(i), inModel.getScaledAltValue(i), -inModel.getScaledVertValue(i)),
-					inModel.getPointHeightCode(i)));
+					inModel.getScaledHorizValue(i) * MODEL_SCALE_FACTOR,
+					inModel.getScaledAltValue(i)   * MODEL_SCALE_FACTOR,
+					-inModel.getScaledVertValue(i) * MODEL_SCALE_FACTOR), inModel.getPointHeightCode(i)));
 			}
 		}
 		return group;

@@ -182,7 +182,8 @@ public class UploadGpsiesFunction extends GenericFunction
 				enableOK();
 			}
 		};
-		GuiGridLayout actGrid = new GuiGridLayout(activityPanel, true);
+		// Why not a simple grid layout here?
+		GuiGridLayout actGrid = new GuiGridLayout(activityPanel, new double[] {1.0, 1.0}, new boolean[] {false, false});
 		final int numActivities = ACTIVITY_KEYS.length;
 		_activityCheckboxes = new JCheckBox[numActivities];
 		for (int i=0; i<numActivities; i++)

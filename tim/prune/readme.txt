@@ -1,5 +1,5 @@
-GpsPrune version 14.1
-=====================
+GpsPrune version 15
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_14.1.jar
+   java -jar gpsprune_15.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,17 +25,25 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_14.1.jar --lang=DE
+   java -jar gpsprune_15.jar --lang=DE
 
 
-New with version 14.1
+New with version 15
 =====================
 The following features were added since version 14:
-  - Addition and correction of translations
-  - Correction of version number in build scripts
+  - Extend povray output using map image on base plane
+  - Export an image of the map and track at a selected zoom level
+  - Estimation of hiking times and learining of parameter values
+  - Allow altitude / speed profile to show any arbitrary field
+  - Accept files dragged and dropped onto the GpsPrune window
+  - Take account of timezone if present in track timestamps
+  - Allow timestamp exports in KML using gx extensions
+  - GPSBabel filters
+  - Improved wikipedia name lookup
+  - Allow loading of speeds and vertical speeds from text files
 
 New with version 14
-===================
+=====================
 The following features were added since version 13:
   - Dragging of existing points
   - Creation of new points by dragging the halfway point between two points

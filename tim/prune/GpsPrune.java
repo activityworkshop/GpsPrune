@@ -35,9 +35,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "14.1";
+	public static final String VERSION_NUMBER = "15";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "265a";
+	public static final String BUILD_NUMBER = "283";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -98,8 +98,9 @@ public class GpsPrune
 				}
 			}
 		}
-		if (showUsage) {
-			System.out.println("Possible parameters:"
+		if (showUsage)
+		{
+			System.out.println("GpsPrune - a tool for editing GPS data.\nPossible parameters:"
 				+ "\n   --configfile=<file> used to specify a configuration file"
 				+ "\n   --lang=<code>       used to specify language code such as DE"
 				+ "\n   --langfile=<file>   used to specify an alternative language file\n");
@@ -232,6 +233,9 @@ public class GpsPrune
 			frame.setIconImage(IconManager.getImageIcon(IconManager.WINDOW_ICON).getImage());
 		}
 		catch (Exception e) {} // ignore
+
+		// Set up drag-and-drop handler to accept dropped files
+		frame.setTransferHandler(new FileDropHandler(APP));
 
 		// finish off and display frame
 		frame.pack();

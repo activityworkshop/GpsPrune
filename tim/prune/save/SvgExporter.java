@@ -47,7 +47,7 @@ public class SvgExporter extends Export3dFunction
 	private JTextField _phiField = null, _thetaField = null;
 	private JTextField _altitudeFactorField = null;
 	private JCheckBox _gradientsCheckbox = null;
-	private static double _scaleFactor = 1.0;
+	private static final double _scaleFactor = 200.0;
 
 
 	/**
@@ -265,16 +265,15 @@ public class SvgExporter extends Export3dFunction
 			}
 			catch (NumberFormatException nfe) {}
 			model.scale();
-			_scaleFactor = 200 / model.getModelSize();
 
 			boolean useGradients = _gradientsCheckbox.isSelected();
 
 			// Create file and write basics
 			writer = new FileWriter(inFile);
 			writeStartOfFile(writer, useGradients, lineSeparator);
-			writeBasePlane(writer, model.getModelSize(), lineSeparator);
+			writeBasePlane(writer, lineSeparator);
 			// write out cardinal letters NESW
-			writeCardinals(writer, model.getModelSize(), lineSeparator);
+			writeCardinals(writer, lineSeparator);
 
 			// write out points
 			writeDataPoints(writer, model, useGradients, lineSeparator);
@@ -342,18 +341,17 @@ public class SvgExporter extends Export3dFunction
 	/**
 	 * Write the base plane
 	 * @param inWriter Writer to use for writing file
-	 * @param inModelSize model size
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private void writeBasePlane(FileWriter inWriter, double inModelSize, String inLineSeparator)
+	private void writeBasePlane(FileWriter inWriter, String inLineSeparator)
 	throws IOException
 	{
 		// Use model size and camera angles to draw path for base rectangle (using 3d transform)
-		int[] coords1 = convertCoordinates(-inModelSize, -inModelSize, 0);
-		int[] coords2 = convertCoordinates(inModelSize, -inModelSize, 0);
-		int[] coords3 = convertCoordinates(inModelSize, inModelSize, 0);
-		int[] coords4 = convertCoordinates(-inModelSize, inModelSize, 0);
+		int[] coords1 = convertCoordinates(-1.0, -1.0, 0);
+		int[] coords2 = convertCoordinates(1.0, -1.0, 0);
+		int[] coords3 = convertCoordinates(1.0, 1.0, 0);
+		int[] coords4 = convertCoordinates(-1.0, 1.0, 0);
 		final String corners = "M " + coords1[0] + "," + coords1[1]
 			+ " L " + coords2[0] + "," + coords2[1]
 			+ " L " + coords3[0] + "," + coords3[1]
@@ -365,21 +363,20 @@ public class SvgExporter extends Export3dFunction
 	/**
 	 * Write the cardinal letters NESW
 	 * @param inWriter Writer to use for writing file
-	 * @param inModelSize model size
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private void writeCardinals(FileWriter inWriter, double inModelSize, String inLineSeparator)
+	private void writeCardinals(FileWriter inWriter, String inLineSeparator)
 	throws IOException
 	{
 		// Use model size and camera angles to calculate positions
-		int[] coordsN = convertCoordinates(0, inModelSize, 0);
+		int[] coordsN = convertCoordinates(0, 1.0, 0);
 		writeCardinal(inWriter, coordsN[0], coordsN[1], "cardinal.n", inLineSeparator);
-		int[] coordsE = convertCoordinates(inModelSize, 0, 0);
+		int[] coordsE = convertCoordinates(1.0, 0, 0);
 		writeCardinal(inWriter, coordsE[0], coordsE[1], "cardinal.e", inLineSeparator);
-		int[] coordsS = convertCoordinates(0, -inModelSize, 0);
+		int[] coordsS = convertCoordinates(0, -1.0, 0);
 		writeCardinal(inWriter, coordsS[0], coordsS[1], "cardinal.s", inLineSeparator);
-		int[] coordsW = convertCoordinates(-inModelSize, 0, 0);
+		int[] coordsW = convertCoordinates(-1.0, 0, 0);
 		writeCardinal(inWriter, coordsW[0], coordsW[1], "cardinal.w", inLineSeparator);
 	}
 

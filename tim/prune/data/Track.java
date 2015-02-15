@@ -62,9 +62,9 @@ public class Track
 	 * Load method, for initialising and reinitialising data
 	 * @param inFieldArray array of Field objects describing fields
 	 * @param inPointArray 2d object array containing data
-	 * @param inAltFormat altitude format
+	 * @param inOptions load options such as units
 	 */
-	public void load(Field[] inFieldArray, Object[][] inPointArray, Altitude.Format inAltFormat)
+	public void load(Field[] inFieldArray, Object[][] inPointArray, PointCreateOptions inOptions)
 	{
 		if (inFieldArray == null || inPointArray == null)
 		{
@@ -81,7 +81,7 @@ public class Track
 		{
 			dataArray = (String[]) inPointArray[p];
 			// Convert to DataPoint objects
-			DataPoint point = new DataPoint(dataArray, _masterFieldList, inAltFormat);
+			DataPoint point = new DataPoint(dataArray, _masterFieldList, inOptions);
 			if (point.isValid())
 			{
 				_dataPoints[pointIndex] = point;
@@ -333,12 +333,12 @@ public class Track
 	 * @param inStart start of range
 	 * @param inEnd end of range
 	 * @param inOffset offset to add (-ve to subtract)
-	 * @param inFormat altitude format of offset
+	 * @param inUnit altitude unit of offset
 	 * @param inDecimals number of decimal places in offset
 	 * @return true on success
 	 */
 	public boolean addAltitudeOffset(int inStart, int inEnd, double inOffset,
-	 Altitude.Format inFormat, int inDecimals)
+	 Unit inUnit, int inDecimals)
 	{
 		// sanity check
 		if (inStart < 0 || inEnd < 0 || inStart >= inEnd || inEnd >= _numPoints) {
@@ -353,7 +353,7 @@ public class Track
 			{
 				// This point has an altitude so add the offset to it
 				foundAlt = true;
-				alt.addOffset(inOffset, inFormat, inDecimals);
+				alt.addOffset(inOffset, inUnit, inDecimals);
 				_dataPoints[i].setModified(false);
 			}
 		}
@@ -578,18 +578,19 @@ public class Track
 		double latitudeDiff = 0.0, longitudeDiff = 0.0;
 		double totalAltitude = 0;
 		int numAltitudes = 0;
-		Altitude.Format altFormat = Altitude.Format.NO_FORMAT;
+		Unit altUnit = null;
 		// loop between start and end points
 		for (int i=inStartIndex; i<= inEndIndex; i++)
 		{
 			DataPoint currPoint = getPoint(i);
 			latitudeDiff += (currPoint.getLatitude().getDouble() - firstLatitude);
 			longitudeDiff += (currPoint.getLongitude().getDouble() - firstLongitude);
-			if (currPoint.hasAltitude()) {
-				totalAltitude += currPoint.getAltitude().getValue(altFormat);
+			if (currPoint.hasAltitude())
+			{
+				totalAltitude += currPoint.getAltitude().getValue(altUnit);
 				// Use altitude format of first valid altitude
-				if (altFormat == Altitude.Format.NO_FORMAT)
-					altFormat = currPoint.getAltitude().getFormat();
+				if (altUnit == null)
+					altUnit = currPoint.getAltitude().getUnit();
 				numAltitudes++;
 			}
 		}
@@ -597,7 +598,9 @@ public class Track
 		double meanLatitude = firstLatitude + (latitudeDiff / numPoints);
 		double meanLongitude = firstLongitude + (longitudeDiff / numPoints);
 		Altitude meanAltitude = null;
-		if (numAltitudes > 0) {meanAltitude = new Altitude((int) (totalAltitude / numAltitudes), altFormat);}
+		if (numAltitudes > 0) {
+			meanAltitude = new Altitude((int) (totalAltitude / numAltitudes), altUnit);
+		}
 
 		DataPoint insertedPoint = new DataPoint(new Latitude(meanLatitude, Coordinate.FORMAT_NONE),
 			new Longitude(meanLongitude, Coordinate.FORMAT_NONE), meanAltitude);
@@ -657,7 +660,7 @@ public class Track
 	 */
 	public DoubleRange getXRange()
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _xRange;
 	}
 
@@ -666,7 +669,7 @@ public class Track
 	 */
 	public DoubleRange getYRange()
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _yRange;
 	}
 
@@ -675,7 +678,7 @@ public class Track
 	 */
 	public DoubleRange getLatRange()
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _latRange;
 	}
 	/**
@@ -683,7 +686,7 @@ public class Track
 	 */
 	public DoubleRange getLonRange()
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _longRange;
 	}
 
@@ -693,7 +696,7 @@ public class Track
 	 */
 	public double getX(int inPointNum)
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _xValues[inPointNum];
 	}
 
@@ -703,7 +706,7 @@ public class Track
 	 */
 	public double getY(int inPointNum)
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _yValues[inPointNum];
 	}
 
@@ -770,7 +773,7 @@ public class Track
 	 */
 	public boolean hasTrackPoints()
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _hasTrackpoint;
 	}
 
@@ -779,7 +782,7 @@ public class Track
 	 */
 	public boolean hasWaypoints()
 	{
-		if (!_scaled) scalePoints();
+		if (!_scaled) {scalePoints();}
 		return _hasWaypoint;
 	}
 
@@ -862,7 +865,7 @@ public class Track
 	 * Scale all the points in the track to gain x and y values
 	 * ready for plotting
 	 */
-	private void scalePoints()
+	private synchronized void scalePoints()
 	{
 		// Loop through all points in track, to see limits of lat, long
 		_longRange = new DoubleRange();

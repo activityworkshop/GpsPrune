@@ -57,7 +57,7 @@ public class WholeNumberField extends JTextField
 	 */
 	public WholeNumberField(int inMaxDigits)
 	{
-		super("0");
+		super(inMaxDigits);
 		setDocument(new WholeNumberDocument(inMaxDigits));
 	}
 

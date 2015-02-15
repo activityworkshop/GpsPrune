@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import tim.prune.App;
-import tim.prune.data.Altitude;
 import tim.prune.data.Field;
 import tim.prune.data.SourceInfo;
 
@@ -92,8 +91,7 @@ public class NmeaFileLoader
 		if (messages.size() > 0)
 		{
 			_app.informDataLoaded(getFieldArray(), makeDataArray(messages),
-				Altitude.Format.METRES, new SourceInfo(inFile, SourceInfo.FILE_TYPE.NMEA),
-				null);
+				null, new SourceInfo(inFile, SourceInfo.FILE_TYPE.NMEA), null);
 		}
 	}
 

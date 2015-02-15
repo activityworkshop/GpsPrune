@@ -3,7 +3,7 @@ package tim.prune.load;
 /**
  * Class to manage the list of file formats supported by Gpsbabel
  * (older versions of gpsbabel might not support all of these, of course).
- * Certain supported formats such as txt, csv, gpx are not included here
+ * Certain supported formats such as txt, csv are not included here
  * as GpsPrune can already load them directly.
  */
 public abstract class BabelFileFormats
@@ -111,6 +111,7 @@ public abstract class BabelFileFormats
 			"GPSman", "gpsman", null,
 			"GPSPilot Tracker for Palm/OS", "gpspilot", null,
 			"gpsutil", "gpsutil", null,
+			"GPX", "gpx", ".gpx",
 			"HikeTech", "hiketech", null,
 			"Holux (gm-100) .wpo Format", "holux", null,
 			"Holux M-241 (MTK based) Binary File Format", "m241-bin", null,

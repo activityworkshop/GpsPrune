@@ -2,11 +2,14 @@ package tim.prune.load;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.TreeSet;
+
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 
 import tim.prune.App;
 import tim.prune.config.Config;
+import tim.prune.data.Photo;
 import tim.prune.load.xml.GzipFileLoader;
 import tim.prune.load.xml.XmlFileLoader;
 import tim.prune.load.xml.ZipFileLoader;
@@ -129,6 +132,14 @@ public class FileLoader
 		else if (fileExtension.equals("nmea"))
 		{
 			_nmeaFileLoader.openFile(inFile);
+		}
+		else if (fileExtension.equals(".jpg") || fileExtension.equals("jpeg"))
+		{
+			Photo photo = JpegLoader.createPhoto(inFile);
+			TreeSet<Photo> photoSet = new TreeSet<Photo>();
+			photoSet.add(photo);
+			_app.informPhotosLoaded(photoSet);
+			_app.informNoDataLoaded(); // To trigger load of next file if any
 		}
 		else
 		{

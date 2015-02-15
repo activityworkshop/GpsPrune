@@ -15,6 +15,8 @@ import javax.swing.JPopupMenu;
 import tim.prune.I18nManager;
 import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
+import tim.prune.data.Field;
+import tim.prune.data.FieldList;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.GenericDisplay;
 
@@ -23,6 +25,17 @@ import tim.prune.gui.GenericDisplay;
  */
 public class ProfileChart extends GenericDisplay implements MouseListener
 {
+	/** Inner class to handle popup menu clicks */
+	class MenuClicker implements ActionListener
+	{
+		private Field _field = null;
+		MenuClicker(Field inField) {_field = inField;}
+		/** React to menu click by changing the field */
+		public void actionPerformed(ActionEvent arg0) {
+			changeView(_field);
+		}
+	}
+
 	/** Current scale factor in x direction*/
 	private double _xScaleFactor = 0.0;
 	/** Data to show on chart */
@@ -40,8 +53,6 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	private static final Dimension MINIMUM_SIZE = new Dimension(200, 110);
 	/** Colour to use for text if no data found */
 	private static final Color COLOR_NODATA_TEXT = Color.GRAY;
-	/** Chart type */
-	private static enum ChartType {ALTITUDE, SPEED, VERT_SPEED};
 
 
 	/**
@@ -255,23 +266,38 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		altItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				changeView(ChartType.ALTITUDE);
+				changeView(Field.ALTITUDE);
 			}});
 		_popup.add(altItem);
 		JMenuItem speedItem = new JMenuItem(I18nManager.getText("fieldname.speed"));
 		speedItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				changeView(ChartType.SPEED);
+				changeView(Field.SPEED);
 			}});
 		_popup.add(speedItem);
 		JMenuItem vertSpeedItem = new JMenuItem(I18nManager.getText("fieldname.verticalspeed"));
 		vertSpeedItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				changeView(ChartType.VERT_SPEED);
+				changeView(Field.VERTICAL_SPEED);
 			}});
 		_popup.add(vertSpeedItem);
+		// Go through track's master field list, see if any other fields to list
+		boolean addSeparator = true;
+		FieldList fields = _track.getFieldList();
+		for (int i=0; i<fields.getNumFields(); i++)
+		{
+			Field field = fields.getField(i);
+			if (!field.isBuiltIn())
+			{
+				if (addSeparator) {_popup.addSeparator();}
+				addSeparator = false;
+				JMenuItem item = new JMenuItem(field.getName());
+				item.addActionListener(new MenuClicker(field));
+				_popup.add(item);
+			}
+		}
 	}
 
 	/**
@@ -308,6 +334,10 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		// Try not to recalculate all the values unless necessary
 		if (inUpdateType != SELECTION_CHANGED) {
 			_data.init(Config.getUnitSet());
+		}
+		// Update the menu if necessary
+		if ((inUpdateType & DATA_ADDED_OR_REMOVED) > 0) {
+			makePopup();
 		}
 		repaint();
 	}
@@ -346,19 +376,31 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 
 	/**
 	 * Called by clicking on popup menu to change the view
-	 * @param inType selected chart type
+	 * @param inField field to show
 	 */
-	private void changeView(ChartType inType)
+	private void changeView(Field inField)
 	{
-		if (inType == ChartType.ALTITUDE && !(_data instanceof AltitudeData))
+		if (inField == Field.ALTITUDE)
 		{
-			_data = new AltitudeData(_track);
+			if (!(_data instanceof AltitudeData)) {
+				_data = new AltitudeData(_track);
+			}
 		}
-		else if (inType == ChartType.SPEED && !(_data instanceof SpeedData)) {
-			_data = new SpeedData(_track);
+		else if (inField == Field.SPEED) {
+			if (!(_data instanceof SpeedData)) {
+				_data = new SpeedData(_track);
+			}
 		}
-		else if (inType == ChartType.VERT_SPEED && !(_data instanceof VerticalSpeedData)) {
-			_data = new VerticalSpeedData(_track);
+		else if (inField == Field.VERTICAL_SPEED) {
+			if (!(_data instanceof VerticalSpeedData)) {
+				_data = new VerticalSpeedData(_track);
+			}
+		}
+		else
+		{
+			if (!(_data instanceof ArbitraryData) || ((ArbitraryData)_data).getField() != inField) {
+				_data = new ArbitraryData(_track, inField);
+			}
 		}
 		_data.init(Config.getUnitSet());
 		repaint();

@@ -40,8 +40,19 @@ public class Unit
 	 */
 	public Unit(Unit inParent, String inSuffix)
 	{
+		this(inParent, inSuffix, 1.0);
+	}
+
+	/**
+	 * Unit constructor
+	 * @param inParent parent unit
+	 * @param inSuffix suffix to name key
+	 * @param inFactor additional time factor to apply
+	 */
+	public Unit(Unit inParent, String inSuffix, double inFactor)
+	{
 		_nameKey = inParent._nameKey + inSuffix;
-		_multFactorFromStd = inParent._multFactorFromStd;
+		_multFactorFromStd = inParent._multFactorFromStd * inFactor;
 		_isStandard = inParent._isStandard;
 	}
 

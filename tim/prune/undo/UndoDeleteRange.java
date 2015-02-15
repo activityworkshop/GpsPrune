@@ -14,7 +14,7 @@ public class UndoDeleteRange implements UndoOperation
 	/**
 	 * Inner class to hold a single range information set
 	 */
-	class RangeInfo
+	static class RangeInfo
 	{
 		public int _startIndex = -1;
 		public DataPoint[] _points = null;

@@ -10,6 +10,7 @@ import tim.prune.I18nManager;
 public class EditFieldsTableModel extends AbstractTableModel
 {
 	private String[] _fieldNames = null;
+	private String[] _originalValues = null;
 	private String[] _fieldValues = null;
 	private boolean[] _valueChanged = null;
 
@@ -20,9 +21,10 @@ public class EditFieldsTableModel extends AbstractTableModel
 	 */
 	public EditFieldsTableModel(int inSize)
 	{
-		_fieldNames = new String[inSize];
-		_fieldValues = new String[inSize];
-		_valueChanged = new boolean[inSize];
+		_fieldNames     = new String[inSize];
+		_originalValues = new String[inSize];
+		_fieldValues    = new String[inSize];
+		_valueChanged   = new boolean[inSize];
 	}
 
 
@@ -35,6 +37,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 	public void addFieldInfo(String inName, String inValue, int inIndex)
 	{
 		_fieldNames[inIndex] = inName;
+		_originalValues[inIndex] = inValue;
 		_fieldValues[inIndex] = inValue;
 		_valueChanged[inIndex] = false;
 	}
@@ -45,7 +48,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 	 */
 	public int getColumnCount()
 	{
-		return 3;
+		return 2;
 	}
 
 
@@ -67,11 +70,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 		{
 			return _fieldNames[inRowIndex];
 		}
-		else if (inColumnIndex == 1)
-		{
-			return _fieldValues[inRowIndex];
-		}
-		return Boolean.valueOf(_valueChanged[inRowIndex]);
+		return _fieldValues[inRowIndex];
 	}
 
 
@@ -111,8 +110,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 	public String getColumnName(int inColNum)
 	{
 		if (inColNum == 0) return I18nManager.getText("dialog.pointedit.table.field");
-		else if (inColNum == 1) return I18nManager.getText("dialog.pointedit.table.value");
-		return I18nManager.getText("dialog.pointedit.table.changed");
+		return I18nManager.getText("dialog.pointedit.table.value");
 	}
 
 
@@ -120,28 +118,36 @@ public class EditFieldsTableModel extends AbstractTableModel
 	 * Update the value of the given row
 	 * @param inRowNum number of row, starting at 0
 	 * @param inValue new value
-	 * @return true if data updated
 	 */
-	public boolean updateValue(int inRowNum, String inValue)
+	public void updateValue(int inRowNum, String inValue)
 	{
+		String origValue = _originalValues[inRowNum];
 		String currValue = _fieldValues[inRowNum];
-		// ignore empty-to-empty changes
-		if ((currValue == null || currValue.equals("")) && (inValue == null || inValue.equals("")))
+		// Update model if changed from original value
+		_valueChanged[inRowNum] = areStringsDifferent(origValue, inValue);
+		// Update model if changed from current value
+		if (areStringsDifferent(currValue, inValue))
+		{
+			_fieldValues[inRowNum] = inValue;
+			fireTableRowsUpdated(inRowNum, inRowNum);
+		}
+	}
+
+	/**
+	 * Compare two strings to see if they're equal or not (nulls treated the same as empty strings)
+	 * @param inString1 first string
+	 * @param inString2 second string
+	 * @return true if the strings are different
+	 */
+	private static boolean areStringsDifferent(String inString1, String inString2)
+	{
+		// if both empty then same
+		if ((inString1 == null || inString1.equals("")) && (inString2 == null || inString2.equals("")))
 		{
 			return false;
 		}
-		// ignore changes when strings equal
-		if (currValue == null || inValue == null || !currValue.equals(inValue))
-		{
-			// really changed
-			_fieldValues[inRowNum] = inValue;
-			_valueChanged[inRowNum] = true;
-			fireTableRowsUpdated(inRowNum, inRowNum);
-			return true;
-		}
-		return false;
+		return (inString1 == null || inString2 == null || !inString1.equals(inString2));
 	}
-
 
 	/**
 	 * Get the value at the given index

@@ -1,23 +1,12 @@
 package tim.prune.function.srtm;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
@@ -27,6 +16,7 @@ import tim.prune.UpdateMessageBroker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Track;
+import tim.prune.gui.ProgressDialog;
 import tim.prune.undo.UndoLookupSrtm;
 
 /**
@@ -37,12 +27,8 @@ import tim.prune.undo.UndoLookupSrtm;
  */
 public class LookupSrtmFunction extends GenericFunction implements Runnable
 {
-	/** function dialog */
-	private JDialog _dialog = null;
-	/** Progress bar for function */
-	private JProgressBar _progressBar = null;
-	/** Cancel flag */
-	private boolean _cancelled = false;
+	/** Progress dialog */
+	ProgressDialog _progress = null;
 
 	/** Expected size of hgt file in bytes */
 	private static final long HGT_SIZE = 2884802L;
@@ -69,48 +55,15 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 */
 	public void begin()
 	{
-		if (_dialog == null)
+		if (_progress == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), false);
-			_dialog.setLocationRelativeTo(_parentFrame);
-			_dialog.getContentPane().add(makeDialogComponents());
-			_dialog.pack();
+			_progress = new ProgressDialog(_parentFrame, getNameKey());
 		}
-		_progressBar.setMinimum(0);
-		_progressBar.setMaximum(100);
-		_progressBar.setValue(20);
-		_cancelled = false;
+		_progress.show();
 		// start new thread for time-consuming part
 		new Thread(this).start();
 	}
 
-
-	/**
-	 * Make the dialog components
-	 * @return the GUI components for the dialog
-	 */
-	private Component makeDialogComponents()
-	{
-		JPanel dialogPanel = new JPanel();
-		dialogPanel.setLayout(new BorderLayout());
-		dialogPanel.add(new JLabel(I18nManager.getText("confirm.running")), BorderLayout.NORTH);
-		_progressBar = new JProgressBar();
-		_progressBar.setPreferredSize(new Dimension(250, 30));
-		dialogPanel.add(_progressBar, BorderLayout.CENTER);
-		// Cancel button at the bottom
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_cancelled = true;
-				_dialog.dispose();
-			}
-		});
-		buttonPanel.add(cancelButton);
-		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-		return dialogPanel;
-	}
 
 	/**
 	 * Run method using separate thread
@@ -145,7 +98,6 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			overwriteZeros = true;
 		}
 
-		_dialog.setVisible(true);
 		// Now loop again to extract the required tiles
 		for (int i=0; i<track.getNumPoints(); i++)
 		{
@@ -176,20 +128,19 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		UndoLookupSrtm undo = new UndoLookupSrtm(_app.getTrackInfo());
 		int numAltitudesFound = 0;
 		// Update progress bar
-		_progressBar.setMaximum(inTileList.size());
-		_progressBar.setIndeterminate(inTileList.size() <= 1);
-		_progressBar.setValue(0);
+		_progress.setMaximum(inTileList.size());
+		_progress.setValue(0);
 		String errorMessage = null;
 		// Get urls for each tile
 		URL[] urls = TileFinder.getUrls(inTileList);
-		for (int t=0; t<inTileList.size() && !_cancelled; t++)
+		for (int t=0; t<inTileList.size() && !_progress.isCancelled(); t++)
 		{
 			if (urls[t] != null)
 			{
 				SrtmTile tile = inTileList.get(t);
 				try
 				{
-					_progressBar.setValue(t);
+					_progress.setValue(t);
 					final int ARRLENGTH = 1201*1201;
 					int[] heights = new int[ARRLENGTH];
 					// Open zipinputstream on url and check size
@@ -253,8 +204,8 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 				}
 			}
 		}
-		_dialog.dispose();
-		if (_cancelled) {return;}
+		_progress.dispose();
+		if (_progress.isCancelled()) {return;}
 		if (numAltitudesFound > 0)
 		{
 			// Inform app including undo information

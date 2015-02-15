@@ -20,6 +20,7 @@ import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Photo;
 import tim.prune.data.Timestamp;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.function.Cancellable;
 import tim.prune.jpeg.ExifGateway;
 import tim.prune.jpeg.JpegData;
@@ -318,7 +319,7 @@ public class JpegLoader implements Runnable, Cancellable
 		Longitude longitude = new Longitude(lonval, Longitude.FORMAT_DEG_MIN_SEC);
 		Altitude altitude = null;
 		if (inData.hasAltitude()) {
-			altitude = new Altitude(inData.getAltitude(), Altitude.Format.METRES);
+			altitude = new Altitude(inData.getAltitude(), UnitSetLibrary.UNITS_METRES);
 		}
 		return new DataPoint(latitude, longitude, altitude);
 	}

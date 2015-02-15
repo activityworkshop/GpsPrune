@@ -54,10 +54,11 @@ public abstract class TileFinder
 	 */
 	private static byte[] readDatFile()
 	{
+		InputStream in = null;
 		try
 		{
 			// Need absolute path to dat file
-			InputStream in = TileFinder.class.getResourceAsStream("/tim/prune/function/srtm/srtmtiles.dat");
+			in = TileFinder.class.getResourceAsStream("/tim/prune/function/srtm/srtmtiles.dat");
 			if (in != null)
 			{
 				byte[] buffer = new byte[in.available()];
@@ -68,6 +69,13 @@ public abstract class TileFinder
 		}
 		catch (java.io.IOException e) {
 			System.err.println("Exception trying to read srtmtiles.dat : " + e.getMessage());
+		}
+		finally
+		{
+			try {
+				in.close();
+			}
+			catch (Exception e) {} // ignore
 		}
 		return null;
 	}

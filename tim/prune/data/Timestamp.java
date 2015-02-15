@@ -1,10 +1,11 @@
 package tim.prune.data;
 
 import java.text.DateFormat;
-import java.text.ParseException;
+import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,7 +27,8 @@ public class Timestamp
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
 	private static final Pattern ISO8601_FRACTIONAL_PATTERN
-		= Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{1,3})Z?");
+		= Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:[\\.,](\\d{1,3}))?(Z|[\\+-]\\d{2}(?::?\\d{2})?)?");
+	    //                    year     month     day T  hour    minute    sec             millisec   Z or +/-  hours  :   minutes
 	private static final Pattern GENERAL_TIMESTAMP_PATTERN
 		= Pattern.compile("(\\d{4})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})");
 	private static long SECS_SINCE_1970 = 0L;
@@ -68,12 +70,17 @@ public class Timestamp
 	static
 	{
 		CALENDAR = Calendar.getInstance();
+		TimeZone gmtZone = TimeZone.getTimeZone("GMT");
+		CALENDAR.setTimeZone(gmtZone);
 		MSECS_SINCE_1970 = CALENDAR.getTimeInMillis();
 		SECS_SINCE_1970 = MSECS_SINCE_1970 / 1000L;
 		SECS_SINCE_GARTRIP = SECS_SINCE_1970 - GARTRIP_OFFSET;
 		CALENDAR.add(Calendar.YEAR, -20);
 		MSECS_SINCE_1990 = CALENDAR.getTimeInMillis();
 		TWENTY_YEARS_IN_SECS = (MSECS_SINCE_1970 - MSECS_SINCE_1990) / 1000L;
+		// Set timezone for output
+		ISO_8601_FORMAT.setTimeZone(gmtZone);
+		DEFAULT_DATE_FORMAT.setTimeZone(gmtZone);
 		// Date formats
 		ALL_DATE_FORMATS = new DateFormat[] {
 			DEFAULT_DATE_FORMAT,
@@ -145,7 +152,8 @@ public class Timestamp
 							Integer.parseInt(fmatcher.group(4)), // hour
 							Integer.parseInt(fmatcher.group(5)), // minute
 							Integer.parseInt(fmatcher.group(6)), // second
-							fmatcher.group(7));                  // fractional seconds
+							fmatcher.group(7),                   // fractional seconds
+							fmatcher.group(8));                  // timezone, if any
 						return true;
 					}
 					catch (NumberFormatException nfe) {}
@@ -173,7 +181,7 @@ public class Timestamp
 								Integer.parseInt(matcher.group(4)),
 								Integer.parseInt(matcher.group(5)),
 								Integer.parseInt(matcher.group(6)),
-								null); // no fractions of a second
+								null, null); // no fractions of a second and no timezone
 							return true;
 						}
 						catch (NumberFormatException nfe2) {} // parse shouldn't fail if matcher matched
@@ -193,14 +201,16 @@ public class Timestamp
 	 */
 	private boolean parseString(String inString, DateFormat inDateFormat)
 	{
-		try
+		inDateFormat.setLenient(false);
+		ParsePosition pPos = new ParsePosition(0);
+		Date date = inDateFormat.parse(inString, pPos);
+		if (date != null && inString.length() == pPos.getIndex()) // require use of _all_ the string, not just the beginning
 		{
-			Date date = inDateFormat.parse(inString);
 			CALENDAR.setTime(date);
 			_milliseconds = CALENDAR.getTimeInMillis();
 			return true;
 		}
-		catch (ParseException e) {}
+
 		return false;
 	}
 
@@ -216,7 +226,7 @@ public class Timestamp
 	 */
 	public Timestamp(int inYear, int inMonth, int inDay, int inHour, int inMinute, int inSecond)
 	{
-		_milliseconds = getMilliseconds(inYear, inMonth, inDay, inHour, inMinute, inSecond, null);
+		_milliseconds = getMilliseconds(inYear, inMonth, inDay, inHour, inMinute, inSecond, null, null);
 		_valid = true;
 	}
 
@@ -241,12 +251,22 @@ public class Timestamp
 	 * @param inMinute minute
 	 * @param inSecond seconds
 	 * @param inFraction fractions of a second
+	 * @param inTimezone timezone, if any
 	 * @return number of milliseconds
 	 */
 	private static long getMilliseconds(int inYear, int inMonth, int inDay,
-		int inHour, int inMinute, int inSecond, String inFraction)
+		int inHour, int inMinute, int inSecond, String inFraction, String inTimezone)
 	{
 		Calendar cal = Calendar.getInstance();
+		// Timezone, if any
+		if (inTimezone == null || inTimezone.equals("") || inTimezone.equals("Z")) {
+			// No timezone, use zulu
+			cal.setTimeZone(TimeZone.getTimeZone("GMT"));
+		}
+		else {
+			// Timezone specified, pass to calendar
+			cal.setTimeZone(TimeZone.getTimeZone("GMT" + inTimezone));
+		}
 		cal.set(Calendar.YEAR, inYear);
 		cal.set(Calendar.MONTH, inMonth - 1);
 		cal.set(Calendar.DAY_OF_MONTH, inDay);
@@ -426,7 +446,7 @@ public class Timestamp
 			return format(ISO_8601_FORMAT);
 		}
 		if (_text == null) {
-			_text = (_valid?format(DEFAULT_DATE_FORMAT):"");
+			_text = format(DEFAULT_DATE_FORMAT);
 		}
 		return _text;
 	}
@@ -453,6 +473,7 @@ public class Timestamp
 	 */
 	private String format(DateFormat inFormat)
 	{
+		CALENDAR.setTimeZone(TimeZone.getTimeZone("GMT"));
 		CALENDAR.setTimeInMillis(_milliseconds);
 		return inFormat.format(CALENDAR.getTime());
 	}
@@ -463,6 +484,7 @@ public class Timestamp
 	public Calendar getCalendar()
 	{
 		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(TimeZone.getTimeZone("GMT"));
 		cal.setTimeInMillis(_milliseconds);
 		return cal;
 	}

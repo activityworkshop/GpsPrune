@@ -26,6 +26,7 @@ import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.SourceInfo.FILE_TYPE;
+import tim.prune.load.babel.BabelFilterPanel;
 
 /**
  * Class to manage the loading of data from a GPS device using GpsBabel
@@ -128,6 +129,15 @@ public class BabelLoadFromGps extends BabelLoader
 		_saveCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_saveCheckbox);
 
+		// Filter panel
+		_filterPanel = new BabelFilterPanel(_parentFrame);
+		// Give filter panel the contents of the config
+		String filter = Config.getConfigString(Config.KEY_GPSBABEL_FILTER);
+		if (filter != null) {
+			_filterPanel.setFilterString(filter);
+		}
+		mainPanel.add(_filterPanel);
+
 		// progress bar (initially invisible)
 		_progressBar = new JProgressBar(0, 10);
 		mainPanel.add(_progressBar);
@@ -169,7 +179,9 @@ public class BabelLoadFromGps extends BabelLoader
 	{
 		final String device = _deviceField.getText().trim();
 		final String format = _formatField.getText().trim();
+		final String filter = _filterPanel.getFilterString();
 		Config.setConfigString(Config.KEY_GPS_DEVICE, device);
 		Config.setConfigString(Config.KEY_GPS_FORMAT, format);
+		Config.setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
 	}
 }

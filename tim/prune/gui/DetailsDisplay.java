@@ -8,7 +8,6 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.NumberFormat;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -51,6 +50,7 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _latLabel = null, _longLabel = null;
 	private JLabel _altLabel = null;
 	private JLabel _timeLabel = null;
+	private JLabel _descLabel = null;
 	private JLabel _speedLabel = null, _vSpeedLabel = null;
 	private JLabel _nameLabel = null, _typeLabel = null;
 
@@ -84,8 +84,6 @@ public class DetailsDisplay extends GenericDisplay
 	// Units
 	private JComboBox _coordFormatDropdown = null;
 	private JComboBox _distUnitsDropdown = null;
-	// Formatter
-	private NumberFormat _distanceFormatter = NumberFormat.getInstance();
 
 	// Cached labels
 	private static final String LABEL_POINT_SELECTED = I18nManager.getText("details.index.selected") + ": ";
@@ -95,6 +93,7 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_POINT_TIMESTAMP = I18nManager.getText("fieldname.timestamp") + ": ";
 	private static final String LABEL_POINT_WAYPOINTNAME = I18nManager.getText("fieldname.waypointname") + ": ";
 	private static final String LABEL_POINT_WAYPOINTTYPE = I18nManager.getText("fieldname.waypointtype") + ": ";
+	private static final String LABEL_POINT_DESCRIPTION  = I18nManager.getText("fieldname.description") + ": ";
 	private static final String LABEL_POINT_SPEED        = I18nManager.getText("fieldname.speed") + ": ";
 	private static final String LABEL_POINT_VERTSPEED    = I18nManager.getText("fieldname.verticalspeed") + ": ";
 	private static final String LABEL_RANGE_SELECTED = I18nManager.getText("details.range.selected") + ": ";
@@ -135,6 +134,8 @@ public class DetailsDisplay extends GenericDisplay
 		_timeLabel = new JLabel("");
 		_timeLabel.setMinimumSize(new Dimension(120, 10));
 		pointDetailsPanel.add(_timeLabel);
+		_descLabel = new JLabel("");
+		pointDetailsPanel.add(_descLabel);
 		_speedLabel = new JLabel("");
 		pointDetailsPanel.add(_speedLabel);
 		_vSpeedLabel = new JLabel("");
@@ -296,6 +297,7 @@ public class DetailsDisplay extends GenericDisplay
 			_longLabel.setText("");
 			_altLabel.setText("");
 			_timeLabel.setText("");
+			_descLabel.setText("");
 			_nameLabel.setText("");
 			_typeLabel.setText("");
 			_speedLabel.setText("");
@@ -315,9 +317,27 @@ public class DetailsDisplay extends GenericDisplay
 				: "");
 			if (currentPoint.hasTimestamp()) {
 				_timeLabel.setText(LABEL_POINT_TIMESTAMP + currentPoint.getTimestamp().getText());
+				_timeLabel.setToolTipText(currentPoint.getTimestamp().getText());
 			}
 			else {
 				_timeLabel.setText("");
+				_timeLabel.setToolTipText("");
+			}
+			// Maybe the point has a description?
+			String pointDesc = currentPoint.getFieldValue(Field.DESCRIPTION);
+			if (pointDesc == null || pointDesc.equals("") || currentPoint.hasMedia()) {
+				_descLabel.setText("");
+				_descLabel.setToolTipText("");
+			}
+			else
+			{
+				if (pointDesc.length() < 5) {
+					_descLabel.setText(LABEL_POINT_DESCRIPTION + pointDesc);
+				}
+				else {
+					_descLabel.setText(shortenString(pointDesc));
+				}
+				_descLabel.setToolTipText(pointDesc);
 			}
 
 			// Speed can come from either timestamps and distances, or speed values in data
@@ -325,7 +345,7 @@ public class DetailsDisplay extends GenericDisplay
 			SpeedCalculator.calculateSpeed(_track, currentPointIndex, speedValue);
 			if (speedValue.isValid())
 			{
-				String speed = roundedNumber(speedValue.getValue()) + " " + speedUnitsStr;
+				String speed = DisplayUtils.roundedNumber(speedValue.getValue()) + " " + speedUnitsStr;
 				_speedLabel.setText(LABEL_POINT_SPEED + speed);
 			}
 			else {
@@ -337,7 +357,7 @@ public class DetailsDisplay extends GenericDisplay
 			if (speedValue.isValid())
 			{
 				String vSpeedUnitsStr = I18nManager.getText(unitSet.getVerticalSpeedUnit().getShortnameKey());
-				String speed = roundedNumber(speedValue.getValue()) + " " + vSpeedUnitsStr;
+				String speed = DisplayUtils.roundedNumber(speedValue.getValue()) + " " + vSpeedUnitsStr;
 				_vSpeedLabel.setText(LABEL_POINT_VERTSPEED + speed);
 			}
 			else {
@@ -374,12 +394,12 @@ public class DetailsDisplay extends GenericDisplay
 			_rangeLabel.setText(LABEL_RANGE_SELECTED
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
-			_distanceLabel.setText(LABEL_RANGE_DISTANCE + roundedNumber(selection.getDistance()) + " " + distUnitsStr);
+			_distanceLabel.setText(LABEL_RANGE_DISTANCE + DisplayUtils.roundedNumber(selection.getDistance()) + " " + distUnitsStr);
 			if (selection.getNumSeconds() > 0)
 			{
 				_durationLabel.setText(LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(selection.getNumSeconds()));
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
-					+ roundedNumber(selection.getDistance()/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
+					+ DisplayUtils.roundedNumber(selection.getDistance()/selection.getNumSeconds()*3600.0) + " " + speedUnitsStr);
 			}
 			else {
 				_durationLabel.setText("");
@@ -503,27 +523,6 @@ public class DetailsDisplay extends GenericDisplay
 
 
 	/**
-	 * Format a number to a sensible precision
-	 * @param inDist distance
-	 * @return formatted String
-	 */
-	private String roundedNumber(double inDist)
-	{
-		// Set precision of formatter
-		int numDigits = 0;
-		if (inDist < 1.0)
-			numDigits = 3;
-		else if (inDist < 10.0)
-			numDigits = 2;
-		else if (inDist < 100.0)
-			numDigits = 1;
-		// set formatter
-		_distanceFormatter.setMaximumFractionDigits(numDigits);
-		_distanceFormatter.setMinimumFractionDigits(numDigits);
-		return _distanceFormatter.format(inDist);
-	}
-
-	/**
 	 * Restrict the given coordinate to a limited number of decimal places for display
 	 * @param inCoord coordinate string
 	 * @return chopped string
@@ -582,15 +581,26 @@ public class DetailsDisplay extends GenericDisplay
 	 */
 	private static String shortenPath(String inFullPath)
 	{
+		String path = inFullPath;
 		// Chop off the home path if possible
 		final String homePath = System.getProperty("user.home").toLowerCase();
 		if (inFullPath != null && inFullPath.toLowerCase().startsWith(homePath)) {
-			inFullPath = inFullPath.substring(homePath.length()+1);
+			path = inFullPath.substring(homePath.length()+1);
 		}
-		if (inFullPath == null || inFullPath.length() < 21) {
-			return inFullPath;
+		return shortenString(path);
+	}
+
+	/**
+	 * @param inString string to shorten
+	 * @return shortened string from the beginning
+	 */
+	private static String shortenString(String inString)
+	{
+		// Limit is hardcoded here, maybe it should depend on parent component width and font size etc?
+		if (inString == null || inString.length() < 21) {
+			return inString;
 		}
-		// path is too long
-		return inFullPath.substring(0, 20) + "...";
+		// string is too long
+		return inString.substring(0, 20) + "...";
 	}
 }

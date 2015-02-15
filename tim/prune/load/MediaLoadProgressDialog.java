@@ -94,7 +94,6 @@ public class MediaLoadProgressDialog
 			_progressBar.setMaximum(inMax);
 		_progressBar.setValue(inCurrent);
 		_progressBar.setString("" + inCurrent + " / " + _progressBar.getMaximum());
-		// TODO: Need to repaint?
 	}
 
 	/**

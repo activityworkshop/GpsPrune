@@ -8,15 +8,17 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 /**
- * Class to make it easier to use GridBagLayout
- * for a two-column, non-equal-width layout
+ * Class to make it easier to use GridBagLayout for a non-equal-width layout
+ * Default is two columns but can handle more
  */
 public class GuiGridLayout
 {
 	private GridBagLayout _layout = null;
 	private GridBagConstraints _constraints = null;
 	private JPanel _panel = null;
-	private boolean _allLeft = false;
+	private int _numColumns = 0;
+	private double[] _colWeights = null;
+	private boolean[] _rightAligns = null;
 	private int _x = 0;
 	private int _y = 0;
 
@@ -26,20 +28,30 @@ public class GuiGridLayout
 	 */
 	public GuiGridLayout(JPanel inPanel)
 	{
-		this(inPanel, false);
+		// Default is two columns, with more weight to the right-hand one; first column is right-aligned
+		this(inPanel, null, null);
 	}
 
 	/**
 	 * Constructor
 	 * @param inPanel panel using layout
-	 * @param inAllLeft true to align all elements to left
+	 * @param inColumnWeights array of column weights
+	 * @param inAlignRights array of booleans, true for right alignment, false for left
 	 */
-	public GuiGridLayout(JPanel inPanel, boolean inAllLeft)
+	public GuiGridLayout(JPanel inPanel, double[] inColumnWeights, boolean[] inAlignRights)
 	{
 		_panel = inPanel;
-		_allLeft = inAllLeft;
 		_layout = new GridBagLayout();
 		_constraints = new GridBagConstraints();
+		_colWeights = inColumnWeights;
+		_rightAligns = inAlignRights;
+		if (_colWeights == null || _rightAligns == null || _colWeights.length != _rightAligns.length
+			|| _colWeights.length < 2)
+		{
+			_colWeights = new double[] {0.5, 1.0};
+			_rightAligns = new boolean[] {true, false};
+		}
+		_numColumns = _colWeights.length;
 		_constraints.weightx = 1.0;
 		_constraints.weighty = 0.0;
 		_constraints.ipadx = 10;
@@ -57,17 +69,25 @@ public class GuiGridLayout
 	{
 		_constraints.gridx = _x;
 		_constraints.gridy = _y;
-		_constraints.weightx = (_x==0?0.5:1.0);
+		_constraints.weightx = _colWeights[_x];
 		// set anchor
-		_constraints.anchor = ((_x == 0 && !_allLeft)?GridBagConstraints.LINE_END:GridBagConstraints.LINE_START);
+		_constraints.anchor = (_rightAligns[_x]?GridBagConstraints.LINE_END:GridBagConstraints.LINE_START);
 		_layout.setConstraints(inComponent, _constraints);
 		// add to panel
 		_panel.add(inComponent);
 		// work out next position
 		_x++;
-		if (_x > 1) {
-			_x = 0;
-			_y++;
+		if (_x >= _numColumns) {
+			nextRow();
 		}
+	}
+
+	/**
+	 * Go to the next row of the grid
+	 */
+	public void nextRow()
+	{
+		_x = 0;
+		_y++;
 	}
 }

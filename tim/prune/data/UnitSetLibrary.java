@@ -18,11 +18,21 @@ public abstract class UnitSetLibrary
 	/** Units for nautical miles */
 	public static final Unit UNITS_NAUTICAL_MILES = new Unit("nauticalmiles", 1/1852.0);
 
+	// Speed units - all conversion factors from metres per second
+	public static final Unit SPEED_UNITS_METRESPERSEC = new Unit(UNITS_METRES, "persec");
+	public static final Unit SPEED_UNITS_FEETPERSEC   = new Unit(UNITS_FEET, "persec");
+	public static final Unit SPEED_UNITS_MILESPERHOUR = new Unit(UNITS_MILES, "perhour", 60.0 * 60.0);
+	public static final Unit SPEED_UNITS_KNOTS        = new Unit(UNITS_NAUTICAL_MILES, "perhour", 60.0 * 60.0);
+	public static final Unit SPEED_UNITS_KMPERHOUR    = new Unit(UNITS_KILOMETRES, "perhour", 60.0 * 60.0);
+	public static final Unit[] ALL_SPEED_UNITS = {SPEED_UNITS_METRESPERSEC, SPEED_UNITS_KMPERHOUR,
+		SPEED_UNITS_FEETPERSEC, SPEED_UNITS_MILESPERHOUR};
+
 	/** Array of available unit sets */
-	private static UnitSet[] _sets = {
-		new UnitSet("unitset.kilometres", UNITS_KILOMETRES, UNITS_METRES, Altitude.Format.METRES),
-		new UnitSet("unitset.miles", UNITS_MILES, UNITS_FEET, Altitude.Format.FEET),
-		new UnitSet("unitset.nautical", UNITS_NAUTICAL_MILES, UNITS_FEET, Altitude.Format.FEET)
+	private static UnitSet[] _sets =
+	{
+		new UnitSet("unitset.kilometres", UNITS_KILOMETRES, UNITS_METRES, SPEED_UNITS_KMPERHOUR, SPEED_UNITS_METRESPERSEC),
+		new UnitSet("unitset.miles", UNITS_MILES, UNITS_FEET, SPEED_UNITS_MILESPERHOUR, SPEED_UNITS_FEETPERSEC),
+		new UnitSet("unitset.nautical", UNITS_NAUTICAL_MILES, UNITS_FEET, SPEED_UNITS_KNOTS, SPEED_UNITS_FEETPERSEC)
 	};
 
 	/**
@@ -53,9 +63,8 @@ public abstract class UnitSetLibrary
 	public static UnitSet getUnitSet(String inKey)
 	{
 		// Loop over all available unit sets
-		for (int i=0; i<getNumUnitSets(); i++)
+		for (UnitSet set : _sets)
 		{
-			UnitSet set = getUnitSet(i);
 			if (set.getNameKey().equals(inKey)) {
 				return set;
 			}

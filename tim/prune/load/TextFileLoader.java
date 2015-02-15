@@ -1,7 +1,6 @@
 package tim.prune.load;
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -22,9 +21,13 @@ import java.io.File;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
-import tim.prune.data.Altitude;
 import tim.prune.data.Field;
+import tim.prune.data.PointCreateOptions;
 import tim.prune.data.SourceInfo;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSetLibrary;
+import tim.prune.gui.GuiGridLayout;
+import tim.prune.gui.WizardLayout;
 
 
 /**
@@ -37,8 +40,7 @@ public class TextFileLoader
 	private App _app = null;
 	private JFrame _parentFrame = null;
 	private JDialog _dialog = null;
-	private JPanel _cardPanel = null;
-	private CardLayout _layout = null;
+	private WizardLayout _wizard = null;
 	private JButton _backButton = null, _nextButton = null;
 	private JButton _finishButton = null;
 	private JButton _moveUpButton = null, _moveDownButton = null;
@@ -51,14 +53,18 @@ public class TextFileLoader
 	private FileExtractTableModel _fileExtractTableModel = null;
 	private JTable _fieldTable;
 	private FieldSelectionTableModel _fieldTableModel = null;
-	private JComboBox _unitsDropDown = null;
+	private JComboBox _altitudeUnitsDropdown = null;
+	private JComboBox _hSpeedUnitsDropdown = null;
+	private JComboBox _vSpeedUnitsDropdown = null;
+	private JRadioButton _vSpeedUpwardsRadio = null;
+	private ComponentHider _componentHider = null;
 	private int _selectedField = -1;
 	private char _currentDelimiter = ',';
 
 	// previously selected values
 	private char _lastUsedDelimiter = ',';
 	private Field[] _lastSelectedFields = null;
-	private Altitude.Format _lastAltitudeFormat = Altitude.Format.NO_FORMAT;
+	private Unit _lastAltitudeUnit = null;
 
 	// constants
 	private static final int SNIPPET_SIZE = 6;
@@ -135,9 +141,11 @@ public class TextFileLoader
 			_dialog.pack();
 			_dialog.setVisible(true);
 		}
-		else {
+		else
+		{
 			// Didn't pass pre-check
-			_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");
+			_app.showErrorMessageNoLookup("error.load.dialogtitle",
+				I18nManager.getText("error.load.noread") + ": " + inFile.getName());
 			_app.informNoDataLoaded();
 		}
 	}
@@ -160,6 +168,9 @@ public class TextFileLoader
 
 		// Check each line of the file
 		String[] fileContents = _fileCacher.getContents();
+		if (fileContents == null) {
+			return false; // nothing cached, might be binary
+		}
 		boolean fileOK = true;
 		_delimiterInfos = new DelimiterInfo[5];
 		for (int i=0; i<4; i++) _delimiterInfos[i] = new DelimiterInfo(DELIMITERS[i]);
@@ -233,9 +244,9 @@ public class TextFileLoader
 		_backButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				_layout.previous(_cardPanel);
-				_backButton.setEnabled(false);
-				_nextButton.setEnabled(true);
+				_wizard.showPreviousCard();
+				_nextButton.setEnabled(!_wizard.isLastCard());
+				_backButton.setEnabled(!_wizard.isFirstCard());
 				_finishButton.setEnabled(false);
 			}
 		});
@@ -245,11 +256,11 @@ public class TextFileLoader
 		_nextButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				prepareSecondPanel();
-				_layout.next(_cardPanel);
-				_nextButton.setEnabled(false);
-				_backButton.setEnabled(true);
-				_finishButton.setEnabled(_fieldTableModel.getRowCount() > 1);
+				prepareNextPanel(); // Maybe it needs to be initialized based on previous panels
+				_wizard.showNextCard();
+				_nextButton.setEnabled(!_wizard.isLastCard() && isCurrentCardValid());
+				_backButton.setEnabled(!_wizard.isFirstCard());
+				_finishButton.setEnabled(_wizard.isLastCard() && isCurrentCardValid());
 			}
 		});
 		buttonPanel.add(_nextButton);
@@ -273,10 +284,9 @@ public class TextFileLoader
 		buttonPanel.add(cancelButton);
 		wholePanel.add(buttonPanel, BorderLayout.SOUTH);
 
-		// Make the two cards, for delimiter and fields
-		_cardPanel = new JPanel();
-		_layout = new CardLayout();
-		_cardPanel.setLayout(_layout);
+		// Make the card panel in the centre
+		JPanel cardPanel = new JPanel();
+		_wizard = new WizardLayout(cardPanel);
 		JPanel firstCard = new JPanel();
 		firstCard.setLayout(new BorderLayout());
 		firstCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -391,17 +401,71 @@ public class TextFileLoader
 
 		innerPanel2.add(innerPanel3, BorderLayout.EAST);
 		secondCard.add(innerPanel2, BorderLayout.CENTER);
-		JPanel altUnitsPanel = new JPanel();
-		altUnitsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-		altUnitsPanel.add(new JLabel(I18nManager.getText("dialog.openoptions.altitudeunits")));
-		String[] units = {I18nManager.getText("units.metres"), I18nManager.getText("units.feet")};
-		_unitsDropDown = new JComboBox(units);
-		altUnitsPanel.add(_unitsDropDown);
-		secondCard.add(altUnitsPanel, BorderLayout.SOUTH);
-		_cardPanel.add(firstCard, "card1");
-		_cardPanel.add(secondCard, "card2");
 
-		wholePanel.add(_cardPanel, BorderLayout.CENTER);
+		// Third card, for units selection of altitude and speeds
+		JPanel thirdCard = new JPanel();
+		thirdCard.setLayout(new BorderLayout(10, 10));
+		JPanel holderPanel = new JPanel();
+		holderPanel.setLayout(new BoxLayout(holderPanel, BoxLayout.Y_AXIS));
+		// Altitude
+		JPanel altUnitsPanel = new JPanel();
+		GuiGridLayout altGrid = new GuiGridLayout(altUnitsPanel);
+		altUnitsPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("fieldname.altitude")));
+		JLabel altLabel = new JLabel(I18nManager.getText("dialog.openoptions.altitudeunits") + ": ");
+		altGrid.add(altLabel);
+		String[] altUnits = {I18nManager.getText("units.metres"), I18nManager.getText("units.feet")};
+		_altitudeUnitsDropdown = new JComboBox(altUnits);
+		altGrid.add(_altitudeUnitsDropdown);
+		holderPanel.add(altUnitsPanel);
+		// Horizontal speed
+		JPanel speedPanel = new JPanel();
+		GuiGridLayout speedGrid = new GuiGridLayout(speedPanel);
+		speedPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("fieldname.speed")));
+		JLabel speedLabel = new JLabel(I18nManager.getText("dialog.openoptions.speedunits") + ": ");
+		speedGrid.add(speedLabel);
+		_hSpeedUnitsDropdown = new JComboBox();
+		for (Unit spUnit : UnitSetLibrary.ALL_SPEED_UNITS) {
+			_hSpeedUnitsDropdown.addItem(I18nManager.getText(spUnit.getNameKey()));
+		}
+		speedGrid.add(_hSpeedUnitsDropdown);
+		holderPanel.add(speedPanel);
+		// Vertical speed
+		JPanel vSpeedPanel = new JPanel();
+		GuiGridLayout vSpeedGrid = new GuiGridLayout(vSpeedPanel);
+		vSpeedPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("fieldname.verticalspeed")));
+		JLabel vSpeedLabel = new JLabel(I18nManager.getText("dialog.openoptions.vertspeedunits") + ": ");
+		vSpeedGrid.add(vSpeedLabel);
+		_vSpeedUnitsDropdown = new JComboBox();
+		for (Unit spUnit : UnitSetLibrary.ALL_SPEED_UNITS) {
+			_vSpeedUnitsDropdown.addItem(I18nManager.getText(spUnit.getNameKey()));
+		}
+		vSpeedGrid.add(_vSpeedUnitsDropdown);
+		_vSpeedUpwardsRadio = new JRadioButton(I18nManager.getText("dialog.openoptions.vspeed.positiveup"));
+		JRadioButton vSpeedDownwardsRadio = new JRadioButton(I18nManager.getText("dialog.openoptions.vspeed.positivedown"));
+		ButtonGroup vSpeedDirGroup = new ButtonGroup();
+		vSpeedDirGroup.add(_vSpeedUpwardsRadio); vSpeedDirGroup.add(vSpeedDownwardsRadio);
+		vSpeedGrid.add(_vSpeedUpwardsRadio);     vSpeedGrid.add(vSpeedDownwardsRadio);
+		_vSpeedUpwardsRadio.setSelected(true);
+		holderPanel.add(vSpeedPanel);
+		thirdCard.add(holderPanel, BorderLayout.NORTH);
+
+		// Make a hider to show and hide the components according to the selected fields
+		_componentHider = new ComponentHider();
+		_componentHider.addComponent(altLabel, Field.ALTITUDE);
+		_componentHider.addComponent(_altitudeUnitsDropdown, Field.ALTITUDE);
+		_componentHider.addComponent(speedLabel, Field.SPEED);
+		_componentHider.addComponent(_hSpeedUnitsDropdown, Field.SPEED);
+		_componentHider.addComponent(vSpeedLabel, Field.VERTICAL_SPEED);
+		_componentHider.addComponent(_vSpeedUnitsDropdown, Field.VERTICAL_SPEED);
+		_componentHider.addComponent(_vSpeedUpwardsRadio, Field.VERTICAL_SPEED);
+		_componentHider.addComponent(vSpeedDownwardsRadio, Field.VERTICAL_SPEED);
+
+		// Add cards to the wizard
+		_wizard.addCard(firstCard);
+		_wizard.addCard(secondCard);
+		_wizard.addCard(thirdCard);
+
+		wholePanel.add(cardPanel, BorderLayout.CENTER);
 		return wholePanel;
 	}
 
@@ -472,6 +536,26 @@ public class TextFileLoader
 
 
 	/**
+	 * Prepare the next panel to be shown, if necessary
+	 */
+	private void prepareNextPanel()
+	{
+		int currPanel = _wizard.getCurrentCardIndex();
+		if (currPanel == 0) {
+			prepareSecondPanel();
+		}
+		else if (currPanel == 1)
+		{
+			Field[] selectedFields = _fieldTableModel.getFieldArray();
+			// Enable / disable controls based on whether altitude / speed / vspeed fields were chosen on second panel
+			_componentHider.enableComponents(Field.ALTITUDE, doesFieldArrayContain(selectedFields, Field.ALTITUDE));
+			_componentHider.enableComponents(Field.SPEED, doesFieldArrayContain(selectedFields, Field.SPEED));
+			_componentHider.enableComponents(Field.VERTICAL_SPEED, doesFieldArrayContain(selectedFields, Field.VERTICAL_SPEED));
+			// TODO: Also check ranges of altitudes, speeds, vert speeds to show them in the third panel
+		}
+	}
+
+	/**
 	 * Use the delimiter selected to determine the fields in the file
 	 * and prepare the second panel accordingly
 	 */
@@ -512,14 +596,31 @@ public class TextFileLoader
 		_fieldTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(fieldTypesBox));
 
 		// Set altitude format to same as last time if available
-		if (_lastAltitudeFormat == Altitude.Format.METRES)
-			_unitsDropDown.setSelectedIndex(0);
-		else if (_lastAltitudeFormat == Altitude.Format.FEET)
-			_unitsDropDown.setSelectedIndex(1);
+		if (_lastAltitudeUnit == UnitSetLibrary.UNITS_METRES)
+			_altitudeUnitsDropdown.setSelectedIndex(0);
+		else if (_lastAltitudeUnit == UnitSetLibrary.UNITS_FEET)
+			_altitudeUnitsDropdown.setSelectedIndex(1);
 		// no selection on field list
 		selectField(-1);
 	}
 
+	/**
+	 * See if the given array of selected fields contains the specified one
+	 * @param inFields array of fields selected by user in the second panel
+	 * @param inCheck field to check
+	 * @return true if the field is present in the array
+	 */
+	private boolean doesFieldArrayContain(Field[] inFields, Field inCheck)
+	{
+		if (inFields != null) {
+			for (int i=0; i<inFields.length; i++) {
+				if (inFields[i] == inCheck) { // == check ok here because it only checks for built-in fields
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * All options have been selected, so load file
@@ -529,22 +630,39 @@ public class TextFileLoader
 		// Save delimiter, field array and altitude format for later use
 		_lastUsedDelimiter = _currentDelimiter;
 		_lastSelectedFields = _fieldTableModel.getFieldArray();
-		Altitude.Format altitudeFormat = Altitude.Format.METRES;
-		if (_unitsDropDown.getSelectedIndex() == 1)
-		{
-			altitudeFormat = Altitude.Format.FEET;
-		}
-		_lastAltitudeFormat = altitudeFormat;
-		// give data to App
+		// TODO: Remember all the units selections for next load?
+		// Get the selected units for altitudes and speeds
 		SourceInfo sourceInfo = new SourceInfo(_file, SourceInfo.FILE_TYPE.TEXT);
+		PointCreateOptions options = new PointCreateOptions();
+		options.setAltitudeUnits(_altitudeUnitsDropdown.getSelectedIndex() == 0 ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);
+		Unit hSpeedUnit = UnitSetLibrary.ALL_SPEED_UNITS[_hSpeedUnitsDropdown.getSelectedIndex()];
+		options.setSpeedUnits(hSpeedUnit);
+		Unit vSpeedUnit = UnitSetLibrary.ALL_SPEED_UNITS[_vSpeedUnitsDropdown.getSelectedIndex()];
+		options.setVerticalSpeedUnits(vSpeedUnit, _vSpeedUpwardsRadio.isSelected());
+
+		// give data to App
 		_app.informDataLoaded(_fieldTableModel.getFieldArray(),
-			_fileExtractTableModel.getData(), altitudeFormat, sourceInfo, null);
+			_fileExtractTableModel.getData(), options, sourceInfo, null);
 		// clear up file cacher
 		_fileCacher.clear();
 		// dispose of dialog
 		_dialog.dispose();
 	}
 
+	/**
+	 * @return true if the inputs on the current tab are valid, user is allowed to proceed
+	 */
+	private boolean isCurrentCardValid()
+	{
+		int cardIndex = _wizard.getCurrentCardIndex();
+		if (cardIndex == 1)
+		{
+			// validate second panel
+			return _fieldTableModel.getRowCount() > 1;
+		}
+		// all other panels are always valid
+		return true;
+	}
 
 	/**
 	 * Make a panel with a label and a component

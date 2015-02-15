@@ -390,25 +390,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				int selectedPoint = _selection.getCurrentPointIndex();
 				if (selectedPoint >= 0 && _dragFromX == -1 && selectedPoint != _prevSelectedPoint)
 				{
-					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(selectedPoint));
-					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(selectedPoint));
-					int panX = 0;
-					int panY = 0;
-					if (px < PAN_DISTANCE) {
-						panX = px - AUTOPAN_DISTANCE;
-					}
-					else if (px > (getWidth()-PAN_DISTANCE)) {
-						panX = AUTOPAN_DISTANCE + px - getWidth();
-					}
-					if (py < PAN_DISTANCE) {
-						panY = py - AUTOPAN_DISTANCE;
-					}
-					if (py > (getHeight()-PAN_DISTANCE)) {
-						panY = AUTOPAN_DISTANCE + py - getHeight();
-					}
-					if (panX != 0 || panY != 0) {
-						_mapPosition.pan(panX, panY);
-					}
+					autopanToPoint(selectedPoint);
 				}
 				_prevSelectedPoint = selectedPoint;
 			}
@@ -446,7 +428,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						inG.drawLine(_dragFromX, _dragToY, _dragToX, _dragToY);
 					}
 					break;
-					
+
 				case MODE_DRAW_POINTS_CONT:
 					// draw line to mouse position to show drawing mode
 					inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
@@ -469,6 +451,45 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		paintChildren(inG);
 	}
 
+	/**
+	 * @return true if the currently selected point is visible, false if off-screen or nothing selected
+	 */
+	private boolean isCurrentPointVisible()
+	{
+		if (_trackInfo.getCurrentPoint() == null) {return false;}
+		final int selectedPoint = _selection.getCurrentPointIndex();
+		final int xFromCentre = Math.abs(_mapPosition.getXFromCentre(_track.getX(selectedPoint)));
+		if (xFromCentre > (getWidth()/2)) {return false;}
+		final int yFromCentre = Math.abs(_mapPosition.getYFromCentre(_track.getY(selectedPoint)));
+		return yFromCentre < (getHeight()/2);
+	}
+
+	/**
+	 * If the specified point isn't visible, pan to it
+	 * @param inIndex index of selected point
+	 */
+	private void autopanToPoint(int inIndex)
+	{
+		int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(inIndex));
+		int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(inIndex));
+		int panX = 0;
+		int panY = 0;
+		if (px < PAN_DISTANCE) {
+			panX = px - AUTOPAN_DISTANCE;
+		}
+		else if (px > (getWidth()-PAN_DISTANCE)) {
+			panX = AUTOPAN_DISTANCE + px - getWidth();
+		}
+		if (py < PAN_DISTANCE) {
+			panY = py - AUTOPAN_DISTANCE;
+		}
+		if (py > (getHeight()-PAN_DISTANCE)) {
+			panY = AUTOPAN_DISTANCE + py - getHeight();
+		}
+		if (panX != 0 || panY != 0) {
+			_mapPosition.pan(panX, panY);
+		}
+	}
 
 	/**
 	 * Paint the map tiles and the points on to the _mapImage
@@ -550,8 +571,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		{
 			pointsPainted = paintPoints(g);
 		}
-		catch (NullPointerException npe) { // ignore, probably due to data being changed during drawing
-		}
+		catch (NullPointerException npe) {} // ignore, probably due to data being changed during drawing
+		catch (ArrayIndexOutOfBoundsException obe) {} // also ignore
 
 		// free g
 		g.dispose();
@@ -658,6 +679,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		int nameHeight = fm.getHeight();
 		if (anyWaypoints)
 		{
+			int numWaypoints = 0;
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
 				if (_track.getPoint(i).isWaypoint())
@@ -668,11 +690,18 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					{
 						inG.fillRect(px-3, py-3, 6, 6);
 						pointsPainted++;
+						numWaypoints++;
 					}
 				}
 			}
+			// Take more care with waypoint names if less than 100 are visible
+			final int numNameSteps = (numWaypoints > 100 ? 1 : 4);
+			final int numPointSteps = (numWaypoints > 1000 ? 2 : 1);
+
 			// Loop over points again, now draw names for waypoints
-			for (int i=0; i<_track.getNumPoints(); i++)
+			int[] nameXs = {0, 0, 0, 0};
+			int[] nameYs = {0, 0, 0, 0};
+			for (int i=0; i<_track.getNumPoints(); i += numPointSteps)
 			{
 				if (_track.getPoint(i).isWaypoint())
 				{
@@ -685,19 +714,21 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						int nameWidth = fm.stringWidth(waypointName);
 						boolean drawnName = false;
 						// Make arrays for coordinates right left up down
-						int[] nameXs = {px + 2, px - nameWidth - 2, px - nameWidth/2, px - nameWidth/2};
-						int[] nameYs = {py + (nameHeight/2), py + (nameHeight/2), py - 2, py + nameHeight + 2};
-						for (int extraSpace = 4; extraSpace < 13 && !drawnName; extraSpace+=2)
+						nameXs[0] = px + 2; nameXs[1] = px - nameWidth - 2;
+						nameXs[2] = nameXs[3] = px - nameWidth/2;
+						nameYs[0] = nameYs[1] = py + (nameHeight/2);
+						nameYs[2] = py - 2; nameYs[3] = py + nameHeight + 2;
+						for (int extraSpace = 0; extraSpace < numNameSteps && !drawnName; extraSpace++)
 						{
 							// Shift arrays for coordinates right left up down
-							nameXs[0] += 2; nameXs[1] -= 2;
-							nameYs[2] -= 2; nameYs[3] += 2;
+							nameXs[0] += 3; nameXs[1] -= 3;
+							nameYs[2] -= 3; nameYs[3] += 3;
 							// Check each direction in turn right left up down
 							for (int a=0; a<4; a++)
 							{
 								if (nameXs[a] > 0 && (nameXs[a] + nameWidth) < winWidth
 									&& nameYs[a] < winHeight && (nameYs[a] - nameHeight) > 0
-									&& !overlapsPoints(nameXs[a], nameYs[a], nameWidth, nameHeight, textColour))
+									&& !MapUtils.overlapsPoints(_mapImage, nameXs[a], nameYs[a], nameWidth, nameHeight, textColour))
 								{
 									// Found a rectangle to fit - draw name here and quit
 									inG.drawString(waypointName, nameXs[a], nameYs[a]);
@@ -814,50 +845,6 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	}
 
 	/**
-	 * Tests whether there are any dark pixels within the specified x,y rectangle
-	 * @param inX left X coordinate
-	 * @param inY bottom Y coordinate
-	 * @param inWidth width of rectangle
-	 * @param inHeight height of rectangle
-	 * @param inTextColour colour of text
-	 * @return true if the rectangle overlaps stuff too close to the given colour
-	 */
-	private boolean overlapsPoints(int inX, int inY, int inWidth, int inHeight, Color inTextColour)
-	{
-		// each of the colour channels must be further away than this to count as empty
-		final int BRIGHTNESS_LIMIT = 80;
-		final int textRGB = inTextColour.getRGB();
-		final int textLow = textRGB & 255;
-		final int textMid = (textRGB >> 8) & 255;
-		final int textHigh = (textRGB >> 16) & 255;
-		try
-		{
-			// loop over x coordinate of rectangle
-			for (int x=0; x<inWidth; x++)
-			{
-				// loop over y coordinate of rectangle
-				for (int y=0; y<inHeight; y++)
-				{
-					int pixelColor = _mapImage.getRGB(inX + x, inY - y);
-					// split into four components rgba
-					int pixLow = pixelColor & 255;
-					int pixMid = (pixelColor >> 8) & 255;
-					int pixHigh = (pixelColor >> 16) & 255;
-					//int fourthBit = (pixelColor >> 24) & 255; // alpha ignored
-					// If colours are too close in any channel then it's an overlap
-					if (Math.abs(pixLow-textLow) < BRIGHTNESS_LIMIT ||
-						Math.abs(pixMid-textMid) < BRIGHTNESS_LIMIT ||
-						Math.abs(pixHigh-textHigh) < BRIGHTNESS_LIMIT) {return true;}
-				}
-			}
-		}
-		catch (NullPointerException e) {
-			// ignore null pointers, just return false
-		}
-		return false;
-	}
-
-	/**
 	 * Make a semi-transparent colour for drawing with
 	 * @param inColour base colour (fully opaque)
 	 * @param inOpacity opacity where 0=invisible and 255=full
@@ -906,7 +893,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	public void zoomIn()
 	{
+		// See if selected point is currently visible, if so (and autopan on) then autopan after zoom to keep it visible
+		boolean wasVisible = _autopanCheckBox.isSelected() && isCurrentPointVisible();
 		_mapPosition.zoomIn();
+		if (wasVisible && !isCurrentPointVisible()) {
+			autopanToPoint(_selection.getCurrentPointIndex());
+		}
 		_recalculate = true;
 		repaint();
 	}

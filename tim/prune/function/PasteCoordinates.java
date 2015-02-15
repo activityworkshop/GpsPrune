@@ -29,6 +29,8 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.GuiGridLayout;
 
 /**
@@ -75,7 +77,7 @@ public class PasteCoordinates extends GenericFunction
 		// MAYBE: Paste clipboard into the edit field
 		_coordField.setText("");
 		_nameField.setText("");
-		boolean useMetres = (Config.getUnitSet().getDefaultAltitudeFormat() == Altitude.Format.METRES);
+		boolean useMetres = (Config.getUnitSet().getAltitudeUnit() == UnitSetLibrary.UNITS_METRES);
 		_altUnitsDropDown.setSelectedIndex(useMetres?0:1);
 		enableOK();
 		_dialog.setVisible(true);
@@ -236,9 +238,9 @@ public class PasteCoordinates extends GenericFunction
 		if (inValue3 != null)
 		{
 			// Look at altitude units dropdown
-			final Altitude.Format altFormat = (_altUnitsDropDown.getSelectedIndex()==0?
-				Altitude.Format.METRES:Altitude.Format.FEET);
-			alt = new Altitude(inValue3, altFormat);
+			final Unit altUnit = (_altUnitsDropDown.getSelectedIndex()==0?
+				UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);
+			alt = new Altitude(inValue3, altUnit);
 			if (!alt.isValid()) {alt = null;}
 		}
 		// See if value1 can be lat and value2 lon:

@@ -71,6 +71,13 @@ public abstract class IconManager
 	/** Icon for stopping the current audio clip */
 	public static final String STOP_AUDIO = "stop_audio.gif";
 
+	/** Icon for a given entry being valid (green tick) */
+	public static final String ENTRY_VALID = "entry_valid.gif";
+	/** Icon for a given entry being invalid (red cross) */
+	public static final String ENTRY_INVALID = "entry_invalid.gif";
+	/** Icon for a given entry being empty (blank) */
+	public static final String ENTRY_NONE = "entry_none.gif";
+
 	/**
 	 * Get the specified image
 	 * @param inFilename filename of image (using constants)

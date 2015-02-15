@@ -9,11 +9,11 @@ import java.util.Locale;
  */
 public abstract class NumberUtils
 {
-	/** Number formatter object to avoid lots of instantiations */
-	private static final NumberFormat NUM_FORMATTER = NumberFormat.getNumberInstance(Locale.UK);
+	/** UK-specific number formatter object to avoid lots of instantiations */
+	private static final NumberFormat UK_FORMAT = NumberFormat.getNumberInstance(Locale.UK);
 	// Select the UK locale for this formatter so that decimal point is always used (not comma)
 	static {
-		if (NUM_FORMATTER instanceof DecimalFormat) ((DecimalFormat) NUM_FORMATTER).applyPattern("0.000");
+		if (UK_FORMAT instanceof DecimalFormat) ((DecimalFormat) UK_FORMAT).applyPattern("0.000");
 	}
 
 	/**
@@ -42,14 +42,14 @@ public abstract class NumberUtils
 	}
 
 	/**
-	 * Format the given number to the given number of decimal places
+	 * Format the given number in UK format (decimal point) to the given number of decimal places
 	 * @param inNumber double number to format
 	 * @param inDecimalPlaces number of decimal places
 	 */
-	public static String formatNumber(double inNumber, int inDecimalPlaces)
+	public static String formatNumberUk(double inNumber, int inDecimalPlaces)
 	{
-		NUM_FORMATTER.setMaximumFractionDigits(inDecimalPlaces);
-		NUM_FORMATTER.setMinimumFractionDigits(inDecimalPlaces);
-		return NUM_FORMATTER.format(inNumber);
+		UK_FORMAT.setMaximumFractionDigits(inDecimalPlaces);
+		UK_FORMAT.setMinimumFractionDigits(inDecimalPlaces);
+		return UK_FORMAT.format(inNumber);
 	}
 }

@@ -30,9 +30,9 @@ public class AltitudeData extends ProfileData
 		final double multFactor = _unitSet.getAltitudeUnit().getMultFactorFromStd();
 		if (_track != null)
 		{
-			for (int i=0; i<_track.getNumPoints(); i++)
+			try
 			{
-				try
+				for (int i=0; i<_track.getNumPoints(); i++)
 				{
 					DataPoint point = _track.getPoint(i);
 					if (point != null && point.hasAltitude())
@@ -43,15 +43,16 @@ public class AltitudeData extends ProfileData
 						if (value < _minValue || !_hasData) {_minValue = value;}
 						if (value > _maxValue || !_hasData) {_maxValue = value;}
 
-						_hasData = true;
+						// if all values are zero then that's no data
+						_hasData = _hasData || (point.getAltitude().getValue() != 0);
 						_pointHasData[i] = true;
 					}
 					else _pointHasData[i] = false;
 				}
-				catch (ArrayIndexOutOfBoundsException obe)
-				{} // must be due to the track size changing during calculation
-				   // assume that a redraw will be triggered
 			}
+			catch (ArrayIndexOutOfBoundsException obe)
+			{} // must be due to the track size changing during calculation
+			   // assume that a redraw will be triggered
 		}
 	}
 

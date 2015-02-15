@@ -9,7 +9,7 @@ import tim.prune.GenericFunction;
 public abstract class Export3dFunction extends GenericFunction
 {
 	/** altitude exaggeration factor */
-	protected double _altFactor = 50.0;
+	protected double _altFactor = 5.0;
 
 	/**
 	 * Required constructor

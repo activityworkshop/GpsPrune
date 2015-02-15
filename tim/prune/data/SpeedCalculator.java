@@ -9,7 +9,7 @@ import tim.prune.config.Config;
 public abstract class SpeedCalculator
 {
 	/**
-	 * Calculate the speed value of the track at the specified index
+	 * Calculate the horizontal speed value of the track at the specified index
 	 * @param inTrack track object
 	 * @param inIndex index of point to calculate speed for
 	 * @param inValue object in which to place result of calculation
@@ -28,13 +28,10 @@ public abstract class SpeedCalculator
 		double  speedValue = 0.0;
 
 		// First, see if point has a speed value already
-		// FIXME: How do we know what units this speed is in?  m/s or mph or km/h or what?
-		String speedStr = point.getFieldValue(Field.SPEED);
-		try {
-			speedValue = Double.parseDouble(speedStr);
+		if (point.hasHSpeed()) {
+			speedValue = point.getHSpeed().getValue(Config.getUnitSet().getSpeedUnit());
 			pointHasSpeed = true;
 		}
-		catch (Exception e) {} // ignore, leave pointHasSpeed false
 
 		// otherwise, see if we can calculate it from the timestamps
 		if (!pointHasSpeed && point.hasTimestamp() && !point.isWaypoint())
@@ -127,15 +124,10 @@ public abstract class SpeedCalculator
 		double  speedValue = 0.0;
 
 		// First, see if point has a speed value already
-		if (point != null)
+		if (point != null && point.hasVSpeed())
 		{
-			// FIXME: Can we assume m/s or ft/s?
-			String speedStr = point.getFieldValue(Field.VERTICAL_SPEED);
-			try {
-				speedValue = Double.parseDouble(speedStr);
-				pointHasSpeed = true;
-			}
-			catch (Exception e) {} // ignore, leave pointHasSpeed false
+			speedValue = point.getVSpeed().getValue(Config.getUnitSet().getVerticalSpeedUnit());
+			pointHasSpeed = true;
 		}
 		// otherwise, see if we can calculate it from the heights and timestamps
 		if (!pointHasSpeed

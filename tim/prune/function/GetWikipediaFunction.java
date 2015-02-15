@@ -71,21 +71,48 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 			lat = (coords[0] + coords[2]) / 2.0;
 			lon = (coords[1] + coords[3]) / 2.0;
 		}
-		else {
+		else
+		{
 			lat = point.getLatitude().getDouble();
 			lon = point.getLongitude().getDouble();
 		}
 
-		String descMessage = "";
-		InputStream inStream = null;
+		// Firstly try the local language
+		String lang = I18nManager.getText("wikipedia.lang");
+		submitSearch(lat, lon, lang);
+		// If we didn't get anything, try a secondary language
+		if (_trackListModel.isEmpty() && _errorMessage == null && lang.equals("als")) {
+			submitSearch(lat, lon, "de");
+		}
+		// If still nothing then try english
+		if (_trackListModel.isEmpty() && _errorMessage == null && !lang.equals("en")) {
+			submitSearch(lat, lon, "en");
+		}
 
+		// Set status label according to error or "none found", leave blank if ok
+		if (_errorMessage == null && _trackListModel.isEmpty()) {
+			_errorMessage = I18nManager.getText("dialog.gpsies.nonefound");
+		}
+		_statusLabel.setText(_errorMessage == null ? "" : _errorMessage);
+	}
+
+	/**
+	 * Submit the search for the given parameters
+	 * @param inLat latitude
+	 * @param inLon longitude
+	 * @param inLang language code to use, such as en or de
+	 */
+	private void submitSearch(double inLat, double inLon, String inLang)
+	{
 		// Example http://api.geonames.org/findNearbyWikipedia?lat=47&lng=9
 		String urlString = "http://api.geonames.org/findNearbyWikipedia?lat=" +
-			lat + "&lng=" + lon + "&maxRows=" + MAX_RESULTS
-			+ "&radius=" + MAX_DISTANCE + "&lang=" + I18nManager.getText("wikipedia.lang")
+			inLat + "&lng=" + inLon + "&maxRows=" + MAX_RESULTS
+			+ "&radius=" + MAX_DISTANCE + "&lang=" + inLang
 			+ "&username=" + GEONAMES_USERNAME;
 		// Parse the returned XML with a special handler
 		GetWikipediaXmlHandler xmlHandler = new GetWikipediaXmlHandler();
+		InputStream inStream = null;
+
 		try
 		{
 			URL url = new URL(urlString);
@@ -94,7 +121,7 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 			saxParser.parse(inStream, xmlHandler);
 		}
 		catch (Exception e) {
-			descMessage = e.getClass().getName() + " - " + e.getMessage();
+			_errorMessage = e.getClass().getName() + " - " + e.getMessage();
 		}
 		// Close stream and ignore errors
 		try {
@@ -104,20 +131,17 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 		ArrayList<GpsiesTrack> trackList = xmlHandler.getTrackList();
 		_trackListModel.addTracks(trackList);
 
-		// Set status label according to error or "none found", leave blank if ok
-		if (descMessage.equals("") && (trackList == null || trackList.size() == 0)) {
-			descMessage = I18nManager.getText("dialog.gpsies.nonefound");
-		}
-		_statusLabel.setText(descMessage);
 		// Show error message if any
-		if (trackList == null || trackList.size() == 0) {
+		if (_trackListModel.isEmpty())
+		{
 			String error = xmlHandler.getErrorMessage();
-			if (error != null && !error.equals("")) {
+			if (error != null && !error.equals(""))
+			{
 				_app.showErrorMessageNoLookup(getNameKey(), error);
+				_errorMessage = error;
 			}
 		}
 	}
-
 
 	/**
 	 * Load the selected point(s)

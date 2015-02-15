@@ -35,7 +35,6 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
@@ -43,6 +42,8 @@ import tim.prune.data.FieldList;
 import tim.prune.data.RecentFile;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.load.OneCharDocument;
 
@@ -72,7 +73,7 @@ public class FileSaver
 
 	private static final int[] FORMAT_COORDS = {Coordinate.FORMAT_NONE, Coordinate.FORMAT_DEG_MIN_SEC,
 		Coordinate.FORMAT_DEG_MIN, Coordinate.FORMAT_DEG};
-	private static final Altitude.Format[] FORMAT_ALTS = {Altitude.Format.NO_FORMAT, Altitude.Format.METRES, Altitude.Format.FEET};
+	private static final Unit[] UNIT_ALTS = {null, UnitSetLibrary.UNITS_METRES, UnitSetLibrary.UNITS_FEET};
 	private static final int[] FORMAT_TIMES = {Timestamp.FORMAT_ORIGINAL, Timestamp.FORMAT_LOCALE, Timestamp.FORMAT_ISO_8601};
 
 
@@ -428,11 +429,11 @@ public class FileSaver
 		for (int i=0; i<_coordUnitsRadios.length; i++)
 			if (_coordUnitsRadios[i].isSelected())
 				coordFormat = FORMAT_COORDS[i];
-		Altitude.Format altitudeFormat = Altitude.Format.NO_FORMAT;
+		Unit altitudeUnit = null;
 		for (int i=0; i<_altitudeUnitsRadios.length; i++)
 		{
 			if (_altitudeUnitsRadios[i].isSelected()) {
-				altitudeFormat = FORMAT_ALTS[i];
+				altitudeUnit = UNIT_ALTS[i];
 			}
 		}
 		// Get timestamp format
@@ -518,7 +519,7 @@ public class FileSaver
 							if (!firstField) {
 								buffer.append(delimiter);
 							}
-							saveField(buffer, point, info.getField(), coordFormat, altitudeFormat, timestampFormat);
+							saveField(buffer, point, info.getField(), coordFormat, altitudeUnit, timestampFormat);
 							firstField = false;
 						}
 					}
@@ -567,11 +568,11 @@ public class FileSaver
 	 * @param inPoint point object
 	 * @param inField field object
 	 * @param inCoordFormat coordinate format
-	 * @param inAltitudeFormat altitude format
+	 * @param inAltitudeUnit altitude unit
 	 * @param inTimestampFormat timestamp format
 	 */
 	private void saveField(StringBuffer inBuffer, DataPoint inPoint, Field inField,
-		int inCoordFormat, Altitude.Format inAltitudeFormat, int inTimestampFormat)
+		int inCoordFormat, Unit inAltitudeUnit, int inTimestampFormat)
 	{
 		// Output field according to type
 		if (inField == Field.LATITUDE)
@@ -586,7 +587,7 @@ public class FileSaver
 		{
 			try
 			{
-				inBuffer.append(inPoint.getAltitude().getStringValue(inAltitudeFormat));
+				inBuffer.append(inPoint.getAltitude().getStringValue(inAltitudeUnit));
 			}
 			catch (NullPointerException npe) {}
 		}

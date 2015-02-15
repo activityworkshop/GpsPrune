@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -77,7 +78,8 @@ public class PointNameEditor extends GenericFunction
 		panel.setLayout(new BorderLayout());
 		// Create GUI layout for point name editor
 		JPanel centrePanel = new JPanel();
-		centrePanel.add(new JLabel(I18nManager.getText("dialog.pointnameedit.name") + ":"));
+		centrePanel.setLayout(new BorderLayout(8, 8));
+		centrePanel.add(new JLabel(I18nManager.getText("dialog.pointnameedit.name") + ": "), BorderLayout.WEST);
 		// Make listener to react to ok being pressed
 		ActionListener okActionListener = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -101,8 +103,13 @@ public class PointNameEditor extends GenericFunction
 			}
 		});
 		_nameField.addActionListener(okActionListener);
-		centrePanel.add(_nameField);
-		panel.add(centrePanel);
+		centrePanel.add(_nameField, BorderLayout.CENTER);
+		// holder panel to stop the text box from being stretched
+		JPanel holderPanel = new JPanel();
+		holderPanel.setLayout(new BorderLayout());
+		holderPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+		holderPanel.add(centrePanel, BorderLayout.NORTH);
+		panel.add(holderPanel, BorderLayout.CENTER);
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 		JButton upperButton = new JButton(I18nManager.getText("dialog.pointnameedit.uppercase"));

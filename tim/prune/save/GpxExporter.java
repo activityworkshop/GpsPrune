@@ -35,7 +35,6 @@ import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -45,6 +44,7 @@ import tim.prune.data.Photo;
 import tim.prune.data.RecentFile;
 import tim.prune.data.Timestamp;
 import tim.prune.data.TrackInfo;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.DialogCloser;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.save.xml.GpxCacherList;
@@ -530,7 +530,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		// Point has been modified - maybe it's possible to modify the source
 		source = replaceGpxTags(source, "lat=\"", "\"", inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		source = replaceGpxTags(source, "lon=\"", "\"", inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
-		source = replaceGpxTags(source, "<ele>", "</ele>", inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
+		source = replaceGpxTags(source, "<ele>", "</ele>", inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 		source = replaceGpxTags(source, "<time>", "</time>", inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
 		if (inPoint.isWaypoint())
 		{
@@ -726,7 +726,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inPoint.hasAltitude())
 		{
 			inWriter.write("\t\t<ele>");
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 			inWriter.write("</ele>\n");
 		}
 		// timestamp if available (point might have timestamp and then be turned into a waypoint)
@@ -798,7 +798,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inPoint.hasAltitude())
 		{
 			inWriter.write("<ele>");
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 			inWriter.write("</ele>");
 		}
 		// timestamp if available (and selected)

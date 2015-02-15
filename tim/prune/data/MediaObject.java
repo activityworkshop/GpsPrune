@@ -212,6 +212,14 @@ public abstract class MediaObject
 	}
 
 	/**
+	 * @return true if status has changed since load
+	 */
+	public boolean isModified()
+	{
+		return _currentStatus != _originalStatus;
+	}
+
+	/**
 	 * Reset any cached data (eg thumbnail)
 	 */
 	public void resetCachedData() {}

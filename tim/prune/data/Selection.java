@@ -19,7 +19,6 @@ public class Selection
 	private AltitudeRange _altitudeRange = null;
 	private long _totalSeconds = 0L, _movingSeconds = 0L;
 	private double _angDistance = -1.0, _angMovingDistance = -1.0;
-	private int _numSegments = 0;
 
 
 	/**
@@ -64,7 +63,6 @@ public class Selection
 	 */
 	private void recalculate()
 	{
-		_numSegments = 0;
 		final int numPoints = _track.getNumPoints();
 		// Recheck if the number of points has changed
 		if (numPoints != _prevNumPoints) {
@@ -109,16 +107,11 @@ public class Selection
 					{
 						double radians = DataPoint.calculateRadiansBetween(lastPoint, currPoint);
 						_angDistance += radians;
-						if (currPoint.getSegmentStart()) {
-							_numSegments++;
-						}
-						else {
+						if (!currPoint.getSegmentStart()) {
 							_angMovingDistance += radians;
 						}
 					}
 					lastPoint = currPoint;
-					// If it's a track point then there must be at least one segment
-					if (_numSegments == 0) {_numSegments = 1;}
 				}
 			}
 			if (endTime != null) {
@@ -190,14 +183,6 @@ public class Selection
 	public double getMovingDistance()
 	{
 		return Distance.convertRadiansToDistance(_angMovingDistance);
-	}
-
-	/**
-	 * @return number of segments in selection
-	 */
-	public int getNumSegments()
-	{
-		return _numSegments;
 	}
 
 	/**

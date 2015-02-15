@@ -15,7 +15,8 @@ public class DataPoint
 	private FieldList _fieldList = null;
 	/** Special fields for coordinates */
 	private Coordinate _latitude = null, _longitude = null;
-	private Altitude _altitude;
+	private Altitude _altitude = null;
+	private Speed _hSpeed = null, _vSpeed = null;
 	private Timestamp _timestamp = null;
 	/** Attached photo */
 	private Photo _photo = null;
@@ -26,13 +27,14 @@ public class DataPoint
 	private boolean _markedForDeletion = false;
 	private int _modifyCount = 0;
 
+
 	/**
 	 * Constructor
 	 * @param inValueArray array of String values
 	 * @param inFieldList list of fields
-	 * @param inAltFormat altitude format
+	 * @param inOptions creation options such as units
 	 */
-	public DataPoint(String[] inValueArray, FieldList inFieldList, Altitude.Format inAltFormat)
+	public DataPoint(String[] inValueArray, FieldList inFieldList, PointCreateOptions inOptions)
 	{
 		// save data
 		_fieldValues = inValueArray;
@@ -41,25 +43,42 @@ public class DataPoint
 		// Remove double quotes around values
 		removeQuotes(_fieldValues);
 		// parse fields into objects
-		parseFields(null, inAltFormat);
+		parseFields(null, inOptions);
 	}
 
 
 	/**
 	 * Parse the string values into objects eg Coordinates
 	 * @param inField field which has changed, or null for all
-	 * @param inAltFormat altitude format
+	 * @param inOptions creation options such as units
 	 */
-	private void parseFields(Field inField, Altitude.Format inAltFormat)
+	private void parseFields(Field inField, PointCreateOptions inOptions)
 	{
+		if (inOptions == null) inOptions = new PointCreateOptions();
 		if (inField == null || inField == Field.LATITUDE) {
 			_latitude = new Latitude(getFieldValue(Field.LATITUDE));
 		}
 		if (inField == null || inField == Field.LONGITUDE) {
 			_longitude = new Longitude(getFieldValue(Field.LONGITUDE));
 		}
-		if (inField == null || inField == Field.ALTITUDE) {
-			_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inAltFormat);
+		if (inField == null || inField == Field.ALTITUDE)
+		{
+			Unit altUnit = inOptions.getAltitudeUnits();
+			if (_altitude != null && _altitude.getUnit() != null) {
+				altUnit = _altitude.getUnit();
+			}
+			_altitude = new Altitude(getFieldValue(Field.ALTITUDE), altUnit);
+		}
+		if (inField == null || inField == Field.SPEED)
+		{
+			_hSpeed = new Speed(getFieldValue(Field.SPEED), inOptions.getSpeedUnits());
+		}
+		if (inField == null || inField == Field.VERTICAL_SPEED)
+		{
+			_vSpeed = new Speed(getFieldValue(Field.VERTICAL_SPEED), inOptions.getVerticalSpeedUnits());
+			if (!inOptions.getVerticalSpeedsUpwards()) {
+				_vSpeed.invert();
+			}
 		}
 		if (inField == null || inField == Field.TIMESTAMP) {
 			_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
@@ -160,13 +179,13 @@ public class DataPoint
 			setModified(inUndo);
 		}
 		// Change Coordinate, Altitude, Name or Timestamp fields after edit
-		if (_altitude != null && _altitude.getFormat() != Altitude.Format.NO_FORMAT) {
+		if (_altitude != null && _altitude.getUnit() != null) {
 			// Altitude already present so reuse format
-			parseFields(inField, _altitude.getFormat());
+			parseFields(inField, null); // current units will be used
 		}
 		else {
 			// use default altitude format from config
-			parseFields(inField, Config.getUnitSet().getDefaultAltitudeFormat());
+			parseFields(inField, Config.getUnitSet().getDefaultOptions());
 		}
 	}
 
@@ -219,12 +238,32 @@ public class DataPoint
 	/** @return true if point has altitude */
 	public boolean hasAltitude()
 	{
-		return _altitude.isValid();
+		return _altitude != null && _altitude.isValid();
 	}
 	/** @return altitude */
 	public Altitude getAltitude()
 	{
 		return _altitude;
+	}
+	/** @return true if point has horizontal speed (loaded as field) */
+	public boolean hasHSpeed()
+	{
+		return _hSpeed != null && _hSpeed.isValid();
+	}
+	/** @return horizontal speed */
+	public Speed getHSpeed()
+	{
+		return _hSpeed;
+	}
+	/** @return true if point has vertical speed (loaded as field) */
+	public boolean hasVSpeed()
+	{
+		return _vSpeed != null && _vSpeed.isValid();
+	}
+	/** @return vertical speed */
+	public Speed getVSpeed()
+	{
+		return _vSpeed;
 	}
 	/** @return true if point has timestamp */
 	public boolean hasTimestamp()
@@ -472,8 +511,20 @@ public class DataPoint
 		// Copy all values (note that photo not copied)
 		String[] valuesCopy = new String[_fieldValues.length];
 		System.arraycopy(_fieldValues, 0, valuesCopy, 0, _fieldValues.length);
+
+		PointCreateOptions options = new PointCreateOptions();
+		if (_altitude != null) {
+			options.setAltitudeUnits(_altitude.getUnit());
+		}
 		// Make new object to hold cloned data
-		DataPoint point = new DataPoint(valuesCopy, _fieldList, _altitude.getFormat());
+		DataPoint point = new DataPoint(valuesCopy, _fieldList, options);
+		// Copy the speed information
+		if (hasHSpeed()) {
+			point.getHSpeed().copyFrom(_hSpeed);
+		}
+		if (hasVSpeed()) {
+			point.getVSpeed().copyFrom(_vSpeed);
+		}
 		return point;
 	}
 

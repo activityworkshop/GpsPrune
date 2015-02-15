@@ -42,6 +42,8 @@ public abstract class Config
 	public static final String KEY_GPS_DEVICE = "prune.gpsdevice";
 	/** Key for GPS format */
 	public static final String KEY_GPS_FORMAT = "prune.gpsformat";
+	/** Key for GPSBabel filter string */
+	public static final String KEY_GPSBABEL_FILTER = "prune.gpsbabelfilter";
 	/** Key for Povray font */
 	public static final String KEY_POVRAY_FONT = "prune.povrayfont";
 	/** Key for the selected unit set */
@@ -59,9 +61,7 @@ public abstract class Config
 	/** Key for working online flag */
 	public static final String KEY_ONLINE_MODE = "prune.onlinemode";
 	/** Key for width of thumbnails in kmz */
-	public static final String KEY_KMZ_IMAGE_WIDTH = "prune.kmzimagewidth";
-	/** Key for height of thumbnails in kmz */
-	public static final String KEY_KMZ_IMAGE_HEIGHT = "prune.kmzimageheight";
+	public static final String KEY_KMZ_IMAGE_SIZE = "prune.kmzimagewidth";
 	/** Key for gpsbabel path */
 	public static final String KEY_GPSBABEL_PATH = "prune.gpsbabelpath";
 	/** Key for gnuplot path */
@@ -78,6 +78,8 @@ public abstract class Config
 	public static final String KEY_AUTOSAVE_SETTINGS = "prune.autosavesettings";
 	/** Key for recently used files */
 	public static final String KEY_RECENT_FILES = "prune.recentfiles";
+	/** Key for estimation parameters */
+	public static final String KEY_ESTIMATION_PARAMS = "prune.estimationparams";
 
 
 	/** Initialise the default properties */
@@ -162,8 +164,7 @@ public abstract class Config
 		props.put(KEY_EXIFTOOL_PATH, "exiftool");
 		props.put(KEY_GNUPLOT_PATH, "gnuplot");
 		props.put(KEY_GPSBABEL_PATH, "gpsbabel");
-		props.put(KEY_KMZ_IMAGE_WIDTH, "240");
-		props.put(KEY_KMZ_IMAGE_HEIGHT, "240");
+		props.put(KEY_KMZ_IMAGE_SIZE, "240");
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		return props;

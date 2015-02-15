@@ -118,4 +118,12 @@ public class AltitudeRange
 	{
 		return (int) (_descent * inUnit.getMultFactorFromStd());
 	}
+
+	/**
+	 * @return overall height gain in metres
+	 */
+	public double getMetricHeightDiff()
+	{
+		return _climb - _descent;
+	}
 }

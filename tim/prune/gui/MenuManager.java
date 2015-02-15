@@ -21,6 +21,7 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.AudioClip;
+import tim.prune.data.Field;
 import tim.prune.data.Photo;
 import tim.prune.data.RecentFile;
 import tim.prune.data.RecentFileList;
@@ -47,6 +48,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _exportGpxItem = null;
 	private JMenuItem _exportPovItem = null;
 	private JMenuItem _exportSvgItem = null;
+	private JMenuItem _exportImageItem = null;
 	private JMenu     _recentFileMenu = null;
 	private JMenuItem _undoItem = null;
 	private JMenuItem _clearUndoItem = null;
@@ -85,6 +87,8 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _downloadOsmItem = null;
 	private JMenuItem _distanceItem = null;
 	private JMenuItem _fullRangeDetailsItem = null;
+	private JMenuItem _estimateTimeItem = null;
+	private JMenuItem _learnEstimationParams = null;
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _photoPopupItem = null;
 	private JMenuItem _selectNoPhotoItem = null;
@@ -217,7 +221,11 @@ public class MenuManager implements DataSubscriber
 		// Svg
 		_exportSvgItem = makeMenuItem(FunctionLibrary.FUNCTION_SVGEXPORT, false);
 		fileMenu.add(_exportSvgItem);
+		// Image
+		_exportImageItem = makeMenuItem(FunctionLibrary.FUNCTION_IMAGEEXPORT, false);
+		fileMenu.add(_exportImageItem);
 		fileMenu.addSeparator();
+		// Exit
 		JMenuItem exitMenuItem = new JMenuItem(I18nManager.getText("menu.file.exit"));
 		exitMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -312,6 +320,9 @@ public class MenuManager implements DataSubscriber
 		trackMenu.add(searchWikipediaNamesItem);
 		_downloadOsmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_OSM, false);
 		trackMenu.add(_downloadOsmItem);
+		trackMenu.addSeparator();
+		_learnEstimationParams = makeMenuItem(FunctionLibrary.FUNCTION_LEARN_ESTIMATION_PARAMS, false);
+		trackMenu.add(_learnEstimationParams);
 		menubar.add(trackMenu);
 
 		// Range menu
@@ -450,7 +461,7 @@ public class MenuManager implements DataSubscriber
 			public void actionPerformed(ActionEvent e) {
 				Config.setConfigBoolean(Config.KEY_SHOW_MAP, _mapCheckbox.isSelected());
 				UpdateMessageBroker.informSubscribers(MAPSERVER_CHANGED);
- 			}
+			}
 		});
 		viewMenu.add(_mapCheckbox);
 		// Turn off the sidebars
@@ -508,12 +519,16 @@ public class MenuManager implements DataSubscriber
 		// Charts
 		_chartItem = makeMenuItem(FunctionLibrary.FUNCTION_CHARTS, false);
 		viewMenu.add(_chartItem);
+		viewMenu.addSeparator();
 		// Distances
 		_distanceItem = makeMenuItem(FunctionLibrary.FUNCTION_DISTANCES, false);
 		viewMenu.add(_distanceItem);
 		// full range details
 		_fullRangeDetailsItem = makeMenuItem(FunctionLibrary.FUNCTION_FULL_RANGE_DETAILS, false);
 		viewMenu.add(_fullRangeDetailsItem);
+		// estimate time
+		_estimateTimeItem = makeMenuItem(FunctionLibrary.FUNCTION_ESTIMATE_TIME, false);
+		viewMenu.add(_estimateTimeItem);
 		menubar.add(viewMenu);
 
 		// Add photo menu
@@ -613,8 +628,6 @@ public class MenuManager implements DataSubscriber
 		settingsMenu.add(_onlineCheckbox);
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_DISK_CACHE));
 		settingsMenu.addSeparator();
-		// Set kmz image size
-		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_KMZ_IMAGE_SIZE));
 		// Set program paths
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_PATHS));
 		// Set colours
@@ -825,22 +838,25 @@ public class MenuManager implements DataSubscriber
 	 */
 	public void dataUpdated(byte inUpdateType)
 	{
-		boolean hasData = (_track != null && _track.getNumPoints() > 0);
+		final boolean hasData = _track != null && _track.getNumPoints() > 0;
+		final boolean hasMultiplePoints = hasData && _track.getNumPoints() > 1;
+
 		// set functions which require data
 		_sendGpsItem.setEnabled(hasData);
 		_saveItem.setEnabled(hasData);
 		_saveButton.setEnabled(hasData);
 		_exportKmlItem.setEnabled(hasData);
 		_exportGpxItem.setEnabled(hasData);
-		_exportPovItem.setEnabled(hasData);
-		_exportSvgItem.setEnabled(hasData);
+		_exportPovItem.setEnabled(hasMultiplePoints);
+		_exportSvgItem.setEnabled(hasMultiplePoints);
+		_exportImageItem.setEnabled(hasMultiplePoints);
 		_compressItem.setEnabled(hasData);
 		_markRectangleItem.setEnabled(hasData);
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeMenu.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
 		_selectAllItem.setEnabled(hasData);
 		_selectNoneItem.setEnabled(hasData);
-		_show3dItem.setEnabled(hasData);
+		_show3dItem.setEnabled(hasMultiplePoints);
 		_chartItem.setEnabled(hasData);
 		_browserMapMenu.setEnabled(hasData);
 		_distanceItem.setEnabled(hasData);
@@ -850,6 +866,7 @@ public class MenuManager implements DataSubscriber
 		_lookupWikipediaItem.setEnabled(hasData);
 		_downloadOsmItem.setEnabled(hasData);
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
+
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
 		_undoItem.setEnabled(hasUndo);
@@ -882,7 +899,7 @@ public class MenuManager implements DataSubscriber
 		_connectButton.setEnabled(connectAvailable);
 		_disconnectPhotoItem.setEnabled(hasPhoto && currentPhoto.getDataPoint() != null);
 		_correlatePhotosItem.setEnabled(anyPhotos && hasData);
-		_rearrangePhotosItem.setEnabled(anyPhotos && hasData && _track.getNumPoints() > 1);
+		_rearrangePhotosItem.setEnabled(anyPhotos && hasMultiplePoints);
 		_removePhotoItem.setEnabled(hasPhoto);
 		_rotatePhotoLeft.setEnabled(hasPhoto);
 		_rotatePhotoRight.setEnabled(hasPhoto);
@@ -909,6 +926,9 @@ public class MenuManager implements DataSubscriber
 		_convertNamesToTimesItem.setEnabled(hasRange && _track.hasWaypoints());
 		_deleteFieldValuesItem.setEnabled(hasRange);
 		_fullRangeDetailsItem.setEnabled(hasRange);
+		_estimateTimeItem.setEnabled(hasRange);
+		_learnEstimationParams.setEnabled(hasData && _track.hasTrackPoints() && _track.hasData(Field.TIMESTAMP)
+			&& _track.hasAltitudeData());
 		// Is the currently selected point outside the current range?
 		boolean canCutAndMove = hasRange && hasPoint &&
 			(_selection.getCurrentPointIndex() < _selection.getStart()

@@ -84,7 +84,7 @@ public abstract class Coordinate
 
 			// count numeric fields - 1=d, 2=dm, 3=dm.m/dms, 4=dms.s
 			int numFields = 0;
-			boolean inNumeric = false;
+			boolean isNumeric = false;
 			char currChar;
 			long[] fields = new long[4]; // needs to be long for lengthy decimals
 			long[] denoms = new long[4];
@@ -97,9 +97,9 @@ public abstract class Coordinate
 					currChar = inString.charAt(i);
 					if (currChar >= '0' && currChar <= '9')
 					{
-						if (!inNumeric)
+						if (!isNumeric)
 						{
-							inNumeric = true;
+							isNumeric = true;
 							numFields++;
 							denoms[numFields-1] = 1;
 						}
@@ -111,7 +111,7 @@ public abstract class Coordinate
 					}
 					else
 					{
-						inNumeric = false;
+						isNumeric = false;
 						// Remember delimiters
 						if (currChar != ',' && currChar != '.') {otherDelims[numFields] = true;}
 					}

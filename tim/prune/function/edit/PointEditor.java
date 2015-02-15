@@ -1,31 +1,39 @@
 package tim.prune.function.edit;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableCellRenderer;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
 import tim.prune.data.Track;
+import tim.prune.data.Unit;
 
 /**
  * Class to manage the display and editing of point data
@@ -36,11 +44,14 @@ public class PointEditor
 	private JFrame _parentFrame = null;
 	private JDialog _dialog = null;
 	private JTable _table = null;
+	private JLabel _fieldnameLabel = null;
+	private JTextField _valueField = null;
+	private JTextArea _valueArea = null;
+	private JScrollPane _valueAreaPane = null;
 	private Track _track = null;
 	private DataPoint _point = null;
 	private EditFieldsTableModel _model = null;
-	private JButton _editButton = null;
-	private JButton _okButton = null;
+	private int _prevRowIndex = -1;
 
 
 	/**
@@ -76,9 +87,16 @@ public class PointEditor
 			Field field = fieldList.getField(i);
 			_model.addFieldInfo(field.getName(), _point.getFieldValue(field), i);
 		}
-		// Create Gui and show it
+		// Create Gui
 		_dialog.getContentPane().add(makeDialogComponents());
 		_dialog.pack();
+		// Init right-hand side
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				_valueField.setVisible(false);
+				_valueAreaPane.setVisible(false);
+			}
+		});
 		_dialog.setVisible(true);
 	}
 
@@ -90,44 +108,71 @@ public class PointEditor
 	private Component makeDialogComponents()
 	{
 		JPanel panel = new JPanel();
-		panel.setLayout(new BorderLayout(1, 10));
+		panel.setLayout(new BorderLayout(20, 10));
 		// Create GUI layout for point editor
-		_table = new JTable(_model);
+		_table = new JTable(_model)
+		{
+			// Paint the changed fields orange
+			public Component prepareRenderer(TableCellRenderer renderer, int row, int column)
+			{
+				Component comp = super.prepareRenderer(renderer, row, column);
+				boolean changed = ((EditFieldsTableModel) getModel()).getChanged(row);
+				comp.setBackground(changed ? Color.orange : getBackground());
+				return comp;
+			}
+		};
 		_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		_table.getSelectionModel().clearSelection();
 		_table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{
-				// enable edit button when row selected
-				_editButton.setEnabled(true);
+				fieldSelected();
 			}
 		});
-		_table.setPreferredScrollableViewportSize(new Dimension(_table.getWidth(), _table.getRowHeight() * 6));
-		panel.add(new JScrollPane(_table), BorderLayout.CENTER);
+		_table.setPreferredScrollableViewportSize(new Dimension(_table.getWidth() * 2, _table.getRowHeight() * 6));
+		JScrollPane tablePane = new JScrollPane(_table);
+		tablePane.setPreferredSize(new Dimension(150, 100));
+
 		// Label at top
-		JLabel topLabel = new JLabel(I18nManager.getText("dialog.pointedit.text"));
+		JLabel topLabel = new JLabel(I18nManager.getText("dialog.pointedit.intro"));
 		topLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 3, 6));
 		panel.add(topLabel, BorderLayout.NORTH);
-		_editButton = new JButton(I18nManager.getText("button.edit"));
-		_editButton.addActionListener(new ActionListener() {
+
+		// listener for ok event
+		ActionListener okListener = new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				// Update field value and enable ok button
-				String currValue = _model.getValue(_table.getSelectedRow());
-				Object newValue = JOptionPane.showInputDialog(_dialog,
-					I18nManager.getText("dialog.pointedit.changevalue.text"),
-					I18nManager.getText("dialog.pointedit.changevalue.title"),
-					JOptionPane.QUESTION_MESSAGE, null, null, currValue);
-				if (newValue != null
-					&& _model.updateValue(_table.getSelectedRow(), newValue.toString()))
-				{
-					_okButton.setEnabled(true);
-				}
+				// update App with edit
+				confirmEdit();
+				_dialog.dispose();
 			}
-		});
-		_editButton.setEnabled(false);
+		};
+
 		JPanel rightPanel = new JPanel();
-		rightPanel.add(_editButton);
-		panel.add(rightPanel, BorderLayout.EAST);
+		rightPanel.setLayout(new BorderLayout());
+		JPanel rightiPanel = new JPanel();
+		rightiPanel.setLayout(new BoxLayout(rightiPanel, BoxLayout.Y_AXIS));
+		// Add GUI elements to rhs
+		_fieldnameLabel = new JLabel(I18nManager.getText("dialog.pointedit.nofield"));
+		rightiPanel.add(_fieldnameLabel);
+		_valueField = new JTextField(11);
+		// Add listener for enter button
+		_valueField.addActionListener(okListener);
+		rightiPanel.add(_valueField);
+		rightPanel.add(rightiPanel, BorderLayout.NORTH);
+		_valueArea = new JTextArea(5, 15);
+		_valueArea.setLineWrap(true);
+		_valueArea.setWrapStyleWord(true);
+		_valueAreaPane = new JScrollPane(_valueArea);
+		rightPanel.add(_valueAreaPane, BorderLayout.CENTER);
+
+		// Put the table and the right-hand panel together in a grid
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new GridLayout(0, 2, 10, 10));
+		mainPanel.add(tablePane);
+		mainPanel.add(rightPanel);
+		panel.add(mainPanel, BorderLayout.CENTER);
+
 		// Bottom panel for OK, cancel buttons
 		JPanel lowerPanel = new JPanel();
 		lowerPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -139,27 +184,109 @@ public class PointEditor
 			}
 		});
 		lowerPanel.add(cancelButton);
-		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.setEnabled(false);
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// update App with edit
-				confirmEdit();
-				_dialog.dispose();
-			}
-		});
-		lowerPanel.add(_okButton);
+		JButton okButton = new JButton(I18nManager.getText("button.ok"));
+		okButton.addActionListener(okListener);
+		lowerPanel.add(okButton);
 		panel.add(lowerPanel, BorderLayout.SOUTH);
 		return panel;
 	}
 
 
 	/**
+	 * When table selection changes, need to update model and go to the selected field
+	 */
+	private void fieldSelected()
+	{
+		int rowNum = _table.getSelectedRow();
+		if (rowNum == _prevRowIndex) {return;} // selection hasn't changed
+		// Check the current values
+		if (_prevRowIndex >= 0)
+		{
+			Field prevField = _track.getFieldList().getField(_prevRowIndex);
+			boolean littleField = prevField.isBuiltIn() && prevField != Field.DESCRIPTION;
+			String newValue = littleField ? _valueField.getText() : _valueArea.getText();
+			// Update the model from the current GUI values
+			_model.updateValue(_prevRowIndex, newValue);
+		}
+
+		if (rowNum < 0)
+		{
+			_fieldnameLabel.setText("");
+		}
+		else
+		{
+			String currValue = _model.getValue(rowNum);
+			Field  field     = _track.getFieldList().getField(rowNum);
+			_fieldnameLabel.setText(makeFieldLabel(field, _point));
+			_fieldnameLabel.setVisible(true);
+			boolean littleField = field.isBuiltIn() && field != Field.DESCRIPTION;
+			if (littleField) {
+				_valueField.setText(currValue);
+			}
+			else {
+				_valueArea.setText(currValue);
+			}
+			_valueField.setVisible(littleField);
+			_valueAreaPane.setVisible(!littleField);
+			if (littleField) {
+				_valueField.requestFocus();
+			}
+			else {
+				_valueArea.requestFocus();
+			}
+		}
+		_prevRowIndex = rowNum;
+	}
+
+	/**
+	 * @param inField field
+	 * @param inPoint current point
+	 * @return label string for above the entry field / area
+	 */
+	private static String makeFieldLabel(Field inField, DataPoint inPoint)
+	{
+		String label = I18nManager.getText("dialog.pointedit.table.field") + ": " + inField.getName();
+		// Add units if the field is altitude / speed / vspeed
+		if (inField == Field.ALTITUDE)
+		{
+			label += makeUnitsLabel(inPoint.hasAltitude() ? inPoint.getAltitude().getUnit() : Config.getUnitSet().getAltitudeUnit());
+		}
+		else if (inField == Field.SPEED)
+		{
+			label += makeUnitsLabel(inPoint.hasHSpeed() ? inPoint.getHSpeed().getUnit() : Config.getUnitSet().getSpeedUnit());
+		}
+		else if (inField == Field.VERTICAL_SPEED)
+		{
+			label += makeUnitsLabel(inPoint.hasVSpeed() ? inPoint.getVSpeed().getUnit() : Config.getUnitSet().getVerticalSpeedUnit());
+		}
+		return label;
+	}
+
+	/**
+	 * @param inUnit units for altitude / speed
+	 * @return addition to the field label to describe the units
+	 */
+	private static String makeUnitsLabel(Unit inUnit)
+	{
+		if (inUnit == null) return "";
+		return " (" + I18nManager.getText(inUnit.getShortnameKey()) + ")";
+	}
+
+	/**
 	 * Confirm the edit and inform the app
 	 */
 	private void confirmEdit()
 	{
+		// Apply the edits to the current field
+		int rowNum = _table.getSelectedRow();
+		if (rowNum >= 0)
+		{
+			Field currField = _track.getFieldList().getField(rowNum);
+			boolean littleField = currField.isBuiltIn() && currField != Field.DESCRIPTION;
+			String newValue = littleField ? _valueField.getText() : _valueArea.getText();
+			_model.updateValue(_prevRowIndex, newValue);
+		}
+
 		// Package the modified fields into an object
 		FieldList fieldList = _track.getFieldList();
 		int numFields = fieldList.getNumFields();

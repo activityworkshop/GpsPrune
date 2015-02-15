@@ -57,6 +57,12 @@ public class TrackListModel extends AbstractTableModel
 		return _trackList.size();
 	}
 
+	/** @return true if there are no rows */
+	public boolean isEmpty()
+	{
+		return getRowCount() == 0;
+	}
+
 	/**
 	 * @param inColNum column number
 	 * @return column label for given column

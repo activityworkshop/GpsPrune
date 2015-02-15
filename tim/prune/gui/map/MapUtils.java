@@ -1,7 +1,10 @@
 package tim.prune.gui.map;
 
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+
 /**
- * Class to manage coordinate conversions for maps
+ * Class to manage coordinate conversions and other stuff for maps
  */
 public abstract class MapUtils
 {
@@ -48,5 +51,51 @@ public abstract class MapUtils
 	{
 		double n = Math.PI * (1 - 2 * inY);
 		return 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)));
+	}
+
+	/**
+	 * Tests whether there are any dark pixels in the image within the specified x,y rectangle
+	 * @param inImage image to test
+	 * @param inX left X coordinate
+	 * @param inY bottom Y coordinate
+	 * @param inWidth width of rectangle
+	 * @param inHeight height of rectangle
+	 * @param inTextColour colour of text
+	 * @return true if the rectangle overlaps stuff too close to the given colour
+	 */
+	public static boolean overlapsPoints(BufferedImage inImage, int inX, int inY,
+		int inWidth, int inHeight, Color inTextColour)
+	{
+		// each of the colour channels must be further away than this to count as empty
+		final int BRIGHTNESS_LIMIT = 80;
+		final int textRGB = inTextColour.getRGB();
+		final int textLow = textRGB & 255;
+		final int textMid = (textRGB >> 8) & 255;
+		final int textHigh = (textRGB >> 16) & 255;
+		try
+		{
+			// loop over x coordinate of rectangle
+			for (int x=0; x<inWidth; x++)
+			{
+				// loop over y coordinate of rectangle
+				for (int y=0; y<inHeight; y++)
+				{
+					int pixelColor = inImage.getRGB(inX + x, inY - y);
+					// split into four components rgba
+					int pixLow = pixelColor & 255;
+					int pixMid = (pixelColor >> 8) & 255;
+					int pixHigh = (pixelColor >> 16) & 255;
+					//int fourthBit = (pixelColor >> 24) & 255; // alpha ignored
+					// If colours are too close in any channel then it's an overlap
+					if (Math.abs(pixLow-textLow) < BRIGHTNESS_LIMIT ||
+						Math.abs(pixMid-textMid) < BRIGHTNESS_LIMIT ||
+						Math.abs(pixHigh-textHigh) < BRIGHTNESS_LIMIT) {return true;}
+				}
+			}
+		}
+		catch (NullPointerException e) {
+			// ignore null pointers, just return false
+		}
+		return false;
 	}
 }

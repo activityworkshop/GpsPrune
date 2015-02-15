@@ -10,7 +10,6 @@ public class UnitSet
 	private Unit _speedUnit = null;
 	private Unit _altitudeUnit = null;
 	private Unit _vertSpeedUnit = null;
-	private Altitude.Format _defaultAltitudeFormat = Altitude.Format.METRES;
 
 	/**
 	 * Constructor
@@ -18,16 +17,17 @@ public class UnitSet
 	 * @param inDistanceUnit distance unit
 	 * @param inAltitudeUnit altitude unit
 	 * @param inAltitudeFormat default altitude format
+	 * @param inSpeedUnit unit for horizontal speeds
+	 * @param inVerticalSpeedUnit unit for vertical speeds
 	 */
 	public UnitSet(String inNameKey, Unit inDistanceUnit,
-		Unit inAltitudeUnit, Altitude.Format inAltitudeFormat)
+		Unit inAltitudeUnit, Unit inSpeedUnit, Unit inVerticalSpeedUnit)
 	{
 		_nameKey = inNameKey;
 		_distanceUnit = inDistanceUnit;
-		_speedUnit = new Unit(_distanceUnit, "perhour");
 		_altitudeUnit = inAltitudeUnit;
-		_defaultAltitudeFormat = inAltitudeFormat;
-		_vertSpeedUnit = new Unit(_altitudeUnit, "persec");
+		_speedUnit = inSpeedUnit;
+		_vertSpeedUnit = inVerticalSpeedUnit;
 	}
 
 	/**
@@ -66,9 +66,14 @@ public class UnitSet
 	}
 
 	/**
-	 * @return default altitude format
+	 * @return default point creation options for this unit set
 	 */
-	public Altitude.Format getDefaultAltitudeFormat() {
-		return _defaultAltitudeFormat;
+	public PointCreateOptions getDefaultOptions()
+	{
+		PointCreateOptions options = new PointCreateOptions();
+		options.setAltitudeUnits(getAltitudeUnit());
+		options.setSpeedUnits(getSpeedUnit());
+		options.setVerticalSpeedUnits(getVerticalSpeedUnit(), true);
+		return options;
 	}
 }

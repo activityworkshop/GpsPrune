@@ -12,7 +12,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -24,8 +26,10 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.EtchedBorder;
 
 import tim.prune.App;
+import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
@@ -33,14 +37,16 @@ import tim.prune.data.NumberUtils;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
 import tim.prune.gui.DialogCloser;
+import tim.prune.gui.map.MapSource;
+import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.load.GenericFileFilter;
-import tim.prune.threedee.LineDialog;
 import tim.prune.threedee.ThreeDModel;
 
 /**
  * Class to export a 3d scene of the track to a specified Pov file
+ * Note: Subscriber interface only used for callback from image config dialog
  */
-public class PovExporter extends Export3dFunction
+public class PovExporter extends Export3dFunction implements DataSubscriber
 {
 	private Track _track = null;
 	private JDialog _dialog = null;
@@ -49,9 +55,13 @@ public class PovExporter extends Export3dFunction
 	private JTextField _cameraXField = null, _cameraYField = null, _cameraZField = null;
 	private JTextField _fontName = null, _altitudeFactorField = null;
 	private JRadioButton _ballsAndSticksButton = null;
+	private JLabel _baseImageLabel = null;
+	private JButton _baseImageButton = null;
+	private BaseImageConfigDialog _baseImageConfig = null;
 
 	// defaults
 	private static final double DEFAULT_CAMERA_DISTANCE = 30.0;
+	private static final double MODEL_SCALE_FACTOR = 20.0;
 	private static final String DEFAULT_FONT_FILE = "crystal.ttf";
 
 
@@ -84,10 +94,10 @@ public class PovExporter extends Export3dFunction
 		double cameraDist = Math.sqrt(inX*inX + inY*inY + inZ*inZ);
 		if (cameraDist > 0.0)
 		{
-			_cameraX = NumberUtils.formatNumber(inX / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
-			_cameraY = NumberUtils.formatNumber(inY / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
+			_cameraX = NumberUtils.formatNumberUk(inX / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
+			_cameraY = NumberUtils.formatNumberUk(inY / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
 			// Careful! Need to convert from java3d (right-handed) to povray (left-handed) coordinate system!
-			_cameraZ = NumberUtils.formatNumber(-inZ / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
+			_cameraZ = NumberUtils.formatNumberUk(-inZ / cameraDist * DEFAULT_CAMERA_DISTANCE, 5);
 		}
 	}
 
@@ -104,12 +114,18 @@ public class PovExporter extends Export3dFunction
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogComponents());
 		}
+		// Make base image dialog
+		if (_baseImageConfig == null)
+		{
+			_baseImageConfig = new BaseImageConfigDialog(this, _dialog, _track);
+		}
 
 		// Set angles
 		_cameraXField.setText(_cameraX);
 		_cameraYField.setText(_cameraY);
 		_cameraZField.setText(_cameraZ);
 		_altitudeFactorField.setText("" + _altFactor);
+		updateBaseImageDetails();
 		// Show dialog
 		_dialog.pack();
 		_dialog.setVisible(true);
@@ -123,7 +139,7 @@ public class PovExporter extends Export3dFunction
 	private Component makeDialogComponents()
 	{
 		JPanel panel = new JPanel();
-		panel.setLayout(new BorderLayout());
+		panel.setLayout(new BorderLayout(4, 4));
 		JLabel introLabel = new JLabel(I18nManager.getText("dialog.exportpov.text"));
 		introLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 6, 4));
 		panel.add(introLabel, BorderLayout.NORTH);
@@ -135,6 +151,7 @@ public class PovExporter extends Export3dFunction
 			public void actionPerformed(ActionEvent e)
 			{
 				doExport();
+				MapGrouter.clearMapImage();
 				_dialog.dispose();
 			}
 		});
@@ -143,6 +160,7 @@ public class PovExporter extends Export3dFunction
 		cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+				MapGrouter.clearMapImage();
 				_dialog.dispose();
 			}
 		});
@@ -205,37 +223,78 @@ public class PovExporter extends Export3dFunction
 		group.add(_ballsAndSticksButton); group.add(tubesButton);
 		stylePanel.add(radioPanel);
 
-		// add this grid to the holder panel
+		// Panel for the base image
+		JPanel imagePanel = new JPanel();
+		imagePanel.setLayout(new BorderLayout(10, 4));
+		imagePanel.add(new JLabel(I18nManager.getText("dialog.exportpov.baseimage") + ": "), BorderLayout.WEST);
+		_baseImageLabel = new JLabel("Typical sourcename");
+		imagePanel.add(_baseImageLabel, BorderLayout.CENTER);
+		_baseImageButton = new JButton(I18nManager.getText("button.edit"));
+		_baseImageButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent event) {
+				changeBaseImage();
+			}
+		});
+		imagePanel.add(_baseImageButton, BorderLayout.EAST);
+		// Put these image controls inside a holder panel with an outline
+		JPanel imageHolderPanel = new JPanel();
+		imageHolderPanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(4, 4, 4, 4))
+		);
+		imageHolderPanel.setLayout(new BorderLayout());
+		imageHolderPanel.add(imagePanel, BorderLayout.NORTH);
+
+		// add these panels to the holder panel
 		JPanel holderPanel = new JPanel();
 		holderPanel.setLayout(new BorderLayout(5, 5));
 		JPanel boxPanel = new JPanel();
 		boxPanel.setLayout(new BoxLayout(boxPanel, BoxLayout.Y_AXIS));
 		boxPanel.add(centralPanel);
+		boxPanel.add(Box.createVerticalStrut(4));
 		boxPanel.add(stylePanel);
+		boxPanel.add(Box.createVerticalStrut(4));
+		boxPanel.add(imageHolderPanel);
 		holderPanel.add(boxPanel, BorderLayout.CENTER);
 
-		// show lines button
-		JButton showLinesButton = new JButton(I18nManager.getText("button.showlines"));
-		showLinesButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// Need to scale model to find lines
-				ThreeDModel model = new ThreeDModel(_track);
-				model.scale();
-				double[] latLines = model.getLatitudeLines();
-				double[] lonLines = model.getLongitudeLines();
-				LineDialog dialog = new LineDialog(_parentFrame, latLines, lonLines);
-				dialog.showDialog();
-			}
-		});
-		JPanel flowPanel = new JPanel();
-		flowPanel.setLayout(new FlowLayout());
-		flowPanel.add(showLinesButton);
-		holderPanel.add(flowPanel, BorderLayout.EAST);
 		panel.add(holderPanel, BorderLayout.CENTER);
 		return panel;
 	}
 
+	/**
+	 * Change the base image by calling the BaseImageConfigDialog
+	 */
+	private void changeBaseImage()
+	{
+		// Check if there is a cache to use
+		if (BaseImageConfigDialog.isImagePossible())
+		{
+			// Show new dialog to choose image details
+			_baseImageConfig.begin();
+		}
+		else {
+			_app.showErrorMessage(getNameKey(), "dialog.exportimage.noimagepossible");
+		}
+	}
+
+	/**
+	 * Update the description label according to the selected base image details
+	 */
+	private void updateBaseImageDetails()
+	{
+		String desc = null;
+		if (_baseImageConfig.useImage())
+		{
+			MapSource source = MapSourceLibrary.getSource(_baseImageConfig.getSourceIndex());
+			if (source != null) {
+				desc = source.getName() + " ("
+					+ _baseImageConfig.getZoomLevel() + ")";
+			}
+		}
+		if (desc == null) {
+			desc = I18nManager.getText("dialog.about.no");
+		}
+		_baseImageLabel.setText(desc);
+	}
 
 	/**
 	 * Select the file and export data to it
@@ -267,25 +326,27 @@ public class PovExporter extends Export3dFunction
 			if (_fileChooser.showSaveDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 			{
 				// OK pressed and file chosen
-				File file = _fileChooser.getSelectedFile();
-				if (!file.getName().toLowerCase().endsWith(".pov"))
+				File povFile = _fileChooser.getSelectedFile();
+				if (!povFile.getName().toLowerCase().endsWith(".pov"))
 				{
-					file = new File(file.getAbsolutePath() + ".pov");
+					povFile = new File(povFile.getAbsolutePath() + ".pov");
 				}
-				// Check if file exists and if necessary prompt for overwrite
+				final int nameLen = povFile.getName().length() - 4;
+				final File imageFile = new File(povFile.getParentFile(), povFile.getName().substring(0, nameLen) + "_base.png");
+				final boolean imageExists = _baseImageConfig.useImage() && imageFile.exists();
+				// Check if files exist and if necessary prompt for overwrite
 				Object[] buttonTexts = {I18nManager.getText("button.overwrite"), I18nManager.getText("button.cancel")};
-				if (!file.exists() || JOptionPane.showOptionDialog(_parentFrame,
+				if ((!povFile.exists() && !imageExists) || JOptionPane.showOptionDialog(_parentFrame,
 						I18nManager.getText("dialog.save.overwrite.text"),
 						I18nManager.getText("dialog.save.overwrite.title"), JOptionPane.YES_NO_OPTION,
 						JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 					== JOptionPane.YES_OPTION)
 				{
 					// Export the file
-					if (exportFile(file))
+					if (exportFile(povFile, imageFile))
 					{
-						// file saved
-						// Store directory in config for later
-						Config.setConfigString(Config.KEY_TRACK_DIR, file.getParentFile().getAbsolutePath());
+						// file saved - store directory in config for later
+						Config.setConfigString(Config.KEY_TRACK_DIR, povFile.getParentFile().getAbsolutePath());
 					}
 					else
 					{
@@ -305,10 +366,11 @@ public class PovExporter extends Export3dFunction
 
 	/**
 	 * Export the track data to the specified file
-	 * @param inFile File object to save to
+	 * @param inPovFile File object to save pov file to
+	 * @param inImageFile file object to save image to
 	 * @return true if successful
 	 */
-	private boolean exportFile(File inFile)
+	private boolean exportFile(File inPovFile, File inImageFile)
 	{
 		FileWriter writer = null;
 		// find out the line separator for this system
@@ -317,6 +379,7 @@ public class PovExporter extends Export3dFunction
 		{
 			// create and scale model
 			ThreeDModel model = new ThreeDModel(_track);
+			model.setModelSize(MODEL_SCALE_FACTOR);
 			try
 			{
 				// try to use given altitude cap
@@ -328,12 +391,28 @@ public class PovExporter extends Export3dFunction
 			}
 			model.scale();
 
-			// Create file and write basics
-			writer = new FileWriter(inFile);
-			writeStartOfFile(writer, model.getModelSize(), lineSeparator);
+			boolean useImage = _baseImageConfig.useImage();
+			if (useImage)
+			{
+				// Get base image from grouter
+				MapSource mapSource = MapSourceLibrary.getSource(_baseImageConfig.getSourceIndex());
+				GroutedImage baseImage = MapGrouter.getMapImage(_track, mapSource, _baseImageConfig.getZoomLevel());
+				try
+				{
+					useImage = ImageIO.write(baseImage.getImage(), "png", inImageFile);
+				}
+				catch (IOException ioe) {
+					System.err.println("Can't write image: " + ioe.getClass().getName());
+					useImage = false;
+				}
+				if (!useImage) {
+					_app.showErrorMessage(getNameKey(), "dialog.exportpov.cannotmakebaseimage");
+				}
+			}
 
-			// write out lat/long lines using model
-			writeLatLongLines(writer, model, lineSeparator);
+			// Create file and write basics
+			writer = new FileWriter(inPovFile);
+			writeStartOfFile(writer, lineSeparator, useImage ? inImageFile : null);
 
 			// write out points
 			if (_ballsAndSticksButton.isSelected()) {
@@ -346,7 +425,7 @@ public class PovExporter extends Export3dFunction
 			// everything worked
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
 				 + " " + _track.getNumPoints() + " " + I18nManager.getText("confirm.save.ok2")
-				 + " " + inFile.getAbsolutePath());
+				 + " " + inPovFile.getAbsolutePath());
 			return true;
 		}
 		catch (IOException ioe)
@@ -370,11 +449,11 @@ public class PovExporter extends Export3dFunction
 	/**
 	 * Write the start of the Pov file, including base plane and lights
 	 * @param inWriter Writer to use for writing file
-	 * @param inModelSize model size
 	 * @param inLineSeparator line separator to use
+	 * @param inImageFile image file to reference (or null if none)
 	 * @throws IOException on file writing error
 	 */
-	private void writeStartOfFile(FileWriter inWriter, double inModelSize, String inLineSeparator)
+	private void writeStartOfFile(FileWriter inWriter, String inLineSeparator, File inImageFile)
 	throws IOException
 	{
 		inWriter.write("// Pov file produced by GpsPrune - see http://activityworkshop.net/");
@@ -389,6 +468,20 @@ public class PovExporter extends Export3dFunction
 		else {
 			Config.setConfigString(Config.KEY_POVRAY_FONT, fontPath);
 		}
+
+		// Make the definition of the base plane depending on whether there's an image or not
+		final boolean useImage = (inImageFile != null);
+		final String boxDefinition = (inImageFile == null ?
+			"   <-10.0, -0.15, -10.0>," + inLineSeparator
+				+ "   <10.0, 0.15, 10.0>" + inLineSeparator
+				+ "   pigment { color rgb <0.5 0.75 0.8> }"
+			:
+			"   <0, 0, 0>, <1, 1, 0.001>" + inLineSeparator
+				+ "   pigment {image_map { png \"" + inImageFile.getName() + "\" map_type 0 interpolate 2 once } }" + inLineSeparator
+				+ "   scale 20.0 rotate <90, 0, 0>" + inLineSeparator
+				+ "   translate <-10.0, 0, -10.0>");
+		// TODO: Maybe could use the same geometry for the imageless case, would simplify code a bit
+
 		// Set up output
 		String[] outputLines = {
 		  "global_settings { ambient_light rgb <4, 4, 4> }", "",
@@ -401,27 +494,15 @@ public class PovExporter extends Export3dFunction
 		  "}", "",
 		// global declares
 		  "// Global declares",
-		  "#declare lat_line =",
-		  "  cylinder {",
-		  "   <-" + inModelSize + ", 0.1, 0>,",
-		  "   <" + inModelSize + ", 0.1, 0>,",
-		  "   0.1            // Radius",
-		  "   pigment { color rgb <0.5 0.5 0.5> }",
-		  "  }",
-		  "#declare lon_line =",
-		  "  cylinder {",
-		  "   <0, 0.1, -" + inModelSize + ">,",
-		  "   <0, 0.1, " + inModelSize + ">,",
-		  "   0.1            // Radius",
-		  "   pigment { color rgb <0.5 0.5 0.5> }",
-		  "  }",
 		  "#declare point_rod =",
 		  "  cylinder {",
 		  "   <0, 0, 0>,",
 		  "   <0, 1, 0>,",
 		  "   0.15",
 		  "   open",
-		  "   pigment { color rgb <0.5 0.5 0.5> }",
+		  "   texture {",
+		  "    pigment { color rgb <0.5 0.5 0.5> }",
+		  useImage ? "   } no_shadow" : "   }",
 		  "  }", "",
 		  // MAYBE: Export rods to POV?  How to store in data?
 		  "#declare waypoint_sphere =",
@@ -430,7 +511,7 @@ public class PovExporter extends Export3dFunction
 		  "    texture {",
 		  "       pigment {color rgb <0.1 0.1 1.0>}",
 		  "       finish { phong 1 }",
-		  "    }",
+		  useImage ? "    } no_shadow" : "    }",
 		  "  }",
 		  "#declare track_sphere0 =",
 		  "  sphere {",
@@ -491,31 +572,29 @@ public class PovExporter extends Export3dFunction
 		  "#declare wall_colour = rgbt <0.5, 0.5, 0.5, 0.3>;", "",
 		  "// Base plane",
 		  "box {",
-		  "   <-" + inModelSize + ", -0.15, -" + inModelSize + ">,  // Near lower left corner",
-		  "   <" + inModelSize + ", 0.15, " + inModelSize + ">   // Far upper right corner",
-		  "   pigment { color rgb <0.5 0.75 0.8> }",
+		  boxDefinition,
 		  "}", "",
 		// write cardinals
 		  "// Cardinal letters N,S,E,W",
 		  "text {",
 		  "  ttf \"" + fontPath + "\" \"" + I18nManager.getText("cardinal.n") + "\" 0.3, 0",
 		  "  pigment { color rgb <1 1 1> }",
-		  "  translate <0, 0.2, " + inModelSize + ">",
+		  "  translate <0, 0.2, 10.0>",
 		  "}",
 		  "text {",
 		  "  ttf \"" + fontPath + "\" \"" + I18nManager.getText("cardinal.s") + "\" 0.3, 0",
 		  "  pigment { color rgb <1 1 1> }",
-		  "  translate <0, 0.2, -" + inModelSize + ">",
+		  "  translate <0, 0.2, -10.0>",
 		  "}",
 		  "text {",
 		  "  ttf \"" + fontPath + "\" \"" + I18nManager.getText("cardinal.e") + "\" 0.3, 0",
 		  "  pigment { color rgb <1 1 1> }",
-		  "  translate <" + (inModelSize * 0.97) + ", 0.2, 0>",
+		  "  translate <9.7, 0.2, 0>",
 		  "}",
 		  "text {",
 		  "  ttf \"" + fontPath + "\" \"" + I18nManager.getText("cardinal.w") + "\" 0.3, 0",
 		  "  pigment { color rgb <1 1 1> }",
-		  "  translate <-" + (inModelSize * 1.03) + ", 0.2, 0>",
+		  "  translate <-10.3, 0.2, 0>",
 		  "}", "",
 		  // MAYBE: Light positions should relate to model size
 		  "// lights",
@@ -531,36 +610,6 @@ public class PovExporter extends Export3dFunction
 			inWriter.write(outputLines[i]);
 			inWriter.write(inLineSeparator);
 		}
-	}
-
-
-	/**
-	 * Write out all the lat and long lines to the file
-	 * @param inWriter Writer to use for writing file
-	 * @param inModel model object for getting lat/long lines
-	 * @param inLineSeparator line separator to use
-	 * @throws IOException on file writing error
-	 */
-	private static void writeLatLongLines(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
-	throws IOException
-	{
-		inWriter.write("// Latitude and longitude lines:");
-		inWriter.write(inLineSeparator);
-		int numlines = inModel.getLatitudeLines().length;
-		for (int i=0; i<numlines; i++)
-		{
-			// write cylinder to file
-			inWriter.write("object { lat_line translate <0, 0, " + inModel.getScaledLatitudeLine(i) + "> }");
-			inWriter.write(inLineSeparator);
-		}
-		numlines = inModel.getLongitudeLines().length;
-		for (int i=0; i<numlines; i++)
-		{
-			// write cylinder to file
-			inWriter.write("object { lon_line translate <" + inModel.getScaledLongitudeLine(i) + ", 0, 0> }");
-			inWriter.write(inLineSeparator);
-		}
-		inWriter.write(inLineSeparator);
 	}
 
 
@@ -828,5 +877,17 @@ public class PovExporter extends Export3dFunction
 			}
 		}
 		return segmentList;
+	}
+
+	/**
+	 * Callback from base image config dialog
+	 */
+	public void dataUpdated(byte inUpdateType)
+	{
+		updateBaseImageDetails();
+	}
+
+	/** Not required */
+	public void actionCompleted(String inMessage) {
 	}
 }

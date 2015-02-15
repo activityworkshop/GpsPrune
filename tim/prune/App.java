@@ -10,7 +10,6 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.Checker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
@@ -18,11 +17,13 @@ import tim.prune.data.LatLonRectangle;
 import tim.prune.data.NumberUtils;
 import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
+import tim.prune.data.PointCreateOptions;
 import tim.prune.data.RecentFile;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.data.SourceInfo.FILE_TYPE;
+import tim.prune.data.Unit;
 import tim.prune.function.AsyncMediaLoader;
 import tim.prune.function.SaveConfig;
 import tim.prune.function.SelectTracksFunction;
@@ -107,7 +108,7 @@ public class App
 	public boolean hasDataUnsaved()
 	{
 		return (_undoStack.size() > _lastSavePosition
-			&& (_track.getNumPoints() > 0 || _trackInfo.getPhotoList().getNumPhotos() > 0));
+			&& (_track.getNumPoints() > 0 || _trackInfo.getPhotoList().hasModifiedMedia()));
 	}
 
 	/**
@@ -403,12 +404,12 @@ public class App
 	/**
 	 * Complete the add altitude offset function with the specified offset
 	 * @param inOffset altitude offset to add as String
-	 * @param inFormat altitude format of offset (eg Feet, Metres)
+	 * @param inUnit altitude units of offset (eg Feet, Metres)
 	 */
-	public void finishAddAltitudeOffset(String inOffset, Altitude.Format inFormat)
+	public void finishAddAltitudeOffset(String inOffset, Unit inUnit)
 	{
 		// Sanity check
-		if (inOffset == null || inOffset.equals("") || inFormat==Altitude.Format.NO_FORMAT) {
+		if (inOffset == null || inOffset.equals("") || inUnit == null) {
 			return;
 		}
 		// Construct undo information
@@ -421,7 +422,7 @@ public class App
 		// Decimal offset given
 		try {
 			double offsetd = Double.parseDouble(inOffset);
-			success = _trackInfo.getTrack().addAltitudeOffset(selStart, selEnd, offsetd, inFormat, numDecimals);
+			success = _trackInfo.getTrack().addAltitudeOffset(selStart, selEnd, offsetd, inUnit, numDecimals);
 		}
 		catch (NumberFormatException nfe) {}
 		if (success)
@@ -568,15 +569,14 @@ public class App
 	 * Receive loaded data and determine whether to filter on tracks or not
 	 * @param inFieldArray array of fields
 	 * @param inDataArray array of data
-	 * @param inAltFormat altitude format
 	 * @param inSourceInfo information about the source of the data
 	 * @param inTrackNameList information about the track names
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
-		Altitude.Format inAltFormat, SourceInfo inSourceInfo, TrackNameList inTrackNameList)
+		SourceInfo inSourceInfo, TrackNameList inTrackNameList)
 	{
 		// no link array given
-		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inSourceInfo,
+		informDataLoaded(inFieldArray, inDataArray, null, inSourceInfo,
 			inTrackNameList, null);
 	}
 
@@ -584,18 +584,33 @@ public class App
 	 * Receive loaded data and determine whether to filter on tracks or not
 	 * @param inFieldArray array of fields
 	 * @param inDataArray array of data
-	 * @param inAltFormat altitude format
+	 * @param inOptions creation options such as units
+	 * @param inSourceInfo information about the source of the data
+	 * @param inTrackNameList information about the track names
+	 */
+	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
+		PointCreateOptions inOptions, SourceInfo inSourceInfo, TrackNameList inTrackNameList)
+	{
+		// no link array given
+		informDataLoaded(inFieldArray, inDataArray, inOptions, inSourceInfo,
+			inTrackNameList, null);
+	}
+
+	/**
+	 * Receive loaded data and determine whether to filter on tracks or not
+	 * @param inFieldArray array of fields
+	 * @param inDataArray array of data
+	 * @param inOptions creation options such as units
 	 * @param inSourceInfo information about the source of the data
 	 * @param inTrackNameList information about the track names
 	 * @param inLinkInfo links to photo/audio clips
 	 */
-	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
-		Altitude.Format inAltFormat, SourceInfo inSourceInfo,
-		TrackNameList inTrackNameList, MediaLinkInfo inLinkInfo)
+	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray, PointCreateOptions inOptions,
+		SourceInfo inSourceInfo, TrackNameList inTrackNameList, MediaLinkInfo inLinkInfo)
 	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
-		loadedTrack.load(inFieldArray, inDataArray, inAltFormat);
+		loadedTrack.load(inFieldArray, inDataArray, inOptions);
 		if (loadedTrack.getNumPoints() <= 0)
 		{
 			showErrorMessage("error.load.dialogtitle", "error.load.nopoints");

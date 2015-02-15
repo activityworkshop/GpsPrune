@@ -79,4 +79,22 @@ public class DoubleRange
 	{
 		return _max - _min;
 	}
+
+	/**
+	 * @return mid value, halfway between min and max
+	 */
+	public double getMidValue()
+	{
+		return (_max + _min) / 2.0;
+	}
+
+	/**
+	 * Copy this range into a new object, which can then be modified without changing this one
+	 * @return deep copy of this object
+	 */
+	public DoubleRange copy()
+	{
+		if (_empty) return new DoubleRange();
+		return new DoubleRange(_min, _max);
+	}
 }

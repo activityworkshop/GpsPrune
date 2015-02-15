@@ -220,6 +220,19 @@ public abstract class MediaList
 	}
 
 	/**
+	 * @return true if there are any modified media in the list
+	 */
+	public boolean hasModifiedMedia()
+	{
+		for (MediaObject m: _media) {
+			if (m.isModified()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * @return clone of list contents
 	 */
 	public abstract MediaList cloneList();

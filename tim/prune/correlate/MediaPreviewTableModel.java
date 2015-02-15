@@ -1,11 +1,12 @@
 package tim.prune.correlate;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import javax.swing.table.AbstractTableModel;
+
 import tim.prune.I18nManager;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.gui.DisplayUtils;
 
 /**
  * Class to act as the table model for the correlation preview table
@@ -18,16 +19,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 	private ArrayList<MediaPreviewTableRow> _list = new ArrayList<MediaPreviewTableRow>();
 	/** Distance units */
 	private Unit _distanceUnits = UnitSetLibrary.UNITS_KILOMETRES;
-	/** Number formatter */
-	private static final NumberFormat FORMAT_ONE_DP = NumberFormat.getNumberInstance();
 
-
-	/** Static block to initialise the one d.p. formatter */
-	static
-	{
-		FORMAT_ONE_DP.setMaximumFractionDigits(1);
-		FORMAT_ONE_DP.setMinimumFractionDigits(1);
-	}
 
 	/**
 	 * Constructor
@@ -103,7 +95,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 		}
 		else if (inColumnIndex == 3) {
 			if (row.getPointPair().isValid()) {
-				return FORMAT_ONE_DP.format(row.getDistance(_distanceUnits));
+				return DisplayUtils.formatOneDp(row.getDistance(_distanceUnits));
 			}
 			return "";
 		}

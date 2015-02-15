@@ -8,7 +8,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.text.NumberFormat;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -20,9 +19,7 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
-import tim.prune.data.AltitudeRange;
-import tim.prune.data.DataPoint;
+import tim.prune.data.RangeStats;
 import tim.prune.data.Selection;
 import tim.prune.data.Unit;
 import tim.prune.gui.DisplayUtils;
@@ -63,10 +60,6 @@ public class FullRangeDetails extends GenericFunction
 	/** Labels for vertical speed */
 	private JLabel _totalVertSpeedLabel, _movingVertSpeedLabel = null;
 
-	/** Number formatter for one decimal place */
-	private static final NumberFormat FORMAT_ONE_DP = NumberFormat.getNumberInstance();
-	/** Flexible number formatter for different decimal places */
-	private NumberFormat _distanceFormatter = NumberFormat.getInstance();
 
 	/**
 	 * Constructor
@@ -75,8 +68,6 @@ public class FullRangeDetails extends GenericFunction
 	public FullRangeDetails(App inApp)
 	{
 		super(inApp);
-		FORMAT_ONE_DP.setMaximumFractionDigits(1);
-		FORMAT_ONE_DP.setMinimumFractionDigits(1);
 	}
 
 	/** Get the name key */
@@ -250,11 +241,14 @@ public class FullRangeDetails extends GenericFunction
 	private void updateDetails()
 	{
 		Selection selection = _app.getTrackInfo().getSelection();
+		// Do the calculations with a separate class
+		RangeStats stats = new RangeStats(_app.getTrackInfo().getTrack(), selection.getStart(), selection.getEnd());
+
 		// Number of points
-		_numPointsLabel.setText("" + (selection.getEnd()-selection.getStart()+1));
+		_numPointsLabel.setText("" + stats.getNumPoints());
 		// Number of segments
-		_numSegsLabel.setText("" + selection.getNumSegments());
-		final boolean isMultiSegments = (selection.getNumSegments() > 1);
+		_numSegsLabel.setText("" + stats.getNumSegments());
+		final boolean isMultiSegments = (stats.getNumSegments() > 1);
 		// Set visibility of third column accordingly
 		_movingDistanceLabel.setVisible(isMultiSegments);
 		_movingDurationLabel.setVisible(isMultiSegments);
@@ -265,132 +259,78 @@ public class FullRangeDetails extends GenericFunction
 		_movingGradientLabel.setVisible(isMultiSegments);
 		_movingVertSpeedLabel.setVisible(isMultiSegments);
 
-		// Distance in current units
+		// Total and moving distance in current units
 		final Unit distUnit = Config.getUnitSet().getDistanceUnit();
 		final String distUnitsStr = I18nManager.getText(distUnit.getShortnameKey());
-		final double selectionDistance = selection.getDistance();
-		_totalDistanceLabel.setText(roundedNumber(selectionDistance) + " " + distUnitsStr);
+		_totalDistanceLabel.setText(DisplayUtils.roundedNumber(stats.getTotalDistance()) + " " + distUnitsStr);
+		_movingDistanceLabel.setText(DisplayUtils.roundedNumber(stats.getMovingDistance()) + " " + distUnitsStr);
 
 		// Duration
-		long numSecs = selection.getNumSeconds();
-		_totalDurationLabel.setText(DisplayUtils.buildDurationString(numSecs));
+		_totalDurationLabel.setText(DisplayUtils.buildDurationString(stats.getTotalDurationInSeconds()));
+		_movingDurationLabel.setText(DisplayUtils.buildDurationString(stats.getMovingDurationInSeconds()));
+
 		// Climb and descent
 		final Unit altUnit = Config.getUnitSet().getAltitudeUnit();
 		final String altUnitsStr = " " + I18nManager.getText(altUnit.getShortnameKey());
-		if (selection.getAltitudeRange().hasRange()) {
-			_totalClimbLabel.setText(selection.getAltitudeRange().getClimb(altUnit) + altUnitsStr);
-			_totalDescentLabel.setText(selection.getAltitudeRange().getDescent(altUnit) + altUnitsStr);
+		if (stats.getTotalAltitudeRange().hasRange()) {
+			_totalClimbLabel.setText(stats.getTotalAltitudeRange().getClimb(altUnit) + altUnitsStr);
+			_totalDescentLabel.setText(stats.getTotalAltitudeRange().getDescent(altUnit) + altUnitsStr);
 		}
 		else {
 			_totalClimbLabel.setText("");
 			_totalDescentLabel.setText("");
 		}
-
-		// Overall pace and speed
-		final String speedUnitsStr = I18nManager.getText(Config.getUnitSet().getSpeedUnit().getShortnameKey());
-		if (numSecs > 0 && selectionDistance > 0)
-		{
-			_totalPaceLabel.setText(
-				DisplayUtils.buildDurationString((long) (numSecs/selectionDistance))
-				+ " / " + distUnitsStr);
-			_totalSpeedLabel.setText(roundedNumber(selectionDistance/numSecs*3600.0)
-				+ " " + speedUnitsStr);
-		}
-		else {
-			_totalPaceLabel.setText("");
-			_totalSpeedLabel.setText("");
-		}
-
-		// Moving distance
-		double movingDist = selection.getMovingDistance();
-		_movingDistanceLabel.setText(roundedNumber(movingDist) + " " + distUnitsStr);
-		// Moving average speed
-		long numMovingSecs = selection.getMovingSeconds();
-		if (numMovingSecs > 0)
-		{
-			_movingDurationLabel.setText(DisplayUtils.buildDurationString(numMovingSecs));
-			_movingSpeedLabel.setText(roundedNumber(movingDist/numMovingSecs*3600.0)
-				+ " " + speedUnitsStr);
-			_movingPaceLabel.setText(
-				DisplayUtils.buildDurationString((long) (numMovingSecs/movingDist))
-				+ " / " + distUnitsStr);
-		}
-		else
-		{
-			_movingDurationLabel.setText("");
-			_movingSpeedLabel.setText("");
-			_movingPaceLabel.setText("");
-		}
-
-		// Moving gradient and moving climb/descent
-		Altitude firstAlt = null, lastAlt = null;
-		Altitude veryFirstAlt = null, veryLastAlt = null;
-		AltitudeRange altRange = new AltitudeRange();
-		double movingHeightDiff = 0.0;
-		if (movingDist > 0.0)
-		{
-			for (int pNum = selection.getStart(); pNum <= selection.getEnd(); pNum++)
-			{
-				DataPoint p = _app.getTrackInfo().getTrack().getPoint(pNum);
-				if (p != null && !p.isWaypoint())
-				{
-					// If we're starting a new segment, calculate the height diff of the previous one
-					if (p.getSegmentStart())
-					{
-						if (firstAlt != null && firstAlt.isValid() && lastAlt != null && lastAlt.isValid())
-							movingHeightDiff = movingHeightDiff + lastAlt.getMetricValue() - firstAlt.getMetricValue();
-						firstAlt = null; lastAlt = null;
-					}
-					Altitude alt = p.getAltitude();
-					if (alt != null && alt.isValid())
-					{
-						if (firstAlt == null) firstAlt = alt;
-						else lastAlt = alt;
-						if (veryFirstAlt == null) veryFirstAlt = alt;
-						else veryLastAlt = alt;
-					}
-					// Keep track of climb and descent too
-					if (p.getSegmentStart())
-						altRange.ignoreValue(alt);
-					else
-						altRange.addValue(alt);
-				}
-			}
-			// deal with last segment
-			if (firstAlt != null && firstAlt.isValid() && lastAlt != null && lastAlt.isValid())
-				movingHeightDiff = movingHeightDiff + lastAlt.getMetricValue() - firstAlt.getMetricValue();
-			final double metricMovingDist = movingDist / distUnit.getMultFactorFromStd(); // convert back to metres
-			final double gradient = movingHeightDiff * 100.0 / metricMovingDist;
-			_movingGradientLabel.setText(FORMAT_ONE_DP.format(gradient) + " %");
-		}
-		if (!altRange.hasRange()) {
-			_movingGradientLabel.setText("");
-		}
-		final boolean hasAltitudes = veryFirstAlt != null && veryFirstAlt.isValid() && veryLastAlt != null && veryLastAlt.isValid();
-
-		// Total gradient
-		final double metreDist = selection.getDistance() / distUnit.getMultFactorFromStd(); // convert back to metres
-		if (hasAltitudes && metreDist > 0.0)
-		{
-			// got an altitude and range
-			int altDiffInMetres = veryLastAlt.getValue(Altitude.Format.METRES) - veryFirstAlt.getValue(Altitude.Format.METRES);
-			double gradient = altDiffInMetres * 100.0 / metreDist;
-			_totalGradientLabel.setText(FORMAT_ONE_DP.format(gradient) + " %");
-		}
-		else {
-			// no altitude given
-			_totalGradientLabel.setText("");
-		}
-
-		// Moving climb/descent
-		if (altRange.hasRange()) {
-			_movingClimbLabel.setText(altRange.getClimb(altUnit) + altUnitsStr);
-			_movingDescentLabel.setText(altRange.getDescent(altUnit) + altUnitsStr);
+		if (stats.getMovingAltitudeRange().hasRange()) {
+			_movingClimbLabel.setText(stats.getMovingAltitudeRange().getClimb(altUnit) + altUnitsStr);
+			_movingDescentLabel.setText(stats.getMovingAltitudeRange().getDescent(altUnit) + altUnitsStr);
 		}
 		else {
 			_movingClimbLabel.setText("");
 			_movingDescentLabel.setText("");
 		}
+
+		// Overall pace and speed
+		final String speedUnitsStr = I18nManager.getText(Config.getUnitSet().getSpeedUnit().getShortnameKey());
+		long numSecs = stats.getTotalDurationInSeconds();
+		double dist = stats.getTotalDistance();
+		if (numSecs > 0 && dist > 0)
+		{
+			_totalSpeedLabel.setText(DisplayUtils.roundedNumber(dist/numSecs*3600.0) + " " + speedUnitsStr);
+			_totalPaceLabel.setText(DisplayUtils.buildDurationString((long) (numSecs/dist))
+				+ " / " + distUnitsStr);
+		}
+		else {
+			_totalSpeedLabel.setText("");
+			_totalPaceLabel.setText("");
+		}
+		// and same for within the segments
+		numSecs = stats.getMovingDurationInSeconds();
+		dist = stats.getMovingDistance();
+		if (numSecs > 0 && dist > 0)
+		{
+			_movingSpeedLabel.setText(DisplayUtils.roundedNumber(dist/numSecs*3600.0) + " " + speedUnitsStr);
+			_movingPaceLabel.setText(DisplayUtils.buildDurationString((long) (numSecs/dist))
+				+ " / " + distUnitsStr);
+		}
+		else {
+			_movingSpeedLabel.setText("");
+			_movingPaceLabel.setText("");
+		}
+
+		// Gradient
+		if (stats.getTotalAltitudeRange().hasRange()) {
+			_totalGradientLabel.setText(DisplayUtils.formatOneDp(stats.getTotalGradient()) + " %");
+		}
+		else {
+			_totalGradientLabel.setText("");
+		}
+		if (stats.getMovingAltitudeRange().hasRange()) {
+			_movingGradientLabel.setText(DisplayUtils.formatOneDp(stats.getMovingGradient()) + " %");
+		}
+		else {
+			_movingGradientLabel.setText("");
+		}
+
 		// Maximum speed
 		SpeedData speeds = new SpeedData(_app.getTrackInfo().getTrack());
 		speeds.init(Config.getUnitSet());
@@ -402,7 +342,7 @@ public class FullRangeDetails extends GenericFunction
 			}
 		}
 		if (maxSpeed > 0.0) {
-			_maxSpeedLabel.setText(roundedNumber(maxSpeed) + " " + speedUnitsStr);
+			_maxSpeedLabel.setText(DisplayUtils.roundedNumber(maxSpeed) + " " + speedUnitsStr);
 		}
 		else {
 			_maxSpeedLabel.setText("");
@@ -410,40 +350,17 @@ public class FullRangeDetails extends GenericFunction
 
 		// vertical speed
 		final String vertSpeedUnitsStr = I18nManager.getText(Config.getUnitSet().getVerticalSpeedUnit().getShortnameKey());
-		if (hasAltitudes && metreDist > 0.0 && numSecs > 0)
+		if (stats.getMovingAltitudeRange().hasRange() && stats.getTotalDurationInSeconds() > 0)
 		{
-			// got an altitude and time - do total
-			final int altDiffInMetres = veryLastAlt.getValue(Altitude.Format.METRES) - veryFirstAlt.getValue(Altitude.Format.METRES);
-			final double altDiff = altDiffInMetres * altUnit.getMultFactorFromStd();
-			_totalVertSpeedLabel.setText(roundedNumber(altDiff/numSecs) + " " + vertSpeedUnitsStr);
-			// and moving
-			_movingVertSpeedLabel.setText(roundedNumber(movingHeightDiff * altUnit.getMultFactorFromStd() / numMovingSecs) + " " + vertSpeedUnitsStr);
+			// got an altitude and time - do totals
+			_totalVertSpeedLabel.setText(DisplayUtils.roundedNumber(stats.getTotalVerticalSpeed()) + " " + vertSpeedUnitsStr);
+			_movingVertSpeedLabel.setText(DisplayUtils.roundedNumber(stats.getMovingVerticalSpeed()) + " " + vertSpeedUnitsStr);
 		}
-		else {
+		else
+		{
 			// no vertical speed available
 			_totalVertSpeedLabel.setText("");
 			_movingVertSpeedLabel.setText("");
 		}
-	}
-
-	/**
-	 * Format a number to a sensible precision
-	 * @param inDist distance
-	 * @return formatted String
-	 */
-	private String roundedNumber(double inDist)
-	{
-		// Set precision of formatter
-		int numDigits = 0;
-		if (inDist < 1.0)
-			numDigits = 3;
-		else if (inDist < 10.0)
-			numDigits = 2;
-		else if (inDist < 100.0)
-			numDigits = 1;
-		// set formatter
-		_distanceFormatter.setMaximumFractionDigits(numDigits);
-		_distanceFormatter.setMinimumFractionDigits(numDigits);
-		return _distanceFormatter.format(inDist);
 	}
 }

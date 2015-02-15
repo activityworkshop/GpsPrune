@@ -25,6 +25,7 @@ import tim.prune.config.Config;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.SourceInfo.FILE_TYPE;
 import tim.prune.gui.GuiGridLayout;
+import tim.prune.load.babel.BabelFilterPanel;
 
 
 /**
@@ -158,6 +159,15 @@ public class BabelLoadFromFile extends BabelLoader
 		_saveCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_saveCheckbox);
 
+		// Filter panel
+		_filterPanel = new BabelFilterPanel(_parentFrame);
+		// Give filter panel the contents of the config
+		String filter = Config.getConfigString(Config.KEY_GPSBABEL_FILTER);
+		if (filter != null) {
+			_filterPanel.setFilterString(filter);
+		}
+		mainPanel.add(_filterPanel);
+
 		// progress bar (initially invisible)
 		_progressBar = new JProgressBar(0, 10);
 		mainPanel.add(_progressBar);
@@ -216,6 +226,10 @@ public class BabelLoadFromFile extends BabelLoader
 	 */
 	protected void saveConfigValues()
 	{
-		// nothing needed
+		// Save the filter string (but don't remove it if it's now blank)
+		final String filter = _filterPanel.getFilterString();
+		if (filter != null && !filter.equals("")) {
+			Config.setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
+		}
 	}
 }

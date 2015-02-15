@@ -40,6 +40,8 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 	protected JTable _trackTable = null;
 	/** Cancelled flag */
 	protected boolean _cancelled = false;
+	/** error message */
+	protected String _errorMessage = null;
 	/** Status label */
 	protected JLabel _statusLabel = null;
 	/** Description box */
@@ -84,6 +86,7 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		_showButton.setEnabled(false);
 		_cancelled = false;
 		_descriptionBox.setText("");
+		_errorMessage = null;
 		// Start new thread to load list asynchronously
 		new Thread(this).start();
 

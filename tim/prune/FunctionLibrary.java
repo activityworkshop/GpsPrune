@@ -7,6 +7,8 @@ import tim.prune.function.charts.Charter;
 import tim.prune.function.compress.CompressTrackFunction;
 import tim.prune.function.distance.DistanceFunction;
 import tim.prune.function.edit.PointNameEditor;
+import tim.prune.function.estimate.EstimateTime;
+import tim.prune.function.estimate.LearnParameters;
 import tim.prune.function.gpsies.GetGpsiesFunction;
 import tim.prune.function.gpsies.UploadGpsiesFunction;
 import tim.prune.function.srtm.LookupSrtmFunction;
@@ -15,6 +17,7 @@ import tim.prune.load.BabelLoadFromFile;
 import tim.prune.load.BabelLoadFromGps;
 import tim.prune.save.GpsSaver;
 import tim.prune.save.GpxExporter;
+import tim.prune.save.ImageExporter;
 import tim.prune.save.KmlExporter;
 import tim.prune.save.PovExporter;
 import tim.prune.save.SvgExporter;
@@ -28,6 +31,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_KMLEXPORT = null;
 	public static PovExporter FUNCTION_POVEXPORT     = null;
 	public static SvgExporter FUNCTION_SVGEXPORT     = null;
+	public static GenericFunction FUNCTION_IMAGEEXPORT = null;
 	public static GenericFunction FUNCTION_GPSLOAD  = null;
 	public static GenericFunction FUNCTION_GPSSAVE  = null;
 	public static GenericFunction FUNCTION_IMPORTBABEL = null;
@@ -63,6 +67,8 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_3D     = null;
 	public static GenericFunction FUNCTION_DISTANCES  = null;
 	public static GenericFunction FUNCTION_FULL_RANGE_DETAILS = null;
+	public static GenericFunction FUNCTION_ESTIMATE_TIME = null;
+	public static GenericFunction FUNCTION_LEARN_ESTIMATION_PARAMS = null;
 	public static GenericFunction FUNCTION_GET_GPSIES = null;
 	public static GenericFunction FUNCTION_UPLOAD_GPSIES = null;
 	public static GenericFunction FUNCTION_LOAD_AUDIO = null;
@@ -73,7 +79,6 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_SET_MAP_BG = null;
 	public static GenericFunction FUNCTION_SET_DISK_CACHE = null;
 	public static GenericFunction FUNCTION_SET_PATHS  = null;
-	public static GenericFunction FUNCTION_SET_KMZ_IMAGE_SIZE = null;
 	public static GenericFunction FUNCTION_SET_COLOURS = null;
 	public static GenericFunction FUNCTION_SET_LINE_WIDTH = null;
 	public static GenericFunction FUNCTION_SET_LANGUAGE = null;
@@ -93,6 +98,7 @@ public abstract class FunctionLibrary
 		FUNCTION_KMLEXPORT = new KmlExporter(inApp);
 		FUNCTION_POVEXPORT = new PovExporter(inApp);
 		FUNCTION_SVGEXPORT = new SvgExporter(inApp);
+		FUNCTION_IMAGEEXPORT = new ImageExporter(inApp);
 		FUNCTION_GPSLOAD   = new BabelLoadFromGps(inApp);
 		FUNCTION_GPSSAVE   = new GpsSaver(inApp);
 		FUNCTION_IMPORTBABEL = new BabelLoadFromFile(inApp);
@@ -127,6 +133,8 @@ public abstract class FunctionLibrary
 		FUNCTION_3D     = new ShowThreeDFunction(inApp);
 		FUNCTION_DISTANCES = new DistanceFunction(inApp);
 		FUNCTION_FULL_RANGE_DETAILS = new FullRangeDetails(inApp);
+		FUNCTION_ESTIMATE_TIME = new EstimateTime(inApp);
+		FUNCTION_LEARN_ESTIMATION_PARAMS = new LearnParameters(inApp);
 		FUNCTION_GET_GPSIES = new GetGpsiesFunction(inApp);
 		FUNCTION_UPLOAD_GPSIES = new UploadGpsiesFunction(inApp);
 		FUNCTION_LOAD_AUDIO = new AudioLoader(inApp);
@@ -138,7 +146,6 @@ public abstract class FunctionLibrary
 		FUNCTION_SET_MAP_BG = new SetMapBgFunction(inApp);
 		FUNCTION_SET_DISK_CACHE = new DiskCacheConfig(inApp);
 		FUNCTION_SET_PATHS = new SetPathsFunction(inApp);
-		FUNCTION_SET_KMZ_IMAGE_SIZE = new SetKmzImageSize(inApp);
 		FUNCTION_SET_COLOURS = new SetColours(inApp);
 		FUNCTION_SET_LINE_WIDTH = new SetLineWidth(inApp);
 		FUNCTION_SET_LANGUAGE = new SetLanguage(inApp);

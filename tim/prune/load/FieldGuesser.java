@@ -19,19 +19,41 @@ public abstract class FieldGuesser
 	 */
 	private static boolean isHeaderRow(String[] inValues)
 	{
-		// Loop over values looking for a Latitude value
+		// Loop over values seeing if any are mostly numeric
 		if (inValues != null)
 		{
-			for (int v=0; v<inValues.length; v++)
+			for (String value : inValues)
 			{
-				Latitude lat = new Latitude(inValues[v]);
-				if (lat.isValid()) {return false;}
+				if (fieldLooksNumeric(value)) {return false;}
 			}
 		}
-		// No valid Latitude value found so presume header
+		// No (mostly) numeric values found so presume header
 		return true;
 	}
 
+
+	/**
+	 * See if a field looks numeric or not by comparing the number of numeric vs non-numeric characters
+	 * @param inValue field value to check
+	 * @return true if there are more numeric characters than not
+	 */
+	private static boolean fieldLooksNumeric(String inValue)
+	{
+		if (inValue == null) {
+			return false;
+		}
+		final int numChars = inValue.length();
+		if (numChars < 3) {return false;} // Don't care about one or two character values
+		// Loop through characters seeing which ones are numeric and which not
+		int numNums = 0;
+		for (int i=0; i<numChars; i++)
+		{
+			char currChar = inValue.charAt(i);
+			if (currChar >= '0' && currChar <= '9') {numNums++;}
+		}
+		// Return true if more than half the characters are numeric
+		return numNums > (numChars/2);
+	}
 
 	/**
 	 * Try to guess the fields for the given values from the file
@@ -108,12 +130,24 @@ public abstract class FieldGuesser
 				else if (!checkArrayHasField(fields, Field.LONGITUDE)) {
 					fields[f] = Field.LONGITUDE;
 				}
-				else {
-					customFieldNum++;
-					fields[f] = new Field(customPrefix + (customFieldNum));
+				else
+				{
+					// Can we use the field name given?
+					Field customField = null;
+					if (isHeader && inValues[f] != null && inValues[f].length() > 0) {
+						customField = new Field(inValues[f]);
+					}
+					// Find an unused field number
+					while (customField == null || checkArrayHasField(fields, customField))
+					{
+						customFieldNum++;
+						customField = new Field(customPrefix + (customFieldNum));
+					}
+					fields[f] = customField;
 				}
 			}
 		}
+
 		// Do a final check to make sure lat and long are in there
 		if (!checkArrayHasField(fields, Field.LATITUDE)) {
 			fields[0] = Field.LATITUDE;

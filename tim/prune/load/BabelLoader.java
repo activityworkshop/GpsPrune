@@ -20,8 +20,8 @@ import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.SourceInfo;
+import tim.prune.load.babel.BabelFilterPanel;
 import tim.prune.load.xml.XmlFileLoader;
 import tim.prune.load.xml.XmlHandler;
 import tim.prune.save.GpxExporter;
@@ -42,6 +42,7 @@ public abstract class BabelLoader extends GenericFunction implements Runnable
 	protected JProgressBar _progressBar = null;
 	protected File _saveFile = null;
 	protected boolean _cancelled = false;
+	protected BabelFilterPanel _filterPanel = null;
 
 
 	/**
@@ -91,7 +92,11 @@ public abstract class BabelLoader extends GenericFunction implements Runnable
 
 
 	/** Do any subclass-specific dialog initialisation necessary */
-	protected void initDialog() {}
+	protected void initDialog()
+	{
+		// GPSBabel filter, if any
+		_filterPanel.setFilterString(Config.getConfigString(Config.KEY_GPSBABEL_FILTER));
+	}
 
 	/**
 	 * @param inStart true if the dialog is restarting
@@ -229,9 +234,8 @@ public abstract class BabelLoader extends GenericFunction implements Runnable
 			if (errorMessage.length() > 0) {throw new Exception(errorMessage);}
 
 			// Send data back to app
-			_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(), Altitude.Format.METRES,
-				getSourceInfo(),
-				handler.getTrackNameList());
+			_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(), null,
+				getSourceInfo(), handler.getTrackNameList());
 		}
 	}
 
@@ -242,33 +246,55 @@ public abstract class BabelLoader extends GenericFunction implements Runnable
 	 */
 	private String[] getCommandArray()
 	{
-		String[] commands = null;
+		ArrayList<String> commandList = new ArrayList<String>();
+		// Firstly the command for gpsbabel itself
 		final String command = Config.getConfigString(Config.KEY_GPSBABEL_PATH);
+		commandList.add(command);
+		// Then whether to load waypoints or track points
 		final boolean loadWaypoints = _waypointCheckbox.isSelected();
 		final boolean loadTrack = _trackCheckbox.isSelected();
-		if (loadWaypoints && loadTrack) {
-			// Both waypoints and track points selected
-			commands = new String[] {command, "-w", "-t", "-i", getInputFormat(),
-				"-f", getFilePath(), "-o", "gpx", "-F", "-"};
+		if (loadWaypoints) {
+			commandList.add("-w");
 		}
-		else
+		if (loadTrack) {
+			commandList.add("-t");
+		}
+		// Input format
+		commandList.add("-i");
+		commandList.add(getInputFormat());
+		// File path
+		commandList.add("-f");
+		commandList.add(getFilePath());
+		// Filters, if any
+		final String filter = _filterPanel.getFilterString();
+		if (filter != null && !filter.equals(""))
 		{
-			// Only waypoints OR track points selected
-			commands = new String[] {command, "-w", "-i", getInputFormat(),
-				"-f", getFilePath(), "-o", "gpx", "-F", "-"};
-			if (loadTrack) {
-				commands[1] = "-t";
+			for (String arg : filter.split(" "))
+			{
+				if (arg.length() > 0) {
+					commandList.add(arg);
+				}
 			}
 		}
+		// Output format
+		commandList.add("-o");
+		commandList.add("gpx");
+		// Where to
+		commandList.add("-F");
+		String whereTo = "-";
 		// Do we want to save the gpx straight to file?
-		if (_saveCheckbox.isSelected()) {
+		if (_saveCheckbox.isSelected())
+		{
 			// Select file to save to
 			_saveFile = GpxExporter.chooseGpxFile(_parentFrame);
 			if (_saveFile != null) {
-				commands[commands.length-1] = _saveFile.getAbsolutePath();
+				whereTo = _saveFile.getAbsolutePath();
 			}
 		}
-		return commands;
+		commandList.add(whereTo);
+		// Convert to string array
+		String[] args = new String[] {};
+		return commandList.toArray(args);
 	}
 
 	/**

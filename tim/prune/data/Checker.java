@@ -18,7 +18,7 @@ public abstract class Checker
 		if (inTrack == null || inTrack.getNumPoints() < 2) {return false;}
 		// Check for non-even number of points
 		final int numPoints = inTrack.getNumPoints();
-		if (numPoints % 2 == 1) {return false;}
+		if (numPoints % 2 != 0) {return false;}
 		// Loop through first half of track
 		final int halfNum = numPoints / 2;
 		for (int i=0; i<halfNum; i++)

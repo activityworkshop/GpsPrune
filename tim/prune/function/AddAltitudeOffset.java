@@ -19,8 +19,9 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.Field;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSetLibrary;
 
 /**
  * Class to provide the function to add an altitude offset to a track range
@@ -31,7 +32,7 @@ public class AddAltitudeOffset extends GenericFunction
 	private JLabel _descLabel = null;
 	private JTextField _editField = null;
 	private JButton _okButton = null;
-	private Altitude.Format _altFormat = Altitude.Format.NO_FORMAT;
+	private Unit _altUnit = null;
 
 
 	/**
@@ -152,11 +153,11 @@ public class AddAltitudeOffset extends GenericFunction
 	 */
 	private void setLabelText()
 	{
-		_altFormat = Altitude.Format.FEET;
+		_altUnit = UnitSetLibrary.UNITS_FEET;
 		if (Config.getUnitSet().getAltitudeUnit().isStandard()) {
-			_altFormat = Altitude.Format.METRES;
+			_altUnit = UnitSetLibrary.UNITS_METRES;
 		}
-		final String unitKey = (_altFormat==Altitude.Format.METRES?"units.metres.short":"units.feet.short");
+		final String unitKey = _altUnit.getShortnameKey();
 		_descLabel.setText(I18nManager.getText("dialog.addaltitude.desc") + " (" + I18nManager.getText(unitKey) + ")");
 	}
 
@@ -166,7 +167,7 @@ public class AddAltitudeOffset extends GenericFunction
 	private void finish()
 	{
 		// Pass information back to App to complete function
-		_app.finishAddAltitudeOffset(_editField.getText(), _altFormat);
+		_app.finishAddAltitudeOffset(_editField.getText(), _altUnit);
 		_dialog.dispose();
 	}
 }

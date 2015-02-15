@@ -24,7 +24,6 @@ import tim.prune.ExternalTools;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
@@ -244,7 +243,7 @@ public class ExifSaver implements Runnable
 			{
 				// Only look at photos which are selected and whose status has changed since load
 				photo = entry.getPhoto();
-				if (photo != null && photo.getOriginalStatus() != photo.getCurrentStatus())
+				if (photo != null && photo.isModified())
 				{
 					// Increment counter if save successful
 					if (savePhoto(photo, overwriteFlag, false)) {
@@ -415,7 +414,7 @@ public class ExifSaver implements Runnable
 		result[paramOffset + 3] = "-GPSLongitudeRef=" + inPoint.getLongitude().output(Coordinate.FORMAT_CARDINAL);
 		// add altitude if it has it
 		result[paramOffset + 4] = "-GPSAltitude="
-		 + (inPoint.hasAltitude()?inPoint.getAltitude().getValue(Altitude.Format.METRES):0);
+		 + (inPoint.hasAltitude()?inPoint.getAltitude().getMetricValue():0);
 		result[paramOffset + 5] = "-GPSAltitudeRef='Above Sea Level'";
 		// add the filename to modify
 		result[paramOffset + 6] = inFile.getAbsolutePath();

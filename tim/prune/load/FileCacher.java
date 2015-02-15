@@ -42,8 +42,14 @@ public class FileCacher
 			{
 				reader = new BufferedReader(new FileReader(_file));
 				String currLine = reader.readLine();
+				if (currLine != null && currLine.startsWith("<?xml")) {
+					return; // it's an xml file, it shouldn't use this cacher
+				}
 				while (currLine != null)
 				{
+					if (currLine.indexOf('\0') >= 0) {
+						return; // it's a binary file, shouldn't use this cacher
+					}
 					if (currLine.trim().length() > 0)
 						contentList.add(currLine);
 					currLine = reader.readLine();

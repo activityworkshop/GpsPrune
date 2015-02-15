@@ -23,6 +23,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageWriter;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -32,6 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
+import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
@@ -41,17 +43,19 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.ColourUtils;
 import tim.prune.config.Config;
-import tim.prune.data.Altitude;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.RecentFile;
+import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.ColourChooser;
 import tim.prune.gui.ColourPatch;
 import tim.prune.gui.DialogCloser;
 import tim.prune.gui.ImageUtils;
+import tim.prune.gui.WholeNumberField;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.save.xml.XmlUtils;
 
@@ -66,9 +70,12 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private JDialog _dialog = null;
 	private JTextField _descriptionField = null;
 	private PointTypeSelector _pointTypeSelector = null;
+	private JRadioButton _gxExtensionsRadio = null;
 	private JCheckBox _altitudesCheckbox = null;
 	private JCheckBox _kmzCheckbox = null;
 	private JCheckBox _exportImagesCheckbox = null;
+	private JLabel _imageSizeLabel = null;
+	private WholeNumberField _imageSizeField = null;
 	private ColourPatch _colourPatch = null;
 	private JLabel _progressLabel = null;
 	private JProgressBar _progressBar = null;
@@ -83,7 +90,6 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private static final String KML_FILENAME_IN_KMZ = "doc.kml";
 	// Default width and height of thumbnail images in Kmz
 	private static final int DEFAULT_THUMBNAIL_WIDTH = 240;
-	private static final int DEFAULT_THUMBNAIL_HEIGHT = 240;
 	// Default track colour
 	private static final Color DEFAULT_TRACK_COLOUR = new Color(204, 0, 0); // red
 
@@ -119,6 +125,8 @@ public class KmlExporter extends GenericFunction implements Runnable
 			_dialog.pack();
 			_colourChooser = new ColourChooser(_dialog);
 		}
+		// Fill in image size from config
+		_imageSizeField.setValue(Config.getConfigInt(Config.KEY_KMZ_IMAGE_SIZE));
 		enableCheckboxes();
 		_descriptionField.setEnabled(true);
 		_okButton.setEnabled(true);
@@ -169,19 +177,31 @@ public class KmlExporter extends GenericFunction implements Runnable
 		colourPanel.add(new JLabel(I18nManager.getText("dialog.exportkml.trackcolour")));
 		colourPanel.add(_colourPatch);
 		mainPanel.add(colourPanel);
+		// Pair of radio buttons for standard/extended KML
+		JRadioButton standardKmlRadio = new JRadioButton(I18nManager.getText("dialog.exportkml.standardkml"));
+		_gxExtensionsRadio = new JRadioButton(I18nManager.getText("dialog.exportkml.extendedkml"));
+		ButtonGroup bGroup = new ButtonGroup();
+		bGroup.add(standardKmlRadio); bGroup.add(_gxExtensionsRadio);
+		JPanel radioPanel = new JPanel();
+		radioPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 1));
+		radioPanel.add(standardKmlRadio);
+		radioPanel.add(_gxExtensionsRadio);
+		standardKmlRadio.setSelected(true);
+		mainPanel.add(radioPanel);
 		// Checkbox for altitude export
 		_altitudesCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.altitude"));
 		_altitudesCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
 		_altitudesCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_altitudesCheckbox);
+
 		// Checkboxes for kmz export and image export
 		_kmzCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.kmz"));
 		_kmzCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
 		_kmzCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
+		// enable image checkbox if kmz activated
 		_kmzCheckbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				// enable image checkbox if kmz activated
 				enableCheckboxes();
 			}
 		});
@@ -189,7 +209,23 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_exportImagesCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.exportimages"));
 		_exportImagesCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
 		_exportImagesCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
+		// enable image size fields if image checkbox changes
+		_exportImagesCheckbox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				enableImageSizeFields();
+			}
+		});
 		mainPanel.add(_exportImagesCheckbox);
+		// Panel for the image size
+		JPanel imageSizePanel = new JPanel();
+		imageSizePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+		_imageSizeLabel = new JLabel(I18nManager.getText("dialog.exportkml.imagesize"));
+		_imageSizeLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+		imageSizePanel.add(_imageSizeLabel);
+		_imageSizeField = new WholeNumberField(4);
+		imageSizePanel.add(_imageSizeField);
+		mainPanel.add(imageSizePanel);
+
 		mainPanel.add(Box.createVerticalStrut(10));
 		_progressLabel = new JLabel("...");
 		_progressLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -237,9 +273,26 @@ public class KmlExporter extends GenericFunction implements Runnable
 		boolean hasPhotos = _trackInfo.getPhotoList() != null && _trackInfo.getPhotoList().getNumPhotos() > 0;
 		_exportImagesCheckbox.setSelected(hasPhotos && _kmzCheckbox.isSelected());
 		_exportImagesCheckbox.setEnabled(hasPhotos && _kmzCheckbox.isSelected());
+		enableImageSizeFields();
+	}
+
+	/**
+	 * Enable and disable the image size fields according to the checkboxes
+	 */
+	private void enableImageSizeFields()
+	{
+		boolean exportImages = _exportImagesCheckbox.isEnabled() && _exportImagesCheckbox.isSelected();
+		_imageSizeField.setEnabled(exportImages);
+		_imageSizeLabel.setEnabled(exportImages);
 	}
 
 
+	/**
+	 * @return true if using gx extensions for kml export
+	 */
+	private boolean useGxExtensions() {
+		return _gxExtensionsRadio.isSelected();
+	}
 	/**
 	 * Start the export process based on the input parameters
 	 */
@@ -325,11 +378,6 @@ public class KmlExporter extends GenericFunction implements Runnable
 		boolean exportImages = exportToKmz && _exportImagesCheckbox.isSelected();
 		_progressBar.setMaximum(exportImages?getNumPhotosToExport():1);
 
-		// Determine photo thumbnail size from config
-		int thumbWidth = Config.getConfigInt(Config.KEY_KMZ_IMAGE_WIDTH);
-		if (thumbWidth < DEFAULT_THUMBNAIL_WIDTH) {thumbWidth = DEFAULT_THUMBNAIL_WIDTH;}
-		int thumbHeight = Config.getConfigInt(Config.KEY_KMZ_IMAGE_HEIGHT);
-		if (thumbHeight < DEFAULT_THUMBNAIL_HEIGHT) {thumbHeight = DEFAULT_THUMBNAIL_HEIGHT;}
 		// Create array for image dimensions in case it's required
 		_imageDimensions = new Dimension[_track.getNumPoints()];
 
@@ -350,9 +398,14 @@ public class KmlExporter extends GenericFunction implements Runnable
 				// Export images into zip file too if requested
 				if (exportImages)
 				{
+					// Get entered value for image size, store in config
+					int thumbSize = _imageSizeField.getValue();
+					if (thumbSize < DEFAULT_THUMBNAIL_WIDTH) {thumbSize = DEFAULT_THUMBNAIL_WIDTH;}
+					Config.setConfigInt(Config.KEY_KMZ_IMAGE_SIZE, thumbSize);
+
 					// Create thumbnails of each photo in turn and add to zip as images/image<n>.jpg
 					// This is done first so that photo sizes are known for later
-					exportThumbnails(zipOutputStream, thumbWidth, thumbHeight);
+					exportThumbnails(zipOutputStream, thumbSize);
 				}
 				writer = new OutputStreamWriter(zipOutputStream);
 				// Make an entry in the zip file for the kml file
@@ -420,8 +473,14 @@ public class KmlExporter extends GenericFunction implements Runnable
 		boolean writePhotos = _pointTypeSelector.getPhotopointsSelected();
 		boolean writeAudios = _pointTypeSelector.getAudiopointsSelected();
 		boolean justSelection = _pointTypeSelector.getJustSelection();
-		inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.1\">\n<Folder>\n");
-		inWriter.write("\t<name>");
+		// Define xml header (depending on whether extensions are used or not)
+		if (useGxExtensions()) {
+			inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
+		}
+		else {
+			inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.1\">\n");
+		}
+		inWriter.write("<Folder>\n\t<name>");
 		if (_descriptionField != null && _descriptionField.getText() != null && !_descriptionField.getText().equals(""))
 		{
 			inWriter.write(_descriptionField.getText());
@@ -492,50 +551,167 @@ public class KmlExporter extends GenericFunction implements Runnable
 		// Make a line for the track, if there is one
 		if (hasTrackpoints && writeTrack)
 		{
-			// Set up strings for start and end of track segment
-			String trackStart = "\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
-				+ "\t\t\t\t<color>cc" + reverse(ColourUtils.makeHexCode(_colourPatch.getBackground())) + "</color>\n"
-				+ "\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
-				+ "\t\t\t<PolyStyle><color>33cc0000</color></PolyStyle>\n"
-				+ "\t\t</Style>\n\t\t<LineString>\n";
-			if (absoluteAltitudes) {
-				trackStart += "\t\t\t<extrude>1</extrude>\n\t\t\t<altitudeMode>absolute</altitudeMode>\n";
+			boolean useGxExtensions = _gxExtensionsRadio.isSelected();
+			if (useGxExtensions)
+			{
+				// Write track using the Google Extensions to KML including gx:Track
+				numSaved += writeGxTrack(inWriter, absoluteAltitudes, selStart, selEnd);
 			}
 			else {
-				trackStart += "\t\t\t<altitudeMode>clampToGround</altitudeMode>\n";
+				// Write track using standard KML
+				numSaved += writeStandardTrack(inWriter, absoluteAltitudes, selStart, selEnd);
 			}
-			trackStart += "\t\t\t<coordinates>";
-			String trackEnd = "\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>";
-
-			// Start segment
-			inWriter.write(trackStart);
-			// Loop over track points
-			boolean firstTrackpoint = true;
-			for (i=0; i<numPoints; i++)
-			{
-				point = _track.getPoint(i);
-				boolean writeCurrentPoint = !justSelection || (i>=selStart && i<=selEnd);
-				if (!point.isWaypoint() && writeCurrentPoint)
-				{
-					// start new track segment if necessary
-					if (point.getSegmentStart() && !firstTrackpoint) {
-						inWriter.write(trackEnd);
-						inWriter.write(trackStart);
-					}
-					if (point.getPhoto() == null)
-					{
-						exportTrackpoint(point, inWriter);
-						numSaved++;
-						firstTrackpoint = false;
-					}
-				}
-			}
-			// end segment
-			inWriter.write(trackEnd);
 		}
 		inWriter.write("</Folder>\n</kml>");
 		return numSaved;
 	}
+
+
+	/**
+	 * Write out the track using standard KML LineString tag
+	 * @param inWriter writer object to write to
+	 * @param inAbsoluteAltitudes true to use absolute altitudes, false to clamp to ground
+	 * @param inSelStart start index of selection, or -1 if whole track
+	 * @param inSelEnd     end index of selection, or -1 if whole track
+	 * @return number of track points written
+	 */
+	private int writeStandardTrack(OutputStreamWriter inWriter, boolean inAbsoluteAltitudes, int inSelStart,
+		int inSelEnd)
+	throws IOException
+	{
+		int numSaved = 0;
+		// Set up strings for start and end of track segment
+		String trackStart = "\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
+			+ "\t\t\t\t<color>cc" + reverse(ColourUtils.makeHexCode(_colourPatch.getBackground())) + "</color>\n"
+			+ "\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
+			+ "\t\t</Style>\n\t\t<LineString>\n";
+		if (inAbsoluteAltitudes) {
+			trackStart += "\t\t\t<extrude>1</extrude>\n\t\t\t<altitudeMode>absolute</altitudeMode>\n";
+		}
+		else {
+			trackStart += "\t\t\t<altitudeMode>clampToGround</altitudeMode>\n";
+		}
+		trackStart += "\t\t\t<coordinates>";
+		String trackEnd = "\t\t\t</coordinates>\n\t\t</LineString>\n\t</Placemark>";
+
+		boolean justSelection = _pointTypeSelector.getJustSelection();
+
+		// Start segment
+		inWriter.write(trackStart);
+		// Loop over track points
+		boolean firstTrackpoint = true;
+		final int numPoints = _track.getNumPoints();
+		for (int i=0; i<numPoints; i++)
+		{
+			DataPoint point = _track.getPoint(i);
+			boolean writeCurrentPoint = !justSelection || (i>=inSelStart && i<=inSelEnd);
+			if (!point.isWaypoint() && writeCurrentPoint)
+			{
+				// start new track segment if necessary
+				if (point.getSegmentStart() && !firstTrackpoint) {
+					inWriter.write(trackEnd);
+					inWriter.write(trackStart);
+				}
+				if (point.getPhoto() == null)
+				{
+					exportTrackpoint(point, inWriter);
+					numSaved++;
+					firstTrackpoint = false;
+				}
+			}
+		}
+		// end segment
+		inWriter.write(trackEnd);
+		return numSaved;
+	}
+
+
+	/**
+	 * Write out the track using Google's KML Extensions such as gx:Track
+	 * @param inWriter writer object to write to
+	 * @param inAbsoluteAltitudes true to use absolute altitudes, false to clamp to ground
+	 * @param inSelStart start index of selection, or -1 if whole track
+	 * @param inSelEnd     end index of selection, or -1 if whole track
+	 * @return number of track points written
+	 */
+	private int writeGxTrack(OutputStreamWriter inWriter, boolean inAbsoluteAltitudes, int inSelStart,
+		int inSelEnd)
+	throws IOException
+	{
+		int numSaved = 0;
+		// Set up strings for start and end of track segment
+		String trackStart = "\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
+			+ "\t\t\t\t<color>cc" + reverse(ColourUtils.makeHexCode(_colourPatch.getBackground())) + "</color>\n"
+			+ "\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
+			+ "\t\t</Style>\n\t\t<gx:Track>\n";
+		if (inAbsoluteAltitudes) {
+			trackStart += "\t\t\t<extrude>1</extrude>\n\t\t\t<altitudeMode>absolute</altitudeMode>\n";
+		}
+		else {
+			trackStart += "\t\t\t<altitudeMode>clampToGround</altitudeMode>\n";
+		}
+		String trackEnd = "\n\t\t</gx:Track>\n\t</Placemark>\n";
+
+		boolean justSelection = _pointTypeSelector.getJustSelection();
+
+		// Start segment
+		inWriter.write(trackStart);
+		StringBuilder whenList = new StringBuilder();
+		StringBuilder coordList = new StringBuilder();
+
+		// Loop over track points
+		boolean firstTrackpoint = true;
+		final int numPoints = _track.getNumPoints();
+		for (int i=0; i<numPoints; i++)
+		{
+			DataPoint point = _track.getPoint(i);
+			boolean writeCurrentPoint = !justSelection || (i>=inSelStart && i<=inSelEnd);
+			if (!point.isWaypoint() && writeCurrentPoint)
+			{
+				// start new track segment if necessary
+				if (point.getSegmentStart() && !firstTrackpoint)
+				{
+					inWriter.write(whenList.toString());
+					inWriter.write('\n');
+					inWriter.write(coordList.toString());
+					inWriter.write('\n');
+					inWriter.write(trackEnd);
+					whenList.setLength(0); coordList.setLength(0);
+					inWriter.write(trackStart);
+				}
+				if (point.getPhoto() == null)
+				{
+					// Add timestamp (if any) to the list
+					whenList.append("<when>");
+					if (point.hasTimestamp()) {
+						whenList.append(point.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
+					}
+					whenList.append("</when>\n");
+					// Add coordinates to the list
+					coordList.append("<gx:coord>");
+					coordList.append(point.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT)).append(' ');
+					coordList.append(point.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT)).append(' ');
+					if (point.hasAltitude()) {
+						coordList.append("" + point.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
+					}
+					else {
+						coordList.append('0');
+					}
+					coordList.append("</gx:coord>\n");
+					numSaved++;
+					firstTrackpoint = false;
+				}
+			}
+		}
+		// end segment
+		inWriter.write(whenList.toString());
+		inWriter.write('\n');
+		inWriter.write(coordList.toString());
+		inWriter.write('\n');
+		inWriter.write(trackEnd);
+		return numSaved;
+	}
+
 
 	/**
 	 * Reverse the hex code for the colours for KML's stupid backwards format
@@ -652,7 +828,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		inWriter.write(',');
 		// Altitude if point has one
 		if (inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 		}
 		else {
 			inWriter.write('0');
@@ -674,7 +850,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		// Altitude if point has one
 		inWriter.write(',');
 		if (inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
+			inWriter.write("" + inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 		}
 		else {
 			inWriter.write('0');
@@ -686,10 +862,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 	/**
 	 * Loop through the photos and create thumbnails
 	 * @param inZipStream zip stream to save image files to
-	 * @param inThumbWidth thumbnail width
-	 * @param inThumbHeight thumbnail height
+	 * @param inThumbSize thumbnail size
 	 */
-	private void exportThumbnails(ZipOutputStream inZipStream, int inThumbWidth, int inThumbHeight)
+	private void exportThumbnails(ZipOutputStream inZipStream, int inThumbSize)
 	throws IOException
 	{
 		// set up image writer
@@ -724,9 +899,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 				// Load image and write to outstream
 				ImageIcon icon = point.getPhoto().createImageIcon();
 
-				// Scale image to required size TODO: should it also be smoothed, or only if it's smaller than a certain size?
+				// Scale image to required size (not smoothed)
 				BufferedImage bufferedImage = ImageUtils.rotateImage(icon.getImage(),
-					inThumbWidth, inThumbHeight, point.getPhoto().getRotationDegrees());
+					inThumbSize, inThumbSize, point.getPhoto().getRotationDegrees());
 				// Store image dimensions so that it doesn't have to be calculated again for the points
 				_imageDimensions[i] = new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
 
