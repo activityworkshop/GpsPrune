@@ -39,12 +39,15 @@ public abstract class MapSourceLibrary
 	private static void addFixedSources()
 	{
 		_sourceList.add(new OsmMapSource("Mapnik", "http://tile.openstreetmap.org/"));
-		_sourceList.add(new OsmMapSource("Osma", "http://tah.openstreetmap.org/Tiles/tile/"));
-		_sourceList.add(new OsmMapSource("Cyclemap", "http://andy.sandbox.cloudmade.com/tiles/cycle/"));
+		_sourceList.add(new OsmMapSource("Cyclemap", "http://tile.opencyclemap.org/cycle/"));
 		_sourceList.add(new OsmMapSource("Reitkarte", "http://wanderreitkarte.de/hills/",
 			"http://topo2.wanderreitkarte.de/topo/", 18));
-		_sourceList.add(new MffMapSource("Mapsforfree", "http://maps-for-free.com/layer/relief/", ".jpg",
-			"http://maps-for-free.com/layer/water/", ".gif", 11));
+		_sourceList.add(new MffMapSource("Mapsforfree", "http://maps-for-free.com/layer/relief/", "jpg",
+			"http://maps-for-free.com/layer/water/", "gif", 11));
+		_sourceList.add(new OsmMapSource("Hikebikemap", "http://toolserver.org/tiles/hikebike/",
+			"http://toolserver.org/~cmarqu/hill/", 18));
+		_sourceList.add(new OsmMapSource("Openseamap", "http://tile.openstreetmap.org/",
+			"http://tiles.openseamap.org/seamark/", 18));
 		_sourceList.add(new CloudmadeMapSource("Pale Dawn", "998", 18));
 	}
 
@@ -86,6 +89,23 @@ public abstract class MapSourceLibrary
 	public static void addSource(MapSource inSource) {
 		// Check whether source is already there?  Check whether valid?
 		_sourceList.add(inSource);
+	}
+
+	/**
+	 * Edit the given MapSource object by replacing with a new one
+	 * @param inOriginal existing MapSource object
+	 * @param inNewSource new MapSource object
+	 */
+	public static void editSource(MapSource inOriginal, MapSource inNewSource)
+	{
+		// Check whether original source is still there
+		int origPos = _sourceList.indexOf(inOriginal);
+		if (origPos < 0) {
+			addSource(inNewSource);
+		}
+		else {
+			_sourceList.set(origPos, inNewSource);
+		}
 	}
 
 	/**

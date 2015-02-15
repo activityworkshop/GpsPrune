@@ -50,7 +50,7 @@ public class AltitudeData extends ProfileData
 						_pointValues[i] = value;
 						if (value < _minValue) {_minValue = value;}
 						if (value > _maxValue) {_maxValue = value;}
-	
+
 						_hasData = true;
 						_pointHasData[i] = true;
 					}

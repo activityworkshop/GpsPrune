@@ -343,20 +343,12 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inUseCopy) gpxCachers = new GpxCacherList(inInfo.getFileInfo());
 		// Write or copy headers
 		inWriter.write(getXmlHeaderString(inWriter));
-		inWriter.write(getGpxHeaderString(gpxCachers));
+		final String gpxHeader = getGpxHeaderString(gpxCachers);
+		final boolean isVersion1_1 = (gpxHeader.toUpperCase().indexOf("GPX/1/1") > 0);
+		inWriter.write(gpxHeader);
 		// Name field
-		String trackName = "GpsPruneTrack";
-		if (inName != null && !inName.equals(""))
-		{
-			trackName = inName;
-			inWriter.write("\t<name>");
-			inWriter.write(trackName);
-			inWriter.write("</name>\n");
-		}
-		// Description field
-		inWriter.write("\t<desc>");
-		inWriter.write((inDesc != null && !inDesc.equals(""))?inDesc:"Export from GpsPrune");
-		inWriter.write("</desc>\n");
+		String trackName = (inName != null && !inName.equals("")) ? inName : "GpsPruneTrack";
+		writeNameAndDescription(inWriter, inName, inDesc, isVersion1_1);
 
 		int i = 0;
 		DataPoint point = null;
@@ -413,6 +405,38 @@ public class GpxExporter extends GenericFunction implements Runnable
 		return numSaved;
 	}
 
+
+	/**
+	 * Write the name and description according to the GPX version number
+	 * @param inWriter writer object
+	 * @param inName name, or null if none supplied
+	 * @param inDesc description, or null if none supplied
+	 * @param inIsVersion1_1 true if gpx version 1.1, false for version 1.0
+	 */
+	private static void writeNameAndDescription(OutputStreamWriter inWriter,
+		String inName, String inDesc, boolean inIsVersion1_1) throws IOException
+	{
+		String desc = (inDesc != null && !inDesc.equals("")) ? inDesc : "Export from GpsPrune";
+		// Position of name and description fields needs to be different for GPX1.0 and GPX1.1
+		if (inIsVersion1_1)
+		{
+			// GPX 1.1 has the name and description inside a metadata tag
+			inWriter.write("\t<metadata>\n");
+		}
+		if (inName != null && !inName.equals(""))
+		{
+			inWriter.write("\t\t<name>");
+			inWriter.write(inName);
+			inWriter.write("</name>\n");
+		}
+		inWriter.write("\t\t<desc>");
+		inWriter.write(desc);
+		inWriter.write("</desc>\n");
+		if (inIsVersion1_1)
+		{
+			inWriter.write("\t</metadata>\n");
+		}
+	}
 
 	/**
 	 * Loop through the track outputting the relevant track points

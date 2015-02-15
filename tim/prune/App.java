@@ -702,7 +702,7 @@ public class App
 		{
 			String[] linkArray = inLinkInfo.getLinkArray();
 			if (linkArray != null) {
-				new AsyncMediaLoader(this, inLinkInfo.getZipFile(), linkArray, loadedTrack).begin();
+				new AsyncMediaLoader(this, inLinkInfo.getZipFile(), linkArray, loadedTrack, inSourceInfo.getFile()).begin();
 			}
 		}
 		// Look at TrackNameList, decide whether to filter or not

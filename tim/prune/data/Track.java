@@ -489,7 +489,7 @@ public class Track
 	{
 		// TODO: Move cut/move into separate function?
 		// Check that indices make sense
-		if (inSectionStart > 0 && inSectionEnd > inSectionStart && inMoveTo >= 0
+		if (inSectionStart >= 0 && inSectionEnd > inSectionStart && inMoveTo >= 0
 			&& (inMoveTo < inSectionStart || inMoveTo > (inSectionEnd+1)))
 		{
 			// do the cut and move

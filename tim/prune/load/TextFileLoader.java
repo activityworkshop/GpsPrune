@@ -350,11 +350,9 @@ public class TextFileLoader
 					}
 				}
 			});
-		JPanel tablePanel = new JPanel();
-		tablePanel.setLayout(new BorderLayout());
-		tablePanel.add(_fieldTable.getTableHeader(), BorderLayout.NORTH);
-		tablePanel.add(_fieldTable, BorderLayout.CENTER);
-		innerPanel2.add(tablePanel, BorderLayout.CENTER);
+		JScrollPane lowerTablePane = new JScrollPane(_fieldTable);
+		lowerTablePane.setPreferredSize(new Dimension(300, 100));
+		innerPanel2.add(lowerTablePane, BorderLayout.CENTER);
 
 		JPanel innerPanel3 = new JPanel();
 		innerPanel3.setLayout(new BoxLayout(innerPanel3, BoxLayout.Y_AXIS));

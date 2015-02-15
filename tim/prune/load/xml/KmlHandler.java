@@ -17,6 +17,7 @@ public class KmlHandler extends XmlHandler
 	private String _name = null, _desc = null;
 	private String _imgLink = null;
 	private StringBuffer _coordinates = null;
+	private ArrayList<String> _coordinateList = null;
 	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
 	private ArrayList<String> _linkList = new ArrayList<String>();
 	// variables for gx extensions
@@ -33,7 +34,13 @@ public class KmlHandler extends XmlHandler
 	{
 		String tagName = localName;
 		if (tagName == null || tagName.equals("")) {tagName = qName;}
-		if (tagName.equalsIgnoreCase("coordinates")) {_insideCoordinates = true; _coordinates = null;}
+		if (tagName.equalsIgnoreCase("Placemark")) {
+			_coordinateList = new ArrayList<String>();
+		}
+		else if (tagName.equalsIgnoreCase("coordinates")) {
+			_insideCoordinates = true;
+			_coordinates = null;
+		}
 		_value = null;
 		super.startElement(uri, localName, qName, attributes);
 	}
@@ -53,7 +60,10 @@ public class KmlHandler extends XmlHandler
 			processPlacemark();
 			_name = _desc = _imgLink = null;
 		}
-		else if (tagName.equalsIgnoreCase("coordinates")) _insideCoordinates = false;
+		else if (tagName.equalsIgnoreCase("coordinates")) {
+			_insideCoordinates = false;
+			if (_coordinates != null) _coordinateList.add(_coordinates.toString().trim());
+		}
 		else if (tagName.equalsIgnoreCase("name")) _name = _value;
 		else if (tagName.equalsIgnoreCase("description")) {
 			_desc = _value;
@@ -102,30 +112,35 @@ public class KmlHandler extends XmlHandler
 	 */
 	private void processPlacemark()
 	{
-		if (_coordinates == null) return;
-		String allCoords = _coordinates.toString().trim();
-		String[] coordArray = allCoords.split("[ \n]");
-		int numPoints = coordArray.length;
-		if (numPoints == 1)
+		if (_coordinateList == null || _coordinateList.isEmpty()) return;
+		final boolean isSingleSelection = (_coordinateList.size() == 1);
+		// Loop over coordinate sets in list (may have multiple <coordinates> tags within single placemark)
+		for (String coords : _coordinateList)
 		{
-			// Add single waypoint to list
-			_pointList.add(makeStringArray(allCoords, _name, _desc));
-			_linkList.add(_imgLink);
-		}
-		else if (numPoints > 1)
-		{
-			// Add each of the unnamed track points to list
-			boolean firstPoint = true;
-			for (int p=0; p<numPoints; p++)
+			String[] coordArray = coords.split("[ \n]");
+			int numPoints = coordArray.length;
+			if (numPoints == 1)
 			{
-				if (coordArray[p] != null && coordArray[p].trim().length()>3)
+				// Add single point to list
+				final String name = (isSingleSelection ? _name : null);
+				_pointList.add(makeStringArray(coords, name, _desc));
+				_linkList.add(_imgLink);
+			}
+			else if (numPoints > 1)
+			{
+				// Add each of the unnamed track points to list
+				boolean firstPoint = true;
+				for (int p=0; p<numPoints; p++)
 				{
-					String[] pointArray = makeStringArray(coordArray[p], null, null);
-					if (firstPoint) {pointArray[5] = "1";} // start of segment flag
-					firstPoint = false;
-					_pointList.add(pointArray);
+					if (coordArray[p] != null && coordArray[p].trim().length()>3)
+					{
+						String[] pointArray = makeStringArray(coordArray[p], null, null);
+						if (firstPoint) {pointArray[5] = "1";} // start of segment flag
+						firstPoint = false;
+						_pointList.add(pointArray);
+					}
+					_linkList.add(null);
 				}
-				_linkList.add(null);
 			}
 		}
 	}

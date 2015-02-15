@@ -78,7 +78,7 @@ public class ExifReader
 	/** "Original" Exif timestamp */
 	public static final int TAG_DATETIME_ORIGINAL = 0x9003;
 	/** "Creation" or "Digitized" timestamp */
-    public static final int TAG_DATETIME_DIGITIZED = 0x9004;
+	public static final int TAG_DATETIME_DIGITIZED = 0x9004;
 	/** Thumbnail offset */
 	private static final int TAG_THUMBNAIL_OFFSET = 0x0201;
 	/** Thumbnail length */

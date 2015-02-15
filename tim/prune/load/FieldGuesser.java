@@ -211,6 +211,7 @@ public abstract class FieldGuesser
 			String upperValue = inValue.toUpperCase();
 			return (upperValue.equals("ALTITUDE")
 				|| upperValue.equals("ALT")
+				|| upperValue.equals("HMSL") // height above mean sea level
 				|| upperValue.equals(I18nManager.getText("fieldname.altitude").toUpperCase()));
 		}
 		else

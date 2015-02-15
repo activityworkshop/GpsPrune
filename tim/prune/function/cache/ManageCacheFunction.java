@@ -203,11 +203,11 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		c.gridheight = 1; c.gridwidth = 2;
 		c.weightx = 0.0; c.weighty = 0.0;
 		c.anchor = GridBagConstraints.FIRST_LINE_START;
-		_tileSetLabel = new JLabel("tileset label");
+		_tileSetLabel = new JLabel("dummy text to be replaced");
 		mainPanel.add(_tileSetLabel, c);
 		c.gridx = 0; c.gridy = 1;
 		c.ipady = 20;
-		_zoomLabel = new JLabel("zoom label");
+		_zoomLabel = new JLabel("dummy text to be replaced");
 		mainPanel.add(_zoomLabel, c);
 
 		JRadioButton deleteOldRadio = new JRadioButton(I18nManager.getText("dialog.diskcache.deleteold"));
@@ -227,7 +227,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		c.gridwidth = 1;
 		c.gridx = 0; c.gridy = 3;
 		c.insets = new Insets(0, 40, 0, 0);
-		_ageLabel = new JLabel("Maximum age (days)");
+		_ageLabel = new JLabel(I18nManager.getText("dialog.diskcache.maximumage"));
 		mainPanel.add(_ageLabel, c);
 		_daysField = new WholeNumberField(2);
 		_daysField.setMinimumSize(new Dimension(20, 1));
@@ -281,6 +281,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		if (_model.getNumTileSets() <= 0)
 		{
 			_app.showErrorMessage(getNameKey(), "error.cache.empty");
+			_dialog.dispose();
 			return;
 		}
 
@@ -394,13 +395,18 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 				if (subdir.isDirectory()) {
 					numDeleted += deleteFilesFrom(subdir, inMaxDays);
 				}
-				else if (subdir.isFile() && subdir.exists() && _TILEFILTER.accept(subdir))
+				else if (subdir.isFile() && subdir.exists())
 				{
-					long fileAge = (now - subdir.lastModified()) / 1000 / 60 / 60 / 24;
-					if (inMaxDays < 0 || fileAge > inMaxDays)
+					boolean isTileFile = _TILEFILTER.accept(subdir);
+					boolean isBadFile = !isTileFile && subdir.getName().toLowerCase().endsWith("png");
+					if (isTileFile || isBadFile)
 					{
-						if (subdir.delete()) {
-							numDeleted++;
+						long fileAge = (now - subdir.lastModified()) / 1000 / 60 / 60 / 24;
+						if (inMaxDays < 0 || fileAge > inMaxDays || isBadFile)
+						{
+							if (subdir.delete()) {
+								numDeleted++;
+							}
 						}
 					}
 				}

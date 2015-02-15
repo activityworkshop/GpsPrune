@@ -106,6 +106,7 @@ public class DiskCacheConfig extends GenericFunction
 			public void actionPerformed(ActionEvent e)
 			{
 				finish();
+				_dialog.dispose();
 			}
 		});
 		buttonPanelr.add(_okButton);
@@ -234,10 +235,10 @@ public class DiskCacheConfig extends GenericFunction
 					I18nManager.getText(getNameKey()), JOptionPane.WARNING_MESSAGE);
 				return;
 			}
+			// TODO: Check path is writeable too, and give warning if not
 		}
 		Config.setConfigString(Config.KEY_DISK_CACHE, cachePath);
 		// inform subscribers so that tiles are wiped from memory and refetched
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
-		_dialog.dispose();
 	}
 }

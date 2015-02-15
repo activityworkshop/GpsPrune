@@ -332,7 +332,7 @@ public class SvgExporter extends Export3dFunction
 				"<stop offset=\"100%\" stop-color=\"#008000\"/>" +
 				"</radialGradient>" +
 				"</defs>";
-		    inWriter.write(defs);
+			inWriter.write(defs);
 			inWriter.write(inLineSeparator);
 		}
 		inWriter.write("<g inkscape:label=\"Layer 1\" inkscape:groupmode=\"layer\" id=\"layer1\">");

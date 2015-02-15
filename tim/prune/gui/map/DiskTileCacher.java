@@ -72,6 +72,7 @@ public class DiskTileCacher implements Runnable
 	 */
 	public static boolean saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver)
 	{
+		// TODO: Check that these are getting blocked properly
 		if (inBasePath == null || inTilePath == null) {return false;}
 		// save file if possible
 		File basePath = new File(inBasePath);

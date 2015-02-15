@@ -14,8 +14,6 @@ public class MffMapSource extends MapSource
 	private String[] _baseUrls = null;
 	/** Site names */
 	private String[] _siteNames = null;
-	/** File extensions */
-	private String[] _extensions = null;
 	/** Maximum zoom level */
 	private int _maxZoom = 0;
 
@@ -69,12 +67,7 @@ public class MffMapSource extends MapSource
 	 */
 	public String makeURL(int inLayerNum, int inZoom, int inX, int inY)
 	{
-		return _baseUrls[inLayerNum] + "z" + inZoom + "/row" + inY + "/" + inZoom + "_" + inX + "-" + inY + getFileExtension(inLayerNum);
-	}
-
-	/** Get right file extension for this layer */
-	public final String getFileExtension(int inLayerNum) {
-		return _extensions[inLayerNum];
+		return _baseUrls[inLayerNum] + "z" + inZoom + "/row" + inY + "/" + inZoom + "_" + inX + "-" + inY + "." + getFileExtension(inLayerNum);
 	}
 
 	/**

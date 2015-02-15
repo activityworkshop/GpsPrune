@@ -24,6 +24,10 @@ public class MapTileManager implements ImageObserver
 	private int _numLayers = -1;
 	/** Current zoom level */
 	private int _zoom = 0;
+	/** Currently blocked zoom level, to prevent looping for non-existent images */
+	private int _blockedZoom = 0;
+	/** Number of tiles in each direction for this zoom level */
+	private int _numTileIndices = 1;
 
 
 	/**
@@ -33,6 +37,8 @@ public class MapTileManager implements ImageObserver
 	public MapTileManager(MapCanvas inParent)
 	{
 		_parent = inParent;
+		// Adjust the index of the selected map source
+		adjustSelectedMap();
 		resetConfig();
 	}
 
@@ -45,6 +51,8 @@ public class MapTileManager implements ImageObserver
 	public void centreMap(int inZoom, int inTileX, int inTileY)
 	{
 		_zoom = inZoom;
+		// Calculate number of tiles = 2^^zoom
+		_numTileIndices = 1 << _zoom;
 		// Pass params onto all memory cachers
 		if (_tempCaches != null) {
 			for (int i=0; i<_tempCaches.length; i++) {
@@ -69,8 +77,9 @@ public class MapTileManager implements ImageObserver
 	public void clearMemoryCaches()
 	{
 		int numLayers = _mapSource.getNumLayers();
-		if (_tempCaches == null || _tempCaches.length != numLayers) {
-			// Ccahers don't match, so need to create the right number of them
+		if (_tempCaches == null || _tempCaches.length != numLayers)
+		{
+			// Cachers don't match, so need to create the right number of them
 			_tempCaches = new MemTileCacher[numLayers];
 			for (int i=0; i<numLayers; i++) {
 				_tempCaches[i] = new MemTileCacher();
@@ -97,6 +106,26 @@ public class MapTileManager implements ImageObserver
 	}
 
 	/**
+	 * Adjust the index of the selected map
+	 * (only required if config was loaded from a previous version of GpsPrune)
+	 */
+	private void adjustSelectedMap()
+	{
+		int sourceNum = Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX);
+		int prevNumFixed = Config.getConfigInt(Config.KEY_NUM_FIXED_MAPS);
+		// Number of fixed maps not specified in version <=13, default to 6
+		if (prevNumFixed == 0) prevNumFixed = 6;
+		int currNumFixed = MapSourceLibrary.getNumFixedSources();
+		// Only need to do something if the number has changed
+		if (currNumFixed != prevNumFixed && (sourceNum >= prevNumFixed || sourceNum >= currNumFixed))
+		{
+			sourceNum += (currNumFixed - prevNumFixed);
+			Config.setConfigInt(Config.KEY_MAPSOURCE_INDEX, sourceNum);
+		}
+		Config.setConfigInt(Config.KEY_NUM_FIXED_MAPS, currNumFixed);
+	}
+
+	/**
 	 * @return the number of layers in the map
 	 */
 	public int getNumLayers()
@@ -112,6 +141,9 @@ public class MapTileManager implements ImageObserver
 	 */
 	public Image getTile(int inLayer, int inX, int inY)
 	{
+		// Check tile boundaries
+		if (inX < 0 || inX >= _numTileIndices || inY < 0 || inY >= _numTileIndices) return null;
+
 		// Check first in memory cache for tile
 		MemTileCacher tempCache = _tempCaches[inLayer]; // Should probably guard against nulls and array indexes here
 		Image tile = tempCache.getTile(inX, inY);
@@ -135,8 +167,9 @@ public class MapTileManager implements ImageObserver
 			}
 		}
 		// Tile wasn't in memory or on disk, so if online let's get it
-		if (onlineMode)
+		if (onlineMode && _blockedZoom != _zoom)
 		{
+			_blockedZoom = 0; // reset to try again
 			try
 			{
 				URL tileUrl = new URL(_mapSource.makeURL(inLayer, _zoom, inX, inY));
@@ -173,6 +206,9 @@ public class MapTileManager implements ImageObserver
 	{
 		boolean loaded = (infoflags & ImageObserver.ALLBITS) > 0;
 		boolean error = (infoflags & ImageObserver.ERROR) > 0;
+		if (error) {
+			_blockedZoom = _zoom;
+		}
 		if (loaded || error) {
 			_parent.tilesUpdated(loaded);
 		}

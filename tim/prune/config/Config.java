@@ -16,7 +16,7 @@ public abstract class Config
 	private static File _configFile = null;
 
 	/** Hashtable containing all config values */
-	private static Properties _configValues = new Properties();
+	private static Properties _configValues = null;
 	/** Colour scheme object is also part of config */
 	private static ColourScheme _colourScheme = new ColourScheme();
 	/** Recently-used file list */
@@ -44,6 +44,8 @@ public abstract class Config
 	public static final String KEY_METRIC_UNITS = "prune.metricunits";
 	/** Key for index of map source */
 	public static final String KEY_MAPSOURCE_INDEX = "prune.mapsource";
+	/** Key for number of fixed map sources */
+	public static final String KEY_NUM_FIXED_MAPS = "prune.numfixedmapsources";
 	/** Key for String containing custom map sources */
 	public static final String KEY_MAPSOURCE_LIST = "prune.mapsourcelist";
 	/** Key for show map flag */
@@ -73,6 +75,12 @@ public abstract class Config
 	/** Key for recently used files */
 	public static final String KEY_RECENT_FILES = "prune.recentfiles";
 
+
+	/** Initialise the default properties */
+	static
+	{
+		_configValues = getDefaultProperties();
+	}
 
 	/**
 	 * Load the default configuration file

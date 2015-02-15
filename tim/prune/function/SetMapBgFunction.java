@@ -2,7 +2,6 @@ package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,6 +9,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -27,10 +27,12 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
+import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 
 /**
  * Function to set the tile server for the map backgrounds
+ * Also allows call to add/edit/delete functions
  */
 public class SetMapBgFunction extends GenericFunction
 {
@@ -38,10 +40,12 @@ public class SetMapBgFunction extends GenericFunction
 	private JList _list = null;
 	private MapSourceListModel _listModel = null;
 	private String _initialSource = null;
-	private JButton _okButton = null;
-	private JButton _deleteButton = null;
+	private JButton _okButton = null, _cancelButton = null;
+	private JButton _deleteButton = null, _editButton = null;
 	// Add dialog
 	private AddMapSourceDialog _addDialog = null;
+	// Flags for what has been edited
+	private boolean _sourcesEdited = false;
 
 
 	/**
@@ -108,7 +112,6 @@ public class SetMapBgFunction extends GenericFunction
 				}
 			}
 		});
-		_list.setPreferredSize(new Dimension(200, 200));
 		// button panel on right
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
@@ -119,10 +122,21 @@ public class SetMapBgFunction extends GenericFunction
 			}
 		});
 		rightPanel.add(addButton);
+		rightPanel.add(Box.createVerticalStrut(5));
+		// edit
+		_editButton = new JButton(I18nManager.getText("button.edit"));
+		_editButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				editMapSource();
+			}
+		});
+		rightPanel.add(_editButton);
+		rightPanel.add(Box.createVerticalStrut(5));
+		// delete
 		_deleteButton = new JButton(I18nManager.getText("button.delete"));
 		_deleteButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				deleteMapSource(_list.getSelectedIndex());
+				deleteMapSource();
 			}
 		});
 		rightPanel.add(_deleteButton);
@@ -140,14 +154,14 @@ public class SetMapBgFunction extends GenericFunction
 		};
 		_okButton.addActionListener(okListener);
 		buttonPanel.add(_okButton);
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
+		_cancelButton = new JButton(I18nManager.getText("button.cancel"));
+		_cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_dialog.dispose();
 			}
 		});
-		buttonPanel.add(cancelButton);
+		buttonPanel.add(_cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
 	}
@@ -166,6 +180,9 @@ public class SetMapBgFunction extends GenericFunction
 		}
 		_initialSource = _listModel.getSource(currSource).getSiteStrings();
 		_list.setSelectedIndex(currSource);
+		// Scroll down to see selected index
+		_list.ensureIndexIsVisible(currSource);
+		_sourcesEdited = false;
 	}
 
 	/**
@@ -183,9 +200,12 @@ public class SetMapBgFunction extends GenericFunction
 	{
 		int serverNum = getSelectedServer();
 		_okButton.setEnabled(serverNum >= 0 && serverNum < _listModel.getSize()
-			&& !_listModel.getSource(serverNum).getSiteStrings().equals(_initialSource));
-		_deleteButton.setEnabled(serverNum >= MapSourceLibrary.getNumFixedSources()
-			&& serverNum < _listModel.getSize());
+			&& (_sourcesEdited || !_listModel.getSource(serverNum).getSiteStrings().equals(_initialSource)));
+		boolean hasCustomSource = serverNum >= MapSourceLibrary.getNumFixedSources()
+			&& serverNum < _listModel.getSize();
+		_editButton.setEnabled(hasCustomSource);
+		_deleteButton.setEnabled(hasCustomSource);
+		_cancelButton.setEnabled(!_sourcesEdited);
 	}
 
 	/**
@@ -193,30 +213,49 @@ public class SetMapBgFunction extends GenericFunction
 	 */
 	private void addNewSource()
 	{
+		addSource(null);
+	}
+
+	/**
+	 * Start the dialog to either add or edit a map source
+	 * @param inSource a current source to edit, or null to add a new one
+	 */
+	private void addSource(MapSource inSource)
+	{
 		if (_addDialog == null) {
 			_addDialog = new AddMapSourceDialog(_dialog, this);
 		}
-		_addDialog.showDialog();
+		_addDialog.showDialog(inSource);
 	}
 
 	/**
 	 * Delete the selected map source so it is no longer available
-	 * @param inIndex index within list
 	 */
-	private void deleteMapSource(int inIndex)
+	private void deleteMapSource()
 	{
-		MapSourceLibrary.deleteSource(inIndex);
+		int serverNum = getSelectedServer();
+		MapSourceLibrary.deleteSource(serverNum);
 		updateList();
 		enableButtons();
 	}
 
 	/**
-	 * use the library to update the current list, after add or delete
+	 * Open the dialog to edit the selected map source
+	 */
+	private void editMapSource()
+	{
+		addSource(_listModel.getSource(getSelectedServer()));
+	}
+
+	/**
+	 * use the library to update the current list, after add or edit or delete
 	 */
 	public void updateList()
 	{
 		_listModel.fireChanged();
+		_sourcesEdited = true;
 		Config.setConfigString(Config.KEY_MAPSOURCE_LIST, MapSourceLibrary.getConfigString());
+		enableButtons();
 	}
 
 	/**

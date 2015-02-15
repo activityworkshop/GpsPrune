@@ -83,7 +83,7 @@ public class ZipFileLoader
 			}
 		}
 		catch (Exception e) {
-			System.err.println("ZipFile Error: " + e.getClass().getName() + " -message= " + e.getMessage());
+			_app.showErrorMessageNoLookup("error.load.dialogtitle", e.getClass().getName() + "\n - " + e.getMessage());
 		}
 	}
 

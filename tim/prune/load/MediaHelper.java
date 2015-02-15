@@ -24,9 +24,10 @@ public abstract class MediaHelper
 	 * Construct a MediaObject for the given path
 	 * @param inZipFile path to archive file (if any)
 	 * @param inPath path to media file
+	 * @param inSourceFile file from which data was loaded
 	 * @return either Photo or AudioClip object as appropriate, or null
 	 */
-	public static MediaObject createMediaObject(File inZipFile, String inPath)
+	public static MediaObject createMediaObject(File inZipFile, String inPath, File inSourceFile)
 	{
 		if (inPath == null || inPath.length() < 5) return null;
 		InputStream is = null;
@@ -85,29 +86,29 @@ public abstract class MediaHelper
 			}
 			return null;
 		}
-		else
-			// If we haven't got a result by now, try to just load plain file
-			return createMediaObject(inPath);
+
+		// If we haven't got a result by now, try to load plain file
+		File file = (inSourceFile == null ? new File(inPath) : new File(inSourceFile.getParent(), inPath));
+		return createMediaObject(file);
 	}
 
 	/**
-	 * Construct a MediaObject for the given path
-	 * @param inPath path to file
+	 * Construct a MediaObject for the given file
+	 * @param inFile file to load
 	 * @return either Photo or AudioClip object as appropriate, or null
 	 */
-	private static MediaObject createMediaObject(String inPath)
+	private static MediaObject createMediaObject(File inFile)
 	{
-		if (inPath == null) {return null;}
-		File file = new File(inPath);
-		if (!file.exists() || !file.canRead() || !file.isFile()) {return null;}
+		if (inFile == null) {return null;}
+		if (!inFile.exists() || !inFile.canRead() || !inFile.isFile()) {return null;}
 		initFilters();
 		// Check if filename looks like a jpeg
-		if (_jpegFilter.acceptFilename(file.getName())) {
-			return JpegLoader.createPhoto(file);
+		if (_jpegFilter.acceptFilename(inFile.getName())) {
+			return JpegLoader.createPhoto(inFile);
 		}
 		// Check if filename looks like an audio clip
-		if (_audioFilter.acceptFilename(file.getName())) {
-			return new AudioClip(file);
+		if (_audioFilter.acceptFilename(inFile.getName())) {
+			return new AudioClip(inFile);
 		}
 		// Neither photo nor audio
 		return null;

@@ -32,6 +32,11 @@ public abstract class Coordinate
 	static {
 		if (EIGHT_DP instanceof DecimalFormat) ((DecimalFormat) EIGHT_DP).applyPattern("0.00000000");
 	}
+	/** Number formatter for fixed decimals with forced decimal point */
+	private static final NumberFormat FIVE_DP = NumberFormat.getNumberInstance(Locale.UK);
+	static {
+		if (FIVE_DP instanceof DecimalFormat) ((DecimalFormat) FIVE_DP).applyPattern("0.00000");
+	}
 
 	// Instance variables
 	private boolean _valid = false;
@@ -170,7 +175,8 @@ public abstract class Coordinate
 			if (_cardinal == WEST || _cardinal == SOUTH || inString.charAt(0) == '-')
 				_asDouble = -_asDouble;
 			// validate fields
-			_valid = _valid && (_degrees <= getMaxDegrees() && _minutes < 60 && _seconds < 60 && _fracs < _fracDenom);
+			_valid = _valid && (_degrees <= getMaxDegrees() && _minutes < 60 && _seconds < 60 && _fracs < _fracDenom)
+				&& Math.abs(_asDouble) <= getMaxDegrees();
 		}
 		else _valid = false;
 	}
@@ -298,7 +304,7 @@ public abstract class Coordinate
 				case FORMAT_DEG_MIN:
 				{
 					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "\u00B0"
-						+ (_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom) + "'";
+						+ FIVE_DP.format((Math.abs(_asDouble) - _degrees) * 60.0) + "'";
 					break;
 				}
 				case FORMAT_DEG_WHOLE_MIN:
@@ -314,8 +320,11 @@ public abstract class Coordinate
 				case FORMAT_DEG:
 				case FORMAT_DEG_WITHOUT_CARDINAL:
 				{
-					answer = (_asDouble<0.0?"-":"")
-						+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 3600.0 / _fracDenom);
+					if (_originalFormat != FORMAT_DEG_WITHOUT_CARDINAL)
+					{
+						answer = (_asDouble<0.0?"-":"")
+							+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 3600.0 / _fracDenom);
+					}
 					break;
 				}
 				case FORMAT_DECIMAL_FORCE_POINT:

@@ -41,15 +41,15 @@ public class SetLanguage extends GenericFunction
 	private int _startIndex = 0;
 
 	/** Names of languages for display in dropdown (not translated) */
-	private static final String[] LANGUAGE_NAMES = {"\u010de\u0161tina", "deutsch", "english",
+	private static final String[] LANGUAGE_NAMES = {"\u010de\u0161tina", "deutsch", "english", "american english",
 		"espa\u00F1ol", "fran\u00E7ais", "italiano", "magyar", "nederlands", "polski",
-		"portugu\u00EAs", "\u4e2d\u6587 (chinese)", "\u65E5\u672C\u8A9E (japanese)",
+		"portugu\u00EAs", "\u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian)", "\u4e2d\u6587 (chinese)", "\u65E5\u672C\u8A9E (japanese)",
 		"\uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean)", "schwiizerd\u00FC\u00FCtsch", "t\u00FCrk\u00E7e",
 		"rom\u00E2n\u0103", "afrikaans", "bahasa indonesia"
 	};
 	/** Associated language codes (must be in same order as names!) */
-	private static final String[] LANGUAGE_CODES = {"cz", "de", "en", "es", "fr", "it", "hu",
-		"nl", "pl", "pt", "zh", "ja", "ko", "de_ch", "tr", "ro", "af", "in"
+	private static final String[] LANGUAGE_CODES = {"cz", "de", "en", "en_us", "es", "fr", "it", "hu",
+		"nl", "pl", "pt", "ru", "zh", "ja", "ko", "de_ch", "tr", "ro", "af", "in"
 	};
 
 

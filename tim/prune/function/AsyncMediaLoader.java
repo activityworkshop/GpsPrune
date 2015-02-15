@@ -29,6 +29,8 @@ implements Runnable, Cancellable
 	private String[] _linkArray = null;
 	/** Track to use for connecting */
 	private Track _track = null;
+	/** Source file */
+	private File _sourceFile = null;
 	/** Cancelled flag */
 	private boolean _cancelled = false;
 
@@ -38,13 +40,15 @@ implements Runnable, Cancellable
 	 * @param inApp App object
 	 * @param inLinkArray array of links
 	 * @param inTrack Track object for connecting points
+	 * @param inSourceFile file from which data was loaded, if any
 	 */
-	public AsyncMediaLoader(App inApp, File inZipFile, String[] inLinkArray, Track inTrack)
+	public AsyncMediaLoader(App inApp, File inZipFile, String[] inLinkArray, Track inTrack, File inSourceFile)
 	{
 		super(inApp);
 		_zipFile = inZipFile;
 		_linkArray = inLinkArray;
 		_track = inTrack;
+		_sourceFile = inSourceFile;
 	}
 
 	/**
@@ -84,6 +88,7 @@ implements Runnable, Cancellable
 		if (numLinks <= 0) return;
 		// Make progress dialog
 		MediaLoadProgressDialog progressDialog = new MediaLoadProgressDialog(_app.getFrame(), this);
+
 		// Make array to store results
 		MediaObject[] media = new MediaObject[numLinks];
 		int currLink = 0;
@@ -91,7 +96,7 @@ implements Runnable, Cancellable
 		{
 			if (_linkArray[i] != null)
 			{
-				MediaObject mf = MediaHelper.createMediaObject(_zipFile, _linkArray[i]);
+				MediaObject mf = MediaHelper.createMediaObject(_zipFile, _linkArray[i], _sourceFile);
 				if (mf != null)
 				{
 					// attach media to point and set status

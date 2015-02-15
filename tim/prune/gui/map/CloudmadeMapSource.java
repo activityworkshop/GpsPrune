@@ -50,4 +50,12 @@ public class CloudmadeMapSource extends OsmMapSource
 		}
 		return source;
 	}
+
+	/**
+	 * @return style as string, only required to populate edit dialog
+	 */
+	public String getStyle()
+	{
+		return _style;
+	}
 }

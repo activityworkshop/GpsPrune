@@ -35,9 +35,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "13";
+	public static final String VERSION_NUMBER = "13.4";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "240";
+	public static final String BUILD_NUMBER = "244c";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -90,8 +90,10 @@ public class GpsPrune
 				if (f.exists() && f.canRead()) {
 					dataFiles.add(f);
 				}
-				else {
-					System.out.println("Unknown parameter '" + arg + "'.");
+				else
+				{
+					// Make a useful String from the unknown parameter - could it be a mistyped filename?
+					System.out.println(makeUnknownParameterString(arg));
 					showUsage = true;
 				}
 			}
@@ -134,13 +136,15 @@ public class GpsPrune
 			// If langfilename is blank on command line parameters then don't use setting from config
 			langFilename = Config.getConfigString(Config.KEY_LANGUAGE_FILE);
 		}
-		if (langFilename != null && !langFilename.equals("")) {
+		if (langFilename != null)
+		{
 			try {
 				I18nManager.addLanguageFile(langFilename);
 				Config.setConfigString(Config.KEY_LANGUAGE_FILE, langFilename);
 			}
 			catch (FileNotFoundException fnfe) {
 				System.err.println("Failed to load language file: " + langFilename);
+				Config.setConfigString(Config.KEY_LANGUAGE_FILE, "");
 			}
 		}
 		// Set up the window and go
@@ -244,5 +248,27 @@ public class GpsPrune
 		APP.setSidebarController(fsc);
 		// Finally, give the files to load to the App
 		APP.loadDataFiles(inDataFiles);
+	}
+
+	/**
+	 * Try to guess whether it's a mistyped parameter or a mistyped filename
+	 * @param inParam command line argument
+	 * @return error message
+	 */
+	private static String makeUnknownParameterString(String inParam)
+	{
+		File file = new File(inParam);
+		if (file.exists()) {
+			return (file.canRead() ? "Something wrong with file" : "Cannot read file") + " '" + inParam + "'";
+		}
+		do
+		{
+			String name = file.getName();
+			file = file.getParentFile();
+			if (file != null && file.exists() && file.canRead()) return "Tried to load file '" + inParam + "' but cannot find '" + name + "'";
+		}
+		while (file != null);
+
+		return "Unknown parameter '" + inParam + "'";
 	}
 }

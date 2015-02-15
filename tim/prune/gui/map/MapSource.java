@@ -11,6 +11,10 @@ import java.net.URL;
  */
 public abstract class MapSource
 {
+	/** File extensions */
+	protected String[] _extensions = null;
+
+
 	/**
 	 * @return the number of layers used in this source
 	 */
@@ -34,7 +38,9 @@ public abstract class MapSource
 	/**
 	 * @return the file extension for the specified layer
 	 */
-	public abstract String getFileExtension(int inLayerNum);
+	public final String getFileExtension(int inLayerNum) {
+		return _extensions[inLayerNum];
+	}
 
 	/**
 	 * Make the URL to get the specified tile
@@ -61,7 +67,7 @@ public abstract class MapSource
 	 */
 	public String makeFilePath(int inLayerNum, int inZoom, int inX, int inY)
 	{
-		return getSiteName(inLayerNum) + inZoom + "/" + inX + "/" + inY + getFileExtension(inLayerNum);
+		return getSiteName(inLayerNum) + inZoom + "/" + inX + "/" + inY + "." + getFileExtension(inLayerNum);
 	}
 
 	/**
@@ -121,15 +127,19 @@ public abstract class MapSource
 	public abstract String getConfigString();
 
 	/**
-	 * @return semicolon-separated list of base urls in order
+	 * @return semicolon-separated list of base urls and extensions in order
 	 */
 	public String getSiteStrings()
 	{
 		StringBuilder sb = new StringBuilder();
-		for (int i=0; i<getNumLayers(); i++) {
+		for (int i=0; i<getNumLayers(); i++)
+		{
 			String url = getBaseUrl(i);
-			if (url != null) {
+			if (url != null)
+			{
 				sb.append(url);
+				sb.append(';');
+				sb.append(getFileExtension(i));
 				sb.append(';');
 			}
 		}

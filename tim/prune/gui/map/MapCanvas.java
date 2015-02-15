@@ -165,9 +165,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				UpdateMessageBroker.informSubscribers(); // to let menu know
 			}
 		};
-		_topPanel = new JPanel();
+		_topPanel = new OverlayPanel();
 		_topPanel.setLayout(new FlowLayout());
-		_topPanel.setOpaque(false);
 		// Make slider for transparency
 		_transparencySlider = new JSlider(-6, 6, 0);
 		_transparencySlider.setPreferredSize(new Dimension(100, 20));
@@ -227,11 +226,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_topPanel.add(_connectCheckBox);
 
 		// Add zoom in, zoom out buttons
-		_sidePanel = new JPanel();
+		_sidePanel = new OverlayPanel();
 		_sidePanel.setLayout(new BoxLayout(_sidePanel, BoxLayout.Y_AXIS));
-		_sidePanel.setOpaque(false);
 		JButton zoomInButton = new JButton(IconManager.getImageIcon(IconManager.ZOOM_IN_BUTTON));
-		zoomInButton.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+		zoomInButton.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		zoomInButton.setContentAreaFilled(false);
 		zoomInButton.setToolTipText(I18nManager.getText("menu.map.zoomin"));
 		zoomInButton.addActionListener(new ActionListener() {
@@ -243,7 +241,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		zoomInButton.setFocusable(false); // stop button from stealing keyboard focus
 		_sidePanel.add(zoomInButton);
 		JButton zoomOutButton = new JButton(IconManager.getImageIcon(IconManager.ZOOM_OUT_BUTTON));
-		zoomOutButton.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+		zoomOutButton.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		zoomOutButton.setContentAreaFilled(false);
 		zoomOutButton.setToolTipText(I18nManager.getText("menu.map.zoomout"));
 		zoomOutButton.addActionListener(new ActionListener() {

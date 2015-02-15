@@ -115,6 +115,7 @@ public abstract class Correlator extends GenericFunction
 		_cards.showCard(card);
 		showCard(0); // does set up and next/prev enabling
 		_okButton.setEnabled(false);
+		_tipLabel.setVisible(!isCardEnabled(1));
 		_dialog.setVisible(true);
 	}
 
