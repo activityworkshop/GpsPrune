@@ -1,15 +1,14 @@
 package tim.prune.correlate;
 
 import tim.prune.data.DataPoint;
-import tim.prune.data.Photo;
+import tim.prune.data.MediaFile;
 
 /**
- * Class to hold a pair of points
- * used to hold the result of correlation of a photo
+ * Class to hold a pair of points used to hold the result of correlation
  */
-public class PointPair
+public class PointMediaPair
 {
-	private Photo _photo = null;
+	private MediaFile _media = null;
 	private DataPoint _pointBefore = null;
 	private DataPoint _pointAfter = null;
 	private long _secondsBefore = 1L;
@@ -18,13 +17,11 @@ public class PointPair
 
 	/**
 	 * Constructor
-	 * @param inPhoto Photo object
+	 * @param inMedia media object
 	 */
-	public PointPair(Photo inPhoto)
-	{
-		_photo = inPhoto;
+	public PointMediaPair(MediaFile inMedia) {
+		_media = inMedia;
 	}
-
 
 	/**
 	 * Add a point to the pair
@@ -36,10 +33,10 @@ public class PointPair
 		// Check if point is closest point before
 		if (inSeconds <= 0)
 		{
-			// point stamp is before photo stamp
+			// point stamp is before media stamp
 			if (inSeconds > _secondsBefore || _secondsBefore > 0L)
 			{
-				// point stamp is nearer to photo
+				// point stamp is nearer to media
 				_pointBefore = inPoint;
 				_secondsBefore = inSeconds;
 			}
@@ -47,10 +44,10 @@ public class PointPair
 		// Check if point is closest point after
 		if (inSeconds >= 0)
 		{
-			// point stamp is after photo stamp
+			// point stamp is after media stamp
 			if (inSeconds < _secondsAfter || _secondsAfter < 0L)
 			{
-				// point stamp is nearer to photo
+				// point stamp is nearer to media
 				_pointAfter = inPoint;
 				_secondsAfter = inSeconds;
 			}
@@ -59,50 +56,44 @@ public class PointPair
 
 
 	/**
-	 * @return Photo object
+	 * @return Media object
 	 */
-	public Photo getPhoto()
-	{
-		return _photo;
+	public MediaFile getMedia() {
+		return _media;
 	}
 
 	/**
-	 * @return the closest point before the photo
+	 * @return the closest point before the media
 	 */
-	public DataPoint getPointBefore()
-	{
+	public DataPoint getPointBefore() {
 		return _pointBefore;
 	}
 
 	/**
-	 * @return number of seconds between photo and subsequent point
+	 * @return number of seconds between media and subsequent point
 	 */
-	public long getSecondsBefore()
-	{
+	public long getSecondsBefore() {
 		return _secondsBefore;
 	}
 
 	/**
-	 * @return the closest point after the photo
+	 * @return the closest point after the media
 	 */
-	public DataPoint getPointAfter()
-	{
+	public DataPoint getPointAfter() {
 		return _pointAfter;
 	}
 
 	/**
-	 * @return number of seconds between previous point and photo
+	 * @return number of seconds between previous point and media
 	 */
-	public long getSecondsAfter()
-	{
+	public long getSecondsAfter() {
 		return _secondsAfter;
 	}
 
 	/**
 	 * @return true if both points found
 	 */
-	public boolean isValid()
-	{
+	public boolean isValid() {
 		return getPointBefore() != null && getPointAfter() != null;
 	}
 
@@ -118,13 +109,12 @@ public class PointPair
 	/**
 	 * @return the number of seconds to the nearest point
 	 */
-	public long getMinSeconds()
-	{
+	public long getMinSeconds() {
 		return Math.min(_secondsAfter, -_secondsBefore);
 	}
 
 	/**
-	 * @return angle from photo to nearest point in radians
+	 * @return angle from media to nearest point in radians
 	 */
 	public double getMinRadians()
 	{

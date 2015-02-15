@@ -97,9 +97,9 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext2")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
-			.append("deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, nederlands,<br>" +
-				" polski, portugu\u00EAs, \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese), schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, " +
-				"<br> \u010de\u0161tina, rom\u00E2n\u0103, afrikaans, bahasa indonesia, farsi").append("</p>");
+			.append("\u010de\u0161tina, deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, magyar,<br>" +
+				" nederlands, polski, portugu\u00EAs, \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean),<br>" +
+				" schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, rom\u00E2n\u0103, afrikaans, bahasa indonesia, farsi</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -195,7 +195,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph, nazotoko,"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d"),
+			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d, Gy\u00F6rgy, HooAU"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
@@ -297,20 +297,27 @@ public class AboutScreen extends GenericFunction
 		// First, try locally-held readme.txt if available (as it normally should be)
 		// Readme file can either be in file system or packed in the same jar as code
 		String errorMessage = null;
+		String readme = null;
+		InputStream in = null;
 		try
 		{
 			// For some reason using ../readme.txt doesn't work, so need absolute path
-			InputStream in = AboutScreen.class.getResourceAsStream("/tim/prune/readme.txt");
+			in = AboutScreen.class.getResourceAsStream("/tim/prune/readme.txt");
 			if (in != null) {
 				byte[] buffer = new byte[in.available()];
 				in.read(buffer);
 				in.close();
-				return new String(buffer);
+				readme = new String(buffer);
 			}
 		}
 		catch (IOException e) {
 			errorMessage =  e.getMessage();
 		}
+		finally {
+			try {in.close();} catch (Exception e) {}
+		}
+		if (readme != null) {return readme;}
+
 		// Locally-held file failed, so try to find gz file installed on system (eg Debian)
 		try
 		{
@@ -318,7 +325,7 @@ public class AboutScreen extends GenericFunction
 			if (gzFile.exists())
 			{
 				// Copy decompressed bytes from gz file into out
-				InputStream in = new GZIPInputStream(new FileInputStream(gzFile));
+				in = new GZIPInputStream(new FileInputStream(gzFile));
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
 				byte[] buffer = new byte[8 * 1024];
 				int count = 0;
@@ -328,12 +335,16 @@ public class AboutScreen extends GenericFunction
 				} while (count != -1);
 				out.close();
 				in.close();
-				return out.toString();
+				readme = out.toString();
 			}
 		}
 		catch (IOException e) {
 			System.err.println("Exception trying to get readme.gz : " + e.getMessage());
 		}
+		finally {
+			try {in.close();} catch (Exception e) {}
+		}
+		if (readme != null) {return readme;}
 		// Only show first error message if couldn't get readme from gz either
 		if (errorMessage != null) {
 			System.err.println("Exception trying to get readme: " + errorMessage);

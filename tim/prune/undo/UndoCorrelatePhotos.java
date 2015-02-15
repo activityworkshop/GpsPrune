@@ -44,7 +44,7 @@ public class UndoCorrelatePhotos implements UndoOperation
 	 */
 	public String getDescription()
 	{
-		return I18nManager.getText("undo.correlate") + " (" + _numPhotosCorrelated + ")";
+		return I18nManager.getText("undo.correlatephotos") + " (" + _numPhotosCorrelated + ")";
 	}
 
 
@@ -60,13 +60,17 @@ public class UndoCorrelatePhotos implements UndoOperation
 		for (int i=0; i<_photoPoints.length; i++)
 		{
 			Photo photo = inTrackInfo.getPhotoList().getPhoto(i);
-			// Only need to look at connected photos, if they're still tagged then leave them
+			// Only need to look at connected photos, since correlation wouldn't disconnect
 			if (photo.getCurrentStatus() == Photo.Status.CONNECTED)
 			{
-				DataPoint point = _photoPoints[i];
-				photo.setDataPoint(point);
-				if (point != null) {
-					point.setPhoto(photo);
+				DataPoint prevPoint = _photoPoints[i];
+				DataPoint currPoint = photo.getDataPoint();
+				photo.setDataPoint(prevPoint);
+				if (currPoint != null) {
+					currPoint.setPhoto(null); // disconnect
+				}
+				if (prevPoint != null) {
+					prevPoint.setPhoto(photo); // reconnect to prev point
 				}
 			}
 		}

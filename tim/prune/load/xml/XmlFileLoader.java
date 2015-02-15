@@ -2,6 +2,7 @@ package tim.prune.load.xml;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -84,19 +85,17 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 				SourceInfo sourceInfo = new SourceInfo(_file,
 					(_handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
 				_app.informDataLoaded(_handler.getFieldArray(), _handler.getDataArray(),
-					Altitude.Format.METRES, sourceInfo, _handler.getTrackNameList());
+					Altitude.Format.METRES, sourceInfo, _handler.getTrackNameList(), _handler.getLinkArray());
 			}
 		}
 		catch (Exception e)
 		{
-			// clean up file stream
-			try {
-				inStream.close();
-			}
-			catch (Exception e2) {}
 			// Show error dialog
 			_app.showErrorMessageNoLookup("error.load.dialogtitle",
 				I18nManager.getText("error.load.othererror") + " " + e.getMessage());
+		}
+		finally {
+			try {inStream.close();} catch (IOException e2) {}
 		}
 	}
 

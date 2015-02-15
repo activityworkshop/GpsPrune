@@ -120,7 +120,8 @@ public class DiskTileCacher implements Runnable
 			}
 			catch (Exception e) {return;}
 		}
-		try {
+		try
+		{
 			// Open streams from URL and to file
 			out = new FileOutputStream(tempFile);
 			in = _url.openStream();
@@ -131,16 +132,18 @@ public class DiskTileCacher implements Runnable
 			}
 			finished = true;
 		} catch (IOException e) {}
-		finally {
-			try {
-				in.close();
-				out.close();
-				if (!finished) {tempFile.delete();}
+		finally
+		{
+			// clean up files
+			try {in.close();} catch (Exception e) {} // ignore
+			try {out.close();} catch (Exception e) {} // ignore
+			if (!finished) {
+				tempFile.delete();
 			}
-			catch (Exception e) {} // ignore
 		}
 		// Move temp file to desired file location
-		if (!tempFile.renameTo(_file)) {
+		if (!tempFile.renameTo(_file))
+		{
 			// File couldn't be moved - delete both to be sure
 			tempFile.delete();
 			_file.delete();

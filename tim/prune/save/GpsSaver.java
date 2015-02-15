@@ -6,6 +6,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -121,6 +123,19 @@ public class GpsSaver extends GenericFunction implements Runnable
 		gridPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		gridPanel.setBorder(BorderFactory.createEmptyBorder(10, 5, 5, 20));
 		mainPanel.add(gridPanel);
+		// close dialog when escape pressed
+		KeyAdapter closer = new KeyAdapter() {
+			public void keyReleased(KeyEvent e)
+			{
+				// close dialog if escape pressed
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
+			}
+		};
+		_deviceField.addKeyListener(closer);
+		_formatField.addKeyListener(closer);
+		_trackNameField.addKeyListener(closer);
 
 		// checkboxes
 		ChangeListener checkboxListener = new ChangeListener() {
@@ -257,7 +272,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 		if (trackName == null || trackName.equals("")) {trackName = "prune";}
 		// Generate the GPX file and send to the GPS
 		OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
-		boolean[] saveFlags = {true, true, true, false, true}; // export everything
+		boolean[] saveFlags = {true, true, true, true, false, true}; // export everything
 		GpxExporter.exportData(writer, _app.getTrackInfo(), trackName, null, saveFlags, false);
 		writer.close();
 

@@ -42,12 +42,14 @@ public class ExternalExifLibrary implements ExifLibrary
 				{
 					data.setLatitudeRef(gpsdir.getString(GpsDirectory.TAG_GPS_LATITUDE_REF));
 					Rational[] latRats = gpsdir.getRationalArray(GpsDirectory.TAG_GPS_LATITUDE);
+					double seconds = ExifGateway.convertToPositiveValue(latRats[2].getNumerator(), latRats[2].getDenominator());
 					data.setLatitude(new double[] {latRats[0].doubleValue(),
-						latRats[1].doubleValue(), latRats[2].doubleValue()});
+						latRats[1].doubleValue(), seconds});
 					data.setLongitudeRef(gpsdir.getString(GpsDirectory.TAG_GPS_LONGITUDE_REF));
 					Rational[] lonRats = gpsdir.getRationalArray(GpsDirectory.TAG_GPS_LONGITUDE);
+					seconds = ExifGateway.convertToPositiveValue(lonRats[2].getNumerator(), lonRats[2].getDenominator());
 					data.setLongitude(new double[] {lonRats[0].doubleValue(),
-						lonRats[1].doubleValue(), lonRats[2].doubleValue()});
+						lonRats[1].doubleValue(), seconds});
 				}
 
 				// Altitude (if present)
@@ -109,6 +111,7 @@ public class ExternalExifLibrary implements ExifLibrary
 		}
 		return data;
 	}
+
 
 	/**
 	 * Check whether the exifreader class can be correctly resolved

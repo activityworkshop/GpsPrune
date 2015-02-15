@@ -1,41 +1,48 @@
 package tim.prune.undo;
 
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.data.AudioFile;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
 
 /**
- * Operation to undo the disconnection of a photo from a point
+ * Operation to undo the disconnection of a photo or audio from a point
  */
-public class UndoDisconnectPhoto implements UndoOperation
+public class UndoDisconnectMedia implements UndoOperation
 {
 	private DataPoint _point = null;
 	private Photo _photo = null;
+	private AudioFile _audio = null;
 	private String _filename = null;
 
 
 	/**
 	 * Constructor
 	 * @param inPoint data point
-	 * @param inFilename filename of photo
+	 * @param inPhoto true if photo was disconnected
+	 * @param inAudio true if audio was disconnected
+	 * @param inFilename filename of photo / audio
 	 */
-	public UndoDisconnectPhoto(DataPoint inPoint, String inFilename)
+	public UndoDisconnectMedia(DataPoint inPoint, boolean inPhoto, boolean inAudio, String inFilename)
 	{
 		_point = inPoint;
-		_photo = inPoint.getPhoto();
+		if (inPhoto) {
+			_photo = inPoint.getPhoto();
+		}
+		if (inAudio) {
+			_audio = inPoint.getAudio();
+		}
 		_filename = inFilename;
 	}
 
 
 	/**
-	 * @return description of operation including photo filename
+	 * @return description of operation including filename
 	 */
 	public String getDescription()
 	{
-		String desc = I18nManager.getText("undo.disconnectphoto") + " " + _filename;
-		return desc;
+		return I18nManager.getText("undo.disconnect") + " " + _filename;
 	}
 
 
@@ -50,13 +57,17 @@ public class UndoDisconnectPhoto implements UndoOperation
 		{
 			_point.setPhoto(_photo);
 			_photo.setDataPoint(_point);
-			// inform subscribers
-			UpdateMessageBroker.informSubscribers();
 		}
-		else
+		else if (_point != null && _audio != null)
 		{
+			_point.setAudio(_audio);
+			_audio.setDataPoint(_point);
+		}
+		else {
 			// throw exception if failed
 			throw new UndoException(getDescription());
 		}
+		// clear selection
+		inTrackInfo.getSelection().clearAll();
 	}
 }

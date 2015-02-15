@@ -69,23 +69,34 @@ public abstract class MapSource
 	 * @param inUrl url to check
 	 * @return validated url with correct prefix and trailing slash, or null
 	 */
-	protected static String fixBaseUrl(String inUrl)
+	public static String fixBaseUrl(String inUrl)
 	{
 		if (inUrl == null || inUrl.equals("")) {return null;}
-		String url = inUrl;
+		String urlstr = inUrl;
 		// check prefix
 		try {
-			new URL(url);
+			new URL(urlstr);
 		}
 		catch (MalformedURLException e) {
+			// fail if protocol specified
+			if (urlstr.indexOf("://") >= 0) {return null;}
 			// add the http protocol
-			url = "http://" + url;
+			urlstr = "http://" + urlstr;
 		}
 		// check trailing /
-		if (!url.endsWith("/")) {
-			url = url + "/";
+		if (!urlstr.endsWith("/")) {
+			urlstr = urlstr + "/";
 		}
-		return url;
+		// Validate current url, return null if not ok
+		try {
+			URL url = new URL(urlstr);
+			// url host must contain a dot
+			if (url.getHost().indexOf('.') < 0) {return null;}
+		}
+		catch (MalformedURLException e) {
+			urlstr = null;
+		}
+		return urlstr;
 	}
 
 	/**
@@ -114,11 +125,14 @@ public abstract class MapSource
 	 */
 	public String getSiteStrings()
 	{
-		String s = "";
+		StringBuilder sb = new StringBuilder();
 		for (int i=0; i<getNumLayers(); i++) {
 			String url = getBaseUrl(i);
-			if (url != null) {s = s + url + ";";}
+			if (url != null) {
+				sb.append(url);
+				sb.append(';');
+			}
 		}
-		return s;
+		return sb.toString();
 	}
 }

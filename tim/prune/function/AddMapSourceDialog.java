@@ -9,8 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
@@ -216,23 +214,15 @@ public class AddMapSourceDialog
 	private boolean isOsmPanelOk()
 	{
 		boolean ok = _oNameField.getText().trim().length() > 1;
-		URL baseUrl = null, topUrl = null;
-		try {
-			// Try to parse base url if given
-			String baseText = _baseUrlField.getText().trim();
-			if (baseText.length() > 10) {
-				baseUrl = new URL(baseText);
-			}
-			else if (baseText.length() > 0) {ok = false;}
-			// Same again for top url if given
-			String topText = _topUrlField.getText().trim();
-			if (topText.length() > 10) {
-				topUrl = new URL(topText);
-			}
-			else if (topText.length() > 0) {ok = false;}
-		} catch (MalformedURLException e) {
-			ok = false;
-		}
+		String baseUrl = null, topUrl = null;
+		// Try to parse base url if given
+		String baseText = _baseUrlField.getText().trim();
+		baseUrl = MapSource.fixBaseUrl(baseText);
+		if (baseText.length() > 0 && baseUrl == null) {ok = false;}
+		// Same again for top url if given
+		String topText = _topUrlField.getText().trim();
+		topUrl = MapSource.fixBaseUrl(topText);
+		if (topText.length() > 0 && topUrl == null) {ok = false;}
 		// looks ok if at least one url given
 		return (ok && (baseUrl != null || topUrl != null));
 	}

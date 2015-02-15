@@ -135,13 +135,18 @@ public class SaveConfig extends GenericFunction
 		if (response == JFileChooser.APPROVE_OPTION)
 		{
 			File saveFile = chooser.getSelectedFile();
+			FileOutputStream outStream = null;
 			try
 			{
-				Config.getAllConfig().store(new FileOutputStream(saveFile), "Prune config file");
+				outStream = new FileOutputStream(saveFile);
+				Config.getAllConfig().store(outStream, "Prune config file");
 			}
 			catch (IOException ioe) {
 				_app.showErrorMessageNoLookup(getNameKey(),
 					I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
+			}
+			finally {
+				try {outStream.close();} catch (Exception e) {}
 			}
 		}
 		_dialog.dispose();

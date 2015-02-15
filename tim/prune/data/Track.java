@@ -173,7 +173,7 @@ public class Track
 		{
 			DataPoint point = _dataPoints[i];
 			// Don't delete photo points
-			if (point.getPhoto() != null || !point.getDeleteFlag())
+			if (point.hasMedia() || !point.getDeleteFlag())
 			{
 				newPointArray[numCopied] = point;
 				numCopied++;

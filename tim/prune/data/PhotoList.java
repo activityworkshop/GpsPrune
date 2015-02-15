@@ -3,17 +3,14 @@ package tim.prune.data;
 import java.util.ArrayList;
 
 /**
- * Class to hold a list of Photos
+ * Class to hold a list of Photos, using the MediaList superclass
  */
-public class PhotoList
+public class PhotoList extends MediaList
 {
-	private ArrayList<Photo> _photos = null;
-
 	/**
 	 * Empty constructor
 	 */
-	public PhotoList()
-	{
+	public PhotoList() {
 		this(null);
 	}
 
@@ -21,236 +18,82 @@ public class PhotoList
 	 * Constructor
 	 * @param inList ArrayList containing Photo objects
 	 */
-	private PhotoList(ArrayList<Photo> inList)
-	{
-		_photos = inList;
+	private PhotoList(ArrayList<MediaFile> inList) {
+		super(inList);
 	}
 
+	/**
+	 * @return clone of list contents
+	 */
+	public PhotoList cloneList()
+	{
+		if (getNumMedia() == 0) return this;
+		ArrayList<MediaFile> listCopy = new ArrayList<MediaFile>();
+		listCopy.addAll(_media);
+		return new PhotoList(listCopy);
+	}
 
 	/**
 	 * @return the number of photos in the list
 	 */
-	public int getNumPhotos()
-	{
-		if (_photos == null) return 0;
-		return _photos.size();
+	public int getNumPhotos() {
+		return getNumMedia();
 	}
-
 
 	/**
 	 * Add a Photo to the list
 	 * @param inPhoto Photo object to add
 	 */
-	public void addPhoto(Photo inPhoto)
-	{
-		if (inPhoto != null)
-		{
-			// Make sure array is initialised
-			if (_photos == null)
-			{
-				_photos = new ArrayList<Photo>();
-			}
-			// Add the photo
-			_photos.add(inPhoto);
-		}
+	public void addPhoto(Photo inPhoto) {
+		addMedia(inPhoto);
 	}
-
 
 	/**
 	 * Add a Photo to the list
 	 * @param inPhoto Photo object to add
 	 * @param inIndex index at which to add photo
 	 */
-	public void addPhoto(Photo inPhoto, int inIndex)
-	{
-		if (inPhoto != null)
-		{
-			// Make sure array is initialised
-			if (_photos == null)
-			{
-				_photos = new ArrayList<Photo>();
-			}
-			// Add the photo
-			_photos.add(inIndex, inPhoto);
-		}
+	public void addPhoto(Photo inPhoto, int inIndex) {
+		addMedia(inPhoto, inIndex);
 	}
-
 
 	/**
 	 * Remove the selected photo from the list
 	 * @param inIndex index number to remove
 	 */
-	public void deletePhoto(int inIndex)
-	{
-		// Maybe throw exception if this fails?
-		if (_photos != null)
-		{
-			_photos.remove(inIndex);
-		}
+	public void deletePhoto(int inIndex) {
+		deleteMedia(inIndex);
 	}
-
-
-	/**
-	 * Checks if the specified Photo is already in the list
-	 * @param inPhoto Photo object to check
-	 * @return true if it's already in the list
-	 */
-	public boolean contains(Photo inPhoto)
-	{
-		return (getPhotoIndex(inPhoto) > -1);
-	}
-
 
 	/**
 	 * Get the index of the given Photo
 	 * @param inPhoto Photo object to check
 	 * @return index of this Photo in the list, or -1 if not found
 	 */
-	public int getPhotoIndex(Photo inPhoto)
-	{
-		// Check if we need to check
-		int numPhotos = getNumPhotos();
-		if (numPhotos <= 0 || inPhoto == null || inPhoto.getFile() == null)
-			return -1;
-		// Loop around photos in list
-		Photo foundPhoto = null;
-		for (int i=0; i<numPhotos; i++)
-		{
-			foundPhoto = getPhoto(i);
-			if (foundPhoto != null && foundPhoto.equals(inPhoto))
-			{
-				return i;
-			}
-		}
-		// not found
-		return -1;
+	public int getPhotoIndex(Photo inPhoto) {
+		return getMediaIndex(inPhoto);
 	}
-
 
 	/**
 	 * Get the Photo at the given index
 	 * @param inIndex index number, starting at 0
 	 * @return specified Photo object
 	 */
-	public Photo getPhoto(int inIndex)
-	{
-		if (inIndex < 0 || inIndex >= getNumPhotos()) return null;
-		return _photos.get(inIndex);
+	public Photo getPhoto(int inIndex) {
+		return (Photo) getMedia(inIndex);
 	}
-
-
-	/**
-	 * Crop the photo list to the specified size
-	 * @param inIndex previous size
-	 */
-	public void cropTo(int inIndex)
-	{
-		if (inIndex <= 0)
-		{
-			// delete whole list
-			if (_photos != null) {_photos.clear();}
-		}
-		else
-		{
-			// delete photos to previous size
-			while (_photos.size() > inIndex)
-			{
-				_photos.remove(_photos.size()-1);
-			}
-		}
-	}
-
-
-	/**
-	 * @return array of file names
-	 */
-	public String[] getNameList()
-	{
-		String[] names = new String[getNumPhotos()];
-		for (int i=0; i<getNumPhotos(); i++)
-		{
-			names[i] = getPhoto(i).getFile().getName();
-		}
-		return names;
-	}
-
 
 	/**
 	 * @return true if photo list contains correlated photos
 	 */
-	public boolean hasCorrelatedPhotos()
-	{
-		int numPhotos = getNumPhotos();
-		boolean hasCorrelated = false;
-		// Loop over photos in list
-		for (int i=0; i<numPhotos && !hasCorrelated; i++)
-		{
-			if (getPhoto(i).getDataPoint() != null)
-				hasCorrelated = true;
-		}
-		return hasCorrelated;
+	public boolean hasCorrelatedPhotos() {
+		return hasCorrelatedMedia();
 	}
-
 
 	/**
 	 * Remove all correlated photos from the list
 	 */
-	public void removeCorrelatedPhotos()
-	{
-		int numPhotos = getNumPhotos();
-		if (numPhotos > 0)
-		{
-			// Construct new list to copy into
-			ArrayList<Photo> listCopy = new ArrayList<Photo>();
-			// Loop over photos in list
-			for (int i=0; i<numPhotos; i++)
-			{
-				// Copy photo if it has no point
-				Photo photo = getPhoto(i);
-				if (photo != null)
-				{
-					if (photo.getDataPoint() == null)
-						listCopy.add(photo);
-					else
-						photo.resetCachedData();
-				}
-			}
-			// Switch reference to new list
-			_photos = listCopy;
-		}
-	}
-
-
-	/**
-	 * @return clone of photo list contents
-	 */
-	public PhotoList cloneList()
-	{
-		if (_photos == null) return this;
-		ArrayList<Photo> listCopy = new ArrayList<Photo>();
-		for (int i=0; i<_photos.size(); i++) {
-			listCopy.add(_photos.get(i));
-		}
-		return new PhotoList(listCopy);
-	}
-
-
-	/**
-	 * Restore contents from other PhotoList
-	 * @param inOther PhotoList with cloned contents
-	 */
-	public void restore(PhotoList inOther)
-	{
-		if (inOther.getNumPhotos() == 0)
-		{
-			// List is empty
-			_photos = null;
-		}
-		else
-		{
-			// Clear array and copy over from other one
-			_photos.clear();
-			_photos.addAll(inOther._photos);
-		}
+	public void removeCorrelatedPhotos() {
+		removeCorrelatedMedia();
 	}
 }

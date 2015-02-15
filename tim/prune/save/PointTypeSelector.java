@@ -14,13 +14,15 @@ import tim.prune.data.TrackInfo;
 
 /**
  * GUI element to allow the selection of point types for saving,
- * including checkboxes for track points, waypoints, photo points
+ * including checkboxes for track points, waypoints, photo points, audio points
  * and also a checkbox for the current selection
  */
 public class PointTypeSelector extends JPanel
 {
 	/** Array of checkboxes */
-	private JCheckBox[] _checkboxes = new JCheckBox[4];
+	private JCheckBox[] _checkboxes = new JCheckBox[5];
+	/** Grid panel for top row */
+	private JPanel _gridPanel = null;
 
 
 	/**
@@ -40,22 +42,22 @@ public class PointTypeSelector extends JPanel
 	private void createComponents()
 	{
 		setLayout(new BorderLayout());
-		// Need label to explain what it is
 		add(new JLabel(I18nManager.getText("dialog.pointtype.desc")), BorderLayout.NORTH);
 		// panel for the checkboxes
-		JPanel gridPanel = new JPanel();
-		gridPanel.setLayout(new GridLayout(0, 3, 15, 3));
-		final String[] keys = {"track", "waypoint", "photo"};
-		for (int i=0; i<3; i++)
+		_gridPanel = new JPanel();
+		_gridPanel.setLayout(new GridLayout(0, 3, 15, 3));
+		final String[] keys = {"track", "waypoint", "photo", "audio"};
+		for (int i=0; i<4; i++)
 		{
 			_checkboxes[i] = new JCheckBox(I18nManager.getText("dialog.pointtype." + keys[i]));
 			_checkboxes[i].setSelected(true);
-			gridPanel.add(_checkboxes[i]);
+			if (i<3) {_gridPanel.add(_checkboxes[i]);}
 		}
-		add(gridPanel, BorderLayout.CENTER);
-		_checkboxes[3] = new JCheckBox(I18nManager.getText("dialog.pointtype.selection"));
-		add(_checkboxes[3], BorderLayout.SOUTH);
+		add(_gridPanel, BorderLayout.CENTER);
+		_checkboxes[4] = new JCheckBox(I18nManager.getText("dialog.pointtype.selection"));
+		add(_checkboxes[4], BorderLayout.SOUTH);
 	}
+
 
 	/**
 	 * Initialize the checkboxes from the given data
@@ -64,14 +66,22 @@ public class PointTypeSelector extends JPanel
 	public void init(TrackInfo inTrackInfo)
 	{
 		// Get whether track has track points, waypoints, photos
-		boolean[] flags = {inTrackInfo.getTrack().hasTrackPoints(),
+		boolean[] dataFlags = {inTrackInfo.getTrack().hasTrackPoints(),
 				inTrackInfo.getTrack().hasWaypoints(),
-				inTrackInfo.getPhotoList().getNumPhotos() > 0
+				inTrackInfo.getPhotoList().getNumPhotos() > 0,
+				inTrackInfo.getAudioList().getNumAudios() > 0
 		};
+		// Rearrange grid to just show the appropriate entries
+		final boolean[] showFlags = {true, true, dataFlags[2] || !dataFlags[3], dataFlags[3]};
+		_gridPanel.removeAll();
+		for (int i=0; i<4; i++) {
+			if (showFlags[i]) {_gridPanel.add(_checkboxes[i]);}
+		}
 		// Enable or disable checkboxes according to data present
-		for (int i=0; i<3; i++)
+		for (int i=0; i<4; i++)
 		{
-			if (flags[i]) {
+			if (dataFlags[i]) {
+				if (!_checkboxes[i].isEnabled()) {_checkboxes[i].setSelected(true);}
 				_checkboxes[i].setEnabled(true);
 			}
 			else {
@@ -79,8 +89,8 @@ public class PointTypeSelector extends JPanel
 				_checkboxes[i].setEnabled(false);
 			}
 		}
-		_checkboxes[3].setEnabled(inTrackInfo.getSelection().hasRangeSelected());
-		_checkboxes[3].setSelected(false);
+		_checkboxes[4].setEnabled(inTrackInfo.getSelection().hasRangeSelected());
+		_checkboxes[4].setSelected(false);
 	}
 
 	/**
@@ -108,11 +118,19 @@ public class PointTypeSelector extends JPanel
 	}
 
 	/**
+	 * @return true if audio points selected
+	 */
+	public boolean getAudiopointsSelected()
+	{
+		return _checkboxes[3].isSelected();
+	}
+
+	/**
 	 * @return true if only the current selection should be saved
 	 */
 	public boolean getJustSelection()
 	{
-		return _checkboxes[3].isSelected();
+		return _checkboxes[4].isSelected();
 	}
 
 	/**
@@ -121,6 +139,6 @@ public class PointTypeSelector extends JPanel
 	public boolean getAnythingSelected()
 	{
 		return getTrackpointsSelected() || getWaypointsSelected()
-			|| getPhotopointsSelected();
+			|| getPhotopointsSelected() || getAudiopointsSelected();
 	}
 }

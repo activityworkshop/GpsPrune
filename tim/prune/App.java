@@ -10,10 +10,12 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import tim.prune.data.Altitude;
+import tim.prune.data.AudioFile;
 import tim.prune.data.Checker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.LatLonRectangle;
+import tim.prune.data.MediaFile;
 import tim.prune.data.NumberUtils;
 import tim.prune.data.Photo;
 import tim.prune.data.PhotoList;
@@ -31,6 +33,7 @@ import tim.prune.gui.UndoManager;
 import tim.prune.gui.Viewport;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
+import tim.prune.load.MediaHelper;
 import tim.prune.load.TrackNameList;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
@@ -48,7 +51,7 @@ public class App
 	private TrackInfo _trackInfo = null;
 	private int _lastSavePosition = 0;
 	private MenuManager _menuManager = null;
-	private SidebarController __sidebarController = null;
+	private SidebarController _sidebarController = null;
 	private FileLoader _fileLoader = null;
 	private JpegLoader _jpegLoader = null;
 	private FileSaver _fileSaver = null;
@@ -638,7 +641,7 @@ public class App
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
 		Altitude.Format inAltFormat, SourceInfo inSourceInfo)
 	{
-		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inSourceInfo, null);
+		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inSourceInfo, null, null);
 	}
 
 	/**
@@ -651,6 +654,24 @@ public class App
 	 */
 	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
 		Altitude.Format inAltFormat, SourceInfo inSourceInfo, TrackNameList inTrackNameList)
+	{
+		// no link array given
+		informDataLoaded(inFieldArray, inDataArray, inAltFormat, inSourceInfo,
+			inTrackNameList, null);
+	}
+
+	/**
+	 * Receive loaded data and determine whether to filter on tracks or not
+	 * @param inFieldArray array of fields
+	 * @param inDataArray array of data
+	 * @param inAltFormat altitude format
+	 * @param inSourceInfo information about the source of the data
+	 * @param inTrackNameList information about the track names
+	 * @param inLinkArray array of links to photo/audio files
+	 */
+	public void informDataLoaded(Field[] inFieldArray, Object[][] inDataArray,
+		Altitude.Format inAltFormat, SourceInfo inSourceInfo,
+		TrackNameList inTrackNameList, String[] inLinkArray)
 	{
 		// Check whether loaded array can be properly parsed into a Track
 		Track loadedTrack = new Track();
@@ -667,6 +688,22 @@ public class App
 			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.open.contentsdoubled"),
 				I18nManager.getText("function.open"), JOptionPane.WARNING_MESSAGE);
 		}
+		// Attach photos and/or audio files to points
+		if (inLinkArray != null)
+		{
+			for (int i=0; i<inLinkArray.length; i++)
+			{
+				if (inLinkArray[i] != null)
+				{
+					MediaFile mf = MediaHelper.createMediaFile(inLinkArray[i]);
+					if (mf != null) {
+						loadedTrack.getPoint(i).attachMedia(mf);
+						mf.setOriginalStatus(MediaFile.Status.TAGGED);
+						mf.setCurrentStatus(MediaFile.Status.TAGGED);
+					}
+				}
+			}
+		}
 		// Look at TrackNameList, decide whether to filter or not
 		if (inTrackNameList != null && inTrackNameList.getNumTracks() > 1)
 		{
@@ -679,6 +716,7 @@ public class App
 			informDataLoaded(loadedTrack, inSourceInfo);
 		}
 	}
+
 
 	/**
 	 * Receive loaded data and optionally merge with current Track
@@ -705,8 +743,13 @@ public class App
 			if (answer == JOptionPane.YES_OPTION)
 			{
 				// append data to current Track
-				_undoStack.add(new UndoLoad(_track.getNumPoints(), inLoadedTrack.getNumPoints()));
+				UndoLoad undo = new UndoLoad(_track.getNumPoints(), inLoadedTrack.getNumPoints());
+				undo.setNumPhotosAudios(_trackInfo.getPhotoList().getNumPhotos(), _trackInfo.getAudioList().getNumAudios());
+				_undoStack.add(undo);
 				_track.combine(inLoadedTrack);
+				// Add photos and audios (if any in loaded track) to list(s)
+				MediaHelper.addMediaFromTrack(_track, _trackInfo.getPhotoList(), Photo.class);
+				MediaHelper.addMediaFromTrack(_track, _trackInfo.getAudioList(), AudioFile.class);
 				// set source information
 				inSourceInfo.populatePointObjects(_track, inLoadedTrack.getNumPoints());
 				_trackInfo.getFileInfo().addSource(inSourceInfo);
@@ -718,26 +761,35 @@ public class App
 				if (_trackInfo.getPhotoList().hasCorrelatedPhotos()) {
 					photos = _trackInfo.getPhotoList().cloneList();
 				}
-				_undoStack.add(new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), photos));
+				UndoLoad undo = new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), photos);
+				undo.setNumPhotosAudios(_trackInfo.getPhotoList().getNumPhotos(), _trackInfo.getAudioList().getNumAudios());
+				_undoStack.add(undo);
 				_lastSavePosition = _undoStack.size();
 				_trackInfo.getSelection().clearAll();
 				_track.load(inLoadedTrack);
 				inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
 				_trackInfo.getFileInfo().replaceSource(inSourceInfo);
-				if (photos != null) {
-					_trackInfo.getPhotoList().removeCorrelatedPhotos();
-				}
+				_trackInfo.getPhotoList().removeCorrelatedPhotos();
+				_trackInfo.getAudioList().removeCorrelatedAudios();
+				// Add photos and audios (if any in loaded track) to list(s)
+				MediaHelper.addMediaFromTrack(_track, _trackInfo.getPhotoList(), Photo.class);
+				MediaHelper.addMediaFromTrack(_track, _trackInfo.getAudioList(), AudioFile.class);
 			}
 		}
 		else
 		{
 			// Currently no data held, so transfer received data
-			_undoStack.add(new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), null));
+			UndoLoad undo = new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), null);
+			undo.setNumPhotosAudios(_trackInfo.getPhotoList().getNumPhotos(), _trackInfo.getAudioList().getNumAudios());
+			_undoStack.add(undo);
 			_lastSavePosition = _undoStack.size();
 			_trackInfo.getSelection().clearAll();
 			_track.load(inLoadedTrack);
 			inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
 			_trackInfo.getFileInfo().addSource(inSourceInfo);
+			// Add photos and audios (if any in loaded track) to list(s)
+			MediaHelper.addMediaFromTrack(_track, _trackInfo.getPhotoList(), Photo.class);
+			MediaHelper.addMediaFromTrack(_track, _trackInfo.getAudioList(), AudioFile.class);
 		}
 		UpdateMessageBroker.informSubscribers();
 		// Update status bar
@@ -805,92 +857,7 @@ public class App
 			// MAYBE: Improve message when photo(s) fail to load (eg already added)
 			UpdateMessageBroker.informSubscribers();
 			// update menu
-			_menuManager.informFileLoaded();
-		}
-	}
-
-
-	/**
-	 * Connect the current photo to the current point
-	 */
-	public void connectPhotoToPoint()
-	{
-		Photo photo = _trackInfo.getCurrentPhoto();
-		DataPoint point = _trackInfo.getCurrentPoint();
-		if (photo != null && point != null)
-		{
-			if (point.getPhoto() == null)
-			{
-				// point doesn't currently have a photo, so just connect it
-				_undoStack.add(new UndoConnectPhoto(point, photo.getFile().getName()));
-				photo.setDataPoint(point);
-				point.setPhoto(photo);
-				UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
-				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.connect"));
-			}
-		}
-	}
-
-
-	/**
-	 * Disconnect the current photo from its point
-	 */
-	public void disconnectPhotoFromPoint()
-	{
-		Photo photo = _trackInfo.getCurrentPhoto();
-		if (photo != null && photo.getDataPoint() != null)
-		{
-			DataPoint point = photo.getDataPoint();
-			_undoStack.add(new UndoDisconnectPhoto(point, photo.getFile().getName()));
-			// disconnect
-			photo.setDataPoint(null);
-			point.setPhoto(null);
-			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
-			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.photo.disconnect"));
-		}
-	}
-
-
-	/**
-	 * Remove the current photo, if any
-	 */
-	public void deleteCurrentPhoto()
-	{
-		// Delete the current photo, and optionally its point too, keeping undo information
-		Photo currentPhoto = _trackInfo.getCurrentPhoto();
-		if (currentPhoto != null)
-		{
-			// Photo is selected, see if it has a point or not
-			boolean photoDeleted = false;
-			UndoDeletePhoto undoAction = null;
-			if (currentPhoto.getDataPoint() == null)
-			{
-				// no point attached, so just delete photo
-				undoAction = new UndoDeletePhoto(currentPhoto, _trackInfo.getSelection().getCurrentPhotoIndex(),
-					null, -1);
-				photoDeleted = _trackInfo.deleteCurrentPhoto(false);
-			}
-			else
-			{
-				// point is attached, so need to confirm point deletion
-				undoAction = new UndoDeletePhoto(currentPhoto, _trackInfo.getSelection().getCurrentPhotoIndex(),
-					currentPhoto.getDataPoint(), _trackInfo.getTrack().getPointIndex(currentPhoto.getDataPoint()));
-				int response = JOptionPane.showConfirmDialog(_frame,
-					I18nManager.getText("dialog.deletephoto.deletepoint"),
-					I18nManager.getText("dialog.deletephoto.title"),
-					JOptionPane.YES_NO_CANCEL_OPTION);
-				boolean deletePointToo = (response == JOptionPane.YES_OPTION);
-				// Cancel delete if cancel pressed or dialog closed
-				if (response == JOptionPane.YES_OPTION || response == JOptionPane.NO_OPTION)
-				{
-					photoDeleted = _trackInfo.deleteCurrentPhoto(deletePointToo);
-				}
-			}
-			// Add undo information to stack if necessary
-			if (photoDeleted)
-			{
-				_undoStack.add(undoAction);
-			}
+			if (numPointsAdded > 0) _menuManager.informFileLoaded();
 		}
 	}
 
@@ -1057,7 +1024,7 @@ public class App
 	 */
 	public void setSidebarController(SidebarController inController)
 	{
-		__sidebarController = inController;
+		_sidebarController = inController;
 	}
 
 	/**
@@ -1065,6 +1032,6 @@ public class App
 	 */
 	public void toggleSidebars()
 	{
-		__sidebarController.toggle();
+		_sidebarController.toggle();
 	}
 }

@@ -3,12 +3,11 @@ package tim.prune.correlate;
 import tim.prune.data.Distance;
 
 /**
- * Class to hold contents of a single row
- * in the photo preview table
+ * Class to hold the contents of a single row in the correlation preview table
  */
-public class PhotoPreviewTableRow extends PhotoSelectionTableRow
+public class MediaPreviewTableRow extends MediaSelectionTableRow
 {
-	private PointPair _pointPair = null;
+	private PointMediaPair _pointPair = null;
 	private double _distance = 0.0;
 	private int _status = 0;
 	private boolean _correlate = false;
@@ -18,13 +17,13 @@ public class PhotoPreviewTableRow extends PhotoSelectionTableRow
 	 * Constructor
 	 * @param inPointPair point pair object
 	 */
-	public PhotoPreviewTableRow(PointPair inPointPair)
+	public MediaPreviewTableRow(PointMediaPair inPointPair)
 	{
-		super(inPointPair.getPhoto(), inPointPair.getMinSeconds());
+		super(inPointPair.getMedia(), inPointPair.getMinSeconds());
 		_pointPair = inPointPair;
 		_distance = inPointPair.getMinRadians();
 		_status = 0;
-		_correlate = (inPointPair.getPhoto().getDataPoint() == null);
+		_correlate = (inPointPair.getMedia().getDataPoint() == null);
 	}
 
 	/**
@@ -47,7 +46,7 @@ public class PhotoPreviewTableRow extends PhotoSelectionTableRow
 	/**
 	 * @return point pair object
 	 */
-	public PointPair getPointPair()
+	public PointMediaPair getPointPair()
 	{
 		return _pointPair;
 	}

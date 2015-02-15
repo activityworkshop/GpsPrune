@@ -12,8 +12,10 @@ public class Selection
 	private Track _track = null;
 	private int _currentPoint = -1;
 	private boolean _valid = false;
+	private int _prevNumPoints = 0;
 	private int _startIndex = -1, _endIndex = -1;
 	private int _currentPhotoIndex = -1;
+	private int _currentAudioIndex = -1;
 	private IntegerRange _altitudeRange = null;
 	private int _climb = -1, _descent = -1;
 	private Altitude.Format _altitudeFormat = Altitude.Format.NO_FORMAT;
@@ -66,7 +68,13 @@ public class Selection
 	{
 		_altitudeFormat = Altitude.Format.NO_FORMAT;
 		_numSegments = 0;
-		if (_track.getNumPoints() > 0 && hasRangeSelected())
+		final int numPoints = _track.getNumPoints();
+		// Recheck if the number of points has changed
+		if (numPoints != _prevNumPoints) {
+			_prevNumPoints = numPoints;
+			check();
+		}
+		if (numPoints > 0 && hasRangeSelected())
 		{
 			_altitudeRange = new IntegerRange();
 			_climb = 0;
@@ -242,13 +250,14 @@ public class Selection
 	}
 
 	/**
-	 * Clear selected point, range and photo
+	 * Clear selected point, range, photo and audio
 	 */
 	public void clearAll()
 	{
 		_currentPoint = -1;
 		selectRange(-1, -1);
 		_currentPhotoIndex = -1;
+		_currentAudioIndex = -1;
 		check();
 	}
 
@@ -373,13 +382,15 @@ public class Selection
 
 	/**
 	 * Select the specified photo and point
-	 * @param inPhotoIndex index of selected photo in PhotoList
 	 * @param inPointIndex index of selected point
+	 * @param inPhotoIndex index of selected photo in PhotoList
+	 * @param inAudioIndex index of selected audio item
 	 */
-	public void selectPhotoAndPoint(int inPhotoIndex, int inPointIndex)
+	public void selectPointPhotoAudio(int inPointIndex, int inPhotoIndex, int inAudioIndex)
 	{
-		_currentPhotoIndex = inPhotoIndex;
 		_currentPoint = inPointIndex;
+		_currentPhotoIndex = inPhotoIndex;
+		_currentAudioIndex = inAudioIndex;
 		check();
 	}
 
@@ -393,34 +404,39 @@ public class Selection
 	}
 
 	/**
+	 * @return currently selected audio index
+	 */
+	public int getCurrentAudioIndex()
+	{
+		return _currentAudioIndex;
+	}
+
+	/**
 	 * Check that the selection still makes sense
 	 * and fire update message to listeners
 	 */
 	private void check()
 	{
-		if (_track != null)
+		if (_track != null && _track.getNumPoints() > 0)
 		{
-			if (_track.getNumPoints() > 0)
+			int maxIndex = _track.getNumPoints() - 1;
+			if (_currentPoint > maxIndex)
 			{
-				int maxIndex = _track.getNumPoints() - 1;
-				if (_currentPoint > maxIndex)
-				{
-					_currentPoint = maxIndex;
-				}
-				if (_endIndex > maxIndex)
-				{
-					_endIndex = maxIndex;
-				}
-				if (_startIndex > maxIndex)
-				{
-					_startIndex = maxIndex;
-				}
+				_currentPoint = maxIndex;
 			}
-			else
+			if (_endIndex > maxIndex)
 			{
-				// track is empty, clear selections
-				_currentPoint = _startIndex = _endIndex = -1;
+				_endIndex = maxIndex;
 			}
+			if (_startIndex > maxIndex)
+			{
+				_startIndex = maxIndex;
+			}
+		}
+		else
+		{
+			// track is empty, clear selections
+			_currentPoint = _startIndex = _endIndex = -1;
 		}
 		UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 	}

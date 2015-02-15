@@ -1,6 +1,5 @@
 package tim.prune.data;
 
-import java.util.Iterator;
 import java.util.Set;
 import tim.prune.UpdateMessageBroker;
 
@@ -14,6 +13,7 @@ public class TrackInfo
 	private Selection _selection = null;
 	private FileInfo _fileInfo = null;
 	private PhotoList _photoList = null;
+	private AudioList _audioList = null;
 
 
 	/**
@@ -26,14 +26,14 @@ public class TrackInfo
 		_selection = new Selection(_track);
 		_fileInfo = new FileInfo();
 		_photoList = new PhotoList();
+		_audioList = new AudioList();
 	}
 
 
 	/**
 	 * @return the Track object
 	 */
-	public Track getTrack()
-	{
+	public Track getTrack() {
 		return _track;
 	}
 
@@ -41,8 +41,7 @@ public class TrackInfo
 	/**
 	 * @return the Selection object
 	 */
-	public Selection getSelection()
-	{
+	public Selection getSelection() {
 		return _selection;
 	}
 
@@ -50,8 +49,7 @@ public class TrackInfo
 	/**
 	 * @return the FileInfo object
 	 */
-	public FileInfo getFileInfo()
-	{
+	public FileInfo getFileInfo() {
 		return _fileInfo;
 	}
 
@@ -66,17 +64,22 @@ public class TrackInfo
 	/**
 	 * @return the PhotoList object
 	 */
-	public PhotoList getPhotoList()
-	{
+	public PhotoList getPhotoList() {
 		return _photoList;
+	}
+
+	/**
+	 * @return the AudioList object
+	 */
+	public AudioList getAudioList() {
+		return _audioList;
 	}
 
 	/**
 	 * Get the currently selected point, if any
 	 * @return DataPoint if single point selected, otherwise null
 	 */
-	public DataPoint getCurrentPoint()
-	{
+	public DataPoint getCurrentPoint() {
 		return _track.getPoint(_selection.getCurrentPointIndex());
 	}
 
@@ -84,9 +87,16 @@ public class TrackInfo
 	 * Get the currently selected photo, if any
 	 * @return Photo if selected, otherwise null
 	 */
-	public Photo getCurrentPhoto()
-	{
+	public Photo getCurrentPhoto() {
 		return _photoList.getPhoto(_selection.getCurrentPhotoIndex());
+	}
+
+	/**
+	 * Get the currently selected audio file, if any
+	 * @return AudioFile if selected, otherwise null
+	 */
+	public AudioFile getCurrentAudio() {
+		return _audioList.getAudio(_selection.getCurrentAudioIndex());
 	}
 
 
@@ -100,25 +110,17 @@ public class TrackInfo
 		// Firstly count number of points and photos to add
 		int numPhotosToAdd = 0;
 		int numPointsToAdd = 0;
-		Iterator<Photo> iterator = null;
 		if (inSet != null && !inSet.isEmpty())
 		{
-			iterator = inSet.iterator();
-			while (iterator.hasNext())
+			for (Photo photo : inSet)
 			{
-				try
+				if (photo != null && !_photoList.contains(photo))
 				{
-					Photo photo = iterator.next();
-					if (photo != null && !_photoList.contains(photo))
-					{
-						numPhotosToAdd++;
-						if (photo.getDataPoint() != null)
-						{
-							numPointsToAdd++;
-						}
+					numPhotosToAdd++;
+					if (photo.getDataPoint() != null) {
+						numPointsToAdd++;
 					}
 				}
-				catch (ClassCastException ce) {}
 			}
 		}
 		// If there are any photos to add, add them
@@ -128,27 +130,21 @@ public class TrackInfo
 			int pointNum = 0;
 			boolean hasAltitude = false;
 			// Add each Photo in turn
-			iterator = inSet.iterator();
-			while (iterator.hasNext())
+			for (Photo photo : inSet)
 			{
-				try
+				if (photo != null && !_photoList.contains(photo))
 				{
-					Photo photo = iterator.next();
-					if (photo != null && !_photoList.contains(photo))
+					// Add photo
+					_photoList.addPhoto(photo);
+					// Add point if there is one
+					if (photo.getDataPoint() != null)
 					{
-						// Add photo
-						_photoList.addPhoto(photo);
-						// Add point if there is one
-						if (photo.getDataPoint() != null)
-						{
-							dataPoints[pointNum] = photo.getDataPoint();
-							// Check if any points have altitudes
-							hasAltitude |= (photo.getDataPoint().getAltitude() != null);
-							pointNum++;
-						}
+						dataPoints[pointNum] = photo.getDataPoint();
+						// Check if any points have altitudes
+						hasAltitude |= (photo.getDataPoint().getAltitude() != null);
+						pointNum++;
 					}
 				}
-				catch (ClassCastException ce) {}
 			}
 			if (numPointsToAdd > 0)
 			{
@@ -164,6 +160,29 @@ public class TrackInfo
 		return result;
 	}
 
+	/**
+	 * Add a Set of Audio objects
+	 * @param inSet Set containing Audio objects
+	 * @return number of audio objects added
+	 */
+	public int addAudios(Set<AudioFile> inSet)
+	{
+		int numAudiosAdded = 0;
+		if (inSet != null && !inSet.isEmpty())
+		{
+			for (AudioFile audio : inSet)
+			{
+				if (audio != null && !_audioList.contains(audio))
+				{
+					// Add audio object
+					_audioList.addAudio(audio);
+					numAudiosAdded++;
+					// audio objects never have points when they're loaded
+				}
+			}
+		}
+		return numAudiosAdded;
+	}
 
 	/**
 	 * Delete the currently selected range of points
@@ -203,7 +222,6 @@ public class TrackInfo
 	 */
 	public boolean deleteCurrentPhoto(boolean inPointToo)
 	{
-		// delete currently selected photo
 		int photoIndex = _selection.getCurrentPhotoIndex();
 		if (photoIndex >= 0)
 		{
@@ -223,6 +241,41 @@ public class TrackInfo
 					// disconnect point from photo
 					photo.getDataPoint().setPhoto(null);
 					photo.setDataPoint(null);
+				}
+			}
+			// update subscribers
+			_selection.modifyPointDeleted();
+			UpdateMessageBroker.informSubscribers();
+		}
+		return true;
+	}
+
+	/**
+	 * Delete the currently selected audio item and optionally its point too
+	 * @param inPointToo true to also delete associated point
+	 * @return true if delete successful
+	 */
+	public boolean deleteCurrentAudio(boolean inPointToo)
+	{
+		int audioIndex = _selection.getCurrentAudioIndex();
+		if (audioIndex >= 0)
+		{
+			AudioFile audio = _audioList.getAudio(audioIndex);
+			_audioList.deleteAudio(audioIndex);
+			// has it got a point?
+			if (audio.getDataPoint() != null)
+			{
+				if (inPointToo)
+				{
+					// delete point
+					int pointIndex = _track.getPointIndex(audio.getDataPoint());
+					_track.deletePoint(pointIndex);
+				}
+				else
+				{
+					// disconnect point from audio
+					audio.getDataPoint().setAudio(null);
+					audio.setDataPoint(null);
 				}
 			}
 			// update subscribers
@@ -328,28 +381,30 @@ public class TrackInfo
 	public void selectPoint(int inPointIndex)
 	{
 		if (_selection.getCurrentPointIndex() == inPointIndex || inPointIndex >= _track.getNumPoints()) {return;}
+		DataPoint selectedPoint = _track.getPoint(inPointIndex);
 		// get the index of the current photo
 		int photoIndex = _selection.getCurrentPhotoIndex();
 		// Check if point has photo or not
-		boolean pointHasPhoto = false;
-		if (inPointIndex >= 0)
-		{
-			Photo pointPhoto = _track.getPoint(inPointIndex).getPhoto();
-			pointHasPhoto = (pointPhoto != null);
-			if (pointHasPhoto) {
-				photoIndex = _photoList.getPhotoIndex(pointPhoto);
-			}
+		boolean pointHasPhoto = inPointIndex >= 0 && selectedPoint.getPhoto() != null;
+		if (pointHasPhoto) {
+			photoIndex = _photoList.getPhotoIndex(selectedPoint.getPhoto());
 		}
-		// Might need to deselect photo
-		if (!pointHasPhoto)
-		{
+		else if (photoIndex < 0 || _photoList.getPhoto(photoIndex).isConnected()) {
 			// selected point hasn't got a photo - deselect photo if necessary
-			if (photoIndex < 0 || _photoList.getPhoto(photoIndex).isConnected()) {
-				photoIndex = -1;
-			}
+			photoIndex = -1;
+		}
+		// Check if point has an audio item or not
+		int audioIndex = _selection.getCurrentAudioIndex();
+		boolean pointHasAudio = inPointIndex >= 0 && selectedPoint.getAudio() != null;
+		if (pointHasAudio) {
+			audioIndex = _audioList.getAudioIndex(selectedPoint.getAudio());
+		}
+		else if (audioIndex < 0 || _audioList.getAudio(audioIndex).isConnected()) {
+			// deselect current audio file
+			audioIndex = -1;
 		}
 		// give to selection
-		_selection.selectPhotoAndPoint(photoIndex, inPointIndex);
+		_selection.selectPointPhotoAudio(inPointIndex, photoIndex, audioIndex);
 	}
 
 	/**
@@ -363,33 +418,83 @@ public class TrackInfo
 		// Therefore the photo selection takes priority, deselecting point if necessary
 		// Find Photo object
 		Photo photo = _photoList.getPhoto(inPhotoIndex);
+		int pointIndex = _selection.getCurrentPointIndex();
+		DataPoint currPoint = getCurrentPoint();
 		if (photo != null)
 		{
-			// Find point object and its index
-			int pointIndex = _track.getPointIndex(photo.getDataPoint());
-			// Check whether to deselect current point or not if photo not correlated
-			if (pointIndex < 0)
-			{
-				int currPointIndex = _selection.getCurrentPointIndex();
-				if (currPointIndex >= 0 && _track.getPoint(currPointIndex).getPhoto() == null)
-				{
-					pointIndex = currPointIndex; // Keep currently selected point
-				}
-			}
-			// give to selection object
-			_selection.selectPhotoAndPoint(inPhotoIndex, pointIndex);
-		}
-		else {
-			// no photo, just reset selection
-			DataPoint currPoint = getCurrentPoint();
-			if (currPoint != null && currPoint.getPhoto() == null) {
-				_selection.selectPhotoAndPoint(-1, _selection.getCurrentPointIndex()); // keep point
+			// Has the photo got a point?
+			if (photo.isConnected()) {
+				pointIndex = _track.getPointIndex(photo.getDataPoint());
 			}
 			else {
-				_selection.selectPhotoAndPoint(-1, -1); // deselect point too
+				// Check whether to deselect current point or not if photo not correlated
+				if (pointIndex >= 0 && _track.getPoint(pointIndex).getPhoto() != null) {
+					pointIndex = -1;
+				}
 			}
 		}
+		else {
+			// no photo, but maybe need to deselect point
+			if (currPoint != null && currPoint.getPhoto() != null) {
+				pointIndex = -1;
+			}
+		}
+		// Has the new point got an audio file?
+		DataPoint selectedPoint = _track.getPoint(pointIndex);
+		int audioIndex = _selection.getCurrentAudioIndex();
+		if (selectedPoint != null) {
+			if (selectedPoint.getAudio() != null) audioIndex = _audioList.getAudioIndex(selectedPoint.getAudio());
+		}
+		else {
+			if (selectedPoint != currPoint && currPoint.getAudio() != null) {audioIndex = -1;}
+		}
+		// give to selection object
+		_selection.selectPointPhotoAudio(pointIndex, inPhotoIndex, audioIndex);
 	}
+
+	/**
+	 * Select the given audio object and its point if any
+	 * @param inAudioIndex index of audio item to select
+	 */
+	public void selectAudio(int inAudioIndex)
+	{
+		if (_selection.getCurrentAudioIndex() == inAudioIndex) {return;}
+		// Audio selection takes priority, deselecting point if necessary
+		AudioFile audio = _audioList.getAudio(inAudioIndex);
+		int pointIndex = _selection.getCurrentPointIndex();
+		DataPoint currPoint = getCurrentPoint();
+		if (audio != null)
+		{
+			// Find point object and its index
+			if (audio.isConnected()) {
+				pointIndex = _track.getPointIndex(audio.getDataPoint());
+			}
+			else {
+				// Check whether to deselect current point or not if audio not correlated
+				if (pointIndex >= 0 && _track.getPoint(pointIndex).getAudio() != null) {
+					pointIndex = -1;
+				}
+			}
+		}
+		else {
+			// check if current point has audio or not
+			if (currPoint != null && currPoint.getAudio() != null) {
+				pointIndex = -1;
+			}
+		}
+		// Has the new point got a photo?
+		DataPoint selectedPoint = _track.getPoint(pointIndex);
+		int photoIndex = _selection.getCurrentPhotoIndex();
+		if (selectedPoint != null) {
+			if (selectedPoint.getPhoto() != null) photoIndex = _photoList.getPhotoIndex(selectedPoint.getPhoto());
+		}
+		else {
+			if (selectedPoint != currPoint && currPoint.getPhoto() != null) {photoIndex = -1;}
+		}
+		// give to selection object
+		_selection.selectPointPhotoAudio(pointIndex, photoIndex, inAudioIndex);
+	}
+
 
 	/**
 	 * Extend the current selection to end at the given point, eg by shift-clicking

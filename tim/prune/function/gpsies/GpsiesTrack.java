@@ -9,8 +9,8 @@ public class GpsiesTrack
 	private String _trackName = null;
 	/** Description */
 	private String _description = null;
-	/** File id for more details */
-	private String _fileId = null;
+	/** Web page for more details */
+	private String _webUrl = null;
 	/** Track length in metres */
 	private double _trackLength = 0.0;
 	/** Download link */
@@ -50,19 +50,19 @@ public class GpsiesTrack
 	}
 
 	/**
-	 * @param inId id of track
+	 * @param inUrl web page url
 	 */
-	public void setFileId(String inId)
+	public void setWebUrl(String inUrl)
 	{
-		_fileId = inId;
+		_webUrl = inUrl;
 	}
 
 	/**
-	 * @return file id
+	 * @return web url
 	 */
-	public String getFileId()
+	public String getWebUrl()
 	{
-		return _fileId;
+		return _webUrl;
 	}
 
 	/**

@@ -41,8 +41,8 @@ public class DuplicatePointAlgorithm extends CompressionAlgorithm
 			if (!inFlags[i])
 			{
 				DataPoint currPoint = _track.getPoint(i);
-				// Don't delete any photo points
-				if (currPoint.getPhoto() == null)
+				// Don't delete any photo points or audio points
+				if (!currPoint.hasMedia())
 				{
 					// loop over last few points before this one
 					for (int j=i-NUM_POINTS_TO_BACKTRACK; j<i; j++)

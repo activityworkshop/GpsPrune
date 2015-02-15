@@ -38,7 +38,7 @@ public class UndoDeletePhoto implements UndoOperation
 	 */
 	public String getDescription()
 	{
-		String desc = I18nManager.getText("undo.deletephoto") + " " + _photo.getFile().getName();
+		String desc = I18nManager.getText("undo.removephoto") + " " + _photo.getFile().getName();
 		return desc;
 	}
 
@@ -66,8 +66,7 @@ public class UndoDeletePhoto implements UndoOperation
 		}
 		// Ensure that photo is associated with point and vice versa
 		_photo.setDataPoint(_point);
-		if (_point != null)
-		{
+		if (_point != null) {
 			_point.setPhoto(_photo);
 		}
 	}

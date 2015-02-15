@@ -31,9 +31,8 @@ public class GenericFileFilter extends FileFilter
 			_threeCharSuffixes = new String[inSuffixes.length];
 			_fourCharSuffixes = new String[inSuffixes.length];
 			int threeIndex = 0, fourIndex = 0;
-			for (int i=0; i<inSuffixes.length; i++)
+			for (String suffix : inSuffixes)
 			{
-				String suffix = inSuffixes[i];
 				if (suffix != null)
 				{
 					suffix = suffix.trim().toLowerCase();
@@ -66,7 +65,7 @@ public class GenericFileFilter extends FileFilter
 	{
 		if (inName != null)
 		{
-			int nameLen = inName.length();
+			final int nameLen = inName.length();
 			if (nameLen > 4)
 			{
 				// Check for three character suffixes
@@ -93,15 +92,14 @@ public class GenericFileFilter extends FileFilter
 	 * @param inAllowedSuffixes array of allowed suffixes
 	 * @return true if accepted, false otherwise
 	 */
-	public boolean acceptFilename(String inSuffixToCheck, String[] inAllowedSuffixes)
+	private static boolean acceptFilename(String inSuffixToCheck, String[] inAllowedSuffixes)
 	{
 		if (inSuffixToCheck != null && inAllowedSuffixes != null)
 		{
 			// Loop over allowed suffixes
-			for (int i=0; i<inAllowedSuffixes.length; i++)
+			for (String allowed : inAllowedSuffixes)
 			{
-				if (inAllowedSuffixes[i] != null && inSuffixToCheck.equals(inAllowedSuffixes[i]))
-				{
+				if (allowed != null && inSuffixToCheck.equals(allowed)) {
 					return true;
 				}
 			}
@@ -119,5 +117,4 @@ public class GenericFileFilter extends FileFilter
 	{
 		return _filterDesc;
 	}
-
 }

@@ -53,7 +53,7 @@ public class GzipFileLoader
 				SourceInfo sourceInfo = new SourceInfo(inFile,
 					(handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
 				_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-					Altitude.Format.METRES, sourceInfo, handler.getTrackNameList());
+					Altitude.Format.METRES, sourceInfo, handler.getTrackNameList(), handler.getLinkArray());
 			}
 		}
 		catch (Exception e) {

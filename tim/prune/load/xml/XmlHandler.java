@@ -25,8 +25,15 @@ public abstract class XmlHandler extends DefaultHandler
 	 * Can be overriden (eg by gpx handler) to provide a track name list
 	 * @return track name list object if any, or null
 	 */
-	public TrackNameList getTrackNameList()
-	{
+	public TrackNameList getTrackNameList() {
+		return null;
+	}
+
+	/**
+	 * Can be overriden (eg by gpx handler) to provide an array of links to media
+	 * @return array of Strings if any, or null
+	 */
+	public String[] getLinkArray() {
 		return null;
 	}
 }

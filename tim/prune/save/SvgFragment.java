@@ -45,4 +45,12 @@ public class SvgFragment implements Comparable<SvgFragment>
 	{
 		return _fragment.equals(inOther._fragment);
 	}
+
+	/**
+	 * @param inOther other object to compare this one with
+	 * @return true if the objects are equal
+	 */
+	public boolean equals(Object inOther) {
+		return (inOther instanceof SvgFragment?equals((SvgFragment) inOther):false);
+	}
 }

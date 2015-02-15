@@ -49,6 +49,7 @@ import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.ColourChooser;
 import tim.prune.gui.ColourPatch;
+import tim.prune.gui.DialogCloser;
 import tim.prune.gui.ImageUtils;
 import tim.prune.load.GenericFileFilter;
 
@@ -81,9 +82,6 @@ public class KmlExporter extends GenericFunction implements Runnable
 	// Default width and height of thumbnail images in Kmz
 	private static final int DEFAULT_THUMBNAIL_WIDTH = 240;
 	private static final int DEFAULT_THUMBNAIL_HEIGHT = 240;
-	// Actual selected width and height of thumbnail images in Kmz
-	private static int THUMBNAIL_WIDTH = 0;
-	private static int THUMBNAIL_HEIGHT = 0;
 	// Default track colour
 	private static final Color DEFAULT_TRACK_COLOUR = new Color(204, 0, 0); // red
 
@@ -143,6 +141,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		descPanel.setLayout(new FlowLayout());
 		descPanel.add(new JLabel(I18nManager.getText("dialog.exportkml.text")));
 		_descriptionField = new JTextField(20);
+		_descriptionField.addKeyListener(new DialogCloser(_dialog));
 		descPanel.add(_descriptionField);
 		descPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(descPanel);
@@ -325,10 +324,10 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_progressBar.setMaximum(exportImages?getNumPhotosToExport():1);
 
 		// Determine photo thumbnail size from config
-		THUMBNAIL_WIDTH = Config.getConfigInt(Config.KEY_KMZ_IMAGE_WIDTH);
-		if (THUMBNAIL_WIDTH < DEFAULT_THUMBNAIL_WIDTH) {THUMBNAIL_WIDTH = DEFAULT_THUMBNAIL_WIDTH;}
-		THUMBNAIL_HEIGHT = Config.getConfigInt(Config.KEY_KMZ_IMAGE_HEIGHT);
-		if (THUMBNAIL_HEIGHT < DEFAULT_THUMBNAIL_HEIGHT) {THUMBNAIL_HEIGHT = DEFAULT_THUMBNAIL_HEIGHT;}
+		int thumbWidth = Config.getConfigInt(Config.KEY_KMZ_IMAGE_WIDTH);
+		if (thumbWidth < DEFAULT_THUMBNAIL_WIDTH) {thumbWidth = DEFAULT_THUMBNAIL_WIDTH;}
+		int thumbHeight = Config.getConfigInt(Config.KEY_KMZ_IMAGE_HEIGHT);
+		if (thumbHeight < DEFAULT_THUMBNAIL_HEIGHT) {thumbHeight = DEFAULT_THUMBNAIL_HEIGHT;}
 		// Create array for image dimensions in case it's required
 		_imageDimensions = new Dimension[_track.getNumPoints()];
 
@@ -351,7 +350,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 				{
 					// Create thumbnails of each photo in turn and add to zip as images/image<n>.jpg
 					// This is done first so that photo sizes are known for later
-					exportThumbnails(zipOutputStream);
+					exportThumbnails(zipOutputStream, thumbWidth, thumbHeight);
 				}
 				writer = new OutputStreamWriter(zipOutputStream);
 				// Make an entry in the zip file for the kml file
@@ -414,6 +413,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		boolean writeTrack = _pointTypeSelector.getTrackpointsSelected();
 		boolean writeWaypoints = _pointTypeSelector.getWaypointsSelected();
 		boolean writePhotos = _pointTypeSelector.getPhotopointsSelected();
+		boolean writeAudios = _pointTypeSelector.getAudiopointsSelected();
 		boolean justSelection = _pointTypeSelector.getJustSelection();
 		inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.1\">\n<Folder>\n");
 		inWriter.write("\t<name>");
@@ -421,8 +421,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		{
 			inWriter.write(_descriptionField.getText());
 		}
-		else
-		{
+		else {
 			inWriter.write("Export from Prune");
 		}
 		inWriter.write("</name>\n");
@@ -438,7 +437,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		int i = 0;
 		DataPoint point = null;
 		boolean hasTrackpoints = false;
-		boolean writtenPhotoHeader = false;
+		boolean writtenPhotoHeader = false, writtenAudioHeader = false;
 		final int numPoints = _track.getNumPoints();
 		int numSaved = 0;
 		int photoNum = 0;
@@ -456,7 +455,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 					numSaved++;
 				}
 			}
-			else if (point.getPhoto() == null)
+			else if (!point.hasMedia())
 			{
 				hasTrackpoints = true;
 			}
@@ -471,6 +470,17 @@ public class KmlExporter extends GenericFunction implements Runnable
 				}
 				photoNum++;
 				exportPhotoPoint(point, inWriter, inExportImages, i, photoNum, absoluteAltitudes);
+				numSaved++;
+			}
+			// Make a blob with description for each audio file
+			if (point.getAudio() != null && writeAudios && writeCurrentPoint)
+			{
+				if (!writtenAudioHeader)
+				{
+					inWriter.write("<Style id=\"audio_icon\"><IconStyle><color>ff00ffff</color><Icon><href>http://maps.google.com/mapfiles/kml/shapes/star.png</href></Icon></IconStyle></Style>");
+					writtenAudioHeader = true;
+				}
+				exportAudioPoint(point, inWriter, absoluteAltitudes);
 				numSaved++;
 			}
 		}
@@ -541,28 +551,23 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inAbsoluteAltitude) throws IOException
 	{
-		inWriter.write("\t<Placemark>\n\t\t<name>");
-		inWriter.write(inPoint.getWaypointName().trim());
-		inWriter.write("</name>\n");
-		inWriter.write("\t\t<Point>\n");
-		if (inAbsoluteAltitude && inPoint.hasAltitude()) {
-			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
-		}
-		else {
-			inWriter.write("\t\t\t<altitudeMode>clampToGround</altitudeMode>\n");
-		}
-		inWriter.write("\t\t\t<coordinates>");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
-		inWriter.write(',');
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
-		inWriter.write(",");
-		if (inPoint.hasAltitude()) {
-			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
-		}
-		else {
-			inWriter.write("0");
-		}
-		inWriter.write("</coordinates>\n\t\t</Point>\n\t</Placemark>\n");
+		String name = inPoint.getWaypointName().trim();
+		exportNamedPoint(inPoint, inWriter, name, null, null, inAbsoluteAltitude);
+	}
+
+
+	/**
+	 * Export the specified audio point into the file
+	 * @param inPoint audio point to export
+	 * @param inWriter writer object
+	 * @param inAbsoluteAltitude true for absolute altitude
+	 * @throws IOException on write failure
+	 */
+	private void exportAudioPoint(DataPoint inPoint, Writer inWriter, boolean inAbsoluteAltitude) throws IOException
+	{
+		String name = inPoint.getAudio().getFile().getName();
+		String desc = inPoint.getAudio().getFile().getAbsolutePath();
+		exportNamedPoint(inPoint, inWriter, name, desc, "audio_icon", inAbsoluteAltitude);
 	}
 
 
@@ -580,18 +585,51 @@ public class KmlExporter extends GenericFunction implements Runnable
 		int inPointNumber, int inImageNumber, boolean inAbsoluteAltitude)
 	throws IOException
 	{
-		inWriter.write("\t<Placemark>\n\t\t<name>");
-		inWriter.write(inPoint.getPhoto().getFile().getName());
-		inWriter.write("</name>\n");
+		String name = inPoint.getPhoto().getFile().getName();
+		String desc = null;
 		if (inImageLink)
 		{
 			Dimension imageSize = _imageDimensions[inPointNumber];
-			// Write out some html for the thumbnail images
-			inWriter.write("<description><![CDATA[<br/><table border='0'><tr><td><center><img src='images/image"
+			// Create html for the thumbnail images
+			desc = "<![CDATA[<br/><table border='0'><tr><td><center><img src='images/image"
 				+ inImageNumber + ".jpg' width='" + imageSize.width + "' height='" + imageSize.height + "'></center></td></tr>"
-				+ "<tr><td><center>" + inPoint.getPhoto().getFile().getName() + "</center></td></tr></table>]]></description>");
+				+ "<tr><td><center>" + inPoint.getPhoto().getFile().getName() + "</center></td></tr></table>]]>";
 		}
-		inWriter.write("<styleUrl>#camera_icon</styleUrl>\n");
+		// Export point
+		exportNamedPoint(inPoint, inWriter, name, desc, "camera_icon", inAbsoluteAltitude);
+	}
+
+
+	/**
+	 * Export the specified named point into the file, like waypoint or photo point
+	 * @param inPoint data point
+	 * @param inWriter writer object
+	 * @param inName name of point
+	 * @param inDesc description of point, or null
+	 * @param inStyle style of point, or null
+	 * @param inAbsoluteAltitude true for absolute altitudes
+	 * @throws IOException on write failure
+	 */
+	private void exportNamedPoint(DataPoint inPoint, Writer inWriter, String inName,
+		String inDesc, String inStyle, boolean inAbsoluteAltitude)
+	throws IOException
+	{
+		inWriter.write("\t<Placemark>\n\t\t<name>");
+		inWriter.write(inName);
+		inWriter.write("</name>\n");
+		if (inDesc != null)
+		{
+			// Write out description
+			inWriter.write("<description>");
+			inWriter.write(inDesc);
+			inWriter.write("</description>");
+		}
+		if (inStyle != null)
+		{
+			inWriter.write("<styleUrl>#");
+			inWriter.write(inStyle);
+			inWriter.write("</styleUrl>\n");
+		}
 		inWriter.write("\t\t<Point>\n");
 		if (inAbsoluteAltitude && inPoint.hasAltitude()) {
 			inWriter.write("\t\t\t<altitudeMode>absolute</altitudeMode>\n");
@@ -603,13 +641,13 @@ public class KmlExporter extends GenericFunction implements Runnable
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
-		inWriter.write(",");
+		inWriter.write(',');
 		// Altitude if point has one
 		if (inPoint.hasAltitude()) {
 			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
-			inWriter.write("0");
+			inWriter.write('0');
 		}
 		inWriter.write("</coordinates>\n\t\t</Point>\n\t</Placemark>\n");
 	}
@@ -626,22 +664,25 @@ public class KmlExporter extends GenericFunction implements Runnable
 		inWriter.write(',');
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		// Altitude if point has one
-		inWriter.write(",");
+		inWriter.write(',');
 		if (inPoint.hasAltitude()) {
 			inWriter.write("" + inPoint.getAltitude().getStringValue(Altitude.Format.METRES));
 		}
 		else {
-			inWriter.write("0");
+			inWriter.write('0');
 		}
-		inWriter.write("\n");
+		inWriter.write('\n');
 	}
 
 
 	/**
 	 * Loop through the photos and create thumbnails
 	 * @param inZipStream zip stream to save image files to
+	 * @param inThumbWidth thumbnail width
+	 * @param inThumbHeight thumbnail height
 	 */
-	private void exportThumbnails(ZipOutputStream inZipStream) throws IOException
+	private void exportThumbnails(ZipOutputStream inZipStream, int inThumbWidth, int inThumbHeight)
+	throws IOException
 	{
 		// set up image writer
 		Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
@@ -677,7 +718,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 
 				// Scale and smooth image to required size
 				BufferedImage bufferedImage = ImageUtils.rotateImage(icon.getImage(),
-					THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT, point.getPhoto().getRotationDegrees());
+					inThumbWidth, inThumbHeight, point.getPhoto().getRotationDegrees());
 				// Store image dimensions so that it doesn't have to be calculated again for the points
 				_imageDimensions[i] = new Dimension(bufferedImage.getWidth(), bufferedImage.getHeight());
 

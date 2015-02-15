@@ -1,9 +1,7 @@
 package tim.prune.jpeg;
 
 import java.io.File;
-
 import javax.swing.JOptionPane;
-
 import tim.prune.I18nManager;
 
 /**
@@ -12,10 +10,8 @@ import tim.prune.I18nManager;
  * to the external libmetadata-extractor-java library
  * instead of the included modified routines.
  *
- * To use the internal routines, set the USE_INTERNAL_LIBRARY flag to true
- * and include the internal classes in the compiled jar.
- * To use the external library, set the USE_INTERNAL_LIBRARY flag to false
- * and do not export the internal classes.
+ * Switching between internal and external libraries is
+ * handled by the ExifLibrarySwitch
  */
 public abstract class ExifGateway
 {
@@ -70,5 +66,26 @@ public abstract class ExifGateway
 		String key = ExifLibrarySwitch.USE_INTERNAL_LIBRARY?"internal":"external";
 		if (_exifLibrary == null || !_exifLibrary.looksOK()) {key = key + ".failed";}
 		return key;
+	}
+
+
+
+	/**
+	 * @param inNumerator numerator from Rational
+	 * @param inDenominator denominator from Rational
+	 * @return the value of the specified number as a positive <code>double</code>.
+	 * Prevents interpretation of 32 bit numbers as negative, and forces a positive answer
+	 */
+	public static final double convertToPositiveValue(int inNumerator, int inDenominator)
+	{
+		if (inDenominator == 0) return 0.0;
+		double numeratorDbl = inNumerator;
+		double denomDbl = inDenominator;
+		if (inNumerator >= 0)
+			return numeratorDbl / denomDbl;
+		final double correction = Math.pow(2.0, 32);
+		numeratorDbl += correction;
+		if (inDenominator < 0) denomDbl += correction;
+		return numeratorDbl / denomDbl;
 	}
 }

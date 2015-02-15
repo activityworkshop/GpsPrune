@@ -17,7 +17,10 @@ public class DataPoint
 	private Coordinate _latitude = null, _longitude = null;
 	private Altitude _altitude;
 	private Timestamp _timestamp = null;
+	/** Attached photo */
 	private Photo _photo = null;
+	/** Attached audio file */
+	private AudioFile _audio = null;
 	private String _waypointName = null;
 	private boolean _startOfSegment = false;
 	private boolean _markedForDeletion = false;
@@ -299,20 +302,51 @@ public class DataPoint
 	 * Set the photo for this data point
 	 * @param inPhoto Photo object
 	 */
-	public void setPhoto(Photo inPhoto)
-	{
+	public void setPhoto(Photo inPhoto) {
 		_photo = inPhoto;
+		_modifyCount++;
 	}
-
 
 	/**
 	 * @return associated Photo object
 	 */
-	public Photo getPhoto()
-	{
+	public Photo getPhoto() {
 		return _photo;
 	}
 
+	/**
+	 * Set the audio file for this point
+	 * @param inAudio audio object
+	 */
+	public void setAudio(AudioFile inAudio) {
+		_audio = inAudio;
+		_modifyCount++;
+	}
+
+	/**
+	 * @return associated audio object
+	 */
+	public AudioFile getAudio() {
+		return _audio;
+	}
+
+	/**
+	 * Attach the given media object according to type
+	 * @param inMedia either a photo or an audio file
+	 */
+	public void attachMedia(MediaFile inMedia)
+	{
+		if (inMedia != null) {
+			if (inMedia instanceof Photo) {
+				setPhoto((Photo) inMedia);
+				inMedia.setDataPoint(this);
+			}
+			else if (inMedia instanceof AudioFile) {
+				setAudio((AudioFile) inMedia);
+				inMedia.setDataPoint(this);
+			}
+		}
+	}
 
 	/**
 	 * @return true if the point is valid
@@ -320,6 +354,13 @@ public class DataPoint
 	public boolean isValid()
 	{
 		return _latitude.isValid() && _longitude.isValid();
+	}
+
+	/**
+	 * @return true if the point has either a photo or audio attached
+	 */
+	public boolean hasMedia() {
+		return _photo != null || _audio != null;
 	}
 
 	/**

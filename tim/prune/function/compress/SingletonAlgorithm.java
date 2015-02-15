@@ -45,7 +45,7 @@ public class SingletonAlgorithm extends SingleParameterAlgorithm
 			{
 				// Don't delete any waypoints or photo points
 				// Only interested in start and end of segments
-				if (!currPoint.isWaypoint() && currPoint.getPhoto() == null
+				if (!currPoint.isWaypoint() && !currPoint.hasMedia()
 					&& _trackDetails.isSegmentStart(i) && _trackDetails.isSegmentEnd(i))
 				{
 					// Measure distance from previous track point

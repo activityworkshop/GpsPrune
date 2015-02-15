@@ -500,8 +500,9 @@ public class FileSaver
 				{
 					DataPoint point = track.getPoint(p);
 					boolean savePoint = ((point.isWaypoint() && _pointTypeSelector.getWaypointsSelected())
-						|| (!point.isWaypoint() && point.getPhoto()==null && _pointTypeSelector.getTrackpointsSelected())
-						|| (!point.isWaypoint() && point.getPhoto()!=null && _pointTypeSelector.getPhotopointsSelected()))
+						|| (!point.isWaypoint() && !point.hasMedia() && _pointTypeSelector.getTrackpointsSelected())
+						|| (!point.isWaypoint() && point.getPhoto()!=null && _pointTypeSelector.getPhotopointsSelected())
+						|| (!point.isWaypoint() && point.getAudio()!=null && _pointTypeSelector.getAudiopointsSelected()))
 						&& (!_pointTypeSelector.getJustSelection() || (p>=selStart && p<=selEnd));
 					if (!savePoint) {continue;}
 					numSaved++;
@@ -512,9 +513,8 @@ public class FileSaver
 						info = _model.getFieldInfo(f);
 						if (info.isSelected())
 						{
-							if (!firstField)
-							{
-								// output field separator
+							// output field separator
+							if (!firstField) {
 								buffer.append(delimiter);
 							}
 							saveField(buffer, point, info.getField(), coordFormat, altitudeFormat, timestampFormat);

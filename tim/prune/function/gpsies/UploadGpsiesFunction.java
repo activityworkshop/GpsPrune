@@ -250,6 +250,7 @@ public class UploadGpsiesFunction extends GenericFunction
 	 */
 	private void startUpload()
 	{
+		BufferedReader reader = null;
 		try
 		{
 			FormPoster poster = new FormPoster(new URL(GPSIES_URL));
@@ -277,12 +278,12 @@ public class UploadGpsiesFunction extends GenericFunction
 			_writer = new OutputStreamWriter(oStream);
 			new Thread(new Runnable() {
 				public void run() {
-					boolean[] saveFlags = {true, true, true, false, true}; // export everything
+					boolean[] saveFlags = {true, true, true, true, false, true}; // export everything
 					try {
 						GpxExporter.exportData(_writer, _app.getTrackInfo(), _nameField.getText(), null, saveFlags, false);
-						_writer.close();
-					} catch (IOException e) {
-						e.printStackTrace();
+					} catch (IOException e) {}
+					finally {
+						try {_writer.close();} catch (IOException e) {}
 					}
 				}
 			}).start();
@@ -290,7 +291,7 @@ public class UploadGpsiesFunction extends GenericFunction
 
 			BufferedInputStream answer = new BufferedInputStream(poster.post());
 			int response = poster.getResponseCode();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(answer));
+			reader = new BufferedReader(new InputStreamReader(answer));
 			String line = reader.readLine();
 			// Try to extract gpsies page url from the returned message
 			String pageUrl = null;
@@ -320,6 +321,9 @@ public class UploadGpsiesFunction extends GenericFunction
 		catch (IOException ioe) {
 			_app.showErrorMessageNoLookup(getNameKey(), I18nManager.getText("error.gpsies.uploadfailed") + ": "
 				+ ioe.getClass().getName() + " : " + ioe.getMessage());
+		}
+		finally {
+			try {if (reader != null) reader.close();} catch (IOException e) {}
 		}
 		_dialog.dispose();
 	}

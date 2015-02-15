@@ -162,12 +162,12 @@ public class FieldList
 	public String toString()
 	{
 		StringBuffer buffer = new StringBuffer();
-		buffer.append("(");
+		buffer.append('(');
 		for (int i=0; i<_fieldArray.length; i++)
 		{
 			buffer.append(_fieldArray[i].getName()).append(',');
 		}
-		buffer.append(")");
+		buffer.append(')');
 		return buffer.toString();
 	}
 }

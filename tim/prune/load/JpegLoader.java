@@ -59,8 +59,7 @@ public class JpegLoader implements Runnable
 	{
 		_app = inApp;
 		_parentFrame = inParentFrame;
-		String[] fileTypes = {"jpg", "jpe", "jpeg"};
-		_fileFilter = new GenericFileFilter("filetype.jpeg", fileTypes);
+		_fileFilter = new JpegFileFilter();
 	}
 
 
@@ -150,8 +149,8 @@ public class JpegLoader implements Runnable
 	public void run()
 	{
 		// Initialise arrays, errors, summaries
-		_fileCounts = new int[4]; // files, jpegs, exifs, gps
-		_photos = new TreeSet<Photo>(new PhotoSorter());
+		_fileCounts = new int[3]; // files, jpegs, gps
+		_photos = new TreeSet<Photo>(new MediaSorter());
 		File[] files = _fileChooser.getSelectedFiles();
 		// Loop recursively over selected files/directories to count files
 		int numFiles = countFileList(files, true, _subdirCheckbox.isSelected());
@@ -166,8 +165,6 @@ public class JpegLoader implements Runnable
 		_progressDialog.dispose(); // Sometimes dialog doesn't disappear without this dispose
 		if (_cancelled) {return;}
 
-		//System.out.println("Finished - counts are: " + _fileCounts[0] + ", " + _fileCounts[1]
-		//  + ", " + _fileCounts[2] + ", " + _fileCounts[3]);
 		if (_fileCounts[0] == 0)
 		{
 			// No files found at all
@@ -179,11 +176,6 @@ public class JpegLoader implements Runnable
 			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nojpegsfound");
 		}
 		else if (!_noExifCheckbox.isSelected() && _fileCounts[2] == 0)
-		{
-			// Need coordinates but no exif found
-			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.noexiffound");
-		}
-		else if (!_noExifCheckbox.isSelected() && _fileCounts[3] == 0)
 		{
 			// Need coordinates but no gps information found
 			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nogpsfound");
@@ -247,18 +239,36 @@ public class JpegLoader implements Runnable
 		if (!_fileFilter.acceptFilename(inFile.getName())) {return;}
 		// If it's a Jpeg, we can use ExifReader to get coords, otherwise we could try exiftool (if it's installed)
 
-		// Create Photo object
-		Photo photo = new Photo(inFile);
 		if (inFile.exists() && inFile.canRead()) {
 			_fileCounts[1]++; // jpeg found
 		}
+		Photo photo = createPhoto(inFile);
+		if (photo.getDataPoint() != null) {
+			_fileCounts[2]++; // photo has coordinates
+		}
+		// Check the criteria for adding the photo - check whether the photo has coordinates and if so if they're within the rectangle
+		if ( (photo.getDataPoint() != null || _noExifCheckbox.isSelected())
+			&& (photo.getDataPoint() == null || !_outsideAreaCheckbox.isEnabled()
+				|| _outsideAreaCheckbox.isSelected() || _trackRectangle.containsPoint(photo.getDataPoint())))
+		{
+			_photos.add(photo);
+		}
+	}
+
+	/**
+	 * Create a Photo object for the given file, including reading exif information
+	 * @param inFile file object
+	 * @return Photo object
+	 */
+	public static Photo createPhoto(File inFile)
+	{
+		// Create Photo object
+		Photo photo = new Photo(inFile);
 		// Try to get information out of exif
 		JpegData jpegData = ExifGateway.getJpegData(inFile);
 		Timestamp timestamp = null;
 		if (jpegData != null)
 		{
-			if (jpegData.getExifDataPresent())
-				{_fileCounts[2]++;} // exif found
 			if (jpegData.isGpsValid())
 			{
 				timestamp = createTimestamp(jpegData.getGpsDatestamp(), jpegData.getGpsTimestamp());
@@ -268,7 +278,6 @@ public class JpegLoader implements Runnable
 				point.setSegmentStart(true);
 				photo.setDataPoint(point);
 				photo.setOriginalStatus(Photo.Status.TAGGED);
-				_fileCounts[3]++;
 			}
 			// Use exif timestamp if gps timestamp not available
 			if (timestamp == null && jpegData.getOriginalTimestamp() != null) {
@@ -290,13 +299,7 @@ public class JpegLoader implements Runnable
 		if (photo.getDataPoint() != null) {
 			photo.getDataPoint().setFieldValue(Field.TIMESTAMP, timestamp.getText(Timestamp.FORMAT_ISO_8601), false);
 		}
-		// Check the criteria for adding the photo - check whether the photo has coordinates and if so if they're within the rectangle
-		if ( (photo.getDataPoint() != null || _noExifCheckbox.isSelected())
-			&& (photo.getDataPoint() == null || !_outsideAreaCheckbox.isEnabled()
-				|| _outsideAreaCheckbox.isSelected() || _trackRectangle.containsPoint(photo.getDataPoint())))
-		{
-			_photos.add(photo);
-		}
+		return photo;
 	}
 
 

@@ -35,9 +35,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPruner
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "11.2";
+	public static final String VERSION_NUMBER = "12";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "205a";
+	public static final String BUILD_NUMBER = "223";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -67,12 +67,7 @@ public class GpsPruner
 		for (int i=0; i<args.length; i++)
 		{
 			String arg = args[i];
-			if (arg.startsWith("--locale="))
-			{
-				localeCode = arg.substring(9);
-				locale = getLanguage(localeCode);
-			}
-			else if (arg.startsWith("--lang="))
+			if (arg.startsWith("--lang="))
 			{
 				localeCode = arg.substring(7);
 				locale = getLanguage(localeCode);
@@ -104,7 +99,7 @@ public class GpsPruner
 		if (showUsage) {
 			System.out.println("Possible parameters:"
 				+ "\n   --configfile=<file> used to specify a configuration file"
-				+ "\n   --lang=<code> or --locale=<code>  used to specify language"
+				+ "\n   --lang=<code>       used to specify language code such as DE"
 				+ "\n   --langfile=<file>   used to specify an alternative language file\n");
 		}
 		// Initialise configuration if selected
@@ -164,7 +159,7 @@ public class GpsPruner
 		{
 			return new Locale(inString);
 		}
-		else if (inString.length() == 5)
+		else if (inString.length() == 5 && inString.charAt(2) == '_')
 		{
 			return new Locale(inString.substring(0, 2), inString.substring(3));
 		}

@@ -1,0 +1,68 @@
+package tim.prune.function;
+
+import javax.swing.JOptionPane;
+
+import tim.prune.App;
+import tim.prune.GenericFunction;
+import tim.prune.I18nManager;
+import tim.prune.data.AudioFile;
+import tim.prune.undo.UndoDeleteAudio;
+
+/**
+ * Function to remove the currently selected audio file
+ */
+public class RemoveAudioFunction extends GenericFunction
+{
+	/**
+	 * Constructor
+	 * @param inApp App object
+	 */
+	public RemoveAudioFunction(App inApp) {
+		super(inApp);
+	}
+
+	/** @return name key */
+	public String getNameKey() {
+		return "function.removeaudio";
+	}
+
+	/**
+	 * Perform the function
+	 */
+	public void begin()
+	{
+		// Delete the current audio, and optionally its point too, keeping undo information
+		AudioFile currentAudio = _app.getTrackInfo().getCurrentAudio();
+		if (currentAudio != null)
+		{
+			// Audio is selected, see if it has a point or not
+			boolean deleted = false;
+			UndoDeleteAudio undoAction = null;
+			if (currentAudio.getDataPoint() == null)
+			{
+				// no point attached, so just delete
+				undoAction = new UndoDeleteAudio(currentAudio, _app.getTrackInfo().getSelection().getCurrentAudioIndex(),
+					null, -1);
+				deleted = _app.getTrackInfo().deleteCurrentAudio(false);
+			}
+			else
+			{
+				// point is attached, so need to confirm point deletion
+				undoAction = new UndoDeleteAudio(currentAudio, _app.getTrackInfo().getSelection().getCurrentAudioIndex(),
+					currentAudio.getDataPoint(), _app.getTrackInfo().getTrack().getPointIndex(currentAudio.getDataPoint()));
+				int response = JOptionPane.showConfirmDialog(_app.getFrame(),
+					I18nManager.getText("dialog.deleteaudio.deletepoint"),
+					I18nManager.getText(getNameKey()), JOptionPane.YES_NO_CANCEL_OPTION);
+				boolean deletePointToo = (response == JOptionPane.YES_OPTION);
+				// Cancel delete if cancel pressed or dialog closed
+				if (response == JOptionPane.YES_OPTION || response == JOptionPane.NO_OPTION) {
+					deleted = _app.getTrackInfo().deleteCurrentAudio(deletePointToo);
+				}
+			}
+			// Add undo information to stack if necessary
+			if (deleted) {
+				_app.completeFunction(undoAction, currentAudio.getFile().getName() + " " + I18nManager.getText("confirm.media.removed"));
+			}
+		}
+	}
+}

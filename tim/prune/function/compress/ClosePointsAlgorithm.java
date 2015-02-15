@@ -58,7 +58,7 @@ public class ClosePointsAlgorithm extends SingleParameterAlgorithm
 				if (!currPoint.isWaypoint())
 				{
 					// Don't delete any photo points or start/end of segments
-					if (currPoint.getPhoto() == null
+					if (!currPoint.hasMedia()
 						&& !_trackDetails.isSegmentStart(i) && !_trackDetails.isSegmentEnd(i))
 					{
 						// Check current point against prevPoint

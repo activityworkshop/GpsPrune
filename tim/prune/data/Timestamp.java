@@ -27,7 +27,6 @@ public class Timestamp
 	private static Calendar CALENDAR = null;
 	private static final Pattern GENERAL_TIMESTAMP_PATTERN
 		= Pattern.compile("(\\d{4})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})");
-	private static Matcher GENERAL_TIMESTAMP_MATCHER = null;
 	private static long SECS_SINCE_1970 = 0L;
 	private static long SECS_SINCE_GARTRIP = 0L;
 	private static long MSECS_SINCE_1970 = 0L;
@@ -96,16 +95,18 @@ public class Timestamp
 					}
 					catch (ParseException e) {}
 				}
-				if (!_valid && inString.length() == 19) {
-					GENERAL_TIMESTAMP_MATCHER = GENERAL_TIMESTAMP_PATTERN.matcher(inString);
-					if (GENERAL_TIMESTAMP_MATCHER.matches()) {
+				if (!_valid && inString.length() == 19)
+				{
+					final Matcher matcher = GENERAL_TIMESTAMP_PATTERN.matcher(inString);
+					if (matcher.matches())
+					{
 						try {
-							_seconds = getSeconds(Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(1)),
-								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(2)),
-								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(3)),
-								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(4)),
-								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(5)),
-								Integer.parseInt(GENERAL_TIMESTAMP_MATCHER.group(6)));
+							_seconds = getSeconds(Integer.parseInt(matcher.group(1)),
+								Integer.parseInt(matcher.group(2)),
+								Integer.parseInt(matcher.group(3)),
+								Integer.parseInt(matcher.group(4)),
+								Integer.parseInt(matcher.group(5)),
+								Integer.parseInt(matcher.group(6)));
 							_valid = true;
 						}
 						catch (NumberFormatException nfe2) {} // parse shouldn't fail if matcher matched
@@ -249,7 +250,17 @@ public class Timestamp
 	 */
 	public Timestamp createPlusOffset(TimeDifference inOffset)
 	{
-		return new Timestamp((_seconds + inOffset.getTotalSeconds()) * 1000L);
+		return createPlusOffset(inOffset.getTotalSeconds());
+	}
+
+	/**
+	 * Add the given number of seconds to this Timestamp
+	 * @param inSeconds number of seconds to add
+	 * @return new Timestamp object
+	 */
+	public Timestamp createPlusOffset(long inSeconds)
+	{
+		return new Timestamp((_seconds + inSeconds) * 1000L);
 	}
 
 

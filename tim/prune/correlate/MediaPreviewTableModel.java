@@ -7,12 +7,14 @@ import tim.prune.I18nManager;
 import tim.prune.data.Distance;
 
 /**
- * Class to act as table model for the photo preview table
+ * Class to act as the table model for the correlation preview table
  */
-public class PhotoPreviewTableModel extends AbstractTableModel
+public class MediaPreviewTableModel extends AbstractTableModel
 {
+	/** Text for first column heading */
+	private String _firstColumnHeading = null;
 	/** ArrayList containing TableRow objects */
-	private ArrayList<PhotoPreviewTableRow> _list = new ArrayList<PhotoPreviewTableRow>();
+	private ArrayList<MediaPreviewTableRow> _list = new ArrayList<MediaPreviewTableRow>();
 	/** Distance units */
 	private Distance.Units _distanceUnits = Distance.Units.KILOMETRES;
 	/** Number formatter */
@@ -26,15 +28,20 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 		FORMAT_ONE_DP.setMinimumFractionDigits(1);
 	}
 
+	/**
+	 * Constructor
+	 * @param inFirstColumnKey key for first column heading
+	 */
+	public MediaPreviewTableModel(String inFirstColumnKey) {
+		_firstColumnHeading = I18nManager.getText(inFirstColumnKey);
+	}
 
 	/**
 	 * @return the column count, always 5
 	 */
-	public int getColumnCount()
-	{
+	public int getColumnCount() {
 		return 5;
 	}
-
 
 	/**
 	 * Get the name of the column
@@ -43,9 +50,9 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	 */
 	public String getColumnName(int inColNum)
 	{
-		if (inColNum == 0) return I18nManager.getText("dialog.correlate.photoselect.photoname");
+		if (inColNum == 0) return _firstColumnHeading;
 		else if (inColNum == 1) return I18nManager.getText("fieldname.timestamp");
-		else if (inColNum == 2) return I18nManager.getText("dialog.correlate.photoselect.timediff");
+		else if (inColNum == 2) return I18nManager.getText("dialog.correlate.select.timediff");
 		else if (inColNum == 3) return I18nManager.getText("fieldname.distance");
 		return I18nManager.getText("dialog.correlate.options.correlate");
 	}
@@ -65,7 +72,7 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	 * @param inRowIndex row index
 	 * @return table row object
 	 */
-	public PhotoPreviewTableRow getRow(int inRowIndex)
+	public MediaPreviewTableRow getRow(int inRowIndex)
 	{
 		return _list.get(inRowIndex);
 	}
@@ -79,10 +86,10 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	 */
 	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
-		PhotoPreviewTableRow row = _list.get(inRowIndex);
-		if (inColumnIndex == 0) return row.getPhoto().getFile().getName();
+		MediaPreviewTableRow row = _list.get(inRowIndex);
+		if (inColumnIndex == 0) return row.getMedia().getFile().getName();
 		else if (inColumnIndex == 1) {
-			return row.getPhoto().getTimestamp().getText();
+			return row.getMedia().getTimestamp().getText();
 		}
 		else if (inColumnIndex == 2) {
 			if (row.getPointPair().isValid()) {
@@ -119,10 +126,10 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 
 
 	/**
-	 * Add a photo to the list
+	 * Add a row to the list
 	 * @param inRow row to add
 	 */
-	public void addPhotoRow(PhotoPreviewTableRow inRow)
+	public void addRow(MediaPreviewTableRow inRow)
 	{
 		_list.add(inRow);
 	}
@@ -153,12 +160,11 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 	/**
 	 * @return true if any of the correlate flags are on
 	 */
-	public boolean hasPhotosSelected()
+	public boolean hasAnySelected()
 	{
 		for (int i=0; i<getRowCount(); i++)
 		{
-			if (getRow(i).getCorrelateFlag().booleanValue())
-			{
+			if (getRow(i).getCorrelateFlag().booleanValue()) {
 				return true;
 			}
 		}
@@ -176,10 +182,9 @@ public class PhotoPreviewTableModel extends AbstractTableModel
 		// can only edit the correlate column
 		if (inColumnIndex == 4)
 		{
-			PhotoPreviewTableRow row = getRow(inRowIndex);
-			// Don't allow setting of photos which can't be correlated
-			if (row.getPointPair().isValid())
-			{
+			MediaPreviewTableRow row = getRow(inRowIndex);
+			// Don't allow setting of items which can't be correlated
+			if (row.getPointPair().isValid()) {
 				row.setCorrelateFlag(((Boolean) inValue).booleanValue());
 			}
 		}

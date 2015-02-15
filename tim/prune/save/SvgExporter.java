@@ -31,6 +31,7 @@ import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
+import tim.prune.gui.DialogCloser;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.ThreeDModel;
 
@@ -131,8 +132,7 @@ public class SvgExporter extends Export3dFunction
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
+			public void actionPerformed(ActionEvent e) {
 				_dialog.dispose();
 			}
 		});
@@ -148,6 +148,7 @@ public class SvgExporter extends Export3dFunction
 		phiLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		centralPanel.add(phiLabel);
 		_phiField = new JTextField("" + _phi);
+		_phiField.addKeyListener(new DialogCloser(_dialog));
 		centralPanel.add(_phiField);
 		JLabel thetaLabel = new JLabel(I18nManager.getText("dialog.exportsvg.theta"));
 		thetaLabel.setHorizontalAlignment(SwingConstants.TRAILING);

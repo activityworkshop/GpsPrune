@@ -3,6 +3,7 @@ package tim.prune.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -16,6 +17,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.border.EtchedBorder;
 
 import tim.prune.DataSubscriber;
@@ -25,6 +27,7 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
+import tim.prune.data.AudioFile;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
@@ -55,11 +58,21 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _aveSpeedLabel = null;
 
 	// Photo details
+	private JPanel _photoDetailsPanel = null;
 	private JLabel _photoLabel = null;
 	private PhotoThumbnail _photoThumbnail = null;
 	private JLabel _photoTimestampLabel = null;
 	private JLabel _photoConnectedLabel = null;
 	private JPanel _rotationButtons = null;
+
+	// Audio details
+	private JPanel _audioDetailsPanel = null;
+	private JLabel _audioLabel = null;
+	private JLabel _audioConnectedLabel = null;
+	private JLabel _audioTimestampLabel = null;
+	private JLabel _audioLengthLabel = null;
+	private JProgressBar _audioProgress = null;
+	private JPanel _playAudioPanel = null;
 
 	// Units
 	private JComboBox _coordFormatDropdown = null;
@@ -81,6 +94,7 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_RANGE_ALTITUDE = I18nManager.getText("fieldname.altitude") + ": ";
 	private static final String LABEL_RANGE_CLIMB = I18nManager.getText("details.range.climb") + ": ";
 	private static final String LABEL_RANGE_DESCENT = ", " + I18nManager.getText("details.range.descent") + ": ";
+	private static final String LABEL_AUDIO_FILE = I18nManager.getText("details.audio.file") + ": ";
 	private static String LABEL_POINT_ALTITUDE_UNITS = null;
 	private static Altitude.Format LABEL_POINT_ALTITUDE_FORMAT = Altitude.Format.NO_FORMAT;
 
@@ -97,18 +111,11 @@ public class DetailsDisplay extends GenericDisplay
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
+		Font biggerFont = new JLabel().getFont();
+		biggerFont = biggerFont.deriveFont(Font.BOLD, biggerFont.getSize2D() + 2.0f);
 
 		// Point details panel
-		JPanel pointDetailsPanel = new JPanel();
-		pointDetailsPanel.setLayout(new BoxLayout(pointDetailsPanel, BoxLayout.Y_AXIS));
-		pointDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
-		);
-		JLabel pointDetailsLabel = new JLabel(I18nManager.getText("details.pointdetails"));
-		Font biggerFont = pointDetailsLabel.getFont();
-		biggerFont = biggerFont.deriveFont(Font.BOLD, biggerFont.getSize2D() + 2.0f);
-		pointDetailsLabel.setFont(biggerFont);
-		pointDetailsPanel.add(pointDetailsLabel);
+		JPanel pointDetailsPanel = makeDetailsPanel("details.pointdetails", biggerFont);
 		_indexLabel = new JLabel(I18nManager.getText("details.nopointselection"));
 		pointDetailsPanel.add(_indexLabel);
 		_latLabel = new JLabel("");
@@ -118,6 +125,7 @@ public class DetailsDisplay extends GenericDisplay
 		_altLabel = new JLabel("");
 		pointDetailsPanel.add(_altLabel);
 		_timeLabel = new JLabel("");
+		_timeLabel.setMinimumSize(new Dimension(120, 10));
 		pointDetailsPanel.add(_timeLabel);
 		_speedLabel = new JLabel("");
 		pointDetailsPanel.add(_speedLabel);
@@ -128,14 +136,7 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// range details panel
-		JPanel rangeDetailsPanel = new JPanel();
-		rangeDetailsPanel.setLayout(new BoxLayout(rangeDetailsPanel, BoxLayout.Y_AXIS));
-		rangeDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
-		);
-		JLabel rangeDetailsLabel = new JLabel(I18nManager.getText("details.rangedetails"));
-		rangeDetailsLabel.setFont(biggerFont);
-		rangeDetailsPanel.add(rangeDetailsLabel);
+		JPanel rangeDetailsPanel = makeDetailsPanel("details.rangedetails", biggerFont);
 		_rangeLabel = new JLabel(I18nManager.getText("details.norangeselection"));
 		rangeDetailsPanel.add(_rangeLabel);
 		_distanceLabel = new JLabel("");
@@ -151,40 +152,68 @@ public class DetailsDisplay extends GenericDisplay
 		rangeDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// photo details panel
-		JPanel photoDetailsPanel = new JPanel();
-		photoDetailsPanel.setLayout(new BoxLayout(photoDetailsPanel, BoxLayout.Y_AXIS));
-		photoDetailsPanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
-		);
-		JLabel photoDetailsLabel = new JLabel(I18nManager.getText("details.photodetails"));
-		photoDetailsLabel.setFont(biggerFont);
-		photoDetailsPanel.add(photoDetailsLabel);
+		_photoDetailsPanel = makeDetailsPanel("details.photodetails", biggerFont);
 		_photoLabel = new JLabel(I18nManager.getText("details.nophoto"));
-		photoDetailsPanel.add(_photoLabel);
+		_photoDetailsPanel.add(_photoLabel);
 		_photoTimestampLabel = new JLabel("");
-		photoDetailsPanel.add(_photoTimestampLabel);
+		_photoTimestampLabel.setMinimumSize(new Dimension(120, 10));
+		_photoDetailsPanel.add(_photoTimestampLabel);
 		_photoConnectedLabel = new JLabel("");
-		photoDetailsPanel.add(_photoConnectedLabel);
+		_photoDetailsPanel.add(_photoConnectedLabel);
 		_photoThumbnail = new PhotoThumbnail();
 		_photoThumbnail.setVisible(false);
 		_photoThumbnail.setPreferredSize(new Dimension(100, 100));
-		photoDetailsPanel.add(_photoThumbnail);
+		_photoDetailsPanel.add(_photoThumbnail);
 		// Rotate buttons
 		JButton rotLeft = makeRotateButton(IconManager.ROTATE_LEFT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_LEFT);
 		JButton rotRight = makeRotateButton(IconManager.ROTATE_RIGHT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_RIGHT);
+		JButton popup = makeRotateButton(IconManager.SHOW_DETAILS, FunctionLibrary.FUNCTION_PHOTO_POPUP);
 		_rotationButtons = new JPanel();
 		_rotationButtons.add(rotLeft);
 		_rotationButtons.add(rotRight);
+		_rotationButtons.add(Box.createHorizontalStrut(10));
+		_rotationButtons.add(popup);
 		_rotationButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_rotationButtons.setVisible(false);
-		photoDetailsPanel.add(_rotationButtons);
+		_photoDetailsPanel.add(_rotationButtons);
+		_photoDetailsPanel.setVisible(false);
+
+		// audio details panel
+		_audioDetailsPanel = makeDetailsPanel("details.audiodetails", biggerFont);
+		_audioLabel = new JLabel(I18nManager.getText("details.noaudio"));
+		_audioDetailsPanel.add(_audioLabel);
+		_audioTimestampLabel = new JLabel("");
+		_audioTimestampLabel.setMinimumSize(new Dimension(120, 10));
+		_audioDetailsPanel.add(_audioTimestampLabel);
+		_audioLengthLabel = new JLabel("");
+		_audioDetailsPanel.add(_audioLengthLabel);
+		_audioConnectedLabel = new JLabel("");
+		_audioDetailsPanel.add(_audioConnectedLabel);
+		_audioProgress = new JProgressBar(0, 100);
+		_audioProgress.setString(I18nManager.getText("details.audio.playing"));
+		_audioProgress.setStringPainted(true);
+		_audioProgress.setVisible(false);
+		_audioDetailsPanel.add(_audioProgress);
+		_playAudioPanel = new JPanel();
+		_playAudioPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		JButton playAudio = makeRotateButton(IconManager.PLAY_AUDIO, FunctionLibrary.FUNCTION_PLAY_AUDIO);
+		playAudio.addActionListener(new AudioListener(_audioProgress));
+		_playAudioPanel.add(playAudio);
+		JButton stopAudio = makeRotateButton(IconManager.STOP_AUDIO, FunctionLibrary.FUNCTION_STOP_AUDIO);
+		_playAudioPanel.add(stopAudio);
+		_playAudioPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		_playAudioPanel.setVisible(false);
+		_audioDetailsPanel.add(_playAudioPanel);
+		_audioDetailsPanel.setVisible(false);
 
 		// add the details panels to the main panel
 		mainPanel.add(pointDetailsPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
 		mainPanel.add(rangeDetailsPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
-		mainPanel.add(photoDetailsPanel);
+		mainPanel.add(_photoDetailsPanel);
+		mainPanel.add(Box.createVerticalStrut(5));
+		mainPanel.add(_audioDetailsPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
 		// add the main panel at the top
 		add(mainPanel, BorderLayout.NORTH);
@@ -234,6 +263,7 @@ public class DetailsDisplay extends GenericDisplay
 		// Update current point data, if any
 		DataPoint currentPoint = _trackInfo.getCurrentPoint();
 		Selection selection = _trackInfo.getSelection();
+		if ((inUpdateType | DATA_ADDED_OR_REMOVED) > 0) selection.markInvalid();
 		int currentPointIndex = selection.getCurrentPointIndex();
 		_speedLabel.setText("");
 		Distance.Units distUnits = _distUnitsDropdown.getSelectedIndex()==0?Distance.Units.KILOMETRES:Distance.Units.MILES;
@@ -343,6 +373,7 @@ public class DetailsDisplay extends GenericDisplay
 			}
 		}
 		// show photo details and thumbnail
+		_photoDetailsPanel.setVisible(_trackInfo.getPhotoList().getNumPhotos() > 0);
 		Photo currentPhoto = _trackInfo.getPhotoList().getPhoto(_trackInfo.getSelection().getCurrentPhotoIndex());
 		if ((currentPoint == null || currentPoint.getPhoto() == null) && currentPhoto == null)
 		{
@@ -358,7 +389,7 @@ public class DetailsDisplay extends GenericDisplay
 			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
 			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getFile().getName());
 			_photoTimestampLabel.setText(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText());
-			_photoConnectedLabel.setText(I18nManager.getText("details.photo.connected") + ": "
+			_photoConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
 				+ (currentPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
 			_photoThumbnail.setVisible(true);
@@ -367,6 +398,27 @@ public class DetailsDisplay extends GenericDisplay
 			if ((inUpdateType & DataSubscriber.PHOTOS_MODIFIED) > 0) {_photoThumbnail.refresh();}
 		}
 		_photoThumbnail.repaint();
+
+		// audio details
+		_audioDetailsPanel.setVisible(_trackInfo.getAudioList().getNumAudios() > 0);
+		AudioFile currentAudio = _trackInfo.getAudioList().getAudio(_trackInfo.getSelection().getCurrentAudioIndex());
+		if (currentAudio == null) {
+			_audioLabel.setText(I18nManager.getText("details.noaudio"));
+			_audioTimestampLabel.setText("");
+			_audioLengthLabel.setText("");
+			_audioConnectedLabel.setText("");
+		}
+		else
+		{
+			_audioLabel.setText(LABEL_AUDIO_FILE + currentAudio.getFile().getName());
+			_audioTimestampLabel.setText(LABEL_POINT_TIMESTAMP + currentAudio.getTimestamp().getText());
+			int audioLength = currentAudio.getLengthInSeconds();
+			_audioLengthLabel.setText(audioLength < 0?"":LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(audioLength));
+			_audioConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
+				+ (currentAudio.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
+					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
+		}
+		_playAudioPanel.setVisible(currentAudio != null);
 	}
 
 
@@ -453,6 +505,25 @@ public class DetailsDisplay extends GenericDisplay
 			}
 		}
 		return inCoord;
+	}
+
+	/**
+	 * Make a details subpanel
+	 * @param inNameKey key to use for top label
+	 * @param inFont font for top label
+	 * @return panel with correct layout, label
+	 */
+	private static JPanel makeDetailsPanel(String inNameKey, Font inFont)
+	{
+		JPanel detailsPanel = new JPanel();
+		detailsPanel.setLayout(new BoxLayout(detailsPanel, BoxLayout.Y_AXIS));
+		detailsPanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
+		);
+		JLabel detailsLabel = new JLabel(I18nManager.getText(inNameKey));
+		detailsLabel.setFont(inFont);
+		detailsPanel.add(detailsLabel);
+		return detailsPanel;
 	}
 
 	/**

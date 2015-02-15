@@ -171,7 +171,7 @@ public class CompressTrackFunction extends GenericFunction
 		for (int i=0; i<deleteFlags.length; i++)
 		{
 			DataPoint point = _track.getPoint(i);
-			point.setMarkedForDeletion(deleteFlags[i] && point.getPhoto() == null);
+			point.setMarkedForDeletion(deleteFlags[i] && !point.hasMedia());
 		}
 
 		// Close dialog and inform listeners

@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -18,9 +17,10 @@ import tim.prune.data.Photo;
 public class PhotoThumbnail extends JPanel implements Runnable
 {
 	private Photo _photo = null;
-	private BufferedImage _thumbnail = null;
+	private Image _thumbnail = null;
 	private boolean _loadingImage = false;
 	private boolean _loadFailed = false;
+	private boolean _inPanel = false;
 	/** String to show before photo is loaded */
 	private static final String LOADING_STRING = I18nManager.getText("details.photo.loading") + " ...";
 
@@ -30,9 +30,18 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	 */
 	public PhotoThumbnail()
 	{
-		setOpaque(true);
+		this(true);
 	}
 
+	/**
+	 * Constructor
+	 * @param inPanel true if thumbnail is inside panel
+	 */
+	public PhotoThumbnail(boolean inPanel)
+	{
+		setOpaque(true);
+		_inPanel = inPanel;
+	}
 
 	/**
 	 * Set the Photo
@@ -41,7 +50,8 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	public void setPhoto(Photo inPhoto)
 	{
 		// Check whether the photo has changed
-		if (_photo != inPhoto) {
+		if (_photo != inPhoto)
+		{
 			_photo = inPhoto;
 			_thumbnail = null;
 			_loadFailed = false;
@@ -52,7 +62,8 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	/**
 	 * Force a refresh / reload
 	 */
-	public void refresh() {
+	public void refresh()
+	{
 		_thumbnail = null;
 		_loadFailed = false;
 	}
@@ -82,14 +93,16 @@ public class PhotoThumbnail extends JPanel implements Runnable
 			{
 				// Copy scaled, smoothed (and rotated) image into scaled
 				int usableWidth = getParent().getWidth()-10;
-				Image scaled = ImageUtils.rotateImage(_thumbnail, usableWidth, usableWidth, _photo.getRotationDegrees());
+				int usableHeight = (_inPanel?usableWidth:getHeight()-10);
+				Image scaled = ImageUtils.rotateImage(_thumbnail, usableWidth, usableHeight, _photo.getRotationDegrees());
 				int scaleWidth = scaled.getWidth(null);
 				int scaleHeight = scaled.getHeight(null);
 				// Draw scaled / rotated image to component
 				int horizOffset = (getWidth() - scaleWidth) / 2;
 				int vertOffset = (getHeight() - scaleHeight) / 2;
 				inG.drawImage(scaled, horizOffset, vertOffset, scaleWidth, scaleHeight, null);
-				if (getHeight() < getWidth() || getHeight() > usableWidth)
+				// Special resize behaviour when locked inside details panel
+				if (_inPanel && (getHeight() < getWidth() || getHeight() > usableWidth))
 				{
 					Dimension newsize = new Dimension(usableWidth, usableWidth);
 					setPreferredSize(newsize);
@@ -114,30 +127,37 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	 */
 	public void run()
 	{
-		// Use exif thumbnail?
-		if (_photo.getExifThumbnail() != null) {
-			Image image = new ImageIcon(_photo.getExifThumbnail()).getImage();
-			_thumbnail = ImageUtils.createScaledImage(image, image.getWidth(null), image.getHeight(null));
-			image = null;
-		}
-		else
+		if (_inPanel)
 		{
-			// no exif thumbnail available, going to have to read whole thing
-			int picWidth = _photo.getWidth();
-			int picHeight = _photo.getHeight();
-			if (picWidth > -1 && picHeight > -1)
-			{
-				// Just set a "reasonable" thumbnail size for now
-				final int DEFAULT_THUMB_SIZE = 400;
-				// calculate maximum thumbnail size
-				Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, DEFAULT_THUMB_SIZE, DEFAULT_THUMB_SIZE);
-				// Make icon to load image into
-				Image image = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
-				// save scaled, smoothed thumbnail for reuse
-				_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
+			// use either exif thumbnail or photo scaled down to sensible size
+			if (_photo.getExifThumbnail() != null) {
+				// Use exif thumbnail
+				Image image = new ImageIcon(_photo.getExifThumbnail()).getImage();
+				_thumbnail = ImageUtils.createScaledImage(image, image.getWidth(null), image.getHeight(null));
 				image = null;
 			}
-			else _loadFailed = true;
+			else
+			{
+				// no exif thumbnail available, going to have to read whole thing
+				int picWidth = _photo.getWidth();
+				int picHeight = _photo.getHeight();
+				if (picWidth > -1 && picHeight > -1)
+				{
+					// Just set a "reasonable" thumbnail size for now
+					final int DEFAULT_THUMB_SIZE = 400;
+					// calculate maximum thumbnail size
+					Dimension thumbSize = ImageUtils.getThumbnailSize(picWidth, picHeight, DEFAULT_THUMB_SIZE, DEFAULT_THUMB_SIZE);
+					// Make icon to load image into
+					Image image = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
+					// save scaled, smoothed thumbnail for reuse
+					_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
+					image = null;
+				}
+				else _loadFailed = true;
+			}
+		}
+		else {
+			_thumbnail = new ImageIcon(_photo.getFile().getAbsolutePath()).getImage();
 		}
 		_loadingImage = false;
 		repaint();

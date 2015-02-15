@@ -30,10 +30,9 @@ public class TrackNameList
 		_pointNum++;
 		if (inIsTrackpoint)
 		{
-			// System.out.println("Point " + _pointNum + " is in track '" + inTrackName + "' (" + inTrackNum + ")");
 			if (inTrackNum != _trackNum) {
 				_trackNames.add(inTrackName);
-				_startIndices.add(new Integer(_pointNum));
+				_startIndices.add(Integer.valueOf(_pointNum));
 			}
 		}
 		_trackNum = inTrackNum;
@@ -80,17 +79,5 @@ public class TrackNameList
 	{
 		if (inTrackNum < 0 || inTrackNum >= getNumTracks()) {return 0;}
 		return _startIndices.get(inTrackNum);
-	}
-
-	/**
-	 * Print summary for debug
-	 * @deprecated
-	 */
-	public void summarize()
-	{
-		System.out.println("File has " + getNumTracks() + " tracks:");
-		for (int i=0; i<getNumTracks(); i++) {
-			System.out.println("  Track " + i + " is called '" + _trackNames.get(i) + "' and has " + getNumPointsInTrack(i) + " points");
-		}
 	}
 }

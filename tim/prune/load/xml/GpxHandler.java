@@ -16,19 +16,16 @@ public class GpxHandler extends XmlHandler
 {
 	private boolean _insidePoint = false;
 	private boolean _insideWaypoint = false;
-	private boolean _insideName = false;
-	private boolean _insideElevation = false;
-	private boolean _insideTime = false;
-	private boolean _insideType = false;
 	private boolean _startSegment = true;
 	private boolean _isTrackPoint = false;
 	private int _trackNum = -1;
-	private String _trackName = null;
-	private String _name = null, _latitude = null, _longitude = null;
-	private String _elevation = null;
-	private String _time = null;
-	private String _type = null;
+	private GpxTag _name = new GpxTag(), _trackName = new GpxTag();
+	private String _latitude = null, _longitude = null;
+	private GpxTag _elevation = new GpxTag(), _time = new GpxTag();
+	private GpxTag _type = new GpxTag(), _link = new GpxTag();
+	private GpxTag _currentTag = null;
 	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
+	private ArrayList<String> _linkList = new ArrayList<String>();
 	private TrackNameList _trackNameList = new TrackNameList();
 
 
@@ -40,48 +37,47 @@ public class GpxHandler extends XmlHandler
 		Attributes attributes) throws SAXException
 	{
 		// Read the parameters for waypoints and track points
-		if (qName.equalsIgnoreCase("wpt") || qName.equalsIgnoreCase("trkpt") || qName.equalsIgnoreCase("rtept"))
+		String tag = qName.toLowerCase();
+		if (tag.equals("wpt") || tag.equals("trkpt") || tag.equals("rtept"))
 		{
 			_insidePoint = true;
-			_insideWaypoint = qName.equalsIgnoreCase("wpt");
-			_isTrackPoint = qName.equalsIgnoreCase("trkpt");
-			int numAttributes = attributes.getLength();
+			_insideWaypoint = tag.equals("wpt");
+			_isTrackPoint = tag.equals("trkpt");
+			final int numAttributes = attributes.getLength();
 			for (int i=0; i<numAttributes; i++)
 			{
-				String att = attributes.getQName(i);
+				String att = attributes.getQName(i).toLowerCase();
 				if (att.equals("lat")) {_latitude = attributes.getValue(i);}
 				else if (att.equals("lon")) {_longitude = attributes.getValue(i);}
 			}
-			_elevation = null;
-			_name = null;
-			_time = null;
-			_type = null;
+			_elevation.setValue(null);
+			_name.setValue(null);
+			_time.setValue(null);
+			_type.setValue(null);
+			_link.setValue(null);
 		}
-		else if (qName.equalsIgnoreCase("ele"))
-		{
-			_insideElevation = true;
+		else if (tag.equals("ele")) {
+			_currentTag = _elevation;
 		}
-		else if (qName.equalsIgnoreCase("name"))
-		{
-			_name = null;
-			_insideName = true;
+		else if (tag.equals("name")) {
+			_currentTag = (_insidePoint?_name:_trackName);
 		}
-		else if (qName.equalsIgnoreCase("time"))
-		{
-			_insideTime = true;
+		else if (tag.equals("time")) {
+			_currentTag = _time;
 		}
-		else if (qName.equalsIgnoreCase("type"))
-		{
-			_insideType = true;
+		else if (tag.equals("type")) {
+			_currentTag = _type;
 		}
-		else if (qName.equalsIgnoreCase("trkseg"))
-		{
+		else if (tag.equals("link")) {
+			_link.setValue(attributes.getValue("href"));
+		}
+		else if (tag.equals("trkseg")) {
 			_startSegment = true;
 		}
-		else if (qName.equalsIgnoreCase("trk"))
+		else if (tag.equals("trk"))
 		{
 			_trackNum++;
-			_trackName = null;
+			_trackName.setValue(null);
 		}
 		super.startElement(uri, localName, qName, attributes);
 	}
@@ -94,26 +90,14 @@ public class GpxHandler extends XmlHandler
 	public void endElement(String uri, String localName, String qName)
 		throws SAXException
 	{
-		if (qName.equalsIgnoreCase("wpt") || qName.equalsIgnoreCase("trkpt") || qName.equalsIgnoreCase("rtept"))
+		String tag = qName.toLowerCase();
+		if (tag.equals("wpt") || tag.equals("trkpt") || tag.equals("rtept"))
 		{
 			processPoint();
 			_insidePoint = false;
 		}
-		else if (qName.equalsIgnoreCase("ele"))
-		{
-			_insideElevation = false;
-		}
-		else if (qName.equalsIgnoreCase("name"))
-		{
-			_insideName = false;
-		}
-		else if (qName.equalsIgnoreCase("time"))
-		{
-			_insideTime = false;
-		}
-		else if (qName.equalsIgnoreCase("type"))
-		{
-			_insideType = false;
+		else {
+			_currentTag = null;
 		}
 		super.endElement(uri, localName, qName);
 	}
@@ -127,11 +111,9 @@ public class GpxHandler extends XmlHandler
 		throws SAXException
 	{
 		String value = new String(ch, start, length);
-		if (_insideName && _insideWaypoint) {_name = checkCharacters(_name, value);}
-		if (_insideName && !_insidePoint) {_trackName = checkCharacters(_trackName, value);}
-		else if (_insideElevation) {_elevation = checkCharacters(_elevation, value);}
-		else if (_insideTime) {_time = checkCharacters(_time, value);}
-		else if (_insideType) {_type = checkCharacters(_type, value);}
+		if (_currentTag != null) {
+			_currentTag.setValue(checkCharacters(_currentTag.getValue(), value));
+		}
 		super.characters(ch, start, length);
 	}
 
@@ -156,16 +138,19 @@ public class GpxHandler extends XmlHandler
 	{
 		// Put the values into a String array matching the order in getFieldArray()
 		String[] values = new String[7];
-		values[0] = _latitude; values[1] = _longitude;
-		values[2] = _elevation; values[3] = _name;
-		values[4] = _time;
+		values[0] = _latitude;
+		values[1] = _longitude;
+		values[2] = _elevation.getValue();
+		if (_insideWaypoint) {values[3] = _name.getValue();}
+		values[4] = _time.getValue();
 		if (_startSegment && !_insideWaypoint) {
 			values[5] = "1";
 			_startSegment = false;
 		}
-		values[6] = _type;
+		values[6] = _type.getValue();
 		_pointList.add(values);
-		_trackNameList.addPoint(_trackNum, _trackName, _isTrackPoint);
+		_trackNameList.addPoint(_trackNum, _trackName.getValue(), _isTrackPoint);
+		_linkList.add(_link.getValue());
 	}
 
 
@@ -196,6 +181,22 @@ public class GpxHandler extends XmlHandler
 		return result;
 	}
 
+	/**
+	 * @return array of links, or null if none
+	 */
+	public String[] getLinkArray()
+	{
+		int numPoints = _linkList.size();
+		boolean hasLink = false;
+		String[] result = new String[numPoints];
+		for (int i=0; i<numPoints; i++)
+		{
+			result[i] = _linkList.get(i);
+			if (result[i] != null) {hasLink = true;}
+		}
+		if (!hasLink) {result = null;}
+		return result;
+	}
 
 	/**
 	 * @return track name list

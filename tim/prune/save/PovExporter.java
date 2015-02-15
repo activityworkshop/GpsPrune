@@ -32,6 +32,7 @@ import tim.prune.config.Config;
 import tim.prune.data.NumberUtils;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
+import tim.prune.gui.DialogCloser;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.LineDialog;
 import tim.prune.threedee.ThreeDModel;
@@ -161,6 +162,7 @@ public class PovExporter extends Export3dFunction
 		}
 		_fontName = new JTextField(defaultFont, 12);
 		_fontName.setAlignmentX(Component.LEFT_ALIGNMENT);
+		_fontName.addKeyListener(new DialogCloser(_dialog));
 		centralPanel.add(_fontName);
 		//coordinates of camera
 		JLabel cameraXLabel = new JLabel(I18nManager.getText("dialog.exportpov.camerax"));

@@ -59,6 +59,8 @@ public abstract class Config
 	public static final String KEY_EXIFTOOL_PATH = "prune.exiftoolpath";
 	/** Key for colour scheme */
 	public static final String KEY_COLOUR_SCHEME = "prune.colourscheme";
+	/** Key for line width used for drawing */
+	public static final String KEY_LINE_WIDTH = "prune.linewidth";
 	/** Key for kml track colour */
 	public static final String KEY_KML_TRACK_COLOUR = "prune.kmltrackcolour";
 

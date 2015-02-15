@@ -38,12 +38,21 @@ public class SelectorDisplay extends GenericDisplay
 	private JScrollBar _scroller = null;
 	private boolean _ignoreScrollEvents = false;
 
-	// Photos
-	private JList _photoList = null;
-	private PhotoListModel _photoListModel = null;
+	// Panel containing lists
+	private JPanel _listsPanel = null;
+	private int _visiblePanels = 1;
 	// Waypoints
+	private JPanel _waypointListPanel = null;
 	private JList _waypointList = null;
 	private WaypointListModel _waypointListModel = null;
+	// Photos
+	private JPanel _photoListPanel = null;
+	private JList _photoList = null;
+	private MediaListModel _photoListModel = null;
+	// Audio files
+	private JPanel _audioListPanel = null;
+	private JList _audioList = null;
+	private MediaListModel _audioListModel = null;
 
 	// scrollbar interval
 	private static final int SCROLLBAR_INTERVAL = 50;
@@ -78,43 +87,39 @@ public class SelectorDisplay extends GenericDisplay
 		_trackpointsLabel = new JLabel(I18nManager.getText("details.notrack"));
 		trackDetailsPanel.add(_trackpointsLabel);
 		_filenameLabel = new JLabel("");
+		_filenameLabel.setMinimumSize(new Dimension(120, 10));
 		trackDetailsPanel.add(_filenameLabel);
 
 		// Scroll bar
 		_scroller = new JScrollBar(JScrollBar.HORIZONTAL, 0, SCROLLBAR_INTERVAL, 0, 100);
 		_scroller.addAdjustmentListener(new AdjustmentListener() {
-			public void adjustmentValueChanged(AdjustmentEvent e)
-			{
+			public void adjustmentValueChanged(AdjustmentEvent e) {
 				selectPoint(e.getValue());
 			}
 		});
 		_scroller.setEnabled(false);
 
 		// Add panel for waypoints / photos
-		JPanel listsPanel = new JPanel();
-		listsPanel.setLayout(new GridLayout(0, 1));
-		listsPanel.setBorder(BorderFactory.createCompoundBorder(
+		_listsPanel = new JPanel();
+		_listsPanel.setLayout(new GridLayout(0, 1));
+		_listsPanel.setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
 		);
 		_waypointListModel = new WaypointListModel(_trackInfo.getTrack());
 		_waypointList = new JList(_waypointListModel);
 		_waypointList.setVisibleRowCount(NUM_LIST_ENTRIES);
-		_waypointList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_waypointList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{
 				if (!e.getValueIsAdjusting()) selectWaypoint(_waypointList.getSelectedIndex());
-			}});
-		JPanel waypointListPanel = new JPanel();
-		waypointListPanel.setLayout(new BorderLayout());
-		waypointListPanel.add(new JLabel(I18nManager.getText("details.waypointsphotos.waypoints")), BorderLayout.NORTH);
-		waypointListPanel.add(new JScrollPane(_waypointList), BorderLayout.CENTER);
-		listsPanel.add(waypointListPanel);
+			}
+		});
+		_waypointListPanel = makeListPanel("details.lists.waypoints", _waypointList);
+		_listsPanel.add(_waypointListPanel);
 		// photo list
-		_photoListModel = new PhotoListModel(_trackInfo.getPhotoList());
+		_photoListModel = new MediaListModel(_trackInfo.getPhotoList());
 		_photoList = new JList(_photoListModel);
 		_photoList.setVisibleRowCount(NUM_LIST_ENTRIES);
-		_photoList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_photoList.addListSelectionListener(new ListSelectionListener() {
 			public void valueChanged(ListSelectionEvent e)
 			{
@@ -122,12 +127,22 @@ public class SelectorDisplay extends GenericDisplay
 					selectPhoto(_photoList.getSelectedIndex());
 				}
 			}});
-		JPanel photoListPanel = new JPanel();
-		photoListPanel.setLayout(new BorderLayout());
-		photoListPanel.add(new JLabel(I18nManager.getText("details.waypointsphotos.photos")), BorderLayout.NORTH);
-		photoListPanel.add(new JScrollPane(_photoList), BorderLayout.CENTER);
-		listsPanel.add(photoListPanel);
-		listsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		_photoListPanel = makeListPanel("details.lists.photos", _photoList);
+		// don't add photo list (because there aren't any photos yet)
+
+		// List for audio files
+		_audioListModel = new MediaListModel(_trackInfo.getAudioList());
+		_audioList = new JList(_audioListModel);
+		_audioList.addListSelectionListener(new ListSelectionListener() {
+			public void valueChanged(ListSelectionEvent e)
+			{
+				if (!e.getValueIsAdjusting()) {
+					selectAudio(_audioList.getSelectedIndex());
+				}
+			}});
+		_audioListPanel = makeListPanel("details.lists.audio", _audioList);
+		// don't add audio list either
+		_listsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// add the controls to the main panel
 		mainPanel.add(trackDetailsPanel);
@@ -138,7 +153,7 @@ public class SelectorDisplay extends GenericDisplay
 		// add the main panel at the top
 		add(mainPanel, BorderLayout.NORTH);
 		// and lists in the centre
-		add(listsPanel, BorderLayout.CENTER);
+		add(_listsPanel, BorderLayout.CENTER);
 		// set preferred width to be small
 		setPreferredSize(new Dimension(100, 100));
 	}
@@ -150,8 +165,7 @@ public class SelectorDisplay extends GenericDisplay
 	 */
 	private void selectPoint(int inValue)
 	{
-		if (_track != null && !_ignoreScrollEvents)
-		{
+		if (_track != null && !_ignoreScrollEvents) {
 			_trackInfo.selectPoint(inValue);
 		}
 	}
@@ -166,6 +180,14 @@ public class SelectorDisplay extends GenericDisplay
 		_trackInfo.selectPhoto(inPhotoIndex);
 	}
 
+	/**
+	 * Select the specified audio file
+	 * @param inIndex index of selected audio file
+	 */
+	private void selectAudio(int inIndex)
+	{
+		_trackInfo.selectAudio(inIndex);
+	}
 
 	/**
 	 * Select the specified waypoint
@@ -173,8 +195,7 @@ public class SelectorDisplay extends GenericDisplay
 	 */
 	private void selectWaypoint(int inWaypointIndex)
 	{
-		if (inWaypointIndex >= 0)
-		{
+		if (inWaypointIndex >= 0) {
 			_trackInfo.selectPoint(_waypointListModel.getWaypoint(inWaypointIndex));
 		}
 	}
@@ -203,8 +224,7 @@ public class SelectorDisplay extends GenericDisplay
 			}
 			else if (numFiles > 1)
 			{
-				_filenameLabel.setText(I18nManager.getText("details.track.numfiles") + ": "
-					+ numFiles);
+				_filenameLabel.setText(I18nManager.getText("details.track.numfiles") + ": " + numFiles);
 			}
 			else _filenameLabel.setText("");
 		}
@@ -237,6 +257,7 @@ public class SelectorDisplay extends GenericDisplay
 			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.PHOTOS_MODIFIED)) > 0)
 		{
 			_photoListModel.fireChanged();
+			_audioListModel.fireChanged();
 		}
 		// Deselect selected waypoint if selected point has since changed
 		if (_waypointList.getSelectedIndex() >= 0)
@@ -249,6 +270,9 @@ public class SelectorDisplay extends GenericDisplay
 				_waypointList.clearSelection();
 			}
 		}
+		// Hide photo list if no photos loaded, same for audio
+		redrawLists(_photoListModel.getSize() > 0, _audioListModel.getSize() > 0);
+
 		// Make sure correct photo is selected
 		if (_photoListModel.getSize() > 0)
 		{
@@ -265,5 +289,62 @@ public class SelectorDisplay extends GenericDisplay
 				}
 			}
 		}
+		// Same for audio files
+		if (_audioListModel.getSize() > 0)
+		{
+			int audioIndex = _trackInfo.getSelection().getCurrentAudioIndex();
+			int listSelection = _audioList.getSelectedIndex();
+			// Change listbox selection if indexes not equal
+			if (listSelection != audioIndex)
+			{
+				if (audioIndex < 0) {
+					_audioList.clearSelection();
+				}
+				else {
+					_audioList.setSelectedIndex(audioIndex);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Make one of the three list panels
+	 * @param inNameKey key for heading text
+	 * @param inList list object
+	 * @return panel object
+	 */
+	private static JPanel makeListPanel(String inNameKey, JList inList)
+	{
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+		panel.add(new JLabel(I18nManager.getText(inNameKey)), BorderLayout.NORTH);
+		inList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		panel.add(new JScrollPane(inList), BorderLayout.CENTER);
+		return panel;
+	}
+
+	/**
+	 * Redraw the list panels in the display according to which ones should be shown
+	 * @param inShowPhotos true to show photo list
+	 * @param inShowAudio true to show audio list
+	 */
+	private void redrawLists(boolean inShowPhotos, boolean inShowAudio)
+	{
+		// exit if same as last time
+		int panels = 1 + (inShowPhotos?2:0) + (inShowAudio?4:0);
+		if (panels == _visiblePanels) return;
+		_visiblePanels = panels;
+		// remove all panels and re-add them
+		_listsPanel.removeAll();
+		_listsPanel.setLayout(new GridLayout(0, 1));
+		_listsPanel.add(_waypointListPanel);
+		if (inShowPhotos) {
+			_listsPanel.add(_photoListPanel);
+		}
+		if (inShowAudio) {
+			_listsPanel.add(_audioListPanel);
+		}
+		_listsPanel.invalidate();
+		_listsPanel.getParent().validate();
 	}
 }

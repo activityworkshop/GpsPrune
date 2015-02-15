@@ -17,17 +17,26 @@ public class TrackListModel extends AbstractTableModel
 	/** List of tracks */
 	private ArrayList<GpsiesTrack> _trackList = null;
 	/** Column heading for track name */
-	private static final String _nameColLabel = I18nManager.getText("dialog.gpsies.column.name");
+	private String _nameColLabel = null;
 	/** Column heading for length */
-	private static final String _lengthColLabel = I18nManager.getText("dialog.gpsies.column.length");
+	private String _lengthColLabel = null;
+	/** Number of columns */
+	private int _numColumns = 2;
 	/** Formatter for distances */
 	private NumberFormat _distanceFormatter = NumberFormat.getInstance();
 
 	/**
 	 * Constructor
+	 * @param inColumn1Key key for first column
+	 * @param inColumn2Key key for second column
 	 */
-	public TrackListModel()
+	public TrackListModel(String inColumn1Key, String inColumn2Key)
 	{
+		_nameColLabel = I18nManager.getText(inColumn1Key);
+		if (inColumn2Key != null) {
+			_lengthColLabel = I18nManager.getText(inColumn2Key);
+		}
+		_numColumns = (_lengthColLabel != null?2:1);
 		_distanceFormatter.setMaximumFractionDigits(1);
 	}
 
@@ -36,7 +45,7 @@ public class TrackListModel extends AbstractTableModel
 	 */
 	public int getColumnCount()
 	{
-		return 2;
+		return _numColumns;
 	}
 
 	/**

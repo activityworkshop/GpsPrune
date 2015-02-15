@@ -16,6 +16,8 @@ public class UndoLoad implements UndoOperation
 	private DataPoint[] _contents = null;
 	private PhotoList _photoList = null;
 	private FileInfo _oldFileInfo = null;
+	// Numbers of each media before operation
+	private int _numPhotos = -1, _numAudios = -1;
 
 
 	/**
@@ -58,6 +60,16 @@ public class UndoLoad implements UndoOperation
 		return desc;
 	}
 
+	/**
+	 * Set the number of photos and audios before the load operation
+	 * @param inNumPhotos number of photos
+	 * @param inNumAudios number of audios
+	 */
+	public void setNumPhotosAudios(int inNumPhotos, int inNumAudios)
+	{
+		_numPhotos = inNumPhotos;
+		_numAudios = inNumAudios;
+	}
 
 	/**
 	 * Perform the undo operation on the given Track
@@ -81,10 +93,12 @@ public class UndoLoad implements UndoOperation
 		else
 		{
 			// replace photos how they were
-			if (_photoList != null)
-			{
+			if (_photoList != null) {
 				inTrackInfo.getPhotoList().restore(_photoList);
 			}
+			// Crop media lists to previous size (if specified)
+			if (_numPhotos > -1) {inTrackInfo.getPhotoList().cropTo(_numPhotos);}
+			if (_numAudios > -1) {inTrackInfo.getAudioList().cropTo(_numAudios);}
 			// replace track contents with old
 			if (!inTrackInfo.getTrack().replaceContents(_contents))
 			{

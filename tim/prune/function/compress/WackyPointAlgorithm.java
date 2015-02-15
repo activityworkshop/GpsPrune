@@ -43,7 +43,7 @@ public class WackyPointAlgorithm extends SingleParameterAlgorithm
 			if (!inFlags[i])
 			{
 				// Don't delete any waypoints or photo points, or start/end of segments
-				if (!currPoint.isWaypoint() && currPoint.getPhoto() == null
+				if (!currPoint.isWaypoint() && !currPoint.hasMedia()
 					&& !_trackDetails.isSegmentStart(i) && !_trackDetails.isSegmentEnd(i))
 				{
 					// Measure distance from previous track point

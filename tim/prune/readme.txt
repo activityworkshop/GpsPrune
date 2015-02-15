@@ -1,5 +1,5 @@
-Prune version 11.2
-==================
+Prune version 12
+================
 
 Prune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run Prune from the jar file, simply call it from a command prompt or shell:
-   java -jar prune_11.2.jar
+   java -jar prune_12.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,23 +25,20 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar prune_11.2.jar --lang=DE
+   java -jar prune_12.jar --lang=DE
 
-New with version 11.2
-=====================
-
-The following were added since version 11.1:
-  - Correction of xml encoding for ISO8859_15 systems so exported GPX is loadable by Google Earth
-  - Updating of Polish and Portuguese texts
-
-New with version 11.1
-=====================
-
-The following were added since version 11:
-  - Bugfix for exporting non-ASCII characters to a GPX file on a non-UTF8 system
-  - Bugfix for freeing file resources when GPX load fails
-  - Bugfix for resizing photo thumbnail
-  - Menu item for deselecting current photo
+New with version 12
+===================
+The following features were added since version 11:
+  - Options to load audio files, play them, connect to points and auto-correlate them
+  - Extend Gpx export to include links to photos and audio files
+  - Extend Gpx load to also load referenced photos, audio files
+  - Function to search for places in Wikipedia by name
+  - Function to search for places in Wikipedia near the current point
+  - Function to download OSM data using the XAPI and save to osm file
+  - New drawing mode to add points with one click each
+  - Hungarian translations thanks to György
+  - Korean translations thanks to HooAU
 
 New with version 11
 ===================
@@ -131,12 +128,6 @@ The following features were added since version 4.1:
   - Display of current and average speed on details panel
   - Statusbar showing confirmation of actions
   - Much improved French texts thanks to generous user input
-
-New with version 4.1
-====================
-
-The following fix was added since version 4:
-  - Exiftool calls now made in series rather than in parallel to avoid performance problems in Windows
 
 New with version 4
 ==================

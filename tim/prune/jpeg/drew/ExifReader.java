@@ -3,6 +3,7 @@ package tim.prune.jpeg.drew;
 import java.io.File;
 import java.util.HashMap;
 
+import tim.prune.jpeg.ExifGateway;
 import tim.prune.jpeg.JpegData;
 
 /**
@@ -93,8 +94,7 @@ public class ExifReader
 	 */
 	public ExifReader(File inFile) throws JpegException
 	{
-		JpegSegmentData segments = JpegSegmentReader.readSegments(inFile);
-		_data = segments.getSegment(JpegSegmentReader.SEGMENT_APP1);
+		_data = JpegSegmentReader.readExifSegment(inFile);
 	}
 
 	/**
@@ -343,14 +343,16 @@ public class ExifReader
 					break;
 				case TAG_GPS_LATITUDE:
 					Rational[] latitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
-					inMetadata.setLatitude(new double[] {latitudes[0].doubleValue(), latitudes[1].doubleValue(), latitudes[2].doubleValue()});
+					inMetadata.setLatitude(new double[] {latitudes[0].doubleValue(), latitudes[1].doubleValue(),
+						ExifGateway.convertToPositiveValue(latitudes[2].getNumerator(), latitudes[2].getDenominator())});
 					break;
 				case TAG_GPS_LONGITUDE_REF:
 					inMetadata.setLongitudeRef(readString(inTagValueOffset, inFormatCode, inComponentCount));
 					break;
 				case TAG_GPS_LONGITUDE:
 					Rational[] longitudes = readRationalArray(inTagValueOffset, inFormatCode, inComponentCount);
-					inMetadata.setLongitude(new double[] {longitudes[0].doubleValue(), longitudes[1].doubleValue(), longitudes[2].doubleValue()});
+					inMetadata.setLongitude(new double[] {longitudes[0].doubleValue(), longitudes[1].doubleValue(),
+						ExifGateway.convertToPositiveValue(longitudes[2].getNumerator(), longitudes[2].getDenominator())});
 					break;
 				case TAG_GPS_ALTITUDE_REF:
 					inMetadata.setAltitudeRef(_data[inTagValueOffset]);

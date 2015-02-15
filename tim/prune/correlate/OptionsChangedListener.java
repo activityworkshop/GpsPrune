@@ -8,13 +8,13 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
 /**
- * Helper class to listen for changed options on the PhotoCorrelator
+ * Helper class to listen for changed options on the Correlators
  * Tightly coupled but only to ok button and preview function
  */
 public class OptionsChangedListener implements KeyListener, ActionListener, ItemListener, Runnable
 {
 	/** Correlator object for callbacks */
-	private PhotoCorrelator _correlator;
+	private Correlator _correlator;
 	/** Thread counter */
 	private int _threadCount = 0;
 
@@ -26,7 +26,7 @@ public class OptionsChangedListener implements KeyListener, ActionListener, Item
 	 * Constructor
 	 * @param inCorrelator correlator object for callbacks
 	 */
-	public OptionsChangedListener(PhotoCorrelator inCorrelator)
+	public OptionsChangedListener(Correlator inCorrelator)
 	{
 		_correlator = inCorrelator;
 	}
