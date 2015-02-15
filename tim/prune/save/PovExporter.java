@@ -43,6 +43,8 @@ import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.ImageDefinition;
+import tim.prune.threedee.TerrainCache;
+import tim.prune.threedee.TerrainDefinition;
 import tim.prune.threedee.TerrainHelper;
 import tim.prune.threedee.ThreeDModel;
 
@@ -392,19 +394,29 @@ public class PovExporter extends Export3dFunction
 			if (useTerrain)
 			{
 				TerrainHelper terrainHelper = new TerrainHelper(_terrainPanel.getGridSize());
-				Track terrainTrack = terrainHelper.createGridTrack(_track);
-				// Get the altitudes from SRTM for all the points in the track
-				LookupSrtmFunction srtmLookup = (LookupSrtmFunction) FunctionLibrary.FUNCTION_LOOKUP_SRTM;
-				srtmLookup.begin(terrainTrack);
-				while (srtmLookup.isRunning())
+				// See if there's a previously saved terrain track we can reuse
+				TerrainDefinition terrainDef = new TerrainDefinition(_terrainPanel.getUseTerrain(), _terrainPanel.getGridSize());
+				Track terrainTrack = TerrainCache.getTerrainTrack(_app.getCurrentDataStatus(), terrainDef);
+				if (terrainTrack == null)
 				{
-					try {
-						Thread.sleep(750);  // just polling in a wait loop isn't ideal but simple
+					// Construct the terrain track according to these extents and the grid size
+					terrainTrack = terrainHelper.createGridTrack(_track);
+					// Get the altitudes from SRTM for all the points in the track
+					LookupSrtmFunction srtmLookup = (LookupSrtmFunction) FunctionLibrary.FUNCTION_LOOKUP_SRTM;
+					srtmLookup.begin(terrainTrack);
+					while (srtmLookup.isRunning())
+					{
+						try {
+							Thread.sleep(750);  // just polling in a wait loop isn't ideal but simple
+						}
+						catch (InterruptedException e) {}
 					}
-					catch (InterruptedException e) {}
+					// Fix the voids
+					terrainHelper.fixVoids(terrainTrack);
+
+					// Store this back in the cache, maybe we'll need it again
+					TerrainCache.storeTerrainTrack(terrainTrack, _app.getCurrentDataStatus(), terrainDef);
 				}
-				// Fix the voids
-				terrainHelper.fixVoids(terrainTrack);
 
 				model.setTerrain(terrainTrack);
 				model.scale();

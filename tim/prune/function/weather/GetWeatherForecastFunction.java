@@ -73,6 +73,8 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 
 	/** True to just simulate the calls and read files instead, false to call real API */
 	private static final boolean SIMULATE_WITH_FILES = false;
+	/** Unique API key for GpsPrune */
+	private static final String OPENWEATHERMAP_API_KEY = "d1c5d792362f5a5c2eacf70a3b72ecd6";
 
 
 	/**
@@ -365,7 +367,8 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 			+ (_locationId == null ? ("lat=" + NumberUtils.formatNumberUk(lat, 5) + "&lon=" + NumberUtils.formatNumberUk(lon, 5))
 				: ("id=" + _locationId))
 			+ "&lang=" + I18nManager.getText("openweathermap.lang")
-			+ "&mode=xml&units=" + (inUseCelsius ? "metric" : "imperial");
+			+ "&mode=xml&units=" + (inUseCelsius ? "metric" : "imperial")
+			+ "&APPID=" + OPENWEATHERMAP_API_KEY;
 		// System.out.println(urlString);
 
 		// Parse the returned XML with a special handler
@@ -431,7 +434,8 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 		final String forecastCount = inDaily ? "8" : "3";
 		final String urlString = "http://api.openweathermap.org/data/2.5/forecast"
 			+ (inDaily ? "/daily" : "") + "?id=" + _locationId + "&lang=" + I18nManager.getText("openweathermap.lang")
-			+ "&mode=xml&units=" + (inCelsius ? "metric" : "imperial") + "&cnt=" + forecastCount;
+			+ "&mode=xml&units=" + (inCelsius ? "metric" : "imperial") + "&cnt=" + forecastCount
+			+ "&APPID=" + OPENWEATHERMAP_API_KEY;
 		// System.out.println(urlString);
 
 		// Parse the returned XML with a special handler

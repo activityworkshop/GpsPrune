@@ -57,7 +57,7 @@ public class ShowThreeDFunction extends GenericFunction
 	}
 
 	/**
-	 * Show the help screen
+	 * Begin the function
 	 */
 	public void begin()
 	{
@@ -169,6 +169,7 @@ public class ShowThreeDFunction extends GenericFunction
 				// Also pass the base image parameters from input dialog
 				window.setBaseImageParameters(_baseImagePanel.getImageDefinition());
 				window.setTerrainParameters(new TerrainDefinition(_terrainPanel.getUseTerrain(), _terrainPanel.getGridSize()));
+				window.setDataStatus(_app.getCurrentDataStatus());
 				window.show();
 			}
 			catch (ThreeDException e)

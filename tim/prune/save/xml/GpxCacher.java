@@ -72,9 +72,19 @@ public class GpxCacher implements TagReceiver
 		if (_headerString == null) {
 			_headerString = inTag;
 		}
-		else {
-			_strings[_pointNum] = inTag;
-			_pointNum++;
+		else if (_strings != null)
+		{
+			if (_pointNum < _strings.length)
+			{
+				_strings[_pointNum] = inTag;
+				_pointNum++;
+			}
+			else
+			{
+				// _pointNum has got too high for the strings array
+				// This means the cacher has failed, probably by invalid points - need to give up caching here
+				_strings = null;
+			}
 		}
 	}
 
@@ -95,7 +105,7 @@ public class GpxCacher implements TagReceiver
 	public String getSourceString(DataPoint inPoint)
 	{
 		int index = _sourceInfo.getIndex(inPoint);
-		if (index >= 0) {
+		if (_strings != null && index >= 0 && index < _strings.length) {
 			return _strings[index];
 		}
 		return null;

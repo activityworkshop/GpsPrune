@@ -1,5 +1,6 @@
 package tim.prune.threedee;
 
+import tim.prune.DataStatus;
 import tim.prune.data.Track;
 
 /**
@@ -28,6 +29,11 @@ public interface ThreeDWindow
 	 * @param inDefinition terrain definition (terrain or not, resolution)
 	 */
 	public void setTerrainParameters(TerrainDefinition inDefinition);
+
+	/**
+	 * @param inStatus current data status for caching
+	 */
+	public void setDataStatus(DataStatus inStatus);
 
 	/**
 	 * Show the window

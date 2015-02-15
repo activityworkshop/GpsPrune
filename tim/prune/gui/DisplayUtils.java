@@ -70,4 +70,24 @@ public abstract class DisplayUtils
 		FORMAT_FLEX.setMinimumFractionDigits(numDigits);
 		return FORMAT_FLEX.format(inVal);
 	}
+
+	/**
+	 * Convert the given hour and minute values into a string H:MM
+	 * @param inHour hour of day, 0-24
+	 * @param inMinute minute, 0-59
+	 * @return string, either H:MM or HH:MM
+	 */
+	public static String makeTimeString(int inHour, int inMinute)
+	{
+		StringBuilder sb = new StringBuilder();
+		final int hour = (inHour >= 0 && inHour <= 24) ? inHour : 0;
+		sb.append(hour);
+
+		sb.append(':');
+
+		final int minute = (inMinute >= 0 && inMinute <= 59) ? inMinute : 0;
+		if (minute <= 9) {sb.append('0');}
+		sb.append(minute);
+		return sb.toString();
+	}
 }

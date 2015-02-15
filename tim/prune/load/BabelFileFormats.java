@@ -26,8 +26,10 @@ public abstract class BabelFileFormats
 		{
 			final String[] suffixes = getColumn(2);
 			for (int i=0; i<suffixes.length; i++)
+			{
 				if (suffixes[i] != null && suffixes[i].equalsIgnoreCase(inSuffix))
 					return i;
+			}
 		}
 		return -1;
 	}

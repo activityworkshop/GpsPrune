@@ -48,7 +48,7 @@ public class PhotoComparer implements Comparator<DataPoint>
 		if (result == 0) {
 			result = compareSizes(inP1, inP2);
 		}
-		return 0;
+		return result;
 	}
 
 	/**

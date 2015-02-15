@@ -11,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -67,7 +66,6 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private JPanel _encodingsPanel = null;
 	private JRadioButton _useSystemRadio = null, _forceUtf8Radio = null;
 	private File _exportFile = null;
-	private static String _systemEncoding = null;
 
 	/** this program name */
 	private static final String GPX_CREATOR = "GpsPrune v" + GpsPrune.VERSION_NUMBER + " activityworkshop.net";
@@ -99,15 +97,16 @@ public class GpxExporter extends GenericFunction implements Runnable
 			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-			_systemEncoding = getSystemEncoding();
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
 		}
 		_pointTypeSelector.init(_app.getTrackInfo());
-		_encodingsPanel.setVisible(!isSystemUtf8());
-		if (!isSystemUtf8()) {
+		_encodingsPanel.setVisible(!XmlUtils.isSystemUtf8());
+		if (!XmlUtils.isSystemUtf8())
+		{
+			String systemEncoding = XmlUtils.getSystemEncoding();
 			_useSystemRadio.setText(I18nManager.getText("dialog.exportgpx.encoding.system")
-				+ " (" + (_systemEncoding == null ? "unknown" : _systemEncoding) + ")");
+				+ " (" + (systemEncoding == null ? "unknown" : systemEncoding) + ")");
 		}
 		_dialog.setVisible(true);
 	}
@@ -148,7 +147,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		mainPanel.add(checkPanel);
 		// panel for selecting character encoding
 		_encodingsPanel = new JPanel();
-		if (!isSystemUtf8())
+		if (!XmlUtils.isSystemUtf8())
 		{
 			// only add this panel if system isn't utf8 (or can't be identified yet)
 			_encodingsPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -384,6 +383,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 						if (!exportTimestamps) {
 							pointSource = stripTime(pointSource);
 						}
+						inWriter.write('\t');
 						inWriter.write(pointSource);
 						inWriter.write('\n');
 					}
@@ -402,10 +402,10 @@ public class GpxExporter extends GenericFunction implements Runnable
 				exportAudios, exportTimestamps, true, inGpxCachers, "<rtept", "\t<rte><number>1</number>\n",
 				null, "\t</rte>\n");
 			// Output all track points, if any
-			String trackStart = "\t<trk><name>" + trackName + "</name><number>1</number><trkseg>\n";
+			String trackStart = "\t<trk>\n\t\t<name>" + trackName + "</name>\n\t\t<number>1</number>\n\t\t<trkseg>\n";
 			numSaved += writeTrackPoints(inWriter, inInfo, exportSelection, exportTrackpoints, exportPhotos,
 				exportAudios, exportTimestamps, false, inGpxCachers, "<trkpt", trackStart,
-				"\t</trkseg>\n\t<trkseg>\n", "\t</trkseg></trk>\n");
+				"\t</trkseg>\n\t<trkseg>\n", "\t\t</trkseg>\n\t</trk>\n");
 		}
 
 		inWriter.write("</gpx>\n");
@@ -432,11 +432,13 @@ public class GpxExporter extends GenericFunction implements Runnable
 		}
 		if (inName != null && !inName.equals(""))
 		{
-			inWriter.write("\t\t<name>");
+			if (inIsVersion1_1) {inWriter.write('\t');}
+			inWriter.write("\t<name>");
 			inWriter.write(inName);
 			inWriter.write("</name>\n");
 		}
-		inWriter.write("\t\t<desc>");
+		if (inIsVersion1_1) {inWriter.write('\t');}
+		inWriter.write("\t<desc>");
 		inWriter.write(desc);
 		inWriter.write("</desc>\n");
 		if (inIsVersion1_1)
@@ -486,7 +488,9 @@ public class GpxExporter extends GenericFunction implements Runnable
 					// get the source from the point (if any)
 					String pointSource = getPointSource(inCachers, point);
 					// Clear point source if it's the wrong type of point (eg changed from waypoint or route point)
-					if (pointSource != null && !pointSource.toLowerCase().startsWith(inPointTag)) {pointSource = null;}
+					if (pointSource != null && !pointSource.trim().toLowerCase().startsWith(inPointTag)) {
+						pointSource = null;
+					}
 					if (pointSource != null || !inOnlyCopies)
 					{
 						// restart track segment if necessary
@@ -626,62 +630,9 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 */
 	private static String getXmlHeaderString(OutputStreamWriter inWriter)
 	{
-		return "<?xml version=\"1.0\" encoding=\"" + getEncoding(inWriter) + "\"?>\n";
+		return "<?xml version=\"1.0\" encoding=\"" + XmlUtils.getEncoding(inWriter) + "\"?>\n";
 	}
 
-
-	/**
-	 * Get the default system encoding using a writer
-	 * @param inWriter writer object
-	 * @return string defining encoding
-	 */
-	private static String getEncoding(OutputStreamWriter inWriter)
-	{
-		String encoding = inWriter.getEncoding();
-		try {
-			encoding =  Charset.forName(encoding).name();
-		}
-		catch (Exception e) {} // ignore failure to find encoding
-		return encoding;
-	}
-
-
-	/**
-	 * Use a temporary file to obtain the name of the default system encoding
-	 * @return name of default system encoding, or null if write failed
-	 */
-	private static String getSystemEncoding()
-	{
-		File tempFile = null;
-		String encoding = null;
-		try
-		{
-			tempFile = File.createTempFile("prune", null);
-			OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(tempFile));
-			encoding = getEncoding(writer);
-			writer.close();
-		}
-		catch (IOException e) {} // value stays null
-		// Delete temp file
-		if (tempFile != null && tempFile.exists()) {
-			if (!tempFile.delete()) {
-				System.err.println("Cannot delete temp file: " + tempFile.getAbsolutePath());
-			}
-		}
-		// If writing failed (eg permissions) then just ask system for default
-		if (encoding == null) encoding = Charset.defaultCharset().name();
-		return encoding;
-	}
-
-	/**
-	 * Creates temp file if necessary to check system encoding
-	 * @return true if system uses UTF-8 by default
-	 */
-	private static boolean isSystemUtf8()
-	{
-		if (_systemEncoding == null) _systemEncoding = getSystemEncoding();
-		return (_systemEncoding != null && _systemEncoding.toUpperCase().equals("UTF-8"));
-	}
 
 	/**
 	 * Get the header string for the gpx tag
@@ -790,24 +741,24 @@ public class GpxExporter extends GenericFunction implements Runnable
 		boolean inExportPhoto, boolean inExportAudio)
 		throws IOException
 	{
-		inWriter.write("\t\t<trkpt lat=\"");
+		inWriter.write("\t\t\t<trkpt lat=\"");
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\" lon=\"");
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
-		inWriter.write("\">");
+		inWriter.write("\">\n");
 		// altitude
 		if (inPoint.hasAltitude())
 		{
-			inWriter.write("<ele>");
+			inWriter.write("\t\t\t\t<ele>");
 			inWriter.write("" + inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
-			inWriter.write("</ele>");
+			inWriter.write("</ele>\n");
 		}
 		// timestamp if available (and selected)
 		if (inPoint.hasTimestamp() && inTimestamps)
 		{
-			inWriter.write("<time>");
+			inWriter.write("\t\t\t\t<time>");
 			inWriter.write(inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
-			inWriter.write("</time>");
+			inWriter.write("</time>\n");
 		}
 		// photo, audio
 		if (inPoint.getPhoto() != null && inExportPhoto) {
@@ -816,7 +767,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inPoint.getAudio() != null && inExportAudio) {
 			inWriter.write(makeMediaLink(inPoint.getAudio()));
 		}
-		inWriter.write("</trkpt>\n");
+		inWriter.write("\t\t\t</trkpt>\n");
 	}
 
 
@@ -867,6 +818,6 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 */
 	private static String stripTime(String inPointSource)
 	{
-		return inPointSource.replaceAll("<time>.*?</time>", "");
+		return inPointSource.replaceAll("[ \t]*<time>.*?</time>", "");
 	}
 }

@@ -47,7 +47,6 @@ public abstract class MapSourceLibrary
 			"http://toolserver.org/~cmarqu/hill/", 18));
 		_sourceList.add(new OsmMapSource("Openseamap", "http://tile.openstreetmap.org/",
 			"http://tiles.openseamap.org/seamark/", 18));
-		_sourceList.add(new CloudmadeMapSource("Pale Dawn", "998", 18));
 	}
 
 	/**
@@ -64,7 +63,6 @@ public abstract class MapSourceLibrary
 			{
 				String sourceString = configString.substring(0, splitPos);
 				MapSource source = OsmMapSource.fromConfig(sourceString);
-				if (source == null) {source = CloudmadeMapSource.fromConfig(sourceString);}
 				if (source != null) {
 					_sourceList.add(source);
 				}

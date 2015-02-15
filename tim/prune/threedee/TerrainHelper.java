@@ -196,12 +196,13 @@ public class TerrainHelper
 	{
 		int numVoids = countVoids(inTerrainTrack);
 		if (numVoids == 0) {return;}
-		// System.out.println("Starting to fix, num voids = " + numVoids);
+		//System.out.println("Starting to fix, num voids = " + numVoids);
 		// Fix the holes which are surrounded on all four sides by non-holes
 		fixSingleHoles(inTerrainTrack);
-		// System.out.println("Fixed single holes, now num voids = " + countVoids(inTerrainTrack));
+		//System.out.println("Fixed single holes, now num voids = " + countVoids(inTerrainTrack));
 		// Maybe there is something to do in the corners?
-		fixCorners(inTerrainTrack);
+		fixCornersAndEdges(inTerrainTrack);
+		//System.out.println("Fixed corners, now num voids = " + countVoids(inTerrainTrack));
 		// Now fix the bigger holes, which should fix everything left
 		fixBiggerHoles(inTerrainTrack);
 		final int numHolesLeft = countVoids(inTerrainTrack);
@@ -216,6 +217,21 @@ public class TerrainHelper
 	 */
 	private static int countVoids(Track inTerrainTrack)
 	{
+		// DEBUG: Show state of voids first
+//		final int gridSize = (int) Math.sqrt(inTerrainTrack.getNumPoints());
+//		StringBuilder sb = new StringBuilder();
+//		for (int i=0; i<inTerrainTrack.getNumPoints(); i++)
+//		{
+//			if ((i%gridSize) == 0) sb.append('\n');
+//			if (inTerrainTrack.getPoint(i).hasAltitude()) {
+//				sb.append('A');
+//			} else {
+//				sb.append(' ');
+//			}
+//		}
+//		System.out.println("Voids:" + sb.toString());
+		// END DEBUG
+
 		int numVoids = 0;
 		if (inTerrainTrack != null)
 		{
@@ -271,7 +287,7 @@ public class TerrainHelper
 
 						double altitude = 0.0;
 						if (pll != null && pll.hasAltitude() && prr != null && prr.hasAltitude()
-							&& puu != null && puu.hasAltitude() && pdd != null & pdd.hasAltitude())
+							&& puu != null && puu.hasAltitude() && pdd != null && pdd.hasAltitude())
 						{
 							// Use the double-neighbours too to take into account the gradients
 							altitude = (
@@ -304,15 +320,19 @@ public class TerrainHelper
 	}
 
 	/**
-	 * Try to fix the corners, if they're blank
+	 * Try to fix the corners and edges, if they're blank
 	 * @param inTerrainTrack terrain track
 	 */
-	private void fixCorners(Track inTerrainTrack)
+	private void fixCornersAndEdges(Track inTerrainTrack)
 	{
 		fixCorner(inTerrainTrack, 0, 1, 1);
 		fixCorner(inTerrainTrack, _gridSize-1, -1, 1);
 		fixCorner(inTerrainTrack, (_gridSize-1)*_gridSize, 1, -1);
 		fixCorner(inTerrainTrack, _gridSize*_gridSize-1, -1, -1);
+		fixEdge(inTerrainTrack, 0, 1);
+		fixEdge(inTerrainTrack, _gridSize-1, _gridSize);
+		fixEdge(inTerrainTrack, (_gridSize-1)*_gridSize, -_gridSize);
+		fixEdge(inTerrainTrack, _gridSize*_gridSize-1, -1);
 	}
 
 	/**
@@ -351,6 +371,40 @@ public class TerrainHelper
 				// System.out.println("Averaging values " + alt1.getMetricValue() + " and " + alt2.getMetricValue());
 				int newAltitude = (int) ((alt1.getMetricValue() + alt2.getMetricValue()) / 2.0);
 				corner.setFieldValue(Field.ALTITUDE, "" + newAltitude, false);
+			}
+		}
+	}
+
+	/**
+	 * Fix any holes found in the specified edge
+	 * @param inTerrainTrack terrain track
+	 * @param inCornerIndex index of corner to start from
+	 * @param inInc increment along edge
+	 */
+	private void fixEdge(Track inTerrainTrack, int inCornerIndex, int inInc)
+	{
+		int prevIndexWithAlt = -1;
+		int sIndex = inCornerIndex;
+		if (inTerrainTrack.getPoint(sIndex).hasAltitude()) {prevIndexWithAlt = 0;}
+		for (int i=1; i<_gridSize; i++)
+		{
+			sIndex += inInc;
+			if (inTerrainTrack.getPoint(sIndex).hasAltitude())
+			{
+				if (prevIndexWithAlt >= 0 && prevIndexWithAlt < (i-1))
+				{
+					final int gapLen = i - prevIndexWithAlt;
+					final double alt1 = inTerrainTrack.getPoint(prevIndexWithAlt).getAltitude().getMetricValue();
+					final double alt2 = inTerrainTrack.getPoint(i).getAltitude().getMetricValue();
+					for (int j = 1; j < gapLen; j++)
+					{
+						// System.out.println("Fill in " + (prevIndexWithAlt + j) + " using " + prevIndexWithAlt + " and " + i);
+						final double alt = alt1 + (alt2-alt1) * j / gapLen;
+						final DataPoint p = inTerrainTrack.getPoint(inCornerIndex + (prevIndexWithAlt + j) * inInc);
+						p.setFieldValue(Field.ALTITUDE, "" + (int) alt, false);
+					}
+				}
+				prevIndexWithAlt = i;
 			}
 		}
 	}

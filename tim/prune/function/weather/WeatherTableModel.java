@@ -84,13 +84,12 @@ public class WeatherTableModel extends AbstractTableModel
 					return buildDisplayString(null, I18nManager.getText("dialog.weather.day." + dayDesc));
 				}
 				case ROW_DESC: return buildDisplayString(null, forecast.getDescription());
-				case ROW_WIND: return buildDisplayString("Wind", forecast.getWindDescription());
+				case ROW_WIND: return buildDisplayString(I18nManager.getText("dialog.weather.wind"), forecast.getWindDescription());
 				case ROW_ICON: return forecast.getImageName();
-				case ROW_TEMP: return buildDisplayString("Temp", forecast.getTemps()
+				case ROW_TEMP: return buildDisplayString(I18nManager.getText("dialog.weather.temp"), forecast.getTemps()
 					+ (_results.isCelsius() ? UNITS_DEGC : UNITS_DEGF));
-				case ROW_HUMID: return buildDisplayString("Humidity", forecast.getHumidity());
+				case ROW_HUMID: return buildDisplayString(I18nManager.getText("dialog.weather.humidity"), forecast.getHumidity());
 			}
-			// TODO: Use language-specific texts for wind, temp and humidity
 		}
 		return "";
 	}

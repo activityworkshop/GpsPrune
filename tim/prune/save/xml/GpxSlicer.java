@@ -12,8 +12,6 @@ public class GpxSlicer
 {
 	/** listener to receive tags */
 	private TagReceiver _receiver = null;
-	/** string builder for copying source xml */
-	private StringBuilder _builder = null;
 
 	// character sequences for start and end of tags
 	private static final char[] GPX_START = "<gpx".toCharArray();
@@ -26,7 +24,6 @@ public class GpxSlicer
 	private static final char[] RTEPT_END = "/rtept>".toCharArray();
 	private static final char[] CDATA_START = "<![CDATA[".toCharArray();
 	private static final char[] CDATA_END = "]]>".toCharArray();
-
 
 	/**
 	 * Constructor
@@ -43,7 +40,8 @@ public class GpxSlicer
 	 */
 	public void slice(InputStream inStream)
 	{
-		_builder = new StringBuilder(100);
+		StringBuffer beginBuffer = new StringBuffer(200);
+		ByteBuffer byteBuffer = new ByteBuffer();
 		boolean insideTag = false;
 		boolean insideCdata = false;
 		char[] endTag = null;
@@ -53,37 +51,49 @@ public class GpxSlicer
 		{
 			while ((b = inStream.read()) >= 0)
 			{
-				if (!insideTag && !insideCdata) {
-					if (b == '<') _builder.setLength(0);
-				}
 				// copy character
-				_builder.append((char)b);
+				byteBuffer.appendByte((byte) b);
+				// clear buffer if necessary
+				if (!insideTag && !insideCdata && (b == '>' || b == '\n'))
+				{
+					byteBuffer.clear();
+					continue;
+				}
+				// if we're still at the beginning, copy to the begin buffer as well
+				if (beginBuffer != null) {beginBuffer.append((char) b);}
 
 				if (insideCdata) {
 					// Just look for end of cdata block
-					if (foundSequence(CDATA_END)) {insideCdata = false;}
+					if (byteBuffer.foundSequence(CDATA_END)) {insideCdata = false;}
 				}
 				else
 				{
 					if (!insideTag)
 					{
 						// Look for start of one of the tags
-						if (!foundHeader && foundSequence(GPX_START)) {
+						if (!foundHeader && byteBuffer.foundSequence(GPX_START))
+						{
 							insideTag = true;
 							foundHeader = true;
 							endTag = GPX_END;
+							// Check begin buffer for utf8 encoding
+							if (beginBuffer != null && beginBuffer.toString().toLowerCase().indexOf("encoding=\"utf-8\"") > 0)
+							{
+								byteBuffer.setEncodingUtf8();
+							}
+							beginBuffer = null; // don't need it any more
 						}
 						else if (b == 't')
 						{
-							if (foundSequence(TRKPT_START)) {
+							if (byteBuffer.foundSequence(TRKPT_START)) {
 								insideTag = true;
 								endTag = TRKPT_END;
 							}
-							else if (foundSequence(WPT_START)) {
+							else if (byteBuffer.foundSequence(WPT_START)) {
 								insideTag = true;
 								endTag = WPT_END;
 							}
-							else if (foundSequence(RTEPT_START)) {
+							else if (byteBuffer.foundSequence(RTEPT_START)) {
 								insideTag = true;
 								endTag = RTEPT_END;
 							}
@@ -92,37 +102,21 @@ public class GpxSlicer
 					else
 					{
 						// Look for end of found tag
-						if (foundSequence(endTag)) {
-							_receiver.reportTag(_builder.toString());
-							_builder.setLength(0);
+						if (byteBuffer.foundSequence(endTag))
+						{
+							String tag = byteBuffer.toString();
+							_receiver.reportTag(tag);
+							byteBuffer.clear();
 							insideTag = false;
 						}
 					}
 					// Look for start of cdata block
-					if (foundSequence(CDATA_START)) {insideCdata = true;}
+					if (byteBuffer.foundSequence(CDATA_START)) {
+						insideCdata = true;
+					}
 				}
 			}
 		}
 		catch (IOException e) {} // ignore
-	}
-
-	/**
-	 * Look for the given character sequence in the last characters read
-	 * @param inChars sequence to look for
-	 * @return true if sequence found
-	 */
-	private boolean foundSequence(char[] inChars)
-	{
-		final int numChars = inChars.length;
-		final int bufflen = _builder.length();
-		if (bufflen < numChars) {return false;}
-		for (int i=0; i<numChars; i++)
-		{
-			char searchChar = inChars[numChars - 1 - i];
-			char sourceChar = _builder.charAt(bufflen - 1 - i);
-			if (searchChar != sourceChar) {return false;}
-			//if (Character.toLowerCase(searchChar) != Character.toLowerCase(sourceChar)) {return false;}
-		}
-		return true;
 	}
 }

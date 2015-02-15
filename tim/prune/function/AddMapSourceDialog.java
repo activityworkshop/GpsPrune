@@ -1,12 +1,10 @@
 package tim.prune.function;
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,7 +22,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import tim.prune.I18nManager;
-import tim.prune.gui.map.CloudmadeMapSource;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.gui.map.OsmMapSource;
@@ -36,18 +33,12 @@ public class AddMapSourceDialog
 {
 	private SetMapBgFunction _parent = null;
 	private JDialog _addDialog = null;
-	private JRadioButton[] _sourceTypeRadios = null;
-	private JPanel _cards = null;
 	private MapSource _originalSource = null;
 	// controls for osm panel
 	private JTextField _oNameField = null;
 	private JTextField _baseUrlField = null, _topUrlField = null;
 	private JRadioButton[] _baseTypeRadios = null, _topTypeRadios = null;
 	private JComboBox<Integer> _oZoomCombo = null;
-	// controls for cloudmade panel
-	private JTextField _cNameField = null;
-	private JTextField _cStyleField = null;
-	private JComboBox<Integer> _cZoomCombo = null;
 	private JButton _okButton = null;
 
 	/** array of file types */
@@ -76,31 +67,9 @@ public class AddMapSourceDialog
 	{
 		JPanel dialogPanel = new JPanel();
 		dialogPanel.setLayout(new BorderLayout());
-		// Top panel with two radio buttons to select source type
-		JPanel radioPanel = new JPanel();
-		ButtonGroup radioGroup = new ButtonGroup();
-		radioPanel.setLayout(new GridLayout(1, 0));
-		_sourceTypeRadios = new JRadioButton[2];
-		_sourceTypeRadios[0] = new JRadioButton("Openstreetmap");
-		radioGroup.add(_sourceTypeRadios[0]);
-		radioPanel.add(_sourceTypeRadios[0]);
-		_sourceTypeRadios[1] = new JRadioButton("Cloudmade");
-		radioGroup.add(_sourceTypeRadios[1]);
-		radioPanel.add(_sourceTypeRadios[1]);
-		_sourceTypeRadios[0].setSelected(true);
-		// listener for clicks on type radios
-		ActionListener typeListener = new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				onRadioClicked();
-			}
-		};
-		_sourceTypeRadios[0].addActionListener(typeListener);
-		_sourceTypeRadios[1].addActionListener(typeListener);
-		radioPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		dialogPanel.add(radioPanel, BorderLayout.NORTH);
+		// Top panel with spacer
+		dialogPanel.add(new JLabel(" "), BorderLayout.NORTH);
 
-		_cards = new JPanel();
-		_cards.setLayout(new CardLayout());
 		// listener
 		KeyAdapter keyListener = new KeyAdapter() {
 			public void keyReleased(KeyEvent e) {
@@ -149,7 +118,7 @@ public class AddMapSourceDialog
 		c.gridx = 1; c.weightx = 1.0;
 		gbPanel.add(_baseUrlField, c);
 		_baseTypeRadios = new JRadioButton[3];
-		radioGroup = new ButtonGroup();
+		ButtonGroup radioGroup = new ButtonGroup();
 		for (int i=0; i<3; i++)
 		{
 			_baseTypeRadios[i] = new JRadioButton(FILE_TYPES[i]);
@@ -190,35 +159,11 @@ public class AddMapSourceDialog
 		c.gridx = 1;
 		gbPanel.add(_oZoomCombo, c);
 		osmPanel.add(gbPanel, BorderLayout.NORTH);
-		_cards.add(osmPanel, "card1");
 
-		// Panel for cloudmade source
-		JPanel cloudPanel = new JPanel();
-		cloudPanel.setBorder(BorderFactory.createEmptyBorder(6, 3, 4, 3));
-		// Use a gridlayout inside a borderlayout to avoid stretching
-		cloudPanel.setLayout(new BorderLayout());
-		JPanel cloudGridPanel = new JPanel();
-		cloudGridPanel.setLayout(new GridLayout(0, 2, 5, 5));
-		cloudGridPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.sourcename")));
-		_cNameField = new JTextField(18);
-		_cNameField.addKeyListener(keyListener);
-		cloudGridPanel.add(_cNameField);
-		cloudGridPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.cloudstyle")));
-		_cStyleField = new JTextField(18);
-		_cStyleField.addKeyListener(keyListener);
-		cloudGridPanel.add(_cStyleField);
-		cloudGridPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.maxzoom")));
-		_cZoomCombo = new JComboBox<Integer>();
-		for (int i=10; i<=20; i++) {
-			_cZoomCombo.addItem(i);
-		}
-		cloudGridPanel.add(_cZoomCombo);
-		cloudPanel.add(cloudGridPanel, BorderLayout.NORTH);
-		_cards.add(cloudPanel, "card2");
 		// cards
 		JPanel holderPanel = new JPanel();
 		holderPanel.setLayout(new BorderLayout());
-		holderPanel.add(_cards, BorderLayout.NORTH);
+		holderPanel.add(osmPanel, BorderLayout.NORTH);
 		dialogPanel.add(holderPanel, BorderLayout.CENTER);
 
 		// button panel at bottom
@@ -267,13 +212,7 @@ public class AddMapSourceDialog
 		_topUrlField.setText("");
 		_topTypeRadios[0].setSelected(true);
 		_oZoomCombo.setSelectedIndex(8);
-		_cNameField.setText("");
-		_cStyleField.setText("");
-		_cZoomCombo.setSelectedIndex(8);
 		_okButton.setEnabled(false);
-		for (int i=0; i<2; i++) {
-			_sourceTypeRadios[i].setEnabled(true);
-		}
 		_addDialog.setVisible(true);
 	}
 
@@ -287,56 +226,24 @@ public class AddMapSourceDialog
 			clearAllFields();
 			return;
 		}
-		boolean sourceFound = false;
-		// See if it's a cloudmade source
+
+		// See if it's an osm source
 		try
 		{
-			CloudmadeMapSource cloudSource = (CloudmadeMapSource) _originalSource;
-			sourceFound = true;
-			_cNameField.setText(cloudSource.getName());
-			_cStyleField.setText(cloudSource.getStyle());
-			_cZoomCombo.setSelectedIndex(getZoomIndex(cloudSource.getMaxZoomLevel()));
-			_sourceTypeRadios[1].setSelected(true);
+			OsmMapSource osmSource = (OsmMapSource) _originalSource;
+			_oNameField.setText(osmSource.getName());
+			_baseUrlField.setText(osmSource.getBaseUrl(0));
+			int baseType = getBaseType(osmSource.getFileExtension(0));
+			_baseTypeRadios[baseType].setSelected(true);
+			_topUrlField.setText(osmSource.getNumLayers()==0?"":osmSource.getBaseUrl(1));
+			int topType = getBaseType(osmSource.getFileExtension(1));
+			_topTypeRadios[topType].setSelected(true);
+			_oZoomCombo.setSelectedIndex(getZoomIndex(osmSource.getMaxZoomLevel()));
 		}
 		catch (ClassCastException cce) {} // ignore, sourceFound flag stays false
 
-		// See if it's an osm source
-		if (!sourceFound)
-		{
-			try
-			{
-				OsmMapSource osmSource = (OsmMapSource) _originalSource;
-				sourceFound = true;
-				_oNameField.setText(osmSource.getName());
-				_baseUrlField.setText(osmSource.getBaseUrl(0));
-				int baseType = getBaseType(osmSource.getFileExtension(0));
-				_baseTypeRadios[baseType].setSelected(true);
-				_topUrlField.setText(osmSource.getNumLayers()==0?"":osmSource.getBaseUrl(1));
-				int topType = getBaseType(osmSource.getFileExtension(1));
-				_topTypeRadios[topType].setSelected(true);
-				_oZoomCombo.setSelectedIndex(getZoomIndex(osmSource.getMaxZoomLevel()));
-				_sourceTypeRadios[0].setSelected(true);
-			}
-			catch (ClassCastException cce) {} // ignore, sourceFound flag stays false
-		}
-		for (int i=0; i<2; i++) {
-			_sourceTypeRadios[i].setEnabled(false);
-		}
-		onRadioClicked();
 		_okButton.setEnabled(false);
 		_addDialog.setVisible(true);
-	}
-
-
-	/**
-	 * React to one of the type radio buttons being clicked
-	 */
-	private void onRadioClicked()
-	{
-		CardLayout cl = (CardLayout) _cards.getLayout();
-		if (_sourceTypeRadios[0].isSelected()) {cl.first(_cards);}
-		else {cl.last(_cards);}
-		enableOK();
 	}
 
 	/**
@@ -344,10 +251,7 @@ public class AddMapSourceDialog
 	 */
 	private void enableOK()
 	{
-		boolean ok = false;
-		if (_sourceTypeRadios[0].isSelected()) {ok = isOsmPanelOk();}
-		if (_sourceTypeRadios[1].isSelected()) {ok = isCloudPanelOk();}
-		_okButton.setEnabled(ok);
+		_okButton.setEnabled(isOsmPanelOk());
 	}
 
 	/**
@@ -371,28 +275,14 @@ public class AddMapSourceDialog
 	}
 
 	/**
-	 * Check the cloudmade panel if all details are complete
-	 * @return true if details look ok
-	 */
-	private boolean isCloudPanelOk()
-	{
-		boolean ok = _cNameField.getText().trim().length() > 1;
-		int styleNum = 0;
-		try {
-			styleNum = Integer.parseInt(_cStyleField.getText());
-		}
-		catch (NumberFormatException nfe) {}
-		return (ok && styleNum > 0);
-	}
-
-	/**
 	 * Finish by adding the requested source and refreshing the parent
 	 */
 	private void finish()
 	{
 		MapSource newSource = null;
 		String origName = (_originalSource == null ? null : _originalSource.getName());
-		if (_sourceTypeRadios[0].isSelected())
+
+		if (isOsmPanelOk())
 		{
 			// Openstreetmap source
 			String sourceName = getValidSourcename(_oNameField.getText(), origName);
@@ -402,12 +292,7 @@ public class AddMapSourceDialog
 			String ext2 = getFileExtension(_topTypeRadios);
 			newSource = new OsmMapSource(sourceName, url1, ext1, url2, ext2, _oZoomCombo.getSelectedIndex()+10);
 		}
-		else if (_sourceTypeRadios[1].isSelected())
-		{
-			String sourceName = getValidSourcename(_cNameField.getText(), origName);
-			newSource = new CloudmadeMapSource(sourceName, _cStyleField.getText(),
-				_cZoomCombo.getSelectedIndex()+10);
-		}
+
 		// Add new source if ok
 		if (newSource != null)
 		{

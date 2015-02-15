@@ -44,7 +44,7 @@ public class TerrainDefinitionPanel extends JPanel
 		JLabel label = new JLabel(I18nManager.getText("dialog.3d.terraingridsize") + ": ");
 		add(label);
 		_gridSizeField = new WholeNumberField(4);
-		_gridSizeField.setValue(10);
+		_gridSizeField.setValue(50); // default grid size
 		_gridSizeField.setMaximumSize(new Dimension(100, 50));
 		_gridSizeField.setEnabled(false);
 		add(_gridSizeField);

@@ -269,7 +269,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 		Process process = Runtime.getRuntime().exec(commands);
 
 		String trackName = _trackNameField.getText();
-		if (trackName == null || trackName.equals("")) {trackName = "prune";}
+		if (trackName == null || trackName.equals("")) {trackName = "gpsprune";}
 		// Generate the GPX file and send to the GPS
 		OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
 		boolean[] saveFlags = {true, true, true, true, false, true}; // export everything

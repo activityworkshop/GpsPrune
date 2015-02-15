@@ -51,4 +51,18 @@ public class TerrainDefinition
 	public int getGridSize() {
 		return _gridSize;
 	}
+
+	@Override
+	/**
+	 * Compare two TerrainDefinitions to see if they're equal
+	 */
+	public boolean equals(Object obj)
+	{
+		if (obj == null || !(obj instanceof TerrainDefinition)) {
+			return false;
+		}
+		TerrainDefinition other = (TerrainDefinition) obj;
+		return _useTerrain == other._useTerrain
+			&& _gridSize == other._gridSize;
+	}
 }

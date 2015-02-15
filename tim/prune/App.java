@@ -60,7 +60,7 @@ public class App
 	private FileLoader _fileLoader = null;
 	private JpegLoader _jpegLoader = null;
 	private FileSaver _fileSaver = null;
-	private Stack<UndoOperation> _undoStack = null;
+	private UndoStack _undoStack = null;
 	private boolean _mangleTimestampsConfirmed = false;
 	private Viewport _viewport = null;
 	private ArrayList<File> _dataFiles = null;
@@ -79,7 +79,7 @@ public class App
 	public App(JFrame inFrame)
 	{
 		_frame = inFrame;
-		_undoStack = new Stack<UndoOperation>();
+		_undoStack = new UndoStack();
 		_track = new Track();
 		_trackInfo = new TrackInfo(_track);
 		FunctionLibrary.initialise(this);
@@ -911,6 +911,12 @@ public class App
 		UpdateMessageBroker.informSubscribers();
 	}
 
+	/**
+	 * @return the current data status, used for later comparison
+	 */
+	public DataStatus getCurrentDataStatus() {
+		return new DataStatus(_undoStack.size(), _undoStack.getNumTimesDeleted());
+	}
 
 	/**
 	 * Show a map url in an external browser

@@ -1,5 +1,5 @@
-GpsPrune version 16
-===================
+GpsPrune version 16.3
+=====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_16.jar
+   java -jar gpsprune_16.3.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,11 +25,36 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_16.jar --lang=DE
+   java -jar gpsprune_16.3.jar --lang=DE
 
+
+New with version 16.3
+=====================
+The following fixes were added since version 16.2:
+  - Fix for gpx caching of points which failed to load
+  - Additional newlines / tabs in gpx export
+  - API key for openweathermap.org
+  - Improvements to 3d terrain reflections
+  - Additional translations
+
+New with version 16.2
+=====================
+The following fixes were added since version 16.1:
+  - Fix for Gpx-slicing UTF8 files
+  - Conversion of sunrise/sunset times to local timezone
+  - Removal of Cloudmade maps
+  - Additional translations
+
+New with version 16.1
+=====================
+The following fixes were added since version 16:
+  - Caching of terrain information for three-dimensional views
+  - Additional translations
+  - Improved void filling by interpolation
+  - Remembering file type of imported files
 
 New with version 16
-=====================
+===================
 The following features were added since version 15:
   - Extend povray output using terrain and/or map image
   - Extend java3d output using terrain and/or map image

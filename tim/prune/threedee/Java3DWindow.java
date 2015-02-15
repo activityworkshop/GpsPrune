@@ -27,9 +27,9 @@ import javax.media.j3d.QuadArray;
 import javax.media.j3d.Shape3D;
 import javax.media.j3d.Text3D;
 import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
-import javax.media.j3d.TriangleStripArray;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -41,6 +41,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3d;
 
+import tim.prune.DataStatus;
 import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
 import tim.prune.data.Track;
@@ -53,6 +54,8 @@ import tim.prune.save.MapGrouter;
 import com.sun.j3d.utils.behaviors.vp.OrbitBehavior;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.Cylinder;
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
 import com.sun.j3d.utils.geometry.Sphere;
 import com.sun.j3d.utils.image.TextureLoader;
 import com.sun.j3d.utils.universe.SimpleUniverse;
@@ -72,6 +75,7 @@ public class Java3DWindow implements ThreeDWindow
 	private ImageDefinition _imageDefinition = null;
 	private GroutedImage _baseImage = null;
 	private TerrainDefinition _terrainDefinition = null;
+	private DataStatus _dataStatus = null;
 
 	/** only prompt about big track size once */
 	private static boolean TRACK_SIZE_WARNING_GIVEN = false;
@@ -132,6 +136,14 @@ public class Java3DWindow implements ThreeDWindow
 	public void setTerrainParameters(TerrainDefinition inDefinition)
 	{
 		_terrainDefinition = inDefinition;
+	}
+
+	/**
+	 * Set the current data status
+	 */
+	public void setDataStatus(DataStatus inStatus)
+	{
+		_dataStatus = inStatus;
 	}
 
 	/**
@@ -331,24 +343,31 @@ public class Java3DWindow implements ThreeDWindow
 
 		if (showTerrain)
 		{
-			// TODO: Is it maybe possible to cache the last terrainTrack?
-			//       (if the dataTrack and the resolution haven't changed)
-			// Construct the terrain track according to these extents and the grid size
 			TerrainHelper terrainHelper = new TerrainHelper(_terrainDefinition.getGridSize());
-			Track terrainTrack = terrainHelper.createGridTrack(_track);
-			// Get the altitudes from SRTM for all the points in the track
-			LookupSrtmFunction srtmLookup = (LookupSrtmFunction) FunctionLibrary.FUNCTION_LOOKUP_SRTM;
-			srtmLookup.begin(terrainTrack);
-			while (srtmLookup.isRunning())
+			// See if there's a previously saved terrain track we can reuse
+			Track terrainTrack = TerrainCache.getTerrainTrack(_dataStatus, _terrainDefinition);
+			if (terrainTrack == null)
 			{
-				try {
-					Thread.sleep(750);  // just polling in a wait loop isn't ideal but simple
+				// Construct the terrain track according to these extents and the grid size
+				terrainTrack = terrainHelper.createGridTrack(_track);
+				// Get the altitudes from SRTM for all the points in the track
+				LookupSrtmFunction srtmLookup = (LookupSrtmFunction) FunctionLibrary.FUNCTION_LOOKUP_SRTM;
+				srtmLookup.begin(terrainTrack);
+				while (srtmLookup.isRunning())
+				{
+					try {
+						Thread.sleep(750);  // just polling in a wait loop isn't ideal but simple
+					}
+					catch (InterruptedException e) {}
 				}
-				catch (InterruptedException e) {}
-			}
 
-			// Fix the voids
-			terrainHelper.fixVoids(terrainTrack);
+				// Fix the voids
+				terrainHelper.fixVoids(terrainTrack);
+
+				// Store this back in the cache, maybe we'll need it again
+				TerrainCache.storeTerrainTrack(terrainTrack, _dataStatus, _terrainDefinition);
+			}
+			// else System.out.println("Yay - reusing the cached track!");
 
 			// Give the terrain definition to the _model as well
 			_model.setTerrain(terrainTrack);
@@ -575,11 +594,8 @@ public class Java3DWindow implements ThreeDWindow
 	{
 		final int numNodes = inHelper.getGridSize();
 		final int RESULT_SIZE = numNodes * (numNodes * 2 - 2);
-		final int GEOMETRY_COLOURING_TYPE = (inBaseImage == null ? GeometryArray.COLOR_3 : GeometryArray.TEXTURE_COORDINATE_2);
-
 		int[] stripData = inHelper.getStripLengths();
-		TriangleStripArray tsa = new TriangleStripArray(RESULT_SIZE, GeometryArray.COORDINATES | GEOMETRY_COLOURING_TYPE,
-			stripData);
+
 		// Get the scaled terrainTrack coordinates (or just heights) from the model
 		final int nSquared = numNodes * numNodes;
 		Point3d[] rawPoints = new Point3d[nSquared];
@@ -590,23 +606,37 @@ public class Java3DWindow implements ThreeDWindow
 				Math.max(height, 0.05), // make sure it's above the box
 				-inModel.getScaledTerrainVertValue(i) * MODEL_SCALE_FACTOR);
 		}
-		tsa.setCoordinates(0, inHelper.getTerrainCoordinates(rawPoints));
+
+		GeometryInfo gi = new GeometryInfo(GeometryInfo.TRIANGLE_STRIP_ARRAY);
+		gi.setCoordinates(inHelper.getTerrainCoordinates(rawPoints));
+		gi.setStripCounts(stripData);
 
 		Appearance tAppearance = new Appearance();
 		if (inBaseImage != null)
 		{
-			tsa.setTextureCoordinates(0, 0, inHelper.getTextureCoordinates());
+			gi.setTextureCoordinateParams(1,  2); // one coord set of two dimensions
+			gi.setTextureCoordinates(0, inHelper.getTextureCoordinates());
 			Texture mapImage = new TextureLoader(inBaseImage.getImage()).getTexture();
 			tAppearance.setTexture(mapImage);
+			TextureAttributes texAttr = new TextureAttributes();
+			texAttr.setTextureMode(TextureAttributes.MODULATE);
+			tAppearance.setTextureAttributes(texAttr);
 		}
 		else
 		{
 			Color3f[] colours = new Color3f[RESULT_SIZE];
 			Color3f terrainColour = new Color3f(0.1f, 0.2f, 0.2f);
 			for (int i=0; i<RESULT_SIZE; i++) {colours[i] = terrainColour;}
-			tsa.setColors(0, colours);
+			gi.setColors(colours);
 		}
-		return new Shape3D(tsa, tAppearance);
+		new NormalGenerator().generateNormals(gi);
+		Material terrnMat = new Material(new Color3f(0.4f, 0.4f, 0.4f), // ambient colour
+			new Color3f(0f, 0f, 0f), // emissive (none)
+			new Color3f(0.8f, 0.8f, 0.8f), // diffuse
+			new Color3f(0.2f, 0.2f, 0.2f), //specular
+			30f); // shinyness
+		tAppearance.setMaterial(terrnMat);
+		return new Shape3D(gi.getGeometryArray(), tAppearance);
 	}
 
 	/**

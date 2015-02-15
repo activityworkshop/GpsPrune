@@ -175,7 +175,12 @@ public class DownloadSrtmFunction extends GenericFunction implements Runnable
 		if (errorMessage != null) {
 			_app.showErrorMessageNoLookup(getNameKey(), errorMessage);
 		}
-		else if (numDownloaded > 0)
+		else if (numDownloaded == 1)
+		{
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getTextWithNumber("confirm.downloadsrtm.1", numDownloaded),
+				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		}
+		else if (numDownloaded > 1)
 		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getTextWithNumber("confirm.downloadsrtm", numDownloaded),
 				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);

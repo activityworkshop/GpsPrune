@@ -201,19 +201,33 @@ public class BabelLoadFromFile extends BabelLoader
 	}
 
 	/**
+	 * @return the suffix of the selected filename
+	 */
+	private String getSelectedSuffix()
+	{
+		String filename = _inputFile.getName();
+		if (filename == null) {return "";}
+		int dotPos = filename.lastIndexOf('.');
+		return (dotPos > 0 ? filename.substring(dotPos) : "");
+	}
+
+	/**
 	 * Initialise dialog
 	 */
 	protected void initDialog()
 	{
 		_inputFileLabel.setText(_inputFile.getName());
 		// Get suffix of filename and compare with previous one
-		String filename = _inputFile.getName();
-		int dotPos = filename.lastIndexOf('.');
-		String suffix = (dotPos > 0 ? filename.substring(dotPos) : null);
-		if (suffix != null && !suffix.equals(".") && (_lastSuffix == null || !suffix.equalsIgnoreCase(_lastSuffix)))
+		String suffix = getSelectedSuffix();
+		if (_lastSuffix == null || !suffix.equalsIgnoreCase(_lastSuffix))
 		{
-			// New suffix chosen, so select first appropriate format (if any)
+			// New suffix has been chosen, so select first appropriate format (if any)
 			int selIndex = BabelFileFormats.getIndexForFileSuffix(suffix);
+			if (selIndex < 0)
+			{
+				// Use the previous one from the Config (if any)
+				selIndex = Config.getConfigInt(Config.KEY_IMPORT_FILE_FORMAT);
+			}
 			if (selIndex >= 0) {
 				_formatDropdown.setSelectedIndex(selIndex);
 			}
@@ -229,5 +243,12 @@ public class BabelLoadFromFile extends BabelLoader
 		// Save the filter string, clear it if it's now blank
 		final String filter = _filterPanel.getFilterString();
 		Config.setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
+
+		// Check if there is a standard file type for the selected suffix
+		int selIndex = BabelFileFormats.getIndexForFileSuffix(getSelectedSuffix());
+		// If there is none, then get the index which the user chose and set in the Config
+		if (selIndex < 0) {
+			Config.setConfigInt(Config.KEY_IMPORT_FILE_FORMAT, _formatDropdown.getSelectedIndex());
+		}
 	}
 }

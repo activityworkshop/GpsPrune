@@ -45,6 +45,8 @@ public abstract class Config
 	public static final String KEY_GPS_FORMAT = "prune.gpsformat";
 	/** Key for GPSBabel filter string */
 	public static final String KEY_GPSBABEL_FILTER = "prune.gpsbabelfilter";
+	/** Key for GPSBabel import file format */
+	public static final String KEY_IMPORT_FILE_FORMAT = "prune.lastimportfileformat";
 	/** Key for Povray font */
 	public static final String KEY_POVRAY_FONT = "prune.povrayfont";
 	/** Key for the selected unit set */
@@ -169,6 +171,7 @@ public abstract class Config
 		props.put(KEY_EXIFTOOL_PATH, "exiftool");
 		props.put(KEY_GNUPLOT_PATH, "gnuplot");
 		props.put(KEY_GPSBABEL_PATH, "gpsbabel");
+		props.put(KEY_IMPORT_FILE_FORMAT, "-1"); // no file format selected
 		props.put(KEY_KMZ_IMAGE_SIZE, "240");
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
