@@ -35,9 +35,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPruner
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "12";
+	public static final String VERSION_NUMBER = "12.1";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "223";
+	public static final String BUILD_NUMBER = "224";
 	/** Static reference to App object */
 	private static App APP = null;
 

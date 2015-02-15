@@ -276,6 +276,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		zoomInItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+				panMap((_popupMenuX - getWidth()/2)/2, (_popupMenuY - getHeight()/2)/2);
 				zoomIn();
 			}});
 		_popup.add(zoomInItem);
@@ -283,6 +284,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		zoomOutItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
+				panMap(-(_popupMenuX - getWidth()/2), -(_popupMenuY - getHeight()/2));
 				zoomOut();
 			}});
 		_popup.add(zoomOutItem);
@@ -1090,10 +1092,14 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	public void mouseWheelMoved(MouseWheelEvent inE)
 	{
 		int clicks = inE.getWheelRotation();
-		if (clicks < 0)
+		if (clicks < 0) {
+			panMap((inE.getX() - getWidth()/2)/2, (inE.getY() - getHeight()/2)/2);
 			zoomIn();
-		else if (clicks > 0)
+		}
+		else if (clicks > 0) {
+			panMap(-(inE.getX() - getWidth()/2), -(inE.getY() - getHeight()/2));
 			zoomOut();
+		}
 	}
 
 	/**

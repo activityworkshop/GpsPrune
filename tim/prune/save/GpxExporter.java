@@ -407,7 +407,6 @@ public class GpxExporter extends GenericFunction implements Runnable
 				if ((point.getPhoto()==null && inExportTrackpoints) || (point.getPhoto()!=null && inExportPhotos)
 					|| (point.getAudio()!=null && inExportAudios))
 				{
-					if (point.getPhoto() != null) System.out.println("Writetrackpoints: Point has photo " + point.getPhoto().getFile().getName());
 					// get the source from the point (if any)
 					String pointSource = getPointSource(inCachers, point);
 					// Clear point source if it's the wrong type of point (eg changed from waypoint or route point)
@@ -420,7 +419,6 @@ public class GpxExporter extends GenericFunction implements Runnable
 						}
 						if (numSaved == 0) {inWriter.write(inStartTag);}
 						if (pointSource != null) {
-							if (point.getPhoto() != null) System.out.println("Point has photo but using source");
 							inWriter.write(pointSource);
 							inWriter.write('\n');
 						}
@@ -645,7 +643,6 @@ public class GpxExporter extends GenericFunction implements Runnable
 		boolean inExportPhoto, boolean inExportAudio)
 		throws IOException
 	{
-		if (inPoint.getPhoto() != null) System.out.println("Point has photo " + inPoint.getPhoto().getFile().getName());
 		inWriter.write("\t\t<trkpt lat=\"");
 		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\" lon=\"");
