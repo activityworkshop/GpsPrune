@@ -45,6 +45,10 @@ public abstract class WindowFactory
 		{
 			// no java3d classes available
 		}
+		catch (UnsatisfiedLinkError ule)
+		{
+			// java3d available but somehow incompatible?
+		}
 		return has3d;
 	}
 
