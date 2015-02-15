@@ -511,6 +511,13 @@ public class App
 		// ensure track's field list contains point's fields
 		_track.extendFieldList(inPoint.getFieldList());
 		_trackInfo.selectPoint(inIndex);
+		final int selStart = _trackInfo.getSelection().getStart(); 
+		final int selEnd   = _trackInfo.getSelection().getEnd(); 
+		if (selStart < inIndex && selEnd > inIndex)
+		{
+			// Extend end of selection by 1
+			_trackInfo.getSelection().selectRange(selStart, selEnd+1);
+		}
 		// update listeners
 		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.createpoint"));
 	}

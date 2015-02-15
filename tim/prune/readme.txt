@@ -1,5 +1,5 @@
-GpsPrune version 15
-===================
+GpsPrune version 15.2
+=====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_15.jar
+   java -jar gpsprune_15.2.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,11 +25,20 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_15.jar --lang=DE
+   java -jar gpsprune_15.2.jar --lang=DE
 
+
+New with version 15.2
+=====================
+The following features were added since version 15:
+  - Improved translations
+  - Fixed bug with speed charts using gnuplot
+  - Fixed bug with dragging a mid-point within a selection
+  - Fixed bug with duplicate entries in profile popup menu
+  - Fixed bug with loading zoom level of custom map sources
 
 New with version 15
-=====================
+===================
 The following features were added since version 14:
   - Extend povray output using map image on base plane
   - Export an image of the map and track at a selected zoom level
@@ -43,7 +52,7 @@ The following features were added since version 14:
   - Allow loading of speeds and vertical speeds from text files
 
 New with version 14
-=====================
+===================
 The following features were added since version 13:
   - Dragging of existing points
   - Creation of new points by dragging the halfway point between two points

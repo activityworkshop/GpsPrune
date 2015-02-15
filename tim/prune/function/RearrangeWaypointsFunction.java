@@ -64,6 +64,7 @@ public class RearrangeWaypointsFunction extends GenericFunction
 		}
 		if (success)
 		{
+			_app.getTrackInfo().getSelection().clearAll(); // clear selected point and range
 			_app.completeFunction(undo, I18nManager.getText("confirm.rearrangewaypoints"));
 		}
 		else

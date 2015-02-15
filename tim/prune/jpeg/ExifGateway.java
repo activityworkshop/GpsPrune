@@ -47,7 +47,10 @@ public abstract class ExifGateway
 				return data;
 			}
 		}
-		catch (LinkageError nolib) {}
+		catch (LinkageError nolib) {
+			System.err.println("Link: " + nolib.getMessage());
+			nolib.printStackTrace();
+		}
 		// Not successful - warn if necessary
 		if (!_exifFailWarned)
 		{
@@ -69,7 +72,6 @@ public abstract class ExifGateway
 	}
 
 
-
 	/**
 	 * @param inNumerator numerator from Rational
 	 * @param inDenominator denominator from Rational
@@ -86,6 +88,21 @@ public abstract class ExifGateway
 		final double correction = Math.pow(2.0, 32);
 		numeratorDbl += correction;
 		if (inDenominator < 0) denomDbl += correction;
+		return numeratorDbl / denomDbl;
+	}
+
+
+	/**
+	 * @param inNumerator numerator from Rational
+	 * @param inDenominator denominator from Rational
+	 * @return the value of the specified number as a positive <code>double</code>.
+	 * Forces a positive answer
+	 */
+	public static final double convertToPositiveValue(long inNumerator, long inDenominator)
+	{
+		if (inDenominator == 0L) return 0.0;
+		final double numeratorDbl = inNumerator;
+		final double denomDbl = inDenominator;
 		return numeratorDbl / denomDbl;
 	}
 }

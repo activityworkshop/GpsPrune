@@ -86,13 +86,16 @@ public class SaveConfig extends GenericFunction
 			{
 				mainPanel.add(new JLabel(keyLabel));
 				String val = conf.getProperty(key);
+				String tipText = val;
 				if (Config.isKeyBoolean(key)) {
 					val = Config.getConfigBoolean(key)?I18nManager.getText("dialog.about.yes"):I18nManager.getText("dialog.about.no");
 				}
 				else if (val != null && val.length() > 30) {
 					val = val.substring(0, 30) + " ...";
 				}
-				mainPanel.add(new JLabel(val));
+				JLabel label = new JLabel(val);
+				label.setToolTipText(tipText);
+				mainPanel.add(label);
 			}
 		}
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);

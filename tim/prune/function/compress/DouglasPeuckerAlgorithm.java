@@ -107,7 +107,7 @@ public class DouglasPeuckerAlgorithm extends SingleParameterAlgorithm
 	private void compressSegment(int[] inFlags, int inSegStart, int inSegEnd,
 		double inThreshold)
 	{
-		//System.out.println("Compress segment " + inSegStart + "-" + inSegEnd);
+		// System.out.println("Compress segment " + inSegStart + "-" + inSegEnd);
 		final int numPoints = inSegEnd - inSegStart + 1;
 		if (numPoints < 3) {return;} // segment too short to compress
 		// Calculate parameters of straight line between first and last
@@ -118,6 +118,17 @@ public class DouglasPeuckerAlgorithm extends SingleParameterAlgorithm
 		// create unit vector perpendicular to AB
 		final double distAB = ab.len();
 		XYpoint perpendicular = new XYpoint(ab.y/distAB, -ab.x/distAB);
+		// Check whether distAB is 0.0 - if so, find furthest point from startxy and compress from start to here and here to end
+		if (distAB <= 0.0)
+		{
+			final int furthestIndex = getFurthestPointIndex(inSegStart, inSegEnd);
+			if (furthestIndex > inSegStart)
+			{
+				compressSegment(inFlags, inSegStart, furthestIndex, inThreshold);
+				compressSegment(inFlags, furthestIndex, inSegEnd, inThreshold);
+			}
+			return;
+		}
 
 		double maxDist = -1.0, dist = -1.0;
 		int furthestIndex = -1;
@@ -171,5 +182,36 @@ public class DouglasPeuckerAlgorithm extends SingleParameterAlgorithm
 	protected String getTitleTextKey()
 	{
 		return "dialog.compress.douglaspeucker.title";
+	}
+
+	/**
+	 * Find the index of the point furthest away from the start and end points
+	 * @param inStartIndex start index of segment to check
+	 * @param inEndIndex end index of segment to check
+	 * @return index of furthest point, or -1 if none found
+	 */
+	private int getFurthestPointIndex(int inStartIndex, int inEndIndex)
+	{
+		int furthestIndex = -1;
+		if (inStartIndex >= 0 && inEndIndex > inStartIndex)
+		{
+			final DataPoint startPoint = _track.getPoint(inStartIndex);
+			double maxDist = 0.0;
+			// Loop over points between start and end
+			for (int i=inStartIndex+1; i<inEndIndex; i++)
+			{
+				DataPoint p = _track.getPoint(i);
+				if (!p.isWaypoint())
+				{
+					double distFromStart = DataPoint.calculateRadiansBetween(startPoint, p);
+					if (distFromStart > maxDist)
+					{
+						furthestIndex = i;
+						maxDist = distFromStart;
+					}
+				}
+			}
+		}
+		return furthestIndex;
 	}
 }

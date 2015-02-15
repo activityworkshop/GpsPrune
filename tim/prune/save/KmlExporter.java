@@ -525,7 +525,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 			}
 			// Make a blob with description for each photo
 			// Photos have already been written so picture sizes already known
-			if (point.getPhoto() != null && writePhotos && writeCurrentPoint)
+			if (point.getPhoto() != null && point.getPhoto().isValid() && writePhotos && writeCurrentPoint)
 			{
 				if (!writtenPhotoHeader)
 				{
@@ -876,21 +876,21 @@ public class KmlExporter extends GenericFunction implements Runnable
 		ImageWriter imageWriter = writers.next();
 
 		// Check selection checkbox
-		boolean justSelection = _pointTypeSelector.getJustSelection();
+		final boolean justSelection = _pointTypeSelector.getJustSelection();
 		int selStart = -1, selEnd = -1;
 		if (justSelection) {
 			selStart = _trackInfo.getSelection().getStart();
 			selEnd = _trackInfo.getSelection().getEnd();
 		}
 
-		int numPoints = _track.getNumPoints();
+		final int numPoints = _track.getNumPoints();
 		DataPoint point = null;
 		int photoNum = 0;
 		// Loop over all points in track
 		for (int i=0; i<numPoints && !_cancelPressed; i++)
 		{
 			point = _track.getPoint(i);
-			if (point.getPhoto() != null && (!justSelection || (i>=selStart && i<=selEnd)))
+			if (point.getPhoto() != null && point.getPhoto().isValid() && (!justSelection || (i>=selStart && i<=selEnd)))
 			{
 				photoNum++;
 				// Make a new entry in zip file

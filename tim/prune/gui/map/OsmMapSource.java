@@ -40,9 +40,9 @@ public class OsmMapSource extends MapSource
 	public OsmMapSource(String inName, String inStr1, String inStr2, int inMaxZoom)
 	{
 		if (inStr2 != null && inStr2.length() == 3)
-			init(inName, inStr1, inStr2, null, null, 18);
+			init(inName, inStr1, inStr2, null, null, inMaxZoom);
 		else
-			init(inName, inStr1, "png", inStr2, "png", 18);
+			init(inName, inStr1, "png", inStr2, "png", inMaxZoom);
 	}
 
 	/**

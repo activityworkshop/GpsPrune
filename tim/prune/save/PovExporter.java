@@ -668,7 +668,6 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 		inWriter.write("// Data points:");
 		inWriter.write(inLineSeparator);
 		int numPoints = inModel.getNumPoints();
-		int numTrackPoints = 0;
 		// Loop over all points and write out waypoints as balls
 		for (int i=0; i<numPoints; i++)
 		{
@@ -686,7 +685,6 @@ public class PovExporter extends Export3dFunction implements DataSubscriber
 				}
 				inWriter.write(inLineSeparator);
 			}
-			else {numTrackPoints++;}
 		}
 		inWriter.write(inLineSeparator);
 

@@ -517,6 +517,7 @@ public class Charter extends GenericFunction
 	{
 		// Calculate speeds using the same formula as the profile chart
 		SpeedData speeds = new SpeedData(inTrack);
+		speeds.init(Config.getUnitSet());
 
 		final int numPoints = inTrack.getNumPoints();
 		ChartSeries values = new ChartSeries(numPoints);
@@ -540,6 +541,7 @@ public class Charter extends GenericFunction
 	{
 		// Calculate speeds using the same formula as the profile chart
 		VerticalSpeedData speeds = new VerticalSpeedData(inTrack);
+		speeds.init(Config.getUnitSet());
 
 		final int numPoints = inTrack.getNumPoints();
 		ChartSeries values = new ChartSeries(numPoints);

@@ -259,7 +259,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	/**
 	 * Make the popup menu for right-clicking the chart
 	 */
-	private void makePopup()
+	private synchronized void makePopup()
 	{
 		_popup = new JPopupMenu();
 		JMenuItem altItem = new JMenuItem(I18nManager.getText("fieldname.altitude"));
