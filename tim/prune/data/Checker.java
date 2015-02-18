@@ -44,7 +44,7 @@ public abstract class Checker
 	{
 		int i = inIndex + 1;
 		DataPoint point = null;
-		while ((point=inTrack.getPoint(i)) != null && !point.getSegmentStart()) {
+		while ((point=inTrack.getPoint(i)) != null && (point.isWaypoint() || !point.getSegmentStart())) {
 			i++;
 		}
 		return Math.min(i, inTrack.getNumPoints()-1);
@@ -60,9 +60,59 @@ public abstract class Checker
 	{
 		int i = inIndex - 1;
 		DataPoint point = null;
-		while ((point=inTrack.getPoint(i)) != null && !point.getSegmentStart()) {
+		while ((point=inTrack.getPoint(i)) != null && (point.isWaypoint() || !point.getSegmentStart())) {
 			i--;
 		}
-		return Math.max(i, 0);
+		// Have we gone past the beginning of the track?
+		i = Math.max(i, 0);
+		// count forwards past the waypoints if necessary
+		while ((point=inTrack.getPoint(i)) != null && point.isWaypoint()) {
+			i++;
+		}
+		return i;
+	}
+
+	/**
+	 * Find the index of the last track point in the current segment
+	 * @param inTrack track object
+	 * @param inIndex current index
+	 * @return index of next segment end
+	 */
+	public static int getNextSegmentEnd(Track inTrack, int inIndex)
+	{
+		// First, go to start of following segment, or the end of the track
+		int i = getNextSegmentStart(inTrack, inIndex);
+		// If it's the next segment, subtract one
+		DataPoint point = inTrack.getPoint(i);
+		if (point == null || point.getSegmentStart())
+		{
+			i--;
+		}
+		// Now we may be on a waypoint, so count back to get the last track point
+		while ((point=inTrack.getPoint(i)) != null && point.isWaypoint()) {
+			i--;
+		}
+		return Math.min(i, inTrack.getNumPoints()-1);
+	}
+
+
+	/**
+	 * @param inTrack track object
+	 * @return true if there is at least one waypoint with a timestamp
+	 */
+	public static boolean haveWaypointsGotTimestamps(Track inTrack)
+	{
+		if (inTrack != null)
+		{
+			for (int i=0; i<inTrack.getNumPoints(); i++)
+			{
+				DataPoint p = inTrack.getPoint(i);
+				if (p != null && p.isWaypoint() && p.hasTimestamp())
+				{
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

@@ -1,15 +1,14 @@
 package tim.prune.function;
 
-import javax.swing.JOptionPane;
-
 import tim.prune.App;
 import tim.prune.DataSubscriber;
-import tim.prune.GenericFunction;
-import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 
-public class SetLineWidth extends GenericFunction
+/**
+ * Function to set the width with which lines are drawn
+ */
+public class SetLineWidth extends SingleNumericParameterFunction
 {
 
 	/**
@@ -17,7 +16,7 @@ public class SetLineWidth extends GenericFunction
 	 * @param inApp App object
 	 */
 	public SetLineWidth(App inApp) {
-		super(inApp);
+		super(inApp, 1, 4);
 	}
 
 	/** @return name key */
@@ -25,32 +24,35 @@ public class SetLineWidth extends GenericFunction
 		return "function.setlinewidth";
 	}
 
+	/** @return description key */
+	public String getDescriptionKey() {
+		return "dialog.setlinewidth.text";
+	}
+
+	/** @return the current value to display */
+	public int getCurrentParamValue() {
+		return Config.getConfigInt(Config.KEY_LINE_WIDTH);
+	}
 
 	/**
 	 * Run function
 	 */
 	public void begin()
 	{
-		int currLineWidth = Config.getConfigInt(Config.KEY_LINE_WIDTH);
-		if (currLineWidth < 1 || currLineWidth > 4) {
-			currLineWidth = 2;
-		}
-		Object lineWidthStr = JOptionPane.showInputDialog(_app.getFrame(),
-			I18nManager.getText("dialog.setlinewidth.text"),
-			I18nManager.getText(getNameKey()),
-			JOptionPane.QUESTION_MESSAGE, null, null, "" + currLineWidth);
-		if (lineWidthStr != null)
+		// Not required, because this function is started from a ChooseSingleParameter function
+		// and goes directly to the completeFunction method.
+	}
+
+	/**
+	 * Complete the function using the given line width parameter
+	 */
+	public void completeFunction(int inLineWidth)
+	{
+		final int currLineWidth = Config.getConfigInt(Config.KEY_LINE_WIDTH);
+		if (inLineWidth >= 1 && inLineWidth <= 4 && inLineWidth != currLineWidth)
 		{
-			int lineWidth = 2;
-			try {
-				lineWidth = Integer.parseInt(lineWidthStr.toString());
-				if (lineWidth >= 1 && lineWidth <= 4 && lineWidth != currLineWidth)
-				{
-					Config.setConfigInt(Config.KEY_LINE_WIDTH, lineWidth);
-					UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
-				}
-			}
-			catch (NumberFormatException nfe) {};
+			Config.setConfigInt(Config.KEY_LINE_WIDTH, inLineWidth);
+			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 		}
 	}
 }

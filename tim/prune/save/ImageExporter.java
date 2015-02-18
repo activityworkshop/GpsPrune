@@ -36,6 +36,7 @@ import tim.prune.data.Track;
 import tim.prune.gui.BaseImageDefinitionPanel;
 import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.WholeNumberField;
+import tim.prune.gui.colour.PointColourer;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.gui.map.MapUtils;
@@ -289,9 +290,11 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		final int zoomFactor = 1 << _baseImagePanel.getImageDefinition().getZoom();
 		Graphics g = inImage.getImage().getGraphics();
 		// TODO: Set line width, style etc
-		g.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
+		final PointColourer pointColourer = _app.getPointColourer();
+		final Color defaultPointColour = Config.getColourScheme().getColour(ColourScheme.IDX_POINT);
+		g.setColor(defaultPointColour);
 
-		// Loop over points
+		// Loop to draw all track points
 		final Track track = _app.getTrackInfo().getTrack();
 		final int numPoints = track.getNumPoints();
 		int prevX = 0, prevY = 0;
@@ -300,6 +303,12 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 			DataPoint point = track.getPoint(i);
 			if (!point.isWaypoint())
 			{
+				// Determine what colour to use to draw the track point
+				if (pointColourer != null)
+				{
+					Color c = pointColourer.getColour(i);
+					g.setColor(c == null ? defaultPointColour : c);
+				}
 				double x = track.getX(i) - xRange.getMinimum();
 				double y = track.getY(i) - yRange.getMinimum();
 				// use zoom level to calculate pixel coords on image
@@ -318,10 +327,11 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 				prevX = px; prevY = py;
 			}
 		}
-		// Draw waypoints
+
+		// Now the waypoints
 		final Color textColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
 		g.setColor(textColour);
-		// Loop over points
+		// Loop again to draw waypoints
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = track.getPoint(i);

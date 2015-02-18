@@ -82,6 +82,21 @@ public class FileInfo
 	}
 
 	/**
+	 * Get the SourceInfo object (if any) for the given point
+	 * @param inPoint point object
+	 * @return SourceInfo object if there is one, otherwise null
+	 */
+	public SourceInfo getSourceForPoint(DataPoint inPoint)
+	{
+		for (SourceInfo source : _sources) {
+			if (source.getIndex(inPoint) >= 0) {
+				return source;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Clone contents of file info
 	 */
 	@SuppressWarnings("unchecked")

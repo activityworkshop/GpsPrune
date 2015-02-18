@@ -18,11 +18,13 @@ public class Timestamp
 	private boolean _valid = false;
 	private long _milliseconds = 0L;
 	private String _text = null;
-	private String _timeText = null;
 
-	private static final DateFormat DEFAULT_DATE_FORMAT = DateFormat.getDateTimeInstance();
+	private static final DateFormat DEFAULT_DATETIME_FORMAT = DateFormat.getDateTimeInstance();
+	private static final DateFormat DEFAULT_DATE_FORMAT = DateFormat.getDateInstance();
 	private static final DateFormat DEFAULT_TIME_FORMAT = DateFormat.getTimeInstance();
+	private static boolean MillisAddedToTimeFormat = false;
 	private static final DateFormat ISO_8601_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private static final DateFormat ISO_8601_FORMAT_WITH_MILLIS = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 	private static final DateFormat ISO_8601_FORMAT_NOZ = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
@@ -38,12 +40,13 @@ public class Timestamp
 	private static long TWENTY_YEARS_IN_SECS = 0L;
 	private static final long GARTRIP_OFFSET = 631065600L;
 
-	/** Specifies original timestamp format */
-	public static final int FORMAT_ORIGINAL = 0;
-	/** Specifies locale-dependent timestamp format */
-	public static final int FORMAT_LOCALE = 1;
-	/** Specifies ISO 8601 timestamp format */
-	public static final int FORMAT_ISO_8601 = 2;
+	/** Possible formats for parsing and displaying timestamps */
+	public enum Format
+	{
+		ORIGINAL,
+		LOCALE,
+		ISO8601
+	}
 
 	/** Identifier for the parsing strategy to use */
 	private enum ParseType
@@ -58,13 +61,15 @@ public class Timestamp
 		FIXED_FORMAT4,
 		FIXED_FORMAT5,
 		FIXED_FORMAT6,
+		FIXED_FORMAT7,
 		GENERAL_STRING
 	}
 
 	/** Array of parse types to loop through (first one is changed to last successful type) */
 	private static ParseType[] ALL_PARSE_TYPES = {ParseType.NONE, ParseType.ISO8601_FRACTIONAL, ParseType.LONG,
 		ParseType.FIXED_FORMAT0, ParseType.FIXED_FORMAT1, ParseType.FIXED_FORMAT2, ParseType.FIXED_FORMAT3,
-		ParseType.FIXED_FORMAT4, ParseType.FIXED_FORMAT5, ParseType.FIXED_FORMAT6, ParseType.GENERAL_STRING};
+		ParseType.FIXED_FORMAT4, ParseType.FIXED_FORMAT5, ParseType.FIXED_FORMAT6, ParseType.FIXED_FORMAT7,
+		ParseType.GENERAL_STRING};
 
 	// Static block to initialise offsets
 	static
@@ -80,16 +85,21 @@ public class Timestamp
 		TWENTY_YEARS_IN_SECS = (MSECS_SINCE_1970 - MSECS_SINCE_1990) / 1000L;
 		// Set timezone for output
 		ISO_8601_FORMAT.setTimeZone(gmtZone);
-		DEFAULT_DATE_FORMAT.setTimeZone(gmtZone);
+		ISO_8601_FORMAT_WITH_MILLIS.setTimeZone(gmtZone);
+		DEFAULT_DATETIME_FORMAT.setTimeZone(gmtZone);
 		// Date formats
 		ALL_DATE_FORMATS = new DateFormat[] {
-			DEFAULT_DATE_FORMAT,
+			DEFAULT_DATETIME_FORMAT,
 			new SimpleDateFormat("EEE MMM dd HH:mm:ss yyyy"),
 			new SimpleDateFormat("HH:mm:ss dd MMM yyyy"),
 			new SimpleDateFormat("dd MMM yyyy HH:mm:ss"),
+			new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss"),
 			new SimpleDateFormat("yyyy MMM dd HH:mm:ss"),
 			ISO_8601_FORMAT, ISO_8601_FORMAT_NOZ
 		};
+		for (DateFormat df : ALL_DATE_FORMATS) {
+			df.setLenient(false);
+		}
 	}
 
 
@@ -100,6 +110,7 @@ public class Timestamp
 	public Timestamp(String inString)
 	{
 		_valid = false;
+		_text = null;
 		if (inString != null && !inString.equals(""))
 		{
 			// Try each of the parse types in turn
@@ -109,6 +120,7 @@ public class Timestamp
 				{
 					ALL_PARSE_TYPES[0] = type;
 					_valid = true;
+					_text = inString;
 					return;
 				}
 			}
@@ -167,6 +179,7 @@ public class Timestamp
 			case FIXED_FORMAT4: return parseString(inString, ALL_DATE_FORMATS[4]);
 			case FIXED_FORMAT5: return parseString(inString, ALL_DATE_FORMATS[5]);
 			case FIXED_FORMAT6: return parseString(inString, ALL_DATE_FORMATS[6]);
+			case FIXED_FORMAT7: return parseString(inString, ALL_DATE_FORMATS[7]);
 
 			case GENERAL_STRING:
 				if (inString.length() == 19)
@@ -201,7 +214,6 @@ public class Timestamp
 	 */
 	private boolean parseString(String inString, DateFormat inDateFormat)
 	{
-		inDateFormat.setLenient(false);
 		ParsePosition pPos = new ParsePosition(0);
 		Date date = inDateFormat.parse(inString, pPos);
 		if (date != null && inString.length() == pPos.getIndex()) // require use of _all_ the string, not just the beginning
@@ -339,6 +351,13 @@ public class Timestamp
 	}
 
 	/**
+	 * @return true if the timestamp has non-zero milliseconds
+	 */
+	public boolean hasMilliseconds()
+	{
+		return isValid() && (_milliseconds % 1000L) > 0;
+	}
+	/**
 	 * @param inOther other Timestamp
 	 * @return true if this one is at least a second after the other
 	 */
@@ -432,23 +451,37 @@ public class Timestamp
 	 */
 	public String getText()
 	{
-		return getText(FORMAT_LOCALE);
+		return getText(Format.LOCALE);
 	}
 
 	/**
 	 * @param inFormat format of timestamp
 	 * @return Description of timestamp in required format
 	 */
-	public String getText(int inFormat)
+	public String getText(Format inFormat)
 	{
 		if (!_valid) {return "";}
-		if (inFormat == FORMAT_ISO_8601) {
-			return format(ISO_8601_FORMAT);
-		}
-		if (_text == null) {
-			_text = format(DEFAULT_DATE_FORMAT);
+		switch (inFormat)
+		{
+			case ORIGINAL:
+				if (_text != null) {return _text;}
+				// otherwise fallthrough to default
+				//$FALL-THROUGH$
+			case LOCALE:
+				return format(DEFAULT_DATETIME_FORMAT);
+			case ISO8601:
+				return format(hasMilliseconds() ? ISO_8601_FORMAT_WITH_MILLIS : ISO_8601_FORMAT);
 		}
 		return _text;
+	}
+
+	/**
+	 * @return date part of timestamp in locale-specific format
+	 */
+	public String getDateText()
+	{
+		if (!_valid) return "";
+		return format(DEFAULT_DATE_FORMAT);
 	}
 
 	/**
@@ -456,14 +489,23 @@ public class Timestamp
 	 */
 	public String getTimeText()
 	{
-		if (_timeText == null)
+		if (!_valid) return "";
+		// Maybe we should add milliseconds to this format?
+		if (hasMilliseconds() && !MillisAddedToTimeFormat)
 		{
-			if (_valid) {
-				_timeText = format(DEFAULT_TIME_FORMAT);
+			try
+			{
+				SimpleDateFormat sdf = (SimpleDateFormat) DEFAULT_TIME_FORMAT;
+				String pattern = sdf.toPattern();
+				if (pattern.indexOf("ss") > 0 && pattern.indexOf("SS") < 0)
+				{
+					sdf.applyPattern(pattern.replaceFirst("s+", "$0.SSS"));
+					MillisAddedToTimeFormat = true;
+				}
 			}
-			else _timeText = "";
+			catch (ClassCastException cce) {}
 		}
-		return _timeText;
+		return format(DEFAULT_TIME_FORMAT);
 	}
 
 	/**

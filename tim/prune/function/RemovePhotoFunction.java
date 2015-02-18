@@ -48,8 +48,11 @@ public class RemovePhotoFunction extends GenericFunction
 			else
 			{
 				// point is attached, so need to confirm point deletion
+				final int pointIndex = _app.getTrackInfo().getTrack().getPointIndex(currentPhoto.getDataPoint());
 				undoAction = new UndoDeletePhoto(currentPhoto, _app.getTrackInfo().getSelection().getCurrentPhotoIndex(),
-					currentPhoto.getDataPoint(), _app.getTrackInfo().getTrack().getPointIndex(currentPhoto.getDataPoint()));
+					currentPhoto.getDataPoint(), pointIndex);
+				undoAction.setAtBoundaryOfSelectedRange(pointIndex == _app.getTrackInfo().getSelection().getStart() ||
+					pointIndex == _app.getTrackInfo().getSelection().getEnd());
 				int response = JOptionPane.showConfirmDialog(_app.getFrame(),
 					I18nManager.getText("dialog.deletephoto.deletepoint"),
 					I18nManager.getText("dialog.deletephoto.title"),

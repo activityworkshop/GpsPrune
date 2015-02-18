@@ -126,7 +126,7 @@ public abstract class Coordinate
 			// parse fields according to number found
 			_degrees = (int) fields[0];
 			_asDouble = _degrees;
-			_originalFormat = hasCardinal?FORMAT_DEG:FORMAT_DEG_WITHOUT_CARDINAL;
+			_originalFormat = hasCardinal ? FORMAT_DEG : FORMAT_DEG_WITHOUT_CARDINAL;
 			_fracDenom = 10;
 			if (numFields == 2)
 			{
@@ -149,6 +149,19 @@ public abstract class Coordinate
 					_fracs = 0;
 					_asDouble = 1.0 * _degrees + (_minutes / 60.0);
 				}
+			}
+			// Check for exponential degrees like 1.3E-6
+			else if (numFields == 3 && !otherDelims[1] && otherDelims[2] && isJustNumber(inString))
+			{
+				_originalFormat = FORMAT_DEG;
+				_asDouble = Math.abs(Double.parseDouble(inString)); // must succeed if isJustNumber has given true
+				// now we can ignore the fields and just use this double
+				_degrees = (int) _asDouble;
+				double numMins = (_asDouble - _degrees) * 60.0;
+				_minutes = (int) numMins;
+				double numSecs = (numMins - _minutes) * 60.0;
+				_seconds = (int) numSecs;
+				_fracs = (int) ((numSecs - _seconds) * 10);
 			}
 			// Differentiate between d-m.f and d-m-s using . or ,
 			else if (numFields == 3 && !otherDelims[2])
@@ -184,10 +197,10 @@ public abstract class Coordinate
 
 	/**
 	 * Get the cardinal from the given character
-	 * @param inFirstChar first character from file
-	 * @param inLastChar last character from file
+	 * @param inFirstChar first character from string
+	 * @param inLastChar last character from string
 	 */
-	protected int getCardinal(char inFirstChar, char inLastChar)
+	private int getCardinal(char inFirstChar, char inLastChar)
 	{
 		// Try leading character first
 		int cardinal = getCardinal(inFirstChar);

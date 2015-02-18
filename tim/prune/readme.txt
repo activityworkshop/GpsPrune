@@ -1,9 +1,9 @@
-GpsPrune version 16.3
-=====================
+GpsPrune version 17
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
-Full details can be found at http://activityworkshop.net/software/gpsprune/
+Full details can be found at http://gpsprune.activityworkshop.net/
 
 GpsPrune is copyright 2006-2014 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_16.3.jar
+   java -jar gpsprune_17.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,34 +25,19 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_16.3.jar --lang=DE
+   java -jar gpsprune_17.jar --lang=DE
 
 
-New with version 16.3
-=====================
-The following fixes were added since version 16.2:
-  - Fix for gpx caching of points which failed to load
-  - Additional newlines / tabs in gpx export
-  - API key for openweathermap.org
-  - Improvements to 3d terrain reflections
-  - Additional translations
-
-New with version 16.2
-=====================
-The following fixes were added since version 16.1:
-  - Fix for Gpx-slicing UTF8 files
-  - Conversion of sunrise/sunset times to local timezone
-  - Removal of Cloudmade maps
-  - Additional translations
-
-New with version 16.1
-=====================
-The following fixes were added since version 16:
-  - Caching of terrain information for three-dimensional views
-  - Additional translations
-  - Improved void filling by interpolation
-  - Remembering file type of imported files
-
+New with version 17
+===================
+The following features were added since version 16:
+  - Colouring the track points according to various criteria (such as altitude,
+    speed, segment, file) in both the regular map view and the image export
+  - Marking points for deletion according to their date
+  - Select the current segment
+  - Adding an altitude tolerance to the climb and descent calculations
+  - Sorting waypoints by name or by timestamp
+  
 New with version 16
 ===================
 The following features were added since version 15:
@@ -64,11 +49,11 @@ The following features were added since version 15:
   - Function to download and save SRTM tiles
 
 New with version 15
-=====================
+===================
 The following features were added since version 14:
   - Extend povray output using map image on base plane
   - Export an image of the map and track at a selected zoom level
-  - Estimation of hiking times and learining of parameter values
+  - Estimation of hiking times and learning of parameter values
   - Allow altitude / speed profile to show any arbitrary field
   - Accept files dragged and dropped onto the GpsPrune window
   - Take account of timezone if present in track timestamps
@@ -78,7 +63,7 @@ The following features were added since version 14:
   - Allow loading of speeds and vertical speeds from text files
 
 New with version 14
-=====================
+===================
 The following features were added since version 13:
   - Dragging of existing points
   - Creation of new points by dragging the halfway point between two points
@@ -120,7 +105,6 @@ The following features were added since version 11:
 
 New with version 11
 ===================
-
 The following features were added since version 10:
   - Option to select which of the named tracks to load out of a gpx file or gps
   - Function to delete all values of a single field (eg all altitudes, all timestamps)
@@ -132,7 +116,6 @@ The following features were added since version 10:
 
 New with version 10
 ===================
-
 The following features were added since version 9:
   - Function to lookup altitudes using SRTM data from the Space Shuttle
   - Choice between altitude profile and speed profile in main view
@@ -144,7 +127,6 @@ The following features were added since version 9:
 
 New with version 9
 ==================
-
 The following features were added since version 8:
   - Ability to paste coordinates (eg from wikipedia or geocaching sites) to create new points
   - Configurable colour settings
@@ -158,7 +140,6 @@ The following features were added since version 8:
 
 New with version 8
 ==================
-
 The following features were added since version 7:
   - Loading of NMEA files (with suffix .nmea)
   - Loading of nearby tracks from gpsies.com
@@ -172,7 +153,6 @@ The following features were added since version 7:
 
 New with version 7
 ==================
-
 The following features were added since version 6:
   - Loading of KMZ files and zipped GPX
   - Improved compression functions with four configurable algorithms
@@ -184,7 +164,6 @@ The following features were added since version 6:
 
 New with version 6
 ==================
-
 The following features were added since version 5:
   - Map view using OpenStreetMap images is now integrated in the main window, with control for map transparency
   - Pov export has new option to use sphere sweeps for better appearance
@@ -197,8 +176,7 @@ The following features were added since version 5:
 
 New with version 5
 ==================
-
-The following features were added since version 4.1:
+The following features were added since version 4:
   - New map window in the View menu, showing points overlaid on OpenStreetMap images
   - New function to launch a browser showing the area in either Google Maps or OpenStreetMap
   - Handling of track segments, including loading, saving and exporting, and preservation during edits and undos
@@ -209,7 +187,6 @@ The following features were added since version 4.1:
 
 New with version 4
 ==================
-
 The following features were added since version 3:
   - Automatic correlation of photos with points based on timestamps
   - Manual disconnection of photos from points
@@ -222,7 +199,6 @@ The following features were added since version 3:
 
 New with version 3
 ==================
-
 The following features were added since version 2:
   - Loading of GPX and KML files
   - Loading of jpeg photos with or without coordinate data
@@ -234,7 +210,6 @@ The following features were added since version 2:
 
 New with version 2
 ==================
-
 The following features were added since version 1:
   - Display of data in 3d view using Java3D library
   - Export of 3d model to POV format for rendering by povray
@@ -244,7 +219,6 @@ The following features were added since version 1:
 
 Features of version 1
 =====================
-
 The following features were included in version 1:
   - Loading of text files, display in overhead and profile views
   - Display of track details such as distances, speeds

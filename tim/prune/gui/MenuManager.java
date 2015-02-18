@@ -21,6 +21,7 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.AudioClip;
+import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Photo;
 import tim.prune.data.RecentFile;
@@ -28,7 +29,7 @@ import tim.prune.data.RecentFileList;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
-import tim.prune.function.RearrangeWaypointsFunction.Rearrange;
+import tim.prune.function.ChooseSingleParameter;
 import tim.prune.function.browser.UrlGenerator;
 
 /**
@@ -60,10 +61,12 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _compressItem = null;
 	private JMenuItem _markRectangleItem = null;
 	private JMenuItem _deleteMarkedPointsItem = null;
+	private JMenuItem _deleteByDateItem = null;
 	private JMenuItem _interpolateItem = null;
 	private JMenuItem _averageItem = null;
 	private JMenuItem _selectAllItem = null;
 	private JMenuItem _selectNoneItem = null;
+	private JMenuItem _selectSegmentItem = null;
 	private JMenuItem _selectStartItem = null;
 	private JMenuItem _selectEndItem = null;
 	private JMenuItem _findWaypointItem = null;
@@ -72,7 +75,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _addTimeOffsetItem = null;
 	private JMenuItem _addAltitudeOffsetItem = null;
 	private JMenuItem _mergeSegmentsItem = null;
-	private JMenu     _rearrangeMenu = null;
+	private JMenuItem _rearrangeWaypointsItem = null;
 	private JMenuItem _splitSegmentsItem = null;
 	private JMenuItem _sewSegmentsItem = null;
 	private JMenuItem _cutAndMoveItem = null;
@@ -309,35 +312,12 @@ public class MenuManager implements DataSubscriber
 		});
 		_deleteMarkedPointsItem.setEnabled(false);
 		trackMenu.add(_deleteMarkedPointsItem);
+		_deleteByDateItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_BY_DATE, false);
+		trackMenu.add(_deleteByDateItem);
 		trackMenu.addSeparator();
 		// Rearrange waypoints
-		_rearrangeMenu = new JMenu(I18nManager.getText("menu.track.rearrange"));
-		_rearrangeMenu.setEnabled(false);
-		JMenuItem  rearrangeStartItem = new JMenuItem(I18nManager.getText("menu.track.rearrange.start"));
-		rearrangeStartItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS.rearrangeWaypoints(Rearrange.TO_START);
-			}
-		});
-		rearrangeStartItem.setEnabled(true);
-		_rearrangeMenu.add(rearrangeStartItem);
-		JMenuItem rearrangeEndItem = new JMenuItem(I18nManager.getText("menu.track.rearrange.end"));
-		rearrangeEndItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS.rearrangeWaypoints(Rearrange.TO_END);
-			}
-		});
-		rearrangeEndItem.setEnabled(true);
-		_rearrangeMenu.add(rearrangeEndItem);
-		JMenuItem rearrangeNearestItem = new JMenuItem(I18nManager.getText("menu.track.rearrange.nearest"));
-		rearrangeNearestItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS.rearrangeWaypoints(Rearrange.TO_NEAREST);
-			}
-		});
-		rearrangeNearestItem.setEnabled(true);
-		_rearrangeMenu.add(rearrangeNearestItem);
-		trackMenu.add(_rearrangeMenu);
+		_rearrangeWaypointsItem = makeMenuItem(FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS, false);
+		trackMenu.add(_rearrangeWaypointsItem);
 		// Split track segments
 		_splitSegmentsItem = makeMenuItem(FunctionLibrary.FUNCTION_SPLIT_SEGMENTS, false);
 		trackMenu.add(_splitSegmentsItem);
@@ -369,6 +349,8 @@ public class MenuManager implements DataSubscriber
 			}
 		});
 		rangeMenu.add(_selectNoneItem);
+		_selectSegmentItem = makeMenuItem(FunctionLibrary.FUNCTION_SELECT_SEGMENT);
+		rangeMenu.add(_selectSegmentItem);
 		rangeMenu.addSeparator();
 		_selectStartItem = new JMenuItem(I18nManager.getText("menu.range.start"));
 		_selectStartItem.setEnabled(false);
@@ -416,7 +398,7 @@ public class MenuManager implements DataSubscriber
 		_deleteFieldValuesItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_FIELD_VALUES, false);
 		rangeMenu.add(_deleteFieldValuesItem);
 		rangeMenu.addSeparator();
-		_interpolateItem = makeMenuItem(FunctionLibrary.FUNCTION_INTERPOLATE, false);
+		_interpolateItem = makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_INTERPOLATE), false);
 		rangeMenu.add(_interpolateItem);
 		_averageItem = new JMenuItem(I18nManager.getText("menu.range.average"));
 		_averageItem.addActionListener(new ActionListener() {
@@ -657,9 +639,11 @@ public class MenuManager implements DataSubscriber
 		// Set colours
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_COLOURS));
 		// Set line width used for drawing
-		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_LINE_WIDTH));
+		settingsMenu.add(makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_SET_LINE_WIDTH)));
 		// Set language
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_LANGUAGE));
+		// Set altitude tolerance
+		settingsMenu.add(makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_SET_ALTITUDE_TOLERANCE)));
 		settingsMenu.addSeparator();
 		// Save configuration
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SAVECONFIG));
@@ -877,7 +861,7 @@ public class MenuManager implements DataSubscriber
 		_compressItem.setEnabled(hasData);
 		_markRectangleItem.setEnabled(hasData);
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
-		_rearrangeMenu.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
+		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
 		_splitSegmentsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3);
 		_sewSegmentsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3);
 		_selectAllItem.setEnabled(hasData);
@@ -895,6 +879,8 @@ public class MenuManager implements DataSubscriber
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
 		// have we got a cache?
 		_downloadSrtmItem.setEnabled(hasData && Config.getConfigString(Config.KEY_DISK_CACHE) != null);
+		// have we got any timestamps?
+		_deleteByDateItem.setEnabled(hasData && _track.hasData(Field.TIMESTAMP));
 
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
@@ -902,7 +888,8 @@ public class MenuManager implements DataSubscriber
 		_undoButton.setEnabled(hasUndo);
 		_clearUndoItem.setEnabled(hasUndo);
 		// is there a current point?
-		boolean hasPoint = (hasData && _selection.getCurrentPointIndex() >= 0);
+		DataPoint currPoint = _app.getTrackInfo().getCurrentPoint();
+		boolean hasPoint = (currPoint != null);
 		_editPointItem.setEnabled(hasPoint);
 		_editPointButton.setEnabled(hasPoint);
 		_editWaypointNameItem.setEnabled(hasPoint);
@@ -913,6 +900,8 @@ public class MenuManager implements DataSubscriber
 		_selectEndItem.setEnabled(hasPoint);
 		_selectEndButton.setEnabled(hasPoint);
 		_duplicatePointItem.setEnabled(hasPoint);
+		// is it a waypoint?
+		_selectSegmentItem.setEnabled(hasPoint && !currPoint.isWaypoint());
 		// are there any photos?
 		boolean anyPhotos = _app.getTrackInfo().getPhotoList().getNumPhotos() > 0;
 		_saveExifItem.setEnabled(anyPhotos && _app.getTrackInfo().getPhotoList().hasMediaWithFile());
@@ -939,7 +928,7 @@ public class MenuManager implements DataSubscriber
 		_selectNoAudioItem.setEnabled(hasAudio);
 		_removeAudioItem.setEnabled(hasAudio);
 		_connectAudioItem.setEnabled(hasAudio && hasPoint && currentAudio.getDataPoint() == null);
-		_disconnectAudioItem.setEnabled(hasAudio && _app.getTrackInfo().getCurrentAudio().getDataPoint() != null);
+		_disconnectAudioItem.setEnabled(hasAudio && currentAudio.getDataPoint() != null);
 		_correlateAudiosItem.setEnabled(anyAudios && hasData);
 		// is there a current range?
 		boolean hasRange = (hasData && _selection.hasRangeSelected());
@@ -983,8 +972,9 @@ public class MenuManager implements DataSubscriber
 				for (int i=0; i<numRecentFiles; i++)
 				{
 					JMenuItem item = _recentFileMenu.getItem(i);
-					item.setText(rfl.getFile(i)==null?"":rfl.getFile(i).getFile().getName());
-					item.setToolTipText(rfl.getFile(i)==null?null:rfl.getFile(i).getFile().getAbsolutePath());
+					RecentFile rf = rfl.getFile(i);
+					item.setText(rf==null?"":rf.getFile().getName());
+					item.setToolTipText(rf==null?null:rf.getFile().getAbsolutePath());
 				}
 			}
 			else

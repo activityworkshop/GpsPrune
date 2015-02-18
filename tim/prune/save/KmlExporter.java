@@ -51,11 +51,11 @@ import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.data.UnitSetLibrary;
-import tim.prune.gui.ColourChooser;
-import tim.prune.gui.ColourPatch;
 import tim.prune.gui.DialogCloser;
 import tim.prune.gui.ImageUtils;
 import tim.prune.gui.WholeNumberField;
+import tim.prune.gui.colour.ColourChooser;
+import tim.prune.gui.colour.ColourPatch;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.save.xml.XmlUtils;
 
@@ -684,7 +684,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 					// Add timestamp (if any) to the list
 					whenList.append("<when>");
 					if (point.hasTimestamp()) {
-						whenList.append(point.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
+						whenList.append(point.getTimestamp().getText(Timestamp.Format.ISO8601));
 					}
 					whenList.append("</when>\n");
 					// Add coordinates to the list

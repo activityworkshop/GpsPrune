@@ -1,6 +1,8 @@
 package tim.prune.gui;
 
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
@@ -59,6 +61,11 @@ public class WholeNumberField extends JTextField
 	{
 		super(inMaxDigits);
 		setDocument(new WholeNumberDocument(inMaxDigits));
+		getDocument().addDocumentListener(new DocumentListener() {
+			public void removeUpdate(DocumentEvent arg0) {fireActionPerformed();}
+			public void insertUpdate(DocumentEvent arg0) {fireActionPerformed();}
+			public void changedUpdate(DocumentEvent arg0) {fireActionPerformed();}
+		});
 	}
 
 	/**

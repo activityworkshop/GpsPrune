@@ -39,8 +39,8 @@ public class SpeedData extends ProfileData
 				{
 					double speedValue = speed.getValue();
 					_pointValues[i] = speedValue;
-					if (speedValue < _minValue || _minValue == 0.0) {_minValue = speedValue;}
-					if (speedValue > _maxValue) {_maxValue = speedValue;}
+					if (speedValue < _minValue || !_hasData) {_minValue = speedValue;}
+					if (speedValue > _maxValue || !_hasData) {_maxValue = speedValue;}
 					_hasData = true;
 				}
 				_pointHasData[i] = speed.isValid();

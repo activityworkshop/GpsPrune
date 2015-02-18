@@ -10,7 +10,7 @@ public abstract class IconManager
 {
 
 	/** Icon for window */
-	public static final String WINDOW_ICON = "window_icon.png";
+	public static final String WINDOW_ICON = "window_icon";
 
 	/** Icon for scalebar button on main map display */
 	public static final String SCALEBAR_BUTTON = "scalebar.gif";

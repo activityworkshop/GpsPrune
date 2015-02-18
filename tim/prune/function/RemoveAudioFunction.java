@@ -48,8 +48,11 @@ public class RemoveAudioFunction extends GenericFunction
 			else
 			{
 				// point is attached, so need to confirm point deletion
+				final int pointIndex = _app.getTrackInfo().getTrack().getPointIndex(currentAudio.getDataPoint());
 				undoAction = new UndoDeleteAudio(currentAudio, _app.getTrackInfo().getSelection().getCurrentAudioIndex(),
-					currentAudio.getDataPoint(), _app.getTrackInfo().getTrack().getPointIndex(currentAudio.getDataPoint()));
+					currentAudio.getDataPoint(), pointIndex);
+				undoAction.setAtBoundaryOfSelectedRange(pointIndex == _app.getTrackInfo().getSelection().getStart() ||
+					pointIndex == _app.getTrackInfo().getSelection().getEnd());
 				int response = JOptionPane.showConfirmDialog(_app.getFrame(),
 					I18nManager.getText("dialog.deleteaudio.deletepoint"),
 					I18nManager.getText(getNameKey()), JOptionPane.YES_NO_CANCEL_OPTION);

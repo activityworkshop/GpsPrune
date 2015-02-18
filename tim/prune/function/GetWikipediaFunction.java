@@ -91,7 +91,7 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 
 		// Set status label according to error or "none found", leave blank if ok
 		if (_errorMessage == null && _trackListModel.isEmpty()) {
-			_errorMessage = I18nManager.getText("dialog.gpsies.nonefound");
+			_errorMessage = I18nManager.getText("dialog.wikipedia.nonefound");
 		}
 		_statusLabel.setText(_errorMessage == null ? "" : _errorMessage);
 	}

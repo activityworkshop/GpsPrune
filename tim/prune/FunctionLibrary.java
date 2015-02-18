@@ -6,6 +6,7 @@ import tim.prune.function.*;
 import tim.prune.function.charts.Charter;
 import tim.prune.function.compress.CompressTrackFunction;
 import tim.prune.function.compress.MarkPointsInRectangleFunction;
+import tim.prune.function.deletebydate.DeleteByDateFunction;
 import tim.prune.function.distance.DistanceFunction;
 import tim.prune.function.edit.PointNameEditor;
 import tim.prune.function.estimate.EstimateTime;
@@ -42,7 +43,8 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_IMPORTBABEL = null;
 	public static GenericFunction FUNCTION_SAVECONFIG  = null;
 	public static GenericFunction FUNCTION_EDIT_WAYPOINT_NAME = null;
-	public static RearrangeWaypointsFunction FUNCTION_REARRANGE_WAYPOINTS = null;
+	public static GenericFunction FUNCTION_REARRANGE_WAYPOINTS = null;
+	public static GenericFunction FUNCTION_SELECT_SEGMENT = null;
 	public static GenericFunction FUNCTION_SPLIT_SEGMENTS = null;
 	public static GenericFunction FUNCTION_SEW_SEGMENTS = null;
 	public static GenericFunction FUNCTION_REARRANGE_PHOTOS = null;
@@ -50,7 +52,8 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_DELETE_RANGE = null;
 	public static GenericFunction FUNCTION_CROP_TRACK = null;
 	public static GenericFunction FUNCTION_MARK_IN_RECTANGLE = null;
-	public static GenericFunction FUNCTION_INTERPOLATE = null;
+	public static GenericFunction FUNCTION_DELETE_BY_DATE = null;
+	public static SingleNumericParameterFunction FUNCTION_INTERPOLATE = null;
 	public static GenericFunction FUNCTION_LOOKUP_SRTM = null;
 	public static GenericFunction FUNCTION_DOWNLOAD_SRTM = null;
 	public static GenericFunction FUNCTION_LOOKUP_WIKIPEDIA = null;
@@ -90,8 +93,9 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_SET_DISK_CACHE = null;
 	public static GenericFunction FUNCTION_SET_PATHS  = null;
 	public static GenericFunction FUNCTION_SET_COLOURS = null;
-	public static GenericFunction FUNCTION_SET_LINE_WIDTH = null;
+	public static SingleNumericParameterFunction FUNCTION_SET_LINE_WIDTH = null;
 	public static GenericFunction FUNCTION_SET_LANGUAGE = null;
+	public static SingleNumericParameterFunction FUNCTION_SET_ALTITUDE_TOLERANCE = null;
 	public static GenericFunction FUNCTION_HELP   = null;
 	public static GenericFunction FUNCTION_SHOW_KEYS = null;
 	public static GenericFunction FUNCTION_ABOUT  = null;
@@ -115,6 +119,7 @@ public abstract class FunctionLibrary
 		FUNCTION_SAVECONFIG = new SaveConfig(inApp);
 		FUNCTION_EDIT_WAYPOINT_NAME = new PointNameEditor(inApp);
 		FUNCTION_REARRANGE_WAYPOINTS = new RearrangeWaypointsFunction(inApp);
+		FUNCTION_SELECT_SEGMENT = new SelectSegmentFunction(inApp);
 		FUNCTION_SPLIT_SEGMENTS = new SplitSegmentsFunction(inApp);
 		FUNCTION_SEW_SEGMENTS = new SewTrackSegmentsFunction(inApp);
 		FUNCTION_REARRANGE_PHOTOS = new RearrangePhotosFunction(inApp);
@@ -122,6 +127,7 @@ public abstract class FunctionLibrary
 		FUNCTION_DELETE_RANGE = new DeleteSelectedRangeFunction(inApp);
 		FUNCTION_CROP_TRACK = new CropToSelection(inApp);
 		FUNCTION_MARK_IN_RECTANGLE = new MarkPointsInRectangleFunction(inApp);
+		FUNCTION_DELETE_BY_DATE = new DeleteByDateFunction(inApp);
 		FUNCTION_INTERPOLATE = new InterpolateFunction(inApp);
 		FUNCTION_LOOKUP_SRTM = new LookupSrtmFunction(inApp);
 		FUNCTION_DOWNLOAD_SRTM = new DownloadSrtmFunction(inApp);
@@ -164,6 +170,7 @@ public abstract class FunctionLibrary
 		FUNCTION_SET_COLOURS = new SetColours(inApp);
 		FUNCTION_SET_LINE_WIDTH = new SetLineWidth(inApp);
 		FUNCTION_SET_LANGUAGE = new SetLanguage(inApp);
+		FUNCTION_SET_ALTITUDE_TOLERANCE = new SetAltitudeTolerance(inApp);
 		FUNCTION_HELP   = new HelpScreen(inApp);
 		FUNCTION_SHOW_KEYS = new ShowKeysScreen(inApp);
 		FUNCTION_ABOUT  = new AboutScreen(inApp);

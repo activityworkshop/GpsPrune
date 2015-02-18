@@ -7,6 +7,8 @@ import java.util.Properties;
 import tim.prune.data.RecentFileList;
 import tim.prune.data.UnitSet;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.gui.colour.ColourerFactory;
+import tim.prune.gui.colour.PointColourer;
 import tim.prune.gui.map.MapSourceLibrary;
 
 
@@ -22,6 +24,8 @@ public abstract class Config
 	private static Properties _configValues = null;
 	/** Colour scheme object is also part of config */
 	private static ColourScheme _colourScheme = new ColourScheme();
+	/** Point colourer object, if any */
+	private static PointColourer _pointColourer = null;
 	/** Recently-used file list */
 	private static RecentFileList _recentFiles = new RecentFileList();
 	/** Current unit set */
@@ -73,6 +77,8 @@ public abstract class Config
 	public static final String KEY_EXIFTOOL_PATH = "prune.exiftoolpath";
 	/** Key for colour scheme */
 	public static final String KEY_COLOUR_SCHEME = "prune.colourscheme";
+	/** Key for point colourer */
+	public static final String KEY_POINT_COLOURER = "prune.pointcolourer";
 	/** Key for line width used for drawing */
 	public static final String KEY_LINE_WIDTH = "prune.linewidth";
 	/** Key for kml track colour */
@@ -85,6 +91,10 @@ public abstract class Config
 	public static final String KEY_ESTIMATION_PARAMS = "prune.estimationparams";
 	/** Key for 3D exaggeration factor */
 	public static final String KEY_HEIGHT_EXAGGERATION = "prune.heightexaggeration";
+	/** Key for terrain grid size */
+	public static final String KEY_TERRAIN_GRID_SIZE = "prune.terraingridsize";
+	/** Key for altitude tolerance */
+	public static final String KEY_ALTITUDE_TOLERANCE = "prune.altitudetolerance";
 
 
 	/** Initialise the default properties */
@@ -145,6 +155,7 @@ public abstract class Config
 		// Save all properties from file
 		_configValues.putAll(props);
 		_colourScheme.loadFromHex(_configValues.getProperty(KEY_COLOUR_SCHEME));
+		_pointColourer = ColourerFactory.createColourer(_configValues.getProperty(KEY_POINT_COLOURER));
 		_recentFiles = new RecentFileList(_configValues.getProperty(KEY_RECENT_FILES));
 		_unitSet = UnitSetLibrary.getUnitSet(_configValues.getProperty(KEY_UNITSET_KEY));
 		// Adjust map source index if necessary
@@ -176,6 +187,8 @@ public abstract class Config
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
+		props.put(KEY_TERRAIN_GRID_SIZE, "50");
+		props.put(KEY_ALTITUDE_TOLERANCE, "0"); // 0, all exact as before
 		return props;
 	}
 
@@ -235,6 +248,14 @@ public abstract class Config
 	public static ColourScheme getColourScheme()
 	{
 		return _colourScheme;
+	}
+
+	/**
+	 * @return the current point colourer, if any
+	 */
+	public static PointColourer getPointColourer()
+	{
+		return _pointColourer;
 	}
 
 	/**
@@ -338,12 +359,25 @@ public abstract class Config
 	}
 
 	/**
+	 * Update the point colourer from the given colourer
+	 * @param inColourer point colourer object, or null
+	 */
+	public static void updatePointColourer(PointColourer inColourer)
+	{
+		_pointColourer = inColourer;
+		setConfigString(KEY_POINT_COLOURER, ColourerFactory.PointColourerToString(_pointColourer));
+	}
+
+	/**
 	 * @return the current unit set
 	 */
 	public static UnitSet getUnitSet() {
 		return _unitSet;
 	}
 
+	/**
+	 * @param inIndex index of unit set to select
+	 */
 	public static void selectUnitSet(int inIndex)
 	{
 		_unitSet = UnitSetLibrary.getUnitSet(inIndex);

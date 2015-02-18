@@ -321,8 +321,11 @@ public class PovExporter extends Export3dFunction
 					{
 						// file saved - store directory in config for later
 						Config.setConfigString(Config.KEY_TRACK_DIR, povFile.getParentFile().getAbsolutePath());
-						// also store exaggeration
+						// also store exaggeration and grid size
 						Config.setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_altFactor * 100));
+						if (_terrainPanel.getUseTerrain() && _terrainPanel.getGridSize() > 20) {
+							Config.setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, _terrainPanel.getGridSize());
+						}
 					}
 					else
 					{

@@ -35,6 +35,8 @@ import tim.prune.gui.MenuManager;
 import tim.prune.gui.SidebarController;
 import tim.prune.gui.UndoManager;
 import tim.prune.gui.Viewport;
+import tim.prune.gui.colour.ColourerCaretaker;
+import tim.prune.gui.colour.PointColourer;
 import tim.prune.load.FileLoader;
 import tim.prune.load.JpegLoader;
 import tim.prune.load.MediaLinkInfo;
@@ -61,6 +63,7 @@ public class App
 	private JpegLoader _jpegLoader = null;
 	private FileSaver _fileSaver = null;
 	private UndoStack _undoStack = null;
+	private ColourerCaretaker _colCaretaker = null;
 	private boolean _mangleTimestampsConfirmed = false;
 	private Viewport _viewport = null;
 	private ArrayList<File> _dataFiles = null;
@@ -83,6 +86,9 @@ public class App
 		_track = new Track();
 		_trackInfo = new TrackInfo(_track);
 		FunctionLibrary.initialise(this);
+		_colCaretaker = new ColourerCaretaker(this);
+		UpdateMessageBroker.addSubscriber(_colCaretaker);
+		_colCaretaker.setColourer(Config.getPointColourer());
 	}
 
 
@@ -120,6 +126,24 @@ public class App
 		return _undoStack;
 	}
 
+	/**
+	 * Update the system's point colourer using the one in the Config
+	 */
+	public void updatePointColourer()
+	{
+		if (_colCaretaker != null) {
+			_colCaretaker.setColourer(Config.getPointColourer());
+		}
+	}
+
+	/**
+	 * @return colourer object, or null
+	 */
+	public PointColourer getPointColourer()
+	{
+		if (_colCaretaker == null) {return null;}
+		return _colCaretaker.getColourer();
+	}
 
 	/**
 	 * Show the specified tip if appropriate
@@ -319,8 +343,10 @@ public class App
 			int audioIndex = _trackInfo.getAudioList().getAudioIndex(currentPoint.getAudio());
 			DataPoint nextTrackPoint = _trackInfo.getTrack().getNextTrackPoint(pointIndex + 1);
 			// Construct Undo object
-			UndoOperation undo = new UndoDeletePoint(pointIndex, currentPoint, photoIndex,
+			UndoDeletePoint undo = new UndoDeletePoint(pointIndex, currentPoint, photoIndex,
 				audioIndex, nextTrackPoint != null && nextTrackPoint.getSegmentStart());
+			undo.setAtBoundaryOfSelectedRange(pointIndex == _trackInfo.getSelection().getStart() ||
+				pointIndex == _trackInfo.getSelection().getEnd());
 			// call track to delete point
 			if (_trackInfo.deletePoint())
 			{
@@ -499,11 +525,21 @@ public class App
 	 */
 	public void createPoint(DataPoint inPoint)
 	{
+		createPoint(inPoint, true);
+	}
+
+	/**
+	 * Create a new point at the end of the track
+	 * @param inPoint point to add
+	 * @param inNewSegment true for a single point, false for a continuation
+	 */
+	public void createPoint(DataPoint inPoint, boolean inNewSegment)
+	{
 		// create undo object
 		UndoCreatePoint undo = new UndoCreatePoint();
 		_undoStack.add(undo);
 		// add point to track
-		inPoint.setSegmentStart(true);
+		inPoint.setSegmentStart(inNewSegment);
 		_track.appendPoints(new DataPoint[] {inPoint});
 		// ensure track's field list contains point's fields
 		_track.extendFieldList(inPoint.getFieldList());

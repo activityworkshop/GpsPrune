@@ -1,4 +1,4 @@
-package tim.prune.gui;
+package tim.prune.gui.colour;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -13,6 +13,7 @@ public class ColourPatch extends JPanel
 {
 	/**
 	 * Constructor
+	 * @param inColour starting colour
 	 */
 	public ColourPatch(Color inColour)
 	{

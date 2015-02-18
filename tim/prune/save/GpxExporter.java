@@ -535,7 +535,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		source = replaceGpxTags(source, "lat=\"", "\"", inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		source = replaceGpxTags(source, "lon=\"", "\"", inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		source = replaceGpxTags(source, "<ele>", "</ele>", inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
-		source = replaceGpxTags(source, "<time>", "</time>", inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
+		source = replaceGpxTags(source, "<time>", "</time>", inPoint.getTimestamp().getText(Timestamp.Format.ISO8601));
 		if (inPoint.isWaypoint())
 		{
 			source = replaceGpxTags(source, "<name>", "</name>", inPoint.getWaypointName());
@@ -685,7 +685,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inPoint.hasTimestamp() && inTimestamps)
 		{
 			inWriter.write("\t\t<time>");
-			inWriter.write(inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
+			inWriter.write(inPoint.getTimestamp().getText(Timestamp.Format.ISO8601));
 			inWriter.write("</time>\n");
 		}
 		// write waypoint name after elevation and time
@@ -757,7 +757,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inPoint.hasTimestamp() && inTimestamps)
 		{
 			inWriter.write("\t\t\t\t<time>");
-			inWriter.write(inPoint.getTimestamp().getText(Timestamp.FORMAT_ISO_8601));
+			inWriter.write(inPoint.getTimestamp().getText(Timestamp.Format.ISO8601));
 			inWriter.write("</time>\n");
 		}
 		// photo, audio

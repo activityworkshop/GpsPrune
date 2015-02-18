@@ -1,15 +1,11 @@
 package tim.prune.function;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -24,8 +20,11 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
-import tim.prune.gui.ColourChooser;
-import tim.prune.gui.ColourPatch;
+import tim.prune.gui.colour.ColourChooser;
+import tim.prune.gui.colour.ColourPatch;
+import tim.prune.gui.colour.ColourerSelectorPanel;
+import tim.prune.gui.colour.PatchListener;
+import tim.prune.gui.colour.PointColourer;
 
 /**
  * Class to show the popup window for setting the colours
@@ -36,6 +35,8 @@ public class SetColours extends GenericFunction
 	private JButton _okButton = null;
 	/** Array of 8 colour patches */
 	private ColourPatch[] _patches = null;
+	/** colourer selection panel */
+	private ColourerSelectorPanel _colourerSelector = null;
 	/** Single colour chooser */
 	private ColourChooser _colourChooser = null;
 
@@ -49,25 +50,6 @@ public class SetColours extends GenericFunction
 		ColourScheme.IDX_TEXT, ColourScheme.IDX_LINES
 	};
 
-	/**
-	 * Inner class to react to patch clicks
-	 */
-	class PatchListener extends MouseAdapter
-	{
-		/** Associated patch */
-		private ColourPatch _patch = null;
-		/** Constructor */
-		public PatchListener(ColourPatch inPatch) {
-			_patch = inPatch;
-		}
-		/** React to mouse clicks */
-		public void mouseClicked(MouseEvent e)
-		{
-			_colourChooser.showDialog(_patch.getBackground());
-			Color colour = _colourChooser.getChosenColour();
-			if (colour != null) _patch.setColour(colour);
-		}
-	}
 
 	/**
 	 * Constructor
@@ -94,11 +76,17 @@ public class SetColours extends GenericFunction
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout(0, 10));
 
-		JLabel intro = new JLabel(I18nManager.getText("dialog.setcolours.intro"));
-		intro.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
-		mainPanel.add(intro, BorderLayout.NORTH);
+		JLabel introLabel = new JLabel(I18nManager.getText("dialog.setcolours.intro"));
+		introLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 0));
+		mainPanel.add(introLabel, BorderLayout.NORTH);
+
+		// Panel in centre, to hold both the patch panel and the colourer panel (and maybe introLabel too?)
 		JPanel centralPanel = new JPanel();
-		centralPanel.setLayout(new GridLayout());
+		centralPanel.setLayout(new BoxLayout(centralPanel, BoxLayout.Y_AXIS));
+
+		// Make panel for 8 colour patches
+		JPanel patchPanel = new JPanel();
+		patchPanel.setLayout(new GridLayout());
 		_patches = new ColourPatch[8];
 
 		ColourScheme scheme = Config.getColourScheme();
@@ -111,7 +99,7 @@ public class SetColours extends GenericFunction
 			// Top label and patch
 			colPanel.add(new JLabel(I18nManager.getText("dialog.setcolours." + LABEL_KEYS[i*2])));
 			patch = new ColourPatch(scheme.getColour(INDICES[i*2]));
-			patch.addMouseListener(new PatchListener(patch));
+			patch.addMouseListener(new PatchListener(patch, _colourChooser));
 			colPanel.add(patch);
 			_patches[i*2] = patch;
 			// separator
@@ -119,14 +107,23 @@ public class SetColours extends GenericFunction
 			// Bottom label and patch
 			colPanel.add(new JLabel(I18nManager.getText("dialog.setcolours." + LABEL_KEYS[i*2+1])));
 			patch = new ColourPatch(scheme.getColour(INDICES[i*2+1]));
-			patch.addMouseListener(new PatchListener(patch));
+			patch.addMouseListener(new PatchListener(patch, _colourChooser));
 			colPanel.add(patch);
 			_patches[i*2+1] = patch;
 
 			// Add column to panel
 			colPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
-			centralPanel.add(colPanel);
+			patchPanel.add(colPanel);
 		}
+		patchPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		centralPanel.add(patchPanel);
+		centralPanel.add(Box.createVerticalStrut(15));
+
+		// now the colourer selector
+		_colourerSelector = new ColourerSelectorPanel(_colourChooser);
+		_colourerSelector.setAlignmentX(Component.LEFT_ALIGNMENT);
+		centralPanel.add(_colourerSelector);
+		// add the central panel to the main one
 		mainPanel.add(centralPanel, BorderLayout.CENTER);
 
 		// Buttons at the bottom
@@ -176,15 +173,17 @@ public class SetColours extends GenericFunction
 		{
 			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()));
 			_dialog.setLocationRelativeTo(_parentFrame);
+			_colourChooser = new ColourChooser(_dialog);
 			_dialog.getContentPane().add(makeContents());
 			_dialog.pack();
-			_colourChooser = new ColourChooser(_dialog);
 		}
 		// Reset colours to current ones
 		ColourScheme scheme = Config.getColourScheme();
 		for (int i=0; i<8; i++) {
 			_patches[i].setColour(scheme.getColour(INDICES[i]));
 		}
+		PointColourer colourer = Config.getPointColourer();
+		_colourerSelector.init(colourer, scheme.getColour(ColourScheme.IDX_POINT));
 		_dialog.setVisible(true);
 		_okButton.requestFocus();
 	}
@@ -200,6 +199,9 @@ public class SetColours extends GenericFunction
 			scheme.setColour(INDICES[i], _patches[i].getBackground());
 		}
 		Config.updateColourScheme();
+		PointColourer colourer = _colourerSelector.getSelectedColourer();
+		Config.updatePointColourer(colourer);
+		_app.updatePointColourer();
 		UpdateMessageBroker.informSubscribers();
 	}
 }

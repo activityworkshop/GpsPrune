@@ -1,24 +1,18 @@
 package tim.prune.function.compress;
 
-import javax.swing.JOptionPane;
-
 import tim.prune.App;
-import tim.prune.GenericFunction;
-import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.DataPoint;
 
 /**
  * Function to mark all the points in the selected rectangle
  */
-public class MarkPointsInRectangleFunction extends GenericFunction
+public class MarkPointsInRectangleFunction extends MarkAndDeleteFunction
 {
 	/** Minimum and maximum latitude values of rectangle */
 	private double _minLat = 0.0, _maxLat = 0.0;
 	/** Minimum and maximum longitude values of rectangle */
 	private double _minLon = 0.0, _maxLon = 0.0;
-	/** flag to remember whether the automatic deletion has been set to always */
-	private boolean _automaticallyDelete = false;
 
 
 	/**
@@ -86,7 +80,7 @@ public class MarkPointsInRectangleFunction extends GenericFunction
 			final double pointLat = point.getLatitude().getDouble();
 			final boolean insideRect = (pointLon >= _minLon && pointLon <= _maxLon
 				&& pointLat >= _minLat && pointLat <= _maxLat);
-			// If so, then mark it
+			// Mark it accordingly (also resetting points outside the rect to false)
 			point.setMarkedForDeletion(insideRect);
 			if (insideRect) {
 				numMarked++;
@@ -98,23 +92,7 @@ public class MarkPointsInRectangleFunction extends GenericFunction
 		// Confirm message showing how many marked
 		if (numMarked > 0)
 		{
-			// Allow calling of delete function with one click
-			final String[] buttonTexts = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
-				I18nManager.getText("button.always")};
-			int answer = _automaticallyDelete ? JOptionPane.YES_OPTION :
-				JOptionPane.showOptionDialog(_parentFrame,
-				I18nManager.getTextWithNumber("dialog.compress.confirm", numMarked),
-				I18nManager.getText(getNameKey()), JOptionPane.YES_NO_CANCEL_OPTION,
-				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1]);
-			if (answer == JOptionPane.CANCEL_OPTION) {_automaticallyDelete = true;} // "always" is third option
-			if (_automaticallyDelete || answer == JOptionPane.YES_OPTION)
-			{
-				new Thread(new Runnable() {
-					public void run() {
-						_app.finishCompressTrack();
-					}
-				}).start();
-			}
+			optionallyDeleteMarkedPoints(numMarked);
 		}
 	}
 }

@@ -122,8 +122,12 @@ public class SourceInfo
 	public int getIndex(DataPoint inPoint)
 	{
 		int idx = -1;
-		for (int i=0; i<_points.length && (idx < 0); i++) {
-			if (_points[i] == inPoint) {idx = i;}
+		for (int i=0; i<_points.length; i++)
+		{
+			if (_points[i] == inPoint) {
+				idx = i;
+				break;
+			}
 		}
 		if (idx == -1) {return idx;}             // point not found
 		if (_pointIndices == null) {return idx;} // All points loaded

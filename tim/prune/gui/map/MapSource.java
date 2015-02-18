@@ -87,6 +87,8 @@ public abstract class MapSource
 		// check prefix
 		try {
 			new URL(urlstr.replace('[', 'w').replace(']', 'w'));
+			// There's a warning that this URL object isn't used, but it's enough to know the parse
+			// was successful without an exception being thrown.
 		}
 		catch (MalformedURLException e)
 		{

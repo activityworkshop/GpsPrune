@@ -87,6 +87,11 @@ public class Track
 				_dataPoints[pointIndex] = point;
 				pointIndex++;
 			}
+			else
+			{
+				// TODO: Maybe report this somehow?
+				// System.out.println("point is not valid!");
+			}
 		}
 		_numPoints = pointIndex;
 		// Set first track point to be start of segment
@@ -360,61 +365,6 @@ public class Track
 		// needs to be scaled again
 		_scaled = false;
 		return foundAlt;
-	}
-
-
-	/**
-	 * Collect all waypoints to the start or end of the track
-	 * @param inAtStart true to collect at start, false for end
-	 * @return true if successful, false if no change
-	 */
-	public boolean collectWaypoints(boolean inAtStart)
-	{
-		// Check for mixed data, numbers of waypoints & nons
-		int numWaypoints = 0, numNonWaypoints = 0;
-		boolean wayAfterNon = false, nonAfterWay = false;
-		DataPoint[] waypoints = new DataPoint[_numPoints];
-		DataPoint[] nonWaypoints = new DataPoint[_numPoints];
-		DataPoint point = null;
-		for (int i=0; i<_numPoints; i++)
-		{
-			point = _dataPoints[i];
-			if (point.isWaypoint())
-			{
-				waypoints[numWaypoints] = point;
-				numWaypoints++;
-				wayAfterNon |= (numNonWaypoints > 0);
-			}
-			else
-			{
-				nonWaypoints[numNonWaypoints] = point;
-				numNonWaypoints++;
-				nonAfterWay |= (numWaypoints > 0);
-			}
-		}
-		// Exit if the data is already in the specified order
-		if (numWaypoints == 0 || numNonWaypoints == 0
-			|| (inAtStart && !wayAfterNon && nonAfterWay)
-			|| (!inAtStart && wayAfterNon && !nonAfterWay))
-		{
-			return false;
-		}
-
-		// Copy the arrays back into _dataPoints in the specified order
-		if (inAtStart)
-		{
-			System.arraycopy(waypoints, 0, _dataPoints, 0, numWaypoints);
-			System.arraycopy(nonWaypoints, 0, _dataPoints, numWaypoints, numNonWaypoints);
-		}
-		else
-		{
-			System.arraycopy(nonWaypoints, 0, _dataPoints, 0, numNonWaypoints);
-			System.arraycopy(waypoints, 0, _dataPoints, numNonWaypoints, numWaypoints);
-		}
-		// needs to be scaled again
-		_scaled = false;
-		UpdateMessageBroker.informSubscribers();
-		return true;
 	}
 
 

@@ -158,6 +158,7 @@ public class SaveConfig extends GenericFunction
 	 */
 	private void saveConfig(File inSaveFile)
 	{
+		// TODO: Check for null inSaveFile, then just call finish() ?
 		FileOutputStream outStream = null;
 		try
 		{

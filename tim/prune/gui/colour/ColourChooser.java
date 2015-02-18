@@ -1,4 +1,4 @@
-package tim.prune.gui;
+package tim.prune.gui.colour;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

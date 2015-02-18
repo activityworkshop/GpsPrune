@@ -17,6 +17,8 @@ public class DistanceTableModel extends GenericTableModel
 	private static final String _toColLabel = I18nManager.getText("dialog.distances.column.to");
 	/** Column heading (depends on metric/imperial settings) */
 	private String _distanceLabel = null;
+	/** Previous distance units */
+	private Unit _previousDistUnit = null;
 
 	/**
 	 * @return column count
@@ -69,6 +71,9 @@ public class DistanceTableModel extends GenericTableModel
 		Unit distUnit = Config.getUnitSet().getDistanceUnit();
 		_distanceLabel = I18nManager.getText("fieldname.distance") + " (" +
 			I18nManager.getText(distUnit.getShortnameKey()) + ")";
+		final boolean distUnitsChanged = (distUnit != _previousDistUnit);
+		_previousDistUnit = distUnit;
+
 		// Initialize array of distances
 		int numRows = getRowCount();
 		if (_distances == null || _distances.length != numRows) {
@@ -84,7 +89,12 @@ public class DistanceTableModel extends GenericTableModel
 				_distances[i] = Distance.convertRadiansToDistance(rads);
 			}
 		}
-		// Let table know that it has to refresh data (and might as well refresh column headings too)
-		fireTableStructureChanged();
+		// Let table know that it has to refresh data, and maybe the whole table too
+		if (distUnitsChanged) {
+			fireTableStructureChanged();
+		}
+		else {
+			fireTableDataChanged();
+		}
 	}
 }

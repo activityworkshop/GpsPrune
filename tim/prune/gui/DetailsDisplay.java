@@ -32,6 +32,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Photo;
 import tim.prune.data.Selection;
+import tim.prune.data.SourceInfo;
 import tim.prune.data.SpeedCalculator;
 import tim.prune.data.SpeedValue;
 import tim.prune.data.TrackInfo;
@@ -49,10 +50,11 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _indexLabel = null;
 	private JLabel _latLabel = null, _longLabel = null;
 	private JLabel _altLabel = null;
-	private JLabel _timeLabel = null;
+	private JLabel _ptDateLabel = null, _ptTimeLabel = null;
 	private JLabel _descLabel = null;
 	private JLabel _speedLabel = null, _vSpeedLabel = null;
 	private JLabel _nameLabel = null, _typeLabel = null;
+	private JLabel _filenameLabel = null;
 
 	// Range details
 	private JLabel _rangeLabel = null;
@@ -90,12 +92,14 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_POINT_LATITUDE = I18nManager.getText("fieldname.latitude") + ": ";
 	private static final String LABEL_POINT_LONGITUDE = I18nManager.getText("fieldname.longitude") + ": ";
 	private static final String LABEL_POINT_ALTITUDE = I18nManager.getText("fieldname.altitude") + ": ";
-	private static final String LABEL_POINT_TIMESTAMP = I18nManager.getText("fieldname.timestamp") + ": ";
+	private static final String LABEL_POINT_DATE     = I18nManager.getText("fieldname.date") + ": ";
+	private static final String LABEL_POINT_TIME     = I18nManager.getText("fieldname.timestamp") + ": ";
 	private static final String LABEL_POINT_WAYPOINTNAME = I18nManager.getText("fieldname.waypointname") + ": ";
 	private static final String LABEL_POINT_WAYPOINTTYPE = I18nManager.getText("fieldname.waypointtype") + ": ";
 	private static final String LABEL_POINT_DESCRIPTION  = I18nManager.getText("fieldname.description") + ": ";
 	private static final String LABEL_POINT_SPEED        = I18nManager.getText("fieldname.speed") + ": ";
 	private static final String LABEL_POINT_VERTSPEED    = I18nManager.getText("fieldname.verticalspeed") + ": ";
+	private static final String LABEL_POINT_FILENAME     = I18nManager.getText("details.track.file") + ": ";
 	private static final String LABEL_RANGE_SELECTED = I18nManager.getText("details.range.selected") + ": ";
 	private static final String LABEL_RANGE_DURATION = I18nManager.getText("fieldname.duration") + ": ";
 	private static final String LABEL_RANGE_DISTANCE = I18nManager.getText("fieldname.distance") + ": ";
@@ -131,9 +135,12 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_longLabel);
 		_altLabel = new JLabel("");
 		pointDetailsPanel.add(_altLabel);
-		_timeLabel = new JLabel("");
-		_timeLabel.setMinimumSize(new Dimension(120, 10));
-		pointDetailsPanel.add(_timeLabel);
+		_ptDateLabel = new JLabel("");
+		_ptDateLabel.setMinimumSize(new Dimension(120, 10));
+		pointDetailsPanel.add(_ptDateLabel);
+		_ptTimeLabel = new JLabel("");
+		_ptTimeLabel.setMinimumSize(new Dimension(120, 10));
+		pointDetailsPanel.add(_ptTimeLabel);
 		_descLabel = new JLabel("");
 		pointDetailsPanel.add(_descLabel);
 		_speedLabel = new JLabel("");
@@ -144,6 +151,8 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_nameLabel);
 		_typeLabel = new JLabel("");
 		pointDetailsPanel.add(_typeLabel);
+		_filenameLabel = new JLabel("");
+		pointDetailsPanel.add(_filenameLabel);
 		pointDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// range details panel
@@ -296,12 +305,14 @@ public class DetailsDisplay extends GenericDisplay
 			_latLabel.setText("");
 			_longLabel.setText("");
 			_altLabel.setText("");
-			_timeLabel.setText("");
+			_ptDateLabel.setText("");
+			_ptTimeLabel.setText("");
 			_descLabel.setText("");
 			_nameLabel.setText("");
 			_typeLabel.setText("");
 			_speedLabel.setText("");
 			_vSpeedLabel.setText("");
+			_filenameLabel.setText("");
 		}
 		else
 		{
@@ -316,12 +327,12 @@ public class DetailsDisplay extends GenericDisplay
 				I18nManager.getText(altUnit.getShortnameKey()))
 				: "");
 			if (currentPoint.hasTimestamp()) {
-				_timeLabel.setText(LABEL_POINT_TIMESTAMP + currentPoint.getTimestamp().getText());
-				_timeLabel.setToolTipText(currentPoint.getTimestamp().getText());
+				_ptDateLabel.setText(LABEL_POINT_DATE + currentPoint.getTimestamp().getDateText());
+				_ptTimeLabel.setText(LABEL_POINT_TIME + currentPoint.getTimestamp().getTimeText());
 			}
 			else {
-				_timeLabel.setText("");
-				_timeLabel.setToolTipText("");
+				_ptDateLabel.setText("");
+				_ptTimeLabel.setText("");
 			}
 			// Maybe the point has a description?
 			String pointDesc = currentPoint.getFieldValue(Field.DESCRIPTION);
@@ -377,6 +388,25 @@ public class DetailsDisplay extends GenericDisplay
 				_typeLabel.setText(LABEL_POINT_WAYPOINTTYPE + type);
 			}
 			else _typeLabel.setText("");
+
+			// File to which point belongs
+			final int numFiles = _trackInfo.getFileInfo().getNumFiles();
+			String filename = null;
+			if (numFiles > 1)
+			{
+				final SourceInfo info = _trackInfo.getFileInfo().getSourceForPoint(currentPoint);
+				if (info != null) {
+					filename = info.getName();
+				}
+			}
+			if (filename != null) {
+				_filenameLabel.setText(LABEL_POINT_FILENAME + filename);
+				_filenameLabel.setToolTipText(filename);
+			}
+			else {
+				_filenameLabel.setText("");
+				_filenameLabel.setToolTipText("");
+			}
 		}
 
 		// Update range details
@@ -447,7 +477,7 @@ public class DetailsDisplay extends GenericDisplay
 			String shortPath = shortenPath(fullPath);
 			_photoPathLabel.setText(fullPath == null ? "" : LABEL_FULL_PATH + shortPath);
 			_photoPathLabel.setToolTipText(currentPhoto.getFullPath());
-			_photoTimestampLabel.setText(currentPhoto.hasTimestamp()?(LABEL_POINT_TIMESTAMP + currentPhoto.getTimestamp().getText()):"");
+			_photoTimestampLabel.setText(currentPhoto.hasTimestamp()?(LABEL_POINT_TIME + currentPhoto.getTimestamp().getText()):"");
 			_photoConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
 				+ (currentPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
@@ -483,7 +513,7 @@ public class DetailsDisplay extends GenericDisplay
 			String shortPath = shortenPath(fullPath);
 			_audioPathLabel.setText(fullPath == null ? "" : LABEL_FULL_PATH + shortPath);
 			_audioPathLabel.setToolTipText(fullPath == null ? "" : fullPath);
-			_audioTimestampLabel.setText(currentAudio.hasTimestamp()?(LABEL_POINT_TIMESTAMP + currentAudio.getTimestamp().getText()):"");
+			_audioTimestampLabel.setText(currentAudio.hasTimestamp()?(LABEL_POINT_TIME + currentAudio.getTimestamp().getText()):"");
 			int audioLength = currentAudio.getLengthInSeconds();
 			_audioLengthLabel.setText(audioLength < 0?"":LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(audioLength));
 			_audioConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
@@ -532,14 +562,23 @@ public class DetailsDisplay extends GenericDisplay
 	{
 		final int DECIMAL_PLACES = 7;
 		if (inCoord == null) return "";
+		String result = inCoord;
 		final int dotPos = Math.max(inCoord.lastIndexOf('.'), inCoord.lastIndexOf(','));
-		if (dotPos >= 0) {
+		if (dotPos >= 0)
+		{
 			final int chopPos = dotPos + DECIMAL_PLACES;
-			if (chopPos < (inCoord.length()-1)) {
-				return inCoord.substring(0, chopPos);
+			if (chopPos < (inCoord.length()-1))
+			{
+				result = inCoord.substring(0, chopPos);
+				// Maybe there's an exponential in there too which needs to be appended
+				int expPos = inCoord.toUpperCase().indexOf("E",  chopPos);
+				if (expPos > 0 && expPos < (inCoord.length()-1))
+				{
+					result += inCoord.substring(expPos);
+				}
 			}
 		}
-		return inCoord;
+		return result;
 	}
 
 	/**

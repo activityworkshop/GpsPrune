@@ -74,7 +74,7 @@ public class FileSaver
 	private static final int[] FORMAT_COORDS = {Coordinate.FORMAT_NONE, Coordinate.FORMAT_DEG_MIN_SEC,
 		Coordinate.FORMAT_DEG_MIN, Coordinate.FORMAT_DEG};
 	private static final Unit[] UNIT_ALTS = {null, UnitSetLibrary.UNITS_METRES, UnitSetLibrary.UNITS_FEET};
-	private static final int[] FORMAT_TIMES = {Timestamp.FORMAT_ORIGINAL, Timestamp.FORMAT_LOCALE, Timestamp.FORMAT_ISO_8601};
+	private static final Timestamp.Format[] FORMAT_TIMES = {Timestamp.Format.ORIGINAL, Timestamp.Format.LOCALE, Timestamp.Format.ISO8601};
 
 
 	/**
@@ -437,7 +437,7 @@ public class FileSaver
 			}
 		}
 		// Get timestamp format
-		int timestampFormat = Timestamp.FORMAT_ORIGINAL;
+		Timestamp.Format timestampFormat = Timestamp.Format.ORIGINAL;
 		for (int i=0; i<_timestampUnitsRadios.length; i++)
 		{
 			if (_timestampUnitsRadios[i].isSelected()) {
@@ -572,7 +572,7 @@ public class FileSaver
 	 * @param inTimestampFormat timestamp format
 	 */
 	private void saveField(StringBuffer inBuffer, DataPoint inPoint, Field inField,
-		int inCoordFormat, Unit inAltitudeUnit, int inTimestampFormat)
+		int inCoordFormat, Unit inAltitudeUnit, Timestamp.Format inTimestampFormat)
 	{
 		// Output field according to type
 		if (inField == Field.LATITUDE)
@@ -595,14 +595,8 @@ public class FileSaver
 		{
 			if (inPoint.hasTimestamp())
 			{
-				if (inTimestampFormat == Timestamp.FORMAT_ORIGINAL) {
-					// output original string
-					inBuffer.append(inPoint.getTimestamp().getText(Timestamp.FORMAT_ORIGINAL));
-				}
-				else {
-					// format value accordingly
-					inBuffer.append(inPoint.getTimestamp().getText(inTimestampFormat));
-				}
+				// format value accordingly
+				inBuffer.append(inPoint.getTimestamp().getText(inTimestampFormat));
 			}
 		}
 		else

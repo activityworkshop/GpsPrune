@@ -3,6 +3,7 @@ package tim.prune;
 import java.awt.event.WindowAdapter;
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Image;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -35,9 +36,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "16.3";
+	public static final String VERSION_NUMBER = "17";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "303c";
+	public static final String BUILD_NUMBER = "320";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -228,11 +229,26 @@ public class GpsPrune
 		// Avoid automatically shutting down if window closed
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-		// set icon
-		try {
-			frame.setIconImage(IconManager.getImageIcon(IconManager.WINDOW_ICON).getImage());
+		// set window icons of different resolutions (1.6+)
+		try
+		{
+			ArrayList<Image> icons = new ArrayList<Image>();
+			String[] resolutions = {"_16", "_20", "_32", "_64", "_128"};
+			for (String r : resolutions) {
+				icons.add(IconManager.getImageIcon(IconManager.WINDOW_ICON + r + ".png").getImage());
+			}
+			Class<?> d = java.awt.Window.class;
+			// This is the same as frame.setIconImages(icons) but is compilable also for java1.5 where this isn't available
+			d.getDeclaredMethod("setIconImages", new Class[]{java.util.List.class}).invoke(frame, icons);
 		}
-		catch (Exception e) {} // ignore
+		catch (Exception e)
+		{
+			// setting a list of icon images didn't work, so try with just one image instead
+			try {
+				frame.setIconImage(IconManager.getImageIcon(IconManager.WINDOW_ICON + "_16.png").getImage());
+			}
+			catch (Exception e2) {}
+		}
 
 		// Set up drag-and-drop handler to accept dropped files
 		frame.setTransferHandler(new FileDropHandler(APP));

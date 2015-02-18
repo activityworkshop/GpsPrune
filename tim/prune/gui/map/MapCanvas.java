@@ -1,5 +1,6 @@
 package tim.prune.gui.map;
 
+import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -58,6 +59,7 @@ import tim.prune.function.compress.MarkPointsInRectangleFunction;
 import tim.prune.function.edit.FieldEdit;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
+import tim.prune.gui.colour.PointColourer;
 import tim.prune.tips.TipManager;
 
 /**
@@ -84,6 +86,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private MapTileManager _tileManager = new MapTileManager(this);
 	/** Image to display */
 	private BufferedImage _mapImage = null;
+	/** Second image for drawing track (only needed for alpha blending) */
+	private BufferedImage _trackImage = null;
 	/** Slider for transparency */
 	private JSlider _transparencySlider = null;
 	/** Checkbox for scale bar */
@@ -484,7 +488,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		else if (px > (getWidth()-PAN_DISTANCE)) {
 			panX = AUTOPAN_DISTANCE + px - getWidth();
 		}
-		if (py < PAN_DISTANCE) {
+		if (py < (2*PAN_DISTANCE)) {
 			panY = py - AUTOPAN_DISTANCE;
 		}
 		if (py > (getHeight()-PAN_DISTANCE)) {
@@ -580,24 +584,58 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 		}
 
-		// Paint the track points on top
-		int pointsPainted = 1;
-		try
-		{
-			pointsPainted = paintPoints(g);
+		// Work out track opacity according to slider
+		final float[] opacities = {1.0f, 0.75f, 0.5f, 0.3f, 0.15f, 0.0f};
+		float trackOpacity = 1.0f;
+		if (_transparencySlider.getValue() < 0) {
+			trackOpacity = opacities[-1 - _transparencySlider.getValue()];
 		}
-		catch (NullPointerException npe) {} // ignore, probably due to data being changed during drawing
-		catch (ArrayIndexOutOfBoundsException obe) {} // also ignore
+
+		if (trackOpacity > 0.0f)
+		{
+			// Paint the track points on top
+			int pointsPainted = 1;
+			try
+			{
+				if (trackOpacity > 0.9f)
+				{
+					// Track is fully opaque, just draw it directly
+					pointsPainted = paintPoints(g);
+					_trackImage = null;
+				}
+				else
+				{
+					// Track is partly transparent, so use a separate BufferedImage
+					if (_trackImage == null || _trackImage.getWidth() != getWidth() || _trackImage.getHeight() != getHeight())
+					{
+						_trackImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+					}
+					// Clear to transparent
+					Graphics2D gTrack = _trackImage.createGraphics();
+					gTrack.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0.0f));
+					gTrack.fillRect(0, 0, getWidth(), getHeight());
+					gTrack.setPaintMode();
+					// Draw the track onto this separate image
+					pointsPainted = paintPoints(gTrack);
+					((Graphics2D) g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, trackOpacity));
+					g.drawImage(_trackImage, 0, 0, null);
+				}
+			}
+			catch (NullPointerException npe) {} // ignore, probably due to data being changed during drawing
+			catch (ArrayIndexOutOfBoundsException obe) {} // also ignore
+
+			// Zoom to fit if no points found
+			if (pointsPainted <= 0 && _checkBounds)
+			{
+				zoomToFit();
+				_recalculate = true;
+				repaint();
+			}
+		}
 
 		// free g
 		g.dispose();
 
-		// Zoom to fit if no points found
-		if (pointsPainted <= 0 && _checkBounds) {
-			zoomToFit();
-			_recalculate = true;
-			repaint();
-		}
 		_checkBounds = false;
 		// enable / disable transparency slider
 		_transparencySlider.setEnabled(showMap);
@@ -613,15 +651,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	{
 		// Set up colours
 		final ColourScheme cs = Config.getColourScheme();
-		final int[] opacities = {255, 190, 130, 80, 40, 0};
-		int opacity = 255;
-		if (_transparencySlider.getValue() < 0)
-			opacity = opacities[-1 - _transparencySlider.getValue()];
-		final Color pointColour  = makeTransparentColour(cs.getColour(ColourScheme.IDX_POINT), opacity);
-		final Color rangeColour  = makeTransparentColour(cs.getColour(ColourScheme.IDX_SELECTION), opacity);
-		final Color currentColour = makeTransparentColour(cs.getColour(ColourScheme.IDX_PRIMARY), opacity);
-		final Color secondColour = makeTransparentColour(cs.getColour(ColourScheme.IDX_SECONDARY), opacity);
-		final Color textColour   = makeTransparentColour(cs.getColour(ColourScheme.IDX_TEXT), opacity);
+		final Color pointColour  = cs.getColour(ColourScheme.IDX_POINT);
+		final Color rangeColour  = cs.getColour(ColourScheme.IDX_SELECTION);
+		final Color currentColour = cs.getColour(ColourScheme.IDX_PRIMARY);
+		final Color secondColour = cs.getColour(ColourScheme.IDX_SECONDARY);
+		final Color textColour   = cs.getColour(ColourScheme.IDX_TEXT);
+		final PointColourer pointColourer = _app.getPointColourer();
 
 		final int winWidth  = getWidth();
 		final int winHeight = getHeight();
@@ -659,26 +694,34 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			currPointVisible = px >= 0 && px < winWidth && py >= 0 && py < winHeight;
 			isWaypoint = _track.getPoint(i).isWaypoint();
 			anyWaypoints = anyWaypoints || isWaypoint;
-			if (currPointVisible)
+			if (!isWaypoint)
 			{
-				if (!isWaypoint)
+				if (currPointVisible || prevPointVisible)
 				{
-					// Draw rectangle for track point
+					// For track points, work out which colour to use
 					if (_track.getPoint(i).getDeleteFlag()) {
 						inG.setColor(currentColour);
 					}
-					else {
+					else if (pointColourer != null)
+					{  // use the point colourer if there is one
+						Color trackColour = pointColourer.getColour(i);
+						inG.setColor(trackColour);
+					}
+					else
+					{
 						inG.setColor(pointColour);
 					}
-					inG.drawRect(px-2, py-2, 3, 3);
-					pointsPainted++;
+
+					// Draw rectangle for track point if it's visible
+					if (currPointVisible)
+					{
+						inG.drawRect(px-2, py-2, 3, 3);
+						pointsPainted++;
+					}
 				}
-			}
-			if (!isWaypoint)
-			{
+
 				// Connect track points if either of them are visible
-				if (connectPoints && (currPointVisible || prevPointVisible)
-				 && !(prevX == -1 && prevY == -1)
+				if (connectPoints && !(prevX == -1 && prevY == -1)
 				 && !_track.getPoint(i).getSegmentStart())
 				{
 					inG.drawLine(prevX, prevY, px, py);
@@ -860,18 +903,6 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	}
 
 	/**
-	 * Make a semi-transparent colour for drawing with
-	 * @param inColour base colour (fully opaque)
-	 * @param inOpacity opacity where 0=invisible and 255=full
-	 * @return new colour object
-	 */
-	private static Color makeTransparentColour(Color inColour, int inOpacity)
-	{
-		if (inOpacity > 240) return inColour;
-		return new Color(inColour.getRed(), inColour.getGreen(), inColour.getBlue(), inOpacity);
-	}
-
-	/**
 	 * Inform that tiles have been updated and the map can be repainted
 	 * @param inIsOk true if data loaded ok, false for error
 	 */
@@ -1050,8 +1081,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					else if (_drawMode == MODE_DRAW_POINTS_CONT)
 					{
 						DataPoint point = createPointFromClick(inE.getX(), inE.getY());
-						_app.createPoint(point);
-						point.setSegmentStart(false);
+						_app.createPoint(point, false); // not a new segment
 					}
 				}
 				else if (inE.getClickCount() == 2)

@@ -6,7 +6,7 @@ package tim.prune;
  */
 public abstract class UpdateMessageBroker
 {
-	private static final int MAXIMUM_NUMBER_SUBSCRIBERS = 6;
+	private static final int MAXIMUM_NUMBER_SUBSCRIBERS = 7;
 	/** Array of all subscribers */
 	private static DataSubscriber[] _subscribers = new DataSubscriber[MAXIMUM_NUMBER_SUBSCRIBERS];
 	/** Counter of the number of subscribers added so far */

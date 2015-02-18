@@ -3,7 +3,6 @@ package tim.prune.function;
 import javax.swing.JOptionPane;
 
 import tim.prune.App;
-import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
@@ -12,14 +11,14 @@ import tim.prune.undo.UndoInterpolate;
 /**
  * Function to interpolate between the points in a range
  */
-public class InterpolateFunction extends GenericFunction
+public class InterpolateFunction extends SingleNumericParameterFunction
 {
 	/**
 	 * Constructor
 	 * @param inApp app object
 	 */
 	public InterpolateFunction(App inApp) {
-		super(inApp);
+		super(inApp, 1, 1000);
 	}
 
 	/** @return name key */
@@ -27,10 +26,28 @@ public class InterpolateFunction extends GenericFunction
 		return "function.interpolate";
 	}
 
+	/** @return description key for input parameter */
+	public String getDescriptionKey() {
+		return "dialog.interpolate.parameter.text";
+	}
+
+	/** @return current (or default) parameter value */
+	public int getCurrentParamValue() {
+		return 0;
+	}
+
 	/**
 	 * Perform the operation
 	 */
 	public void begin()
+	{
+		// not needed, we just use the completeFunction method instead
+	}
+
+	/**
+	 * Complete the function after the input parameter has been chosen
+	 */
+	public void completeFunction(int inParam)
 	{
 		// Firstly, work out whether the selected range only contains waypoints or not
 		final int startIndex = _app.getTrackInfo().getSelection().getStart();
@@ -49,24 +66,12 @@ public class InterpolateFunction extends GenericFunction
 			betweenWaypoints = true;
 		}
 
-		// Get number of points to add
-		Object numPointsStr = JOptionPane.showInputDialog(_parentFrame,
-			I18nManager.getText("dialog.interpolate.parameter.text"),
-			I18nManager.getText(getNameKey()),
-			JOptionPane.QUESTION_MESSAGE, null, null, "");
-		if (numPointsStr == null) {return;}
-		int numToAdd = parseNumber(numPointsStr);
-		if (numToAdd <= 0 || numToAdd > 1000)
-		{
-			_app.showErrorMessage(getNameKey(), "error.interpolate.invalidparameter");
-			return;
-		}
-
 		if (startIndex < 0 || endIndex < 0 || endIndex <= startIndex) {
 			return;
 		}
 
 		// construct new point array with the interpolated points
+		final int numToAdd = inParam;
 		final Track track = _app.getTrackInfo().getTrack();
 		final int maxToAdd = (endIndex-startIndex) * numToAdd;
 		final int extendedSize = track.getNumPoints() + maxToAdd;
@@ -140,25 +145,5 @@ public class InterpolateFunction extends GenericFunction
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Helper method to parse an Object into an integer
-	 * @param inObject object, eg from dialog
-	 * @return int value given
-	 */
-	private static int parseNumber(Object inObject)
-	{
-		int num = 0;
-		if (inObject != null)
-		{
-			try
-			{
-				num = Integer.parseInt(inObject.toString());
-			}
-			catch (NumberFormatException nfe)
-			{}
-		}
-		return num;
 	}
 }

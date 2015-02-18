@@ -258,7 +258,7 @@ public class JpegLoader implements Runnable, Cancellable
 		// Apply timestamp to photo and its point (if any)
 		photo.setTimestamp(timestamp);
 		if (photo.getDataPoint() != null) {
-			photo.getDataPoint().setFieldValue(Field.TIMESTAMP, timestamp.getText(Timestamp.FORMAT_ISO_8601), false);
+			photo.getDataPoint().setFieldValue(Field.TIMESTAMP, timestamp.getText(Timestamp.Format.ISO8601), false);
 		}
 		return photo;
 	}

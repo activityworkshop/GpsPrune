@@ -284,6 +284,9 @@ public class Charter extends GenericFunction
 					+ getSvgValue(_svgHeightField, DEFAULT_SVG_HEIGHT) + "\n");
 				writer.write("set out '" + svgFile.getAbsolutePath() + "'\n");
 			}
+			else {
+				// For screen output, gnuplot should use the default terminal (windows or x11 or wxt or something)
+			}
 			if (numCharts > 1) {
 				writer.write("set multiplot layout " + numCharts + ",1\n");
 			}
@@ -374,7 +377,7 @@ public class Charter extends GenericFunction
 			break;
 		}
 		// Make a temporary data file for the output (one per subchart)
-		File tempFile = File.createTempFile("prunedata", null);
+		File tempFile = File.createTempFile("gpsprunedata", null);
 		tempFile.deleteOnExit();
 		// write out values for x and y to temporary file
 		FileWriter tempFileWriter = null;

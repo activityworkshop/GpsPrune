@@ -1,20 +1,18 @@
-package tim.prune.function;
+package tim.prune.data.sort;
 
 import java.util.Comparator;
 
 import tim.prune.data.DataPoint;
+
 
 /**
  * Class for comparing photos to sort them by name or timestamp
  */
 public class PhotoComparer implements Comparator<DataPoint>
 {
-	public enum SortMode {
-		SORTBY_NAME, SORTBY_TIME
-	};
-
 	/** Sort mode */
-	private SortMode _sortMode = SortMode.SORTBY_NAME;
+	private SortMode _sortMode;
+
 
 	/**
 	 * Constructor
@@ -79,7 +77,7 @@ public class PhotoComparer implements Comparator<DataPoint>
 		if (!inP2.hasTimestamp()) return -1;
 		if (!inP1.hasTimestamp()) return 1;
 		// Compare the timestamps
-		long secDiff = inP1.getPhoto().getTimestamp().getSecondsSince(inP2.getPhoto().getTimestamp());
+		long secDiff = inP1.getPhoto().getTimestamp().getMillisecondsSince(inP2.getPhoto().getTimestamp());
 		return (secDiff<0?-1:(secDiff==0?0:1));
 	}
 

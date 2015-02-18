@@ -15,7 +15,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import tim.prune.App;
-import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.DataPoint;
@@ -24,15 +23,13 @@ import tim.prune.data.Track;
 /**
  * Class to provide the function for track compression
  */
-public class CompressTrackFunction extends GenericFunction
+public class CompressTrackFunction extends MarkAndDeleteFunction
 {
 	private Track _track = null;
 	private JDialog _dialog = null;
 	private JButton _okButton = null;
 	private CompressionAlgorithm[] _algorithms = null;
 	private SummaryLabel _summaryLabel = null;
-	/** flag to remember whether the automatic deletion has been set to always */
-	private boolean _automaticallyDelete = false;
 
 
 	/**
@@ -187,23 +184,7 @@ public class CompressTrackFunction extends GenericFunction
 		// Show confirmation dialog with OK button (not status bar message)
 		if (numMarked > 0)
 		{
-			// Allow calling of delete function with one click
-			final String[] buttonTexts = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
-				I18nManager.getText("button.always")};
-			int answer = _automaticallyDelete ? JOptionPane.YES_OPTION :
-				JOptionPane.showOptionDialog(_parentFrame,
-				I18nManager.getTextWithNumber("dialog.compress.confirm", numMarked),
-				I18nManager.getText(getNameKey()), JOptionPane.YES_NO_CANCEL_OPTION,
-				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1]);
-			if (answer == JOptionPane.CANCEL_OPTION) {_automaticallyDelete = true;} // "always" is third option
-			if (_automaticallyDelete || answer == JOptionPane.YES_OPTION)
-			{
-				new Thread(new Runnable() {
-					public void run() {
-						_app.finishCompressTrack();
-					}
-				}).start();
-			}
+			optionallyDeleteMarkedPoints(numMarked);
 		}
 		else
 		{

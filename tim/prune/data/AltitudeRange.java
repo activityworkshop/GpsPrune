@@ -1,5 +1,7 @@
 package tim.prune.data;
 
+import tim.prune.config.Config;
+
 /**
  * Represents a range of altitudes, taking units into account.
  * Values assumed to be >= 0.
@@ -8,14 +10,18 @@ public class AltitudeRange
 {
 	/** Range of altitudes in metres */
 	private IntegerRange _range = new IntegerRange();
-	/** Empty flag */
-	private boolean _empty;
+	/** Flag for whether previous value exists or not */
+	private boolean _gotPreviousValue;
 	/** Previous metric value */
-	private int _prevValue;
+	private int _previousValue;
 	/** Total climb in metres */
-	private double _climb;
+	private int _climb;
 	/** Total descent in metres */
-	private double _descent;
+	private int _descent;
+	/** Flags for whether minimum or maximum has been found */
+	private boolean _gotPreviousMinimum = false, _gotPreviousMaximum = false;
+	/** Integer values of previous minimum and maximum, if any */
+	private int     _previousExtreme = 0;
 
 
 	/**
@@ -31,10 +37,11 @@ public class AltitudeRange
 	public void clear()
 	{
 		_range.clear();
-		_climb = 0.0;
-		_descent = 0.0;
-		_empty = true;
-		_prevValue = 0;
+		_climb = _descent = 0;
+		_gotPreviousValue = false;
+		_previousValue = 0;
+		_gotPreviousMinimum = _gotPreviousMaximum = false;
+		_previousExtreme = 0;
 	}
 
 
@@ -44,20 +51,91 @@ public class AltitudeRange
 	 */
 	public void addValue(Altitude inAltitude)
 	{
+		final int wiggleLimit = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+
 		if (inAltitude != null && inAltitude.isValid())
 		{
 			int altValue = (int) inAltitude.getMetricValue();
 			_range.addValue(altValue);
 			// Compare with previous value if any
-			if (!_empty)
+			if (_gotPreviousValue)
 			{
-				if (altValue > _prevValue)
-					_climb += (altValue - _prevValue);
-				else
-					_descent += (_prevValue - altValue);
+				if (altValue != _previousValue)
+				{
+					// Got an altitude value which is different from the previous one
+					final boolean locallyUp = (altValue > _previousValue);
+					final boolean overallUp = _gotPreviousMinimum && _previousValue > _previousExtreme;
+					final boolean overallDn = _gotPreviousMaximum && _previousValue < _previousExtreme;
+					final boolean moreThanWiggle = Math.abs(altValue - _previousValue) > wiggleLimit;
+					// Do we know whether we're going up or down yet?
+					if (!_gotPreviousMinimum && !_gotPreviousMaximum)
+					{
+						// we don't know whether we're going up or down yet - check limit
+						if (moreThanWiggle)
+						{
+							if (locallyUp) {_gotPreviousMinimum = true;}
+							else {_gotPreviousMaximum = true;}
+							_previousExtreme = _previousValue;
+							_previousValue = altValue;
+							_gotPreviousValue = true;
+						}
+					}
+					else if (overallUp)
+					{
+						if (locallyUp) {
+							// we're still going up - do nothing
+							_previousValue = altValue;
+						}
+						else if (moreThanWiggle)
+						{
+							// we're going up but have dropped over a maximum
+							// Add the climb from _previousExtreme up to _previousValue
+							_climb += (_previousValue - _previousExtreme);
+							_previousExtreme = _previousValue;
+							_gotPreviousMinimum = false; _gotPreviousMaximum = true;
+							_previousValue = altValue;
+							_gotPreviousValue = true;
+						}
+					}
+					else if (overallDn)
+					{
+						if (locallyUp) {
+							if (moreThanWiggle)
+							{
+								// we're going down but have climbed up from a minimum
+								// Add the descent from _previousExtreme down to _previousValue
+								_descent += (_previousExtreme - _previousValue);
+								_previousExtreme = _previousValue;
+								_gotPreviousMinimum = true; _gotPreviousMaximum = false;
+								_previousValue = altValue;
+								_gotPreviousValue = true;
+							}
+						}
+						else {
+							// we're still going down - do nothing
+							_previousValue = altValue;
+							_gotPreviousValue = true;
+						}
+					}
+					// TODO: Behaviour when WIGGLE_LIMIT == 0 should be same as before, all differences cumulated
+				}
 			}
-			_prevValue = altValue;
-			_empty = false;
+			else
+			{
+				// we haven't got a previous value at all, so it's the start of a new segment
+				_previousValue = altValue;
+				_gotPreviousValue = true;
+			}
+
+//			if (!_empty)
+//			{
+//				if (altValue > _previousValue)
+//					_climb += (altValue - _previousValue);
+//				else
+//					_descent += (_previousValue - altValue);
+//			}
+//			_previousValue = altValue;
+//			_empty = false;
 		}
 	}
 
@@ -67,9 +145,24 @@ public class AltitudeRange
 	 */
 	public void ignoreValue(Altitude inAltitude)
 	{
-		// If we set the empty flag to true, that has the same effect as restarting a segment
-		_empty = true;
-		addValue(inAltitude);
+		// Process the previous value, if any, to update climb/descent as that's the end of the previous segment
+		if (_gotPreviousValue && _gotPreviousMinimum && _previousValue > _previousExtreme) {
+			_climb += (_previousValue - _previousExtreme);
+		}
+		else if (_gotPreviousValue && _gotPreviousMaximum && _previousValue < _previousExtreme) {
+			_descent += (_previousExtreme - _previousValue);
+		}
+		// Eliminate the counting values to start the new segment
+		_gotPreviousMinimum = _gotPreviousMaximum = false;
+		_gotPreviousValue = false;
+		// Now process this value if there is one
+		if (inAltitude != null && inAltitude.isValid())
+		{
+			final int altValue = (int) inAltitude.getMetricValue();
+			_range.addValue(altValue);
+			_previousValue = altValue;
+			_gotPreviousValue = true;
+		}
 	}
 
 	/**
@@ -107,7 +200,12 @@ public class AltitudeRange
 	 */
 	public int getClimb(Unit inUnit)
 	{
-		return (int) (_climb * inUnit.getMultFactorFromStd());
+		// May need to add climb from last segment
+		int lastSegmentClimb = 0;
+		if (_gotPreviousValue && _gotPreviousMinimum && _previousValue > _previousExtreme) {
+			lastSegmentClimb = _previousValue - _previousExtreme;
+		}
+		return (int) ((_climb + lastSegmentClimb) * inUnit.getMultFactorFromStd());
 	}
 
 	/**
@@ -116,7 +214,12 @@ public class AltitudeRange
 	 */
 	public int getDescent(Unit inUnit)
 	{
-		return (int) (_descent * inUnit.getMultFactorFromStd());
+		// May need to add descent from last segment
+		int lastSegmentDescent = 0;
+		if (_gotPreviousValue && _gotPreviousMaximum && _previousValue < _previousExtreme) {
+			lastSegmentDescent = _previousExtreme - _previousValue;
+		}
+		return (int) ((_descent + lastSegmentDescent) * inUnit.getMultFactorFromStd());
 	}
 
 	/**
@@ -124,6 +227,6 @@ public class AltitudeRange
 	 */
 	public double getMetricHeightDiff()
 	{
-		return _climb - _descent;
+		return getClimb(UnitSetLibrary.UNITS_METRES) - getDescent(UnitSetLibrary.UNITS_METRES);
 	}
 }
