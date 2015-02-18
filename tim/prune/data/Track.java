@@ -552,8 +552,8 @@ public class Track
 			meanAltitude = new Altitude((int) (totalAltitude / numAltitudes), altUnit);
 		}
 
-		DataPoint insertedPoint = new DataPoint(new Latitude(meanLatitude, Coordinate.FORMAT_NONE),
-			new Longitude(meanLongitude, Coordinate.FORMAT_NONE), meanAltitude);
+		DataPoint insertedPoint = new DataPoint(new Latitude(meanLatitude, Coordinate.FORMAT_DECIMAL_FORCE_POINT),
+			new Longitude(meanLongitude, Coordinate.FORMAT_DECIMAL_FORCE_POINT), meanAltitude);
 		// Make into singleton
 		insertedPoint.setSegmentStart(true);
 		DataPoint nextPoint = getNextTrackPoint(inEndIndex+1);

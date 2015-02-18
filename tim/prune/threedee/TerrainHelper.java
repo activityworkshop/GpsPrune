@@ -149,8 +149,8 @@ public class TerrainHelper
 				// Create a new point with the appropriate lat and long, with no altitude
 				double pX = xRange.getMinimum() + j * xStep;
 				DataPoint point = new DataPoint(
-					new Latitude(MapUtils.getLatitudeFromY(pY), Coordinate.FORMAT_NONE),
-					new Longitude(MapUtils.getLongitudeFromX(pX), Coordinate.FORMAT_NONE),
+					new Latitude(MapUtils.getLatitudeFromY(pY), Coordinate.FORMAT_DECIMAL_FORCE_POINT),
+					new Longitude(MapUtils.getLongitudeFromX(pX), Coordinate.FORMAT_DECIMAL_FORCE_POINT),
 					null);
 				//System.out.println("Created point at " + point.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC)
 				//	+ ", " + point.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC));

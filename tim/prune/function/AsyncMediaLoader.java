@@ -8,9 +8,12 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.AudioClip;
+import tim.prune.data.DataPoint;
+import tim.prune.data.Distance;
 import tim.prune.data.MediaObject;
 import tim.prune.data.Photo;
 import tim.prune.data.Track;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.load.MediaHelper;
 import tim.prune.load.MediaLoadProgressDialog;
 import tim.prune.undo.UndoLoadAudios;
@@ -99,14 +102,30 @@ implements Runnable, Cancellable
 				MediaObject mf = MediaHelper.createMediaObject(_zipFile, _linkArray[i], _sourceFile);
 				if (mf != null)
 				{
+					// Check if the media object has a point now (from exif)
+					DataPoint exifPoint = mf.getDataPoint();
 					// attach media to point and set status
 					_track.getPoint(i).attachMedia(mf);
-					mf.setOriginalStatus(MediaObject.Status.TAGGED);
-					mf.setCurrentStatus(MediaObject.Status.TAGGED);
+					// Check exif to see whether media was already tagged
+					final MediaObject.Status originalMediaStatus =
+						(exifPoint == null ? MediaObject.Status.NOT_CONNECTED : MediaObject.Status.TAGGED);
+					mf.setOriginalStatus(originalMediaStatus);
+					MediaObject.Status currMediaStatus = MediaObject.Status.TAGGED;
+					if (exifPoint != null)
+					{
+						final double distinMetres = Distance.convertRadiansToDistance(
+							DataPoint.calculateRadiansBetween(exifPoint, _track.getPoint(i)),
+							UnitSetLibrary.UNITS_METRES);
+						if (distinMetres > 10.0) {
+							currMediaStatus = MediaObject.Status.CONNECTED; // still connected but changed
+						}
+					}
+					mf.setCurrentStatus(currMediaStatus);
 					media[currLink] = mf;
 					// update progress
-					if (!_app.isBusyLoading())
+					if (!_app.isBusyLoading()) {
 						progressDialog.showProgress(currLink, numLinks);
+					}
 					currLink++;
 				}
 				try {Thread.sleep(100);} catch (InterruptedException ie) {}

@@ -1,7 +1,6 @@
 package tim.prune.function.cache;
 
 import java.io.File;
-import java.util.ArrayList;
 
 
 /**
@@ -16,8 +15,6 @@ public class TileSet
 	private String _path = null;
 	/** Comma-separated list of configs using this tileset */
 	private String _usedBy = null;
-	/** List of infos for each zoom level */
-	private ArrayList<RowInfo> _zoomLevels = null;
 
 
 	/**
@@ -31,7 +28,6 @@ public class TileSet
 		_path = inPath;
 		_usedBy = inUsedBy;
 		_rowInfo = new RowInfo();
-		_zoomLevels = new ArrayList<RowInfo>();
 		// Go through zoom directories and construct row info objects
 		if (inDir != null && inDir.exists() && inDir.isDirectory() && inDir.canRead())
 		{
@@ -41,7 +37,6 @@ public class TileSet
 					&& subdir.canRead() && isNumeric(subdir.getName()))
 				{
 					RowInfo row = makeRowInfo(subdir);
-					_zoomLevels.add(row);
 					_rowInfo.addRow(row);
 				}
 			}

@@ -437,7 +437,7 @@ public abstract class Coordinate
 		double startValue = inStart.getDouble();
 		double endValue = inEnd.getDouble();
 		double newValue = startValue + (endValue - startValue) * inFraction;
-		Coordinate answer = inStart.makeNew(newValue, inStart._originalFormat);
+		Coordinate answer = inStart.makeNew(newValue, Coordinate.FORMAT_DECIMAL_FORCE_POINT);
 		return answer;
 	}
 

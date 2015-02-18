@@ -1,11 +1,11 @@
-GpsPrune version 17
-===================
+GpsPrune version 17.2
+=====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting and photo correlation.
 Full details can be found at http://gpsprune.activityworkshop.net/
 
-GpsPrune is copyright 2006-2014 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2015 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_17.jar
+   java -jar gpsprune_17.2.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,21 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_17.jar --lang=DE
+   java -jar gpsprune_17.2.jar --lang=DE
 
+
+New with version 17.2
+=====================
+The following fixes were added since version 17.1:
+  - Speed up the cache management dialog
+  - Translation improvements
+
+New with version 17.1
+=====================
+The following fixes were added since version 17:
+  - Fix the decimal precision of coordinates calculated by interpolation and averaging
+  - Fix the selection adjustment when midpoints within the selection are dragged
+  - Minor translation improvements
 
 New with version 17
 ===================

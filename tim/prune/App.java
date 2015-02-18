@@ -566,7 +566,7 @@ public class App
 		_trackInfo.selectPoint(inIndex);
 		final int selStart = _trackInfo.getSelection().getStart();
 		final int selEnd   = _trackInfo.getSelection().getEnd();
-		if (selStart < inIndex && selEnd > inIndex)
+		if (selStart < inIndex && selEnd >= inIndex)
 		{
 			// Extend end of selection by 1
 			_trackInfo.getSelection().selectRange(selStart, selEnd+1);
