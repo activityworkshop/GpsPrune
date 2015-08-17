@@ -40,7 +40,6 @@ public class DiskTileCacher implements Runnable
 		_url = inUrl;
 		_file = inFile;
 		_observer = inObserver;
-		new Thread(this).start();
 	}
 
 	/**
@@ -98,7 +97,7 @@ public class DiskTileCacher implements Runnable
 		// Start a new thread to load the image if necessary
 		if ((dir.exists() || dir.mkdirs()) && dir.canWrite())
 		{
-			new DiskTileCacher(inUrl, tileFile, inObserver);
+			new Thread(new DiskTileCacher(inUrl, tileFile, inObserver)).start();
 			return true;
 		}
 		return false; // couldn't write the file

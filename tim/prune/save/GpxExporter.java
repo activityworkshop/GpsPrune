@@ -539,7 +539,11 @@ public class GpxExporter extends GenericFunction implements Runnable
 		if (inPoint.isWaypoint())
 		{
 			source = replaceGpxTags(source, "<name>", "</name>", inPoint.getWaypointName());
-			source = replaceGpxTags(source, "<description>", "</description>",
+			if (source != null)
+			{
+				source = source.replaceAll("<description>", "<desc>").replaceAll("</description>", "</desc>");
+			}
+			source = replaceGpxTags(source, "<desc>", "</desc>",
 				XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION)));
 		}
 		// photo / audio links
@@ -696,9 +700,9 @@ public class GpxExporter extends GenericFunction implements Runnable
 		String desc = XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION));
 		if (desc != null && !desc.equals(""))
 		{
-			inWriter.write("\t\t<description>");
+			inWriter.write("\t\t<desc>");
 			inWriter.write(desc);
-			inWriter.write("</description>\n");
+			inWriter.write("</desc>\n");
 		}
 		// Media links, if any
 		if (inPhoto && inPoint.getPhoto() != null)

@@ -12,6 +12,8 @@ import javax.xml.parsers.SAXParserFactory;
 import tim.prune.App;
 import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
+import tim.prune.function.search.GenericDownloaderFunction;
+import tim.prune.function.search.SearchResult;
 import tim.prune.load.xml.XmlFileLoader;
 import tim.prune.load.xml.ZipFileLoader;
 
@@ -65,7 +67,7 @@ public class GetGpsiesFunction extends GenericDownloaderFunction
 		double[] coords = _app.getViewport().getBounds();
 		int currPage = 1;
 
-		ArrayList<GpsiesTrack> trackList = null;
+		ArrayList<SearchResult> trackList = null;
 		URL url = null;
 		String descMessage = "";
 		InputStream inStream = null;

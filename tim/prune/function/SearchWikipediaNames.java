@@ -16,8 +16,8 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
-import tim.prune.function.gpsies.GenericDownloaderFunction;
-import tim.prune.function.gpsies.GpsiesTrack;
+import tim.prune.function.search.GenericDownloaderFunction;
+import tim.prune.function.search.SearchResult;
 
 /**
  * Function to search Wikipedia for place names
@@ -133,7 +133,7 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 			inStream.close();
 		} catch (Exception e) {}
 		// Add track list to model
-		ArrayList<GpsiesTrack> trackList = xmlHandler.getTrackList();
+		ArrayList<SearchResult> trackList = xmlHandler.getTrackList();
 		// TODO: Do a better job of sorting replies by relevance - use three different lists
 		_trackListModel.addTracks(trackList);
 	}
@@ -203,11 +203,11 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 			int rowNum = rowNums[i];
 			if (rowNum >= 0 && rowNum < _trackListModel.getRowCount())
 			{
-				String coords = _trackListModel.getTrack(rowNum).getDownloadLink();
-				String[] latlon = coords.split(",");
-				if (latlon.length == 2)
+				String lat = _trackListModel.getTrack(rowNum).getLatitude();
+				String lon = _trackListModel.getTrack(rowNum).getLongitude();
+				if (lat != null && lon != null)
 				{
-					DataPoint point = new DataPoint(new Latitude(latlon[0]), new Longitude(latlon[1]), null);
+					DataPoint point = new DataPoint(new Latitude(lat), new Longitude(lon), null);
 					point.setFieldValue(Field.WAYPT_NAME, _trackListModel.getTrack(rowNum).getTrackName(), false);
 					_app.createPoint(point);
 				}

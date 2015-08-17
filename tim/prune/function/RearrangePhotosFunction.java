@@ -89,7 +89,7 @@ public class RearrangePhotosFunction extends RearrangeFunction
 				System.arraycopy(nonPhotos, 0, neworder, 0, numNonPhotos);
 				System.arraycopy(photos, 0, neworder, numNonPhotos, numPhotos);
 			}
-			
+
 			// Give track the new point order
 			pointsChanged = track.replaceContents(neworder);
 		}

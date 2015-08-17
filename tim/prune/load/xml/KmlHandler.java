@@ -13,9 +13,10 @@ import tim.prune.data.Field;
 public class KmlHandler extends XmlHandler
 {
 	private boolean _insideCoordinates = false;
+	private boolean _insideGxTrack = false;
 	private String _value = null;
 	private String _name = null, _desc = null;
-	private String _imgLink = null;
+	private String _timestamp = null, _imgLink = null;
 	private StringBuffer _coordinates = null;
 	private ArrayList<String> _coordinateList = null;
 	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
@@ -34,12 +35,20 @@ public class KmlHandler extends XmlHandler
 	{
 		String tagName = localName;
 		if (tagName == null || tagName.equals("")) {tagName = qName;}
-		if (tagName.equalsIgnoreCase("Placemark")) {
+		tagName = tagName.toLowerCase();
+
+		if (tagName.equals("placemark"))
+		{
 			_coordinateList = new ArrayList<String>();
 		}
-		else if (tagName.equalsIgnoreCase("coordinates")) {
+		else if (tagName.equals("coordinates"))
+		{
 			_insideCoordinates = true;
 			_coordinates = null;
+		}
+		else if (tagName.equals("gx:track"))
+		{
+			_insideGxTrack = true;
 		}
 		_value = null;
 		super.startElement(uri, localName, qName, attributes);
@@ -55,28 +64,44 @@ public class KmlHandler extends XmlHandler
 	{
 		String tagName = localName;
 		if (tagName == null || tagName.equals("")) {tagName = qName;}
-		if (tagName.equalsIgnoreCase("Placemark"))
+		tagName = tagName.toLowerCase();
+
+		if (tagName.equals("placemark"))
 		{
 			processPlacemark();
-			_name = _desc = _imgLink = null;
+			_name = _desc = _imgLink = _timestamp = null;
 		}
-		else if (tagName.equalsIgnoreCase("coordinates")) {
+		else if (tagName.equals("coordinates"))
+		{
 			_insideCoordinates = false;
 			if (_coordinates != null) _coordinateList.add(_coordinates.toString().trim());
 		}
-		else if (tagName.equalsIgnoreCase("name")) _name = _value;
-		else if (tagName.equalsIgnoreCase("description")) {
+		else if (tagName.equals("name"))
+		{
+			_name = _value;
+		}
+		else if (tagName.equals("description"))
+		{
 			_desc = _value;
 			_imgLink = getImgLink(_desc);
 		}
-		else if (tagName.equalsIgnoreCase("when")) {
-			_whenList.add(_value);
+		else if (tagName.equals("when"))
+		{
+			if (!_insideGxTrack)
+				_timestamp = _value;
+			else
+				_whenList.add(_value);
 		}
-		else if (tagName.equalsIgnoreCase("gx:coord")) {
-			_whereList.add(_value);
+		else if (tagName.equals("gx:coord"))
+		{
+			if (_insideGxTrack) {
+				_whereList.add(_value);
+			}
 		}
-		else if (tagName.equalsIgnoreCase("gx:Track")) {
+		else if (tagName.equals("gx:track"))
+		{
 			processGxTrack();
+			_insideGxTrack = false;
 		}
 		super.endElement(uri, localName, qName);
 	}
@@ -123,7 +148,7 @@ public class KmlHandler extends XmlHandler
 			{
 				// Add single point to list
 				final String name = (isSingleSelection ? _name : null);
-				_pointList.add(makeStringArray(coords, name, _desc));
+				_pointList.add(makeStringArray(coords, name, _desc, _timestamp));
 				_linkList.add(_imgLink);
 			}
 			else if (numPoints > 1)
@@ -134,7 +159,7 @@ public class KmlHandler extends XmlHandler
 				{
 					if (coordArray[p] != null && coordArray[p].trim().length()>3)
 					{
-						String[] pointArray = makeStringArray(coordArray[p], null, null);
+						String[] pointArray = makeStringArray(coordArray[p], null, null, null);
 						if (firstPoint) {pointArray[5] = "1";} // start of segment flag
 						firstPoint = false;
 						_pointList.add(pointArray);
@@ -150,14 +175,17 @@ public class KmlHandler extends XmlHandler
 	 */
 	private void processGxTrack()
 	{
-		if (_whenList.size() > 0 && _whenList.size() == _whereList.size())
+		if (!_whereList.isEmpty())
 		{
+			// If the whens don't match, then throw them all away
+			if (_whenList.size() != _whereList.size()) {System.out.println("clearing!"); _whenList.clear();}
+
 			// Add each of the unnamed track points to list
 			boolean firstPoint = true;
 			final int numPoints = _whenList.size();
 			for (int p=0; p < numPoints; p++)
 			{
-				String when  = _whenList.get(p);
+				String when  = (_whenList.isEmpty() ? null : _whenList.get(p));
 				String where = _whereList.get(p);
 				if (where != null)
 				{
@@ -210,10 +238,11 @@ public class KmlHandler extends XmlHandler
 	 * @param inCoordinates coordinate string in Kml format
 	 * @param inName name of waypoint, or null if track point
 	 * @param inDesc description of waypoint, if any
+	 * @param inDesc timestamp of waypoint, if any
 	 * @return String array for point
 	 */
 	private static String[] makeStringArray(String inCoordinates,
-		String inName, String inDesc)
+		String inName, String inDesc, String inTimestamp)
 	{
 		String[] result = new String[7];
 		String[] values = inCoordinates.split(",");
@@ -223,6 +252,7 @@ public class KmlHandler extends XmlHandler
 		}
 		result[3] = inName;
 		result[4] = inDesc;
+		result[6] = inTimestamp;
 		return result;
 	}
 

@@ -30,7 +30,10 @@ import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.function.ChooseSingleParameter;
+import tim.prune.function.SearchOpenCachingDeFunction;
 import tim.prune.function.browser.UrlGenerator;
+import tim.prune.function.browser.WebMapFunction;
+import tim.prune.function.search.SearchMapillaryFunction;
 
 /**
  * Class to manage the menu bar and tool bar,
@@ -60,6 +63,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _cropTrackItem = null;
 	private JMenuItem _compressItem = null;
 	private JMenuItem _markRectangleItem = null;
+	private JMenuItem _markUphillLiftsItem = null;
 	private JMenuItem _deleteMarkedPointsItem = null;
 	private JMenuItem _deleteByDateItem = null;
 	private JMenuItem _interpolateItem = null;
@@ -89,13 +93,20 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _uploadGpsiesItem = null;
 	private JMenuItem _lookupSrtmItem = null;
 	private JMenuItem _downloadSrtmItem = null;
-	private JMenuItem _lookupWikipediaItem = null;
+	private JMenuItem _nearbyWikipediaItem = null;
+	private JMenuItem _showPeakfinderItem = null;
+	private JMenuItem _showGeohackItem = null;
+	private JMenuItem _showPanoramioItem = null;
+	private JMenuItem _showOpencachingComItem = null;
+	private JMenuItem _searchOpencachingDeItem = null;
+	private JMenuItem _searchMapillaryItem = null;
 	private JMenuItem _downloadOsmItem = null;
 	private JMenuItem _getWeatherItem = null;
 	private JMenuItem _distanceItem = null;
 	private JMenuItem _fullRangeDetailsItem = null;
 	private JMenuItem _estimateTimeItem = null;
 	private JMenuItem _learnEstimationParams = null;
+	private JMenuItem _autoplayTrack = null;
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _photoPopupItem = null;
 	private JMenuItem _selectNoPhotoItem = null;
@@ -113,6 +124,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _correlateAudiosItem = null;
 	private JMenuItem _selectNoAudioItem = null;
 	private JCheckBoxMenuItem _onlineCheckbox = null;
+	private JCheckBoxMenuItem _antialiasCheckbox = null;
 	private JCheckBoxMenuItem _autosaveSettingsCheckbox = null;
 
 	// ActionListeners for reuse by menu and toolbar
@@ -257,14 +269,43 @@ public class MenuManager implements DataSubscriber
 		// Upload to gpsies
 		_uploadGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_UPLOAD_GPSIES, false);
 		onlineMenu.add(_uploadGpsiesItem);
+
 		onlineMenu.addSeparator();
-		_lookupWikipediaItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_WIKIPEDIA, false);
-		onlineMenu.add(_lookupWikipediaItem);
+		// browser submenu
+		_browserMapMenu = new JMenu(I18nManager.getText("menu.view.browser"));
+		_browserMapMenu.setEnabled(false);
+		JMenuItem googleMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_GOOGLE, "menu.view.browser.google"));
+		_browserMapMenu.add(googleMapsItem);
+		JMenuItem openMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_OSM, "menu.view.browser.openstreetmap"));
+		_browserMapMenu.add(openMapsItem);
+		JMenuItem mapquestMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_MAPQUEST, "menu.view.browser.mapquest"));
+		_browserMapMenu.add(mapquestMapsItem);
+		JMenuItem yahooMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_YAHOO, "menu.view.browser.yahoo"));
+		_browserMapMenu.add(yahooMapsItem);
+		JMenuItem bingMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_BING, "menu.view.browser.bing"));
+		_browserMapMenu.add(bingMapsItem);
+		onlineMenu.add(_browserMapMenu);
+		// wikipedia
+		_nearbyWikipediaItem = makeMenuItem(FunctionLibrary.FUNCTION_NEARBY_WIKIPEDIA, false);
+		onlineMenu.add(_nearbyWikipediaItem);
 		JMenuItem searchWikipediaNamesItem = makeMenuItem(FunctionLibrary.FUNCTION_SEARCH_WIKIPEDIA);
 		onlineMenu.add(searchWikipediaNamesItem);
+		_showPeakfinderItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_PEAKFINDER, "webservice.peakfinder"), false);
+		onlineMenu.add(_showPeakfinderItem);
+		_showGeohackItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_GEOHACK, "webservice.geohack"), false);
+		onlineMenu.add(_showGeohackItem);
+		_showPanoramioItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_PANORAMIO, "webservice.panoramio"), false);
+		onlineMenu.add(_showPanoramioItem);
+		_showOpencachingComItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_OPENCACHINGCOM, "webservice.opencachingcom"), false);
+		onlineMenu.add(_showOpencachingComItem);
+
+		onlineMenu.addSeparator();
+		_searchOpencachingDeItem = makeMenuItem(new SearchOpenCachingDeFunction(_app), false);
+		onlineMenu.add(_searchOpencachingDeItem);
+		_searchMapillaryItem = makeMenuItem(new SearchMapillaryFunction(_app), false);
+		onlineMenu.add(_searchMapillaryItem);
 		_downloadOsmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_OSM, false);
 		onlineMenu.add(_downloadOsmItem);
-		onlineMenu.addSeparator();
 		_getWeatherItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_WEATHER_FORECAST, false);
 		onlineMenu.add(_getWeatherItem);
 		menubar.add(onlineMenu);
@@ -304,13 +345,9 @@ public class MenuManager implements DataSubscriber
 		});
 		_markRectangleItem.setEnabled(false);
 		trackMenu.add(_markRectangleItem);
-		_deleteMarkedPointsItem = new JMenuItem(I18nManager.getText("menu.track.deletemarked"));
-		_deleteMarkedPointsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.finishCompressTrack();
-			}
-		});
-		_deleteMarkedPointsItem.setEnabled(false);
+		_markUphillLiftsItem = makeMenuItem(FunctionLibrary.FUNCTION_MARK_LIFTS, false);
+		trackMenu.add(_markUphillLiftsItem);
+		_deleteMarkedPointsItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_MARKED_POINTS, false);
 		trackMenu.add(_deleteMarkedPointsItem);
 		_deleteByDateItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_BY_DATE, false);
 		trackMenu.add(_deleteByDateItem);
@@ -483,45 +520,6 @@ public class MenuManager implements DataSubscriber
 		// 3d
 		_show3dItem = makeMenuItem(FunctionLibrary.FUNCTION_3D, false);
 		viewMenu.add(_show3dItem);
-		// browser submenu
-		_browserMapMenu = new JMenu(I18nManager.getText("menu.view.browser"));
-		_browserMapMenu.setEnabled(false);
-		JMenuItem googleMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.google"));
-		googleMapsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.showExternalMap(UrlGenerator.MAP_SOURCE_GOOGLE);
-			}
-		});
-		_browserMapMenu.add(googleMapsItem);
-		JMenuItem openMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.openstreetmap"));
-		openMapsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.showExternalMap(UrlGenerator.MAP_SOURCE_OSM);
-			}
-		});
-		_browserMapMenu.add(openMapsItem);
-		JMenuItem mapquestMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.mapquest"));
-		mapquestMapsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.showExternalMap(UrlGenerator.MAP_SOURCE_MAPQUEST);
-			}
-		});
-		_browserMapMenu.add(mapquestMapsItem);
-		JMenuItem yahooMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.yahoo"));
-		yahooMapsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.showExternalMap(UrlGenerator.MAP_SOURCE_YAHOO);
-			}
-		});
-		_browserMapMenu.add(yahooMapsItem);
-		JMenuItem bingMapsItem = new JMenuItem(I18nManager.getText("menu.view.browser.bing"));
-		bingMapsItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_app.showExternalMap(UrlGenerator.MAP_SOURCE_BING);
-			}
-		});
-		_browserMapMenu.add(bingMapsItem);
-		viewMenu.add(_browserMapMenu);
 		// Charts
 		_chartItem = makeMenuItem(FunctionLibrary.FUNCTION_CHARTS, false);
 		viewMenu.add(_chartItem);
@@ -535,6 +533,10 @@ public class MenuManager implements DataSubscriber
 		// estimate time
 		_estimateTimeItem = makeMenuItem(FunctionLibrary.FUNCTION_ESTIMATE_TIME, false);
 		viewMenu.add(_estimateTimeItem);
+		viewMenu.addSeparator();
+		// autoplay
+		_autoplayTrack = makeMenuItem(FunctionLibrary.FUNCTION_AUTOPLAY_TRACK, false);
+		viewMenu.add(_autoplayTrack);
 		menubar.add(viewMenu);
 
 		// Add photo menu
@@ -640,6 +642,16 @@ public class MenuManager implements DataSubscriber
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_COLOURS));
 		// Set line width used for drawing
 		settingsMenu.add(makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_SET_LINE_WIDTH)));
+		// Use antialias or not
+		_antialiasCheckbox = new JCheckBoxMenuItem(I18nManager.getText("menu.settings.antialias"), false);
+		_antialiasCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_ANTIALIAS));
+		_antialiasCheckbox.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				Config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
+				UpdateMessageBroker.informSubscribers(MAPSERVER_CHANGED);
+			}
+		});
+			settingsMenu.add(_antialiasCheckbox);
 		// Set language
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_LANGUAGE));
 		// Set altitude tolerance
@@ -860,6 +872,7 @@ public class MenuManager implements DataSubscriber
 		_exportImageItem.setEnabled(hasMultiplePoints);
 		_compressItem.setEnabled(hasData);
 		_markRectangleItem.setEnabled(hasData);
+		_markUphillLiftsItem.setEnabled(hasData && _track.hasAltitudeData());
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
 		_splitSegmentsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3);
@@ -870,10 +883,11 @@ public class MenuManager implements DataSubscriber
 		_chartItem.setEnabled(hasData);
 		_browserMapMenu.setEnabled(hasData);
 		_distanceItem.setEnabled(hasData);
+		_autoplayTrack.setEnabled(hasData && _track.getNumPoints() > 3);
 		_getGpsiesItem.setEnabled(hasData);
 		_uploadGpsiesItem.setEnabled(hasData && _track.hasTrackPoints());
 		_lookupSrtmItem.setEnabled(hasData);
-		_lookupWikipediaItem.setEnabled(hasData);
+		_nearbyWikipediaItem.setEnabled(hasData);
 		_downloadOsmItem.setEnabled(hasData);
 		_getWeatherItem.setEnabled(hasData);
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
@@ -900,6 +914,12 @@ public class MenuManager implements DataSubscriber
 		_selectEndItem.setEnabled(hasPoint);
 		_selectEndButton.setEnabled(hasPoint);
 		_duplicatePointItem.setEnabled(hasPoint);
+		_showPeakfinderItem.setEnabled(hasPoint);
+		_showGeohackItem.setEnabled(hasPoint);
+		_showPanoramioItem.setEnabled(hasPoint);
+		_showOpencachingComItem.setEnabled(hasPoint);
+		_searchOpencachingDeItem.setEnabled(hasPoint);
+		_searchMapillaryItem.setEnabled(hasPoint);
 		// is it a waypoint?
 		_selectSegmentItem.setEnabled(hasPoint && !currPoint.isWaypoint());
 		// are there any photos?

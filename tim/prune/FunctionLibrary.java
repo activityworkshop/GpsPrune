@@ -3,8 +3,11 @@ package tim.prune;
 import tim.prune.correlate.AudioCorrelator;
 import tim.prune.correlate.PhotoCorrelator;
 import tim.prune.function.*;
+import tim.prune.function.autoplay.AutoplayFunction;
 import tim.prune.function.charts.Charter;
 import tim.prune.function.compress.CompressTrackFunction;
+import tim.prune.function.compress.DeleteMarkedPointsFunction;
+import tim.prune.function.compress.MarkLiftsFunction;
 import tim.prune.function.compress.MarkPointsInRectangleFunction;
 import tim.prune.function.deletebydate.DeleteByDateFunction;
 import tim.prune.function.distance.DistanceFunction;
@@ -49,6 +52,8 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_SEW_SEGMENTS = null;
 	public static GenericFunction FUNCTION_REARRANGE_PHOTOS = null;
 	public static GenericFunction FUNCTION_COMPRESS = null;
+	public static GenericFunction FUNCTION_MARK_LIFTS = null;
+	public static DeleteMarkedPointsFunction FUNCTION_DELETE_MARKED_POINTS = null;
 	public static GenericFunction FUNCTION_DELETE_RANGE = null;
 	public static GenericFunction FUNCTION_CROP_TRACK = null;
 	public static GenericFunction FUNCTION_MARK_IN_RECTANGLE = null;
@@ -56,7 +61,7 @@ public abstract class FunctionLibrary
 	public static SingleNumericParameterFunction FUNCTION_INTERPOLATE = null;
 	public static GenericFunction FUNCTION_LOOKUP_SRTM = null;
 	public static GenericFunction FUNCTION_DOWNLOAD_SRTM = null;
-	public static GenericFunction FUNCTION_LOOKUP_WIKIPEDIA = null;
+	public static GenericFunction FUNCTION_NEARBY_WIKIPEDIA = null;
 	public static GenericFunction FUNCTION_SEARCH_WIKIPEDIA = null;
 	public static GenericFunction FUNCTION_DOWNLOAD_OSM = null;
 	public static GenericFunction FUNCTION_ADD_TIME_OFFSET  = null;
@@ -79,6 +84,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_3D     = null;
 	public static GenericFunction FUNCTION_DISTANCES  = null;
 	public static GenericFunction FUNCTION_FULL_RANGE_DETAILS = null;
+	public static GenericFunction FUNCTION_AUTOPLAY_TRACK = null;
 	public static GenericFunction FUNCTION_ESTIMATE_TIME = null;
 	public static GenericFunction FUNCTION_LEARN_ESTIMATION_PARAMS = null;
 	public static GenericFunction FUNCTION_GET_GPSIES = null;
@@ -124,6 +130,8 @@ public abstract class FunctionLibrary
 		FUNCTION_SEW_SEGMENTS = new SewTrackSegmentsFunction(inApp);
 		FUNCTION_REARRANGE_PHOTOS = new RearrangePhotosFunction(inApp);
 		FUNCTION_COMPRESS = new CompressTrackFunction(inApp);
+		FUNCTION_MARK_LIFTS = new MarkLiftsFunction(inApp);
+		FUNCTION_DELETE_MARKED_POINTS = new DeleteMarkedPointsFunction(inApp);
 		FUNCTION_DELETE_RANGE = new DeleteSelectedRangeFunction(inApp);
 		FUNCTION_CROP_TRACK = new CropToSelection(inApp);
 		FUNCTION_MARK_IN_RECTANGLE = new MarkPointsInRectangleFunction(inApp);
@@ -131,7 +139,7 @@ public abstract class FunctionLibrary
 		FUNCTION_INTERPOLATE = new InterpolateFunction(inApp);
 		FUNCTION_LOOKUP_SRTM = new LookupSrtmFunction(inApp);
 		FUNCTION_DOWNLOAD_SRTM = new DownloadSrtmFunction(inApp);
-		FUNCTION_LOOKUP_WIKIPEDIA = new GetWikipediaFunction(inApp);
+		FUNCTION_NEARBY_WIKIPEDIA = new GetWikipediaFunction(inApp);
 		FUNCTION_SEARCH_WIKIPEDIA = new SearchWikipediaNames(inApp);
 		FUNCTION_DOWNLOAD_OSM = new DownloadOsmFunction(inApp);
 		FUNCTION_ADD_TIME_OFFSET = new AddTimeOffset(inApp);
@@ -153,6 +161,7 @@ public abstract class FunctionLibrary
 		FUNCTION_3D     = new ShowThreeDFunction(inApp);
 		FUNCTION_DISTANCES = new DistanceFunction(inApp);
 		FUNCTION_FULL_RANGE_DETAILS = new FullRangeDetails(inApp);
+		FUNCTION_AUTOPLAY_TRACK = new AutoplayFunction(inApp);
 		FUNCTION_ESTIMATE_TIME = new EstimateTime(inApp);
 		FUNCTION_LEARN_ESTIMATION_PARAMS = new LearnParameters(inApp);
 		FUNCTION_GET_GPSIES = new GetGpsiesFunction(inApp);

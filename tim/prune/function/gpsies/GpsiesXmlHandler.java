@@ -6,14 +6,16 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import tim.prune.function.search.SearchResult;
+
 /**
  * XML handler for dealing with XML returned from gpsies.com
  */
 public class GpsiesXmlHandler extends DefaultHandler
 {
 	private String _value = null;
-	private ArrayList<GpsiesTrack> _trackList = null;
-	private GpsiesTrack _track = null;
+	private ArrayList<SearchResult> _trackList = null;
+	private SearchResult _track = null;
 
 
 	/**
@@ -23,10 +25,10 @@ public class GpsiesXmlHandler extends DefaultHandler
 		Attributes inAttributes) throws SAXException
 	{
 		if (inTagName.equals("tracks")) {
-			_trackList = new ArrayList<GpsiesTrack>();
+			_trackList = new ArrayList<SearchResult>();
 		}
 		else if (inTagName.equals("track")) {
-			_track = new GpsiesTrack();
+			_track = new SearchResult();
 		}
 		_value = null;
 		super.startElement(inUri, inLocalName, inTagName, inAttributes);
@@ -76,7 +78,7 @@ public class GpsiesXmlHandler extends DefaultHandler
 	/**
 	 * @return the list of tracks
 	 */
-	public ArrayList<GpsiesTrack> getTrackList()
+	public ArrayList<SearchResult> getTrackList()
 	{
 		return _trackList;
 	}

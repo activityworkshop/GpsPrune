@@ -1,9 +1,9 @@
-package tim.prune.function.gpsies;
+package tim.prune.function.search;
 
 /**
- * Class to hold a single track from Gpsies.com
+ * Class to hold a search result from wikipedia / gpsies / panoramio etc
  */
-public class GpsiesTrack
+public class SearchResult
 {
 	/** Track name or title */
 	private String _trackName = null;
@@ -15,6 +15,8 @@ public class GpsiesTrack
 	private double _trackLength = 0.0;
 	/** Download link */
 	private String _downloadLink = null;
+	/** Coordinates of point */
+	private String _latitude = null, _longitude = null;
 
 
 	/**
@@ -95,5 +97,33 @@ public class GpsiesTrack
 	public String getDownloadLink()
 	{
 		return _downloadLink;
+	}
+
+	/**
+	 * @param inLatitude latitude
+	 */
+	public void setLatitude(String inLatitude) {
+		_latitude = inLatitude;
+	}
+
+	/**
+	 * @return latitude
+	 */
+	public String getLatitude() {
+		return _latitude;
+	}
+
+	/**
+	 * @param inLongitude longitude
+	 */
+	public void setLongitude(String inLongitude) {
+		_longitude = inLongitude;
+	}
+
+	/**
+	 * @return longitude
+	 */
+	public String getLongitude() {
+		return _longitude;
 	}
 }

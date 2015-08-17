@@ -9,7 +9,7 @@ import java.io.File;
 public class SourceInfo
 {
 	/** File type of source file */
-	public enum FILE_TYPE {TEXT, GPX, KML, NMEA, GPSBABEL, GPSIES};
+	public enum FILE_TYPE {TEXT, GPX, KML, NMEA, GPSBABEL, GPSIES, JSON};
 
 	/** Source file */
 	private File _sourceFile = null;

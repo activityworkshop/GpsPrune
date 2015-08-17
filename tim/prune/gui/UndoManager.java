@@ -4,7 +4,6 @@ import java.awt.FlowLayout;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Stack;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -19,16 +18,17 @@ import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
-import tim.prune.undo.UndoOperation;
+import tim.prune.undo.UndoStack;
 
 /**
  * Class to manage the selection of actions to undo
  */
 public class UndoManager
 {
-	private App _app;
-	private JDialog _dialog;
-	private JList<String> _actionList;
+	private App _app = null;
+	private JFrame _parentFrame = null;
+	private JDialog _dialog = null;
+	private JList<String> _actionList = null;
 
 
 	/**
@@ -39,18 +39,26 @@ public class UndoManager
 	public UndoManager(App inApp, JFrame inFrame)
 	{
 		_app = inApp;
-		_dialog = new JDialog(inFrame, I18nManager.getText("dialog.undo.title"), true);
-		_dialog.setLocationRelativeTo(inFrame);
+		_parentFrame = inFrame;
+	}
+
+	/**
+	 * Show the dialog to select which actions to undo
+	 */
+	public void show()
+	{
+		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.undo.title"), true);
+		_dialog.setLocationRelativeTo(_parentFrame);
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout(3, 3));
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		Stack<UndoOperation> undoStack = inApp.getUndoStack();
+		UndoStack undoStack = _app.getUndoStack();
 		mainPanel.add(new JLabel(I18nManager.getText("dialog.undo.pretext")), BorderLayout.NORTH);
 
 		String[] undoActions = new String[undoStack.size()];
 		for (int i=0; i<undoStack.size(); i++)
 		{
-			undoActions[i] = undoStack.elementAt(undoStack.size()-1-i).getDescription();
+			undoActions[i] = undoStack.getOperationAt(undoStack.size()-1-i).getDescription();
 		}
 		_actionList = new JList<String>(undoActions);
 		_actionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);

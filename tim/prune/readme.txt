@@ -1,8 +1,8 @@
-GpsPrune version 17.2
-=====================
+GpsPrune version 18
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
-including format conversion, charting and photo correlation.
+including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
 Full details can be found at http://gpsprune.activityworkshop.net/
 
 GpsPrune is copyright 2006-2015 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_17.2.jar
+   java -jar gpsprune_18.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,21 +25,18 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_17.2.jar --lang=DE
+   java -jar gpsprune_18.jar --lang=DE
 
 
-New with version 17.2
-=====================
-The following fixes were added since version 17.1:
-  - Speed up the cache management dialog
-  - Translation improvements
-
-New with version 17.1
-=====================
-The following fixes were added since version 17:
-  - Fix the decimal precision of coordinates calculated by interpolation and averaging
-  - Fix the selection adjustment when midpoints within the selection are dragged
-  - Minor translation improvements
+New with version 18
+===================
+The following features were added since version 17:
+  - New search options using opencaching.de and mapillary
+  - New web options using peakfinder, geohack and panoramio
+  - Autoplay function for automatically scrolling through the track
+  - Marking uphill lift sections of skiing / snowboarding tracks
+  - Configurable anti-aliasing for map view and profile view
+  - Allow showing just the lines between track points but not the track points
 
 New with version 17
 ===================
@@ -50,7 +47,7 @@ The following features were added since version 16:
   - Select the current segment
   - Adding an altitude tolerance to the climb and descent calculations
   - Sorting waypoints by name or by timestamp
-  
+
 New with version 16
 ===================
 The following features were added since version 15:
@@ -244,7 +241,7 @@ Further information and updates
 ===============================
 
 To obtain the source code (if it wasn't included in your jar file), or for further information,
-please visit the website:  http://activityworkshop.net/
+please visit the website:  http://gpsprune.activityworkshop.net/
 
 You will find there user guides, screenshots and demo videos illustrating the major features.
 As GpsPrune is further developed, subsequent versions of the program will also be made freely

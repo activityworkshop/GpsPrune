@@ -228,12 +228,17 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 											+ (fouralts[2]==VOID_VAL?1:0) + (fouralts[3]==VOID_VAL?1:0);
 										// if (numVoids > 0) System.out.println(numVoids + " voids found");
 										double altitude = 0.0;
-										switch (numVoids) {
+										switch (numVoids)
+										{
 											case 0:	altitude = bilinearInterpolate(fouralts, x, y); break;
 											case 1: altitude = bilinearInterpolate(fixVoid(fouralts), x, y); break;
 											case 2:
 											case 3: altitude = averageNonVoid(fouralts); break;
 											default: altitude = VOID_VAL;
+										}
+										// Special case for terrain tracks, don't interpolate voids yet
+										if (!_normalTrack && numVoids > 0) {
+											altitude = VOID_VAL;
 										}
 										if (altitude != VOID_VAL)
 										{

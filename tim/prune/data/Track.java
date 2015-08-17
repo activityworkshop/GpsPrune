@@ -178,21 +178,30 @@ public class Track
 
 	/**
 	 * Delete the points marked for deletion
+	 * @param inSplitSegments true to split segments at deleted points
 	 * @return number of points deleted
 	 */
-	public int deleteMarkedPoints()
+	public int deleteMarkedPoints(boolean inSplitSegments)
 	{
 		int numCopied = 0;
-		// Copy selected points
+		// Copy selected points into a new point array
 		DataPoint[] newPointArray = new DataPoint[_numPoints];
+		boolean prevPointDeleted = false;
 		for (int i=0; i<_numPoints; i++)
 		{
 			DataPoint point = _dataPoints[i];
 			// Don't delete photo points
 			if (point.hasMedia() || !point.getDeleteFlag())
 			{
+				if (prevPointDeleted && inSplitSegments) {
+					point.setSegmentStart(true);
+				}
 				newPointArray[numCopied] = point;
 				numCopied++;
+				prevPointDeleted = false;
+			}
+			else {
+				prevPointDeleted = true;
 			}
 		}
 
@@ -901,7 +910,7 @@ public class Track
 	 */
 	private static final double getMinXDist(double inX)
 	{
-		// TODO: Can use some kind of floor here?
+		// TODO: Should be abs(mod(inX-0.5,1)-0.5) - means two adds, one mod, one abs instead of two adds, 3 abss and two compares
 		return Math.min(Math.min(Math.abs(inX), Math.abs(inX-1.0)), Math.abs(inX+1.0));
 	}
 

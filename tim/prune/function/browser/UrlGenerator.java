@@ -22,38 +22,46 @@ public abstract class UrlGenerator
 		if (FIVE_DP instanceof DecimalFormat) ((DecimalFormat) FIVE_DP).applyPattern("0.00000");
 	}
 
-	/** Constant for Google Maps */
-	public static final int MAP_SOURCE_GOOGLE = 0;
-	/** Constant for Open Street Maps */
-	public static final int MAP_SOURCE_OSM    = 1;
-	/** Constant for Mapquest */
-	public static final int MAP_SOURCE_MAPQUEST = 2;
-	/** Constant for Yahoo */
-	public static final int MAP_SOURCE_YAHOO  = 3;
-	/** Constant for Bing */
-	public static final int MAP_SOURCE_BING = 4;
+	public enum WebService
+	{
+		MAP_SOURCE_GOOGLE,     /* Google maps */
+		MAP_SOURCE_OSM,        /* OpenStreetMap */
+		MAP_SOURCE_MAPQUEST,   /* Mapquest */
+		MAP_SOURCE_YAHOO,      /* Yahoo */
+		MAP_SOURCE_BING,       /* Bing */
+		MAP_SOURCE_PEAKFINDER, /* PeakFinder */
+		MAP_SOURCE_GEOHACK,    /* Geohack */
+		MAP_SOURCE_PANORAMIO,  /* Panoramio */
+		MAP_SOURCE_OPENCACHINGCOM, /* Opencaching.com */
+	}
 
 	/**
 	 * Generate a URL for the given source and track info
-	 * @param inSource source to use, either google or openstreetmap
+	 * @param inSource source to use, from the enum in UrlGenerator
 	 * @param inTrackInfo track info
 	 * @return url for map
 	 */
-	public static String generateUrl(int inSource, TrackInfo inTrackInfo)
+	public static String generateUrl(WebService inSource, TrackInfo inTrackInfo)
 	{
-		if (inSource == MAP_SOURCE_GOOGLE) {
-			return generateGoogleUrl(inTrackInfo);
+		switch (inSource)
+		{
+			case MAP_SOURCE_GOOGLE:
+				return generateGoogleUrl(inTrackInfo);
+			case MAP_SOURCE_MAPQUEST:
+				return generateMapquestUrl(inTrackInfo);
+			case MAP_SOURCE_YAHOO:
+				return generateYahooUrl(inTrackInfo);
+			case MAP_SOURCE_BING:
+				return generateBingUrl(inTrackInfo);
+			case MAP_SOURCE_PEAKFINDER:
+			case MAP_SOURCE_GEOHACK:
+			case MAP_SOURCE_PANORAMIO:
+			case MAP_SOURCE_OPENCACHINGCOM:
+				return generateUrlForPoint(inSource, inTrackInfo);
+			case MAP_SOURCE_OSM:
+			default:
+				return generateOpenStreetMapUrl(inTrackInfo);
 		}
-		else if (inSource == MAP_SOURCE_MAPQUEST) {
-			return generateMapquestUrl(inTrackInfo);
-		}
-		else if (inSource == MAP_SOURCE_YAHOO) {
-			return generateYahooUrl(inTrackInfo);
-		}
-		else if (inSource == MAP_SOURCE_BING) {
-			return generateBingUrl(inTrackInfo);
-		}
-		return generateOpenStreetMapUrl(inTrackInfo);
 	}
 
 	/**
@@ -84,33 +92,6 @@ public abstract class UrlGenerator
 			if (currPoint.getWaypointName() != null) {
 				url = url + "(" + currPoint.getWaypointName() + ")";
 			}
-		}
-		return url;
-	}
-
-	/**
-	 * Generate a url for Open Street Map
-	 * @param inTrackInfo track information
-	 * @return URL
-	 */
-	private static String generateOpenStreetMapUrl(TrackInfo inTrackInfo)
-	{
-		// Check if any data to display
-		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
-		{
-			return null;
-		}
-		DoubleRange latRange = inTrackInfo.getTrack().getLatRange();
-		DoubleRange lonRange = inTrackInfo.getTrack().getLonRange();
-		// Build basic url using min and max lat and long
-		String url = "http://openstreetmap.org/?minlat=" + FIVE_DP.format(latRange.getMinimum())
-			+ "&maxlat=" + FIVE_DP.format(latRange.getMaximum())
-			+ "&minlon=" + FIVE_DP.format(lonRange.getMinimum()) + "&maxlon=" + FIVE_DP.format(lonRange.getMaximum());
-		DataPoint currPoint = inTrackInfo.getCurrentPoint();
-		// Add selected point, if any (no way to add point name?)
-		if (currPoint != null) {
-			url = url + "&mlat=" + FIVE_DP.format(currPoint.getLatitude().getDouble())
-				+ "&mlon=" + FIVE_DP.format(currPoint.getLongitude().getDouble());
 		}
 		return url;
 	}
@@ -175,6 +156,117 @@ public abstract class UrlGenerator
 		String lonStr = FIVE_DP.format(medianLon);
 		String url = "http://bing.com/maps/default.aspx?cp=" + latStr + "~" + lonStr
 			+ "&where1=" + latStr + "%2C%20" + lonStr;
+		return url;
+	}
+
+	/**
+	 * Generate a url for Open Street Map
+	 * @param inTrackInfo track information
+	 * @return URL
+	 */
+	private static String generateOpenStreetMapUrl(TrackInfo inTrackInfo)
+	{
+		// Check if any data to display
+		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
+		{
+			return null;
+		}
+		DoubleRange latRange = inTrackInfo.getTrack().getLatRange();
+		DoubleRange lonRange = inTrackInfo.getTrack().getLonRange();
+		// Build basic url using min and max lat and long
+		String url = "http://openstreetmap.org/?minlat=" + FIVE_DP.format(latRange.getMinimum())
+			+ "&maxlat=" + FIVE_DP.format(latRange.getMaximum())
+			+ "&minlon=" + FIVE_DP.format(lonRange.getMinimum()) + "&maxlon=" + FIVE_DP.format(lonRange.getMaximum());
+		DataPoint currPoint = inTrackInfo.getCurrentPoint();
+		// Add selected point, if any (no way to add point name?)
+		if (currPoint != null) {
+			url = url + "&mlat=" + FIVE_DP.format(currPoint.getLatitude().getDouble())
+				+ "&mlon=" + FIVE_DP.format(currPoint.getLongitude().getDouble());
+		}
+		return url;
+	}
+
+	/**
+	 * Generate a URL which only needs the current point
+	 * This is just a helper method to simplify the calls to the service-specific methods
+	 * @param inSource service to call
+	 * @param inTrackInfo track info
+	 * @return URL if available, or null
+	 */
+	private static String generateUrlForPoint(WebService inService, TrackInfo inTrackInfo)
+	{
+		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
+		{
+			return null;
+		}
+		// Need a current point
+		DataPoint currPoint = inTrackInfo.getCurrentPoint();
+		if (currPoint == null)
+		{
+			return null;
+		}
+		switch (inService)
+		{
+			case MAP_SOURCE_PEAKFINDER:
+				return generatePeakfinderUrl(currPoint);
+			case MAP_SOURCE_GEOHACK:
+				return generateGeohackUrl(currPoint);
+			case MAP_SOURCE_PANORAMIO:
+				return generatePanoramioUrl(currPoint);
+			case MAP_SOURCE_OPENCACHINGCOM:
+				return generateOpencachingComUrl(currPoint);
+			default:
+				return null;
+		}
+	}
+
+
+	/**
+	 * Generate a url for PeakFinder
+	 * @param inPoint current point, not null
+	 * @return URL
+	 */
+	private static String generatePeakfinderUrl(DataPoint inPoint)
+	{
+		return "http://peakfinder.org/?lat=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
+			+ "&lng=" + FIVE_DP.format(inPoint.getLongitude().getDouble());
+	}
+
+	/**
+	 * Generate a url for Geohack
+	 * @param inPoint current point, not null
+	 * @return URL
+	 */
+	private static String generateGeohackUrl(DataPoint inPoint)
+	{
+		return "https://tools.wmflabs.org/geohack/geohack.php?params=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
+			+ "_N_" + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "_E";
+		// TODO: Could use absolute values and S, W but this seems to work
+	}
+
+	/**
+	 * Generate a url for Panoramio.com
+	 * @param inPoint current point, not null
+	 * @return URL
+	 */
+	private static String generatePanoramioUrl(DataPoint inPoint)
+	{
+		return "http://panoramio.com/map/#lt=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
+			+ "&ln=" + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "&z=1&k=0";
+	}
+
+
+	/**
+	 * Generate a url for OpenCaching.com
+	 * @param inPoint current point, not null
+	 * @return URL
+	 */
+	private static String generateOpencachingComUrl(DataPoint inPoint)
+	{
+		final String occLang = I18nManager.getText("webservice.opencachingcom.lang");
+		final String url = "http://www.opencaching.com/" + occLang
+			+ "/#find?&loc=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
+			+ "," + FIVE_DP.format(inPoint.getLongitude().getDouble());
 		return url;
 	}
 

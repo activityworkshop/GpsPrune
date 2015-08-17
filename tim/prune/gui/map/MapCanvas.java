@@ -11,6 +11,7 @@ import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -59,6 +60,7 @@ import tim.prune.function.compress.MarkPointsInRectangleFunction;
 import tim.prune.function.edit.FieldEdit;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
+import tim.prune.gui.TripleStateCheckBox;
 import tim.prune.gui.colour.PointColourer;
 import tim.prune.tips.TipManager;
 
@@ -97,7 +99,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/** Checkbox for autopan */
 	private JCheckBox _autopanCheckBox = null;
 	/** Checkbox for connecting track points */
-	private JCheckBox _connectCheckBox = null;
+	private TripleStateCheckBox _connectCheckBox = null;
 	/** Checkbox for enable edit mode */
 	private JCheckBox _editmodeCheckBox = null;
 	/** Right-click popup menu */
@@ -241,8 +243,11 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_autopanCheckBox.setFocusable(false); // stop button from stealing keyboard focus
 		_topPanel.add(_autopanCheckBox);
 		// Add checkbox button for connecting points or not
-		_connectCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.POINTS_DISCONNECTED_BUTTON), true);
-		_connectCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.POINTS_CONNECTED_BUTTON));
+		_connectCheckBox = new TripleStateCheckBox();
+		_connectCheckBox.setIcon(0, IconManager.getImageIcon(IconManager.POINTS_CONNECTED_BUTTON));
+		_connectCheckBox.setIcon(1, IconManager.getImageIcon(IconManager.POINTS_DISCONNECTED_BUTTON));
+		_connectCheckBox.setIcon(2, IconManager.getImageIcon(IconManager.POINTS_HIDDEN_BUTTON));
+		_connectCheckBox.setCurrentState(0);
 		_connectCheckBox.setOpaque(false);
 		_connectCheckBox.setToolTipText(I18nManager.getText("menu.map.connect"));
 		_connectCheckBox.addItemListener(itemListener);
@@ -509,8 +514,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			_mapImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
 		}
 
-		// Clear map
 		Graphics g = _mapImage.getGraphics();
+		// Set antialiasing according to config
+		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+			Config.getConfigBoolean(Config.KEY_ANTIALIAS) ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
 		// Clear to background
 		g.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND));
 		g.fillRect(0, 0, getWidth(), getHeight());
@@ -678,7 +685,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// draw track points
 		inG.setColor(pointColour);
 		int prevX = -1, prevY = -1;
-		boolean connectPoints = _connectCheckBox.isSelected();
+		final int connectState = _connectCheckBox.getCurrentState();
+		final boolean drawLines = (connectState % 2) == 0; // 0 or 2
+		final boolean drawPoints = (connectState <= 1);    // 0 or 1
 		boolean prevPointVisible = false, currPointVisible = false;
 		boolean anyWaypoints = false;
 		boolean isWaypoint = false;
@@ -696,7 +705,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			anyWaypoints = anyWaypoints || isWaypoint;
 			if (!isWaypoint)
 			{
-				if (currPointVisible || prevPointVisible)
+				if ((currPointVisible || prevPointVisible) && drawPoints)
 				{
 					// For track points, work out which colour to use
 					if (_track.getPoint(i).getDeleteFlag()) {
@@ -721,7 +730,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				}
 
 				// Connect track points if either of them are visible
-				if (connectPoints && !(prevX == -1 && prevY == -1)
+				if (drawLines && !(prevX == -1 && prevY == -1)
 				 && !_track.getPoint(i).getSegmentStart())
 				{
 					inG.drawLine(prevX, prevY, px, py);

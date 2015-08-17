@@ -84,13 +84,19 @@ public abstract class MapSource
 	{
 		if (inUrl == null || inUrl.equals("")) {return null;}
 		String urlstr = inUrl;
+		boolean urlOk = false;
+
 		// check prefix
-		try {
-			new URL(urlstr.replace('[', 'w').replace(']', 'w'));
-			// There's a warning that this URL object isn't used, but it's enough to know the parse
-			// was successful without an exception being thrown.
+		try
+		{
+			urlOk = new URL(urlstr.replace('[', 'w').replace(']', 'w')) != null;
 		}
 		catch (MalformedURLException e)
+		{
+			urlOk = false;
+		}
+
+		if (!urlOk)
 		{
 			// fail if protocol specified
 			if (urlstr.indexOf("://") >= 0) {return null;}
@@ -102,7 +108,8 @@ public abstract class MapSource
 			urlstr = urlstr + "/";
 		}
 		// Validate current url, return null if not ok
-		try {
+		try
+		{
 			URL url = new URL(urlstr.replace('[', 'w').replace(']', 'w'));
 			// url host must contain a dot
 			if (url.getHost().indexOf('.') < 0) {return null;}

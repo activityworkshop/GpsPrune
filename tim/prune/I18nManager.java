@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Properties;
@@ -16,11 +17,8 @@ import java.util.ResourceBundle;
  */
 public abstract class I18nManager
 {
-	private static final String BUNDLE_NAME = "tim.prune.lang.prune-texts";
-	private static final Locale BACKUP_LOCALE = new Locale("en", "GB");
-
-	private static ResourceBundle EnglishTexts = null;
-	private static ResourceBundle LocalTexts = null;
+	/** Properties object into which all the texts are copied */
+	private static Properties LocalTexts = null;
 
 	/** External properties file for developer testing */
 	private static Properties ExternalPropsFile = null;
@@ -32,26 +30,44 @@ public abstract class I18nManager
 	 */
 	public static void init(Locale inLocale)
 	{
+		final String BUNDLE_NAME = "tim.prune.lang.prune-texts";
+		final Locale BACKUP_LOCALE = new Locale("en", "GB");
+
+		LocalTexts = new Properties();
 		// Load English texts first to use as defaults
-		EnglishTexts = ResourceBundle.getBundle(BUNDLE_NAME, BACKUP_LOCALE);
+		loadFromBundle(ResourceBundle.getBundle(BUNDLE_NAME, BACKUP_LOCALE));
 
 		// Get bundle for selected locale, if any
 		try
 		{
 			if (inLocale != null)
 			{
-				LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, inLocale);
+				loadFromBundle(ResourceBundle.getBundle(BUNDLE_NAME, inLocale));
 			}
 			else
 			{
 				// locale is null so just use the system default
-				LocalTexts = ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault());
+				loadFromBundle(ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault()));
 			}
 		}
 		catch (MissingResourceException mre) { // ignore error, default to english
 		}
 	}
 
+	/**
+	 * Copy all the translations from the given bundle and store in the Properties object
+	 * overwriting the existing translations if necessary
+	 * @param inBundle bundle object loaded from file
+	 */
+	private static void loadFromBundle(ResourceBundle inBundle)
+	{
+		Enumeration<String> e = inBundle.getKeys();
+		while (e.hasMoreElements())
+		{
+			String key = e.nextElement();
+			LocalTexts.setProperty(key, inBundle.getString(key));
+		}
+	}
 
 	/**
 	 * Add a language file
@@ -92,23 +108,13 @@ public abstract class I18nManager
 			String extText = ExternalPropsFile.getProperty(inKey);
 			if (extText != null) return extText;
 		}
-		// look in extra texts if available
+		// look in texts if available
 		if (LocalTexts != null)
 		{
 			try
 			{
-				String localText = LocalTexts.getString(inKey);
+				String localText = LocalTexts.getProperty(inKey);
 				if (localText != null) return localText;
-			}
-			catch (MissingResourceException mre) {}
-		}
-		// look in english texts
-		if (EnglishTexts != null)
-		{
-			try
-			{
-				String engText = EnglishTexts.getString(inKey);
-				if (engText != null) return engText;
 			}
 			catch (MissingResourceException mre) {}
 		}

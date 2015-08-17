@@ -8,6 +8,7 @@ import javax.swing.table.AbstractTableModel;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.Unit;
+import tim.prune.function.search.SearchResult;
 
 /**
  * Model for list of tracks from gpsies.com
@@ -15,7 +16,7 @@ import tim.prune.data.Unit;
 public class TrackListModel extends AbstractTableModel
 {
 	/** List of tracks */
-	private ArrayList<GpsiesTrack> _trackList = null;
+	private ArrayList<SearchResult> _trackList = null;
 	/** Column heading for track name */
 	private String _nameColLabel = null;
 	/** Column heading for length */
@@ -80,7 +81,7 @@ public class TrackListModel extends AbstractTableModel
 	 */
 	public Object getValueAt(int inRowNum, int inColNum)
 	{
-		GpsiesTrack track = _trackList.get(inRowNum);
+		SearchResult track = _trackList.get(inRowNum);
 		if (inColNum == 0) {return track.getTrackName();}
 		double lengthM = track.getLength();
 		// convert to current distance units
@@ -94,9 +95,9 @@ public class TrackListModel extends AbstractTableModel
 	 * Add a list of tracks to this model
 	 * @param inList list of tracks to add
 	 */
-	public void addTracks(ArrayList<GpsiesTrack> inList)
+	public void addTracks(ArrayList<SearchResult> inList)
 	{
-		if (_trackList == null) {_trackList = new ArrayList<GpsiesTrack>();}
+		if (_trackList == null) {_trackList = new ArrayList<SearchResult>();}
 		final int prevCount = _trackList.size();
 		if (inList != null && inList.size() > 0) {
 			_trackList.addAll(inList);
@@ -112,7 +113,7 @@ public class TrackListModel extends AbstractTableModel
 	 * @param inRowNum row number from 0
 	 * @return track object for this row
 	 */
-	public GpsiesTrack getTrack(int inRowNum)
+	public SearchResult getTrack(int inRowNum)
 	{
 		return _trackList.get(inRowNum);
 	}

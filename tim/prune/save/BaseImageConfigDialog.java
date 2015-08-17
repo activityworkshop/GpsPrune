@@ -471,7 +471,7 @@ public class BaseImageConfigDialog implements Runnable
 		{
 			_previewPanel.setImage(groutedImage);
 			final int numTilesRemaining = groutedImage.getNumTilesTotal() - groutedImage.getNumTilesUsed();
-			final boolean offerDownload = numTilesRemaining > 0 && numTilesRemaining < 50;
+			final boolean offerDownload = numTilesRemaining > 0 && numTilesRemaining < 50 && Config.getConfigBoolean(Config.KEY_ONLINE_MODE);
 			// Set values of labels
 			_downloadTilesButton.setVisible(offerDownload);
 			_downloadTilesButton.setEnabled(offerDownload);
@@ -502,6 +502,7 @@ public class BaseImageConfigDialog implements Runnable
 		try {
 			zoomLevel = Integer.parseInt(_zoomDropdown.getSelectedItem().toString());
 		}
+		catch (NullPointerException npe) {}
 		catch (Exception e) {
 			System.err.println("Exception: " + e.getClass().getName() + " : " + e.getMessage());
 		}

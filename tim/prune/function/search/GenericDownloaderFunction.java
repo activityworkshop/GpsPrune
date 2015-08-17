@@ -1,4 +1,4 @@
-package tim.prune.function.gpsies;
+package tim.prune.function.search;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -25,6 +25,7 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.function.browser.BrowserLauncher;
+import tim.prune.function.gpsies.TrackListModel;
 
 /**
  * Function to load track information from any source,

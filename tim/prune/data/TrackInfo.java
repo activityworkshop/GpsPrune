@@ -272,12 +272,14 @@ public class TrackInfo
 
 	/**
 	 * Delete all the points which have been marked for deletion
+	 * @param inSplitSegments true to split segments at deleted points
 	 * @return number of points deleted
 	 */
-	public int deleteMarkedPoints()
+	public int deleteMarkedPoints(boolean inSplitSegments)
 	{
-		int numDeleted = _track.deleteMarkedPoints();
-		if (numDeleted > 0) {
+		int numDeleted = _track.deleteMarkedPoints(inSplitSegments);
+		if (numDeleted > 0)
+		{
 			_selection.clearAll();
 			UpdateMessageBroker.informSubscribers();
 		}

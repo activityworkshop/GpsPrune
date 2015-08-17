@@ -81,6 +81,8 @@ public abstract class Config
 	public static final String KEY_POINT_COLOURER = "prune.pointcolourer";
 	/** Key for line width used for drawing */
 	public static final String KEY_LINE_WIDTH = "prune.linewidth";
+	/** Key for whether to use antialiasing or not */
+	public static final String KEY_ANTIALIAS = "prune.antialias";
 	/** Key for kml track colour */
 	public static final String KEY_KML_TRACK_COLOUR = "prune.kmltrackcolour";
 	/** Key for autosaving settings */
@@ -184,6 +186,7 @@ public abstract class Config
 		props.put(KEY_GPSBABEL_PATH, "gpsbabel");
 		props.put(KEY_IMPORT_FILE_FORMAT, "-1"); // no file format selected
 		props.put(KEY_KMZ_IMAGE_SIZE, "240");
+		props.put(KEY_ANTIALIAS, "1"); // antialias on by default
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
@@ -345,9 +348,9 @@ public abstract class Config
 	 */
 	public static boolean isKeyBoolean(String inKey)
 	{
-		// Only one boolean key so far (after metric flag was removed)
 		return inKey != null && (
-			inKey.equals(KEY_SHOW_MAP));
+			inKey.equals(KEY_SHOW_MAP) || inKey.equals(KEY_AUTOSAVE_SETTINGS) || inKey.equals(KEY_ONLINE_MODE)
+			|| inKey.equals(KEY_ANTIALIAS));
 	}
 
 	/**

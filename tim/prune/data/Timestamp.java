@@ -62,6 +62,7 @@ public class Timestamp
 		FIXED_FORMAT5,
 		FIXED_FORMAT6,
 		FIXED_FORMAT7,
+		FIXED_FORMAT8,
 		GENERAL_STRING
 	}
 
@@ -69,7 +70,7 @@ public class Timestamp
 	private static ParseType[] ALL_PARSE_TYPES = {ParseType.NONE, ParseType.ISO8601_FRACTIONAL, ParseType.LONG,
 		ParseType.FIXED_FORMAT0, ParseType.FIXED_FORMAT1, ParseType.FIXED_FORMAT2, ParseType.FIXED_FORMAT3,
 		ParseType.FIXED_FORMAT4, ParseType.FIXED_FORMAT5, ParseType.FIXED_FORMAT6, ParseType.FIXED_FORMAT7,
-		ParseType.GENERAL_STRING};
+		ParseType.FIXED_FORMAT8, ParseType.GENERAL_STRING};
 
 	// Static block to initialise offsets
 	static
@@ -95,6 +96,7 @@ public class Timestamp
 			new SimpleDateFormat("dd MMM yyyy HH:mm:ss"),
 			new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss"),
 			new SimpleDateFormat("yyyy MMM dd HH:mm:ss"),
+			new SimpleDateFormat("MMM dd, yyyy hh:mm:ss aa"),
 			ISO_8601_FORMAT, ISO_8601_FORMAT_NOZ
 		};
 		for (DateFormat df : ALL_DATE_FORMATS) {
@@ -180,6 +182,7 @@ public class Timestamp
 			case FIXED_FORMAT5: return parseString(inString, ALL_DATE_FORMATS[5]);
 			case FIXED_FORMAT6: return parseString(inString, ALL_DATE_FORMATS[6]);
 			case FIXED_FORMAT7: return parseString(inString, ALL_DATE_FORMATS[7]);
+			case FIXED_FORMAT8: return parseString(inString, ALL_DATE_FORMATS[8]);
 
 			case GENERAL_STRING:
 				if (inString.length() == 19)

@@ -10,7 +10,6 @@ public class RowInfo
 	private int _minZoom = -1, _maxZoom = -1;
 	private int _numTiles = 0;
 	private long _totalSize = 0L;
-	private boolean _unexpected = false;
 
 
 	/**
@@ -84,20 +83,6 @@ public class RowInfo
 		return _totalSize;
 	}
 
-	/**
-	 * Mark that an unexpected file or directory was found
-	 * TODO: Is this needed?
-	 */
-	public void foundUnexpected() {
-		_unexpected = true;
-	}
-
-	/**
-	 * @return true if any unexpected files or directories were found
-	 */
-	public boolean wasUnexpected() {
-		return _unexpected;
-	}
 
 	/**
 	 * Add the given RowInfo object to this one
@@ -117,6 +102,5 @@ public class RowInfo
 			addZoom(inOther._maxZoom);
 		if (inOther._zoom > 0)
 			addZoom(inOther._zoom);
-		_unexpected = _unexpected || inOther._unexpected;
 	}
 }

@@ -22,7 +22,7 @@ public abstract class XmlHandler extends DefaultHandler
 	public abstract Field[] getFieldArray();
 
 	/**
-	 * Can be overriden (eg by gpx handler) to provide a track name list
+	 * Can be overridden (eg by gpx handler) to provide a track name list
 	 * @return track name list object if any, or null
 	 */
 	public TrackNameList getTrackNameList() {
@@ -30,7 +30,7 @@ public abstract class XmlHandler extends DefaultHandler
 	}
 
 	/**
-	 * Can be overriden (eg by gpx handler) to provide an array of links to media
+	 * Can be overridden (eg by gpx handler) to provide an array of links to media
 	 * @return array of Strings if any, or null
 	 */
 	public String[] getLinkArray() {

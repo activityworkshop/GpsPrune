@@ -98,8 +98,8 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
 			.append("\u010de\u0161tina, deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano, magyar,<br>" +
-				" nederlands, polski, portugu\u00EAs, \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese),<br>" +
-				" \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean), schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, afrikaans, rom\u00E2n\u0103, ukrainian</p>");
+				" nederlands, polski, portugu\u00EAs, rom\u00E2n\u0103, \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese),<br>" +
+				" \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean), schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, afrikaans, ukrainian</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -200,7 +200,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d, Gy\u00F6rgy,"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter"),
+			new JLabel(" HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter, Cristian"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),

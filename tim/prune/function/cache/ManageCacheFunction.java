@@ -273,6 +273,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
+		// TODO: Maybe this can be speeded up so that it just finds the tilesets first and then gets the details later
 		// Check if directory has anything in it
 		_model = new TileCacheModel(_cacheDir);
 		_model.buildTileSets();

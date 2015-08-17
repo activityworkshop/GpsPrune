@@ -6,17 +6,17 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import tim.prune.function.gpsies.GpsiesTrack;
+import tim.prune.function.search.SearchResult;
 
 /**
- * XML handler for dealing with XML returned from the geonames api
+ * XML handler for dealing with XML returned from the geonames api,
+ * both from the search by name and search by location
  */
 public class GetWikipediaXmlHandler extends DefaultHandler
 {
 	private String _value = null;
-	private ArrayList<GpsiesTrack> _trackList = null;
-	private GpsiesTrack _track = null;
-	private String _lat = null, _lon = null;
+	private ArrayList<SearchResult> _trackList = null;
+	private SearchResult _track = null;
 	private String _errorMessage = null;
 
 
@@ -27,12 +27,10 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 		Attributes inAttributes) throws SAXException
 	{
 		if (inTagName.equals("geonames")) {
-			_trackList = new ArrayList<GpsiesTrack>();
+			_trackList = new ArrayList<SearchResult>();
 		}
 		else if (inTagName.equals("entry")) {
-			_track = new GpsiesTrack();
-			_lat = null;
-			_lon = null;
+			_track = new SearchResult();
 		}
 		else if (inTagName.equals("status")) {
 			_errorMessage = inAttributes.getValue("message");
@@ -49,7 +47,6 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 	{
 		if (inTagName.equals("entry")) {
 			// end of the entry
-			_track.setDownloadLink(_lat + "," + _lon);
 			_trackList.add(_track);
 		}
 		else if (inTagName.equals("title")) {
@@ -59,10 +56,10 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 			_track.setDescription(_value);
 		}
 		else if (inTagName.equals("lat")) {
-			_lat = _value;
+			_track.setLatitude(_value);
 		}
 		else if (inTagName.equals("lng")) {
-			_lon = _value;
+			_track.setLongitude(_value);
 		}
 		else if (inTagName.equals("distance")) {
 			try {
@@ -90,7 +87,7 @@ public class GetWikipediaXmlHandler extends DefaultHandler
 	/**
 	 * @return the list of tracks
 	 */
-	public ArrayList<GpsiesTrack> getTrackList()
+	public ArrayList<SearchResult> getTrackList()
 	{
 		return _trackList;
 	}

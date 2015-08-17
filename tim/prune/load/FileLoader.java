@@ -63,6 +63,7 @@ public class FileLoader
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kml", new String[] {"kml"}));
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kmz", new String[] {"kmz"}));
 			_fileChooser.setAcceptAllFileFilterUsed(true);
+			_fileChooser.setFileFilter(_fileChooser.getAcceptAllFileFilter()); // For some reason seems necessary
 			// start from directory in config if already set (by load jpegs)
 			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
 			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);}

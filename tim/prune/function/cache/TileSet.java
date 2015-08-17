@@ -60,6 +60,35 @@ public class TileSet
 	}
 
 	/**
+	 * Check if a filename is numeric up until the first dot
+	 * This appears to be much faster than scanning for a . with indexOf, then
+	 * chopping to make a new String, and then calling isNumeric to scan through again
+	 * @param inName name of file
+	 * @return true if it only contains characters 0-9 before the first dot
+	 */
+	public static boolean isNumericUntilDot(String inName)
+	{
+		if (inName == null || inName.equals("") || inName.charAt(0) == '.') {
+			return false;
+		}
+		try
+		{
+			char c = '.';
+			int i = 0;
+			do
+			{
+				c = inName.charAt(i);
+				if (c == '.') return true; // found the dot, so stop
+				if (c < '0' || c > '9') return false; // not numeric
+				i++;
+			} while (c != '\0');
+		}
+		catch (IndexOutOfBoundsException iobe) {}
+		// Didn't find a dot, so can't be a valid name
+		return false;
+	}
+
+	/**
 	 * Make a RowInfo object from the given directory
 	 * @param inDir directory for a single zoom level
 	 * @return RowInfo object describing files and size
@@ -78,9 +107,7 @@ public class TileSet
 				{
 					if (f != null && f.exists() && f.isFile() && f.canRead())
 					{
-						final String filename = f.getName();
-						int dotpos = filename.lastIndexOf('.');
-						if (dotpos > 0 && isNumeric(filename.substring(0, dotpos))) {
+						if (isNumericUntilDot(f.getName())) {
 							row.addTile(f.length());
 						}
 					}

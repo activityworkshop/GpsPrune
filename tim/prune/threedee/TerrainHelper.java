@@ -371,6 +371,7 @@ public class TerrainHelper
 				// System.out.println("Averaging values " + alt1.getMetricValue() + " and " + alt2.getMetricValue());
 				int newAltitude = (int) ((alt1.getMetricValue() + alt2.getMetricValue()) / 2.0);
 				corner.setFieldValue(Field.ALTITUDE, "" + newAltitude, false);
+				// TODO: Check forcing metres?  Is there a nicer way?
 			}
 		}
 	}
@@ -394,14 +395,19 @@ public class TerrainHelper
 				if (prevIndexWithAlt >= 0 && prevIndexWithAlt < (i-1))
 				{
 					final int gapLen = i - prevIndexWithAlt;
-					final double alt1 = inTerrainTrack.getPoint(prevIndexWithAlt).getAltitude().getMetricValue();
-					final double alt2 = inTerrainTrack.getPoint(i).getAltitude().getMetricValue();
+					final int cellIndex1 = inCornerIndex + prevIndexWithAlt * inInc;
+					final double alt1 = inTerrainTrack.getPoint(cellIndex1).getAltitude().getMetricValue();
+					final int cellIndex2 = inCornerIndex + i * inInc;
+					final double alt2 = inTerrainTrack.getPoint(cellIndex2).getAltitude().getMetricValue();
+					//System.out.println("Altitude along edge goes from " + alt1 + " (at " + prevIndexWithAlt + ") to " +
+					//		alt2 + " (at " + i + ")");
 					for (int j = 1; j < gapLen; j++)
 					{
-						// System.out.println("Fill in " + (prevIndexWithAlt + j) + " using " + prevIndexWithAlt + " and " + i);
 						final double alt = alt1 + (alt2-alt1) * j / gapLen;
+						//System.out.println("Fill in " + (prevIndexWithAlt + j) + "(" + (inCornerIndex + (prevIndexWithAlt + j) * inInc) + ")  with alt " + (int) alt);
 						final DataPoint p = inTerrainTrack.getPoint(inCornerIndex + (prevIndexWithAlt + j) * inInc);
 						p.setFieldValue(Field.ALTITUDE, "" + (int) alt, false);
+						// TODO: Check forcing metres?
 					}
 				}
 				prevIndexWithAlt = i;
@@ -415,7 +421,7 @@ public class TerrainHelper
 	 */
 	private void fixBiggerHoles(Track inTerrainTrack)
 	{
-		double[] altitudes = new double[inTerrainTrack.getNumPoints()];
+		TerrainPatch patch = new TerrainPatch(_gridSize);
 		for (int i=0; i<_gridSize; i++)
 		{
 			int prevHoriz = -1, prevVert = -1;
@@ -425,18 +431,13 @@ public class TerrainHelper
 				{
 					if (prevHoriz > -1 && prevHoriz != (j-1))
 					{
-//						System.out.println("Found a gap for y=" + i +" between x=" + prevHoriz + " and " + j + " (" + (j-prevHoriz-1) + ")");
+						//System.out.println("Found a gap for y=" + i +" between x=" + prevHoriz + " and " + j + " (" + (j-prevHoriz-1) + ")");
 						double startVal = inTerrainTrack.getPoint(i * _gridSize + prevHoriz).getAltitude().getMetricValue();
 						double endVal   = inTerrainTrack.getPoint(i * _gridSize + j).getAltitude().getMetricValue();
 						for (int k=prevHoriz + 1; k< j; k++)
 						{
 							double val = startVal + (k-prevHoriz) * (endVal-startVal) / (j-prevHoriz);
-							if (altitudes[i * _gridSize + k] > 0.0) {
-								altitudes[i * _gridSize + k] = (altitudes[i * _gridSize + k] + val) / 2.0;
-							}
-							else {
-								altitudes[i * _gridSize + k] = val;
-							}
+							patch.addAltitude(i * _gridSize + k, val, k-prevHoriz, j-prevHoriz);
 						}
 					}
 					prevHoriz = j;
@@ -445,32 +446,31 @@ public class TerrainHelper
 				{
 					if (prevVert > -1 && prevVert != (j-1))
 					{
-//						System.out.println("Found a gap for x=" + i +" between y=" + prevVert + " and " + j + " (" + (j-prevVert-1) + ")");
+						//System.out.println("Found a gap for x=" + i +" between y=" + prevVert + " and " + j + " (" + (j-prevVert-1) + ")");
 						double startVal = inTerrainTrack.getPoint(prevVert * _gridSize + i).getAltitude().getMetricValue();
 						double endVal   = inTerrainTrack.getPoint(j * _gridSize + i).getAltitude().getMetricValue();
 						for (int k=prevVert + 1; k< j; k++)
 						{
 							double val = startVal + (k-prevVert) * (endVal-startVal) / (j-prevVert);
-							if (altitudes[k * _gridSize + i] > 0.0) {
-								altitudes[k * _gridSize + i] = (altitudes[k * _gridSize + i] + val) / 2.0;
-							}
-							else {
-								altitudes[k * _gridSize + i] = val;
-							}
+							patch.addAltitude(k * _gridSize + i, val, k-prevVert, j-prevVert);
 						}
 					}
 					prevVert = j;
 				}
 			}
 		}
-		// Now the doubles have been set and/or averaged, we can set the values in the points
+		// Smooth the patch to reduce the blocky effect from the voids
+		patch.smooth();
+
+		// Now the doubles have been set and averaged, we can set the values in the points
 		for (int i=0; i<inTerrainTrack.getNumPoints(); i++)
 		{
 			DataPoint p = inTerrainTrack.getPoint(i);
-			if (!p.hasAltitude() && altitudes[i] > 0.0)
+			if (!p.hasAltitude())
 			{
-				p.setFieldValue(Field.ALTITUDE, "" + altitudes[i], false);
-				p.getAltitude().reset(new Altitude((int) altitudes[i], UnitSetLibrary.UNITS_METRES));
+				final double altitude = patch.getAltitude(i);
+				p.setFieldValue(Field.ALTITUDE, "" + altitude, false);
+				p.getAltitude().reset(new Altitude((int) altitude, UnitSetLibrary.UNITS_METRES));
 			}
 		}
 	}

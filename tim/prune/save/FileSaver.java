@@ -102,16 +102,24 @@ public class FileSaver
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
 		}
+		// Has the track got media?
+		final boolean hasMedia = _app.getTrackInfo().getPhotoList().hasCorrelatedPhotos()
+			|| _app.getTrackInfo().getAudioList().hasCorrelatedAudios();
 		// Check field list
 		Track track = _app.getTrackInfo().getTrack();
 		FieldList fieldList = track.getFieldList();
 		int numFields = fieldList.getNumFields();
-		_model = new FieldSelectionTableModel(numFields);
+		_model = new FieldSelectionTableModel(numFields + (hasMedia ? 1 : 0));
 		for (int i=0; i<numFields; i++)
 		{
 			Field field = fieldList.getField(i);
 			FieldInfo info = new FieldInfo(field, track.hasData(field));
 			_model.addFieldInfo(info, i);
+		}
+		// Add a field for photos / audio if any present
+		if (hasMedia)
+		{
+			_model.addFieldInfo(new FieldInfo(Field.MEDIA_FILENAME, true), numFields);
 		}
 		// Initialise dialog and show it
 		initDialog(_model, inDefaultDelimiter);
@@ -597,6 +605,13 @@ public class FileSaver
 			{
 				// format value accordingly
 				inBuffer.append(inPoint.getTimestamp().getText(inTimestampFormat));
+			}
+		}
+		else if (inField == Field.MEDIA_FILENAME)
+		{
+			if (inPoint.hasMedia())
+			{
+				inBuffer.append(inPoint.getMediaName());
 			}
 		}
 		else

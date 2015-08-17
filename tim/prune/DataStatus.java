@@ -8,17 +8,17 @@ package tim.prune;
 public class DataStatus
 {
 	private int _undoSize = 0;
-	private int _deleteCount = 0;
+	private int _numUndos = 0;
 
 	/**
 	 * Constructor
 	 * @param inUndoSize current size of undo stack
-	 * @param inDeleteCount number of times undo stack has been deleted
+	 * @param inNumUndos number of operations undone
 	 */
-	public DataStatus(int inUndoSize, int inDeleteCount)
+	public DataStatus(int inUndoSize, int inNumUndos)
 	{
 		_undoSize = inUndoSize;
-		_deleteCount = inDeleteCount;
+		_numUndos = inNumUndos;
 	}
 
 	/**
@@ -29,6 +29,6 @@ public class DataStatus
 	public boolean hasDataChanged(DataStatus inPreviousStatus)
 	{
 		return _undoSize != inPreviousStatus._undoSize
-			|| _deleteCount != inPreviousStatus._deleteCount;
+			|| _numUndos != inPreviousStatus._numUndos;
 	}
 }

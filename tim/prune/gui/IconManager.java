@@ -25,9 +25,11 @@ public abstract class IconManager
 	/** Icon for autopan button on main map display when selected */
 	public static final String AUTOPAN_BUTTON_ON = "autopan_on.gif";
 	/** Icon for points connected icon on main map display */
-	public static final String POINTS_CONNECTED_BUTTON = "points_connected.gif";
+	public static final String POINTS_CONNECTED_BUTTON = "points_connected.png";
 	/** Icon for points disconnected icon on main map display */
-	public static final String POINTS_DISCONNECTED_BUTTON = "points_disconnected.gif";
+	public static final String POINTS_DISCONNECTED_BUTTON = "points_disconnected.png";
+	/** Icon for points hidden, just lines icon on main map display */
+	public static final String POINTS_HIDDEN_BUTTON = "points_hidden.png";
 	 /** Icon for edit mode button on main map display when not selected */
 	public static final String EDIT_MODE_BUTTON = "drag_points_icon.gif";
 	 /** Icon for edit mode button on main map display when selected */
@@ -70,6 +72,12 @@ public abstract class IconManager
 	public static final String PLAY_AUDIO = "play_audio.gif";
 	/** Icon for stopping the current audio clip */
 	public static final String STOP_AUDIO = "stop_audio.gif";
+	/** Icon for autoplaying a track */
+	public static final String AUTOPLAY_PLAY = "play.png";
+	/** Icon for pausing autoplay of a track */
+	public static final String AUTOPLAY_PAUSE = "pause.png";
+	/** Icon for rewinding the autoplay of a track */
+	public static final String AUTOPLAY_REWIND = "rewind.png";
 
 	/** Icon for a given entry being valid (green tick) */
 	public static final String ENTRY_VALID = "entry_valid.gif";

@@ -70,7 +70,7 @@ public class GpxHandler extends XmlHandler
 		else if (tag.equals("type")) {
 			_currentTag = _type;
 		}
-		else if (tag.equals("description")) {
+		else if (tag.equals("description") || tag.equals("desc")) {
 			_currentTag = _description;
 		}
 		else if (tag.equals("link")) {

@@ -86,6 +86,7 @@ public abstract class BrowserLauncher
 	 */
 	public static void launchBrowser(String inUrl)
 	{
+		if (inUrl == null) {return;}
 		// First choice is to try the Desktop library from java 6, if available
 		try {
 			Class<?> d = Class.forName("java.awt.Desktop");

@@ -43,8 +43,8 @@ public abstract class MapSourceLibrary
 		_sourceList.add(new OsmMapSource("Reitkarte", "http://topo[234].wanderreitkarte.de/topo/"));
 		_sourceList.add(new MffMapSource("Mapsforfree", "http://maps-for-free.com/layer/relief/", "jpg",
 			"http://maps-for-free.com/layer/water/", "gif", 11));
-		_sourceList.add(new OsmMapSource("Hikebikemap", "http://toolserver.org/tiles/hikebike/",
-			"http://toolserver.org/~cmarqu/hill/", 18));
+		_sourceList.add(new OsmMapSource("Hikebikemap", "http://[abc].tiles.wmflabs.org/hikebike/",
+			"http://[abc].tiles.wmflabs.org/hillshading/", 18));
 		_sourceList.add(new OsmMapSource("Openseamap", "http://tile.openstreetmap.org/",
 			"http://tiles.openseamap.org/seamark/", 18));
 	}

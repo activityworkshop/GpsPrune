@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
 import java.util.Set;
-import java.util.Stack;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -27,8 +26,6 @@ import tim.prune.data.Unit;
 import tim.prune.function.AsyncMediaLoader;
 import tim.prune.function.SaveConfig;
 import tim.prune.function.SelectTracksFunction;
-import tim.prune.function.browser.BrowserLauncher;
-import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.function.edit.PointEditor;
 import tim.prune.gui.MenuManager;
@@ -121,7 +118,7 @@ public class App
 	/**
 	 * @return the undo stack
 	 */
-	public Stack<UndoOperation> getUndoStack()
+	public UndoStack getUndoStack()
 	{
 		return _undoStack;
 	}
@@ -303,7 +300,7 @@ public class App
 			// pass to track for completion
 			if (_track.editPoint(currentPoint, inEditList, false))
 			{
-				_undoStack.push(undo);
+				_undoStack.add(undo);
 				// Confirm point edit
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.point.edit"));
 			}
@@ -351,7 +348,7 @@ public class App
 			if (_trackInfo.deletePoint())
 			{
 				// Delete was successful so add undo info to stack
-				_undoStack.push(undo);
+				_undoStack.add(undo);
 				if (currentPhoto != null)
 				{
 					// delete photo if necessary
@@ -377,27 +374,6 @@ public class App
 		}
 	}
 
-
-	/**
-	 * Finish the compression by deleting the marked points
-	 */
-	public void finishCompressTrack()
-	{
-		UndoDeleteMarked undo = new UndoDeleteMarked(_track);
-		// call track to do compress
-		int numPointsDeleted = _trackInfo.deleteMarkedPoints();
-		// add to undo stack if successful
-		if (numPointsDeleted > 0)
-		{
-			undo.setNumPointsDeleted(numPointsDeleted);
-			_undoStack.add(undo);
-			UpdateMessageBroker.informSubscribers("" + numPointsDeleted + " "
-				 + (numPointsDeleted==1?I18nManager.getText("confirm.deletepoint.single"):I18nManager.getText("confirm.deletepoint.multi")));
-		}
-		else {
-			showErrorMessage("function.compress", "dialog.deletemarked.nonefound");
-		}
-	}
 
 	/**
 	 * Reverse the currently selected section of the track
@@ -891,7 +867,7 @@ public class App
 		}
 		else
 		{
-			new UndoManager(this, _frame);
+			new UndoManager(this, _frame).show();
 		}
 	}
 
@@ -931,7 +907,7 @@ public class App
 		{
 			for (int i=0; i<inNumUndos; i++)
 			{
-				_undoStack.pop().performUndo(_trackInfo);
+				_undoStack.popOperation().performUndo(_trackInfo);
 			}
 			String message = "" + inNumUndos + " "
 				 + (inNumUndos==1?I18nManager.getText("confirm.undo.single"):I18nManager.getText("confirm.undo.multi"));
@@ -950,18 +926,11 @@ public class App
 	/**
 	 * @return the current data status, used for later comparison
 	 */
-	public DataStatus getCurrentDataStatus() {
-		return new DataStatus(_undoStack.size(), _undoStack.getNumTimesDeleted());
+	public DataStatus getCurrentDataStatus()
+	{
+		return new DataStatus(_undoStack.size(), _undoStack.getNumUndos());
 	}
 
-	/**
-	 * Show a map url in an external browser
-	 * @param inSourceIndex index of map source to use
-	 */
-	public void showExternalMap(int inSourceIndex)
-	{
-		BrowserLauncher.launchBrowser(UrlGenerator.generateUrl(inSourceIndex, _trackInfo));
-	}
 
 	/**
 	 * Display a standard error message

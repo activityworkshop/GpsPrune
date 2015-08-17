@@ -22,8 +22,9 @@ public class Field
 
 	public static final Field SPEED          = new Field("fieldname.speed", true);
 	public static final Field VERTICAL_SPEED = new Field("fieldname.verticalspeed", true);
+	public static final Field MEDIA_FILENAME = new Field("fieldname.mediafilename", true);
 
-	// TODO: Field for photo filename, ability to load (from text) and save (to text)
+	// TODO: Ability to load media (from text) and save (to text)
 
 	/** List of all the available fields */
 	private static final Field[] ALL_AVAILABLE_FIELDS = {
