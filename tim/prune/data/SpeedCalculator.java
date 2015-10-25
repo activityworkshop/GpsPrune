@@ -50,14 +50,14 @@ public abstract class SpeedCalculator
 				do
 				{
 					p = inTrack.getPoint(index);
-					boolean timeOk = p != null && p.hasTimestamp() && !p.getTimestamp().isAfter(point.getTimestamp());
+					boolean timeOk = p != null && p.hasTimestamp() && p.getTimestamp().isBefore(point.getTimestamp());
 					boolean pValid = timeOk && !p.isWaypoint();
 					if (pValid) {
 						totalRadians += DataPoint.calculateRadiansBetween(p, q);
 						earlyStamp = p.getTimestamp();
 					}
-					stop = (p == null) || (p.hasTimestamp() && !p.getTimestamp().isEqual(point.getTimestamp())
-						|| p.getSegmentStart());
+
+					stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(p, point);
 					index--;
 					if (p != null && !p.isWaypoint()) {
 						q = p;
@@ -78,8 +78,8 @@ public abstract class SpeedCalculator
 					totalRadians += DataPoint.calculateRadiansBetween(p, q);
 					lateStamp = p.getTimestamp();
 				}
-				stop = (p == null) || (p.hasTimestamp() && !p.getTimestamp().isEqual(point.getTimestamp())
-					|| p.getSegmentStart());
+
+				stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point,  p);
 				index++;
 				if (p != null && !p.isWaypoint()) {
 					q = p;
@@ -146,14 +146,14 @@ public abstract class SpeedCalculator
 				do
 				{
 					p = inTrack.getPoint(index);
-					boolean timeOk = p != null && p.hasTimestamp() && !p.getTimestamp().isAfter(point.getTimestamp());
+					boolean timeOk = p != null && p.hasTimestamp() && p.getTimestamp().isBefore(point.getTimestamp());
 					boolean pValid = timeOk && !p.isWaypoint();
 					if (pValid) {
 						earlyStamp = p.getTimestamp();
 						if (p.hasAltitude()) firstAlt = p.getAltitude();
 					}
-					stop = (p == null) || (p.hasTimestamp() && !p.getTimestamp().isEqual(point.getTimestamp())
-						|| p.getSegmentStart());
+
+					stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(p,  point);
 					index--;
 				}
 				while (!stop);
@@ -172,8 +172,8 @@ public abstract class SpeedCalculator
 					lateStamp = p.getTimestamp();
 					if (p.hasAltitude()) lastAlt = p.getAltitude();
 				}
-				stop = (p == null) || (p.hasTimestamp() && !p.getTimestamp().isEqual(point.getTimestamp())
-					|| p.getSegmentStart());
+
+				stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point,  p);
 				index++;
 			}
 			while (!stop);
@@ -193,5 +193,21 @@ public abstract class SpeedCalculator
 		{
 			inValue.setValue(speedValue);
 		}
+	}
+
+	/**
+	 * Check whether the time difference between P1 and P2 is sufficiently large
+	 * @param inP1 earlier point
+	 * @param inP2 later point
+	 * @return true if we can stop looking now, found a point early/late enough
+	 */
+	private static boolean hasSufficientTimeDifference(DataPoint inP1, DataPoint inP2)
+	{
+		if (inP1 == null || inP2 == null)
+			return true; // we have to give up now
+		if (!inP1.hasTimestamp() || !inP2.hasTimestamp())
+			return false; // keep looking
+		final long MIN_TIME_DIFFERENCE_MS = 1000L;
+		return inP2.getTimestamp().getMillisecondsSince(inP1.getTimestamp()) >= MIN_TIME_DIFFERENCE_MS;
 	}
 }

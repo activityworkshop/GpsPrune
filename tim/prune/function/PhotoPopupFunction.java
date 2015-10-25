@@ -8,21 +8,26 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JButton;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import tim.prune.App;
+import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.data.Photo;
 import tim.prune.gui.PhotoThumbnail;
 
 /**
  * Class to show a popup window for a photo
  */
-public class PhotoPopupFunction extends GenericFunction
+public class PhotoPopupFunction extends GenericFunction implements DataSubscriber
 {
 	/** popup window */
 	private JFrame _frame = null; // would be a JDialog but that doesn't allow max button
@@ -59,15 +64,27 @@ public class PhotoPopupFunction extends GenericFunction
 			_frame.getContentPane().add(makeContents());
 			_frame.pack();
 			_frame.setLocationRelativeTo(_parentFrame);
+			_frame.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			_frame.addWindowListener(new WindowAdapter() {
+				public void windowClosed(WindowEvent e) {
+					UpdateMessageBroker.removeSubscriber(PhotoPopupFunction.this);
+					super.windowClosed(e);
+				}
+			});
 		}
 		initFrame();
 		final Photo photo = _app.getTrackInfo().getCurrentPhoto();
-		if (photo.getWidth() <= 0 || photo.getHeight() <= 0) {
+		if (photo.getWidth() <= 0 || photo.getHeight() <= 0)
+		{
+			_frame.setVisible(false);
 			_app.showErrorMessageNoLookup(getNameKey(), I18nManager.getText("error.showphoto.failed")
 			 + " : " + photo.getName());
 		}
-		else {
+		else
+		{
 			_frame.setVisible(true);
+			// Add listener to Broker
+			UpdateMessageBroker.addSubscriber(this);
 		}
 	}
 
@@ -76,11 +93,18 @@ public class PhotoPopupFunction extends GenericFunction
 	 */
 	private void initFrame()
 	{
-		_frame.setVisible(false);
 		Photo photo = _app.getTrackInfo().getCurrentPhoto();
-		_frame.setTitle(photo.getName());
-		_label.setText("'" + photo.getName() + "' ("
-			+ photo.getWidth() + " x " + photo.getHeight() + ")");
+		if (photo == null)
+		{
+			_frame.setTitle("GpsPrune - " + I18nManager.getText("details.nophoto"));
+			_label.setText(I18nManager.getText("details.nophoto"));
+		}
+		else
+		{
+			_frame.setTitle(photo.getName());
+			_label.setText("'" + photo.getName() + "' ("
+				+ photo.getWidth() + " x " + photo.getHeight() + ")");
+		}
 		_photoThumb.setPhoto(photo);
 	}
 
@@ -117,4 +141,15 @@ public class PhotoPopupFunction extends GenericFunction
 		mainPanel.add(okPanel, BorderLayout.SOUTH);
 		return mainPanel;
 	}
+
+	public void dataUpdated(byte inUpdateType)
+	{
+		// Update photo if selection changes
+		if ((inUpdateType & DataSubscriber.SELECTION_CHANGED) > 0)
+		{
+			initFrame();
+		}
+	}
+
+	public void actionCompleted(String inMessage) {}
 }

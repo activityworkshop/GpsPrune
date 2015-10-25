@@ -17,7 +17,7 @@ public class Selection
 	private int _currentPhotoIndex = -1;
 	private int _currentAudioIndex = -1;
 	private AltitudeRange _altitudeRange = null;
-	private long _movingSeconds = 0L;
+	private long _movingMilliseconds = 0L;
 	private double _angMovingDistance = -1.0;
 
 
@@ -77,7 +77,7 @@ public class Selection
 			Timestamp time = null, previousTime = null;
 			DataPoint lastPoint = null, currPoint = null;
 			_angMovingDistance = 0.0;
-			_movingSeconds = 0L;
+			_movingMilliseconds = 0L;
 			// Loop over points in selection
 			for (int i=_startIndex; i<=_endIndex; i++)
 			{
@@ -99,7 +99,7 @@ public class Selection
 				{
 					// add moving time
 					if (!currPoint.getSegmentStart() && previousTime != null && time.isAfter(previousTime)) {
-						_movingSeconds += time.getSecondsSince(previousTime);
+						_movingMilliseconds += time.getMillisecondsSince(previousTime);
 					}
 					previousTime = time;
 				}
@@ -156,7 +156,7 @@ public class Selection
 	public long getMovingSeconds()
 	{
 		if (!_valid) recalculate();
-		return _movingSeconds;
+		return _movingMilliseconds / 1000L;
 	}
 
 	/**

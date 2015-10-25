@@ -2,6 +2,7 @@ package tim.prune.function.gpsies;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.table.AbstractTableModel;
 
@@ -97,10 +98,24 @@ public class TrackListModel extends AbstractTableModel
 	 */
 	public void addTracks(ArrayList<SearchResult> inList)
 	{
+		addTracks(inList, false);
+	}
+
+	/**
+	 * Add a list of tracks to this model and optionally sort them
+	 * @param inList list of tracks to add
+	 * @param inSort true to sort results after adding
+	 */
+	public void addTracks(ArrayList<SearchResult> inList, boolean inSort)
+	{
 		if (_trackList == null) {_trackList = new ArrayList<SearchResult>();}
 		final int prevCount = _trackList.size();
-		if (inList != null && inList.size() > 0) {
+		if (inList != null && inList.size() > 0)
+		{
 			_trackList.addAll(inList);
+			if (inSort) {
+				Collections.sort(_trackList);
+			}
 		}
 		final int updatedCount = _trackList.size();
 		if (prevCount <= 0)

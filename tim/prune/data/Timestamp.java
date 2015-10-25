@@ -362,11 +362,11 @@ public class Timestamp
 	}
 	/**
 	 * @param inOther other Timestamp
-	 * @return true if this one is at least a second after the other
+	 * @return true if this one is at least a millisecond after the other
 	 */
 	public boolean isAfter(Timestamp inOther)
 	{
-		return getSecondsSince(inOther) > 0L;
+		return getMillisecondsSince(inOther) > 0L;
 	}
 
 	/**
@@ -391,11 +391,11 @@ public class Timestamp
 
 	/**
 	 * @param inOther other timestamp to compare
-	 * @return true if they're equal to the nearest second
+	 * @return true if they're equal to the nearest millisecond
 	 */
 	public boolean isEqual(Timestamp inOther)
 	{
-		return getSecondsSince(inOther) == 0L;
+		return inOther != null && _milliseconds == inOther._milliseconds;
 	}
 
 	/**
@@ -404,7 +404,7 @@ public class Timestamp
 	 */
 	public boolean isBefore(Timestamp inOther)
 	{
-		return getSecondsSince(inOther) < 0L;
+		return getMillisecondsSince(inOther) < 0L;
 	}
 
 	/**

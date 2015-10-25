@@ -485,7 +485,7 @@ public class Charter extends GenericFunction
 			if (currPoint.hasTimestamp())
 			{
 				if (!currPoint.getSegmentStart() && prevTimestamp != null) {
-					seconds += (currPoint.getTimestamp().getSecondsSince(prevTimestamp));
+					seconds += (currPoint.getTimestamp().getMillisecondsSince(prevTimestamp) / 1000.0);
 				}
 				values.setData(i, seconds / 60.0 / 60.0);
 				prevTimestamp = currPoint.getTimestamp();

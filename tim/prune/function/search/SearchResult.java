@@ -3,7 +3,7 @@ package tim.prune.function.search;
 /**
  * Class to hold a search result from wikipedia / gpsies / panoramio etc
  */
-public class SearchResult
+public class SearchResult implements Comparable<SearchResult>
 {
 	/** Track name or title */
 	private String _trackName = null;
@@ -125,5 +125,22 @@ public class SearchResult
 	 */
 	public String getLongitude() {
 		return _longitude;
+	}
+
+	/**
+	 * Compare two search results for sorting (nearest first, then alphabetic)
+	 */
+	public int compareTo(SearchResult inOther)
+	{
+		double distDiff = getLength() - inOther.getLength();
+		if (distDiff < 0.0)
+		{
+			return -1;
+		}
+		if (distDiff > 0.0)
+		{
+			return 1;
+		}
+		return getTrackName().compareTo(inOther.getTrackName());
 	}
 }
