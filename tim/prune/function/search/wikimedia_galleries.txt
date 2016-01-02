@@ -67,7 +67,7 @@ Boccadasse	Boccadasse è un antico borgo marinaro situato nel levante di Genova.
 Boettcherstrasse		53 04 30 N	8 48 21 E
 Boiro		42 38 13.16 N	8 52 12.31 W
 Boke	Boke is a small village in the German district Paderborn; it belongs to the city of Delbrück.	51 43 48 N	8 33 43.56 E
-Bolongaropalast	The Bolongaro Palace ist a baroque building in Frankfurt-Höchst.	50 06 04 N	8 33 08 E
+Bolongaropalast	The Bolongaro Palace is a baroque building in Frankfurt-Höchst.	50 06 04 N	8 33 08 E
 Borne des Trois Puissances	Dreiländerstein	47 30 10.58 N	7 07 48.76 E
 Borovsk	Эта страница на русском: Боровск	55 12 27.19 N	36 29 05.05 E
 Bosco delle Querce	The Regional Natural Park Bosco delle Querce (Oaks' Wood), built after the Seveso Disaster on the "A" zone.	45 38 55 N	9 09 10 E
@@ -149,7 +149,7 @@ Château de Couiza		42 56 42.68 N	2 15 14.11 E
 Chiesa di Sant'Antonio in Caggiano	Church of Saint Anthony in Caggiano.	40 34 04.13 N	15 29 39.47 E
 Chioggia	Chioggia is a town in Veneto in Italy.	45 13 04.23 N	12 16 36.76 E
 Chroniques de Jérusalem	Jerusalem Mount of Olives Santa Marta Passionists church.	31 46 15.83 N	35 15 08.48 E
-Church of Adelboden	The gothic village church Adelboden was built in the 15th century	46 29 34.1 N	7 33 32.4 E
+Church of Adelboden	The gothic village church of Adelboden was built in the 15th century	46 29 34.1 N	7 33 32.4 E
 Church of Saints Apostles Peter and Paul in Vilnius		54 41 38.82 N	25 18 22.69 E
 Church of St. Johns in Vilnius	Organ	54 40 57.5 N	25 17 19.22 E
 Church of São Vítor (Braga)	Igreja de São Victor em Braga	41 33 09.95 N	8 24 47.49 W

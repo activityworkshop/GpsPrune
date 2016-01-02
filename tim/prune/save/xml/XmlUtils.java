@@ -25,8 +25,8 @@ public abstract class XmlUtils
 	 */
 	public static String fixCdata(String inString)
 	{
-		if (inString == null) return "";
-		if (inString.indexOf('<') < 0 && inString.indexOf('>') < 0) {
+		if (inString == null || inString.isEmpty()) return "";
+		if (!hasIllegalCharacter(inString)) {
 			return inString;
 		}
 		String result = inString;
@@ -37,12 +37,32 @@ public abstract class XmlUtils
 		// Remove all instances of end block
 		result = result.replaceAll(CDATA_END, "");
 		// Now check whether cdata block is required
-		if (result.indexOf('<') < 0 && result.indexOf('>') < 0) {
+		if (!XmlUtils.hasIllegalCharacter(result)) {
 			return result;
 		}
 		return CDATA_START + result + CDATA_END;
 	}
 
+	/**
+	 * Checks the input string for the three illegal characters,
+	 * but only looping through the string once instead of three times
+	 * @param inValue string to check
+	 * @return true if at least one of the illegal characters is found
+	 */
+	public static boolean hasIllegalCharacter(String inValue)
+	{
+		if (inValue == null) return false;
+		final int numChars = inValue.length();
+		for (int i=0; i<numChars; i++)
+		{
+			final char c = inValue.charAt(i);
+			if (c == '<' || c == '>' || c == '&')
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * @return true if system uses UTF-8 by default

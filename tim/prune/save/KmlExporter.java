@@ -562,7 +562,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 				numSaved += writeStandardTrack(inWriter, absoluteAltitudes, selStart, selEnd);
 			}
 		}
-		inWriter.write("</Folder>\n</kml>");
+		inWriter.write("</Folder>\n</kml>\n");
 		return numSaved;
 	}
 
@@ -799,7 +799,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	throws IOException
 	{
 		inWriter.write("\t<Placemark>\n\t\t<name>");
-		inWriter.write(inName);
+		inWriter.write(XmlUtils.fixCdata(inName));
 		inWriter.write("</name>\n");
 		if (inDesc != null)
 		{

@@ -538,7 +538,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		source = replaceGpxTags(source, "<time>", "</time>", inPoint.getTimestamp().getText(Timestamp.Format.ISO8601));
 		if (inPoint.isWaypoint())
 		{
-			source = replaceGpxTags(source, "<name>", "</name>", inPoint.getWaypointName());
+			source = replaceGpxTags(source, "<name>", "</name>", XmlUtils.fixCdata(inPoint.getWaypointName()));
 			if (source != null)
 			{
 				source = source.replaceAll("<description>", "<desc>").replaceAll("</description>", "</desc>");
@@ -694,7 +694,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		}
 		// write waypoint name after elevation and time
 		inWriter.write("\t\t<name>");
-		inWriter.write(inPoint.getWaypointName().trim());
+		inWriter.write(XmlUtils.fixCdata(inPoint.getWaypointName().trim()));
 		inWriter.write("</name>\n");
 		// description, if any
 		String desc = XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION));
