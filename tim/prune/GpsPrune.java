@@ -36,9 +36,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "18.2";
+	public static final String VERSION_NUMBER = "18.3";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "336a";
+	public static final String BUILD_NUMBER = "336b";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -233,7 +233,7 @@ public class GpsPrune
 		try
 		{
 			ArrayList<Image> icons = new ArrayList<Image>();
-			String[] resolutions = {"_16", "_20", "_32", "_64", "_128"};
+			String[] resolutions = {"_16", "_20", "_22", "_24", "_32", "_36", "_48", "_64", "_72", "_96", "_128"};
 			for (String r : resolutions) {
 				icons.add(IconManager.getImageIcon(IconManager.WINDOW_ICON + r + ".png").getImage());
 			}
@@ -255,7 +255,10 @@ public class GpsPrune
 
 		// finish off and display frame
 		frame.pack();
-		frame.setSize(650, 450);
+		if (!setFrameBoundsFromConfig(frame))
+		{
+			frame.setSize(650, 450);
+		}
 		frame.setVisible(true);
 		// Set position of map/profile splitter
 		midSplit.setDividerLocation(0.75);
@@ -269,6 +272,38 @@ public class GpsPrune
 		// Finally, give the files to load to the App
 		APP.loadDataFiles(inDataFiles);
 	}
+
+
+	/**
+	 * Set the frame bounds using the saved config setting
+	 * @param inFrame frame to set the bounds of
+	 * @return true on success
+	 */
+	private static boolean setFrameBoundsFromConfig(JFrame inFrame)
+	{
+		// Try to get bounds from config
+		String bounds = Config.getConfigString(Config.KEY_WINDOW_BOUNDS);
+		try
+		{
+			String[] boundValues = bounds.split("x");
+			if (boundValues.length == 4)
+			{
+				int[] elems = new int[4];
+				for (int i=0; i<4; i++) {
+					elems[i] = Integer.parseInt(boundValues[i]);
+				}
+				// Make sure width and height aren't stupid
+				elems[2] = Math.max(elems[2], 400);
+				elems[3] = Math.max(elems[3], 300);
+				inFrame.setBounds(elems[0], elems[1], elems[2], elems[3]);
+				return true;
+			}
+		}
+		catch (NullPointerException npe) {}  // if no entry found in config
+		catch (NumberFormatException nfe) {} // if string couldn't be parsed
+		return false;
+	}
+
 
 	/**
 	 * Try to guess whether it's a mistyped parameter or a mistyped filename

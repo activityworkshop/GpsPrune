@@ -347,11 +347,11 @@ public class GpxExporter extends GenericFunction implements Runnable
 		final String gpxHeader = getGpxHeaderString(inGpxCachers);
 		final boolean isVersion1_1 = (gpxHeader.toUpperCase().indexOf("GPX/1/1") > 0);
 		inWriter.write(gpxHeader);
-		// Name field
-		String trackName = (inName != null && !inName.equals("")) ? inName : "GpsPruneTrack";
-		writeNameAndDescription(inWriter, inName, inDesc, isVersion1_1);
+		// name and description
+		String trackName = (inName != null && !inName.equals("")) ? XmlUtils.fixCdata(inName) : "GpsPruneTrack";
+		String desc      = (inDesc != null && !inDesc.equals("")) ? XmlUtils.fixCdata(inDesc) : "Export from GpsPrune";
+		writeNameAndDescription(inWriter, trackName, desc, isVersion1_1);
 
-		int i = 0;
 		DataPoint point = null;
 		final boolean exportTrackpoints = inSaveFlags[0];
 		final boolean exportWaypoints = inSaveFlags[1];
@@ -368,7 +368,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		// Loop over waypoints
 		final int numPoints = inInfo.getTrack().getNumPoints();
 		int numSaved = 0;
-		for (i=0; i<numPoints; i++)
+		for (int i=0; i<numPoints; i++)
 		{
 			point = inInfo.getTrack().getPoint(i);
 			if (!exportSelection || (i>=selStart && i<=selEnd))
@@ -423,7 +423,6 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private static void writeNameAndDescription(OutputStreamWriter inWriter,
 		String inName, String inDesc, boolean inIsVersion1_1) throws IOException
 	{
-		String desc = (inDesc != null && !inDesc.equals("")) ? inDesc : "Export from GpsPrune";
 		// Position of name and description fields needs to be different for GPX1.0 and GPX1.1
 		if (inIsVersion1_1)
 		{
@@ -439,7 +438,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 		}
 		if (inIsVersion1_1) {inWriter.write('\t');}
 		inWriter.write("\t<desc>");
-		inWriter.write(desc);
+		inWriter.write(inDesc);
 		inWriter.write("</desc>\n");
 		if (inIsVersion1_1)
 		{

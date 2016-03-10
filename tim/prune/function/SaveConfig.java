@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -158,6 +159,12 @@ public class SaveConfig extends GenericFunction
 	 */
 	private void saveConfig(File inSaveFile)
 	{
+		// Set current window position in config
+		Rectangle currBounds = _app.getFrame().getBounds();
+		String windowBounds = "" + currBounds.x + "x" + currBounds.y + "x"
+			+ currBounds.width + "x" + currBounds.height;
+		Config.setConfigString(Config.KEY_WINDOW_BOUNDS, windowBounds);
+
 		// TODO: Check for null inSaveFile, then just call finish() ?
 		FileOutputStream outStream = null;
 		try

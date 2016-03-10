@@ -483,7 +483,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		inWriter.write("<Folder>\n\t<name>");
 		if (_descriptionField != null && _descriptionField.getText() != null && !_descriptionField.getText().equals(""))
 		{
-			inWriter.write(_descriptionField.getText());
+			inWriter.write(XmlUtils.fixCdata(_descriptionField.getText()));
 		}
 		else {
 			inWriter.write("Export from GpsPrune");

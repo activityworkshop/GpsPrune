@@ -63,6 +63,8 @@ public abstract class Config
 	public static final String KEY_MAPSOURCE_LIST = "prune.mapsourcelist";
 	/** Key for show map flag */
 	public static final String KEY_SHOW_MAP = "prune.showmap";
+	/** Key for window position */
+	public static final String KEY_WINDOW_BOUNDS = "prune.windowbounds";
 	/** Key for path to disk cache */
 	public static final String KEY_DISK_CACHE = "prune.diskcache";
 	/** Key for working online flag */

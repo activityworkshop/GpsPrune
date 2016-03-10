@@ -37,7 +37,7 @@ public abstract class XmlUtils
 		// Remove all instances of end block
 		result = result.replaceAll(CDATA_END, "");
 		// Now check whether cdata block is required
-		if (!XmlUtils.hasIllegalCharacter(result)) {
+		if (!hasIllegalCharacter(result)) {
 			return result;
 		}
 		return CDATA_START + result + CDATA_END;
