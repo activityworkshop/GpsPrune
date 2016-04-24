@@ -98,7 +98,7 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
 			.append("afrikaans, \u010de\u0161tina, deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano,<br>" +
-				" magyar,nederlands, polski, portugu\u00EAs, rom\u00E2n\u0103, \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese),<br>" +
+				" magyar, nederlands, polski, portugu\u00EAs, rom\u00E2n\u0103, \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese),<br>" +
 				" \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean), schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, ukrainian</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());

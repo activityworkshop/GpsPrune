@@ -42,6 +42,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 	private JTextField _deviceField = null, _formatField = null;
 	private JTextField _trackNameField = null;
 	private JCheckBox _waypointCheckbox = null, _trackCheckbox = null;
+	private boolean _switchedWaypointsOff = false, _switchedTrackpointsOff = false;
 	private JButton _okButton = null;
 	private JProgressBar _progressBar = null;
 	private boolean _cancelled = false;
@@ -84,8 +85,10 @@ public class GpsSaver extends GenericFunction implements Runnable
 				_dialog.pack();
 			}
 			// Initialise progress bars, buttons
+			enableCheckboxes();
 			enableOkButton();
 			setupProgressBar(true);
+			_trackNameField.requestFocus();
 			_dialog.setVisible(true);
 		}
 	}
@@ -197,6 +200,42 @@ public class GpsSaver extends GenericFunction implements Runnable
 		_progressBar.setValue(0);
 	}
 
+	/**
+	 * Enable or disable the waypoints and trackpoints checkboxes
+	 */
+	private void enableCheckboxes()
+	{
+		// Enable or disable waypoints checkbox depending on whether data is available
+		if (_waypointCheckbox.isSelected())
+		{
+			if (!_app.getTrackInfo().getTrack().hasWaypoints())
+			{
+				_waypointCheckbox.setSelected(false);
+				_switchedWaypointsOff = true;
+			}
+			else _switchedWaypointsOff = false;
+		}
+		else if (_app.getTrackInfo().getTrack().hasWaypoints() && _switchedWaypointsOff)
+		{
+			_waypointCheckbox.setSelected(true);
+			_switchedWaypointsOff = false;
+		}
+		// ... and the same for track points
+		if (_trackCheckbox.isSelected())
+		{
+			if (!_app.getTrackInfo().getTrack().hasTrackPoints())
+			{
+				_trackCheckbox.setSelected(false);
+				_switchedTrackpointsOff = true;
+			}
+			else _switchedTrackpointsOff = false;
+		}
+		else if (_app.getTrackInfo().getTrack().hasTrackPoints() && _switchedTrackpointsOff)
+		{
+			_trackCheckbox.setSelected(true);
+			_switchedTrackpointsOff = false;
+		}
+	}
 
 	/**
 	 * Enable or disable the ok button

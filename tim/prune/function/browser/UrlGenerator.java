@@ -32,7 +32,6 @@ public abstract class UrlGenerator
 		MAP_SOURCE_PEAKFINDER, /* PeakFinder */
 		MAP_SOURCE_GEOHACK,    /* Geohack */
 		MAP_SOURCE_PANORAMIO,  /* Panoramio */
-		MAP_SOURCE_OPENCACHINGCOM, /* Opencaching.com */
 	}
 
 	/**
@@ -56,7 +55,6 @@ public abstract class UrlGenerator
 			case MAP_SOURCE_PEAKFINDER:
 			case MAP_SOURCE_GEOHACK:
 			case MAP_SOURCE_PANORAMIO:
-			case MAP_SOURCE_OPENCACHINGCOM:
 				return generateUrlForPoint(inSource, inTrackInfo);
 			case MAP_SOURCE_OSM:
 			default:
@@ -213,8 +211,6 @@ public abstract class UrlGenerator
 				return generateGeohackUrl(currPoint);
 			case MAP_SOURCE_PANORAMIO:
 				return generatePanoramioUrl(currPoint);
-			case MAP_SOURCE_OPENCACHINGCOM:
-				return generateOpencachingComUrl(currPoint);
 			default:
 				return null;
 		}
@@ -253,21 +249,6 @@ public abstract class UrlGenerator
 	{
 		return "http://panoramio.com/map/#lt=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
 			+ "&ln=" + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "&z=1&k=0";
-	}
-
-
-	/**
-	 * Generate a url for OpenCaching.com
-	 * @param inPoint current point, not null
-	 * @return URL
-	 */
-	private static String generateOpencachingComUrl(DataPoint inPoint)
-	{
-		final String occLang = I18nManager.getText("webservice.opencachingcom.lang");
-		final String url = "http://www.opencaching.com/" + occLang
-			+ "/#find?&loc=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
-			+ "," + FIVE_DP.format(inPoint.getLongitude().getDouble());
-		return url;
 	}
 
 

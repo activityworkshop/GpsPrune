@@ -97,7 +97,6 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _showPeakfinderItem = null;
 	private JMenuItem _showGeohackItem = null;
 	private JMenuItem _showPanoramioItem = null;
-	private JMenuItem _showOpencachingComItem = null;
 	private JMenuItem _searchOpencachingDeItem = null;
 	private JMenuItem _searchMapillaryItem = null;
 	private JMenuItem _downloadOsmItem = null;
@@ -296,8 +295,6 @@ public class MenuManager implements DataSubscriber
 		onlineMenu.add(_showGeohackItem);
 		_showPanoramioItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_PANORAMIO, "webservice.panoramio"), false);
 		onlineMenu.add(_showPanoramioItem);
-		_showOpencachingComItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_OPENCACHINGCOM, "webservice.opencachingcom"), false);
-		onlineMenu.add(_showOpencachingComItem);
 
 		onlineMenu.addSeparator();
 		_searchOpencachingDeItem = makeMenuItem(new SearchOpenCachingDeFunction(_app), false);
@@ -917,7 +914,6 @@ public class MenuManager implements DataSubscriber
 		_showPeakfinderItem.setEnabled(hasPoint);
 		_showGeohackItem.setEnabled(hasPoint);
 		_showPanoramioItem.setEnabled(hasPoint);
-		_showOpencachingComItem.setEnabled(hasPoint);
 		_searchOpencachingDeItem.setEnabled(hasPoint);
 		_searchMapillaryItem.setEnabled(hasPoint);
 		// is it a waypoint?
