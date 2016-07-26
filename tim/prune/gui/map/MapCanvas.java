@@ -705,7 +705,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			anyWaypoints = anyWaypoints || isWaypoint;
 			if (!isWaypoint)
 			{
-				if ((currPointVisible || prevPointVisible) && drawPoints)
+				if (currPointVisible || (drawLines && prevPointVisible))
 				{
 					// For track points, work out which colour to use
 					if (_track.getPoint(i).getDeleteFlag()) {
@@ -722,7 +722,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					}
 
 					// Draw rectangle for track point if it's visible
-					if (currPointVisible)
+					if (currPointVisible && drawPoints)
 					{
 						inG.drawRect(px-2, py-2, 3, 3);
 						pointsPainted++;

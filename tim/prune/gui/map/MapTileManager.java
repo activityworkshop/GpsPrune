@@ -155,14 +155,14 @@ public class MapTileManager implements ImageObserver
 		inX = ((inX % _numTileIndices) + _numTileIndices) % _numTileIndices;
 
 		// Check first in memory cache for tile
-		Image tile = null;
+		Image tileImage = null;
 		MemTileCacher tempCache = null;
 		if (_tempCaches != null)
 		{
 			tempCache = _tempCaches[inLayer]; // Should probably guard array indexes here
-			tile = tempCache.getTile(inX, inY);
-			if (tile != null) {
-				return tile;
+			tileImage = tempCache.getTile(inX, inY);
+			if (tileImage != null) {
+				return tileImage;
 			}
 		}
 
@@ -170,32 +170,37 @@ public class MapTileManager implements ImageObserver
 		String diskCachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
 		boolean useDisk = (diskCachePath != null);
 		boolean onlineMode = Config.getConfigBoolean(Config.KEY_ONLINE_MODE);
+		MapTile mapTile = null;
 		if (useDisk)
 		{
-			tile = DiskTileCacher.getTile(diskCachePath, _mapSource.makeFilePath(inLayer, _zoom, inX, inY), onlineMode);
-			if (tile != null)
+			// Get the map tile from cache
+			mapTile = DiskTileCacher.getTile(diskCachePath, _mapSource.makeFilePath(inLayer, _zoom, inX, inY));
+			if (mapTile != null && mapTile.getImage() != null)
 			{
-				if (_returnIncompleteImages) {return tile;}
+				tileImage = mapTile.getImage();
+				if (_returnIncompleteImages) {return tileImage;}
 				// Pass tile to memory cache
 				if (tempCache != null) {
-					tempCache.setTile(tile, inX, inY, _zoom);
+					tempCache.setTile(tileImage, inX, inY, _zoom);
 				}
-				if (tile.getWidth(this) > 0) {return tile;}
-				return null;
+				tileImage.getWidth(this); // trigger the load from file
 			}
-			// else System.out.println("DTC gave null tile for " + _zoom + ", " + inX + ", " + inY);
 		}
-		// Tile wasn't in memory or on disk, so if online let's get it
-		if (onlineMode && _downloadTiles && inDownloadIfNecessary)
+		// Maybe we've got an image now, maybe it's expired
+		final boolean shouldDownload = (tileImage == null || mapTile == null || mapTile.isExpired());
+
+		// If we're online then try to download the tile
+		if (onlineMode && _downloadTiles && inDownloadIfNecessary && shouldDownload)
 		{
 			try
 			{
 				URL tileUrl = new URL(_mapSource.makeURL(inLayer, _zoom, inX, inY));
-				// System.out.println("Going to fetch: " + tileUrl);
-				if (useDisk && DiskTileCacher.saveTile(tileUrl, diskCachePath,
-					_mapSource.makeFilePath(inLayer, _zoom, inX, inY), this))
+				//System.out.println("Trying to fetch: " + tileUrl);
+				if (useDisk)
 				{
-					// Image now copied directly from URL stream to disk cache
+					DiskTileCacher.saveTile(tileUrl, diskCachePath,
+						_mapSource.makeFilePath(inLayer, _zoom, inX, inY), this);
+					// Image will now be copied directly from URL stream to disk cache
 				}
 				else
 				{
@@ -206,7 +211,7 @@ public class MapTileManager implements ImageObserver
 			}
 			catch (MalformedURLException urle) {} // ignore
 		}
-		return null;
+		return tileImage;
 	}
 
 	/**

@@ -1,4 +1,4 @@
-GpsPrune version 18.4
+GpsPrune version 18.5
 =====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_18.4.jar
+   java -jar gpsprune_18.5.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,17 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_18.4.jar --lang=DE
+   java -jar gpsprune_18.5.jar --lang=DE
 
+
+New with version 18.5
+=====================
+The following fixes and additions were made since version 18.4:
+  - When points have no altitudes, send them to a GPS with altitude 0 (prevents weird values when reading back)
+  - When points are not displayed on map, still colour the lines according to the selected scheme
+  - When points all have crazy values, don't hang the profile chart
+  - When images can't be fetched from the internet, don't delete expired cache images
+  - Translation updates to es, uk, ru, cz
 
 New with version 18.4
 =====================

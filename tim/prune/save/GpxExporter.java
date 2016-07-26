@@ -290,12 +290,17 @@ public class GpxExporter extends GenericFunction implements Runnable
 				writer = new OutputStreamWriter(new FileOutputStream(_exportFile), "UTF-8");
 			else
 				writer = new OutputStreamWriter(new FileOutputStream(_exportFile));
-			final boolean[] saveFlags = {_pointTypeSelector.getTrackpointsSelected(), _pointTypeSelector.getWaypointsSelected(),
-				_pointTypeSelector.getPhotopointsSelected(), _pointTypeSelector.getAudiopointsSelected(),
-				_pointTypeSelector.getJustSelection(), _timestampsCheckbox.isSelected()};
+			// TODO: Move to new method
+			SettingsForExport settings = new SettingsForExport();
+			settings.setExportTrackPoints(_pointTypeSelector.getTrackpointsSelected());
+			settings.setExportWaypoints(_pointTypeSelector.getWaypointsSelected());
+			settings.setExportPhotoPoints(_pointTypeSelector.getPhotopointsSelected());
+			settings.setExportAudiopoints(_pointTypeSelector.getAudiopointsSelected());
+			settings.setExportJustSelection(_pointTypeSelector.getJustSelection());
+			settings.setExportTimestamps(_timestampsCheckbox.isSelected());
 			// write file
 			final int numPoints = exportData(writer, _trackInfo, _nameField.getText(),
-				_descriptionField.getText(), saveFlags, gpxCachers);
+				_descriptionField.getText(), settings, gpxCachers);
 
 			// close file
 			writer.close();
@@ -334,13 +339,13 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * @param inInfo track info object
 	 * @param inName name of track (optional)
 	 * @param inDesc description of track (optional)
-	 * @param inSaveFlags array of booleans to export tracks, waypoints, photos, audios, selection, timestamps
+	 * @param inExportSettings flags for what to export and how
 	 * @param inGpxCachers list of Gpx cachers containing input data
 	 * @return number of points written
 	 * @throws IOException if io errors occur on write
 	 */
 	public static int exportData(OutputStreamWriter inWriter, TrackInfo inInfo, String inName,
-		String inDesc, boolean[] inSaveFlags, GpxCacherList inGpxCachers) throws IOException
+		String inDesc, SettingsForExport inSettings, GpxCacherList inGpxCachers) throws IOException
 	{
 		// Write or copy headers
 		inWriter.write(getXmlHeaderString(inWriter));
@@ -353,12 +358,9 @@ public class GpxExporter extends GenericFunction implements Runnable
 		writeNameAndDescription(inWriter, trackName, desc, isVersion1_1);
 
 		DataPoint point = null;
-		final boolean exportTrackpoints = inSaveFlags[0];
-		final boolean exportWaypoints = inSaveFlags[1];
-		final boolean exportPhotos = inSaveFlags[2];
-		final boolean exportAudios = inSaveFlags[3];
-		final boolean exportSelection = inSaveFlags[4];
-		final boolean exportTimestamps = inSaveFlags[5];
+		final boolean exportWaypoints = inSettings.getExportWaypoints();
+		final boolean exportSelection = inSettings.getExportJustSelection();
+		final boolean exportTimestamps = inSettings.getExportTimestamps();
 		// Examine selection
 		int selStart = -1, selEnd = -1;
 		if (exportSelection) {
@@ -388,23 +390,23 @@ public class GpxExporter extends GenericFunction implements Runnable
 						inWriter.write('\n');
 					}
 					else {
-						exportWaypoint(point, inWriter, exportTimestamps, exportPhotos, exportAudios);
+						exportWaypoint(point, inWriter, inSettings);
 					}
 					numSaved++;
 				}
 			}
 		}
 		// Export both route points and then track points
-		if (exportTrackpoints || exportPhotos || exportAudios)
+		if (inSettings.getExportTrackPoints() || inSettings.getExportPhotoPoints() || inSettings.getExportAudioPoints())
 		{
 			// Output all route points (if any)
-			numSaved += writeTrackPoints(inWriter, inInfo, exportSelection, exportTrackpoints, exportPhotos,
-				exportAudios, exportTimestamps, true, inGpxCachers, "<rtept", "\t<rte><number>1</number>\n",
+			numSaved += writeTrackPoints(inWriter, inInfo, inSettings,
+				true, inGpxCachers, "<rtept", "\t<rte><number>1</number>\n",
 				null, "\t</rte>\n");
 			// Output all track points, if any
 			String trackStart = "\t<trk>\n\t\t<name>" + trackName + "</name>\n\t\t<number>1</number>\n\t\t<trkseg>\n";
-			numSaved += writeTrackPoints(inWriter, inInfo, exportSelection, exportTrackpoints, exportPhotos,
-				exportAudios, exportTimestamps, false, inGpxCachers, "<trkpt", trackStart,
+			numSaved += writeTrackPoints(inWriter, inInfo, inSettings,
+				false, inGpxCachers, "<trkpt", trackStart,
 				"\t</trkseg>\n\t<trkseg>\n", "\t\t</trkseg>\n\t</trk>\n");
 		}
 
@@ -450,11 +452,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * Loop through the track outputting the relevant track points
 	 * @param inWriter writer object for output
 	 * @param inInfo track info object containing track
-	 * @param inExportSelection true to just output current selection
-	 * @param inExportTrackpoints true to output track points
-	 * @param inExportPhotos true to output photo points
-	 * @param inExportAudios true to output audio points
-	 * @param inExportTimestamps true to include timestamps in export
+	 * @param inSettings export settings defining what should be exported
 	 * @param inOnlyCopies true to only export if source can be copied
 	 * @param inCachers list of GpxCachers
 	 * @param inPointTag tag to match for each point
@@ -463,26 +461,30 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * @param inEndTag end tag to output
 	 */
 	private static int writeTrackPoints(OutputStreamWriter inWriter,
-		TrackInfo inInfo, boolean inExportSelection, boolean inExportTrackpoints,
-		boolean inExportPhotos, boolean inExportAudios, boolean exportTimestamps,
+		TrackInfo inInfo, SettingsForExport inSettings,
 		boolean inOnlyCopies, GpxCacherList inCachers, String inPointTag,
 		String inStartTag, String inSegmentTag, String inEndTag)
 	throws IOException
 	{
-		// Note: far too many input parameters to this method but avoids duplication
+		// Note: Too many input parameters to this method but avoids duplication
 		// of output functionality for writing track points and route points
 		int numPoints = inInfo.getTrack().getNumPoints();
 		int selStart = inInfo.getSelection().getStart();
 		int selEnd = inInfo.getSelection().getEnd();
 		int numSaved = 0;
+		final boolean exportSelection = inSettings.getExportJustSelection();
+		final boolean exportTrackPoints = inSettings.getExportTrackPoints();
+		final boolean exportPhotos = inSettings.getExportPhotoPoints();
+		final boolean exportAudios = inSettings.getExportAudioPoints();
+		final boolean exportTimestamps = inSettings.getExportTimestamps();
 		// Loop over track points
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = inInfo.getTrack().getPoint(i);
-			if ((!inExportSelection || (i>=selStart && i<=selEnd)) && !point.isWaypoint())
+			if ((!exportSelection || (i>=selStart && i<=selEnd)) && !point.isWaypoint())
 			{
-				if ((point.getPhoto()==null && inExportTrackpoints) || (point.getPhoto()!=null && inExportPhotos)
-					|| (point.getAudio()!=null && inExportAudios))
+				if ((point.getPhoto()==null && exportTrackPoints) || (point.getPhoto()!=null && exportPhotos)
+					|| (point.getAudio()!=null && exportAudios))
 				{
 					// get the source from the point (if any)
 					String pointSource = getPointSource(inCachers, point);
@@ -506,15 +508,20 @@ public class GpxExporter extends GenericFunction implements Runnable
 							inWriter.write(pointSource);
 							inWriter.write('\n');
 						}
-						else {
-							if (!inOnlyCopies) {exportTrackpoint(point, inWriter, exportTimestamps, inExportPhotos, inExportAudios);}
+						else
+						{
+							if (!inOnlyCopies) {
+								exportTrackpoint(point, inWriter, inSettings);
+							}
 						}
 						numSaved++;
 					}
 				}
 			}
 		}
-		if (numSaved > 0) {inWriter.write(inEndTag);}
+		if (numSaved > 0) {
+			inWriter.write(inEndTag);
+		}
 		return numSaved;
 	}
 
@@ -663,13 +670,11 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * Export the specified waypoint into the file
 	 * @param inPoint waypoint to export
 	 * @param inWriter writer object
-	 * @param inTimestamps true to export timestamps too
-	 * @param inPhoto true to export link to photo
-	 * @param inAudio true to export link to audio
+	 * @param inSettings export settings
 	 * @throws IOException on write failure
 	 */
-	private static void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inTimestamps,
-		boolean inPhoto, boolean inAudio)
+	private static void exportWaypoint(DataPoint inPoint, Writer inWriter,
+		SettingsForExport inSettings)
 		throws IOException
 	{
 		inWriter.write("\t<wpt lat=\"");
@@ -678,14 +683,14 @@ public class GpxExporter extends GenericFunction implements Runnable
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\">\n");
 		// altitude if available
-		if (inPoint.hasAltitude())
+		if (inPoint.hasAltitude() || inSettings.getExportMissingAltitudesAsZero())
 		{
 			inWriter.write("\t\t<ele>");
-			inWriter.write("" + inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
+			inWriter.write(inPoint.hasAltitude() ? inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES) : "0");
 			inWriter.write("</ele>\n");
 		}
-		// timestamp if available (point might have timestamp and then be turned into a waypoint)
-		if (inPoint.hasTimestamp() && inTimestamps)
+		// timestamp if available (some waypoints have timestamps, some not)
+		if (inPoint.hasTimestamp() && inSettings.getExportTimestamps())
 		{
 			inWriter.write("\t\t<time>");
 			inWriter.write(inPoint.getTimestamp().getText(Timestamp.Format.ISO8601));
@@ -704,13 +709,13 @@ public class GpxExporter extends GenericFunction implements Runnable
 			inWriter.write("</desc>\n");
 		}
 		// Media links, if any
-		if (inPhoto && inPoint.getPhoto() != null)
+		if (inSettings.getExportPhotoPoints() && inPoint.getPhoto() != null)
 		{
 			inWriter.write("\t\t");
 			inWriter.write(makeMediaLink(inPoint.getPhoto()));
 			inWriter.write('\n');
 		}
-		if (inAudio && inPoint.getAudio() != null)
+		if (inSettings.getExportAudioPoints() && inPoint.getAudio() != null)
 		{
 			inWriter.write("\t\t");
 			inWriter.write(makeMediaLink(inPoint.getAudio()));
@@ -736,12 +741,9 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * Export the specified trackpoint into the file
 	 * @param inPoint trackpoint to export
 	 * @param inWriter writer object
-	 * @param inTimestamps true to export timestamps too
-	 * @param inExportPhoto true to export photo link
-	 * @param inExportAudio true to export audio link
+	 * @param inSettings export settings
 	 */
-	private static void exportTrackpoint(DataPoint inPoint, Writer inWriter, boolean inTimestamps,
-		boolean inExportPhoto, boolean inExportAudio)
+	private static void exportTrackpoint(DataPoint inPoint, Writer inWriter, SettingsForExport inSettings)
 		throws IOException
 	{
 		inWriter.write("\t\t\t<trkpt lat=\"");
@@ -750,24 +752,24 @@ public class GpxExporter extends GenericFunction implements Runnable
 		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
 		inWriter.write("\">\n");
 		// altitude
-		if (inPoint.hasAltitude())
+		if (inPoint.hasAltitude() || inSettings.getExportMissingAltitudesAsZero())
 		{
 			inWriter.write("\t\t\t\t<ele>");
-			inWriter.write("" + inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
+			inWriter.write(inPoint.hasAltitude() ? inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES) : "0");
 			inWriter.write("</ele>\n");
 		}
 		// timestamp if available (and selected)
-		if (inPoint.hasTimestamp() && inTimestamps)
+		if (inPoint.hasTimestamp() && inSettings.getExportTimestamps())
 		{
 			inWriter.write("\t\t\t\t<time>");
 			inWriter.write(inPoint.getTimestamp().getText(Timestamp.Format.ISO8601));
 			inWriter.write("</time>\n");
 		}
 		// photo, audio
-		if (inPoint.getPhoto() != null && inExportPhoto) {
+		if (inPoint.getPhoto() != null && inSettings.getExportPhotoPoints()) {
 			inWriter.write(makeMediaLink(inPoint.getPhoto()));
 		}
-		if (inPoint.getAudio() != null && inExportAudio) {
+		if (inPoint.getAudio() != null && inSettings.getExportAudioPoints()) {
 			inWriter.write(makeMediaLink(inPoint.getAudio()));
 		}
 		inWriter.write("\t\t\t</trkpt>\n");

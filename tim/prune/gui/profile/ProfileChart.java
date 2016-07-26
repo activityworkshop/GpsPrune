@@ -136,8 +136,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 
 			// horizontal lines for scale - set to round numbers eg 500
 			int lineScale = getLineScale(minValue, maxValue);
-			int scaleValue = (int) (minValue/lineScale + 1) * lineScale;
-			if (minValue < 0.0) {scaleValue -= lineScale;}
+			double scaleValue = Math.ceil(minValue/lineScale) * lineScale;
 			int x = 0, y = 0;
 			final int zeroY = height - BORDER_WIDTH - (int) (yScaleFactor * (0.0 - minValue));
 
@@ -223,7 +222,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 					if (y < (BORDER_WIDTH + textHeight)) {
 						y = BORDER_WIDTH + textHeight;
 					}
-					g.drawString(""+scaleValue, BORDER_WIDTH + 5, y);
+					g.drawString(""+(int)scaleValue, BORDER_WIDTH + 5, y);
 					scaleValue += lineScale;
 				}
 			}
