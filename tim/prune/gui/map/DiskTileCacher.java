@@ -46,10 +46,9 @@ public class DiskTileCacher implements Runnable
 	 * Get the specified tile from the disk cache
 	 * @param inBasePath base path to whole disk cache
 	 * @param inTilePath relative path to requested tile
-	 * @param inCheckAge true to check age of file, false to ignore
 	 * @return tile image if available, or null if not there
 	 */
-	public static Image getTile(String inBasePath, String inTilePath, boolean inCheckAge)
+	public static MapTile getTile(String inBasePath, String inTilePath)
 	{
 		if (inBasePath == null) {return null;}
 		File tileFile = new File(inBasePath, inTilePath);
@@ -57,17 +56,17 @@ public class DiskTileCacher implements Runnable
 		if (tileFile.exists() && tileFile.canRead() && tileFile.length() > 0)
 		{
 			long fileStamp = tileFile.lastModified();
-			if (!inCheckAge || ((System.currentTimeMillis()-fileStamp) < CACHE_TIME_LIMIT))
+			boolean isExpired = ((System.currentTimeMillis()-fileStamp) > CACHE_TIME_LIMIT);
+			try
 			{
-				try {
-					image = Toolkit.getDefaultToolkit().createImage(tileFile.getAbsolutePath());
-				}
-				catch (Exception e) {
-					System.err.println("createImage: " + e.getClass().getName() + " _ " + e.getMessage());
-				}
+				image = Toolkit.getDefaultToolkit().createImage(tileFile.getAbsolutePath());
+				return new MapTile(image, isExpired);
+			}
+			catch (Exception e) {
+				System.err.println("createImage: " + e.getClass().getName() + " _ " + e.getMessage());
 			}
 		}
-		return image;
+		return null;
 	}
 
 	/**
@@ -76,31 +75,28 @@ public class DiskTileCacher implements Runnable
 	 * @param inBasePath base path to disk cache
 	 * @param inTilePath relative path to this tile
 	 * @param inObserver observer to inform when load complete
-	 * @return true if successful, false for failure
 	 */
-	public static boolean saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver)
+	public static void saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver)
 	{
-		if (inBasePath == null || inTilePath == null) {return false;}
+		if (inBasePath == null || inTilePath == null) {return;}
 		// save file if possible
 		File basePath = new File(inBasePath);
 		if (!basePath.exists() || !basePath.isDirectory() || !basePath.canWrite()) {
 			// Can't write to base path
-			return false;
+			return;
 		}
 		File tileFile = new File(basePath, inTilePath);
 		// Check if this file is already being loaded
-		if (isBeingLoaded(tileFile)) {return true;}
+		if (isBeingLoaded(tileFile)) {return;}
 		// Check if it has already failed
-		if (BLOCKED_URLS.contains(inUrl.toString())) {return true;}
+		if (BLOCKED_URLS.contains(inUrl.toString())) {return;}
 
 		File dir = tileFile.getParentFile();
 		// Start a new thread to load the image if necessary
 		if ((dir.exists() || dir.mkdirs()) && dir.canWrite())
 		{
 			new Thread(new DiskTileCacher(inUrl, tileFile, inObserver)).start();
-			return true;
 		}
-		return false; // couldn't write the file
 	}
 
 	/**
@@ -141,6 +137,7 @@ public class DiskTileCacher implements Runnable
 		{
 			// Open streams from URL and to file
 			out = new FileOutputStream(tempFile);
+			//System.out.println("Opening URL: " + _url.toString());
 			// Set http user agent on connection
 			URLConnection conn = _url.openConnection();
 			conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
@@ -165,7 +162,7 @@ public class DiskTileCacher implements Runnable
 			}
 		}
 		// Move temp file to desired file location
-		if (!tempFile.renameTo(_file))
+		if (tempFile.exists() && !tempFile.renameTo(_file))
 		{
 			// File couldn't be moved - delete both to be sure
 			tempFile.delete();

@@ -39,6 +39,7 @@ import tim.prune.I18nManager;
 import tim.prune.function.browser.BrowserLauncher;
 import tim.prune.gui.GuiGridLayout;
 import tim.prune.save.GpxExporter;
+import tim.prune.save.SettingsForExport;
 
 /**
  * Function to upload track information up to Gpsies.com
@@ -279,9 +280,9 @@ public class UploadGpsiesFunction extends GenericFunction
 			_writer = new OutputStreamWriter(oStream);
 			new Thread(new Runnable() {
 				public void run() {
-					boolean[] saveFlags = {true, true, true, true, false, true}; // export everything
 					try {
-						GpxExporter.exportData(_writer, _app.getTrackInfo(), _nameField.getText(), null, saveFlags, null);
+						GpxExporter.exportData(_writer, _app.getTrackInfo(), _nameField.getText(),
+							null, new SettingsForExport(), null);
 					} catch (IOException e) {}
 					finally {
 						try {_writer.close();} catch (IOException e) {}

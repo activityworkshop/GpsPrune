@@ -168,6 +168,7 @@ public class AboutScreen extends GenericFunction
 		creditsPanel.setLayout(gridBag);
 		constraints = new GridBagConstraints();
 		constraints.weightx = 0.0; constraints.weighty = 0.0;
+		constraints.ipady = 3;
 
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.code") + " : "),
@@ -200,7 +201,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d, Gy\u00F6rgy,"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter, Cristian"),
+			new JLabel(" HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter, Cristian, Roman"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
