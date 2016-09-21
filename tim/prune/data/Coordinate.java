@@ -255,15 +255,19 @@ public abstract class Coordinate
 		// Make a string to display on screen
 		_cardinal = inCardinal;
 		_originalFormat = FORMAT_NONE;
-		if (inFormat == FORMAT_NONE) inFormat = FORMAT_DEG_WITHOUT_CARDINAL;
-		_originalString = output(inFormat);
-		_originalFormat = inFormat;
+		if (inFormat == FORMAT_NONE || inFormat == FORMAT_DEG_WITHOUT_CARDINAL){
+			_originalString = Double.toString(inValue);
+			_originalFormat = FORMAT_DEG_WITHOUT_CARDINAL;
+		} else {
+			_originalString = output(inFormat);
+			_originalFormat = inFormat;
+		}
 		_valid = true;
 	}
 
 
 	/**
-	 * @return coordinate as a double
+	 * @return coordinate as a double, in degrees
 	 */
 	public double getDouble()
 	{
