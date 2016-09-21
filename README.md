@@ -1,6 +1,3 @@
-# super-octo-memory
-Super-octo-memory was created on the request of a client who wished to do some things with gpx files that were not well supported by any existing software. To satisfy their needs, it was decided to build on the existing gpsprune software. Under the GNU GPL, the changes must be made publicly available free of charge. Since the client is reluctant to do this, no documentation of the new features is present at this time. 
-
 # GpsPrune
 GpsPrune is a map-based application for viewing, editing and converting coordinate data from GPS systems.
 
