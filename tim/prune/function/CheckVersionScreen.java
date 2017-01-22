@@ -42,7 +42,7 @@ public class CheckVersionScreen extends GenericFunction
 	 */
 	public void begin()
 	{
-		final String filePathStart = "http://activityworkshop.net/software/gpsprune/gpsprune_versioncheck_";
+		final String filePathStart = "https://activityworkshop.net/software/gpsprune/gpsprune_versioncheck_";
 		final String filePathEnd = ".txt";
 		String latestVer = null;
 		String nextVersion = null;

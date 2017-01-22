@@ -304,7 +304,8 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			if (srtmDir.exists() && srtmDir.isDirectory() && srtmDir.canRead())
 			{
 				File srtmFile = new File(srtmDir, new File(inUrl.getFile()).getName());
-				if (srtmFile.exists() && srtmFile.isFile() && srtmFile.canRead())
+				if (srtmFile.exists() && srtmFile.isFile() && srtmFile.canRead()
+					&& srtmFile.length() > 400)
 				{
 					// System.out.println("Lookup: Using file " + srtmFile.getAbsolutePath());
 					// File found, use this one

@@ -204,7 +204,7 @@ public class DownloadSrtmFunction extends GenericFunction implements Runnable
 			if (srtmDir.exists() && srtmDir.isDirectory() && srtmDir.canRead())
 			{
 				File srtmFile = new File(srtmDir, new File(inUrl.getFile()).getName());
-				if (!srtmFile.exists() || !srtmFile.canRead() || srtmFile.length() <= 1) {
+				if (!srtmFile.exists() || !srtmFile.canRead() || srtmFile.length() <= 400) {
 					return srtmFile;
 				}
 			}

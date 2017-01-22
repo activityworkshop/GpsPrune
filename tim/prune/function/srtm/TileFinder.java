@@ -13,7 +13,7 @@ import java.util.ArrayList;
 public abstract class TileFinder
 {
 	/** URL prefix for all tiles */
-	private static final String URL_PREFIX = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
+	private static final String URL_PREFIX = "https://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
 	/** Directory names for each continent */
 	private static final String[] CONTINENTS = {"", "Eurasia", "North_America", "Australia",
 		"Islands", "South_America", "Africa"};
