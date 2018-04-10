@@ -1,7 +1,3 @@
-/*       |         |         |         |         |         |         |         |
- *      10        20        30        40        50        60        70        80
- */
-
 package tim.prune.save;
 
 import java.awt.BorderLayout;
@@ -57,7 +53,7 @@ import tim.prune.threedee.TerrainHelper;
 import tim.prune.threedee.ThreeDModel;
 
 /**
- * Class to export a 3d scene of the track to a specified Pov file.
+ * Class to export a 3d scene of the track to a specified Pov file
  */
 public class PovExporter extends Export3dFunction
 {
@@ -107,7 +103,7 @@ public class PovExporter extends Export3dFunction
 	private String _lonUnit = "m";
 
 	/** Length of distance markers for longitude */
-	private double _lonArrow =  1.0d;
+	private double _lonArrow =  1.0;
 
 	/** Distance in m for labeling latitude */
 	private int _latLength = 1;
@@ -116,21 +112,22 @@ public class PovExporter extends Export3dFunction
 	private String _latUnit = "m";
 
 	/** Length of distance markers for latitude */
-	private double _latArrow =  1.0d;
+	private double _latArrow =  1.0;
 
 	/** Distance in m for labeling altitude */
 	private int _altLength = 1;
 
 	/** The unit for labeling altitude */
-	private String _alttUnit = "m";
+	private String _altUnit = "m";
 
 	/** Length of distance markers for altitude */
-	private double _altArrow = 1.0d;
+	private double _altArrow = 1.0;
 
 	// defaults
 	private static final double DEFAULT_CAMERA_DISTANCE = 30.0;
 	private static final double MODEL_SCALE_FACTOR = 20.0;
 	private static final String DEFAULT_FONT_FILE = "crystal.ttf";
+
 
 	/**
 	 * Constructor
@@ -152,15 +149,13 @@ public class PovExporter extends Export3dFunction
 		_orthProjection = "orthographic";
 	}
 
-	/** Get the name key. */
-	public String getNameKey()
-	{
+	/** Get the name key */
+	public String getNameKey() {
 		return "function.exportpov";
 	}
 
 	/**
-	 * Set the coordinates for the camera (can be any scale).
-	 *
+	 * Set the coordinates for the camera (can be any scale)
 	 * @param inX X coordinate of camera
 	 * @param inY Y coordinate of camera
 	 * @param inZ Z coordinate of camera
@@ -182,8 +177,9 @@ public class PovExporter extends Export3dFunction
 		}
 	}
 
+
 	/**
-	 * Show the dialog to select options and export file.
+	 * Show the dialog to select options and export file
 	 */
 	public void begin()
 	{
@@ -224,6 +220,7 @@ public class PovExporter extends Export3dFunction
 		_dialog.setLocationByPlatform(true);
 		_dialog.setVisible(true);
 	}
+
 
 	/**
 	 * Make the dialog components to select the export options
@@ -462,8 +459,9 @@ public class PovExporter extends Export3dFunction
 		return panel;
 	}
 
+
 	/**
-	 * Select the file and export data to it.
+	 * Select the file and export data to it
 	 */
 	private void doExport()
 	{
@@ -558,8 +556,9 @@ public class PovExporter extends Export3dFunction
 		} while (chooseAgain);
 	}
 
+
 	/**
-	 * Export the data to the specified file(s).
+	 * Export the data to the specified file(s)
 	 *
 	 * @param inPovFile File object to save pov file to
 	 * @param inImageFile file object to save image to
@@ -650,8 +649,7 @@ public class PovExporter extends Export3dFunction
 					// and the grid size
 					terrainTrack = terrainHelper.createGridTrack(_track);
 
-					// Get the altitudes from SRTM for all the points in the
-					// track
+					// Get the altitudes from SRTM for all the points in the track
 					LookupSrtmFunction srtmLookup = (LookupSrtmFunction)
 						FunctionLibrary.FUNCTION_LOOKUP_SRTM;
 					srtmLookup.begin(terrainTrack);
@@ -697,14 +695,15 @@ public class PovExporter extends Export3dFunction
 			}
 
 			// calculate distance in m per povray unit
-			double _lonConversion = 111319.49078d;	// Conversion degree to m
-			double _latConversion = 111132.95378d;	// Conversion degree to m
+			// TODO: Explain where these magic numbers come from
+			double _lonConversion = 111319.49078;	// Conversion degree to m
+			double _latConversion = 111132.95378;	// Conversion degree to m
 
 			/** TODO clarify why division by 2 is required for correct scaling
 				of latitude and longitude */
 			// X axis : longitude
 			double _lonPerUnit = _track.getLonRange().getRange()
-				* _lonConversion / _scaledLonRange.getRange() / 2.0d;
+				* _lonConversion / _scaledLonRange.getRange() / 2.0;
 
 			// Y axis : altitude
 			double _altPerUnit = _altRange.getRange()
@@ -712,7 +711,7 @@ public class PovExporter extends Export3dFunction
 
 			// Z axis : latitude
 			double _latPerUnit = _track.getLatRange().getRange()
-				* _latConversion / _scaledLatRange.getRange() / 2.0d;
+				* _latConversion / _scaledLatRange.getRange() / 2.0;
 
 			/*
 			System.out.println("PovExporter");
@@ -739,12 +738,12 @@ public class PovExporter extends Export3dFunction
 			int _altExp = (int) Math.log10(_altPerUnit);
 
 			// Distance in m for labeling longitude
-			_lonLength = (int) Math.pow(10.0d, _lonExp + 1);
+			_lonLength = (int) Math.pow(10.0, _lonExp + 1);
 			// Length of distance marker for longitude
 			_lonArrow =  (double) _lonLength / (double) _lonScale;
-			while (_lonArrow < 2.0d)
+			while (_lonArrow < 2.0)
 			{
-				_lonArrow *= 10.0d;
+				_lonArrow *= 10.0;
 				_lonLength *= 10;
 			}
 			if (_lonLength > 1000)
@@ -754,12 +753,12 @@ public class PovExporter extends Export3dFunction
 			}
 
 			// Distance in m for labeling latitude
-			_latLength = (int) Math.pow(10.0d, _latExp + 1);
+			_latLength = (int) Math.pow(10.0, _latExp + 1);
 			// Length of distance marker for latitude
 			_latArrow =  (double) _latLength / (double) _latScale;
-			while (_latArrow < 2.0d)
+			while (_latArrow < 2.0)
 			{
-				_latArrow *= 10.0d;
+				_latArrow *= 10.0;
 				_latLength *= 10;
 			}
 			if (_latLength > 1000)
@@ -768,14 +767,16 @@ public class PovExporter extends Export3dFunction
 				_latUnit = "km";
 			}
 
+			// FIXME: This assumes that the user wants metric units, need to also offer imperial
 			// Distance in m for labeling altitude
-			_altLength = (int) Math.pow(10.0d, _altExp + 1);
+			_altLength = (int) Math.pow(10.0, _altExp + 1);
 			// Length of distance marker for altitude
 			_altArrow = (double) _altLength / (double) _altPerUnit;
 			if (_altLength > 1000)
 			{
 				_altLength /= 1000;
-				_alttUnit = "km";
+				_altUnit = "km";
+				// FIXME: Need to use text token for "m" and "km"
 			}
 
 			/*
@@ -792,7 +793,7 @@ public class PovExporter extends Export3dFunction
 			writer = new FileWriter(inPovFile);
 			writeStartOfFile(writer, lineSeparator,
 				useImage ? inImageFile : null,
-					useTerrain ? inTerrainFile : null,
+				useTerrain ? inTerrainFile : null,
 				_orthographicButton.isSelected() ?
 					_orthProjection : _persProjection,
 				_cartographicLightingButton.isSelected() ?
@@ -845,14 +846,16 @@ public class PovExporter extends Export3dFunction
 		return false;
 	}
 
+
 	/**
-	 * Write the start of the Pov file, including base plane and lights.
+	 * Write the start of the Pov file, including base plane and lights
 	 *
 	 * @param inWriter Writer to use for writing file
 	 * @param inLineSeparator line separator to use
 	 * @param inImageFile image file to reference (or null if none)
 	 * @param inTerrainFile terrain file to reference (or null if none)
-	 * @param type of projection
+	 * @param projection type of projection as string
+	 * @param lighting type of lighting as string
 	 * @throws IOException on file writing error
 	 */
 	private void writeStartOfFile(FileWriter inWriter, String inLineSeparator,
@@ -860,7 +863,7 @@ public class PovExporter extends Export3dFunction
 		String lighting) throws IOException
 	{
 		inWriter.write("// Pov file produced by GpsPrune - "
-			+ "see http://gpsprune.activityworkshop.net/");
+			+ "see https://gpsprune.activityworkshop.net/");
 		inWriter.write(inLineSeparator);
 		inWriter.write(inLineSeparator);
 		inWriter.write("// Render with command :");
@@ -1084,7 +1087,7 @@ public class PovExporter extends Export3dFunction
 			"	light_source { <0, -10, -2> color rgb <3 3 3> parallel }",
 			"	cylinder {",
 			"		<10.0, 0, -10.0>,",
-			"		<" + (10.0d - _lonArrow) + ", 0, -10.0>,",
+			"		<" + (10.0 - _lonArrow) + ", 0, -10.0>,",
 			"		0.05",
 			"		pigment { color rgb <1 0 0> }",
 			"  	}",
@@ -1092,7 +1095,7 @@ public class PovExporter extends Export3dFunction
 			"  		ttf \"" + fontPath + "\" \""
 						+ _lonLength + " " + _lonUnit + "\" 0.3, 0",
 			"  		pigment { color rgb <1 0 0> }",
-			"  		translate <" + (10.0d - _lonArrow / 1.3d) + ", -1.3, -10.0>",
+			"  		translate <" + (10.0 - _lonArrow / 1.3) + ", -1.3, -10.0>",
 			"	}",
 			"	global_lights on",
 			"}", "",
@@ -1103,7 +1106,7 @@ public class PovExporter extends Export3dFunction
 			"	light_source { <15, 0, -2> color rgb <3 3 3> parallel }",
 			"	cylinder {",
 			"		<10.0, 0, -10.0>,",
-			"		<10.0, 0, " +  (-10.0d + _latArrow) + ">,",
+			"		<10.0, 0, " +  (-10.0 + _latArrow) + ">,",
 			"   	0.05",
 			"		pigment { color rgb <1.0 0 0> }",
 			"  	}",
@@ -1111,7 +1114,7 @@ public class PovExporter extends Export3dFunction
 			"  		ttf \"" + fontPath + "\" \""
 						+ _latLength + " " + _latUnit + "\" 0.3, 0",
 			"  		pigment { color rgb <1 0 0> }",
-			"  		translate <11.5, 0.2, " + (-10.0d + _latArrow / 2.0d) + ">",
+			"  		translate <11.5, 0.2, " + (-10.0 + _latArrow / 2.0) + ">",
 			"	}",
 			"	global_lights on",
 			"}", "",
@@ -1133,9 +1136,9 @@ public class PovExporter extends Export3dFunction
 			"  	}",
 			"	text {",
 			"  		ttf \"" + fontPath + "\" \""
-						+ _altLength + " " + _alttUnit + "\" 0.3, 0",
+						+ _altLength + " " + _altUnit + "\" 0.3, 0",
 			"  		pigment { color rgb <1 0 0> }",
-			"  		translate <10.5, " + (_altArrow / 2.0d) + ", 10.0>",
+			"  		translate <10.5, " + (_altArrow / 2.0) + ", 10.0>",
 			"	}",
 			"	global_lights on",
 			"}", "",
@@ -1154,7 +1157,7 @@ public class PovExporter extends Export3dFunction
 
 		// write strings to file
 		int numLines = outputLines.length;
-		for (int i = 0; i < numLines; i++)
+		for (int i=0; i<numLines; i++)
 		{
 			inWriter.write(outputLines[i]);
 			inWriter.write(inLineSeparator);
@@ -1241,7 +1244,7 @@ public class PovExporter extends Export3dFunction
 	}
 
 	/**
-	 * Write out all the data points to the file in the balls-and-sticks style.
+	 * Write out all the data points to the file in the balls-and-sticks style
 	 *
 	 * @param inWriter Writer to use for writing file
 	 * @param inModel model object for getting scaled data points
@@ -1255,7 +1258,7 @@ public class PovExporter extends Export3dFunction
 		inWriter.write("// Data points:");
 		inWriter.write(inLineSeparator);
 		int numPoints = inModel.getNumPoints();
-		for (int i = 0; i < numPoints; i++)
+		for (int i=0; i<numPoints; i++)
 		{
 			// ball (different according to type)
 			if (inModel.getPointType(i) == ThreeDModel.POINT_TYPE_WAYPOINT)
@@ -1290,7 +1293,7 @@ public class PovExporter extends Export3dFunction
 	}
 
 	/**
-	 * Write out all the data points to the file in the balls-and-sticks style
+	 * Write out all the data points to the file in the "spheres" style
 	 * @param inWriter Writer to use for writing file
 	 * @param inModel model object for getting scaled data points
 	 * @param inLineSeparator line separator to use
@@ -1374,8 +1377,7 @@ public class PovExporter extends Export3dFunction
 			ModelSegment segment = segmentIterator.next();
 			int segLength = segment.getNumTrackPoints();
 
-			// if the track segment is long enough, do a cubic spline sphere
-			// sweep
+			// if the track segment is long enough, do a cubic spline sphere sweep
 			if (segLength <= 1)
 			{
 				// single point in segment - just draw sphere
@@ -1400,8 +1402,7 @@ public class PovExporter extends Export3dFunction
 	}
 
 	/**
-	 * Write out a single sphere sweep using either cubic spline or linear
-	 * spline.
+	 * Write out a single sphere sweep using either cubic spline or linear spline
 	 *
 	 * @param inWriter Writer to use for writing file
 	 * @param inModel model object for getting data points
@@ -1443,6 +1444,7 @@ public class PovExporter extends Export3dFunction
 		inWriter.write("}");
 		inWriter.write(inLineSeparator);
 	}
+
 
 	/**
 	 * Write out a single polygon-based wall for the tubes-and-walls style
@@ -1493,8 +1495,9 @@ public class PovExporter extends Export3dFunction
 		}
 	}
 
+
 	/**
-	 *
+	 * TODO: Method description?
 	 * @param inWriter Writer to use for writing file
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
@@ -1502,14 +1505,16 @@ public class PovExporter extends Export3dFunction
 	private static void writeEndOfFile(
 		FileWriter inWriter, String inLineSeparator) throws IOException
 	{
+		// FIXME: Rename method, this closes the light_group, not the end of the file
 		inWriter.write("}");
 		inWriter.write(inLineSeparator);
 	}
 
+
 	/**
-	 * @param inCode height code to check.
+	 * @param inCode height code to check
 	 *
-	 * @return validated height code within range 0 to max
+	 * @return validated height code within range 0 to maxHeightCode
 	 */
 	private static byte checkHeightCode(byte inCode)
 	{
@@ -1519,8 +1524,9 @@ public class PovExporter extends Export3dFunction
 		return inCode;
 	}
 
+
 	/**
-	 * Check the given coordinate.
+	 * Check the given string can be parsed into a double value (coordinate or size).
 	 *
 	 * @param inString String entered by user
 	 * @return validated String value

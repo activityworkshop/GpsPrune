@@ -53,17 +53,17 @@ public class ShowThreeDFunction extends GenericFunction
 	/** CheckBox for scaling */
 	private JCheckBox _scaleButton = null;
 
-	/** RadioButtons for orthographic projection */
+	/** RadioButton for orthographic projection */
 	private JRadioButton _orthographicButton = null;
 
-	/** RadioButtons for perspektive projection */
+	/** RadioButton for perspective projection */
 	private JRadioButton _perspectiveButton = null;
 
-	/** Radio buttons for style - balls on sticks or tubes or spheres */
+	/** Radio buttons for style - balls on sticks or just balls (spheres) */
 	private JRadioButton _ballsAndSticksButton = null;
 	private JRadioButton _spheresButton = null;
 
-	/** Radio button for lighting */
+	/** Radio buttons for lighting */
 	private JRadioButton _standardLightingButton = null;
 	private JRadioButton _cartographicLightingButton = null;
 
@@ -123,6 +123,7 @@ public class ShowThreeDFunction extends GenericFunction
 			if (exaggFactor > 0) {
 				_exaggField.setValue(exaggFactor / 100.0);
 			}
+			// TODO: Get lighting, projection, style from config too
 			_baseImagePanel.updateBaseImageDetails();
 			_dialog.setLocationRelativeTo(_app.getFrame());
 			_dialog.setVisible(true);
@@ -180,7 +181,7 @@ public class ShowThreeDFunction extends GenericFunction
 		innerPanel.add(exaggPanel);
 		innerPanel.add(Box.createVerticalStrut(4));
 
-		// Radio buttons for style - balls on sticks or tubes or spheres
+		// Radio buttons for style - balls on sticks or just balls (spheres)
 		JPanel stylePanel = new JPanel();
 		stylePanel.setLayout(new GridLayout(0, 2, 10, 4));
 		JLabel styleLabel = new JLabel(
@@ -337,6 +338,7 @@ public class ShowThreeDFunction extends GenericFunction
 		int terrainGridSize = _terrainPanel.getGridSize();
 		if (terrainGridSize < 20) {terrainGridSize = 20;}
 		Config.setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, terrainGridSize);
+		// TODO: Store lighting, projection, style in config too
 
 		ThreeDWindow window = WindowFactory.getWindow(_parentFrame);
 		if (window != null)

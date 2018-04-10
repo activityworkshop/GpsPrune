@@ -79,13 +79,13 @@ public class Java3DWindow implements ThreeDWindow
 	private ThreeDModel _model = null;
 	private OrbitBehavior _orbit = null;
 	private KeyNavigatorBehavior _keyNav = null;
-	private double _altFactor = -1.0d;
+	private double _altFactor = -1.0;
 
 	private static float _sphereSize = -1.0f;
 	private static float _rodSize = -1.0f;
 	private static boolean _showRods = true;
 	private boolean _parProjection = true;
-	private boolean _cartographic = true;
+	private boolean _cartographic = true; // Cartographic what?
 	private boolean _showScale = true;
 
 	private ImageDefinition _imageDefinition = null;
@@ -100,7 +100,7 @@ public class Java3DWindow implements ThreeDWindow
 	private String _lonUnit = "m";
 
 	/** Length of distance markers for longitude */
-	private double _lonArrow =  1.0d;
+	private double _lonArrow =  1.0;
 
 	/** Distance in m for labeling latitude */
 	private int _latLength = 1;
@@ -109,7 +109,7 @@ public class Java3DWindow implements ThreeDWindow
 	private String _latUnit = "m";
 
 	/** Length of distance markers for latitude */
-	private double _latArrow =  1.0d;
+	private double _latArrow =  1.0;
 
 	/** Distance in m for labeling altitude */
 	private int _altLength = 1;
@@ -118,7 +118,7 @@ public class Java3DWindow implements ThreeDWindow
 	private String _altUnit = "m";
 
 	/** Length of distance markers for altitude */
-	private double _altArrow = 1.0d;
+	private double _altArrow = 1.0;
 
 	/** only prompt about big track size once */
 	private static boolean TRACK_SIZE_WARNING_GIVEN = false;
@@ -126,10 +126,13 @@ public class Java3DWindow implements ThreeDWindow
 	// Constants
 	private static final double INITIAL_Y_ROTATION = 0.0;
 	private static final double INITIAL_X_ROTATION = 30.0;
+	// MAYBE: Use the same font for both?
 	private static final String CARDINALS_FONT = "Arial";
 	private static final String SCALING_FONT = "SansSerif";
+
 	private static final int MAX_TRACK_SIZE = 2500; // threshold for warning
 	private static final double MODEL_SCALE_FACTOR = 20.0;
+
 
 	/**
 	 * Constructor
@@ -139,6 +142,7 @@ public class Java3DWindow implements ThreeDWindow
 	{
 		_parentFrame = inFrame;
 	}
+
 
 	/**
 	 * Set the track object
@@ -176,6 +180,7 @@ public class Java3DWindow implements ThreeDWindow
 	/**
 	 * @param inStyle	<code>true</code> to show rods and spheres,
 	 * 					<code>false</code> to show only spheres
+	 * TODO: Rename method setShowRods?
 	 */
 	public void setStyle(boolean inStyle)
 	{
@@ -184,6 +189,7 @@ public class Java3DWindow implements ThreeDWindow
 
 	/**
 	 * @param inProjection	<code>true</code> for orthographic projection
+	 * TODO: Rename method setParallelProjection?
 	 */
 	public void setProjection(boolean inProjection)
 	{
@@ -191,7 +197,7 @@ public class Java3DWindow implements ThreeDWindow
 	}
 
 	/**
-	 * @param inCartographic	<code>true</code> for cartoographic lighting
+	 * @param inCartographic	<code>true</code> for cartographic lighting
 	 */
 	public void setCartographic(boolean inCartographic)
 	{
@@ -247,12 +253,10 @@ public class Java3DWindow implements ThreeDWindow
 		if (_altFactor < 0.0) {_altFactor = 1.0;}
 
 		// Set up the graphics config
-		GraphicsConfiguration config =
-			SimpleUniverse.getPreferredConfiguration();
+		GraphicsConfiguration config = SimpleUniverse.getPreferredConfiguration();
 		if (config == null)
 		{
-			// Config shouldn't be null, but we can try to create a new one as a
-			// workaround
+			// Config shouldn't be null, but we can try to create a new one
 			GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
 			gc.setDepthSize(0);
 			config = GraphicsEnvironment.getLocalGraphicsEnvironment()
@@ -265,8 +269,7 @@ public class Java3DWindow implements ThreeDWindow
 			throw new ThreeDException("Couldn't create graphics config");
 		}
 
-		// Check number of points in model isn't too big, and suggest
-		// compression
+		// Check number of points in model isn't too big, and suggest compression
 		Object[] buttonTexts = {I18nManager.getText("button.continue"),
 			I18nManager.getText("button.cancel")};
 		if (_track.getNumPoints() > MAX_TRACK_SIZE && !TRACK_SIZE_WARNING_GIVEN)
@@ -328,8 +331,7 @@ public class Java3DWindow implements ThreeDWindow
 		panel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
 		// Add button for exporting pov
-		JButton povButton =
-			new JButton(I18nManager.getText("function.exportpov"));
+		JButton povButton = new JButton(I18nManager.getText("function.exportpov"));
 		povButton.addActionListener(new ActionListener() {
 			/** Export pov button pressed */
 			public void actionPerformed(ActionEvent e)
@@ -341,8 +343,7 @@ public class Java3DWindow implements ThreeDWindow
 		panel.add(povButton);
 
 		// Add button for exporting svg
-		JButton svgButton =
-			new JButton(I18nManager.getText("function.exportsvg"));
+		JButton svgButton = new JButton(I18nManager.getText("function.exportsvg"));
 		svgButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
@@ -467,8 +468,7 @@ public class Java3DWindow implements ThreeDWindow
 				_dataStatus, _terrainDefinition);
 			if (terrainTrack == null)
 			{
-				// Construct the terrain track according to these extents and
-				// the grid size
+				// Construct the terrain track according to extents and grid size
 				terrainTrack = terrainHelper.createGridTrack(_track);
 				// Get the altitudes from SRTM for all the points in the track
 				LookupSrtmFunction srtmLookup =
@@ -510,12 +510,12 @@ public class Java3DWindow implements ThreeDWindow
 		// N, S, E, W
 		GeneralPath bevelPath = new GeneralPath();
 		bevelPath.moveTo(0.0f, 0.0f);
-		for (int i = 0; i < 91; i += 5)
+		for (int i=0; i<91; i+= 5)
 		{
 			bevelPath.lineTo((float) (0.1 - 0.1 * Math.cos(Math.toRadians(i))),
 			  (float) (0.1 * Math.sin(Math.toRadians(i))));
 		}
-		for (int i = 90; i > 0; i -= 5)
+		for (int i=90; i>0; i-=5)
 		{
 			bevelPath.lineTo((float) (0.3 + 0.1 * Math.cos(Math.toRadians(i))),
 			  (float) (0.1 * Math.sin(Math.toRadians(i))));
@@ -524,6 +524,7 @@ public class Java3DWindow implements ThreeDWindow
 			new Font(CARDINALS_FONT, Font.PLAIN, 1),
 			new FontExtrusion(bevelPath));
 
+		// TODO: Separate this duplicated code and call it 4 times
 		// Add north label with billboard behavior
 		TransformGroup subTgNorth = new TransformGroup();
 		subTgNorth.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
@@ -583,6 +584,7 @@ public class Java3DWindow implements ThreeDWindow
 			new Point3f(11f, 0f, 0f), compassFont));
 		*/
 
+		// TODO: Separate scale-showing into separate method
 		if (_showScale)
 		{
 			// calculate range for track height values, needed for altitude
@@ -793,6 +795,7 @@ public class Java3DWindow implements ThreeDWindow
 		pl4.setInfluencingBounds(bounds);
 		objTrans.addChild(pl4);
 
+		// TODO: Does "TransferGroup" mean "TransformGroup"?
 		// Add behaviour to rotate and move using keyboard
 		// x-axis :
 		// 		ALT <--		: move TransferGroup to the left
@@ -821,7 +824,7 @@ public class Java3DWindow implements ThreeDWindow
 	}
 
 	/**
-	 * Create a text object for compass point, N S E or W.
+	 * Create a text object for compass point, N S E or W
 	 *
 	 * @param text text to display
 	 * @param locn position at which to display
@@ -845,8 +848,9 @@ public class Java3DWindow implements ThreeDWindow
 		return shape;
 	}
 
+
 	/**
-	 * Make a Group of the data points to be added.
+	 * Make a Group of the data points to be added
 	 *
 	 * @param inModel	model containing data
 	 * @return			Group object containing spheres, rods etc
@@ -882,8 +886,9 @@ public class Java3DWindow implements ThreeDWindow
 		return group;
 	}
 
+
 	/**
-	 * Create a waypoint sphere.
+	 * Create a waypoint sphere
 	 *
 	 * @param inPointPos	position of point
 	 * @return				Group object containing sphere
@@ -891,11 +896,11 @@ public class Java3DWindow implements ThreeDWindow
 	private static Group createWaypoint(Point3d inPointPos)
 	{
 		Material mat = getWaypointMaterial();
-		// MAYBE: sort symbol scaling
-		// Sphere dot = new Sphere(0.35f); // * symbolScaling / 100f);
+		// TODO: Explain magic 1.5 factor
 		Sphere dot = new Sphere(_sphereSize * 1.5f);
 		return createBall(inPointPos, dot, mat);
 	}
+
 
 	/**
 	 * @return a new Material object to define waypoint colour / shine etc
@@ -907,6 +912,7 @@ public class Java3DWindow implements ThreeDWindow
 			 new Color3f(1.0f, 0.6f, 0.6f), 40.0f);
 	}
 
+
 	/**
 	 * @return track point object
 	 */
@@ -914,10 +920,10 @@ public class Java3DWindow implements ThreeDWindow
 	{
 		Material mat = getTrackpointMaterial(inHeightCode);
 		// MAYBE: sort symbol scaling
-		// Sphere dot = new Sphere(0.2f);
 		Sphere dot = new Sphere(_sphereSize);
 		return createBall(inPointPos, dot, mat);
 	}
+
 
 	/**
 	 * @return Material object for track points with the appropriate colour for
@@ -944,8 +950,9 @@ public class Java3DWindow implements ThreeDWindow
 		return mat;
 	}
 
+
 	/**
-	 * Create a ball at the given point.
+	 * Create a ball at the given point
 	 *
 	 * @param inPosition	scaled position of point
 	 * @param inSphere		sphere object
@@ -991,7 +998,7 @@ public class Java3DWindow implements ThreeDWindow
 	}
 
 	/**
-	 * Create a Java3d Shape for the terrain.
+	 * Create a Java3d Shape for the terrain
 	 *
 	 * @param inModel threedModel
 	 * @param inHelper terrain helper
@@ -1005,8 +1012,7 @@ public class Java3DWindow implements ThreeDWindow
 		final int RESULT_SIZE = numNodes * (numNodes * 2 - 2);
 		int[] stripData = inHelper.getStripLengths();
 
-		// Get the scaled terrainTrack coordinates (or just heights) from the
-		// model
+		// Get the scaled terrainTrack coordinates (or just heights) from the model
 		final int nSquared = numNodes * numNodes;
 		Point3d[] rawPoints = new Point3d[nSquared];
 		for (int i=0; i<nSquared; i++)
@@ -1029,8 +1035,7 @@ public class Java3DWindow implements ThreeDWindow
 			// one coord set of two dimensions
 			gi.setTextureCoordinateParams(1, 2);
 			gi.setTextureCoordinates(0, inHelper.getTextureCoordinates());
-			Texture mapImage =
-				new TextureLoader(inBaseImage.getImage()).getTexture();
+			Texture mapImage = new TextureLoader(inBaseImage.getImage()).getTexture();
 			tAppearance.setTexture(mapImage);
 			TextureAttributes texAttr = new TextureAttributes();
 			texAttr.setTextureMode(TextureAttributes.MODULATE);
@@ -1061,8 +1066,7 @@ public class Java3DWindow implements ThreeDWindow
 	private void callbackRender(Export3dFunction inFunction)
 	{
 		Transform3D trans3d = new Transform3D();
-		_orbit.getViewingPlatform().getViewPlatformTransform()
-			.getTransform(trans3d);
+		_orbit.getViewingPlatform().getViewPlatformTransform().getTransform(trans3d);
 		Matrix3d matrix = new Matrix3d();
 		trans3d.get(matrix);
 		Point3d point = new Point3d(0.0, 0.0, 1.0);

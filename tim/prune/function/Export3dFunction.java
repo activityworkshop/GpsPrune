@@ -17,6 +17,9 @@ public abstract class Export3dFunction extends GenericFunction
 	/** definition of base image */
 	protected ImageDefinition _imageDef = null;
 
+	// TODO: Add extra parameters for lighting, projection, style
+	// so that Java3dWindow can pass them to PovExport
+
 	/**
 	 * Required constructor
 	 * @param inApp App object
