@@ -21,6 +21,37 @@ public interface ThreeDWindow
 	public void setAltitudeFactor(double inFactor);
 
 	/**
+	 * @param inSphereSize	sphere size to use
+	 */
+	public void setSphereSize(float inSphereSize);
+
+	/**
+	 * @param inRodSize	rod size to use
+	 */
+	public void setRodSize(float inRodSize);
+
+	/**
+	 * @param inStyle	<code>true</code> to show rods and spheres,
+	 * 					<code>false</code> to show only spheres
+	 */
+	public void setStyle(boolean inStyle);
+
+	/**
+	 * @param inProjection <code>true</code> for orthographic projection
+	 */
+	public void setProjection(boolean inProjection);
+
+	/**
+	 * @param inShowScale	<code>true</code> to show scaling
+	 */
+	public void setShowScale(boolean inShowScale);
+
+	/**
+	 * @param inLighting	<code>true</code> for cartographic lighting
+	 */
+	public void setCartographic(boolean inCartographic);
+
+	/**
 	 * @param inDefinition image definition (image or not, source, zoom)
 	 */
 	public void setBaseImageParameters(ImageDefinition inDefinition);
