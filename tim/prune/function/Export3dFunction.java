@@ -6,7 +6,7 @@ import tim.prune.threedee.ImageDefinition;
 import tim.prune.threedee.TerrainDefinition;
 
 /**
- * Abstract superclass for pov and svg export functions
+ * Abstract superclass of any 3d export function, currently only the PovExporter
  */
 public abstract class Export3dFunction extends GenericFunction
 {

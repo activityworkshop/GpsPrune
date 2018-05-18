@@ -29,7 +29,7 @@ import tim.prune.function.gpsies.TrackListModel;
 
 /**
  * Function to load track information from any source,
- * subclassed for special cases gpsies or wikipedia
+ * subclassed for special cases like gpsies, wikipedia or OSM
  */
 public abstract class GenericDownloaderFunction extends GenericFunction implements Runnable
 {
@@ -116,16 +116,18 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 				if (!e.getValueIsAdjusting())
 				{
 					final int numSelected = _trackTable.getSelectedRowCount();
+					boolean foundUrl = false;
 					if (numSelected > 0)
 					{
 						setDescription(_trackListModel.getTrack(_trackTable.getSelectedRow()).getDescription());
 						_descriptionBox.setCaretPosition(0);
+						foundUrl = _trackListModel.getTrack(_trackTable.getSelectedRow()).getWebUrl() != null;
 					}
 					else {
 						_descriptionBox.setText("");
 					}
 					_loadButton.setEnabled(numSelected > 0);
-					_showButton.setEnabled(numSelected == 1);
+					_showButton.setEnabled(numSelected == 1 && foundUrl);
 				}
 			}
 		});

@@ -4,7 +4,7 @@ import tim.prune.I18nManager;
 import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
-import tim.prune.data.Timestamp;
+import tim.prune.data.TimestampUtc;
 
 /**
  * Class to try to match data with field names,
@@ -317,7 +317,7 @@ public abstract class FieldGuesser
 		{
 			// must be at least 7 characters long
 			if (inValue.length() < 7) {return false;}
-			Timestamp stamp = new Timestamp(inValue);
+			TimestampUtc stamp = new TimestampUtc(inValue);
 			return stamp.isValid();
 		}
 	}

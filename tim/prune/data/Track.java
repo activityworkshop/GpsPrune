@@ -320,7 +320,7 @@ public class Track
 	 * @param inUndo true for undo operation
 	 * @return true on success
 	 */
-	public boolean addTimeOffset(int inStart, int inEnd, long inOffset, boolean inUndo)
+	public boolean addTimeOffsetSeconds(int inStart, int inEnd, long inOffset, boolean inUndo)
 	{
 		// sanity check
 		if (inStart < 0 || inEnd < 0 || inStart >= inEnd || inEnd >= _numPoints) {
@@ -335,7 +335,7 @@ public class Track
 			{
 				// This point has a timestamp so add the offset to it
 				foundTimestamp = true;
-				p.addTimeOffset(inOffset);
+				p.addTimeOffsetSeconds(inOffset);
 				p.setModified(inUndo);
 			}
 		}

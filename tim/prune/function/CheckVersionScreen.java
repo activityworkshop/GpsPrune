@@ -106,7 +106,7 @@ public class CheckVersionScreen extends GenericFunction
 				== JOptionPane.YES_OPTION)
 			{
 				// User selected to launch home page
-				BrowserLauncher.launchBrowser("http://activityworkshop.net/software/gpsprune/download.html");
+				BrowserLauncher.launchBrowser("https://activityworkshop.net/software/gpsprune/download.html");
 			}
 		}
 	}

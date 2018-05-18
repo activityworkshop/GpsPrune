@@ -1,9 +1,12 @@
 package tim.prune.correlate;
 
 import java.util.ArrayList;
+import java.util.TimeZone;
+
 import javax.swing.table.AbstractTableModel;
 
 import tim.prune.I18nManager;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.DisplayUtils;
@@ -19,14 +22,18 @@ public class MediaPreviewTableModel extends AbstractTableModel
 	private ArrayList<MediaPreviewTableRow> _list = new ArrayList<MediaPreviewTableRow>();
 	/** Distance units */
 	private Unit _distanceUnits = UnitSetLibrary.UNITS_KILOMETRES;
+	/** Current timezone */
+	private TimeZone _timezone = null;
 
 
 	/**
 	 * Constructor
 	 * @param inFirstColumnKey key for first column heading
 	 */
-	public MediaPreviewTableModel(String inFirstColumnKey) {
+	public MediaPreviewTableModel(String inFirstColumnKey)
+	{
 		_firstColumnHeading = I18nManager.getText(inFirstColumnKey);
+		_timezone = TimezoneHelper.getSelectedTimezone();
 	}
 
 	/**
@@ -83,7 +90,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 		if (inColumnIndex == 0) return row.getMedia().getName();
 		else if (inColumnIndex == 1) {
 			if (row.getMedia().hasTimestamp()) {
-				return row.getMedia().getTimestamp().getText();
+				return row.getMedia().getTimestamp().getText(_timezone);
 			}
 			return ""; // media doesn't have a timestamp
 		}

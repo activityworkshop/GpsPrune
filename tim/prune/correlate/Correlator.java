@@ -6,8 +6,8 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Calendar;
 import java.util.Iterator;
+import java.util.TimeZone;
 import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
@@ -27,6 +27,7 @@ import javax.swing.JTextField;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.Field;
@@ -50,6 +51,7 @@ public abstract class Correlator extends GenericFunction
 	protected JTable _previewTable = null;
 	private boolean _previewEnabled = false; // flag required to enable preview function on final panel
 	private boolean[] _cardEnabled = null; // flag for each card
+	private TimeZone _timezone = null;
 	private JTextField _offsetHourBox = null, _offsetMinBox = null, _offsetSecBox = null;
 	private JRadioButton _mediaLaterOption = null, _pointLaterOption = null;
 	private JRadioButton _timeLimitRadio = null, _distLimitRadio = null;
@@ -58,6 +60,7 @@ public abstract class Correlator extends GenericFunction
 	private JComboBox<String> _distUnitsDropdown = null;
 	private JButton _nextButton = null, _backButton = null;
 	protected JButton _okButton = null;
+
 
 	/**
 	 * Constructor
@@ -110,13 +113,17 @@ public abstract class Correlator extends GenericFunction
 			_dialog.getContentPane().add(makeDialogContents());
 			_dialog.pack();
 		}
+		_okButton.setEnabled(false);
+		// Init timezone to the currently selected one
+		_timezone = TimezoneHelper.getSelectedTimezone();
 		// Go to first available card
 		int card = 0;
 		_cardEnabled = null;
-		while (!isCardEnabled(card)) {card++;}
+		while (!isCardEnabled(card)) {
+			card++;
+		}
 		_cards.showCard(card);
 		showCard(0); // does set up and next/prev enabling
-		_okButton.setEnabled(false);
 		if (!isCardEnabled(1)) {
 			_app.showTip(TipManager.Tip_ManuallyCorrelateOne);
 		}
@@ -205,7 +212,7 @@ public abstract class Correlator extends GenericFunction
 				&& media.getOriginalStatus() == MediaObject.Status.NOT_CONNECTED)
 			{
 				// Calculate time difference, add to table model
-				long timeDiff = getMediaTimestamp(media).getSecondsSince(media.getDataPoint().getTimestamp());
+				long timeDiff = getMediaTimestamp(media).getSecondsSince(media.getDataPoint().getTimestamp(), _timezone);
 				model.addMedia(media, timeDiff);
 			}
 		}
@@ -239,27 +246,6 @@ public abstract class Correlator extends GenericFunction
 		}
 		catch (NumberFormatException nfe) {}
 		return value;
-	}
-
-
-	/**
-	 * @param inFirstTimestamp timestamp of first photo / audio object, or null if not available
-	 * @return time difference of local time zone from UTC when the first photo was taken
-	 */
-	private static TimeDifference getTimezoneOffset(Timestamp inFirstTimestamp)
-	{
-		Calendar cal = null;
-		// Use first timestamp if available
-		if (inFirstTimestamp != null) {
-			cal = inFirstTimestamp.getCalendar();
-		}
-		else {
-			// No photo or no timestamp, just use current time
-			cal = Calendar.getInstance();
-		}
-		// Both time zone offset and dst offset are based on milliseconds, so convert to seconds
-		TimeDifference timeDiff = new TimeDifference((cal.get(Calendar.ZONE_OFFSET) + cal.get(Calendar.DST_OFFSET)) / 1000);
-		return timeDiff;
 	}
 
 
@@ -478,7 +464,9 @@ public abstract class Correlator extends GenericFunction
 	 */
 	private boolean isCardEnabled(int inCardNum)
 	{
-		if (_cardEnabled == null) {_cardEnabled = getCardEnabledFlags();}
+		if (_cardEnabled == null) {
+			_cardEnabled = getCardEnabledFlags();
+		}
 		return (inCardNum >= 0 && inCardNum < _cardEnabled.length && _cardEnabled[inCardNum]);
 	}
 
@@ -595,7 +583,9 @@ public abstract class Correlator extends GenericFunction
 	public void createPreview(boolean inFromButton)
 	{
 		// Exit if still on first panel
-		if (!_previewEnabled) {return;}
+		if (!_previewEnabled) {
+			return;
+		}
 		// Create a TimeDifference based on the edit boxes
 		int numHours = getValue(_offsetHourBox.getText());
 		int numMins = getValue(_offsetMinBox.getText());
@@ -615,12 +605,8 @@ public abstract class Correlator extends GenericFunction
 		TimeDifference timeDiff = inTimeDiff;
 		if (timeDiff == null)
 		{
-			// No time difference available, so calculate based on computer's time zone
-			Timestamp tstamp = null;
-			if (inFirstMedia != null) {
-				tstamp = inFirstMedia.getTimestamp();
-			}
-			timeDiff = getTimezoneOffset(tstamp);
+			// No time difference available, so try with zero
+			timeDiff = new TimeDifference(0L);
 		}
 		// Use time difference to set edit boxes
 		_offsetHourBox.setText("" + timeDiff.getNumHours());
@@ -664,7 +650,7 @@ public abstract class Correlator extends GenericFunction
 		if (inMedia.hasTimestamp())
 		{
 			// Add/subtract offset to media timestamp
-			Timestamp mediaStamp = getMediaTimestamp(inMedia).createMinusOffset(inOffset);
+			Timestamp mediaStamp = getMediaTimestamp(inMedia);
 			int numPoints = inTrack.getNumPoints();
 			for (int i=0; i<numPoints; i++)
 			{
@@ -674,7 +660,8 @@ public abstract class Correlator extends GenericFunction
 					Timestamp pointStamp = point.getTimestamp();
 					if (pointStamp != null && pointStamp.isValid())
 					{
-						long numSeconds = pointStamp.getSecondsSince(mediaStamp);
+						long numSeconds = pointStamp.getSecondsSince(mediaStamp, _timezone)
+							+ inOffset.getTotalSeconds();
 						pair.addPoint(point, numSeconds);
 					}
 				}

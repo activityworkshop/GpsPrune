@@ -46,7 +46,7 @@ public class ColourerCaretaker implements DataSubscriber
 	public void dataUpdated(byte inUpdateType)
 	{
 		if ((inUpdateType &
-			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED)) > 0
+			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.UNITS_CHANGED)) > 0
 			&& _colourer != null)
 		{
 			_colourer.calculateColours(_app.getTrackInfo());

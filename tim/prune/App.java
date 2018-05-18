@@ -24,10 +24,10 @@ import tim.prune.data.TrackInfo;
 import tim.prune.data.SourceInfo.FILE_TYPE;
 import tim.prune.data.Unit;
 import tim.prune.function.AsyncMediaLoader;
-import tim.prune.function.SaveConfig;
 import tim.prune.function.SelectTracksFunction;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.function.edit.PointEditor;
+import tim.prune.function.settings.SaveConfig;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.SidebarController;
 import tim.prune.gui.UndoManager;
@@ -402,16 +402,16 @@ public class App
 	}
 
 	/**
-	 * Complete the add time offset function with the specified offset
+	 * Complete the add time offset function with the specified offset in seconds
 	 * @param inTimeOffset time offset to add (+ve for add, -ve for subtract)
 	 */
-	public void finishAddTimeOffset(long inTimeOffset)
+	public void finishAddTimeOffsetSeconds(long inTimeOffset)
 	{
 		// Construct undo information
 		int selStart = _trackInfo.getSelection().getStart();
 		int selEnd = _trackInfo.getSelection().getEnd();
 		UndoAddTimeOffset undo = new UndoAddTimeOffset(selStart, selEnd, inTimeOffset);
-		if (_trackInfo.getTrack().addTimeOffset(selStart, selEnd, inTimeOffset, false))
+		if (_trackInfo.getTrack().addTimeOffsetSeconds(selStart, selEnd, inTimeOffset, false))
 		{
 			_undoStack.add(undo);
 			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_EDITED);

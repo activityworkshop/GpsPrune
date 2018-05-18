@@ -2,11 +2,12 @@ package tim.prune.data;
 
 /**
  * Represents a range of integers, holding the maximum and
- * minimum values.  Values assumed to be >= 0.
+ * minimum values.
  */
 public class IntegerRange
 {
 	private int _min = -1, _max = -1;
+	private boolean _foundValues = false;
 
 
 	/**
@@ -16,22 +17,31 @@ public class IntegerRange
 	{
 		_min = -1;
 		_max = -1;
+		_foundValues = false;
 	}
 
 
 	/**
 	 * Add a value to the range
-	 * @param inValue value to add, only positive values considered
+	 * @param inValue value to add
 	 */
 	public void addValue(int inValue)
 	{
-		if (inValue >= 0)
-		{
-			if (inValue < _min || _min < 0) _min = inValue;
-			if (inValue > _max) _max = inValue;
+		if (inValue < _min || !_foundValues) {
+			_min = inValue;
 		}
+		if (inValue > _max || !_foundValues) {
+			_max = inValue;
+		}
+		_foundValues = true;
 	}
 
+	/**
+	 * @return true if any values added to the range
+	 */
+	public boolean hasValues() {
+		return _foundValues;
+	}
 
 	/**
 	 * @return minimum value, or -1 if none found

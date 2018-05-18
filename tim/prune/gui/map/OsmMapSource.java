@@ -19,6 +19,9 @@ public class OsmMapSource extends MapSource
 	private String[] _siteNames = null;
 	/** Maximum zoom level */
 	private int _maxZoom = 0;
+	/** API key, usually remains empty */
+	private String _apiKey = null;
+
 
 	/**
 	 * Constructor giving single name and url
@@ -93,6 +96,12 @@ public class OsmMapSource extends MapSource
 		_maxZoom = inMaxZoom;
 	}
 
+	/** Set the API key (if required) */
+	public void setApiKey(String inKey)
+	{
+		_apiKey = inKey;
+	}
+
 	/**
 	 * Construct a new map source from its config string
 	 * @param inConfigString string from Config, separated by semicolons
@@ -147,8 +156,15 @@ public class OsmMapSource extends MapSource
 	public String makeURL(int inLayerNum, int inZoom, int inX, int inY)
 	{
 		// Check if the base url has a [1234], if so replace at random
-		return pickServerUrl(_baseUrls[inLayerNum])
-			+ inZoom + "/" + inX + "/" + inY + "." + getFileExtension(inLayerNum);
+		StringBuffer url = new StringBuffer();
+		url.append(pickServerUrl(_baseUrls[inLayerNum]));
+		url.append(inZoom).append('/').append(inX).append('/').append(inY);
+		url.append('.').append(getFileExtension(inLayerNum));
+		if (_apiKey != null)
+		{
+			url.append("?apikey=").append(_apiKey);
+		}
+		return url.toString();
 	}
 
 	/**

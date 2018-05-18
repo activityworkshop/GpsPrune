@@ -440,6 +440,11 @@ public class TextFileLoader
 			_vSpeedUnitsDropdown.addItem(I18nManager.getText(spUnit.getNameKey()));
 		}
 		vSpeedGrid.add(_vSpeedUnitsDropdown);
+		final String vSpeedLabelText = I18nManager.getText("dialog.openoptions.vspeed.intro");
+		if (!vSpeedLabelText.isEmpty()) {
+			vSpeedGrid.add(new JLabel(vSpeedLabelText));
+			vSpeedGrid.add(new JLabel(""));
+		}
 		_vSpeedUpwardsRadio = new JRadioButton(I18nManager.getText("dialog.openoptions.vspeed.positiveup"));
 		JRadioButton vSpeedDownwardsRadio = new JRadioButton(I18nManager.getText("dialog.openoptions.vspeed.positivedown"));
 		ButtonGroup vSpeedDirGroup = new ButtonGroup();

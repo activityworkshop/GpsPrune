@@ -1,6 +1,5 @@
 package tim.prune.function.deletebydate;
 
-import java.text.DateFormat;
 import javax.swing.table.AbstractTableModel;
 import tim.prune.I18nManager;
 
@@ -12,8 +11,6 @@ public class DeletionTableModel extends AbstractTableModel
 	/** info list, one for each row of table */
 	private DateInfoList _infoList = null;
 
-	/** Formatter, determining how dates appear in the table */
-	private static final DateFormat DEFAULT_DATE_FORMAT = DateFormat.getDateInstance();
 	/** Column heading for date */
 	private static final String COLUMN_HEADING_DATE = I18nManager.getText("fieldname.date");
 	/** Column heading for number of points */
@@ -110,7 +107,7 @@ public class DeletionTableModel extends AbstractTableModel
 	}
 
 	/**
-	 * @return cell contents at the given row, column inded
+	 * @return cell contents at the given row, column index
 	 */
 	public Object getValueAt(int inRowIndex, int inColIndex)
 	{
@@ -124,7 +121,7 @@ public class DeletionTableModel extends AbstractTableModel
 						if (info.isDateless()) {
 							return I18nManager.getText("dialog.deletebydate.nodate");
 						}
-						return DEFAULT_DATE_FORMAT.format(info.getDate());
+						return info.getString();
 					case 1: // number of points
 						return info.getPointCount();
 					case 2: // keep

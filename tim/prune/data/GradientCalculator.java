@@ -40,7 +40,7 @@ public abstract class GradientCalculator
 				&& p.hasAltitude() && q.hasAltitude())
 			{
 				final double horizRads = DataPoint.calculateRadiansBetween(p, point) +
-					DataPoint.calculateRadiansBetween(point,  q);
+					DataPoint.calculateRadiansBetween(point, q);
 				final double horizDist = Distance.convertRadiansToDistance(horizRads, UnitSetLibrary.UNITS_METRES);
 				final double heightDiff = q.getAltitude().getMetricValue() - p.getAltitude().getMetricValue();
 				// Get gradient in radians

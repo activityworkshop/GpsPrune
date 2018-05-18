@@ -684,7 +684,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 					// Add timestamp (if any) to the list
 					whenList.append("<when>");
 					if (point.hasTimestamp()) {
-						whenList.append(point.getTimestamp().getText(Timestamp.Format.ISO8601));
+						whenList.append(point.getTimestamp().getText(Timestamp.Format.ISO8601, null));
 					}
 					whenList.append("</when>\n");
 					// Add coordinates to the list

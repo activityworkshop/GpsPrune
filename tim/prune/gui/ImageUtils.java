@@ -39,6 +39,9 @@ public abstract class ImageUtils
 	 */
 	public static BufferedImage createScaledImage(Image inImage, int inWidth, int inHeight)
 	{
+		if (inWidth <= 0 || inHeight <= 0) {
+			return null;
+		}
 		// create smaller image and force its loading
 		Image smallerImage = inImage.getScaledInstance(inWidth, inHeight, Image.SCALE_SMOOTH);
 		Image tempImage = new ImageIcon(smallerImage).getImage();

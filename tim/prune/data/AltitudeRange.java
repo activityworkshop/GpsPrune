@@ -170,27 +170,25 @@ public class AltitudeRange
 	 */
 	public boolean hasRange()
 	{
-		return _range.getMaximum() > _range.getMinimum();
+		return _range.hasValues();
 	}
 
 
 	/**
 	 * @param inUnit altitude units to use
-	 * @return minimum value, or -1 if none found
+	 * @return minimum value
 	 */
 	public int getMinimum(Unit inUnit)
 	{
-		if (_range.getMinimum() <= 0) return _range.getMinimum();
 		return (int) (_range.getMinimum() * inUnit.getMultFactorFromStd());
 	}
 
 	/**
 	 * @param inUnit altitude units to use
-	 * @return maximum value, or -1 if none found
+	 * @return maximum value
 	 */
 	public int getMaximum(Unit inUnit)
 	{
-		if (_range.getMaximum() <= 0) return _range.getMaximum();
 		return (int) (_range.getMaximum() * inUnit.getMultFactorFromStd());
 	}
 

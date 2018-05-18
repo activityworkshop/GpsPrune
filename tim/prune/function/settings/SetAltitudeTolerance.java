@@ -1,10 +1,11 @@
-package tim.prune.function;
+package tim.prune.function.settings;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.Unit;
+import tim.prune.function.SingleNumericParameterFunction;
 
 /**
  * Function to set the tolerance for the altitude range calculations

@@ -8,6 +8,7 @@ import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.TimeZone;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -25,6 +26,7 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.AltitudeRange;
 import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
@@ -86,6 +88,8 @@ public class DetailsDisplay extends GenericDisplay
 	// Units
 	private JComboBox<String> _coordFormatDropdown = null;
 	private JComboBox<String> _distUnitsDropdown = null;
+	// Timezone
+	private TimeZone _timezone = null;
 
 	// Cached labels
 	private static final String LABEL_POINT_SELECTED = I18nManager.getText("details.index.selected") + ": ";
@@ -299,6 +303,10 @@ public class DetailsDisplay extends GenericDisplay
 		UnitSet unitSet = UnitSetLibrary.getUnitSet(_distUnitsDropdown.getSelectedIndex());
 		String distUnitsStr = I18nManager.getText(unitSet.getDistanceUnit().getShortnameKey());
 		String speedUnitsStr = I18nManager.getText(unitSet.getSpeedUnit().getShortnameKey());
+		if (_timezone == null || (inUpdateType | UNITS_CHANGED) > 0) {
+			_timezone = TimezoneHelper.getSelectedTimezone();
+		}
+
 		if (_track == null || currentPoint == null)
 		{
 			_indexLabel.setText(I18nManager.getText("details.nopointselection"));
@@ -326,11 +334,13 @@ public class DetailsDisplay extends GenericDisplay
 				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getValue(altUnit) + " " +
 				I18nManager.getText(altUnit.getShortnameKey()))
 				: "");
-			if (currentPoint.hasTimestamp()) {
-				_ptDateLabel.setText(LABEL_POINT_DATE + currentPoint.getTimestamp().getDateText());
-				_ptTimeLabel.setText(LABEL_POINT_TIME + currentPoint.getTimestamp().getTimeText());
+			if (currentPoint.hasTimestamp())
+			{
+				_ptDateLabel.setText(LABEL_POINT_DATE + currentPoint.getTimestamp().getDateText(_timezone));
+				_ptTimeLabel.setText(LABEL_POINT_TIME + currentPoint.getTimestamp().getTimeText(_timezone));
 			}
-			else {
+			else
+			{
 				_ptDateLabel.setText("");
 				_ptTimeLabel.setText("");
 			}
@@ -477,7 +487,9 @@ public class DetailsDisplay extends GenericDisplay
 			String shortPath = shortenPath(fullPath);
 			_photoPathLabel.setText(fullPath == null ? "" : LABEL_FULL_PATH + shortPath);
 			_photoPathLabel.setToolTipText(currentPhoto.getFullPath());
-			_photoTimestampLabel.setText(currentPhoto.hasTimestamp()?(LABEL_POINT_TIME + currentPhoto.getTimestamp().getText()):"");
+			_photoTimestampLabel.setText(currentPhoto.hasTimestamp() ?
+				(LABEL_POINT_TIME + currentPhoto.getTimestamp().getText(_timezone))
+				: "");
 			_photoConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
 				+ (currentPhoto.getCurrentStatus() == Photo.Status.NOT_CONNECTED ?
 					I18nManager.getText("dialog.about.no"):I18nManager.getText("dialog.about.yes")));
@@ -513,7 +525,9 @@ public class DetailsDisplay extends GenericDisplay
 			String shortPath = shortenPath(fullPath);
 			_audioPathLabel.setText(fullPath == null ? "" : LABEL_FULL_PATH + shortPath);
 			_audioPathLabel.setToolTipText(fullPath == null ? "" : fullPath);
-			_audioTimestampLabel.setText(currentAudio.hasTimestamp()?(LABEL_POINT_TIME + currentAudio.getTimestamp().getText()):"");
+			_audioTimestampLabel.setText(currentAudio.hasTimestamp() ?
+				(LABEL_POINT_TIME + currentAudio.getTimestamp().getText(_timezone))
+				: "");
 			int audioLength = currentAudio.getLengthInSeconds();
 			_audioLengthLabel.setText(audioLength < 0?"":LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(audioLength));
 			_audioConnectedLabel.setText(I18nManager.getText("details.media.connected") + ": "
@@ -571,7 +585,7 @@ public class DetailsDisplay extends GenericDisplay
 			{
 				result = inCoord.substring(0, chopPos);
 				// Maybe there's an exponential in there too which needs to be appended
-				int expPos = inCoord.toUpperCase().indexOf("E",  chopPos);
+				int expPos = inCoord.toUpperCase().indexOf("E", chopPos);
 				if (expPos > 0 && expPos < (inCoord.length()-1))
 				{
 					result += inCoord.substring(expPos);

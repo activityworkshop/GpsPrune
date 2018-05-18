@@ -79,7 +79,7 @@ public abstract class SpeedCalculator
 					lateStamp = p.getTimestamp();
 				}
 
-				stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point,  p);
+				stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point, p);
 				index++;
 				if (p != null && !p.isWaypoint()) {
 					q = p;
@@ -153,7 +153,7 @@ public abstract class SpeedCalculator
 						if (p.hasAltitude()) firstAlt = p.getAltitude();
 					}
 
-					stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(p,  point);
+					stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(p, point);
 					index--;
 				}
 				while (!stop);
@@ -173,7 +173,7 @@ public abstract class SpeedCalculator
 					if (p.hasAltitude()) lastAlt = p.getAltitude();
 				}
 
-				stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point,  p);
+				stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point, p);
 				index++;
 			}
 			while (!stop);

@@ -2,28 +2,24 @@ package tim.prune.jpeg.drew;
 
 /**
  * Immutable class for holding a rational number without loss of precision.
- * Based on Drew Noakes' Metadata extractor at http://drewnoakes.com
+ * Based on Drew Noakes' Metadata extractor at https://drewnoakes.com
  */
 public class Rational
 {
 	/** Holds the numerator */
-	private final int _numerator;
+	private final long _numerator;
 
 	/** Holds the denominator */
-	private final int _denominator;
+	private final long _denominator;
 
 	/**
-	 * Constructor
-	 * @param inNumerator numerator of fraction (upper number)
-	 * @param inDenominator denominator of fraction (lower number)
+	 * Creates a new (immutable) instance of Rational.
 	 */
-	public Rational(int inNumerator, int inDenominator)
+	public Rational(long numerator, long denominator)
 	{
-		// Could throw exception if denominator is zero
-		_numerator = inNumerator;
-		_denominator = inDenominator;
+		_numerator = numerator;
+		_denominator = denominator;
 	}
-
 
 	/**
 	 * @return the value of the specified number as a <code>double</code>.
@@ -31,65 +27,87 @@ public class Rational
 	 */
 	public double doubleValue()
 	{
-		if (_denominator == 0) return 0.0;
+		if (_denominator == 0L) return 0.0;
 		return (double)_numerator / (double)_denominator;
 	}
 
 	/**
-	 * @return the value of the specified number as an <code>int</code>.
-	 * This may involve rounding or truncation.
+	 * Returns the value of the specified number as an <code>int</code>.
 	 */
 	public final int intValue()
 	{
-		if (_denominator == 0) return 0;
-		return _numerator / _denominator;
+		return (int) longValue();
 	}
 
 	/**
-	 * @return the denominator.
+	 * Returns the value of the specified number as a <code>long</code>.
+	 * This may involve rounding or truncation.
+	 * If the denominator is 0, returns 0 to avoid dividing by 0.
 	 */
-	public final int getDenominator()
+	public final long longValue()
+	{
+		if (_denominator == 0L) return 0L;
+		return _numerator / _denominator;
+	}
+
+	/** Returns the denominator */
+	public final long getDenominator()
 	{
 		return _denominator;
 	}
 
-	/**
-	 * @return the numerator.
-	 */
-	public final int getNumerator()
+	/** Returns the numerator */
+	public final long getNumerator()
 	{
 		return _numerator;
 	}
 
 	/**
-	 * Checks if this rational number is an Integer, either positive or negative
-	 * @return true if an integer
+	 * @return the value of the specified number as a positive <code>double</code>.
+	 * Prevents interpretation of 32 bit numbers as negative, and forces a positive answer.
+	 * Needed?
 	 */
-	public boolean isInteger()
+	public double convertToPositiveValue()
 	{
-		// number is integer if the denominator is 1, or if the remainder is zero
-		return (_denominator == 1
-			|| (_denominator != 0 && (_numerator % _denominator == 0)));
+		if (_denominator == 0L) return 0.0;
+		double numeratorDbl = _numerator;
+		double denomDbl = _denominator;
+		if (_numerator >= 0L) {
+			// Numerator is positive (but maybe denominator isn't?)
+			return numeratorDbl / denomDbl;
+		}
+		// Add 2^32 to negative doubles to make them positive
+		final double correction = Math.pow(2.0, 32);
+		numeratorDbl += correction;
+		if (_denominator < 0L) {
+			denomDbl += correction;
+		}
+		return numeratorDbl / denomDbl;
 	}
 
-
 	/**
-	 * @return a string representation of the object of form <code>numerator/denominator</code>.
+	 * Returns a string representation of the object of form <code>numerator/denominator</code>.
 	 */
+	@Override
 	public String toString()
 	{
 		return "" + _numerator + "/" + _denominator;
 	}
 
-
 	/**
-	 * Compares two <code>Rational</code> instances, returning true if they are equal
-	 * @param inOther the Rational to compare this instance to.
-	 * @return true if instances are equal, otherwise false.
+	 * Compares two {@link Rational} instances, returning true if they are mathematically
+	 * equivalent.
+	 *
+	 * @param obj the {@link Rational} to compare this instance to.
+	 * @return true if instances are mathematically equivalent, otherwise false.  Will also
+	 *         give false if <code>obj</code> is not an instance of {@link Rational}.
 	 */
-	public boolean equals(Rational inOther)
+	@Override
+	public boolean equals( Object obj)
 	{
-		// Could also attempt to simplify fractions to lowest common denominator before compare
-		return _numerator == inOther._numerator && _denominator == inOther._denominator;
+		if (obj==null || !(obj instanceof Rational))
+			return false;
+		Rational that = (Rational) obj;
+		return this.doubleValue() == that.doubleValue();
 	}
 }

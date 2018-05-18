@@ -480,7 +480,7 @@ public class PovExporter extends Export3dFunction
 	private void writeStartOfFile(FileWriter inWriter, String inLineSeparator, File inImageFile, File inTerrainFile)
 	throws IOException
 	{
-		inWriter.write("// Pov file produced by GpsPrune - see http://gpsprune.activityworkshop.net/");
+		inWriter.write("// Pov file produced by GpsPrune - see https://gpsprune.activityworkshop.net/");
 		inWriter.write(inLineSeparator);
 		inWriter.write("#version 3.6;");
 		inWriter.write(inLineSeparator);
@@ -864,7 +864,7 @@ public class PovExporter extends Export3dFunction
 
 	/**
 	 * @param inCode height code to check
-	 * @return validated height code within range 0 to max
+	 * @return validated height code within range 0 to maxHeightCode
 	 */
 	private static byte checkHeightCode(byte inCode)
 	{

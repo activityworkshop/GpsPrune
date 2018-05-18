@@ -2,6 +2,7 @@ package tim.prune.function.deletebydate;
 
 import java.text.DateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Class to hold the information about a date,
@@ -12,7 +13,7 @@ public class DateInfo implements Comparable<DateInfo>
 {
 	/** Date, or null for no date - used for earlier/later comparison */
 	private Date _date = null;
-	/** String representation of date, for equality comparison */
+	/** String representation of date */
 	private String _dateString = null;
 	/** Number of points with this date */
 	private int _numPoints = 0;
@@ -21,6 +22,15 @@ public class DateInfo implements Comparable<DateInfo>
 
 	// Doesn't really matter what format is used here, as long as dates are different
 	private static final DateFormat DEFAULT_DATE_FORMAT = DateFormat.getDateInstance();
+
+
+	/**
+	 * @param inZone Timezone to use for the date identification
+	 */
+	public static void setTimezone(TimeZone inZone)
+	{
+		DEFAULT_DATE_FORMAT.setTimeZone(inZone);
+	}
 
 	/**
 	 * Constructor
@@ -47,10 +57,10 @@ public class DateInfo implements Comparable<DateInfo>
 	}
 
 	/**
-	 * @return date object, or null
+	 * @return string representation of date
 	 */
-	public Date getDate() {
-		return _date;
+	public String getString() {
+		return _dateString;
 	}
 
 	/**

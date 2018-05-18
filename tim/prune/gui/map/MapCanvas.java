@@ -1,39 +1,10 @@
 package tim.prune.gui.map;
 
-import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Cursor;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
+import java.awt.*;
+import java.awt.event.*;
 import java.awt.image.BufferedImage;
 
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JMenuItem;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.JSlider;
-import javax.swing.SwingUtilities;
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -44,23 +15,12 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
-import tim.prune.data.Checker;
-import tim.prune.data.Coordinate;
-import tim.prune.data.DataPoint;
-import tim.prune.data.DoubleRange;
-import tim.prune.data.Field;
-import tim.prune.data.FieldList;
-import tim.prune.data.Latitude;
-import tim.prune.data.Longitude;
-import tim.prune.data.MidpointData;
-import tim.prune.data.Selection;
-import tim.prune.data.Track;
-import tim.prune.data.TrackInfo;
+import tim.prune.data.*;
 import tim.prune.function.compress.MarkPointsInRectangleFunction;
 import tim.prune.function.edit.FieldEdit;
 import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
-import tim.prune.gui.TripleStateCheckBox;
+import tim.prune.gui.MultiStateCheckBox;
 import tim.prune.gui.colour.PointColourer;
 import tim.prune.tips.TipManager;
 
@@ -99,7 +59,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/** Checkbox for autopan */
 	private JCheckBox _autopanCheckBox = null;
 	/** Checkbox for connecting track points */
-	private TripleStateCheckBox _connectCheckBox = null;
+	private MultiStateCheckBox _connectCheckBox = null;
 	/** Checkbox for enable edit mode */
 	private JCheckBox _editmodeCheckBox = null;
 	/** Right-click popup menu */
@@ -128,6 +88,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private boolean _shownOsmErrorAlready = false;
 	/** Current drawing mode */
 	private int _drawMode = MODE_DEFAULT;
+	/** Current waypoint icon definition */
+	WpIconDefinition _waypointIconDefinition = null;
 
 	/** Constant for click sensitivity when selecting nearest point */
 	private static final int CLICK_SENSITIVITY = 10;
@@ -243,10 +205,11 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_autopanCheckBox.setFocusable(false); // stop button from stealing keyboard focus
 		_topPanel.add(_autopanCheckBox);
 		// Add checkbox button for connecting points or not
-		_connectCheckBox = new TripleStateCheckBox();
-		_connectCheckBox.setIcon(0, IconManager.getImageIcon(IconManager.POINTS_CONNECTED_BUTTON));
-		_connectCheckBox.setIcon(1, IconManager.getImageIcon(IconManager.POINTS_DISCONNECTED_BUTTON));
-		_connectCheckBox.setIcon(2, IconManager.getImageIcon(IconManager.POINTS_HIDDEN_BUTTON));
+		_connectCheckBox = new MultiStateCheckBox(4);
+		_connectCheckBox.setIcon(0, IconManager.getImageIcon(IconManager.POINTS_WITH_ARROWS_BUTTON));
+		_connectCheckBox.setIcon(1, IconManager.getImageIcon(IconManager.POINTS_HIDDEN_BUTTON));
+		_connectCheckBox.setIcon(2, IconManager.getImageIcon(IconManager.POINTS_CONNECTED_BUTTON));
+		_connectCheckBox.setIcon(3, IconManager.getImageIcon(IconManager.POINTS_DISCONNECTED_BUTTON));
 		_connectCheckBox.setCurrentState(0);
 		_connectCheckBox.setOpaque(false);
 		_connectCheckBox.setToolTipText(I18nManager.getText("menu.map.connect"));
@@ -305,6 +268,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		makePopup();
 		// Get currently selected map from Config, pass to MapTileManager
 		_tileManager.setMapSource(Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX));
+		// Update display settings
+		dataUpdated(MAPSERVER_CHANGED);
 	}
 
 
@@ -409,7 +374,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 
 			// Draw the map contents if necessary
-			if ((_mapImage == null || _recalculate))
+			if (_mapImage == null || _recalculate)
 			{
 				paintMapContents();
 				_scaleBar.updateScale(_mapPosition.getZoom(), _mapPosition.getYFromPixels(0, 0));
@@ -601,7 +566,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		if (trackOpacity > 0.0f)
 		{
 			// Paint the track points on top
-			int pointsPainted = 1;
+			boolean pointsPainted = true;
 			try
 			{
 				if (trackOpacity > 0.9f)
@@ -632,7 +597,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			catch (ArrayIndexOutOfBoundsException obe) {} // also ignore
 
 			// Zoom to fit if no points found
-			if (pointsPainted <= 0 && _checkBounds)
+			if (!pointsPainted && _checkBounds)
 			{
 				zoomToFit();
 				_recalculate = true;
@@ -652,9 +617,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/**
 	 * Paint the points using the given graphics object
 	 * @param inG Graphics object to use for painting
-	 * @return number of points painted, if any
+	 * @return true if any points or lines painted
 	 */
-	private int paintPoints(Graphics inG)
+	private boolean paintPoints(Graphics inG)
 	{
 		// Set up colours
 		final ColourScheme cs = Config.getColourScheme();
@@ -674,6 +639,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		final int[] xPixels = new int[numPoints];
 		final int[] yPixels = new int[numPoints];
 
+		final int pointSeparationForArrowsSqd = 350;
+		final int pointSeparation1dForArrows = (int) (Math.sqrt(pointSeparationForArrowsSqd) * 0.7);
+
 		// try to set line width for painting
 		if (inG instanceof Graphics2D)
 		{
@@ -681,16 +649,20 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if (lineWidth < 1 || lineWidth > 4) {lineWidth = 2;}
 			((Graphics2D) inG).setStroke(new BasicStroke(lineWidth));
 		}
-		int pointsPainted = 0;
+
+		boolean pointsPainted = false;
 		// draw track points
 		inG.setColor(pointColour);
 		int prevX = -1, prevY = -1;
 		final int connectState = _connectCheckBox.getCurrentState();
-		final boolean drawLines = (connectState % 2) == 0; // 0 or 2
-		final boolean drawPoints = (connectState <= 1);    // 0 or 1
+		final boolean drawLines = (connectState != 3);  // 0, 1 or 2
+		final boolean drawPoints = (connectState != 1); // 0, 2 or 3
+		final boolean drawArrows = (connectState == 0); // 0
+
 		boolean prevPointVisible = false, currPointVisible = false;
 		boolean anyWaypoints = false;
 		boolean isWaypoint = false;
+		boolean drawnLastArrow = false;	// avoid painting arrows on adjacent lines, looks too busy
 		for (int i=0; i<numPoints; i++)
 		{
 			// Calculate pixel position of point from its x, y coordinates
@@ -722,18 +694,55 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					}
 
 					// Draw rectangle for track point if it's visible
-					if (currPointVisible && drawPoints)
+					if (currPointVisible)
 					{
-						inG.drawRect(px-2, py-2, 3, 3);
-						pointsPainted++;
+						if (drawPoints) {
+							inG.drawRect(px-2, py-2, 3, 3);
+						}
+						pointsPainted = true;
 					}
 				}
 
 				// Connect track points if either of them are visible
-				if (drawLines && !(prevX == -1 && prevY == -1)
+				if (drawLines
+				 && (currPointVisible || prevPointVisible)
+				 && !(prevX == -1 && prevY == -1)
 				 && !_track.getPoint(i).getSegmentStart())
 				{
 					inG.drawLine(prevX, prevY, px, py);
+					pointsPainted = true;
+
+					// Now consider whether we need to draw an arrow as well
+					if (drawArrows
+					 && !drawnLastArrow
+					 && (Math.abs(prevX-px) > pointSeparation1dForArrows || Math.abs(prevY-py) > pointSeparation1dForArrows))
+					{
+						final double pointSeparationSqd = (prevX-px) * (prevX-px) + (prevY-py) * (prevY-py);
+						if (pointSeparationSqd > pointSeparationForArrowsSqd)
+						{
+							final double midX = (prevX + px) / 2;
+							final double midY = (prevY + py) / 2;
+							final boolean midPointVisible = midX >= 0 && midX < winWidth && midY >= 0 && midY < winHeight;
+							if (midPointVisible)
+							{
+								final double alpha = Math.atan2(py - prevY, px - prevX);
+								//System.out.println("Draw arrow from (" + prevX + "," + prevY + ") to (" + px + "," + py
+								//	+ ") with angle" + (int) (alpha * 180/Math.PI));
+								final double MID_TO_VERTEX = 3.0;
+								final double arrowX = MID_TO_VERTEX * Math.cos(alpha);
+								final double arrowY = MID_TO_VERTEX * Math.sin(alpha);
+								final double vertexX = midX + arrowX;
+								final double vertexY = midY + arrowY;
+								inG.drawLine((int)(midX-arrowX-2*arrowY), (int)(midY-arrowY+2*arrowX), (int)vertexX, (int)vertexY);
+								inG.drawLine((int)(midX-arrowX+2*arrowY), (int)(midY-arrowY-2*arrowX), (int)vertexX, (int)vertexY);
+							}
+							drawnLastArrow = midPointVisible;
+						}
+					}
+					else
+					{
+						drawnLastArrow = false;
+					}
 				}
 				prevX = px; prevY = py;
 			}
@@ -755,8 +764,20 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					int py = yPixels[i];
 					if (px >= 0 && px < winWidth && py >= 0 && py < winHeight)
 					{
-						inG.fillRect(px-3, py-3, 6, 6);
-						pointsPainted++;
+						if (_waypointIconDefinition == null)
+						{
+							inG.fillRect(px-3, py-3, 6, 6);
+						}
+						else
+						{
+							ImageIcon icon = _waypointIconDefinition.getImageIcon();
+							if (icon != null)
+							{
+								inG.drawImage(icon.getImage(), px-_waypointIconDefinition.getXOffset(),
+									py-_waypointIconDefinition.getYOffset(), null);
+							}
+						}
+						pointsPainted = true;
 						numWaypoints++;
 					}
 				}
@@ -820,7 +841,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				{
 					inG.drawRect(px-1, py-1, 2, 2);
 					inG.drawRect(px-2, py-2, 4, 4);
-					pointsPainted++;
+					pointsPainted = true;
 				}
 			}
 		}
@@ -1354,9 +1375,20 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		if ((inUpdateType & DataSubscriber.DATA_ADDED_OR_REMOVED) > 0) {
 			_checkBounds = true;
 		}
-		if ((inUpdateType & DataSubscriber.MAPSERVER_CHANGED) > 0) {
+		if ((inUpdateType & DataSubscriber.MAPSERVER_CHANGED) > 0)
+		{
 			// Get the selected map source index and pass to tile manager
 			_tileManager.setMapSource(Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX));
+			final int wpType = Config.getConfigInt(Config.KEY_WAYPOINT_ICONS);
+			if (wpType == WpIconLibrary.WAYPT_DEFAULT)
+			{
+				_waypointIconDefinition = null;
+			}
+			else
+			{
+				final int wpSize = Config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE);
+				_waypointIconDefinition = WpIconLibrary.getIconDefinition(wpType, wpSize);
+			}
 		}
 		if ((inUpdateType & (DataSubscriber.DATA_ADDED_OR_REMOVED + DataSubscriber.DATA_EDITED)) > 0) {
 			_midpoints.updateData(_track);

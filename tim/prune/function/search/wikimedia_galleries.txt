@@ -1,26 +1,47 @@
 A Arnoia		42 14 54.95 N	8 08 04.88 W
 A Barciela, Oroso		42 57 57.49 N	8 26 31.07 W
 A Cañiza	A Cañiza is a municipality in Galicia, in the province of Pontevedra.	42 12 45.46 N	8 16 29.77 W
-A Coruña		43 21 58.95 N	8 24 28.71 W
-A Guarda		41 54 09.12 N	8 52 27.14 W
+A Coruña	A Coruña is a Galician city, in north-western Spain.	43 21 58.95 N	8 24 28.71 W
+A Estrada		41 32 35.1 N	2 12 59.63 E
+A Guarda		41 54 09.12 N	8 52 27.15 W
 A Gudiña	A Gudiña is a municipality in Galicia, in the province of Ourense.	42 03 40.13 N	7 08 34.19 W
 A Illa de Arousa	A Illa de Arousa is a municipality in Galicia, in the province of Pontevedra.	42 33 08.36 N	8 52 06.13 W
 A Merca	A Merca is a municipality in Galicia, in the province of Ourense.	42 13 22.53 N	7 54 15.55 W
 A Mezquita		42 00 42.5 N	7 02 43.17 W
-A Pobra de Trives		42 20 19.97 N	7 15 15.88 W
+A Pobra de Trives		42 20 19.96 N	7 15 15.88 W
 A Pobra do Brollón		42 33 29.3 N	7 23 40.15 W
 A Pobra do Caramiñal	A Pobra do Caramiñal is a municipality in the province of A Coruña, Galicia, Spain.	42 36 12.2 N	8 56 14.25 W
 A Rúa	A Rúa is a municipality in Galicia, in the province of Ourense.	42 23 34.93 N	7 06 59.02 W
 A Veiga	A Veiga is a municipality in Galicia, in the province of Ourense.	42 15 01.36 N	7 01 30.25 W
-A Walk on Main Street, Ferndale, California	Ferndale is a small town in Eureka County, California. Its Main Street is listed by the National Register of Historic Places as a historic district.	40 34 32.16 N	124 15 54 W
+A Walk on Main Street, Ferndale, California	Ferndale is a small town in Humboldt County, California. Its Main Street is listed by the National Register of Historic Places as a historic district.	40 34 32.16 N	124 15 54 W
 A Walk up Main Street, Adamstown, Pennsylvania	Adamstown is a small, historic town in Lancaster County, Pennsylvania.	40 14 36.96 N	76 03 16.2 W
+Abbaye d'Acey		47 15 42 N	5 39 25 E
+Abbaye de Bourgueil		47 16 46.2 N	0 10 18.12 E
+Abbaye de Cluny	The Abbey of Cluny (or Cluni, or Clugny) was founded on 2 September 909 and is located in the modern-day department of Saône-et-Loire in the region of Bourgogne, in east-central France, near Mâcon.	46 26 03 N	4 39 33 E
+Abbaye de Fontenay		47 38 27 N	4 23 23 E
+Abbaye de Fontevraud	Fontevraud Abbey is located near Saumur in Anjou, France	47 10 53 N	0 03 06 E
+Abbaye de La Sauve-Majeure		44 46 07.24 N	0 18 42.41 W
+Abbaye de Montmajour		43 42 20 N	4 39 50 E
+Abbaye de Saint-Germain-des-Prés		48 51 14 N	2 20 04 E
+Abbaye de Saint-Savin-sur-Gartempe		46 33 51 N	0 51 58 E
+Abbaye de Sénanque		43 55 42 N	5 11 13 E
+Abbaye de Valmagne		43 29 12.97 N	3 33 44.19 E
+Abbaye du Relec		48 26 56 N	3 43 00 W
+Abbaye Saint Wandrille	Monastery Saint Wandrille in France	49 31 46.42 N	0 45 59.58 E
+Abbaye Saint-Corneille		49 25 02.6 N	2 49 28.57 E
+Abbaye Saint-Florentin, Bonneval		48 10 40.41 N	1 23 04.87 E
 Abeilhan		43 27 02 N	3 17 43 E
+Abri-caverne de l'ouvrage du Haut-Bois		47 35 24.07 N	6 48 34.23 E
+Abtei Saint-André (Lavaudieu)		45 15 49 N	3 27 17 E
 Aceldama	Aceldama or Akeldama is the Aramaic name for a place in Jerusalem associated with Judas Iscariot, one of the followers of Jesus.	31 46 05.1 N	35 13 59.51 E
 Adissan		43 32 09.96 N	3 25 45.12 E
+Agadir		30 25 00 N	9 35 00 W
 Agel		43 20 18.96 N	2 51 13.68 E
 Agrón, Ames		42 54 20.32 N	8 41 43.21 W
 Aguiño, Ribeira		42 31 24.99 N	9 00 57.6 W
-Alagna Valsesia	Alagna Valsesia is a village in Piemonte in Italy.	45 51 05.15 N	7 56 16.98 E
+Aichi prefecture		35 04 59 N	136 58 59 E
+Aiguafreda	Montseny	41 46 05.2 N	2 15 05.39 E
+Alagna Valsesia	Alagna Valsesia is a village in Piemonte in Italy.	45 51 05.16 N	7 56 16.98 E
 Albrechtsburg	The Albrechtsburg is the castle that dominates the city centre of Meißen, Germany.	51 09 59.65 N	13 28 17.83 E
 Aletsch	Aletsch region, UNESCO World Heritage Site since 2001, in Bernese Alps, Switzerland	46 27 50.9 N	8 04 20.89 E
 Allariz	Allariz is a municipality in Galicia, in the province of Ourense.	42 11 20.76 N	7 48 09.71 W
@@ -32,37 +53,39 @@ Anta de Casaínhos		38 52 50.16 N	9 10 09.91 W
 Antwerp Central Station		51 13 02 N	4 25 15.6 E
 Aquis Querquennis	Aquis Querquennis was a Roman castra at Os Baños, Bande (Ourense, Galiza).	41 58 27.2 N	7 58 52.1 W
 Arbo		42 06 39.45 N	8 18 57.47 W
+Arc de Triomf de Barcelona	The Arc de Triomf (Triumphal Arch) is an archway structure in Barcelona, Spain.	41 23 27 N	2 10 50 E
+Arc de Triomphe du Carrousel	The Arc de Triomphe du Carrousel is a triumphal arch in Paris, located in the Place du Carrousel on the site of the former Tuileries Palace.	48 51 43 N	2 19 58 E
 Arch of Constantine		41 53 23 N	12 29 27 E
 Arch of Septimius Severus (Rome)	The Arch of Septimius Severus is situated in the Forum Romanum in Rome.	41 53 34 N	12 29 05 E
 Arch of Titus	The Arch of Titus is a triumphal arch with a single arched opening, located on the Summa Sacra Via to the west of the Roman Forum in Rome.	41 53 26 N	12 29 19 E
+Arnhem		51 59 00 N	5 55 00 E
 Arenys de Munt	Arenys de Munt is a village in the comarca of Maresme, Catalonia.	41 36 46 N	2 32 25 E
-Artwork:La Nouvelle Liberté		4 03 51.2 N	9 42 24.97 E
-Artwork:Lucas Grandin, Le jardin sonore de Bonamouti		4 04 19.3 N	9 42 37.91 E
-Artwork:Pascale Marthine Tayou, La Colonne Pascale		4 01 34.12 N	9 42 22.84 E
-Artwork:Tracey Rose, Oasis		4 01 28.09 N	9 42 32.75 E
 As Neves	As Neves is a municipality in Galicia, in the province of Pontevedra.	42 05 10.49 N	8 24 53.43 W
 As Pontes de García Rodríguez		43 26 47.63 N	7 51 09.54 W
 Askersund		58 53 00 N	14 54 00 E
 Assumption Cathedral in Odessa	Assumption Cathedral in Odessa, Ukraine	46 28 49.43 N	30 44 21.24 E
-Australian Synchrotron		37 54 51 S	145 08 33 E
-Avión	Avión is a municipality in Galicia, in the province of Ourense.	42 22 23.72 N	8 15 02.64 W
+Australian Synchrotron	The Australian Synchrotron, a synchrotron facility in the suburb of Clayton, in Melbourne, Victoria, Australia.	37 54 51 S	145 08 33 E
+Avión	Avión is a municipality in Galicia, in the province of Ourense.	42 22 23.73 N	8 15 02.64 W
 Ayasofya	The Church of the Holy Wisdom, commonly known as Hagia Sophia in English, is the former Greek Orthodox patriarchal cathedral, converted in 1453 to a mosque, now a museum, in Istanbul.	41 00 30.5 N	28 58 47.7 E
+Aérodrome de Besançon-Thise		47 16 25.68 N	6 04 59.09 E
+Aşgabat		37 57 00 N	58 23 00 E
 Bahnhof Dresden-Neustadt	Dresden-Neustadt railway station and the four inner city bridges	51 03 56 N	13 44 27 E
 Baiona	Baiona is a municipality in Galicia, Spain in the province of Pontevedra.	42 07 03.29 N	8 51 01.86 W
 Baltar	Baltar is a municipality in Galicia, in the province of Ourense.	41 57 04.75 N	7 42 56.7 W
-Barbadás		42 17 56.03 N	7 53 13.13 W
+Barbadás		42 17 56.03 N	7 53 13.14 W
+Basilique Notre-Dame de la Daurade		43 36 03 N	1 26 23 E
+Basilique Notre-Dame de Thierenbach		47 52 54.12 N	7 11 21.16 E
+Basilique Saint-Sauveur de Rennes		48 06 42 N	1 40 55 W
 Beade	Beade is a municipality in Galicia, in the province of Ourense.	42 20 06.72 N	8 08 45.05 W
-Beamish Museum: Entrance area	The entrance to Beamish Museum is on the south side of the site.	54 52 54.04 N	1 39 30.93 W
 Bergfriedhof (Stuttgart)	The Bergfriedhof is a cemetery in the Stadtbezirk Stuttgart-Ost in Stuttgart.	48 47 19.16 N	9 12 23.35 E
-Bergondo		43 19 15.35 N	8 13 54.04 W
+Bergondo		43 19 15.36 N	8 13 54.04 W
 Berlin Anhalter Bahnhof	The Anhalter Bahnhof was a large main-line railway station in Berlin. Today it is just a stop on the Berlin S-Bahn.	52 30 11 N	13 22 55 E
 Betanzos		43 16 44.24 N	8 12 55.95 W
+Bibliothèque Sainte-Geneviève		48 50 49.5 N	2 20 45 E
+Bibracte		46 55 23 N	4 02 15 E
 Biella		45 34 05.07 N	8 03 02.61 E
 Bienertparks in Dresden	Als Bienertpark werden verschiedene Parkanlagen in Dresden bezeichnet, deren Entstehung auf die Familie Gottlieb Traugott Bienert zurückgeht.	51 01 48.29 N	13 42 54.9 E
-Bildstock Austraße, Burggrumbach		49 52 19.59 N	10 01 43.48 E
-Bildstock Herrngasse 1, Grafenrheinfeld		50 00 11.52 N	10 11 54.6 E
-Bildstock Mainbacher Weg, Holzhausen		50 07 06.2 N	10 11 07.12 E
-Bildstock Schulstraße 2, Burggrumbach		49 52 13.11 N	10 02 14.06 E
+Bishkek		42 52 00 N	74 34 00 E
 Boccadasse	Boccadasse è un antico borgo marinaro situato nel levante di Genova.	44 23 23.85 N	8 58 22.71 E
 Boettcherstrasse		53 04 30 N	8 48 21 E
 Boiro		42 38 13.16 N	8 52 12.31 W
@@ -72,6 +95,7 @@ Borne des Trois Puissances	Dreiländerstein	47 30 10.58 N	7 07 48.76 E
 Borovsk	Эта страница на русском: Боровск	55 12 27.19 N	36 29 05.05 E
 Bosco delle Querce	The Regional Natural Park Bosco delle Querce (Oaks' Wood), built after the Seveso Disaster on the "A" zone.	45 38 55 N	9 09 10 E
 Botanischer Garten Heidelberg		49 25 00 N	8 40 10 E
+Brancion		46 32 51 N	4 47 48.12 E
 Brudermühlbrücke	The Brudermühlbrücke is a bridge in Munich across the Isar.	48 06 45.3 N	11 33 36.07 E
 Brudermühlstraße	The Brudermühlstraße is a street in Munich, part of the Mittlerer Ring around the city centre.	48 06 44.2 N	11 33 01.37 E
 Buenos Aires		34 36 13 S	58 22 54 W
@@ -81,16 +105,17 @@ Burg Stahleck	Stahleck Castle in Bacharach is a 12th century castle occupying a 
 Burj Khalifa	The Burj Khalifa ("Khalifa Tower") is a skyscraper in Dubai, United Arab Emirates.	25 11 49.7 N	55 16 26.8 E
 Bürgerhospital (Stuttgart)		48 47 34.6 N	9 10 45.95 E
 Cabanas		43 24 50.49 N	8 10 04.15 W
-Cabo Fisterra		42 52 50.96 N	9 16 18.27 W
+Cabo Fisterra	Cape Finisterre is a rock-bound peninsula on the west coast of Galicia, in Fisterra (Spain).	42 52 50.96 N	9 16 18.27 W
 Cabrils		41 31 42 N	2 22 09 E
-Cadaqués	Cadaqués is a touristic village in Costa Brava, Alt Empordà, Catalonia, Spain	42 17 19.46 N	3 16 40.96 E
-Cal Becs (Puig-reig)		41 57 41.01 N	1 54 21.89 E
+Cadaqués	Cadaqués is a touristic village in Costa Brava, Alt Empordà, Catalonia, Spain.	42 17 19.46 N	3 16 40.96 E
 Calgary		51 02 42 N	114 03 26 W
 Cambados		42 30 52.2 N	8 48 24.89 W
 Cambre	Cambre is a municipality in the province A Coruña, Galicia, Spain.	43 17 37.32 N	8 20 34.49 W
 Campo de' Fiori		41 53 43.94 N	12 28 20.06 E
+Canal du Midi	The Canal du Midi is a 240km long canal in southern France, linking the Garonne River to the Mediterranean Sea, between Toulouse and the Mediterranean port of Sète.	43 36 40 N	1 25 06 E
 Candelabro de Paracas	The Paracas Candelabra is a well-known prehistoric geoglyph found on the northern face of the Paracas Peninsula at Pisco Bay in Peru.	13 47 39.67 S	76 18 31.31 W
-Cangas		42 15 47.09 N	8 47 09.5 W
+Cangas		42 15 47.1 N	8 47 09.5 W
+Cape Arkona	There are two bunkers at Cape Arkona.	54 40 47 N	13 25 57 E
 Cape Horn	Cape Horn is often said to be the southernmost point of South America.	55 58 47 S	67 16 18 W
 Capela de São Nicolau	Capela de São Nicolau ou Passos da Via Sacra. Em Portugal, Porto.	41 08 27.14 N	8 36 55.49 W
 Capriata d'Orba	Capriata d'Orba è un comune in provincia di Alessandria, Piemonte, Italia.	44 43 43.93 N	8 41 25.29 E
@@ -101,12 +126,13 @@ Cartelle	Cartelle is a municipality in Galicia, in the province of Ourense.	42 1
 Casa Buonarroti (Florence)	Casa Buonarroti è un museo di Firenze	43 46 11.64 N	11 15 49 E
 Casa de las Carnicerías, León	The Casa de las Carnicerías (butcher's shops), a monument declared as a Bien de Interés Cultural in 1992, is located at San Martín square, León (Spain).	42 35 48.84 N	5 34 04.4 W
 Casa del esquileo, Cabanillas del Monte	The casa del esquileo (shearing shed) is a monument placed at Cabanillas del Monte, Torrecaballeros, Segovia (Spain).	40 58 36 N	4 01 54 W
-Casa Milà	Also known as 'La Pedrera', due to its look.	41 23 42.65 N	2 09 42.37 E
+Casa Milà	Casa Milà, also known as La Pedrera (the open quarry), is a modernist building in Barcelona, Catalonia, Spain	41 23 42.66 N	2 09 42.37 E
+Cassine		44 45 03 N	8 31 44 E
 Castel del Monte	Castel del Monte is a castle in Apulia, in Italy.	41 05 05.28 N	16 16 15.57 E
 Castellazzo Bormida	Castellazzo Bormida is a comune (municipality) in the Province of Alessandria in the Italian region Piedmont	44 50 46 N	8 34 42 E
 Castello di Duino	Il castello di Duino è un castello situato nel comune di Duino-Aurisina, in provincia di Trieste, Italia.	45 46 18.39 N	13 36 14.3 E
 Castello di Miramare	Miramare is a castle near Trieste.	45 42 09 N	13 42 45 E
-Castello di San Giusto	The statues Micheze and Jacheze in the entrance hall of Castello di San Giusto	45 38 49.99 N	13 46 23.62 E
+Castello di San Giusto	The statues Micheze and Jacheze in the entrance hall of Castello di San Giusto	45 38 50 N	13 46 23.62 E
 Castello Sforzesco (Milan)	The "Castello Sforzesco" is a castle and a museum in Milan, Italy.	45 28 11.4 N	9 10 46.2 E
 Castelo da Rocha Forte		42 51 42.29 N	8 34 29.38 W
 Castelo de Castro Marim		37 13 07.43 N	7 26 29.69 W
@@ -115,37 +141,59 @@ Castelo de Monforte de Lemos		42 31 26.71 N	7 30 38.86 W
 Castelo de Monterreal		42 07 29.82 N	8 50 59.18 W
 Castelo de Pambre		42 51 34.87 N	7 56 53.7 W
 Castelo de Ribadavia		42 17 12.3 N	8 08 37.49 W
-Castelo de San Felipe		43 27 52.83 N	8 16 52.45 W
+Castelo de San Felipe	Castillo de San Felipe is a castle in the county of Ferrol, Galicia	43 27 53 N	8 16 54 W
 Castelo de Santa Cruz		43 20 54.08 N	8 21 00.64 W
 Castelo de Santo Antón		43 21 56.6 N	8 23 16.12 W
-Castelo de Sobroso	The Sobroso Castle is a castle located in Vilasobroso- Mondariz, Provincia of Pontevedra, Galicia (Spain).	42 12 17.3 N	8 27 20.51 W
+Castelo de Sobroso	The Sobroso Castle is a castle located in Vilasobroso- Mondariz, Provincia of Pontevedra, Galicia (Spain).	42 12 17.31 N	8 27 20.51 W
 Castelo de Soutomaior		42 19 46.77 N	8 34 05.54 W
 Castelo de Vilalba		43 17 52.79 N	7 40 56.44 W
 Castelo de Vilamarín		42 27 02.87 N	7 54 02.26 W
 Castiñeiras, Ribeira		42 31 57.33 N	8 59 44.67 W
 Castrelo de Miño	Castrelo de Miño is a municipality in Galicia, in the province of Ourense.	42 17 49.63 N	8 04 02.63 W
-Castrelo do Val	Castrelo do Val is a municipality in Galicia, in the province of Ourense.	41 59 26.72 N	7 25 25.2 W
-Castro Caldelas	Castro Caldelas is a municipality in Galicia, in the province of Ourense.	42 22 32.63 N	7 24 54 W
-Castro de Baroña		42 41 40.91 N	9 01 54.91 W
-Castro de Rei		43 12 32.15 N	7 23 58.38 W
+Castrelo do Val	Castrelo do Val is a municipality in Galicia, in the province of Ourense.	41 59 26.73 N	7 25 25.2 W
+Castro Caldelas	Castro Caldelas is a municipality in Galicia, in the province of Ourense.	42 22 32.62 N	7 24 54 W
+Castro de Baroña	O Castro de Baroña está situado na parroquia de Baroña no concello de Porto do Son.	42 41 40.91 N	9 01 54.91 W
+Castro de Rei		43 12 32.14 N	7 23 58.38 W
 Catacaos		5 16 00 S	80 41 00 W
-Catedral de Barcelona		41 23 02.07 N	2 10 35.19 E
-Catedral de Santiago de Compostela	Santiago de Compostela Cathedral is a Roman Catholic church in the city of the same name. It is the reputed burial-place of Saint James the Greater and the destination of the Way of St. James.	42 52 51.27 N	8 32 42.16 W
+Catedral de Santiago de Compostela		42 52 51.27 N	8 32 42.17 W
 Cathedral of Justo	The Cathedral of Justo is being built by Justo Gallego in Mejorada del Campo (Community of Madrid, Spain).	40 23 38.88 N	3 29 17.99 W
+Cathédrale Notre-Dame d'Amiens	The cathedral of Our Lady of Amiens (fr: Cathédrale Notre-Dame d'Amiens), or just Amiens Cathedral, is the tallest complete cathedral in France.	49 53 42 N	2 18 08 E
+Cathédrale Notre-Dame de Chartres		48 26 50 N	1 29 16 E
+Cathédrale Notre-Dame de Paris		48 51 10.8 N	2 20 59.28 E
+Cathédrale Notre-Dame de Reims	Cathedral "Notre-Dame de Reims", located in Reims, France	49 15 13.9 N	4 02 02.5 E
 Cathédrale Notre-Dame de Strasbourg		48 34 55 N	7 45 03 E
+Cathédrale Notre-Dame du Havre		49 29 13 N	0 06 30 E
+Cathédrale Saint-André de Bordeaux		44 50 16 N	0 34 39 W
+Cathédrale Saint-Bénigne de Dijon		47 19 17 N	5 02 04 E
+Cathédrale Saint-Julien du Mans	Interior	48 00 33 N	0 11 56 E
+Cathédrale Sainte-Cécile d'Albi		43 55 42.57 N	2 08 34.6 E
 Catoira	Catoira is a municipality in Galicia, Spain in the province of Pontevedra.	42 39 54.98 N	8 43 57.93 W
 Cedeira	Cedeira is a municipality in the province A Coruña, Galicia, Spain.	43 39 39.53 N	8 03 10.41 W
 Celanova	Celanova is a municipality in Galicia, in the province of Ourense.	42 09 07.02 N	7 57 24.65 W
 Cenlle	Cenlle is a municipality in Galicia, in the province of Ourense.	42 20 36.87 N	8 05 16.17 W
 Central Park		40 46 55.2 N	73 57 57.6 W
 Cesantes, Redondela		42 18 33.05 N	8 36 44.72 W
+Champ-de-Mars (Paris)		48 51 22 N	2 17 54 E
 Chantada		42 36 27.15 N	7 46 09.2 W
-Chapela, Redondela		42 15 53.95 N	8 40 22.72 W
+Chapela, Redondela		42 15 53.95 N	8 40 22.71 W
 Chapelle de Languidou	Chapel in Plovan / Bretagne	47 54 49.13 N	4 21 09.72 W
+Chapelle Notre-Dame de Molsheim		48 32 26.16 N	7 29 40.13 E
+Chapelle Notre-Dame du Schaefertal (Soultzmatt)		47 57 06.84 N	7 12 59.4 E
 Chapelle Notre-Dame du Verger	Chapelle Notre-Dame du Verger dans l'anse du Verger à Cancale (Ille-et-Vilaine)	48 41 37 N	1 52 51 W
+Chapelle Notre-Dame-du-Chêne de Plobsheim		48 27 35.28 N	7 42 49.32 E
+Chapelle Notre-Dame-du-Grasweg de Huttenheim		48 21 31.32 N	7 34 33.85 E
+Chapelle royale Saint-Louis, Dreux		48 44 18 N	1 21 48 E
+Chapelle Saint-Gonéry		48 50 29.4 N	3 13 42.38 W
+Chapelle Saint-Sébastien de Dambach-la-Ville		48 19 37.56 N	7 25 11.75 E
+Chapelle Saint-Théodore de Vienne		45 31 28.56 N	4 52 24.13 E
+Chapelle Saint-Ulrich d'Avolsheim		48 33 43.56 N	7 30 01.51 E
+Chapelle Sainte-Marguerite d'Epfig		48 21 15.84 N	7 28 40.12 E
+Chapelle Sainte-Marie de l'Assomption d'Obersteigen		48 38 32.28 N	7 18 22.32 E
+Chapelles du Kochersberg		48 38 42 N	7 31 14.88 E
 Château d'Angers		47 28 11.67 N	0 33 33.61 W
 Château de Bugarach		42 52 36.16 N	2 21 05.15 E
 Château de Couiza		42 56 42.68 N	2 15 14.11 E
+Château de Condé		49 00 20 N	3 33 34 E
 Chiesa di Sant'Antonio in Caggiano	Church of Saint Anthony in Caggiano.	40 34 04.13 N	15 29 39.47 E
 Chioggia	Chioggia is a town in Veneto in Italy.	45 13 04.23 N	12 16 36.76 E
 Chroniques de Jérusalem	Jerusalem Mount of Olives Santa Marta Passionists church.	31 46 15.83 N	35 15 08.48 E
@@ -153,61 +201,125 @@ Church of Adelboden	The gothic village church of Adelboden was built in the 15th
 Church of Saints Apostles Peter and Paul in Vilnius		54 41 38.82 N	25 18 22.69 E
 Church of St. Johns in Vilnius	Organ	54 40 57.5 N	25 17 19.22 E
 Church of São Vítor (Braga)	Igreja de São Victor em Braga	41 33 09.95 N	8 24 47.49 W
+Château d'Anet		48 51 29 N	1 26 19 E
+Château d'Arlay		46 45 32.4 N	5 32 16.44 E
+Château d'Azay-le-Rideau	The Château de Azay-le-Rideau is one of the most famous castles in t
+he French Loire Valley.	47 15 33 N	0 27 58 E
+Château d'Effiat	The château d'Effiat in Puy de Dôme, Auvergne, France.	46 02 37 N	3 15 06 E
+Château d'If		43 16 47.5 N	5 19 30.5 E
+Château d'Ussé	The Château d'Ussé is a château of the Loire Valley in Rigny-Ussé.	47 14 59 N	0 17 28 E
+Château de Blois	The Château de Blois is one of the most renowned châteaux of the Loire Valley.	47 35 07.8 N	1 19 51.42 E
+Château de Bressieux		45 19 21 N	5 16 45.01 E
+Château de Brest		48 22 52.52 N	4 29 40.95 W
+Château de Chambord		47 36 58.22 N	1 31 03.25 E
+Château de Chamerolles		48 03 37.08 N	2 09 51.01 E
+Château de Chantilly		49 11 38 N	2 29 09 E
+Château de Chenonceau		47 19 30 N	1 04 14.16 E
+Château de Cheverny		47 30 01 N	1 27 29 E
+Château de Chinon		47 10 05 N	0 14 10 E
+Château de Châteaudun		48 04 14 N	1 19 25 E
+Château de Cléron		47 05 16 N	6 03 27 E
+Château de Domfront		48 35 39 N	0 39 09 W
+Château de Fontainebleau	The Château of Fontainebleau is the largest of the French royal châteaux.	48 24 08 N	2 42 02 E
+Château de Frontenay		46 47 08.88 N	5 37 05.88 E
+Château de Gevrey-Chambertin		47 13 46 N	4 57 56 E
+Château de l'Arthaudière	The Château de l'Arthaudière is a castle in the Isère départment of the Rhône-Alpes région of France.	45 07 09 N	5 13 59 E
+Château de Lagarde		43 03 02 N	1 56 08.5 E
+Château de Langeais	The Château de Langeais in the Loire Valley	47 19 29.28 N	0 24 21.96 E
+Château de Loches	The Château de Loches in Loches is a château of the Loire Valley. The castle area, consisting of three buildings, among them one the oldest keeps in France, is one of the best preserved European architecture ensembles of the Middle Ages.	47 07 37 N	0 59 54 E
+Château de Maintenon		48 35 08 N	1 34 41 E
 Château de Malmaison	Château de Malmaison was the place of residence of Joséphine de Beauharnais and Napoleon Bonaparte	48 52 15 N	2 10 01 E
+Château de Montfaucon		47 14 46.32 N	6 04 42.24 E
+Château de Murol		45 34 42 N	2 56 43 E
+Château de Pagax		44 36 29.88 N	2 15 06.98 E
 Château de Puivert		42 55 16.21 N	2 03 17.82 E
+Château de Saint-Germain-en-Laye	The Château de Saint-Germain-en-Laye is a former royal residence in Saint-Germain-en-Laye, located ca. 19 km to the west of Paris. Nowadays it serves as Musée des Antiquités Nationales.	48 53 53 N	2 05 47 E
+Château de Saint-Izaire	The Château de Saint-Izaire is a castle in the Saint-Izaire commune of the Aveyron département of France	43 58 31 N	2 43 10 E
+Château de Suscinio		47 30 46 N	2 43 46 W
+Château de Suze-la-Rousse		44 17 14.64 N	4 50 11.62 E
+Château de Thorens	The Château de Thorens is a castle in the commune of Thorens-Glières in the Haute-Savoie département of France.	45 59 37 N	6 15 20 E
+Château de Valençay	The Château de Valençay is one of the châteaux of the Loire Valley in the french region Centre.	47 09 27 N	1 33 48 E
+Château de Vaux-le-Vicomte		48 33 53.46 N	2 42 50.4 E
+Château de Wangenbourg	The castle of Wangenbourg is a mediaeval castle in Wangenbourg-Engental, Bas-Rhin, France.	48 37 15 N	7 18 51 E
+Château des Adhémar		44 33 33.02 N	4 45 15.35 E
+Château du Haut-Kœnigsbourg	The castle of Haut-Kœnigsbourg is a mediaeval castle located in Orschwiller, France.	48 14 58 N	7 20 39 E
+Château-Gaillard		49 14 17.26 N	1 24 09.91 E
+Cimetière du Montparnasse	The Montparnasse cemetery (Fr: Cimetière du Montparnasse) is a famous cemetery in the Montparnasse quarter of Paris, France.	48 50 17 N	2 19 37 E
+Cimetière du Père-Lachaise	Père Lachaise Cemetery (French: Cimetière du Père-Lachaise) (officially, cimetière de l'Est “eastern cemetery”) is the largest cemetery in the city of Paris at 118 acres (48 ha), though there are larger cemeteries in Paris suburbs.	48 51 43 N	2 23 39 E
 Cinque Terre	The Cinque Terre are five coastal villages in the province of La Spezia, Italy.	44 06 37.74 N	9 44 31.35 E
+Ciudad Real		38 59 00 N	3 55 00 W
+Clermont-Ferrand		45 46 47 N	3 05 13 E
+Clos Vougeot		47 10 29.72 N	4 57 19.74 E
 Collingwood Monument	A monument to Admiral Collingwood (1748-1810) was erected in Tynemouth, North East England, in 1845.	55 00 52.96 N	1 25 12.14 W
+Collégiale Notre-Dame de Melun		48 32 08 N	2 39 37 E
 Collégiale Saint-Florent de Niederhaslach		48 32 35 N	7 20 29 E
 Collégiale Saint-Martin de Colmar		48 04 38.5 N	7 21 29 E
 Collégiale Saint-Thiébaut de Thann		47 48 40 N	7 06 06 E
+Collégiale Saints-Michel-et-Gangolphe de Lautenbach		47 56 27.96 N	7 09 32.94 E
 Colonia-Haus	The Colonia-Haus is a 45-storey, 147 m skyscraper completed in 1973 in the Riehl district of Cologne, Germany.	50 57 38 N	6 58 55 E
+Colonne Vendôme		48 52 02.89 N	2 19 45.89 E
 Comacchio	Comacchio is a town in Emilia Romagna in Italy.	44 41 31.74 N	12 10 55.95 E
 Concatedral de Santa María de Guadalajara		40 38 04.72 N	3 09 45.15 W
-Corrubedo, Ribeira		42 34 21.64 N	9 04 22.77 W
+Conciergerie	The Conciergerie in the Palais de Justice, Paris, France	48 51 23 N	2 20 44 E
+Corrubedo, Ribeira		42 34 21.64 N	9 04 22.76 W
 Cortegada	Cortegada is a municipality in Galicia, in the province of Ourense.	42 12 24.86 N	8 10 01.06 W
 Coulée verte René-Dumont	The Promenade plantée is an elevated park in the 12th arrondissement of Paris, France.	48 50 32 N	2 23 15 E
+Couvent de Bischenberg (Bischoffsheim)		48 28 59.88 N	7 28 46.34 E
 Couvent de la Divine Providence de Saint-Jean-de-Bassel		48 48 12.12 N	6 59 32.06 E
+Couvent de Reinacker		48 40 51.96 N	7 24 27.5 E
 Crecente	Crecente is a municipality in Galicia, in the province of Pontevedra.	42 09 07.02 N	8 13 22.52 W
+Credit Lyonnais Head Office		48 52 14.95 N	2 20 11.45 E
+Château de Crussol	The Château de Crussol is a castle in the Ardèche départment of France.	44 56 18 N	4 51 09 E
 Cualedro		41 59 18.46 N	7 35 40.71 W
 Culleredo	Culleredo is a municipality in the province A Coruña, Galicia, Spain.	43 17 31.02 N	8 23 08.99 W
 Curtis Hall Arboretum		40 04 42 N	75 07 44 W
+Cáceres	Cáceres is the capital of Cáceres Province, in Extremadura, Spain.	39 28 23 N	6 22 16 W
 Córdoba (Argentina)	Intendancy square	31 24 00 S	64 11 00 W
+Dakar		14 43 55 N	17 27 26 W
 Dalhems kyrka	Die Kirche von Dalhem zählt zu den berühmtesten auf Gotland. Ihr Turm, der im 14. Jahrhundert angefügt wurde, gehört zu den höchsten der Landkirchen Gotlands.	57 33 08.7 N	18 32 03.2 E
 Dazaifu Tenman-gū		33 31 17.49 N	130 32 05.45 E
 Dent du Géant		45 51 43 N	6 57 06 E
 Detroit Institute of Arts	The Detroit Institute of Arts is a large art museum in Detroit, Michigan in the United States.	42 21 33.5 N	83 03 53.3 W
-Deutsches Museum Verkehrszentrum		48 07 57.85 N	11 32 40.69 E
+Deutsches Museum Verkehrszentrum	München	48 07 57.85 N	11 32 40.69 E
 Deyrulzaferan		37 17 57.6 N	40 47 33.9 E
-Dorfkirche Zernikow		53 05 24.62 N	13 05 23.78 E
+Dorfkirche Klein Haßlow	Church in Klein Haßlow, Wittstock municipality, Ostprignitz-Ruppin district, Brandenburg state, Germany	53 10 29.84 N	12 31 28.6 E
+Dorfkirche Priort	Church in Priort, Wustermark municipality, Havelland district, Brandenburg state, Germany.	52 30 44.61 N	12 57 49.36 E
 Dozón		42 34 09.35 N	8 03 08.25 W
 Drexel University		39 57 14.68 N	75 11 12.76 W
 Duchesse Anne (voilier)		51 02 15.37 N	2 22 20.21 E
-Duino-Aurisina	English:	45 45 02.29 N	13 40 29.6 E
+Duino-Aurisina		45 45 02.29 N	13 40 29.6 E
 Durban		29 53 00 S	31 03 00 E
 Dürrenstein (Südtirol)	The Dürrenstein is a mountain in the Dolomites in South Tyrol.	46 40 24 N	12 11 04 E
-Edinburgh Park & Ride network	The Park & Ride network serving Edinburgh, Scotland. Services run by Lothian Buses call at all the sites except Ferrytoll.	55 56 30.52 N	3 00 42.77 W
 Effnerplatz	The Effnerplatz is a square in the north of Munich, in the Borough Bogenhausen.	48 09 11.79 N	11 36 54.73 E
 Église Saint-Jean-Baptiste de Laure-Minervois		43 16 20.78 N	2 31 12.11 E
+Église Saint-Louis-en-l'Île	The Saint-Louis-en-l'Île Church (lit. "St. Louis on the Island"), is a Catholic church located on Île Saint-Louis in the IVe arrondissement of Paris	48 51 4.38 N 2 21 27.47 E
 Église Saint-Martin de Chambonas		44 25 02.45 N	4 07 43.97 E
 Eglise Saint-Pierre des Cuisines		43 36 15.49 N	1 26 08.26 E
 Église Saint-Vincent-de-Paul (Paris)	Saint-Vincent-de-Paul is a church in Paris near the Gare du Nord	48 52 43.7 N	2 21 06.6 E
-Empúries	Empúries is a town in the Mediterranean coast of the Catalan comarca of Empordà. It was founded by the ancient Greeks with the name of Ἐμπόριον (Emporion — "market").	42 08 20.29 N	3 07 11.19 E
-Erica, Victoria	Erica, Victoria	37 59 00 S	146 22 00 E
+El Padul		37 01 27 N	3 37 36 W
+El Vendrell		41 13 11.72 N	1 32 04.08 E
+Empúries	Empúries is a town on the Mediterranean coast of the Catalan comarca of Alt Empordà in Catalonia, Spain.	42 08 20.29 N	3 07 11.19 E
+Enclos paroissial de Saint-Thégonnec		48 31 13.4 N	3 56 47.44 W
+Erica, Victoria	 37 59 00 S	146 22 00 E
 Erlöserkirche (Bad Homburg)	The Church of the Redeemer is a protestant church in Bad Homburg, Germany.	50 13 35.5 N	8 36 42 E
 Esgos		42 19 29.71 N	7 41 45.94 W
-Eurockéennes 2015		47 41 08.79 N	6 48 30.36 E
-European Parliament		48 35 51.82 N	7 46 09.82 E
+European Parliament	The European Parliament is the parliament of the European Union.	48 35 51.82 N	7 46 09.82 E
+Familistère		49 54 15 N	3 37 31 E
 Fangelsbachfriedhof	The Fangelsbachfriedhof is one of the most important historical cemeteries in Stuttgart.	48 45 56 N	9 10 28 E
 Feldkommandostelle Hegewald (East Prussia)		54 08 05.54 N	21 58 36.02 E
 Fene	Fene is a municipality in the province A Coruña, Galicia, Spain.	43 27 40.11 N	8 11 28.2 W
-Ferrol		43 29 21.46 N	8 13 29.94 W
+Ferrol		43 29 21.47 N	8 13 29.94 W
 Ferrytoll Park & Ride	Ferrytoll Park & Ride is a bus/car interchange in Fife, Scotland, at the northern end of the Forth road crossing.	56 01 21.47 N	3 24 22.97 W
 Fieschergletscher		46 30 07.88 N	8 08 30.59 E
-Fiesole (area archeologica)		43 48 29.05 N	11 17 39.19 E
-Fish Creek, Victoria	Fish Creek, Victoria	38 41 00 S	146 05 00 E
+Fiesole (area archeologica)		43 48 29.04 N	11 17 39.19 E
+Fish Creek, Victoria		38 41 00 S	146 05 00 E
 Flaucher	Flaucher is an area in the south of Munich on the left and right hand side of the Isar (district: Sendling and Thalkirchen).	48 06 27 N	11 33 27 E
+Fontaine des Neuf-Canons		43 31 36.12 N	5 26 55.25 E
+Fontaine du Palmier		48 51 26.99 N	2 20 50.17 E
+Fort Boyard	Fort Boyard is a fort located between the île d'Aix and the île d'Oléron in the Pertuis d'Antioche straits, on the west coast of France.	45 59 58.71 N	1 12 50.16 W
 Fort de Bessoncourt		47 38 58.41 N	6 55 37.74 E
 Fort de la Miotte		47 38 53.29 N	6 52 30.33 E
+Fort de Vézelois		47 36 01.67 N	6 54 29.41 E
 Fort des Basses Perches		47 37 34.05 N	6 52 06.81 E
 Fort du Bois d'Oye		47 34 27.7 N	6 50 36.55 E
 Fort Ross	Fort Ross, a former Russian fur trade outpost, located on the coast of Northern California (United States).	38 30 51.35 N	123 14 36.88 W
@@ -218,40 +330,49 @@ Fortezza del Priamar	La fortezza del Priamar è un antico insediamento storico p
 Forêt domaniale de Sète	The National Forest of Sète in the commune of Sète, Hérault, France.	43 24 18.74 N	3 40 13.74 E
 Fosse De Sessevalle		50 22 11.03 N	3 15 41.09 E
 Four solaire d'Odeillo	The "Centre du Four Solaire Félix Trombe" is located in Odeillo, France.	42 29 37 N	2 01 45 E
-Francelos, Ribadavia		42 16 35.51 N	8 09 34.87 W
+Francelos, Ribadavia		42 16 35.51 N	8 09 34.88 W
 Franciscan Monastery in Katowice Panewniki	Neo-Romanesque monastery of the Franciscans in Katowice Panewniki in Poland from the early XX century.	50 13 37 N	18 57 45 E
 Pfarrkirche St. Bartholomäus in Friesach		46 57 04.28 N	14 24 18.19 E
 Fubine	Fubine è un comune in provincia di Alessandria, Piemonte, Italia.	44 57 55.35 N	8 25 32.75 E
+Funkturm Leipzig		51 18 49.02 N	12 23 34.93 E
 Fuzhou	Fuzhou, also known as Foochow, is a city in China.	26 04 16 N	119 18 13 E
 Gandino		45 48 42 N	9 54 11 E
 Gardens of Nymphenburg Palace	Der Nymphenburger Schlosspark ist eines der größten und bedeutendsten Gartenkunstwerke Deutschlands.	48 09 29 N	11 30 13 E
+Gare de Metz-Ville		49 06 35.28 N	6 10 39 E
+Gare de Paris-Est	Literally East Station, Paris, but usually called Gare de l'Est in Paris, France.	48 52 37 N	2 21 33 E
+Gare de Paris-Nord	Literally North Station, Paris, but usually called Gare du Nord in Paris, France.	48 52 58 N	2 21 24 E
+Gare de Paris-Saint-Lazare	Gare Paris Saint-Lazare is one of the six large terminus railway stations of Paris.	48 52 37 N	2 19 28 E
 Garmischer Straße	The Garmischer Straße is a street in Munich, part of the Mittlerer Ring around the city centre.	48 07 28.03 N	11 31 14.51 E
 Garten des Himmlischen Friedens	The Garten des Himmlischen Friedens (lit. Garden of Heavenly Peace) is a small walled Chinese garden in the Bethmannpark in Frankfurt-Nordend	50 07 07.57 N	8 41 26.52 E
 Gavi	Gavi is a town in Piemonte in Italy.	44 41 19.35 N	8 48 10.64 E
 Gedankengang Offenbach	This is part of a series of tunnels in Offenbach that have been redesigned.	50 05 58.64 N	8 45 49.92 E
-Gent-Wevelgem 2014		50 48 29.25 N	3 10 49.47 E
 Georg-Brauchle-Ring	The Georg-Brauchle-Ring is a street in Munich.	48 10 34.46 N	11 32 35.48 E
-Gernikako Arbola	The Gernika oak where the lords of Biscay (including several kings of Castile and Spain) came to take the oath of respect to the basques Fueros (Rules and Rights).	43 18 53.44 N	2 40 47.92 W
+Gernikako Arbola	The Gernika oak where the lords of Biscay (including several kings of Castile and Spain) came to take the oath of respect to the basques Fueros (Rules and Rights).	43 18 53.43 N	2 40 47.92 W
 Giardino dei Semplici di Firenze	The Orto Botanico di Firenze (2.3 hectares), also known as the Giardino dei Semplici, is a botanical garden maintained by the University of Florence.	43 46 45 N	11 15 39 E
-Giurtelecu Şimleului	Giurtelecu Şimleului is a settlement in Romania.	47 18 N	22 48 E
+Giurtelecu Șimleului	Giurtelecu Șimleului is a settlement in Romania.	47 18 N	22 48 E
+Glanum		43 46 26 N	4 49 57 E
 Goethedenkmal (Wien)	The Goethe monument at the Opernring in Vienna by Edmund Hellmer	48 12 12.07 N	16 21 57.73 E
 Gogar Tram Depot		55 56 22.27 N	3 19 36.44 W
 Gorle		45 42 14 N	9 43 08 E
 Government House, Jersey		49 11 41.44 N	2 05 39.78 W
-Gradara	Gradara is a town in Marche, Italy.	43 56 15.75 N	12 45 59.24 E
+Gradara	Gradara is a town in Marche, Italy.	43 56 15.75 N	12 45 59.25 E
+Grand Hôtel de Cabourg		49 17 37.32 N	0 06 59.08 W
+Grand Palais	The Grand Palais in Paris, France	48 51 58 N	2 18 45 E
 Granollers	Granollers is a city near Barcelona, in Catalonia, Spain.	41 32 35.1 N	2 12 59.63 E
+Gromo	Gromo is a town in Lombardia in Italy.	45 58 09.91 N	9 55 25.72 E
 Gråmanstorps kyrka		56 08 59.33 N	13 06 00.4 E
-Guaricano	Barrio of Santo Domingo (Dominican Republic), Genoese mission	18 32 01.81 N	69 55 58.57 W
 Gut Böckel	Böckel Castle in Rödinghausen, District of Herford, North Rhine-Westphalia, Germany.	52 13 29.1 N	8 31 02.98 E
 Gymnasium Koblenzer Straße	The Gymnasium Koblenzer Straße, also known as Kobi, is a German grammar school in Urdenbach, an urban borough of Düsseldorf.	51 08 58.67 N	6 53 08.95 E
 Göltzschtalbrücke		50 37 21.29 N	12 14 37.46 E
 Hamburg	Hamburg is a City-State in the North of Germany and one of the biggest seaports in Europe.	53 34 07 N	10 02 19 E
 Hamburger Rathaus		53 33 01 N	9 59 32 E
+Hameau de la Reine		48 49 07 N	2 06 46 E
+Hampigny		48 27 21 N	4 35 24 E
 Hansestaden Visby	The Hanseatic town Visby was founded in the 10th century, on the then independent Baltic Sea island of Gotland.	57 38 20 N	18 17 40 E
+Château d'Harcourt	The Château d'Harcourt is a castle located in the commune of Harcourt in the Eure département of France	49 10 26 N	0 47 11 E
 Haus Werburg	Haus Werburg is a small water castle in Spenge, Kreis Herford.	52 08 30.78 N	8 28 33.66 E
 Hazmburk	Hazmburk is a hill with castle in České středohoří in Czech Republic.	50 26 03 N	14 00 52 E
 Heckenstallerstraße	The Heckenstallerstraße is a street in Munich, part of the Mittlerer Ring around the city centre.	48 06 35.77 N	11 31 42 E
-Heiligenhäuschen Neun Morgen, Burggrumbach		49 52 42.52 N	10 01 26.96 E
 Hellig Kors Kirke	Hellig Kors Kirke is a church on Nørrebro in Copenhagen, Denmark.	55 41 15.72 N	12 33 05.04 E
 Henninger-Turm	The 120-m-high Henninger Turm is located in Frankfurt-Sachsenhausen in Germany.	50 05 50.16 N	8 41 36.77 E
 Herford	Herford is a city in North Rhine-Westphalia, Germany.	52 06 57.81 N	8 40 12.11 E
@@ -260,61 +381,80 @@ Holy Trinity Cathedral in Odessa		46 28 34.36 N	30 44 18.43 E
 Hoppenlaufriedhof	The Hoppenlaufriedhof is a cemetery in Stuttgart.	48 46 54 N	9 10 05 E
 Horyuji	Hōryū-ji (法隆寺, "Temple of the Flourishing Law") is a Buddhist temple in Ikaruga, Nara Prefecture, Japan.	34 36 53.06 N	135 44 03.02 E
 Hospitalkirche (Stuttgart)		48 46 40 N	9 10 22 E
-Hôtel du Gouverneur, Belfort		47 38 16.16 N	6 51 49.16 E
+Humprecht	Humprecht is a castle on top of a hill near Sobotka in the Hradec Králové region in the Czech Republic.	50 28 13 N	15 10 11 E
+Hôtel Biron		48 51 19 N	2 18 57 E
+Hôtel d'Ulmo		43 35 51 N	1 26 59.28 E
+Hôtel de Bourgtheroulde		49 26 31.2 N	1 05 17.77 E
+Hôtel de Sens		48 51 12 N	2 21 33 E
+Hôtel de Soubise		48 51 38 N	2 21 30 E
+Hôtel Lutetia		48 51 04 N	2 19 39 E
+Hôtel Négresco		43 41 40 N	7 15 27 E
 Igreja de São Martinho de Aldoar		41 10 14.58 N	8 40 13.83 W
 Igrexa de San Pedro de Vilanova de Dozón	The romanic parochial Church of San Pedro of Dozón	42 35 06.77 N	8 01 27.02 W
 Igrexa de Santa María de Cambre		43 17 32.03 N	8 20 34.4 W
 Igrexa de Santo Antolín de Toques		42 58 41.36 N	7 58 59.23 W
 Illa de Cortegada		42 37 05.87 N	8 47 02.7 W
 Iloilo City	The City of Iloilo is the capital city of the Provinces of the Philippines of Iloilo.	10 41 24 N	122 33 00 E
-Im Klosterhof Nr 4, Kennelbach Vbg, Aufbahrungshalle		47 28 49.67 N	9 45 59.27 E
-Info:Kusterdingen	Kusterdingen is a municipality situated between Tübingen and Reutlingen in Baden-Württemberg in Germany.	48 31 20.28 N	9 07 15.24 E
-Info:Mössingen	Mössingen is a municipality circa 15km south of Tübingen in Baden-Württemberg in Germany.	48 24 23 N	9 03 27 E
+Innerer Plauenscher Friedhof	Cemetery „Innerer Plauenscher Friedhof“ near church „Auferstehungskirche“ in Dresden-Plauen	51 01 42.38 N	13 42 15.91 E
 Institut de théologie orthodoxe Saint-Serge		48 52 59.98 N	2 23 01.23 E
 Isarring	The Isarring is a street in Munich, part of the Mittlerer Ring around the city centre.	48 09 36.65 N	11 36 03.89 E
-Isla San Carlos	Peninsula of San Carlos, commonly known as San Carlos Island, part of Venezuela, is located north of the island of Toas, between the Gulf of Venezuela and Lake Maracaibo.	10 59 42.73 N	71 36 43.16 W
+Isfahan اصفهان		32 39 05 N	51 40 45 E
+Isla San Carlos	Isla San Carlos or peninsula of San Carlos, is part of Venezuela and is located north of the island of Toas.	10 59 42.73 N	71 36 43.16 W
 Ivrea	Ivrea is a town in Piemonte in Italy.	45 27 50.4 N	7 52 42.96 E
 Jagdschloss Wermsdorf		51 16 59.52 N	12 56 21.85 E
-Jesuitenkirche (Wien)	The Jesuit church is a prominent church in Vienna, Austria.	48 12 32.95 N	16 22 39.48 E
+Jardin de l'État	The Jardin de l'État is a botanical garden on Réunion island.	20 53 12 S	55 27 04 E
+Jardin des Tuileries		48 51 50 N	2 19 34 E
+Jaroměř	Pond	50 21 22.45 N	15 55 17.21 E
+Jesuitenkirche (Wien)	The Jesuitenkirche (Jesuit church) is a prominent church in Vienna, Austria.	48 12 32.95 N	16 22 39.48 E
 Jin Mao Tower	Jin Mao Building	31 14 14 N	121 30 05 E
 Johannesburg	Johannesburg is the largest city in South Africa.	26 12 16 S	28 02 44 E
 Jubiläumssäule		48 46 42.85 N	9 10 47.53 E
 Jumkils kyrka	Jumkils kyrka tillhör Bälingebygdens församling, Upplands västra kontrakt, Uppsala stift / Diocese of Uppsala.	59 56 33.2 N	17 25 23.7 E
+Jüdischer Friedhof Haunetal		50 45 12.6 N	9 41 00.6 E
 Kaaba		21 25 21.11 N	39 49 34.41 E
 Kagawa prefecture	Kagawa Prefecture (香川県, Kagawa-ken?) is a prefecture of Japan located on Shikoku island. The capital is Takamatsu.	34 20 24.4 N	134 02 35.8 E
 Kansai International Airport	Kansai International Airport, is an international airport located on an artificial island in the middle of Osaka Bay, off the shore of Sennan district of Osaka, Japan.	34 26 03 N	135 13 58 E
 Karlsfried	Karlsfried Castle is situated nearby the town of Zittau in Sachsen, Germany.	50 50 05.05 N	14 47 32.29 E
 Katharinenhospital Stuttgart		48 48 01.87 N	9 12 21.6 E
-Kennesaw State Soccer Stadium	New KSU Stadium is a new stadium near Kennesaw, Georgia that is currently being constructed.	34 01 46.43 N	84 34 03.63 W
-Kiel	Kiel is the Capital city and most populous city of the northern German state Schleswig-Holstein.	54 19 31 N	10 08 26 E
-Kleinmarkthalle Frankfurt		50 06 45 N	8 41 01 E
+Kathmandu		27 43 00 N	85 22 00 E
+Kiel	Kiel is the capital city and most populous city of the northern German state Schleswig-Holstein.	54 19 31 N	10 08 26 E
+Kleinmarkthalle Frankfurt	Vegetable stall	50 06 45 N	8 41 01 E
+Klimkówka - stary dwór		49 35 18.78 N	21 49 50.14 E
 Kloster Ettal	The monastery of Ettal is a Benedictine monastery in Bavaria/Germany near Oberammergau.	47 34 09.33 N	11 05 40.42 E
 Kotohira Gu	Kotohira Gu in Kotohira, Kagawa prefecture, Japan.	34 11 02.2 N	133 48 34 E
 Kreis Herford		52 06 57.54 N	8 39 40.42 E
 Kreis Minden-Lübbecke	Der Kreis Minden-Lübbecke ist ein Landkreis im Osten des Landes Nordrhein-Westfalen mit Sitz in Minden.	52 16 53.48 N	8 54 41.71 E
-Kreuzschlepper Am Weiher 1, Holzhausen		50 07 06.2 N	10 11 07.12 E
+Kreuz im Heldenhain, Geschwister-Scholl-Weg, Ruhland		51 27 30.61 N	13 52 01.48 E
+Kriegerdenkmal in Arnsdorf (Ruhland)		51 25 48.02 N	13 51 05.5 E
 Kronprinzenpalais (Stuttgart)		48 46 41.56 N	9 10 39.88 E
 Krumbach (Schwaben)	Krumbach (Schwaben) ist eine Stadt im Landkreis Günzburg, Regierungsbezirk Schwaben, Bayern.	48 14 35 N	10 21 48 E
 Krummesse	Krummesse is a village in Schleswig-Holstein, Germany, which partly belongs to Kreis Herzogtum Lauenburg and partly to Lübeck.	53 46 45 N	10 38 30 E
-Kuala Lumpur		3 08 08.5 N	101 41 16.8 E
+Kuala Lumpur		3 09 35 N	101 42 00 E
 Kunsthalle Bremen		53 04 22 N	8 48 49 E
 Kuressaare		58 09 00 N	22 16 48 E
 Kusterdingen		48 31 20.28 N	9 07 15.24 E
 Lac Blanc (Orbey)	Dans le massif des Vosges, près d'Orbey.	48 07 31.32 N	7 05 34.95 E
+Lac Chambon		45 34 13 N	2 55 18 E
 Lac de Serre-Ponçon	Le Lac de Serre-Ponçon, vallé de l'Ubaye, Hautes-Alpes, France	44 30 33.26 N	6 22 10.8 E
+Lac des Dix		46 03 25.74 N	7 23 51.17 E
 Lalín	Lalín is a municipality in Galicia, Spain in the province of Pontevedra.	42 39 36.8 N	8 06 43.31 W
-Langes Tannen	The domain Langes Tannen now belongs to the town of Uetersen.	53 41 32.67 N	9 40 28.6 E
-Large Hadron Collider		46 16 17 N	6 03 48.5 E
+Langes Tannen		53 41 32.67 N	9 40 28.6 E
+Large Hadron Collider	CERN collider near Geneva, Switzerland	46 16 17 N	6 03 48.5 E
 Larouco	Larouco is a municipality in Galicia, in the province of Ourense.	42 20 48.74 N	7 09 37.22 W
-Laza	Laza is a municipality in Galicia, in the province of Ourense.	42 03 36.69 N	7 27 37.14 W
-Le Crozet (Loire)	Le Crozet est une commune française, située dans le département de la Loire et la région Rhône-Alpes.	46 10 11 N	3 51 25 E
+Lavoir de Gex		46 20 02.04 N	6 03 30.02 E
+Laza	Laza is a municipality in Galicia, in the province of Ourense.	42 03 36.68 N	7 27 37.14 W
+Le Louxor		48 52 00 N	2 20 59 E
 Le Sauze-du-Lac	Le Sauze-du-Lac est un petit village de les Hautes-Alpes, prés du lac de Serre-Ponçon.	44 28 42.94 N	6 18 52.35 E
+Le Train Bleu		48 50 42 N	2 22 24 E
+Legnano	Legnano is a town in the north-west of Lombardy, situated on the flat lands of the Po Valley between Milan and Lake Maggiore.	45 35 48.84 N	8 54 32 E
 Leiro	Leiro is a municipality in Galicia, in the province of Ourense.	42 22 11.51 N	8 07 27.42 W
+Les Invalides		48 51 18 N	2 18 45 E
 Levanto	Levanto is a village in Liguria in Italy.	44 10 15.82 N	9 36 41.68 E
+Lighthouses at Cape Arkona	There are two lighthouses and one bearing tower at Cape Arkona.	54 40 47 N	13 25 57 E
 Ligne Aubagne - Fuveau		43 23 41.38 N	5 33 59.44 E
 Lima		12 05 36 S	77 02 48 W
 Loro Parque	Puerto de la Cruz, Tenerife, Canarias, España	28 24 30.18 N	16 33 51.25 W
-Lothian Buses: Central garage	Central garage in Annandale Street, Broughton, is one of Lothian Buses' depot sites.	55 57 40.43 N	3 11 16.73 W
+Loschwitzer Friedhof	Cemetery "Loschwitzer Friedhof" in Dresden-Loschwitz	51 02 46 N	13 49 18.98 E
 Luise-Kiesselbach-Platz	The Luise-Kiesselbach-Platz is a square in the southwest of Munich.	48 06 44.17 N	11 31 03.27 E
 Lunds domkyrka	Lunds domkyrka or Lund Cathedral is the cathedral of Lund in Skåne in southern Sweden.	55 42 14.59 N	13 11 36.91 E
 LWL-Freilichtmuseum Detmold	The LWL-Freilichtmuseum Detmold (earlier name: Westfälisches Freilichtmuseum Detmold) is a museum for folklife studies in the town of Detmold, Germany.	51 55 25 N	8 52 12 E
@@ -322,13 +462,16 @@ Madone		45 39 00 N	9 32 53 E
 Magasin-caverne du Salbert		47 39 20.34 N	6 49 22.79 E
 Magazzini del Cotone di Genova	I Magazzini del Cotone sono una delle principali strutture del porto antico di Genova.	44 24 29.75 N	8 55 16.68 E
 Mahabodhi Temple	The Mahabodhi Temple is a Buddhist temple in Bodh Gaya, the location where Siddhartha Gautama, the Buddha, attained enlightenment.	24 41 46 N	84 59 29 E
+Maison de François Coignet		48 55 51.24 N	2 20 30.44 E
+Maison de la Mutualité		48 50 55.5 N	2 21 02 E
 Maisons de la rue Jeanne-Mance		45 30 31.9 N	73 34 11.02 W
 Manneken Pis van Brussel	Manneken Pis in Brussels	50 50 42 N	4 21 00 E
-Manzaneda	Manzaneda is a municipality in Galicia, in the province of Ourense.	42 18 35.34 N	7 13 58.01 W
-Mary's Tomb	'egg' (ornament hung on oil lamp chains) with winged seraphim. Armenian artwork	31 46 48.5 N	35 14 21.41 E
+Manufacture nationale de Sèvres		48 49 43 N	2 13 21 E
+Manzaneda	Manzaneda is a municipality in Galicia, in the province of Ourense.	42 18 35.33 N	7 13 58.01 W
 Marín		42 23 31.28 N	8 42 16.58 W
 Maside	Maside is a municipality in Galicia, in the province of Ourense.	42 24 44.75 N	8 01 31.85 W
 Matitone (Genova)	Il Matitone è un grattacielo di Genova dalla struttura a forma di lapis. È situato nella zona portuale di San Benigno, a breve distanza dalla torre della Lanterna.	44 24 40.59 N	8 54 25.07 E
+Matteus kyrka, Stockholm		59 20 43.08 N	18 02 32.94 E
 Maximiliansbrücke in München		48 08 12.42 N	11 35 31.45 E
 Meaño	Meaño is a municipality in Galicia, Spain in the province of Pontevedra.	42 26 31.95 N	8 46 46.02 W
 Meis	Meis is a municipality in Galicia, Spain in the province of Pontevedra.	42 30 49.01 N	8 41 27.14 W
@@ -338,27 +481,27 @@ Millennium Town Park	The Millennium Town Park is a public park in Saint Helier, 
 Minden	Minden is a German city in North Rhine-Westphalia.	52 17 20.18 N	8 55 04.19 E
 Mindener Dom	Cathedral in Minden, District of Minden-Lübbecke, North Rhine-Westphalia, Germany.	52 17 19.85 N	8 55 09.94 E
 Mindener Kreisbahnen	Kreisbahnen Minden, ein Unternehmen aus dem 19. Jahrhundert, das in Abwandlungen noch heute besteht.	52 18 01.14 N	8 54 50.98 E
-Miquel Marti i Pol.jpg	Monument al Llibre, Saltamartí	41 23 21.34 N	2 10 05.05 E
 Mittagskogel	Mittagskogel is a peak in the Karawanken mountain chain in Carinthia / Austria / EU.	46 30 26.54 N	13 57 08.1 E
 Moaña	Moaña is a municipality in Galicia, Spain in the province of Pontevedra.	42 17 05.52 N	8 44 57.56 W
-Moe, Victoria	Moe, Victoria	38 10 20 S	146 16 04 E
+Moe, Victoria		38 10 20 S	146 16 04 E
 Molino Stucky	Il Molino Stucky è uno storico edificio di Venezia. È un esempio di architettura industriale neogotica.	45 25 41.55 N	12 19 11.95 E
-Mollet del Vallès	Mollet del Vallès is a village in the comarca of Vallès Oriental (Catalonia, Spain).	41 32 35.1 N	2 12 59.63 E
 Monastery of San Paio de Diomondi		42 36 13.6 N	7 42 34.1 W
-Monforte de Lemos		42 31 19.98 N	7 30 46.55 W
+Monforte de Lemos		42 31 19.98 N	7 30 46.56 W
 Monte Amiata	Il Monte Amiata è un monte situato nella Toscana.	42 54 00 N	11 38 00 E
 Monte Musinè	el Monte Musinè es una cima de los Alpes Grayos, en Italia.	45 06 50 N	7 27 16 E
 Monterrei	Monterrei is a municipality in Galicia, in the province of Ourense.	41 56 51.19 N	7 26 58.52 W
 Montevideo		34 52 01 S	56 10 00 W
-Montsec d'Ares	El Montsec d'Ares és el sector central de la Serra del Montsec, entre els congostos deTerradets a l'est i el de Mont-rebei a l'oest	42 02 27.96 N	0 47 33.68 E
+Montmartre Cemetery	Montmartre Cemetery (Fr: Cimetière de Montmartre) is a famous cemetery located at 37 Avenue Samson, in the 18th arrondissement of Paris, France.	48 53 16 N	2 19 49 E
 Monument de Joseph Sec	Monument Joseph Sec, 8 avenue Pasteur, Aix-en-Provence, France.	43 31 59.44 N	5 26 46.71 E
 Monument international de la Réformation		46 12 00.78 N	6 08 45.19 E
-Mos	Mos is a municipality in Galicia, Spain in the province of Pontevedra.	42 11 39.08 N	8 39 11.18 W
+Mos	Mos is a municipality in Galicia, Spain in the province of Pontevedra.	42 11 39.08 N	8 39 11.19 W
 Mosteiro de San Clodio de Leiro		42 22 02.61 N	8 06 54.12 W
 Mosteiro de San Salvador de Celanova		42 09 06.55 N	7 57 24.85 W
 Mosteiro de Santa María de Aciveiro		42 37 03 N	8 18 06 W
 Mońki	Railway station	53 24 00 N	22 47 00 E
 Mugardos	Mugardos is a municipality in the province A Coruña, Galicia, Spain.	43 27 43.7 N	8 15 12.52 W
+Muntic	Muntic is a village in Istria, Croatia.	44 55 00 N	13 56 00 E
+Murol		45 34 23 N	2 56 35 E
 Muros		42 46 28.69 N	9 03 23.75 W
 Murray House		22 13 05.15 N	114 12 34.96 E
 Murviel-lès-Béziers		43 26 29 N	3 08 42 E
@@ -366,13 +509,16 @@ Museo Civico d'Arte Antica di Torino	Il Museo Civico d'Arte Antica è un polo mu
 Museo della Storia del Genoa		44 24 37.8 N	8 56 11.39 E
 Museo Regionale della Fauna Alpina - Alpenfaunamuseum "Beck-Peccoz"	Un museo sulla fauna alpina situato a Gressoney-Saint-Jean, in Valle d'Aosta, Italia.	45 46 35.57 N	7 49 36.84 E
 Museum für Moderne Kunst	The Museum für Moderne Kunst (MMK) is an art museum in Frankfurt am Main.	50 06 42.56 N	8 41 03.86 E
+Mérida (Spain)		38 54 57 N	6 20 00 W
 Möja kyrka		59 24 18.8 N	18 52 53 E
 Mössingen		48 24 23 N	9 03 27 E
-Nagaoka Tenman-gū	日本語: 長岡天満宮, 京都府長岡京市。	34 55 22.2 N	135 41 10.8 E
+Mühlen am Löbauer Wasser		51 12 02.21 N	14 39 21.09 E
 Narón	Narón is a municipality in the province A Coruña, Galicia, Spain.	43 32 14.91 N	8 10 53.28 W
-Neda	Neda is a municipality in the province A Coruña, Galicia, Spain.	43 29 58.67 N	8 09 21.51 W
+Necrópole Megalítica da Lameira de Cima	Necrópole Megalítica da Lameira de Cima, freguesia de Antas, Penedono, Portugal.	40 56 09.92 N	7 20 57.52 W
+Neda	Neda is a municipality in the province A Coruña, Galicia, Spain.	43 29 58.68 N	8 09 21.51 W
+Nedroma		35 00 47.01 N	1 44 51.12 W
 Neues Rathaus München		48 08 16.07 N	11 34 33.35 E
-Neues Schloss, Stuttgart	The south front parallels the Planie and the Alte Schloss.	48 46 41 N	9 10 55 E
+Neues Schloss, Stuttgart		48 46 41 N	9 10 55 E
 New Mosque in Istanbul	New Mosque (Yeni Cami) in Istanbul	41 01 01.05 N	28 58 19.2 E
 Niujie Mosque	The Niujie Mosque (Chinese: 牛街清真寺; pinyin: niújiē qīngzhēnsì) is the oldest mosque in Beijing, China. It was built in 996 and completely rebuilt under the Kangxi Emperor (1622-1722).	39 53 04 N	116 21 29 E
 Nizza-Ufer	The Nizza bank is a park with mild microclimate at the Main river bank in Frankfurt am Main. The Park was constructed in 1860.	50 06 15.68 N	8 40 14.37 E
@@ -380,12 +526,12 @@ Noorderplantsoen	The Noorderplantsoen is a park in the Dutch city of Groningen.	
 Nullamunjie Olive Grove, Victoria	Nullamunjie olive groves are situated in the mountains of eastern Victoria, Australia on the slopes of Mount Stawell and near the banks of the Tambo River.	37 11 05 S	147 43 58 E
 O Barco de Valdeorras		42 24 38.82 N	6 58 33.51 W
 O Bolo	O Bolo is a municipality in Galicia, in the province of Ourense.	42 18 27.11 N	7 05 52.28 W
-O Carballiño		42 25 53.18 N	8 04 38.48 W
+O Carballiño		42 25 53.18 N	8 04 38.47 W
 O Grove		42 29 34.29 N	8 52 04.9 W
 O Pereiro de Aguiar	O Pereiro de Aguiar is a municipality in Galicia, in the province of Ourense.	42 20 47.83 N	7 48 06.62 W
 O Porriño	O Porriño is a municipality in Galicia, Spain in the province of Pontevedra.	42 09 41.84 N	8 37 15 W
-O Rosal	O Rosal is a municipality in Galicia, Spain in the province of Pontevedra.	41 56 07.29 N	8 50 05.63 W
-O Ézaro, Dumbría		42 54 38.2 N	9 07 54.11 W
+O Rosal	O Rosal is a municipality in Galicia, Spain in the province of Pontevedra.	41 56 07.3 N	8 50 05.63 W
+O Ézaro, Dumbría		42 54 38.2 N	9 07 54.12 W
 Obermillstatt		46 48 36.91 N	13 35 29.41 E
 Obervellach		46 55 55.76 N	13 12 06.68 E
 Ocean Park, Hong Kong		22 14 45.1 N	114 10 33.3 E
@@ -394,62 +540,96 @@ Oia	Oia is a municipality in Galicia, Spain in the province of Pontevedra.	42 00
 Oleiros	Oleiros is a municipality in the province A Coruña, Galicia, Spain.	43 19 57.16 N	8 18 54.38 W
 Oleiros, Ribeira		42 36 11.29 N	9 00 20.52 W
 Olgastraße (Stuttgart)		48 46 04.17 N	9 10 44.23 E
+Oradour-sur-Glane	Oradour-sur-Glane was a village in the Limousin region of Vichy France that came under direct German control in 1942.	45 55 55 N	1 01 54 E
+Oran		35 41 49 N	0 37 59 W
 Orangerie (Neustrelitz)	Die Orangerie in Neustrelitz wurde bereits 1755 erbaut und erfuhr 1840 bis 1842 einen grundlegenden Umbau durch Friedrich Wilhelm Buttel.	53 21 40 N	13 03 27 E
 Organización Médica Colegial de España	Spanish Medical Colleges Organization	40 24 57.24 N	3 41 49.49 W
 Ortigueira	Ortigueira is a municipality in the province A Coruña, Galicia, Spain.	43 41 12.94 N	7 51 10.47 W
-Os Blancos	Os Blancos is a municipality in Galicia, in the province of Ourense.	41 59 50.61 N	7 45 12.35 W
+Os Blancos	Os Blancos is a municipality in Galicia, in the province of Ourense.	41 59 50.61 N	7 45 12.34 W
 Ouaisné		49 10 45.75 N	2 11 10.77 W
 Oza-Cesuras	Oza-Cesuras, municipality in the province of A Coruña, in Galicia (Spain).	43 16 44.24 N	8 12 55.95 W
-Ozurgeti	Ozurgeti is a town and the regional administrative centre of Western Georgian province of Guria, former Macharadze or Makharadze (named in honor of Filipp Makaradze).	41 55 26.26 N	42 00 33.84 E
+Ozurgeti	Ozurgeti is a town and the regional administrative centre of Western Georgian province of Guria, former Macharadze or Makharadze.	41 55 26.26 N	42 00 33.84 E
 Oímbra		41 53 07.94 N	7 28 19.78 W
-Palacete de Belomonte	Palacete de Belomonte / Palácio de Belomonte / Casa dos Pacheco Pereira. Em Portugal, Porto, Porto, São Nicolau.	41 08 33.18 N	8 36 58.35 W
+Palace and park of Versailles		48 48 15.85 N	2 07 23.38 E
+Palais Brongniart	The Palais Brongniart was the site of the Paris Stock Exchange until 1987.	48 52 09.01 N	2 20 26.98 E
+Palais de justice de Paris	Palais de Justice is a building complex on the Île-de-la-Cité in Paris. It was built on the site of the Palais de la Cité, the residence of the Kings of France until the 14th century.	48 51 20.6 N	2 20 42.18 E
+Palais de l'Élysée		48 52 13 N	2 18 59 E
+Palais des Papes	The Palais des Papes in Avignon, France was the residency of popes during the 14th and 15th century.	   43 57 02 N 4 48 25 E   43.95068 N 4.80704 E  43.95068 4.80704
+Palais du parlement de Bretagne		48 06 46.08 N	1 40 40.01 W
 Palais du parlement du Dauphiné		45 11 35.97 N	5 43 42.86 E
+Palais du Tau		49 15 11 N	4 02 04 E
+Palais ducal de Nevers	The Palais Ducal in Nevers, France	46 59 18 N	3 09 30 E
 Palais Garnier	The Palais Garnier, also known as Opéra Garnier or Opéra national de Paris is an opera house situated at the northern end of the avenue de l'Opera, in Paris.	48 52 19 N	2 19 54 E
+Palais Granvelle (Besançon)		47 14 08.52 N	6 01 35.76 E
+Palais Idéal		45 15 22.85 N	5 01 42.74 E
+Palais Longchamp		43 18 15.48 N	5 23 40.2 E
+Palais Royal		48 51 52.5 N	2 20 15.1 E
 Palmenhaus, Vienna	Vienna's Palmenhaus ('palm house', a Jugendstil greenhouse built in 1901) is a building in Vienna's 1st district, beneath 'Burggarten' and Hofburg.	48 12 18 N	16 22 01 E
 Palácio de Estói		37 05 47.79 N	7 53 44.05 W
 Palácio Nacional da Pena		38 47 15.24 N	9 23 25.75 W
 Palácio Nacional de Mafra	O Palácio Nacional de Mafra é um palácio e mosteiro monumental de estilo neoclássico localizado em Mafra (Portugal) a poucos mais de 50 quilómetros de Lisboa.	38 56 12 N	9 19 35 W
 Pamukkale	Pamukkale is a natural site and attraction and a UNESCO World Heritage Site in south-western Turkey.	37 55 25 N	29 07 24 E
+Panthéon de Paris		48 50 46 N	2 20 45 E
+Parc Astérix		48 27 21 N	4 35 24 E
 Parc du Thabor		48 06 51 N	1 40 12 W
+Parc Monceau		48 52 45.84 N	2 18 33.23 E
+Parc Natural del Delta de l'Ebre	Village	40 42 09 N	0 48 32 E
+Paris-Gare de Lyon		48 50 41 N	2 22 25 E
+Emin Pasha	Emin Pasha (born Eduard Schnitzer, 1840-1892) was a German explorer of Central Africa.	42 12 40.68 N	20 44 28.26 E
+Petit Palais	The Petit Palais is a palace in Paris, France built for the Universal Exhibition in 1900. It now houses the Musée des Beaux-Arts de la Ville de Paris (Paris Museum of Fine Arts).	48 51 57.72 N	2 18 52.39 E
 Petuelpark		48 10 39.64 N	11 34 45.32 E
 Petuelring	The Petuelring is a street in Munich, part of the Mittlerer Ring around the city centre.	48 10 40.25 N	11 34 19 E
 Petueltunnel	The Petueltunnel is a tunnel that runs beneath the Petuelring between the Boroughs Milbertshofen-Am Hart and Schwabing-West in Munich.	48 10 39.9 N	11 34 37.48 E
+Phare de Chassiron		46 02 48.12 N	1 24 37.01 W
 Philadelphia City Hall	Philadelphia City Hall is the seat of government for the city of Philadelphia, Pennsylvania.	39 57 08.28 N	75 09 48.96 W
 Piazza Corvetto (Genova)	Piazza Corvetto è una delle principali piazze di Genova	44 24 36.1 N	8 56 18.2 E
 Piazza della Vittoria (Genoa)	Piazza della Vittoria è una delle principali piazze di Genova.	44 24 11.12 N	8 56 42.45 E
-Piazza Navona	Piazza Navona is a square in Parione, the VI. Rione (district) from Rome / Italy / EU.	41 53 56.21 N	12 28 23.15 E
+Piazza delle Erbe (Verona)		45 26 36.74 N	10 59 48.53 E
+Piazza Navona	Piazza Navona is a square in Parione, the VI. Rione (district) from Rome, Italy.	41 53 56.21 N	12 28 23.15 E
 Piazza Venezia	Piazza Venezia is Located in Rome.	41 53 47 N	12 28 57 E
 Pieve di San Giorgio di Valpolicella	The Pieve di San Giorgio di Valpolicella is a particularly large and elaborate Pieve (ancient church) of the city of Sant'Ambrogio di Valpolicella, Italy.	45 32 07 N	10 51 00 E
 Piode	Piode è un comune della Valsesia, in provincia di Vercelli, Piemonte, Italia.	45 46 09.98 N	8 02 57.28 E
-Piñor	Piñor is a municipality in Galicia, in the province of Ourense.	42 29 50.7 N	8 00 21.4 W
-Place royale du Peyrou		43 36 40 N	3 52 15 E
+Piñor	Piñor is a municipality in Galicia, in the province of Ourense.	42 29 50.69 N	8 00 21.39 W
+Place de la Concorde	The Place de la Concorde is one of the major public squares in Paris, France.	48 51 56 N	2 19 16 E
+Place des Vosges	Place des Vosges in Paris, France	48 51 20 N	2 21 56 E
 Plaridel Airport		14 53 27.91 N	120 51 09.9 E
 Plaça Catalunya	Plaça Catalunya (or Plaza de Cataluña in spanish) is a large square in central Barcelona.	41 23 13.21 N	2 10 12.09 E
-Ponte de Rande		42 17 18.66 N	8 39 37.45 W
+Pont Ambroix	The Pont Ambroix was a Roman bridge across the Vidourle in Gallargues-le-Montueux, Gard department, and Villetelle, Hérault department, both Languedoc-Roussillon, France.	43 43 02 N	4 09 07 E
+Pont Camille-de-Hogues		46 48 49.12 N	0 32 15.32 E
+Pont de la Concorde		48 51 47.99 N	2 19 09.98 E
+Pont du Gard	The Pont du Gard is a Roman aqueduct bridge near Nîmes, France.	43 56 50.28 N	4 32 07.8 E
+Pont Flavien	The Pont Flavien is a Roman bridge in Saint-Chamas, Bouches-du-Rhône department, Provence-Alpes-Côte d'Azur, France.	43 32 29 N	5 02 35 E
+Pont Julien	The Pont Julien is a Roman bridge near Bonnieux, Vaucluse department, Provence-Alpes-Côte d’Azur, France.	43 51 45 N	5 18 28 E
+Pont Neuf		48 51 26.81 N	2 20 29.82 E
+Pont sur la Laye	Roadway	43 55 48 N	5 45 23 E
+Ponte de Rande	The Rande Bridge is a cable-stayed bridge near Vigo, Galicia, Spain.	42 17 18.66 N	8 39 37.45 W
 Ponte Sant'Angelo (Rome)	The Ponte Sant'Angelo is a Roman bridge across the Tiber in Rome, Italy.	41 54 06.46 N	12 27 59.24 E
 Pontedeume		43 24 13.68 N	8 09 46.85 W
-Pontevedra		42 25 50.84 N	8 38 56.28 W
+Pontevedra		42 25 50.84 N	8 38 56.27 W
 Pordoi Pass	The Pordoi Pass is an Alpine pass in the Dolomites.	46 29 19.33 N	11 48 52.54 E
 Port of Kobe	Port of Kobe in Kobe, Hyōgo Prefecture, Japan	34 40 39.17 N	135 13 36.97 E
 Porta Pia		41 54 33 N	12 30 04 E
 Porta san Sebastiano		41 52 25 N	12 30 07 E
 Porta Soprana (Genova)	Porta Soprana a Genova.	44 24 19.76 N	8 56 05.6 E
 Porta Westfalica		52 14 22.66 N	8 55 14.31 E
-Porto antico di Genova		44 24 34.22 N	8 55 04.27 E
+Porto antico di Genova		44 24 34.22 N	8 55 04.26 E
 Porto Azzurro		42 46 05.02 N	10 23 48.33 E
 Portor, Negreira		42 54 45.44 N	8 41 52.17 W
 Potemkin Stairs		46 29 18.75 N	30 44 31.18 E
 Praia de Cabanas		43 24 55.21 N	8 10 23.62 W
 Prinzenbau Stuttgart		48 46 38.55 N	9 10 40.96 E
+Promenade du Peyrou		43 36 40 N	3 52 15 E
+Prytanée national militaire		47 42 10.09 N	0 04 35.77 W
+Puerto de Navacerrada		40 47 19.04 N	4 00 13.23 W
 Puits Arthur-de-Buyer		47 40 37.23 N	6 36 51.29 E
 Punta Manara	Manara Bivouac	44 15 19.08 N	9 24 20.88 E
-Punxín	Punxín is a municipality in Galicia, in the province of Ourense.	42 22 06.15 N	8 00 03.17 W
+Punxín	Punxín is a municipality in Galicia, in the province of Ourense.	42 22 06.15 N	8 00 03.16 W
 Quartier de Beaugrenelle		48 51 03.87 N	2 17 07.61 E
-Rairiz de Veiga		42 04 57.65 N	7 49 56.93 W
+Rairiz de Veiga		42 04 57.65 N	7 49 56.92 W
 Ravensberger Bahn	Die Ravensberger Bahn ist eine Eisenbahnstrecke von Bielefeld nach Rahden.	52 13 36.48 N	8 31 20.75 E
-Redondela	Redondela is a municipality in Galicia, Spain in the province of Pontevedra.	42 17 03 N	8 36 31.13 W
 Regattastrecke Oberschleißheim	Die Regattastrecke Oberschleißheim ist ein künstlicher, rechteckiger Grundwassersee im Norden von München, angelegt für die Olympischen Sommerspiele 1972.	48 14 33.67 N	11 30 54.38 E
 Reggia di Caserta	La Reggia di Caserta, Palazzo Reale, è stata la dimora della dinastia dei Borboni, sovrani del Regno delle due Sicilie. È situata a Caserta, in Campania (Italia).	41 04 26.27 N	14 19 36.92 E
+Reservoir in Stara Morawa	Reservoir in Stara Morawa near Stronie Śląskie (Lower Silesian Voivodeship, Poland)	50 16 31.15 N	16 52 47.84 E
 Rianxo	Rianxo is a port town in Galicia, Spain, in the province of A Coruña.	42 38 38.62 N	8 48 44.67 W
 Ribadavia		42 17 13.06 N	8 08 34.54 W
 Ribadumia	Ribadumia is a municipality in Galicia, Spain in the province of Pontevedra.	42 30 50.38 N	8 45 25.68 W
@@ -460,91 +640,105 @@ Rio Marina	Rio Marina is a village in Isola d'Elba Toscana in Italy	42 48 44.2 N
 Risiera di San Sabba	La Risiera di San Sabba è stato un campo di concentramento nazista, attivo negli ultimi anni della seconda guerra mondiale a Trieste, Italia.	45 37 26.09 N	13 47 22.1 E
 Riós	Riós is a municipality in Galicia, in the province of Ourense.	41 58 29.53 N	7 16 55.68 W
 Robben Island	Robben Island, Cape Town, South Africa	33 48 24.24 S	18 21 58.4 E
-Rocca Grimalda	Rocca Grimalda è un comune dell'Alto Monferrato, in provincia di Alessandria, Piemonte, Italia.	44 40 17.48 N	8 38 55.12 E
-Rodeiro	Rodeiro is a municipality in Galicia, Spain in the province of Pontevedra.	42 39 00.44 N	7 56 59.93 W
+Rocca Grimalda	Rocca Grimalda è un comune dell'Alto Monferrato, in provincia di Alessandria, Piemonte, Italia.	44 40 17.48 N	8 38 55.11 E
+Rodeiro	Rodeiro is a municipality in Galicia, Spain in the province of Pontevedra.	42 39 00.44 N	7 56 59.94 W
+Roman Bridge (Saint-Thibéry)	Old mill nearby	43 23 34.39 N	3 25 58.21 E
+Roman Bridge (Vaison-la-Romaine)	The Roman Bridge at Vaison-la-Romaine is a bridge across the Ouvèze in the Vaucluse department, Provence, France.	44 14 20.3 N	5 04 28.7 E
 Roman Theatre of Catania		37 30 10.4 N	15 05 00.9 E
 Roujan		43 30 32.5 N	3 17 15.15 E
 Río Tambre		42 54 20.32 N	8 41 43.21 W
 Sacrario Militare di Redipuglia		45 51 05.58 N	13 29 22.49 E
 Sada	Sada is a municipality in the province A Coruña, Galicia, Spain.	43 21 01.43 N	8 15 16.23 W
-Safranbolu	Safranbolu is a city and district of Karabük Province, Turkey. Safranbolu is one of the World Heritage sites in Turkey.	41 14 41 N	32 41 37 E
+Safranbolu	Safranbolu is a city and World Heritage site of Karabük Province, Turkey.	41 14 41 N	32 41 37 E
 Sagrada Família		41 24 12.82 N	2 10 27.64 E
+Église Saint-Gervais-Saint-Protais		48 51 19.8 N	2 21 16.6 E
 Saint-Michel de Nahuze	Prieuré du XIe siècle, situé sur la commune de Lagrasse (département de l'Aude), dont les ruines ont été inscrites comme monument historique	43 07 56.82 N	2 37 06.38 E
 Saint-Nazaire-de-Ladarez		43 30 37 N	3 04 36 E
+Sainte-Chapelle		48 51 20 N	2 20 41 E
+Château de Saissac	The Château de Saissac is a Cathar castle in the Saissac commune, Aude département of France.	43 21 25 N	2 10 04.7 E
 Salt Lake Temple	The Salt Lake Temple, the sixth temple built by the church overall, and the fourth operating temple, is the largest and best-known temple of The Church of Jesus Christ of Latter-day Saints.	40 46 14.45 N	111 53 31.18 W
-San Amaro	San Amaro is a municipality in Galicia, in the province of Ourense.	42 22 20.07 N	8 04 23.64 W
+San Amaro	San Amaro is a municipality in Galicia, in the province of Ourense.	42 22 20.07 N	8 04 23.65 W
 San Clodio, Leiro		42 22 02.61 N	8 06 54.12 W
 San Cristovo de Cea	San Cristovo de Cea is a municipality in Galicia, in the province of Ourense.	42 28 33.22 N	7 59 07.24 W
 San Giorgio in Lemine	San Giorgio in Lemine is a church in the comune of Almenno San Salvatore, Bergamo, Lombardy, Italy	45 44 46 N	9 35 50 E
+San Marco (Milan)		45 28 23.77 N	9 11 20 E
 San Sadurniño	San Sadurniño is a municipality of Spain in the province of A Coruña, in the autonomous community of Galicia.	43 33 44.93 N	8 03 17.21 W
 Sandiás	Sandiás is a municipality in Galicia, in the province of Ourense.	42 06 38.53 N	7 45 28.41 W
 Sankt Martini		53 04 30 N	8 48 15 E
 Sant'Anastasia	Sant'Anastasia è una chiesa di Roma.	41 53 17.6 N	12 29 03 E
+Santa Maria degli Scalzi (Venice)		45 26 29.4 N	12 19 19.56 E
+Santa Maria dei Servi (Padua)		45 24 16.56 N	11 52 32.63 E
 Santiago de Chile	Santiago is the capital of Chile, it is also the country's industrial and commercial center.	33 27 00 S	70 40 00 W
-Santiago de Compostela		42 52 50.24 N	8 32 39.96 W
 Sanxenxo		42 24 19.2 N	8 48 23.66 W
 Sarreaus		42 05 13.93 N	7 36 10.99 W
 Sarria		42 46 38.13 N	7 24 54.31 W
 Schallenberg		46 49 34 N	7 47 50 E
 Schenkendorfstraße	The Schenkendorfstraße is a street in Munich, part of the Mittlerer Ring around the city centre.	48 10 34.21 N	11 35 29.04 E
-Schloss Eutin	The Castle of Eutin is located in Eutin in Schleswig-Holstein. It was built onto the foundations of a medieval castle.	54 08 15.75 N	10 37 13.22 E
+Schloss Eutin	The Castle of Eutin is located in Eutin in Schleswig-Holstein.	54 08 15.75 N	10 37 13.22 E
 Schloss Hüffe	Schloss Hüffe ist ein Ende des 13. Jahrhunderts errichtetes Wasserschloss in der Ortschaft Lashorst der Stadt Preußisch Oldendorf im Kreis Minden-Lübbecke.	52 20 05.99 N	8 30 55.72 E
 Schloss Kalkum	Schloss Kalkum is a water castle in Kalkum in the north of Düsseldorf, about two kilometers northeast of Kaiserwerth.	51 18 14.9 N	6 45 26.7 E
-Schloss Nymphenburg	Nymphenburg Palace is a château in Munich. Its construction was started during the 17th century by the Prince-elector Ferdinand Maria of Bavaria.	48 09 29 N	11 30 13 E
+Schloss Nymphenburg	Nymphenburg Palace is a château in Munich.	48 09 29 N	11 30 13 E
 Schloss Petershagen	Das Schloss Petershagen in Petershagen ist ein Wasserschloss im Stil der Weserrenaissance.	52 22 46.16 N	8 58 18.62 E
 Schloss Rosenstein		48 48 15 N 9 11 30 E
 Schlosskirche (Neustrelitz)	Die Neustrelitzer Schlosskirche wurde durch Friedrich Wilhelm Buttel erbaut und ist dessen Hauptwerk in der Stadt.	53 21 35 N	13 03 32 E
 Schlossplatz Stuttgart		48 46 42.81 N	9 10 47.45 E
+Serres d'Auteuil	The Jardin des serres d'Auteuil is a botanical garden in the Bois de Boulogne, Paris 16th, located at 3 avenue de la Porte d'Auteuil and 1 avenue Gordon-Bennett.	  48 50 49 N 2 15 8 E
 Sestri Levante	Sestri Levante is a town in Liguria in Italy.	44 16 17.76 N	9 23 33 E
 Shokeda	Shokeda is a religious settlement in Israel, in north-west part of Negev, south to Sderot and east to the Gaza Strip.	31 25 19.56 N	34 31 28.2 E
-Sigüeiro, A Barciela, Oroso		42 58 06.42 N	8 26 33.38 W
+Sidi Okba		34 45 00 N	5 54 00 E
+Sigüeiro, A Barciela, Oroso		42 58 06.42 N	8 26 33.39 W
 Silleda		42 41 49.46 N	8 14 50.28 W
 Singapore	Singapore is a city state at the southern tip of peninsular Malaysia. It is an island approximately 40 by 20 km in size inhabited by more than five million people.	1 18 00 N	103 48 00 E
 Singapore Zoo		1 24 15.9 N	103 47 28.1 E
 Sistiana	Sistiana is a town near Trieste.	45 46 09.98 N	13 38 01.98 E
 Sistine Chapel	The Sistine Chapel is located in the Vatican and is decorated with frescoes by Michelangelo.	41 54 11 N	12 27 16 E
 Sohland am Rotstein	Sohland am Rotstein is a municipality in Saxony, Germany.	51 07 00 N	14 47 00 E
-Sopron	Sopron (pronounced "shop-ron"; German: Ödenburg) is a city in Hungary near the Austrian border. It is located a short train ride from Vienna.	47 41 12 N	16 34 49 E
+Sopron	Sopron (pronounced "shop-ron"; German: Ödenburg) is a city in Hungary near the Austrian border.	47 41 12 N	16 34 49 E
 Spenge	Spenge is a northrhine-westphalian town in the administrative district Kreis Herford.	52 08 33.29 N	8 28 59.9 E
 Spišský hrad	The ruins of Spiš Castle are situated above the town of Spišské Podhradie and the village of Žehra in the Spiš region in eastern Slovakia.	48 59 58.5 N	20 46 03.3 E
 St. Jürgenskirche (Lilienthal)	The church of St. Jürgen is in the same named district of Lilienthal in the county of Osterholz in Lower Saxony, Germany.	53 10 36 N	8 48 29 E
 St. Maria in der Kupfergasse	St. Maria in der Kupfergasse is a baroque church in Cologne.	50 56 23.2 N	6 57 01.04 E
 Stadtplatz (Steyr)		48 02 20.42 N	14 25 08.89 E
 Stalis		35 17 47.4 N	25 25 25.9 E
+Stefanskyrkan, Stockholm		59 20 51.38 N	18 03 16.7 E
 Steigfriedhof	The Steigfriedhof is a cemetery in the Stadtbezirk Bad Cannstatt in Stuttgart.	48 48 41.9 N	9 12 28.95 E
 Stift Göttweig	Göttweig Abbey is a Benedictine monastery in Lower Austria.	48 22 00.2 N	15 36 45.5 E
+Stockholms stadshus		59 19 38.57 N	18 03 15.67 E
+Stockholms universitet	Stockholm University, founded 1878, with about 37,000 students.	59 21 46.68 N	18 03 31.4 E
 Städtisches Lapidarium Stuttgart		48 46 03.36 N	9 10 04.58 E
-Sultanahmet Camii	The Sultan Ahmed Mosque (in Turkish Sultanahmet Camii, in English commonly called the Blue Mosque) is a mosque in Istanbul. It is regarded as one of the greatest masterpieces of Islamic architecture.	41 00 19.3 N	28 58 36.6 E
+Sultanahmet Camii	The Sultan Ahmed Mosque (in Turkish Sultanahmet Camii, in English commonly called the Blue Mosque) is a mosque in Istanbul.	41 00 19.3 N	28 58 36.6 E
 Synchrotron Soleil		48 42 33 N	2 08 41 E
 Süleymaniye camii	The Mosque of Suleiman I in Istanbul.	41 00 58.3 N	28 57 50 E
 Tarancón	Tarancón village and municipality in the province of Cuenca, part of the autonomous community of Castile-La Mancha, Spain.	40 00 45.89 N	3 00 14.85 W
 Teixido, Cedeira		43 42 36.72 N	7 59 00.44 W
-Villa romana de Tejada	The ancient roman villa of La Tejeda is an archaeological site from II to V centuries in Quintanilla de la Cueza, Cervatos de la Cueza (Palencia, Spain).	40 58 36 N	4 48 25 W
-Temple Neuf (Strasbourg)		48 35 00 N	7 44 54 E
+Villa romana de Tejada	The ancient roman villa of La Tejada is an archaeological site from II to V centuries in Quintanilla de la Cueza, Cervatos de la Cueza (Palencia, Spain).	40 58 36 N	4 48 25 W
 Templer Cemetery, Jerusalem	Jerusalem, German Colony, Emek Refaim street 39	31 45 47.46 N	35 13 08.68 E
 Texas State Capitol	The Texas State Capitol, located in Downtown Austin, Texas, is the fourth building to serve as the seat of Texas government.	30 16 29 N	97 44 26 W
 The Dormition Cathedral in Odessa		46 28 31.07 N	30 43 55.42 E
 The Spice Bazaar, Istanbul		41 01 00.7 N	28 58 15.13 E
+Théâtre municipal de Besançon		47 14 03.84 N	6 01 33.89 E
 Tiberias		32 47 20.04 N	35 31 20.28 E
-Tomiño	Tomiño is a municipality in Galicia, Spain in the province of Pontevedra.	41 59 31.78 N	8 44 32.53 W
+Toblinger Knoten	The Toblinger Knoten is a mountain in the Sexten Dolomites in South Tyrol.	46 38 31 N	12 18 29 E
+Tomiño	Tomiño is a municipality in Galicia, Spain in the province of Pontevedra.	41 59 31.78 N	8 44 32.54 W
 Toosa	Toosa is a village in Punjab.	30 44 45.31 N	75 41 14.53 E
 Topkapı Sarayı	İznik tiles: camp of the Mount Arafat	41 00 45.7 N	28 59 03.25 E
 Torre de San Sadurniño		42 30 25 N	8 49 16 W
 Torre de Vilanova dos Infantes		42 09 58.36 N	7 57 16.62 W
 Torres de Altamira		42 52 39.02 N	8 41 15.17 W
-Torres do Oeste		42 40 35.81 N	8 43 32.45 W
+Torres de Oeste		42 40 35.81 N	8 43 32.46 W
 Torreón dos Andrade		43 24 27.98 N	8 10 17.88 W
-Transfiguration Cathedral in Odessa		46 28 59.44 N	30 43 51.75 E
+Toshkent		41 18 00 N	69 16 00 E
+Tour Eiffel		48 51 30 N	2 17 39 E
+Tour Goguin		46 59 03.84 N	3 09 19.91 E
+Transfiguration Cathedral in Odessa	Odessa Cathedral of God's Transfiguration	46 28 59.44 N	30 43 51.75 E
 Trappentreustraße	The Trappentreustraße is a street in Munich, part of the Mittlerer Ring around the city centre.	48 08 12.34 N	11 32 03.84 E
-Trappentreutunnel	The Trappentreutunnel is a tunnel that runs beneath the Trappentreustraße in the borough Schwanthalerhöhe in Munich.	48 08 08.78 N	11 32 03.17 E
+Trappentreutunnel	The Trappentreutunnel is a tunnel that runs beneath the Trappentreustraße in the Borough Schwanthalerhöhe in Munich.	48 08 08.78 N	11 32 03.17 E
 Trastevere	Restaurant in Via della Lungaretta	41 53 22.54 N	12 28 12.76 E
 Travemünde	Travemünde is a part of Lübeck in Germany at the Baltic Sea.	53 58 00 N	10 52 00 E
-Treuners Altstadtmodell	The Treuner brothers' Altstadtmodell is a scale model which shows the oldtown of Frankfurt am Main prior to the air-raid damages in 1943 and 1944. The ruin model shows the destroyed old town of Frankfurt in spring 1945.	50 06 35 N	8 40 57 E
-Triumphal arch Barcelona		41 23 27 N	2 10 50 E
+Trinitatisfriedhof, Dresden	Cemetery „Trinitatisfriedhof“ in Dresden-Johannstadt	51 03 15.08 N	13 46 20.93 E
 Twierdza Osowiec	Dry moat around the fort No 3	53 27 44 N	22 37 38 E
 Třebechovice pod Orebem	Třebechovice pod Orebem is a town in Czech Republic in Hradec Králové Region	50 12 07 N	15 59 38 E
 Uetersen		53 41 14 N	9 40 09 E
-Universidad de Alcalá		40 28 58.53 N	3 21 47.27 W
 Université Lille Nord de France		50 36 33.38 N	3 08 29.72 E
 Upper Darby, Pennsylvania		39 57 40.2 N	75 15 32.06 W
 Urgnano		45 35 50 N	9 41 42 E
@@ -554,10 +748,10 @@ Valparaíso		33 02 45.4 S	71 36 58.9 W
 Varallo	Varallo is a town in Valsesia, Piedmont, Italy, named also Varallo Sesia.	45 49 10.95 N	8 15 19.01 E
 Varigotti	Varigotti è una frazione del comune di Finale Ligure, in provincia di Savona (riviera ligure di ponente, Liguria, Italia).	44 10 53.83 N	8 23 45.56 E
 Verducido, Pontevedra		42 28 35.96 N	8 37 06.66 W
-Verín	Verín is a municipality in Galicia, in the province of Ourense.	41 56 22.46 N	7 26 19.59 W
-Via dell'Amore (Cinque Terre)	La Via dell'Amore è una passeggiata turistica di circa un chilometro che, costeggiando il mare, congiunge le località di Riomaggiore e Manarola, nelle Cinque Terre, in Liguria (Italia).	44 06 06.07 N	9 44 00.37 E
-Via Dolorosa signs		31 46 46.48 N	35 13 56.63 E
-Viana do Bolo		42 10 46.42 N	7 06 44.8 W
+Verín	Verín is a municipality in Galicia, in the province of Ourense.	41 56 22.47 N	7 26 19.59 W
+Via dell'Amore (Cinque Terre)	The Via dell'Amore (=way of love) is a hiking path above the sea linking the villages of Riomaggiore and Manarola in the Cinque Terre (Liguria, Italia).	44 06 06.07 N	9 44 00.37 E
+Viana do Bolo		42 10 46.42 N	7 06 44.81 W
+Vieilles prisons d'Annecy	Ancient Jails or the Palais de l'Île of Annecy.	45 53 54.89 N	6 07 36.59 E
 Vigo	Vigo is a Spanish municipality and the largest city in Galicia.	42 14 00.05 N	8 42 37.59 W
 Vilagarcía de Arousa		42 35 33.08 N	8 46 36.13 W
 Vilamarín	Vilamarín is a municipality in Galicia, in the province of Ourense.	42 27 51.29 N	7 53 23.64 W
@@ -565,58 +759,168 @@ Vilanova de Arousa	Vilanova de Arousa is a municipality in Galicia, Spain in the
 Vilar de Santos	Vilar de Santos is a municipality in Galicia, in the province of Ourense.	42 05 10.72 N	7 47 44.37 W
 Vilardevós		41 54 25.21 N	7 18 45.37 W
 Vilariño de Conso		42 09 56.5 N	7 11 02.5 W
-Vilasobroso, Mondariz		42 12 17.3 N	8 27 20.51 W
+Vilasobroso, Mondariz		42 12 17.31 N	8 27 20.51 W
 Vilassar de Mar	Vilassar de Mar is a village in the county of the Maresme, Catalonia.	41 30 19 N	2 23 34 E
 Villa Berg		48 47 31.34 N	9 12 27.17 E
 Villa d'Este (Tivoli)	The Villa d'Este in Tivoli is a masterpiece of Italian architecture and garden design.	41 57 45 N	12 47 46 E
+Villa Ephrussi de Rothschild		43 41 48 N	7 19 42.5 E
+Villa Les Glycines		  48 40 46 N 6 10 56 E
+Villa Majorelle		  48 41 8 N 6 9 50 E
 Villa Schneider	Villa Schneider è un palazzo storico di Biella (Piemonte, Italia), servito come quartier generale delle SS durante la seconda guerra mondiale.	45 33 49.52 N	8 03 04.87 E
 Village Vanguard	The Village Vanguard is a jazzclub in Greenwich Village (New York City).	40 44 09.64 N	74 00 05.81 W
 Villeneuve-d'Ascq	Villeneuve-d'Ascq is a commune within Lille Metropolis, in northern France	50 37 24 N	3 08 42 E
-Wakayama prefecture	Wakayama Prefecture is located in the Kinki Region of the island of Honshu, Japan.	34 13 33.7 N	135 10 03 E
 Walhalla, Victoria		37 56 37.43 S	146 27 02.75 E
 Walt Disney Concert Hall		34 03 19.36 N	118 14 59.61 W
 Wayside Cross Villenstraße, Bonn-Dottendorf		50 42 15.73 N	7 06 43.18 E
 Weckschnapp		50 56 57.48 N	6 57 55.5 E
 West Lake		30 15 00 N	120 09 00 E
 Whitemarsh Hall		40 04 42 N	75 07 44 W
-Wild fire area at lake Norra Hörken	Norra Hörken is a lake situated between Ludvika and Ljusnarsberg municipalities in central Sweden. This gallery page shows some ecological aspects of a small wildfire in a rather typical Scandinavian forest.	60 02 30 N	14 54 37 E
-Wilhelmsstift Tübingen		48 31 16.19 N	9 03 18.52 E
+Wilhelmsstift Tübingen		48 31 16.19 N	9 03 18.53 E
 Woodlawn Cemetery (Bronx)	Gate on Jerome Avenue	40 53 30 N	73 52 12 W
 Xinzo de Limia	Xinzo de Limia is a municipality in Galicia, in the province of Ourense.	42 03 36 N	7 43 19.87 W
-Yad Vashem	The memorial of the murdered jews of Suwałki and the neighbour communities, Yad Vashem, Jerusalem	31 46 23.55 N	35 10 29.2 E
+Xàbia	Xàbia is a village in the province of Alicante.	38 47 21 N	0 09 47 E
+Yad Vashem		31 46 23.55 N	35 10 29.2 E
 Yao	Yao (八尾市, Yao-shi) is a city in Osaka, Japan.	34 37 36.9 N	135 36 03 E
-Zwangsarbeitslager Rees-Groin und Bienen		51 46 44.76 N	6 24 25.92 E
-Zwehrenturm	The Zwehrenturm from 1330 is a remain of Kassel's medieval defensive wall. Temporary it contained an observatory.	51 18 49 N	9 29 54 E
+Zwehrenturm	The Zwehrenturm from 1330 is a remain of Kassel's medieval defensive wall.	51 18 49 N	9 29 54 E
+Äußerer Plauenscher Friedhof	Cemetery „Äußerer Plauenscher Friedhof“ in Dresden-Plauen	51 01 11.89 N	13 42 26.03 E
 École centrale de Lille	École Centrale de Lille is a graduate engineering school located in campus Lille I within Université Lille Nord de France.	50 36 21.62 N	3 08 13.63 E
+Église de l'Assomption simultanée (La Petite-Pierre)		48 51 25.2 N	7 18 55.84 E
+Église de la Sainte-Trinité (Lauterbourg)		48 58 30.1 N	8 10 40.77 E
+Église de Saint-Lothain		46 49 27.84 N	5 38 30.12 E
 Église de Saint-Paul de Frontignan		43 26 50.47 N	3 45 18.66 E
+Église des Augustins (Ribeauvillé)		48 11 43.44 N	7 19 08.87 E
 Église des Jésuites (Molsheim)		48 32 25.3 N	7 29 45 E
+Église des Saints-Innocents (Blienschwiller)		48 20 25.8 N	7 25 06.17 E
 Église Notre-Dame (Guebwiller)		47 54 20.75 N	7 12 52.56 E
+Église Notre-Dame de la Dalbade		43 35 51.36 N	1 26 32.89 E
+Église Notre-Dame-de-l'Assomption (Bergheim)		48 12 18 N	7 21 53.28 E
+Église Notre-Dame-de-l'Assomption (Bernardswiller)		48 27 10.08 N	7 27 49.57 E
+Église Notre-Dame-de-l'Assomption (Monswiller)		48 45 17.61 N	7 22 39.66 E
+Église Notre-Dame-de-l'Assomption (Rosenwiller)		48 30 21.96 N	7 26 25.48 E
+Église Notre-Dame-de-l'Assomption (Rouffach)		47 57 24 N	7 18 02 E
+Église Notre-Dame-de-la-Nativité (Saverne)		48 44 28.32 N	7 21 50.36 E
+Église protestante (Balbronn)		48 35 05.28 N	7 26 15.97 E
+Église protestante (Baldenheim)		48 14 15 N	7 32 14.35 E
+Église protestante (Berg)		48 53 52.08 N	7 09 24.01 E
+Église protestante (Bischheim)		48 36 55.08 N	7 45 21.89 E
+Église protestante (Fouday)		48 25 17.76 N	7 11 12.95 E
+Église protestante (Harskirchen)		48 56 02.04 N	7 02 20.15 E
+Église protestante (Scharrachbergheim)		48 35 35.52 N	7 29 55.9 E
+Église protestante (Schiltigheim)		48 36 21.96 N	7 45 05.04 E
+Église protestante (Weiterswiller)		48 51 10.44 N	7 24 50.9 E
+Église protestante du Temple Neuf (Strasbourg)		48 35 00 N	7 44 54 E
+Église Saint-Eustache de Paris		48 51 48 N	2 20 42 E
+Église Saint-Laurent (Paris)		48 52 29.45 N	2 21 29.92 E
 Église Saint-Michel d'Ernolsheim-lès-Saverne	Bells	48 47 27.85 N	7 22 47.57 E
+Église Saint-Nicolas-du-Chardonnet	St. Nicolas du Chardonnet is a church in the centre of Paris, France located in the 5th arrondissement.	48 50 57 N	2 21 01 E
+Église Saint-Pierre de Montmartre	Saint-Pierre de Montmartre is a church in Paris	48 53 12 N	2 20 31 E
 Église Saint-Pierre-de-Rhèdes		43 35 16.22 N	3 04 43.64 E
 Église Saint-Pierre-Saint-Paul de Rueil-Malmaison		48 52 35.4 N	2 10 53.15 E
+Église Saint-Sulpice		48 51 04 N	2 20 05 E
+Église Saint-Étienne-du-Mont	Saint-Étienne-du-Mont church is located in Paris, nearby Panthéon.	48 50 47 N	2 20 52 E
+Église Sainte-Marie-Madeleine de Rennes-le-Château		42 55 41.05 N	2 15 45.69 E
 Église Saints-Pierre-et-Paul (Andlau)		48 23 16.3 N	7 24 54.3 E
+Église Saints-Pierre-et-Paul (Eguisheim)		48 02 32.28 N	7 18 21.2 E
+Église Saints-Pierre-et-Paul (Hohatzenheim)		48 42 44.64 N	7 36 59.11 E
 Église Saints-Pierre-et-Paul (Neuwiller-lès-Saverne)		48 49 25 N	7 24 20 E
+Église Saints-Pierre-et-Paul (Obernai)		48 27 47.88 N	7 28 54.48 E
+Église Saints-Pierre-et-Paul (Ottmarsheim)		47 47 13.2 N	7 30 25.2 E
+Église Saints-Pierre-et-Paul (Rosheim)		48 29 48 N	7 28 14 E
+Église Saints-Pierre-et-Paul (Sigolsheim)		48 08 04.2 N	7 18 03.1 E
 Église Saints-Pierre-et-Paul (Wissembourg)		49 02 14 N	7 56 30 E
+Église St Antoine de Padoue (Saverne)	The cloister	48 44 29.4 N	7 21 40.82 E
+Église St Arbogast (Offenheim)		48 37 53.76 N	7 36 59.54 E
+Église St Barthélemy (Sarrewerden)		48 55 22.8 N	7 04 56.93 E
+Église St Benoît (Bergholtzzell)		47 55 51.34 N	7 13 54.48 E
+Église St Blaise (Valff)		48 25 12.36 N	7 31 06.96 E
 Église St Cyriaque (Altorf)		48 31 22.7 N	7 31 50 E
+Église St Gall (Niedermorschwihr)		48 05 57.84 N	7 16 26.47 E
+Église St Gall protestante (Domfessel)		48 57 06.48 N	7 09 07.56 E
+Église St Georges (Châtenois)		48 16 09.12 N	7 23 51 E
+Église St Georges (Sélestat)		48 15 36 N	7 27 24.12 E
+Église St Grégoire (Ribeauvillé)		48 11 49.2 N	7 19 00.41 E
+Église St Guillaume protestante (Strasbourg)		48 34 55.5 N	7 45 28 E
+Église St Hippolyte (Saint-Hippolyte)		48 14 01.68 N	7 22 04.01 E
+Église St Jacques-le-Majeur (Kuttolsheim)		48 38 37.32 N	7 31 41.34 E
+Église St Jacques-le-Majeur simultanée (Dettwiller)		48 45 12.6 N	7 27 56.77 E
+Église St Jacques-le-Majeur simultanée (Hunawihr)		48 10 42.24 N	7 18 38.02 E
+Église St Jean (Strasbourg)		48 35 04 N	7 44 25 E
+Église St Jean protestante (Wissembourg)		49 02 18.96 N	7 56 33.36 E
 Église St Jean-Baptiste (Saint-Jean-Saverne)		48 46 18.7 N	7 21 48.5 E
+Église St Jean-Baptiste (Surbourg)		48 54 34.2 N	7 50 50.28 E
+Église St Jean-Baptiste (Wattwiller)		47 50 07.72 N	7 10 37.27 E
+Église St Jean-Baptiste simultanée (Hohwiller)		48 45 12.78 N	7 27 56.77 E
+Église St Laurent (Dieffenbach-au-Val)		48 18 44.64 N	7 19 41.34 E
+Église St Laurent protestante (Dorlisheim)		48 31 30 N	7 29 13.99 E
 Église St Léger (Guebwiller)		47 54 42.1 N	7 12 33.75 E
+Église St Léger (Murbach)		47 55 24 N	7 09 29 E
+Église St Martin (Ammerschwihr)		48 07 37.92 N	7 16 54.01 E
+Église St Martin (Ebersheim)		48 18 14.04 N	7 30 14.08 E
+Église St Martin (Pfaffenheim)		47 59 05.28 N	7 17 08.59 E
+Église St Martin protestante (Barr)		48 24 33.84 N	7 26 51.47 E
+Église St Martin protestante (Westhoffen)		48 36 01.8 N	7 26 30.3 E
 Église St Maurice (Ebersmunster)		48 18 39.5 N	7 31 37 E
+Église St Maurice (Fegersheim)		48 29 23.64 N	7 40 50.27 E
+Église St Maurice (Orschwiller)		48 14 27.24 N	7 22 44.62 E
+Église St Maurice (Soultz-Haut-Rhin)		47 53 13.2 N	7 13 48.29 E
+Église St Maurice (Soultz-les-Bains)		48 34 17.4 N	7 29 09.35 E
+Église St Maurice (Willgottheim)		48 40 14.52 N	7 30 33.23 E
+Église St Michel (Reichshoffen)		48 55 54.84 N	7 39 52.02 E
+Église St Michel (Weyersheim)		48 43 06.24 N	7 48 07.96 E
+Église St Médard (Bœrsch)		48 28 40.44 N	7 26 24.4 E
+Église St Nicolas (Haguenau)		48 49 13 N	7 47 32 E
+Église St Nicolas (Neuve-Église)		48 19 50.88 N	7 18 48.24 E
+Église St Nicolas (Wingersheim)		48 43 18.84 N	7 38 08.02 E
+Église St Pantaléon (Gueberschwihr)		48 00 16.92 N	7 16 29.78 E
+Église St Paul protestante (Strasbourg)		48 35 11 N	7 45 35 E
+Église St Pierre "Dompeter" (Molsheim, Avolsheim)		48 33 24.12 N	7 30 19.59 E
 Église St Pierre le Jeune catholique (Strasbourg)		48 35 18.35 N	7 44 55.75 E
 Église St Pierre le Jeune protestante (Strasbourg)		48 35 08 N	7 44 47 E
+Église St Rémi (Itterswiller)		48 21 51.48 N	7 25 37.42 E
+Église St Sébastien (Soultzmatt)		47 57 37.08 N	7 14 15.36 E
 Église St Thomas protestante (Strasbourg)		48 34 47 N	7 44 44 E
+Église St Trophime (Eschau)		48 29 25.08 N	7 42 57.96 E
+Église St Ulrich (Altenstadt)		49 01 49.8 N	7 58 05.88 E
+Église St Ulrich (Wittersheim)		48 46 53.04 N	7 39 27.47 E
+Église St Étienne (Rosheim)		48 29 43.8 N	7 27 59.72 E
+Église St Étienne (Seltz)		48 53 37.32 N	8 06 28.44 E
+Église St Étienne simultanée (Wangen)		48 37 01.56 N	7 27 53.68 E
+Église Ste Anne (Turckheim)		48 05 15.72 N	7 16 41.12 E
+Église Ste Aurélie protestante (Strasbourg)		48 34 53 N	7 44 00 E
+Église Ste Colombe (Hattstatt)		48 00 44.28 N	7 18 06.01 E
+Église Ste Croix (Kaysersberg)	Lamentation of Christ	48 08 20.04 N	7 15 48.56 E
+Église Ste Croix (Rountzenheim)		48 49 08.76 N	8 00 26.39 E
+Église Ste Foy (Sélestat)		48 15 33.67 N	7 27 21.81 E
+Église Ste Lucie (Niederhergheim)		47 59 10.32 N	7 23 48.41 E
 Église Ste Madeleine (Strasbourg)		48 34 48 N	7 45 17 E
+Église Ste Marguerite (Geispolsheim)		48 30 50.4 N	7 38 36.06 E
+Église Ste Odile (Lapoutroie)		48 09 08.64 N	7 10 03.97 E
+Église Ste Odile (Wintzfelden)		47 58 32.88 N	7 11 49.92 E
+Église Ste Walburge (Walbourg)		48 53 05.51 N	7 47 21.97 E
+Églises St Pierre le Vieux (Strasbourg)		48 34 58 N	7 44 24 E
 Đình Bảng	Bảng Communal House (Đình Bảng in Vietnamese) is one of largest and finest village communal houses in Việt Nam. It is located in Đình Bảng commune, Từ Sơn district, Bắc Ninh province.	21 06 29.99 N	105 57 06.31 E
+Архангельск		64 33 00 N	40 32 00 E
+Астана		51 11 00 N	71 24 00 E
+Астрахань		46 20 00 N	48 01 00 E
+Барнаул		53 21 24 N	83 47 14 E
 Боровск	Borovsk	55 12 27.19 N	36 29 05.05 E
-กรุงเทพมหานคร	Bangkok	13 45 08 N	100 29 38 E
+Душанбе		38 34 23 N	68 47 11 E
+Екатеринбург		59 57 00 N	30 19 00 E
+Москва		55 45 21 N	37 37 04 E
+Нижний Новгород		56 19 37 N	44 00 27 E
+Санкт-Петербург		59 57 00 N	30 19 00 E
+Северодвинск		64 34 00 N	39 51 00 E
+กรุงเทพมหานคร	Bangkok	13 45 00 N	100 31 00 E
 სვეტიცხოველი		41 50 31 N	44 43 16 E
 ჯვარი		41 30 06.84 N	44 26 24.72 E
 鹿児島市	Kagoshima（鹿児島市; -shi） is a city in Japan and the capital city of Kagoshima Prefecture.	31 35 48.5 N	130 33 25.7 E
 薩摩川内市	Satsumasendai is a city in Kagoshima prefecture, Japan.	31 48 48.5 N	130 18 14.3 E
-上海	Shanghai is the largest city in China and is divided into 18 districts and one county (the island in the Yangtze River). It is located on the coast of eastern China at the mouth of the Chang Jiang (Yangtze River), and borders the provinces of Jiangsu and Zhejiang.	31 10 00 N	121 29 00 E
+上海	Shanghai is the largest city in China and is divided into 18 districts and one county (the island in the Yangtze River). It is located on the coast of eastern China at the mouth of the Chang Jiang (Yangtze River), and borders the provinces of Jiangsu and Zhejiang.	31 10 00 N	121 28 00 E
+东平	Daqing River	35 54 30 N	116 18 00 E
 中南海	Zhongnanhai (Chinese: 中南海; pinyin: Zhōngnánhăi) is a complex of buildings in Beijing, China which serves as the central headquarters for the Communist Party of China and the government of the People's Republic of China.	39 54 41 N	116 22 50 E
-九寨沟	Jiuzhaigou Valley (Chinese: 九寨沟; pinyin: Jiǔzhàigōu; lit. "Nine Stockades Gully") is a nature reserve in Aba(阿坝) Tibetan and Qiang Autonomous District, northern Sichuan province, China. It is known for its many multi-level waterfalls and colorful lakes, and was declared a UNESCO World Heritage Site in 1992.	33 09 34 N	103 52 40 E
+九寨沟	Jiuzhaigou Valley (Chinese: 九寨沟; pinyin: Jiǔzhàigōu; lit. "Nine Stockades Gully") is a nature reserve in Aba(阿坝) Tibetan and Qiang Autonomous District, northern Sichuan province, China.	33 09 34 N	103 52 40 E
 云南	Yunnan(云南) is a Chinese southwest border province, with the most varied nationalities in China. There are 52 nationalities of people living in Yunnan, out of 56 total throughout China.	25 03 00 N	101 52 00 E
-京都市	Kyoto is a city in Japan. It was the capital of Japan from 794 to 1869.	35 00 41.8 N	135 46 05.2 E
+京都市	Kyoto is a city in Japan. It was the capital of Japan from 794 to 1869.	35 00 42 N	135 46 05 E
 兵馬俑	Terracotta Army	34 23 05.7 N	109 16 23.1 E
 別府市	Beppu is a famous onsen city in Oita Prefecture on the island of Kyushu in Japan.	33 17 04.6 N	131 29 28.6 E
 北九州市	Kitakyūshū is a city in Fukuoka Prefecture on the island of Kyushu, Japan.	33 53 00.3 N	130 52 30.7 E
@@ -625,10 +929,12 @@ Zwehrenturm	The Zwehrenturm from 1330 is a remain of Kassel's medieval defensive
 南京	Nanjing (南京) is the capital of Jiangsu Province of China. It was the Chinese capital from 1927-1949.	32 03 00 N	118 46 00 E
 南法華寺	Minamihokke-ji is the Buddhist temple in Takatori, Nara prefecture, Japan.	34 25 35.1 N	135 48 35.5 E
 台南市		22 59 00 N	120 11 00 E
+名古屋市		35 07 00 N	136 56 00 E
 和歌山市	Wakayama (和歌山市, Wakayama-shi) is the capital city of Wakayama Prefecture in the Kansai region of Japan.	34 13 49.3 N	135 10 14.7 E
-四川	Sichuan(四川) is the most densely populated province in west China. It is famous for its peppery dishes.	30 08 00 N	102 56 00 E
+哈尔滨	Harbin is a sub-provincial city in north-east China and the capital of the Heilongjiang Province.	45 48 05 N	126 31 45 E
+四川	Nature reserve in Aba(阿坝) Tibetan and Qiang Autonomous District, northern Sichuan province, China. It is known for its many multi-level waterfalls and colorful lakes, and was declared a UNESCO World Heritage Site in 1992.	30 08 00 N	102 56 00 E
 圆明园	Yuanmingyuan (pinyin: Yuanmingyuan, 圆明园), or the old Summer Palace in Peking.	40 00 26 N	116 17 33 E
-大津市	Otsu is a city in Japan. It was the capital of Japan from 667 to 672.	35 01 04.1 N	135 51 17 E
+大津市	Ōtsu is a city in Japan. It was the capital of Japan from 667 to 672.	35 01 04.1 N	135 51 17 E
 大阪市	Osaka	34 41 37.5 N	135 30 07.6 E
 天坛	Temple of Heaven in Beijing.	39 52 56.1 N	116 24 23.7 E
 天安門	Tiananmen (Gate of Heavenly Peace) in Beijing was the southern gate of the Imperial City in Beijing.	39 54 26.4 N	116 23 27.9 E
@@ -636,27 +942,25 @@ Zwehrenturm	The Zwehrenturm from 1330 is a remain of Kassel's medieval defensive
 宇治市	Uji is a city in Kyoto prefecture. The Byodoin (an ancient Buddhist temple) and the Ujigami Shrine are famous landmarks in Uji.	34 53 03.7 N	135 47 59.3 E
 小田原市	Odawara, Kanagawa	35 15 52.6 N	139 09 08 E
 屋久島	Yakushima island	30 20 00 N	130 30 00 E
-川崎市	Kawasaki, Kanagawa	35 31 51.2 N	139 42 10.8 E
 广东	Guangdong (广东) is a coastal province in southern China adjacent to Hongkong and Macao.	23 24 00 N	113 30 00 E
-广州	Guangzhou is the capital of Guangdong Province in southern China. The city was formerly known internationally as Canton City or simply Canton.	23 07 43.67 N	113 15 32.31 E
+广州	Guangzhou is the capital of Guangdong Province in southern China. The city was formerly known internationally as Canton City or simply Canton.	23 07 43.66 N	113 15 32.31 E
 広島市	Hiroshima is one of largest cities in Japan and the capital of Hiroshima prefecture.	34 23 06.9 N	132 27 19.1 E
 徳島市	Tokushima is the capital city of Tokushima prefecture on the island of Kyushu in Japan.	34 04 13 N	134 33 17.8 E
-成都	Chengdu is the capital of Sichuan province in China.	30 39 49 N	104 04 00 E
+成都	Chengdu is the capital city and prefecture-level division of Sichuan Province, in southwestern China.	30 39 49 N	104 04 00 E
 景山公园	Jingshan Park, Dongcheng District, Beijing.	39 55 24.5 N	116 23 26.2 E
-杭州	Hangzhou (杭州) is a picturesque city in south China. It is the capital of Zhejiang Province and visited by Marco Polo.	30 15 00 N	120 10 00 E
+杭州	Hangzhou (杭州) is a picturesque city in south China. It is the capital of Zhejiang Province and was visited by Marco Polo.	30 15 00 N	120 10 00 E
 武汉	Wuhan is the capital of the Chinese province of Hubei	30 34 21 N	114 16 45 E
-滕王阁		28 41 02.76 N	115 52 32.88 E
-熊本市	Kumamoto is the capital city of Kumamoto Prefecture, on the island of Kyushu, Japan.	32 48 10.8 N	130 42 28.3 E
+深圳	Shenzhen is a major city in Guangdong Province, China.	22 32 06 N	114 03 14.4 E
+滕王阁	The Pavilion of Prince Teng or Tengwang Pavilion is a building in the north west of the city of Nanchang, in Jiangxi province, China.	28 41 02.76 N	115 52 32.88 E
 相模原市	Sagamihara, Kanagawa	35 34 17.1 N	139 22 23.3 E
 祇園	Gion (祇園) is a district of Kyoto, Japan, originally developed in the middle ages.	35 00 13 N	135 46 30 E
 福岡市	Fukuoka, Fukuoka	33 35 24.5 N	130 24 06.2 E
 紫禁城	The Forbidden City (紫禁城), located at the centre of Beijing, China, was the imperial palace of the last two imperial dynasties of China (from 1420 to 1924).	39 54 50.1 N	116 23 27.6 E
 西安	Xi'an is an ancient city located in north central China. It was the capital of various dynasties from 1046 B.C. to 907 A.D, and it has been known under a number of different names including most notably Chang'an during the Tang dynasty.	34 16 00 N	108 57 00 E
 逗子市	Zushi (逗子市 Zushi-shi) is a city located in Kanagawa, Japan.	35 17 44.2 N	139 34 49.2 E
-那覇市		26 12 44.4 N	127 40 44.8 E
+重庆	Chongqing is located in the southwest of China, is China's largest and most populous municipality.	29 33 00 N	106 33 00 E
 鎌倉	Zeniarai Benten shrine	35 19 09.3 N	139 32 48.1 E
-颐和园	The Summer Palace (pinyin: Yiheyuan, 颐和园) is a former imperial palace in northwest of Beijing, China. It has been transformed in a public garden.	39 59 51 N	116 16 08.04 E
-香港	Hong Kong	22 16 01 N	114 11 17 E
-高松市	日本語: 高松市は日本の瀬戸内海沿岸に位置する香川県の県都である。四国の北端に位置することや本州に近いことから、港町として発展してきた歴史をもつ。	34 20 34.1 N	134 02 47.8 E
+颐和园	The Summer Palace is a former imperial palace in northwest of Beijing, China. It has been transformed in a public garden.	39 59 51 N	116 16 08.04 E
+香港		22 16 01 N	114 11 17 E
 高雄市	Kaohsiung is a city in Taiwan.	22 38 00 N	120 16 00 E
-
+서울특별시	Seoul is the capital of South Korea.	37 35 00 N	127 00 00 E

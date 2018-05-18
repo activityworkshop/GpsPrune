@@ -1,8 +1,11 @@
 package tim.prune.correlate;
 
 import java.util.ArrayList;
+import java.util.TimeZone;
+
 import javax.swing.table.AbstractTableModel;
 import tim.prune.I18nManager;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.MediaObject;
 
 
@@ -18,6 +21,8 @@ public class MediaSelectionTableModel extends AbstractTableModel
 	private String _lastColumnHeading = null;
 	/** List of rows */
 	private ArrayList<MediaSelectionTableRow> _list = new ArrayList<MediaSelectionTableRow>();
+	/** Current timezone */
+	private TimeZone _timezone = null;
 
 
 	/**
@@ -29,6 +34,7 @@ public class MediaSelectionTableModel extends AbstractTableModel
 	{
 		_firstColumnHeading = I18nManager.getText(inFirstColumnKey);
 		_lastColumnHeading = I18nManager.getText(inLastColumnKey);
+		_timezone = TimezoneHelper.getSelectedTimezone();
 	}
 
 	/**
@@ -84,7 +90,8 @@ public class MediaSelectionTableModel extends AbstractTableModel
 		MediaSelectionTableRow row = _list.get(inRowIndex);
 		if (inColumnIndex == 0) return row.getMedia().getName();
 		else if (inColumnIndex == 1) {
-			return (row.getMedia().hasTimestamp() ? row.getMedia().getTimestamp().getText() : "");
+			return (row.getMedia().hasTimestamp() ?
+				row.getMedia().getTimestamp().getText(_timezone) : "");
 		}
 		else if (inColumnIndex == 2) return row.getTimeDiff().getDescription();
 		return (row.getTimeDiff().getIsPositive() ? I18nManager.getText("dialog.about.yes") :
