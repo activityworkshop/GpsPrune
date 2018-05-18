@@ -11,7 +11,7 @@ public class UndoAddTimeOffset implements UndoOperation
 {
 	/** Start and end indices of section */
 	private int _startIndex, _endIndex;
-	/** time offset */
+	/** time offset in seconds */
 	private long _timeOffset;
 
 
@@ -19,7 +19,7 @@ public class UndoAddTimeOffset implements UndoOperation
 	 * Constructor
 	 * @param inStart start index of section
 	 * @param inEnd end index of section
-	 * @param inOffset time offset
+	 * @param inOffset time offset in seconds
 	 */
 	public UndoAddTimeOffset(int inStart, int inEnd, long inOffset)
 	{
@@ -45,7 +45,7 @@ public class UndoAddTimeOffset implements UndoOperation
 	public void performUndo(TrackInfo inTrackInfo) throws UndoException
 	{
 		// Perform the inverse operation
-		inTrackInfo.getTrack().addTimeOffset(_startIndex, _endIndex, -_timeOffset, true);
+		inTrackInfo.getTrack().addTimeOffsetSeconds(_startIndex, _endIndex, -_timeOffset, true);
 		UpdateMessageBroker.informSubscribers();
 	}
 }

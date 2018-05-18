@@ -40,6 +40,8 @@ import tim.prune.gui.colour.PointColourer;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.gui.map.MapUtils;
+import tim.prune.gui.map.WpIconDefinition;
+import tim.prune.gui.map.WpIconLibrary;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.ImageDefinition;
 
@@ -331,18 +333,33 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		// Now the waypoints
 		final Color textColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
 		g.setColor(textColour);
+		WpIconDefinition wpIconDefinition = null;
+		final int wpType = Config.getConfigInt(Config.KEY_WAYPOINT_ICONS);
+		if (wpType != WpIconLibrary.WAYPT_DEFAULT)
+		{
+			wpIconDefinition = WpIconLibrary.getIconDefinition(wpType, WpIconLibrary.SIZE_MEDIUM);
+		}
 		// Loop again to draw waypoints
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = track.getPoint(i);
 			if (point.isWaypoint())
 			{
-				// draw blob for each waypoint
+				// use zoom level to calculate pixel coords on image
 				double x = track.getX(i) - xRange.getMinimum();
 				double y = track.getY(i) - yRange.getMinimum();
-				// use zoom level to calculate pixel coords on image
 				int px = (int) (x * zoomFactor * 256), py = (int) (y * zoomFactor * 256);
+				// Fill Rect or draw icon image?
 				g.fillRect(px-3, py-3, 6, 6);
+				if (wpIconDefinition == null)
+				{
+					g.fillRect(px-3, py-3, 6, 6);
+				}
+				else
+				{
+					g.drawImage(wpIconDefinition.getImageIcon().getImage(), px-wpIconDefinition.getXOffset(),
+						py-wpIconDefinition.getYOffset(), null);
+				}
 			}
 		}
 		// Set text size according to input

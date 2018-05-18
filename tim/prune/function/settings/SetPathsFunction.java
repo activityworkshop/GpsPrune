@@ -1,4 +1,4 @@
-package tim.prune.function;
+package tim.prune.function.settings;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;

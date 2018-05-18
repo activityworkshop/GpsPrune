@@ -31,7 +31,6 @@ public abstract class UrlGenerator
 		MAP_SOURCE_BING,       /* Bing */
 		MAP_SOURCE_PEAKFINDER, /* PeakFinder */
 		MAP_SOURCE_GEOHACK,    /* Geohack */
-		MAP_SOURCE_PANORAMIO,  /* Panoramio */
 	}
 
 	/**
@@ -54,7 +53,6 @@ public abstract class UrlGenerator
 				return generateBingUrl(inTrackInfo);
 			case MAP_SOURCE_PEAKFINDER:
 			case MAP_SOURCE_GEOHACK:
-			case MAP_SOURCE_PANORAMIO:
 				return generateUrlForPoint(inSource, inTrackInfo);
 			case MAP_SOURCE_OSM:
 			default:
@@ -209,8 +207,6 @@ public abstract class UrlGenerator
 				return generatePeakfinderUrl(currPoint);
 			case MAP_SOURCE_GEOHACK:
 				return generateGeohackUrl(currPoint);
-			case MAP_SOURCE_PANORAMIO:
-				return generatePanoramioUrl(currPoint);
 			default:
 				return null;
 		}
@@ -238,17 +234,6 @@ public abstract class UrlGenerator
 		return "https://tools.wmflabs.org/geohack/geohack.php?params=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
 			+ "_N_" + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "_E";
 		// TODO: Could use absolute values and S, W but this seems to work
-	}
-
-	/**
-	 * Generate a url for Panoramio.com
-	 * @param inPoint current point, not null
-	 * @return URL
-	 */
-	private static String generatePanoramioUrl(DataPoint inPoint)
-	{
-		return "http://panoramio.com/map/#lt=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
-			+ "&ln=" + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "&z=1&k=0";
 	}
 
 

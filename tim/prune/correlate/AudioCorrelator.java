@@ -11,6 +11,7 @@ import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.AudioClip;
 import tim.prune.data.AudioList;
 import tim.prune.data.DataPoint;
@@ -18,6 +19,7 @@ import tim.prune.data.MediaObject;
 import tim.prune.data.MediaList;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
+import tim.prune.data.TimestampUtc;
 import tim.prune.undo.UndoCorrelateAudios;
 
 /**
@@ -164,14 +166,19 @@ public class AudioCorrelator extends Correlator
 	protected Timestamp getMediaTimestamp(MediaObject inMedia)
 	{
 		Timestamp tstamp = super.getMediaTimestamp(inMedia);
+		long mediaMillis = tstamp.getMilliseconds(TimezoneHelper.getSelectedTimezone());
 		try {
 			AudioClip audio = (AudioClip) inMedia;
 			int audioLength = audio.getLengthInSeconds();
 			// Each option is worth half the length of the audio clip, so need to divide by 2
 			int secsToAdd = audioLength *
 				(_correlTimesSelector.getSelectedOption() - _fileTimesSelector.getSelectedOption()) / 2;
-			if (audioLength > 0 && secsToAdd != 0) {
-				tstamp = tstamp.createPlusOffset(secsToAdd);
+			if (audioLength > 0 && secsToAdd != 0)
+			{
+				mediaMillis += (secsToAdd * 1000L);
+				tstamp = new TimestampUtc(mediaMillis);
+				// Here we create a Utc timestamp but it's only temporary for the correlation
+				// so it will never have to react to timezone changes
 			}
 		}
 		catch (ClassCastException cce) {}

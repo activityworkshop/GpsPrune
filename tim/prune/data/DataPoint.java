@@ -81,7 +81,7 @@ public class DataPoint
 			}
 		}
 		if (inField == null || inField == Field.TIMESTAMP) {
-			_timestamp = new Timestamp(getFieldValue(Field.TIMESTAMP));
+			_timestamp = new TimestampUtc(getFieldValue(Field.TIMESTAMP));
 		}
 		if (inField == null || inField == Field.WAYPT_NAME) {
 			_waypointName = getFieldValue(Field.WAYPT_NAME);
@@ -118,7 +118,7 @@ public class DataPoint
 			_altitude = inAltitude;
 			_fieldValues[2] = "" + inAltitude.getValue();
 		}
-		_timestamp = new Timestamp(null);
+		_timestamp = new TimestampUtc(null);
 	}
 
 
@@ -369,12 +369,12 @@ public class DataPoint
 	 * Add a time offset to this point
 	 * @param inOffset offset to add (-ve to subtract)
 	 */
-	public void addTimeOffset(long inOffset)
+	public void addTimeOffsetSeconds(long inOffset)
 	{
 		if (hasTimestamp())
 		{
-			_timestamp.addOffset(inOffset);
-			_fieldValues[_fieldList.getFieldIndex(Field.TIMESTAMP)] = _timestamp.getText();
+			_timestamp.addOffsetSeconds(inOffset);
+			_fieldValues[_fieldList.getFieldIndex(Field.TIMESTAMP)] = _timestamp.getText(null);
 			setModified(false);
 		}
 	}

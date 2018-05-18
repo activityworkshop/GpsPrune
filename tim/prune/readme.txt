@@ -1,11 +1,11 @@
-GpsPrune version 18.6
-=====================
+GpsPrune version 19
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
 Full details can be found at https://gpsprune.activityworkshop.net/
 
-GpsPrune is copyright 2006-2016 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2018 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_18.6.jar
+   java -jar gpsprune_19.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,49 +25,28 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_18.6.jar --lang=DE
+   java -jar gpsprune_19.jar --lang=DE
 
 
-New with version 18.6
-=====================
-The following fix was made since version 18.5:
-  - Change of URL for SRTM tiles, and recognise when downloaded file is too small to be valid
-
-New with version 18.5
-=====================
-The following fixes and additions were made since version 18.4:
-  - When points have no altitudes, send them to a GPS with altitude 0 (prevents weird values when reading back)
-  - When points are not displayed on map, still colour the lines according to the selected scheme
-  - When points all have crazy values, don't hang the profile chart
-  - When images can't be fetched from the internet, don't delete expired cache images
-  - Translation updates to es, uk, ru, cz
-
-New with version 18.4
-=====================
-The following fixes and additions were made since version 18.3:
-  - Updated GPSBabel format descriptions (thanks, Juergen!)
-  - Removed calls to the retired opencaching.com site (thanks, Garmin!)
-
-New with version 18.3
-=====================
-The following fixes and additions were made since version 18.2:
-  - Fix for saving track names and descriptions containing ampersands in xml formats (thanks, Joe!)
-  - Additional window icon sizes (thanks, Sebastic!)
-  - Remember window size
-
-New with version 18.2
-=====================
-The following fixes and additions were made since version 18.1:
-  - Fix for saving point names containing ampersands in gpx, kml, kmz formats (thanks, Joe!)
-  - Minor translation updates to nl, it, pl
-
-New with version 18.1
-=====================
+New with version 19
+===================
 The following fixes and additions were made since version 18:
   - Fix for duration rounding bug affecting sub-second timestamps
   - Wikipedia search now also includes galleries from wikimedia
   - Photo popup window now gets updated when the track selection changes
-  - Small improvements to Ukrainian, Dutch translations
+  - Remove export to SVG function as it has fallen behind the java3d and pov options
+  - Remove Turkish language because there haven't been any translators since early 2010
+  - Function to add waypoints along the track at intervals of distance or time (eg every 5 km)
+  - Optionally draw arrows on the track lines to show direction of travel
+  - Waypoint rendering using icons (wishlist 71)
+  - Allow user to select timezone in which timestamps are displayed (wishlist 61)
+  - Provide call to geonames.org's OSM node search function, to find amenities (like bus stops) close to the current point
+  - Fix OSM download function using overpass API
+  - Fix opencyclemap URLs
+  - Fix reading of Exif data for some unusual cases (from Adobe Lightroom?)
+  - Remove Panoramio
+  - Update wikimedia catalogue
+  - Debian and Ubuntu packages no longer rely on external libmetadata jar
 
 New with version 18
 ===================

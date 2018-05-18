@@ -342,17 +342,6 @@ public class Java3DWindow implements ThreeDWindow
 			}});
 		panel.add(povButton);
 
-		// Add button for exporting svg
-		JButton svgButton = new JButton(I18nManager.getText("function.exportsvg"));
-		svgButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				if (_orbit != null) {
-					callbackRender(FunctionLibrary.FUNCTION_SVGEXPORT);
-				}
-			}});
-		panel.add(svgButton);
-
 		// Close button
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
 		closeButton.addActionListener(new ActionListener()
@@ -1061,7 +1050,7 @@ public class Java3DWindow implements ThreeDWindow
 
 	/**
 	 * Calculate the angles and call them back to the app
-	 * @param inFunction function to call (either pov or svg)
+	 * @param inFunction function to call for export
 	 */
 	private void callbackRender(Export3dFunction inFunction)
 	{
@@ -1084,8 +1073,8 @@ public class Java3DWindow implements ThreeDWindow
 		// Give the settings to the rendering function
 		inFunction.setCameraCoordinates(result.x, result.y, result.z);
 		inFunction.setAltitudeExaggeration(_altFactor);
-		inFunction.setTerrainDefinition(_terrainDefinition); // ignored by svg, used by pov
-		inFunction.setImageDefinition(_imageDefinition);     // ignored by svg, used by pov
+		inFunction.setTerrainDefinition(_terrainDefinition);
+		inFunction.setImageDefinition(_imageDefinition);
 
 		inFunction.begin();
 	}

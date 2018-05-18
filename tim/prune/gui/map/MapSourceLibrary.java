@@ -38,14 +38,20 @@ public abstract class MapSourceLibrary
 	 */
 	private static void addFixedSources()
 	{
+		final String THUNDERFOREST_APIKEY = "c32212f10b13496786b98dc6c42e5c3c";
 		_sourceList.add(new OsmMapSource("Mapnik", "http://[abc].tile.openstreetmap.org/"));
-		_sourceList.add(new OsmMapSource("Cyclemap", "http://[abc].tile.opencyclemap.org/cycle/"));
+		OsmMapSource cycleSource = new OsmMapSource("OpenCycleMap", "http://[abc].tile.thunderforest.com/cycle/");
+		cycleSource.setApiKey(THUNDERFOREST_APIKEY);
+		_sourceList.add(cycleSource);
+		OsmMapSource outdoorsSource = new OsmMapSource("Outdoors", "http://[abc].tile.thunderforest.com/outdoors/");
+		outdoorsSource.setApiKey(THUNDERFOREST_APIKEY);
+		_sourceList.add(outdoorsSource);
 		_sourceList.add(new OsmMapSource("Reitkarte", "http://topo[234].wanderreitkarte.de/topo/"));
 		_sourceList.add(new MffMapSource("Mapsforfree", "http://maps-for-free.com/layer/relief/", "jpg",
 			"http://maps-for-free.com/layer/water/", "gif", 11));
 		_sourceList.add(new OsmMapSource("Hikebikemap", "http://[abc].tiles.wmflabs.org/hikebike/",
 			"http://[abc].tiles.wmflabs.org/hillshading/", 18));
-		_sourceList.add(new OsmMapSource("Openseamap", "http://tile.openstreetmap.org/",
+		_sourceList.add(new OsmMapSource("OpenSeaMap", "http://tile.openstreetmap.org/",
 			"http://tiles.openseamap.org/seamark/", 18));
 	}
 

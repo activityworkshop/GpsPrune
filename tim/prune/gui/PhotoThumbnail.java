@@ -129,14 +129,16 @@ public class PhotoThumbnail extends JPanel implements Runnable
 	{
 		if (_inPanel)
 		{
-			// use either exif thumbnail or photo scaled down to sensible size
+			_thumbnail = null;
+			// try to use exif thumbnail
 			if (_photo.getExifThumbnail() != null) {
 				// Use exif thumbnail
 				Image image = new ImageIcon(_photo.getExifThumbnail()).getImage();
 				_thumbnail = ImageUtils.createScaledImage(image, image.getWidth(null), image.getHeight(null));
 				image = null;
 			}
-			else
+			// Maybe there's no thumbnail, maybe the load of the thumbnail failed
+			if (_thumbnail == null)
 			{
 				// no exif thumbnail available, going to have to read whole thing
 				int picWidth = _photo.getWidth();

@@ -137,7 +137,7 @@ public class FileLoader
 		else if (fileExtension.equals(".jpg") || fileExtension.equals("jpeg"))
 		{
 			Photo photo = JpegLoader.createPhoto(inFile);
-			TreeSet<Photo> photoSet = new TreeSet<Photo>();
+			TreeSet<Photo> photoSet = new TreeSet<Photo>(new MediaSorter());
 			photoSet.add(photo);
 			_app.informPhotosLoaded(photoSet);
 			_app.informNoDataLoaded(); // To trigger load of next file if any

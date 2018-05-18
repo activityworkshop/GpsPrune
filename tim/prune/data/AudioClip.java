@@ -23,7 +23,7 @@ public class AudioClip extends MediaObject
 	public AudioClip(File inFile)
 	{
 		// Timestamp is always just taken from the file modification stamp
-		super(inFile, new Timestamp(inFile.lastModified()));
+		super(inFile, new TimestampUtc(inFile.lastModified()));
 	}
 
 	/**

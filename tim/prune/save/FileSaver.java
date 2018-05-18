@@ -604,7 +604,7 @@ public class FileSaver
 			if (inPoint.hasTimestamp())
 			{
 				// format value accordingly
-				inBuffer.append(inPoint.getTimestamp().getText(inTimestampFormat));
+				inBuffer.append(inPoint.getTimestamp().getText(inTimestampFormat, null));
 			}
 		}
 		else if (inField == Field.MEDIA_FILENAME)

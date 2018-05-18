@@ -14,15 +14,16 @@ import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.LatLonRectangle;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Photo;
 import tim.prune.data.Timestamp;
+import tim.prune.data.TimestampLocal;
+import tim.prune.data.TimestampUtc;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.function.Cancellable;
-import tim.prune.jpeg.ExifGateway;
+import tim.prune.jpeg.InternalExifLibrary;
 import tim.prune.jpeg.JpegData;
 
 /**
@@ -224,7 +225,7 @@ public class JpegLoader implements Runnable, Cancellable
 		// Create Photo object
 		Photo photo = new Photo(inFile);
 		// Try to get information out of exif
-		JpegData jpegData = ExifGateway.getJpegData(inFile);
+		JpegData jpegData = new InternalExifLibrary().getJpegData(inFile);
 		Timestamp timestamp = null;
 		if (jpegData != null)
 		{
@@ -253,12 +254,12 @@ public class JpegLoader implements Runnable, Cancellable
 		}
 		// Use file timestamp if exif timestamp isn't available
 		if (timestamp == null) {
-			timestamp = new Timestamp(inFile.lastModified());
+			timestamp = new TimestampUtc(inFile.lastModified());
 		}
 		// Apply timestamp to photo and its point (if any)
 		photo.setTimestamp(timestamp);
 		if (photo.getDataPoint() != null) {
-			photo.getDataPoint().setFieldValue(Field.TIMESTAMP, timestamp.getText(Timestamp.Format.ISO8601), false);
+			// photo.getDataPoint().setFieldValue(Field.TIMESTAMP, timestamp.getText(Timestamp.Format.ISO8601), false);
 		}
 		return photo;
 	}
@@ -355,7 +356,7 @@ public class JpegLoader implements Runnable, Cancellable
 		if (inDate == null || inTime == null || inDate.length != 3 || inTime.length != 3) {
 			return null;
 		}
-		return new Timestamp(inDate[0], inDate[1], inDate[2],
+		return new TimestampLocal(inDate[0], inDate[1], inDate[2],
 			inTime[0], inTime[1], inTime[2]);
 	}
 
@@ -370,7 +371,7 @@ public class JpegLoader implements Runnable, Cancellable
 		Timestamp stamp = null;
 		try
 		{
-			stamp = new Timestamp(Integer.parseInt(inStamp.substring(0, 4)),
+			stamp = new TimestampLocal(Integer.parseInt(inStamp.substring(0, 4)),
 				Integer.parseInt(inStamp.substring(5, 7)),
 				Integer.parseInt(inStamp.substring(8, 10)),
 				Integer.parseInt(inStamp.substring(11, 13)),

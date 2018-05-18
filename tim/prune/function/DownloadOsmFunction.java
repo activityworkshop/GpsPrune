@@ -243,9 +243,10 @@ public class DownloadOsmFunction extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
-		final String url = "http://www.overpass-api.de/api/xapi?map?bbox=" +
-			_latLonLabels[1].getText() + "," + _latLonLabels[3].getText() + "," +
-			_latLonLabels[2].getText() + "," + _latLonLabels[0].getText();
+		String url = "http://overpass-api.de/api/interpreter?data=(node(" +
+			_latLonLabels[3].getText() + "," + _latLonLabels[1].getText() + "," +
+			_latLonLabels[0].getText() + "," + _latLonLabels[2].getText() + ");<;);out%20qt;";
+		// System.out.println(url);
 
 		byte[] buffer = new byte[1024];
 		InputStream inStream = null;

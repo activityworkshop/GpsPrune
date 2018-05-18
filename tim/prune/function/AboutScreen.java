@@ -34,7 +34,6 @@ import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
-import tim.prune.jpeg.ExifGateway;
 import tim.prune.threedee.WindowFactory;
 
 /**
@@ -98,8 +97,8 @@ public class AboutScreen extends GenericFunction
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.summarytext3")).append("</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.languages")).append(" : ")
 			.append("afrikaans, \u010de\u0161tina, deutsch, english, espa\u00F1ol, fran\u00E7ais, italiano,<br>" +
-				" magyar, nederlands, polski, portugu\u00EAs, rom\u00E2n\u0103, \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese),<br>" +
-				" \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean), schwiizerd\u00FC\u00FCtsch, t\u00FCrk\u00E7e, ukrainian</p>");
+				" magyar, nederlands, polski, portugu\u00EAs, rom\u00E2n\u0103, suomi, \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian),<br>" +
+				" \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean), schwiizerd\u00FC\u00FCtsch, ukrainian</p>");
 		descBuffer.append("<p>").append(I18nManager.getText("dialog.about.translatedby")).append("</p>");
 		JEditorPane descPane = new JEditorPane("text/html", descBuffer.toString());
 		descPane.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -153,13 +152,6 @@ public class AboutScreen extends GenericFunction
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[3], 1, 5);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, new JLabel("Xerces : "), 0, 6);
 		addToGridBagPanel(sysInfoPanel, gridBag, constraints, _installedLabels[4], 1, 6);
-		// Exif library
-		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.systeminfo.exiflib") + " : "),
-			0, 7);
-		final String exiflibkey = "dialog.about.systeminfo.exiflib." + ExifGateway.getDescriptionKey();
-		addToGridBagPanel(sysInfoPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText(exiflibkey)), 1, 7);
 		_tabs.add(I18nManager.getText("dialog.about.systeminfo"), sysInfoPanel);
 
 		// Third pane for credits
@@ -198,35 +190,38 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" theYinYeti, Rothermographer, Sam, Rudolph, nazotoko,"),
 			1, 4);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d, Gy\u00F6rgy,"),
+			new JLabel(" katpatuka, R\u00E9mi, Marcus, Ali, Javier, Jeroen, prot_d,"),
 			1, 5);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter, Cristian, Roman"),
+			new JLabel(" Gy\u00F6rgy, HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter, Cristian,"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
-			0, 7);
-		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
+			new JLabel(" Roman, Erkki"),
 			1, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
 			0, 8);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Debian Linux, Sun Java, OpenJDK, Eclipse, Svn, Gimp, Inkscape"),
+			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
 			1, 8);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
 			0, 9);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Openstreetmap, Povray, Exiftool, Gpsbabel, Gnuplot"),
+			new JLabel("Debian Linux, Sun Java, OpenJDK, Eclipse, Svn, Gimp, Inkscape"),
 			1, 9);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			new JLabel(I18nManager.getText("dialog.about.credits.othertools") + " : "),
 			0, 10);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Friends and loved ones, for encouragement and support"),
+			new JLabel("Openstreetmap, Povray, Exiftool, Gpsbabel, Gnuplot"),
 			1, 10);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel(I18nManager.getText("dialog.about.credits.thanks") + " : "),
+			0, 11);
+		addToGridBagPanel(creditsPanel, gridBag, constraints,
+			new JLabel("Friends and loved ones, for encouragement and support"),
+			1, 11);
 		_tabs.add(I18nManager.getText("dialog.about.credits"), creditsPanel);
 
 		// Read me

@@ -50,7 +50,7 @@ public class GpsiesXmlHandler extends DefaultHandler
 			_track.setDescription(_value);
 		}
 		else if (inTagName.equals("fileId")) {
-			_track.setWebUrl("http://gpsies.com/map.do?fileId=" + _value);
+			_track.setWebUrl("https://gpsies.com/map.do?fileId=" + _value);
 		}
 		else if (inTagName.equals("trackLengthM")) {
 			try {

@@ -24,34 +24,34 @@ public class DateInfoList
 	 */
 	public void addPoint(Date inDate)
 	{
+		DateInfo currentInfo = null;
 		if (_previousInfo != null && _previousInfo.isSameDate(inDate))
 		{
 			// found it
-			_previousInfo.incrementCount();
+			currentInfo = _previousInfo;
 		}
 		else
 		{
-			// loop through list, seeing if date already present
-			boolean foundDate = false;
+			// loop through list, to see if date already present
 			for (DateInfo info : _infoList)
 			{
 				if (info.isSameDate(inDate))
 				{
-					info.incrementCount();
-					_previousInfo = info;
-					foundDate = true;
+					currentInfo = info;
 					break;
 				}
 			}
 			// create new info if necessary
-			if (!foundDate)
+			if (currentInfo == null)
 			{
-				_previousInfo = new DateInfo(inDate);
-				_previousInfo.incrementCount();
-				_infoList.add(_previousInfo);
+				currentInfo = new DateInfo(inDate);
+				_infoList.add(currentInfo);
 				_hasBeenSorted = false;
 			}
+			_previousInfo = currentInfo;
 		}
+		// Now we've identified the current info or created a new one
+		currentInfo.incrementCount();
 	}
 
 	/**
@@ -62,18 +62,6 @@ public class DateInfoList
 		_infoList.clear();
 		_previousInfo = null;
 		_hasBeenSorted = true;
-	}
-
-	/**
-	 * not used, can be removed
-	 * @return true if any points without dates were found
-	 */
-	public boolean hasDatelessPoints()
-	{
-		if (_infoList.isEmpty()) {return false;}
-		sort();
-		DateInfo firstInfo = _infoList.get(0);
-		return (firstInfo != null && firstInfo.isDateless() && firstInfo.getPointCount() > 0);
 	}
 
 	/**

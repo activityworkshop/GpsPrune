@@ -118,8 +118,9 @@ public class AddTimeOffset extends GenericFunction
 		// Listeners to enable/disable ok button
 		KeyAdapter keyListener = new KeyAdapter() {
 			/** Key typed */
-			public void keyTyped(KeyEvent arg0) {
-				_okButton.setEnabled(getOffsetSecs() != 0L);
+			public void keyTyped(KeyEvent event) {
+				final boolean isNumber = "1234567890".indexOf(event.getKeyChar()) >= 0;
+                _okButton.setEnabled(isNumber || getOffsetSecs() != 0L);
 			}
 		};
 		MouseAdapter mouseListener = new MouseAdapter() {
@@ -194,7 +195,7 @@ public class AddTimeOffset extends GenericFunction
 		if (offsetSecs != 0L)
 		{
 			// Pass offset back to app and close dialog
-			_app.finishAddTimeOffset(offsetSecs);
+			_app.finishAddTimeOffsetSeconds(offsetSecs);
 			_dialog.dispose();
 		}
 	}

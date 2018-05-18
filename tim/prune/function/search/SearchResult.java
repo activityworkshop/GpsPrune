@@ -1,12 +1,14 @@
 package tim.prune.function.search;
 
 /**
- * Class to hold a search result from wikipedia / gpsies / panoramio etc
+ * Class to hold a search result from wikipedia / gpsies etc
  */
 public class SearchResult implements Comparable<SearchResult>
 {
 	/** Track name or title */
 	private String _trackName = null;
+	/** Point type (for POIs) */
+	private String _pointType = null;
 	/** Description */
 	private String _description = null;
 	/** Web page for more details */
@@ -33,6 +35,22 @@ public class SearchResult implements Comparable<SearchResult>
 	public String getTrackName()
 	{
 		return _trackName;
+	}
+
+	/**
+	 * @param inType type of point (for POIs)
+	 */
+	public void setPointType(String inType)
+	{
+		_pointType = inType;
+	}
+
+	/**
+	 * @return type of point (for POIs)
+	 */
+	public String getPointType()
+	{
+		return _pointType;
 	}
 
 	/**

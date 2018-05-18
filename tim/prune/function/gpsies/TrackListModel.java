@@ -12,7 +12,7 @@ import tim.prune.data.Unit;
 import tim.prune.function.search.SearchResult;
 
 /**
- * Model for list of tracks from gpsies.com
+ * Model for list of tracks from a search result (eg gpsies.com, geonames, overpass)
  */
 public class TrackListModel extends AbstractTableModel
 {
@@ -24,6 +24,8 @@ public class TrackListModel extends AbstractTableModel
 	private String _lengthColLabel = null;
 	/** Number of columns */
 	private int _numColumns = 2;
+	/** Normally this model shows distances / lengths, except when this flag is true */
+	private boolean _showPointTypes = false;
 	/** Formatter for distances */
 	private NumberFormat _distanceFormatter = NumberFormat.getInstance();
 
@@ -76,6 +78,14 @@ public class TrackListModel extends AbstractTableModel
 	}
 
 	/**
+	 * @param inShowTypes true to show point types, false for distances
+	 */
+	public void setShowPointTypes(boolean inShowTypes)
+	{
+		_showPointTypes = inShowTypes;
+	}
+
+	/**
 	 * @param inRowNum row number
 	 * @param inColNum column number
 	 * @return cell entry at given row and column
@@ -83,7 +93,13 @@ public class TrackListModel extends AbstractTableModel
 	public Object getValueAt(int inRowNum, int inColNum)
 	{
 		SearchResult track = _trackList.get(inRowNum);
-		if (inColNum == 0) {return track.getTrackName();}
+		if (inColNum == 0) {
+			return track.getTrackName();
+		}
+		if (_showPointTypes)
+		{
+			return track.getPointType();
+		}
 		double lengthM = track.getLength();
 		// convert to current distance units
 		Unit distUnit = Config.getUnitSet().getDistanceUnit();

@@ -99,6 +99,12 @@ public abstract class Config
 	public static final String KEY_TERRAIN_GRID_SIZE = "prune.terraingridsize";
 	/** Key for altitude tolerance */
 	public static final String KEY_ALTITUDE_TOLERANCE = "prune.altitudetolerance";
+	/** Key for waypoint icons to use */
+	public static final String KEY_WAYPOINT_ICONS = "prune.waypointicons";
+	/** Size of waypoint icons to use */
+	public static final String KEY_WAYPOINT_ICON_SIZE = "prune.waypointiconsize";
+	/** Id of selected timezone */
+	public static final String KEY_TIMEZONE_ID = "prune.timezoneid";
 
 
 	/** Initialise the default properties */
@@ -194,6 +200,7 @@ public abstract class Config
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
 		props.put(KEY_TERRAIN_GRID_SIZE, "50");
 		props.put(KEY_ALTITUDE_TOLERANCE, "0"); // 0, all exact as before
+		props.put(KEY_WAYPOINT_ICON_SIZE, "1"); // medium size
 		return props;
 	}
 

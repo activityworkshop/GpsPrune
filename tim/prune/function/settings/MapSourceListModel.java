@@ -1,4 +1,4 @@
-package tim.prune.function;
+package tim.prune.function.settings;
 
 import javax.swing.AbstractListModel;
 

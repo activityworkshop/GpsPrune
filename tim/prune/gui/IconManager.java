@@ -30,6 +30,8 @@ public abstract class IconManager
 	public static final String POINTS_DISCONNECTED_BUTTON = "points_disconnected.png";
 	/** Icon for points hidden, just lines icon on main map display */
 	public static final String POINTS_HIDDEN_BUTTON = "points_hidden.png";
+	/** Icon for points, lines and arrows on main map display */
+	public static final String POINTS_WITH_ARROWS_BUTTON = "points_arrows.png";
 	 /** Icon for edit mode button on main map display when not selected */
 	public static final String EDIT_MODE_BUTTON = "drag_points_icon.gif";
 	 /** Icon for edit mode button on main map display when selected */
@@ -85,6 +87,9 @@ public abstract class IconManager
 	public static final String ENTRY_INVALID = "entry_invalid.gif";
 	/** Icon for a given entry being empty (blank) */
 	public static final String ENTRY_NONE = "entry_none.gif";
+
+	public static final String WAYPOINT_ICON_PREFIX = "wpicon_";
+	public static final String WAYPOINT_ICON_SUFFIX = ".png";
 
 	/**
 	 * Get the specified image

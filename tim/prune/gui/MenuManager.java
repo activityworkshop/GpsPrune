@@ -51,7 +51,6 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _exportKmlItem = null;
 	private JMenuItem _exportGpxItem = null;
 	private JMenuItem _exportPovItem = null;
-	private JMenuItem _exportSvgItem = null;
 	private JMenuItem _exportImageItem = null;
 	private JMenu     _recentFileMenu = null;
 	private JMenuItem _undoItem = null;
@@ -82,6 +81,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _rearrangeWaypointsItem = null;
 	private JMenuItem _splitSegmentsItem = null;
 	private JMenuItem _sewSegmentsItem = null;
+	private JMenuItem _createMarkerWaypointsItem = null;
 	private JMenuItem _cutAndMoveItem = null;
 	private JMenuItem _convertNamesToTimesItem = null;
 	private JMenuItem _deleteFieldValuesItem = null;
@@ -94,9 +94,9 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _lookupSrtmItem = null;
 	private JMenuItem _downloadSrtmItem = null;
 	private JMenuItem _nearbyWikipediaItem = null;
+	private JMenuItem _nearbyOsmPoiItem = null;
 	private JMenuItem _showPeakfinderItem = null;
 	private JMenuItem _showGeohackItem = null;
-	private JMenuItem _showPanoramioItem = null;
 	private JMenuItem _searchOpencachingDeItem = null;
 	private JMenuItem _searchMapillaryItem = null;
 	private JMenuItem _downloadOsmItem = null;
@@ -123,7 +123,6 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _correlateAudiosItem = null;
 	private JMenuItem _selectNoAudioItem = null;
 	private JCheckBoxMenuItem _onlineCheckbox = null;
-	private JCheckBoxMenuItem _antialiasCheckbox = null;
 	private JCheckBoxMenuItem _autosaveSettingsCheckbox = null;
 
 	// ActionListeners for reuse by menu and toolbar
@@ -236,9 +235,6 @@ public class MenuManager implements DataSubscriber
 		// Pov
 		_exportPovItem = makeMenuItem(FunctionLibrary.FUNCTION_POVEXPORT, false);
 		fileMenu.add(_exportPovItem);
-		// Svg
-		_exportSvgItem = makeMenuItem(FunctionLibrary.FUNCTION_SVGEXPORT, false);
-		fileMenu.add(_exportSvgItem);
 		// Image
 		_exportImageItem = makeMenuItem(FunctionLibrary.FUNCTION_IMAGEEXPORT, false);
 		fileMenu.add(_exportImageItem);
@@ -289,12 +285,12 @@ public class MenuManager implements DataSubscriber
 		onlineMenu.add(_nearbyWikipediaItem);
 		JMenuItem searchWikipediaNamesItem = makeMenuItem(FunctionLibrary.FUNCTION_SEARCH_WIKIPEDIA);
 		onlineMenu.add(searchWikipediaNamesItem);
+		_nearbyOsmPoiItem = makeMenuItem(FunctionLibrary.FUNCTION_SEARCH_OSMPOIS);
+		onlineMenu.add(_nearbyOsmPoiItem);
 		_showPeakfinderItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_PEAKFINDER, "webservice.peakfinder"), false);
 		onlineMenu.add(_showPeakfinderItem);
 		_showGeohackItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_GEOHACK, "webservice.geohack"), false);
 		onlineMenu.add(_showGeohackItem);
-		_showPanoramioItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_PANORAMIO, "webservice.panoramio"), false);
-		onlineMenu.add(_showPanoramioItem);
 
 		onlineMenu.addSeparator();
 		_searchOpencachingDeItem = makeMenuItem(new SearchOpenCachingDeFunction(_app), false);
@@ -358,6 +354,9 @@ public class MenuManager implements DataSubscriber
 		// Sew track segments
 		_sewSegmentsItem = makeMenuItem(FunctionLibrary.FUNCTION_SEW_SEGMENTS, false);
 		trackMenu.add(_sewSegmentsItem);
+		// Create marker waypoints
+		_createMarkerWaypointsItem = makeMenuItem(FunctionLibrary.FUNCTION_CREATE_MARKER_WAYPOINTS, false);
+		trackMenu.add(_createMarkerWaypointsItem);
 		trackMenu.addSeparator();
 		_learnEstimationParams = makeMenuItem(FunctionLibrary.FUNCTION_LEARN_ESTIMATION_PARAMS, false);
 		trackMenu.add(_learnEstimationParams);
@@ -637,22 +636,15 @@ public class MenuManager implements DataSubscriber
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_PATHS));
 		// Set colours
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_COLOURS));
-		// Set line width used for drawing
-		settingsMenu.add(makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_SET_LINE_WIDTH)));
-		// Use antialias or not
-		_antialiasCheckbox = new JCheckBoxMenuItem(I18nManager.getText("menu.settings.antialias"), false);
-		_antialiasCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_ANTIALIAS));
-		_antialiasCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				Config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
-				UpdateMessageBroker.informSubscribers(MAPSERVER_CHANGED);
-			}
-		});
-			settingsMenu.add(_antialiasCheckbox);
+		// display settings
+		JMenuItem setDisplaySettingsItem = makeMenuItem(FunctionLibrary.FUNCTION_SET_DISPLAY_SETTINGS);
+		settingsMenu.add(setDisplaySettingsItem);
 		// Set language
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_LANGUAGE));
 		// Set altitude tolerance
 		settingsMenu.add(makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_SET_ALTITUDE_TOLERANCE)));
+		// Set timezone
+		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SET_TIMEZONE));
 		settingsMenu.addSeparator();
 		// Save configuration
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SAVECONFIG));
@@ -865,15 +857,16 @@ public class MenuManager implements DataSubscriber
 		_exportKmlItem.setEnabled(hasData);
 		_exportGpxItem.setEnabled(hasData);
 		_exportPovItem.setEnabled(hasMultiplePoints);
-		_exportSvgItem.setEnabled(hasMultiplePoints);
 		_exportImageItem.setEnabled(hasMultiplePoints);
 		_compressItem.setEnabled(hasData);
 		_markRectangleItem.setEnabled(hasData);
 		_markUphillLiftsItem.setEnabled(hasData && _track.hasAltitudeData());
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
-		_splitSegmentsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3);
-		_sewSegmentsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3);
+		final boolean hasSeveralTrackPoints = hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3;
+		_splitSegmentsItem.setEnabled(hasSeveralTrackPoints);
+		_sewSegmentsItem.setEnabled(hasSeveralTrackPoints);
+		_createMarkerWaypointsItem.setEnabled(hasSeveralTrackPoints);
 		_selectAllItem.setEnabled(hasData);
 		_selectNoneItem.setEnabled(hasData);
 		_show3dItem.setEnabled(hasMultiplePoints);
@@ -885,6 +878,7 @@ public class MenuManager implements DataSubscriber
 		_uploadGpsiesItem.setEnabled(hasData && _track.hasTrackPoints());
 		_lookupSrtmItem.setEnabled(hasData);
 		_nearbyWikipediaItem.setEnabled(hasData);
+		_nearbyOsmPoiItem.setEnabled(hasData);
 		_downloadOsmItem.setEnabled(hasData);
 		_getWeatherItem.setEnabled(hasData);
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
@@ -913,7 +907,6 @@ public class MenuManager implements DataSubscriber
 		_duplicatePointItem.setEnabled(hasPoint);
 		_showPeakfinderItem.setEnabled(hasPoint);
 		_showGeohackItem.setEnabled(hasPoint);
-		_showPanoramioItem.setEnabled(hasPoint);
 		_searchOpencachingDeItem.setEnabled(hasPoint);
 		_searchMapillaryItem.setEnabled(hasPoint);
 		// is it a waypoint?

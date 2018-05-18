@@ -7,7 +7,7 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
-import tim.prune.data.Timestamp;
+import tim.prune.data.TimestampUtc;
 import tim.prune.data.Track;
 import tim.prune.undo.UndoConvertNamesToTimes;
 
@@ -51,8 +51,9 @@ public class ConvertNamesToTimes extends GenericFunction
 			DataPoint point = track.getPoint(i);
 			if (point.isWaypoint())
 			{
-				Timestamp tstamp = new Timestamp(point.getWaypointName());
-				if (tstamp.isValid()) {
+				TimestampUtc tstamp = new TimestampUtc(point.getWaypointName());
+				if (tstamp.isValid())
+				{
 					// timestamp could be parsed!
 					point.setFieldValue(Field.TIMESTAMP, point.getWaypointName(), false);
 					// set waypoint name to nothing (track point)

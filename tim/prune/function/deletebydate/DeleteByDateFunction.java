@@ -22,12 +22,13 @@ import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.DataPoint;
 import tim.prune.function.compress.MarkAndDeleteFunction;
 
 /**
  * Function to select a date or dates,
- * and delete the corresponding points
+ * and mark the corresponding points for deletion
  */
 public class DeleteByDateFunction extends MarkAndDeleteFunction
 {
@@ -56,6 +57,9 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 	@Override
 	public void begin()
 	{
+		// Select the current timezone
+		DateInfo.setTimezone(TimezoneHelper.getSelectedTimezone());
+
 		// Make a list of which dates are present in the track
 		_infoList.clearAll();
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
@@ -65,29 +69,14 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 			if (point != null)
 			{
 				if (point.hasTimestamp()) {
-					_infoList.addPoint(point.getTimestamp().getCalendar().getTime());
+					_infoList.addPoint(point.getTimestamp()
+						.getCalendar(TimezoneHelper.getSelectedTimezone()).getTime());
 				}
 				else {
 					_infoList.addPoint(null); // no timestamp available
 				}
 			}
 		}
-//		System.out.println("Debug: info list has dateless points? " + (_infoList.hasDatelessPoints() ? "yes":"no"));
-//		System.out.println("Debug: info list has " + _infoList.getNumEntries() + " different entries");
-//		System.out.println("Debug: info list has " + _infoList.getTotalNumPoints() + " total points");
-//		final boolean checkOk = (_infoList.getTotalNumPoints() == numPoints);
-//		System.out.println("Debug: which " + (checkOk?"IS":"ISN'T!") + " the same as track: " + numPoints);
-
-		// Loop over entries for debug
-//		if (!checkOk)
-//		{
-//			for (int i=0; i<_infoList.getNumEntries(); i++)
-//			{
-//				DateInfo info = _infoList.getDateInfo(i);
-//				System.out.println("   " + i + " (" + info.getPointCount() + " points) - " +
-//					(info.isDateless() ? "no date" : "date"));
-//			}
-//		}
 
 		// Complain if there is only one entry in the list - this means all points are on the same day
 		if (_infoList.getNumEntries() < 2)
@@ -182,7 +171,9 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 			DataPoint point = _app.getTrackInfo().getTrack().getPoint(p);
 			if (point != null)
 			{
-				Date date = (point.hasTimestamp() ? point.getTimestamp().getCalendar().getTime() : null);
+				final Date date = (point.hasTimestamp() ?
+					point.getTimestamp().getCalendar(TimezoneHelper.getSelectedTimezone()).getTime()
+					: null);
 				boolean pointMarked = false;
 				// Try to match each of the date info objects in the list
 				for (int d=0; d<numDates; d++)
@@ -205,7 +196,8 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 		if (numMarked > 0) {
 			optionallyDeleteMarkedPoints(numMarked);
 		}
-		else {
+		else
+		{
 			// Do nothing   //System.out.println("Nothing selected to delete!");
 			// delete flags might have been reset, so refresh display
 			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
