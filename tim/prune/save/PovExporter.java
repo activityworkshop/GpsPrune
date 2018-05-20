@@ -53,7 +53,7 @@ import tim.prune.threedee.TerrainHelper;
 import tim.prune.threedee.ThreeDModel;
 
 /**
- * Class to export a 3d scene of the track to a specified Pov file
+ * Class to export a 3d scene of the track to a specified Pov file.
  */
 public class PovExporter extends Export3dFunction
 {
@@ -63,12 +63,6 @@ public class PovExporter extends Export3dFunction
 	private String _cameraX = null;
 	private String _cameraY = null;
 	private String _cameraZ = null;
-	private String _sphereSize = null;
-	private String _persProjection = null;
-	private String _orthProjection = null;
-	private String _stdLighting = null;
-	private String _cartLighting = null;
-	private static String _rodSize = null;
 
 	private JTextField _cameraXField = null;
 	private JTextField _cameraYField = null;
@@ -78,17 +72,26 @@ public class PovExporter extends Export3dFunction
 	private JTextField _sphereSizeField = null;
 	private JTextField _rodSizeField = null;
 
-	private JRadioButton _ballsAndSticksButton = null;
+	private JRadioButton _spheresAndSticksButton = null;
 	private JRadioButton _tubesButton = null;
 	private JRadioButton _spheresButton = null;
+	private final String _spheresStyle = "spheres";
+	private final String _spheresSticksStyle = "spheres-sticks";
+	private final String _tubesWallsStyle = "tubes-walls";
 
 	private JRadioButton _perspectiveButton = null;
 	private JRadioButton _orthographicButton = null;
+	private final String _persProjection = "perspective";
+	private final String _orthProjection = "orthographic";
 
 	private JRadioButton _standardLightingButton = null;
 	private JRadioButton _cartographicLightingButton = null;
+	private final String _stdLighting = "standard";
+	private final String _cartLighting = "cartographic";
 
 	private JCheckBox _scaleButton = null;
+	private final String _showScales = "show";
+	private final String _hideScales = "hide";
 
 	/** Panel for defining the base image */
 	private BaseImageDefinitionPanel _baseImagePanel = null;
@@ -141,21 +144,19 @@ public class PovExporter extends Export3dFunction
 		_cameraX = "17";
 		_cameraY = "13";
 		_cameraZ = "-20";
-		_sphereSize = "0.2";
-		_rodSize = "0.1";
-		_stdLighting = "standard";
-		_cartLighting = "cartographic";
-		_persProjection = "perspective";
-		_orthProjection = "orthographic";
 	}
 
-	/** Get the name key */
-	public String getNameKey() {
+	/**
+	 * Get the name key.
+	 */
+	public String getNameKey()
+	{
 		return "function.exportpov";
 	}
 
 	/**
-	 * Set the coordinates for the camera (can be any scale)
+	 * Set the coordinates for the camera (can be any scale).
+	 *
 	 * @param inX X coordinate of camera
 	 * @param inY Y coordinate of camera
 	 * @param inZ Z coordinate of camera
@@ -179,7 +180,7 @@ public class PovExporter extends Export3dFunction
 
 
 	/**
-	 * Show the dialog to select options and export file
+	 * Show the dialog to select options and export file.
 	 */
 	public void begin()
 	{
@@ -191,20 +192,56 @@ public class PovExporter extends Export3dFunction
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogComponents());
 		}
+
 		// Get exaggeration factor from config
 		final int exaggFactor = Config.getConfigInt(
 			Config.KEY_HEIGHT_EXAGGERATION);
-		if (exaggFactor > 0) {
+		if (exaggFactor > 0)
+		{
 			_altFactor = exaggFactor / 100.0;
 		}
 
-		// Set angles
+		// Get sphere size from config if not passed from Java3DWindow
+		if (_sphereSize == null)
+			_sphereSize = Config.getConfigString(Config.KEY_SPHERE_SIZE);
+
+		// Get rod radius from config if not passed from Java3DWindow
+		if (_rodSize == null)
+			_rodSize = Config.getConfigString(Config.KEY_ROD_SIZE);
+
+		// Get projection type from config if not passed from Java3DWindow
+		if (_projection == null)
+			_projection = Config.getConfigString(Config.KEY_PROJECTION);
+
+		// Get lighting type from config if not passed from Java3DWindow
+		if (_lighting == null)
+			_lighting = Config.getConfigString(Config.KEY_LIGHTING);
+
+		// Get style type from config if not passed from Java3DWindow
+		if (_style == null)
+			_style = Config.getConfigString(Config.KEY_STYLE);
+
+		// Get flag for showing scale from config if not passed from
+		// Java3DWindow
+		if (_scales == null)
+			_scales = Config.getConfigString(Config.KEY_SCALES);
+
+		// Set parameters
 		_cameraXField.setText(_cameraX);
 		_cameraYField.setText(_cameraY);
 		_cameraZField.setText(_cameraZ);
 		_altitudeFactorField.setText("" + _altFactor);
+
 		_sphereSizeField.setText(_sphereSize);
 		_rodSizeField.setText(_rodSize);
+		_perspectiveButton.setSelected(_projection.equals(_persProjection));
+		_orthographicButton.setSelected(_projection.equals(_orthProjection));
+		_cartographicLightingButton.setSelected(_lighting.equals(_cartLighting));
+		_standardLightingButton.setSelected(_lighting.equals(_stdLighting));
+		_spheresAndSticksButton.setSelected(_style.equals(_spheresSticksStyle));
+		_spheresButton.setSelected(_style.equals(_spheresStyle));
+		_tubesButton.setSelected(_style.equals(_tubesWallsStyle));
+		_scaleButton.setSelected(_scales.equals(_showScales));
 
 		// Pass terrain and image def parameters (if any) to the panels
 		if (_terrainDef != null) {
@@ -223,7 +260,8 @@ public class PovExporter extends Export3dFunction
 
 
 	/**
-	 * Make the dialog components to select the export options
+	 * Make the dialog components to select the export options.
+	 *
 	 * @return Component holding gui elements
 	 */
 	private Component makeDialogComponents()
@@ -237,6 +275,7 @@ public class PovExporter extends Export3dFunction
 			I18nManager.getText("dialog.exportpov.text"));
 		introLabel.setBorder(BorderFactory.createEmptyBorder(4, 4, 6, 4));
 		panel.add(introLabel, BorderLayout.NORTH);
+
 		// OK, Cancel buttons
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -290,9 +329,9 @@ public class PovExporter extends Export3dFunction
 		_fontName.addKeyListener(new DialogCloser(_dialog));
 		centralPanel.add(_fontName);
 
-		//coordinates of camera
-		JLabel cameraXLabel = new JLabel
-			(I18nManager.getText("dialog.exportpov.camerax"));
+		// coordinates of camera
+		JLabel cameraXLabel = new JLabel(
+			I18nManager.getText("dialog.exportpov.camerax"));
 		cameraXLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		centralPanel.add(cameraXLabel);
 		_cameraXField = new JTextField("" + _cameraX);
@@ -345,10 +384,10 @@ public class PovExporter extends Export3dFunction
 		JPanel radioPanel = new JPanel();
 		radioPanel.setLayout(new BoxLayout(radioPanel, BoxLayout.Y_AXIS));
 		radioPanel.setBorder(panelBorder);
-		_ballsAndSticksButton = new JRadioButton(
+		_spheresAndSticksButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.ballsandsticks"));
-		_ballsAndSticksButton.setSelected(false);
-		radioPanel.add(_ballsAndSticksButton);
+		_spheresAndSticksButton.setSelected(false);
+		radioPanel.add(_spheresAndSticksButton);
 
 		_tubesButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.tubesandwalls"));
@@ -361,7 +400,7 @@ public class PovExporter extends Export3dFunction
 		radioPanel.add(_spheresButton);
 
 		ButtonGroup group = new ButtonGroup();
-		group.add(_ballsAndSticksButton);
+		group.add(_spheresAndSticksButton);
 		group.add(_tubesButton);
 		group.add(_spheresButton);
 		stylePanel.add(radioPanel);
@@ -407,12 +446,12 @@ public class PovExporter extends Export3dFunction
 		radioPanel3.setBorder(panelBorder);
 		_standardLightingButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.standardlighting"));
-		_standardLightingButton.setSelected(true);
+		_standardLightingButton.setSelected(false);
 		radioPanel3.add(_standardLightingButton);
 
 		_cartographicLightingButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.cartographiclighting"));
-		_cartographicLightingButton.setSelected(false);
+		_cartographicLightingButton.setSelected(true);
 		radioPanel3.add(_cartographicLightingButton);
 
 		ButtonGroup group3 = new ButtonGroup();
@@ -429,13 +468,12 @@ public class PovExporter extends Export3dFunction
 		_scaleButton.setSelected(true);
 		centralPanel.add(_scaleButton);
 
+		// Panel for the terrain definition
+		_terrainPanel = new TerrainDefinitionPanel();
+
 		// Panel for the base image
 		// (parent is null because we don't need callback)
 		_baseImagePanel = new BaseImageDefinitionPanel(null, _dialog, _track);
-		_baseImagePanel.setBorder(panelBorder);
-		// Panel for the terrain definition
-		_terrainPanel = new TerrainDefinitionPanel();
-		_terrainPanel.setBorder(panelBorder);
 
 		// add these panels to the holder panel
 		JPanel holderPanel = new JPanel();
@@ -461,7 +499,7 @@ public class PovExporter extends Export3dFunction
 
 
 	/**
-	 * Select the file and export data to it
+	 * Select the file and export data to it.
 	 */
 	private void doExport()
 	{
@@ -471,6 +509,28 @@ public class PovExporter extends Export3dFunction
 		_cameraZ = checkValue(_cameraZField.getText());
 		_sphereSize = checkValue(_sphereSizeField.getText());
 		_rodSize = checkValue(_rodSizeField.getText());
+
+		if (_perspectiveButton.isSelected())
+			_projection = _persProjection;
+		else
+			_projection = _orthProjection;
+
+		if (_cartographicLightingButton.isSelected())
+			_lighting = _cartLighting;
+		else
+			_lighting = _stdLighting;
+
+		if (_spheresAndSticksButton.isSelected())
+			_style = _spheresSticksStyle;
+		else if (_spheresButton.isSelected())
+			_style = _spheresStyle;
+		else
+			_style = _tubesWallsStyle;
+
+		if (_scaleButton.isSelected())
+			_scales = _showScales;
+		else
+			_scales = _hideScales;
 
 		// OK pressed, so choose output file
 		if (_fileChooser == null)
@@ -534,12 +594,20 @@ public class PovExporter extends Export3dFunction
 						// also store exaggeration and grid size
 						Config.setConfigInt(Config.KEY_HEIGHT_EXAGGERATION,
 							(int) (_altFactor * 100));
+
 						if (_terrainPanel.getUseTerrain()
 							&& _terrainPanel.getGridSize() > 20)
 						{
 							Config.setConfigInt(Config.KEY_TERRAIN_GRID_SIZE,
 								_terrainPanel.getGridSize());
 						}
+
+						Config.setConfigString(Config.KEY_SPHERE_SIZE, _sphereSize);
+						Config.setConfigString(Config.KEY_ROD_SIZE, _rodSize);
+						Config.setConfigString(Config.KEY_PROJECTION, _projection);
+						Config.setConfigString(Config.KEY_LIGHTING, _lighting);
+						Config.setConfigString(Config.KEY_STYLE, _style);
+						Config.setConfigString(Config.KEY_SCALES, _scales);
 					}
 					else
 					{
@@ -558,11 +626,11 @@ public class PovExporter extends Export3dFunction
 
 
 	/**
-	 * Export the data to the specified file(s)
+	 * Export the data to the specified file(s).
 	 *
-	 * @param inPovFile File object to save pov file to
-	 * @param inImageFile file object to save image to
-	 * @param inTerrainFile file object to save terrain to
+	 * @param inPovFile		File object to save pov file to
+	 * @param inImageFile	file object to save image to
+	 * @param inTerrainFile	file object to save terrain to
 	 * @return true if successful
 	 */
 	private boolean exportFiles(
@@ -694,12 +762,13 @@ public class PovExporter extends Export3dFunction
 				_scaledAltRange.addValue(model.getScaledAltValue(p));
 			}
 
+			/* TODO Begin : only valid for SI unit meters */
 			// calculate distance in m per povray unit
 			// TODO: Explain where these magic numbers come from
 			double _lonConversion = 111319.49078;	// Conversion degree to m
 			double _latConversion = 111132.95378;	// Conversion degree to m
 
-			/** TODO clarify why division by 2 is required for correct scaling
+			/* TODO clarify why division by 2 is required for correct scaling
 				of latitude and longitude */
 			// X axis : longitude
 			double _lonPerUnit = _track.getLonRange().getRange()
@@ -712,21 +781,6 @@ public class PovExporter extends Export3dFunction
 			// Z axis : latitude
 			double _latPerUnit = _track.getLatRange().getRange()
 				* _latConversion / _scaledLatRange.getRange() / 2.0;
-
-			/*
-			System.out.println("PovExporter");
-			System.out.println("_lonRange : " + _track.getLonRange().getRange());
-			System.out.println("_scaledLonRange : " + _scaledLonRange.getRange());
-			System.out.println("_altRange : " + _altRange.getRange());
-			System.out.println("_scaledAltRange : " + _scaledAltRange.getRange());
-			System.out.println("_latRange : " + _track.getLatRange().getRange());
-			System.out.println("_scaledLatRange : " + _scaledLatRange.getRange());
-			System.out.println();
-			System.out.println("_lonPerUnit : " + _lonPerUnit);
-			System.out.println("_altPerUnit : " + _altPerUnit);
-			System.out.println("_latPerUnit : " + _latPerUnit);
-			System.out.println();
-			*/
 
 			// same scaling for longitude and latitude
 			_lonPerUnit = _latPerUnit = Math.max(_lonPerUnit, _latPerUnit);
@@ -778,16 +832,7 @@ public class PovExporter extends Export3dFunction
 				_altUnit = "km";
 				// FIXME: Need to use text token for "m" and "km"
 			}
-
-			/*
-			System.out.println("_lonArrow : " + _lonArrow);
-			System.out.println( _lonLength + " " + _lonUnit);
-			System.out.println("_latArrow : " + _latArrow);
-			System.out.println( _latLength + " " + _latUnit);
-			System.out.println("_heightArrow : " + _heightArrow);
-			System.out.println( _heightLength + " " + _heightUnit);
-			System.out.println();
-			*/
+			/* TODO End : only valid for SI unit meters */
 
 			// Create file and write basics
 			writer = new FileWriter(inPovFile);
@@ -800,7 +845,7 @@ public class PovExporter extends Export3dFunction
 					_cartLighting : _stdLighting);
 
 			// write out points
-			if (_ballsAndSticksButton.isSelected())
+			if (_spheresAndSticksButton.isSelected())
 			{
 				writeDataPointsBallsAndSticks(writer, model, lineSeparator);
 			}
@@ -848,7 +893,7 @@ public class PovExporter extends Export3dFunction
 
 
 	/**
-	 * Write the start of the Pov file, including base plane and lights
+	 * Write the start of the Pov file, including base plane and lights.
 	 *
 	 * @param inWriter Writer to use for writing file
 	 * @param inLineSeparator line separator to use
@@ -1244,7 +1289,7 @@ public class PovExporter extends Export3dFunction
 	}
 
 	/**
-	 * Write out all the data points to the file in the balls-and-sticks style
+	 * Write out all the data points to the file in the balls-and-sticks style.
 	 *
 	 * @param inWriter Writer to use for writing file
 	 * @param inModel model object for getting scaled data points

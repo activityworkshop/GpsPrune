@@ -1,6 +1,7 @@
 package tim.prune.gui;
 
 import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -9,6 +10,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.border.EtchedBorder;
 
 import tim.prune.I18nManager;
@@ -24,8 +26,10 @@ import tim.prune.threedee.ImageDefinition;
  * Panel used to show the current base image details
  * and an edit button to change the definition
  */
-public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsumer
+public class BaseImageDefinitionPanel extends JPanel
+	implements BaseImageConsumer
 {
+	private static final long serialVersionUID = -7885740399236321451L;
 	/** Parent object (if any) */
 	private BaseImageConsumer _parent = null;
 	/** Label to describe the current settings */
@@ -37,37 +41,46 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 
 
 	/**
-	 * Constructor
+	 * Constructor.
+	 *
 	 * @param inParent parent object to inform about changes
 	 * @param inParentDialog parent dialog
 	 * @param inTrack track object
 	 */
-	public BaseImageDefinitionPanel(BaseImageConsumer inParent, JDialog inParentDialog,
-		Track inTrack)
+	public BaseImageDefinitionPanel(BaseImageConsumer inParent,
+		JDialog inParentDialog, Track inTrack)
 	{
 		_parent = inParent;
-		_baseImageConfig = new BaseImageConfigDialog(this, inParentDialog, inTrack);
+		_baseImageConfig = new BaseImageConfigDialog(
+			this, inParentDialog, inTrack);
 
 		// Etched border
 		setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(4, 4, 4, 4))
-		);
+			BorderFactory.createEmptyBorder(2, 4, 2, 4),
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED)));
 		setLayout(new BorderLayout());
 
 		// GUI components
 		JPanel subPanel = new JPanel();
-		subPanel.setLayout(new BorderLayout(10, 4));
-		subPanel.add(new JLabel(I18nManager.getText("dialog.exportpov.baseimage") + ": "), BorderLayout.WEST);
+		subPanel.setLayout(new GridLayout(0, 2, 10, 0));
+
+		JLabel label = new JLabel(
+			I18nManager.getText("dialog.exportpov.baseimage"));
+		label.setHorizontalAlignment(SwingConstants.TRAILING);
+		subPanel.add(label);
+
 		_baseImageLabel = new JLabel("Typical sourcename");
-		subPanel.add(_baseImageLabel, BorderLayout.CENTER);
+		subPanel.add(_baseImageLabel);
+
+		subPanel.add(new JLabel());
 		_editButton = new JButton(I18nManager.getText("button.edit"));
 		_editButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
 				changeBaseImage();
 			}
 		});
-		subPanel.add(_editButton, BorderLayout.EAST);
-		add(subPanel, BorderLayout.NORTH);
+		subPanel.add(_editButton);
+		add(subPanel);
 	}
 
 	/**

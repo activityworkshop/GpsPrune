@@ -34,10 +34,17 @@ import tim.prune.threedee.WindowFactory;
 import tim.prune.tips.TipManager;
 
 /**
- * Class to show the 3d window
+ * Class to show the 3d window.
  */
 public class ShowThreeDFunction extends GenericFunction
 {
+	private String _sphereSize = null;
+	private String _rodSize = null;
+	private String _projection = null;
+	private String _lighting = null;
+	private String _style = null;
+	private String _scales = null;
+
 	/** Dialog for input parameters */
 	private JDialog _dialog = null;
 
@@ -52,20 +59,27 @@ public class ShowThreeDFunction extends GenericFunction
 
 	/** CheckBox for scaling */
 	private JCheckBox _scaleButton = null;
+	private final String _showScales = "show";
+	private final String _hideScales = "hide";
 
-	/** RadioButton for orthographic projection */
+	/** RadioButtons for projection type */
 	private JRadioButton _orthographicButton = null;
-
-	/** RadioButton for perspective projection */
 	private JRadioButton _perspectiveButton = null;
+	private final String _orthProjection = "orthographic";
+	private final String _persProjection = "perspective";
 
-	/** Radio buttons for style - balls on sticks or just balls (spheres) */
-	private JRadioButton _ballsAndSticksButton = null;
+	/** RadioButtons for style - balls on sticks or tubes or spheres */
+	private JRadioButton _spheresAndSticksButton = null;
 	private JRadioButton _spheresButton = null;
+	private final String _spheresStyle = "spheres";
+	private final String _spheresSticksStyle = "spheres-sticks";
+	private final String _tubesWallsStyle = "tubes-walls";
 
-	/** Radio buttons for lighting */
+	/** RadioButtons for lighting */
 	private JRadioButton _standardLightingButton = null;
 	private JRadioButton _cartographicLightingButton = null;
+	private final String _stdLighting = "standard";
+	private final String _cartLighting = "cartographic";
 
 	/** Component for defining the base image */
 	private BaseImageDefinitionPanel _baseImagePanel = null;
@@ -74,7 +88,8 @@ public class ShowThreeDFunction extends GenericFunction
 	private TerrainDefinitionPanel _terrainPanel = null;
 
 	/**
-	 * Constructor
+	 * Constructor.
+	 *
 	 * @param inApp app object
 	 */
 	public ShowThreeDFunction(App inApp)
@@ -83,14 +98,14 @@ public class ShowThreeDFunction extends GenericFunction
 	}
 
 	/**
-	 * Get the name key
+	 * Get the name key.
 	 */
 	public String getNameKey() {
 		return "function.show3d";
 	}
 
 	/**
-	 * Begin the function
+	 * Begin the function.
 	 */
 	public void begin()
 	{
@@ -104,6 +119,24 @@ public class ShowThreeDFunction extends GenericFunction
 		}
 		else
 		{
+			// Get sphere size from config
+			_sphereSize = Config.getConfigString(Config.KEY_SPHERE_SIZE);
+
+			// Get rod size radius from config
+			_rodSize = Config.getConfigString(Config.KEY_ROD_SIZE);
+
+			// Get projection type from config
+			_projection = Config.getConfigString(Config.KEY_PROJECTION);
+
+			// Get lighting type from config
+			_lighting = Config.getConfigString(Config.KEY_LIGHTING);
+
+			// Get model type from config
+			_style = Config.getConfigString(Config.KEY_STYLE);
+
+			// Get flag for showing scale from config
+			_scales = Config.getConfigString(Config.KEY_SCALES);
+
 			// See if the track has any altitudes at all - if not, show a tip
 			// to use SRTM
 			if (!_app.getTrackInfo().getTrack().hasAltitudeData()) {
@@ -112,18 +145,35 @@ public class ShowThreeDFunction extends GenericFunction
 			// Show a dialog to get the parameters
 			if (_dialog == null)
 			{
-				_dialog = new JDialog(_app.getFrame(),
-					I18nManager.getText(getNameKey()), true);
+				_dialog = new JDialog(
+					_app.getFrame(), I18nManager.getText(getNameKey()), true);
 				_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 				_dialog.getContentPane().add(makeDialogComponents());
 				_dialog.pack();
 			}
+
 			final int exaggFactor = Config.getConfigInt(
 				Config.KEY_HEIGHT_EXAGGERATION);
-			if (exaggFactor > 0) {
+			if (exaggFactor > 0)
+			{
 				_exaggField.setValue(exaggFactor / 100.0);
 			}
-			// TODO: Get lighting, projection, style from config too
+
+			_sphereSizeField.setText(_sphereSize);
+			_rodSizeField.setText(_rodSize);
+			_perspectiveButton.setSelected(_projection.equals(_persProjection));
+			_orthographicButton.setSelected(_projection.equals(_orthProjection));
+			_cartographicLightingButton.setSelected(_lighting.equals(_cartLighting));
+			_standardLightingButton.setSelected(_lighting.equals(_stdLighting));
+			_scaleButton.setSelected(_scales.equals(_showScales));
+
+			// Tubes and walls not supported by Java3D, in this case use
+			// spheres and sticks.
+			_spheresAndSticksButton.setSelected(
+				_style.equals(_spheresSticksStyle) ||
+				_style.equals(_tubesWallsStyle));
+			_spheresButton.setSelected(_style.equals(_spheresStyle));
+
 			_baseImagePanel.updateBaseImageDetails();
 			_dialog.setLocationRelativeTo(_app.getFrame());
 			_dialog.setVisible(true);
@@ -158,8 +208,9 @@ public class ShowThreeDFunction extends GenericFunction
 		_exaggField = new DecimalNumberField(); // don't allow negative numbers
 		_exaggField.setText("5.0");
 		exaggPanel.add(_exaggField);
+		innerPanel.add(exaggPanel);
+		innerPanel.add(Box.createVerticalStrut(4));
 
-		/** TODO ph */
 		// Size of spheres
 		JLabel spheresSizeLabel = new JLabel(
 			I18nManager.getText("dialog.3d.spheresize"));
@@ -181,7 +232,22 @@ public class ShowThreeDFunction extends GenericFunction
 		innerPanel.add(exaggPanel);
 		innerPanel.add(Box.createVerticalStrut(4));
 
-		// Radio buttons for style - balls on sticks or just balls (spheres)
+		// Button to select scale
+		JPanel scalePanel = new JPanel();
+		scalePanel.setLayout(new GridLayout(0, 2, 10, 4));
+		scalePanel.setBorder(panelBorder);
+		JLabel scaleLabel = new JLabel(
+			I18nManager.getText("dialog.3d.showscale"));
+		scaleLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+		scalePanel.add(scaleLabel);
+		_scaleButton = new JCheckBox();
+		_scaleButton.setSelected(true);
+		scalePanel.add(_scaleButton);
+
+		innerPanel.add(scalePanel);
+		innerPanel.add(Box.createVerticalStrut(4));
+
+		// Radio buttons for style - balls on sticks or tubes or spheres
 		JPanel stylePanel = new JPanel();
 		stylePanel.setLayout(new GridLayout(0, 2, 10, 4));
 		JLabel styleLabel = new JLabel(
@@ -192,10 +258,10 @@ public class ShowThreeDFunction extends GenericFunction
 		JPanel radioPanel = new JPanel();
 		radioPanel.setLayout(new BoxLayout(radioPanel, BoxLayout.Y_AXIS));
 		radioPanel.setBorder(panelBorder);
-		_ballsAndSticksButton = new JRadioButton(
+		_spheresAndSticksButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.ballsandsticks"));
-		_ballsAndSticksButton.setSelected(false);
-		radioPanel.add(_ballsAndSticksButton);
+		_spheresAndSticksButton.setSelected(false);
+		radioPanel.add(_spheresAndSticksButton);
 
 		_spheresButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.spheres"));
@@ -203,7 +269,7 @@ public class ShowThreeDFunction extends GenericFunction
 		radioPanel.add(_spheresButton);
 
 		ButtonGroup group = new ButtonGroup();
-		group.add(_ballsAndSticksButton);
+		group.add(_spheresAndSticksButton);
 		group.add(_spheresButton);
 		stylePanel.add(radioPanel);
 
@@ -254,12 +320,12 @@ public class ShowThreeDFunction extends GenericFunction
 		radioPanel3.setBorder(panelBorder);
 		_standardLightingButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.standardlighting"));
-		_standardLightingButton.setSelected(true);
+		_standardLightingButton.setSelected(false);
 		radioPanel3.add(_standardLightingButton);
 
 		_cartographicLightingButton = new JRadioButton(
 			I18nManager.getText("dialog.3d.cartographiclighting"));
-		_cartographicLightingButton.setSelected(false);
+		_cartographicLightingButton.setSelected(true);
 		radioPanel3.add(_cartographicLightingButton);
 
 		ButtonGroup group3 = new ButtonGroup();
@@ -268,21 +334,6 @@ public class ShowThreeDFunction extends GenericFunction
 		lightingPanel.add(radioPanel3);
 
 		innerPanel.add(lightingPanel);
-		innerPanel.add(Box.createVerticalStrut(4));
-
-		// Button to select scale
-		JPanel scalePanel = new JPanel();
-		scalePanel.setLayout(new GridLayout(0, 2, 10, 4));
-		scalePanel.setBorder(panelBorder);
-		JLabel scaleLabel = new JLabel(
-			I18nManager.getText("dialog.3d.showscale"));
-		scaleLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-		scalePanel.add(scaleLabel);
-		_scaleButton = new JCheckBox();
-		_scaleButton.setSelected(true);
-		scalePanel.add(_scaleButton);
-
-		innerPanel.add(scalePanel);
 		innerPanel.add(Box.createVerticalStrut(4));
 
 		// Panel for terrain
@@ -314,7 +365,8 @@ public class ShowThreeDFunction extends GenericFunction
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(
 			I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
+		cancelButton.addActionListener(new ActionListener()
+		{
 			public void actionPerformed(ActionEvent e)
 			{
 				_dialog.dispose();
@@ -332,36 +384,49 @@ public class ShowThreeDFunction extends GenericFunction
 	 */
 	private void finish()
 	{
-		// Store exaggeration factor and grid size in config
+		// Store parameters in config
 		Config.setConfigInt(Config.KEY_HEIGHT_EXAGGERATION,
 			(int) (_exaggField.getValue() * 100));
+
+		Config.setConfigString(Config.KEY_SPHERE_SIZE, _sphereSize);
+		Config.setConfigString(Config.KEY_ROD_SIZE, _rodSize);
+		Config.setConfigString(Config.KEY_PROJECTION, _projection);
+		Config.setConfigString(Config.KEY_LIGHTING, _lighting);
+		Config.setConfigString(Config.KEY_STYLE, _style);
+		Config.setConfigString(Config.KEY_SCALES, _scales);
+
 		int terrainGridSize = _terrainPanel.getGridSize();
-		if (terrainGridSize < 20) {terrainGridSize = 20;}
+		if (terrainGridSize < 20)
+		{
+			terrainGridSize = 20;
+		}
 		Config.setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, terrainGridSize);
-		// TODO: Store lighting, projection, style in config too
 
 		ThreeDWindow window = WindowFactory.getWindow(_parentFrame);
 		if (window != null)
 		{
 			try
 			{
-				/** TODO ph */
 				// Pass the parameters to use and show the window
 				window.setTrack(_app.getTrackInfo().getTrack());
 				window.setAltitudeFactor(_exaggField.getValue());
 				window.setSphereSize((float) _sphereSizeField.getValue());
 				window.setRodSize((float) _rodSizeField.getValue());
-				window.setStyle(_ballsAndSticksButton.isSelected());
-				window.setCartographic(
-					_cartographicLightingButton.isSelected());
-				window.setProjection(_orthographicButton.isSelected());
-				window.setShowScale(_scaleButton.isSelected());
+				window.setStyle(_spheresAndSticksButton.isSelected() ?
+					_spheresSticksStyle : _spheresStyle);
+				window.setLighting(_cartographicLightingButton.isSelected() ?
+					_cartLighting : _stdLighting);
+				window.setProjection(_orthographicButton.isSelected() ?
+					_orthProjection : _persProjection);
+				window.setScales(_scaleButton.isSelected() ?
+					_showScales : _hideScales);
 
 				// Also pass the base image parameters from input dialog
 				window.setBaseImageParameters(
 					_baseImagePanel.getImageDefinition());
 				window.setTerrainParameters(new TerrainDefinition(
-					_terrainPanel.getUseTerrain(), _terrainPanel.getGridSize()));
+					_terrainPanel.getUseTerrain(),
+					_terrainPanel.getGridSize()));
 				window.setDataStatus(_app.getCurrentDataStatus());
 				window.show();
 			}

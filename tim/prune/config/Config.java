@@ -95,6 +95,18 @@ public abstract class Config
 	public static final String KEY_ESTIMATION_PARAMS = "prune.estimationparams";
 	/** Key for 3D exaggeration factor */
 	public static final String KEY_HEIGHT_EXAGGERATION = "prune.heightexaggeration";
+	/** Key for sphere size */
+	public static final String KEY_SPHERE_SIZE = "prune.spheresize";
+	/** Key for rod size */
+	public static final String KEY_ROD_SIZE = "prune.rodsize";
+	/** Key for projection type */
+	public static final String KEY_PROJECTION = "prune.projection";
+	/** Key for lighting type */
+	public static final String KEY_LIGHTING = "prune.lighting";
+	/** Key for model type */
+	public static final String KEY_STYLE = "prune.style"; // TODO: Not a very descriptive name
+	/** Key for scales to show */
+	public static final String KEY_SCALES = "prune.scales";
 	/** Key for terrain grid size */
 	public static final String KEY_TERRAIN_GRID_SIZE = "prune.terraingridsize";
 	/** Key for altitude tolerance */
@@ -107,20 +119,23 @@ public abstract class Config
 	public static final String KEY_TIMEZONE_ID = "prune.timezoneid";
 
 
-	/** Initialise the default properties */
+	/**
+	 * Initialise the default properties.
+	 */
 	static
 	{
 		_configValues = getDefaultProperties();
 	}
 
 	/**
-	 * Load the default configuration file
+	 * Load the default configuration file.
 	 */
 	public static void loadDefaultFile()
 	{
 		if (DEFAULT_CONFIG_FILE.exists())
 		{
-			try {
+			try
+			{
 				loadFile(DEFAULT_CONFIG_FILE);
 				return;
 			}
@@ -128,16 +143,17 @@ public abstract class Config
 		}
 		if (HOME_CONFIG_FILE.exists())
 		{
-			try {
+			try
+			{
 				loadFile(HOME_CONFIG_FILE);
 			}
 			catch (ConfigException ce) {} // ignore
 		}
 	}
 
-
 	/**
-	 * Load configuration from file
+	 * Load configuration from file.
+	 *
 	 * @param inFile file to load
 	 * @throws ConfigException if specified file couldn't be read
 	 */
@@ -171,7 +187,8 @@ public abstract class Config
 		// Adjust map source index if necessary
 		adjustSelectedMap();
 
-		if (loadFailed) {
+		if (loadFailed)
+		{
 			throw new ConfigException();
 		}
 		// Store location of successfully loaded config file
@@ -198,6 +215,12 @@ public abstract class Config
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
+		props.put(KEY_SPHERE_SIZE, "0.2"); // default sphere size
+		props.put(KEY_ROD_SIZE, "0.1" ); // default rod radius
+		props.put(KEY_PROJECTION, "orthographic" ); // default projection type
+		props.put(KEY_LIGHTING, "cartographic" ); // default lighting type
+		props.put(KEY_STYLE, "spheres-sticks" ); // default style type
+		props.put(KEY_SCALES, "show" ); // scales shown by default
 		props.put(KEY_TERRAIN_GRID_SIZE, "50");
 		props.put(KEY_ALTITUDE_TOLERANCE, "0"); // 0, all exact as before
 		props.put(KEY_WAYPOINT_ICON_SIZE, "1"); // medium size
@@ -250,7 +273,8 @@ public abstract class Config
 	public static Properties getAllConfig()
 	{
 		// Update recently-used files
-		_configValues.setProperty(KEY_RECENT_FILES, _recentFiles.getConfigString());
+		_configValues.setProperty(
+			KEY_RECENT_FILES, _recentFiles.getConfigString());
 		return _configValues;
 	}
 
@@ -358,7 +382,9 @@ public abstract class Config
 	public static boolean isKeyBoolean(String inKey)
 	{
 		return inKey != null && (
-			inKey.equals(KEY_SHOW_MAP) || inKey.equals(KEY_AUTOSAVE_SETTINGS) || inKey.equals(KEY_ONLINE_MODE)
+			inKey.equals(KEY_SHOW_MAP)
+			|| inKey.equals(KEY_AUTOSAVE_SETTINGS)
+			|| inKey.equals(KEY_ONLINE_MODE)
 			|| inKey.equals(KEY_ANTIALIAS));
 	}
 

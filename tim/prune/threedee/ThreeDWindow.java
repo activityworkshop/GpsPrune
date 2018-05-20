@@ -31,25 +31,24 @@ public interface ThreeDWindow
 	public void setRodSize(float inRodSize);
 
 	/**
-	 * @param inStyle	<code>true</code> to show rods and spheres,
-	 * 					<code>false</code> to show only spheres
+	 * @param inStyle	TODO: Description missing
 	 */
-	public void setStyle(boolean inStyle);
+	public void setStyle(String inStyle);
 
 	/**
-	 * @param inProjection <code>true</code> for orthographic projection
+	 * @param inProjection "orthographic" or "perspective"
 	 */
-	public void setProjection(boolean inProjection);
+	public void setProjection(String inProjection);
 
 	/**
-	 * @param inShowScale	<code>true</code> to show scaling
+	 * @param inScales	TODO: Description missing
 	 */
-	public void setShowScale(boolean inShowScale);
+	public void setScales(String inScales);
 
 	/**
-	 * @param inLighting	<code>true</code> for cartographic lighting
+	 * @param inLighting	TODO: Description missing
 	 */
-	public void setCartographic(boolean inCartographic);
+	public void setLighting(String inLighting);
 
 	/**
 	 * @param inDefinition image definition (image or not, source, zoom)

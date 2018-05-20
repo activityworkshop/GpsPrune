@@ -83,10 +83,18 @@ public class Java3DWindow implements ThreeDWindow
 
 	private static float _sphereSize = -1.0f;
 	private static float _rodSize = -1.0f;
-	private static boolean _showRods = true;
-	private boolean _parProjection = true;
-	private boolean _cartographic = true; // Cartographic what?
-	private boolean _showScale = true;
+
+	private String _projection = null;
+	private final String _orthProjection = "orthographic";
+
+	private String _lighting = null;
+	private final String _cartLighting = "cartographic";
+
+	private static String _style = null;
+	private static final String _spheresSticksStyle = "spheres-sticks";
+
+	private String _scales = null;
+	private final String _showScales = "show";
 
 	private ImageDefinition _imageDefinition = null;
 	private GroutedImage _baseImage = null;
@@ -124,8 +132,8 @@ public class Java3DWindow implements ThreeDWindow
 	private static boolean TRACK_SIZE_WARNING_GIVEN = false;
 
 	// Constants
-	private static final double INITIAL_Y_ROTATION = 0.0;
-	private static final double INITIAL_X_ROTATION = 30.0;
+	private static final double INITIAL_Y_ROTATION = -25.0;
+	private static final double INITIAL_X_ROTATION = 15.0;
 	// MAYBE: Use the same font for both?
 	private static final String CARDINALS_FONT = "Arial";
 	private static final String SCALING_FONT = "SansSerif";
@@ -178,38 +186,35 @@ public class Java3DWindow implements ThreeDWindow
 	}
 
 	/**
-	 * @param inStyle	<code>true</code> to show rods and spheres,
-	 * 					<code>false</code> to show only spheres
-	 * TODO: Rename method setShowRods?
+	 * @param inStyle	"spheres" or "spheres-sticks"
 	 */
-	public void setStyle(boolean inStyle)
+	public void setStyle(String inStyle)
 	{
-		_showRods = inStyle;
+		_style = inStyle;
 	}
 
 	/**
-	 * @param inProjection	<code>true</code> for orthographic projection
-	 * TODO: Rename method setParallelProjection?
+	 * @param inProjection	"orthographic" or "perspective"
 	 */
-	public void setProjection(boolean inProjection)
+	public void setProjection(String inProjection)
 	{
-		_parProjection = inProjection;
+		_projection = inProjection;
 	}
 
 	/**
-	 * @param inCartographic	<code>true</code> for cartographic lighting
+	 * @param inLighting	"cartographic" or "standard"
 	 */
-	public void setCartographic(boolean inCartographic)
+	public void setLighting(String inLighting)
 	{
-		_cartographic = inCartographic;
+		_lighting = inLighting;
 	}
 
 	/**
-	 * @param inShowScale	<code>true</code> to show axis scaling
+	 * @param inScales	"show" or "hide"
 	 */
-	public void setShowScale(boolean inShowScale)
+	public void setScales(String inScales)
 	{
-		_showScale = inShowScale;
+		_scales = inScales;
 	}
 
 	/**
@@ -270,14 +275,16 @@ public class Java3DWindow implements ThreeDWindow
 		}
 
 		// Check number of points in model isn't too big, and suggest compression
-		Object[] buttonTexts = {I18nManager.getText("button.continue"),
+		Object[] buttonTexts = {
+			I18nManager.getText("button.continue"),
 			I18nManager.getText("button.cancel")};
 		if (_track.getNumPoints() > MAX_TRACK_SIZE && !TRACK_SIZE_WARNING_GIVEN)
 		{
 			if (JOptionPane.showOptionDialog(_parentFrame,
 					I18nManager.getText("dialog.3d.warningtracksize"),
 					I18nManager.getText("function.show3d"),
-					JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE,
+					JOptionPane.OK_CANCEL_OPTION,
+					JOptionPane.WARNING_MESSAGE,
 					null, buttonTexts, buttonTexts[1])
 				== JOptionPane.OK_OPTION)
 			{
@@ -310,7 +317,7 @@ public class Java3DWindow implements ThreeDWindow
 		u.getViewingPlatform().setViewPlatformBehavior(_orbit);
 		u.addBranchGraph(scene);
 
-		if (_parProjection)
+		if (_orthProjection.equals(_projection))
 		{
 			canvas.getView().setProjectionPolicy(View.PARALLEL_PROJECTION);
 		}
@@ -356,6 +363,7 @@ public class Java3DWindow implements ThreeDWindow
 		_frame.getContentPane().add(panel, BorderLayout.SOUTH);
 		_frame.setSize(500, 350);
 		_frame.pack();
+
 		// Add a listener to clean up when window closed
 		_frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -562,19 +570,8 @@ public class Java3DWindow implements ThreeDWindow
 		subTgEast.addChild(billboardEast);
 		objTrans.addChild(subTgEast);
 
-		/*
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.n"),
-			new Point3f(0f, 0f, -12f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.s"),
-			new Point3f(0f, 0f, 11f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.w"),
-			new Point3f(-12f, 0f, 0f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"),
-			new Point3f(11f, 0f, 0f), compassFont));
-		*/
-
 		// TODO: Separate scale-showing into separate method
-		if (_showScale)
+		if (_scales.equals(_showScales))
 		{
 			// calculate range for track height values, needed for altitude
 			// axis scaling.
@@ -591,51 +588,52 @@ public class Java3DWindow implements ThreeDWindow
 
 			// calculate ranges of model data in povray units, needed for
 			// scaling longitude and latitude axes
-			DoubleRange _scaledLonRange = new DoubleRange();
-			DoubleRange _scaledLatRange = new DoubleRange();
-			DoubleRange _scaledAltRange = new DoubleRange();
+			DoubleRange scaledLonRange = new DoubleRange();
+			DoubleRange scaledLatRange = new DoubleRange();
+			DoubleRange scaledAltRange = new DoubleRange();
 
 			for (p = 0; p < _model.getNumPoints(); p++)
 			{
-				_scaledLonRange.addValue(_model.getScaledHorizValue(p));
-				_scaledLatRange.addValue(_model.getScaledVertValue(p));
-				_scaledAltRange.addValue(_model.getScaledAltValue(p));
+				scaledLonRange.addValue(_model.getScaledHorizValue(p));
+				scaledLatRange.addValue(_model.getScaledVertValue(p));
+				scaledAltRange.addValue(_model.getScaledAltValue(p));
 			}
 
+			/* TODO Begin : only valid for SI unit meters */
 			// calculate distance in m per povray unit
-			double _lonConversion = 111319.49078d;	// Conversion degree to m
-			double _latConversion = 111132.95378d;	// Conversion degree to m
+			final double lonConversion = 111319.49078;	// Conversion degree to m
+			final double latConversion = 111132.95378;	// Conversion degree to m
 
-			/** TODO clarify why division by 40 is required for correct scaling
-				of latitude and longitudeand 20 for altutude */
+			/* TODO clarify why division by 40 is required for correct scaling
+				of latitude and longitude and 20 for altitude */
 			// X axis : longitude
-			double _lonPerUnit = _track.getLonRange().getRange()
-				* _lonConversion / _scaledLonRange.getRange() / 40.0d;
+			double lonPerUnit = _track.getLonRange().getRange()
+				* lonConversion / scaledLonRange.getRange() / 40.0;
 
 			// Y axis : altitude
-			double _altPerUnit = _altRange.getRange()
-				/ _scaledAltRange.getRange() / 20.0d;
+			double altPerUnit = _altRange.getRange()
+				/ scaledAltRange.getRange() / 20.0;
 
 			// Z axis : latitude
-			double _latPerUnit = _track.getLatRange().getRange()
-				* _latConversion / _scaledLatRange.getRange() / 40.0d;
+			double latPerUnit = _track.getLatRange().getRange()
+				* latConversion / scaledLatRange.getRange() / 40.0;
 
 			// same scaling for longitude and latitude
-			_lonPerUnit = _latPerUnit = Math.max(_lonPerUnit, _latPerUnit);
+			lonPerUnit = latPerUnit = Math.max(lonPerUnit, latPerUnit);
 
-			int _lonScale = (int) Math.max(_lonPerUnit, 1);
-			int _lonExp = (int) Math.log10(_lonScale);
-			int _latScale = (int) Math.max(_latPerUnit, 1);
-			int _latExp = (int) Math.log10(_latScale);
-			int _altExp = (int) Math.log10(_altPerUnit);
+			int lonScale = (int) Math.max(lonPerUnit, 1);
+			int lonExp = (int) Math.log10(lonScale);
+			int latScale = (int) Math.max(latPerUnit, 1);
+			int latExp = (int) Math.log10(latScale);
+			int altExp = (int) Math.log10(altPerUnit);
 
 			// Distance in m for labeling longitude
-			_lonLength = (int) Math.pow(10.0d, _lonExp + 1);
+			_lonLength = (int) Math.pow(10.0, lonExp + 1);
 			// Length of distance marker for longitude
-			_lonArrow =  (double) _lonLength / (double) _lonScale;
-			while (_lonArrow < 2.0d)
+			_lonArrow =  (double) _lonLength / (double) lonScale;
+			while (_lonArrow < 2.0)
 			{
-				_lonArrow *= 10.0d;
+				_lonArrow *= 10.0;
 				_lonLength *= 10;
 			}
 			if (_lonLength > 1000)
@@ -645,12 +643,12 @@ public class Java3DWindow implements ThreeDWindow
 			}
 
 			// Distance in m for labeling latitude
-			_latLength = (int) Math.pow(10.0d, _latExp + 1);
+			_latLength = (int) Math.pow(10.0, latExp + 1);
 			// Length of distance marker for latitude
-			_latArrow =  (double) _latLength / (double) _latScale;
-			while (_latArrow < 2.0d)
+			_latArrow =  (double) _latLength / (double) latScale;
+			while (_latArrow < 2.0)
 			{
-				_latArrow *= 10.0d;
+				_latArrow *= 10.0;
 				_latLength *= 10;
 			}
 			if (_latLength > 1000)
@@ -660,14 +658,15 @@ public class Java3DWindow implements ThreeDWindow
 			}
 
 			// Distance in m for labeling altitude
-			_altLength = (int) Math.pow(10.0d, _altExp + 1);
+			_altLength = (int) Math.pow(10.0, altExp + 1);
 			// Length of distance marker for altitude
-			_altArrow = (double) _altLength / (double) _altPerUnit;
+			_altArrow = (double) _altLength / (double) altPerUnit;
 			if (_altLength > 1000)
 			{
 				_altLength /= 1000;
 				_altUnit = "km";
 			}
+			/* TODO End : only valid for SI unit meters */
 
 			// Add labeled axes to model
 			Material mat = new Material(
@@ -686,8 +685,8 @@ public class Java3DWindow implements ThreeDWindow
 			// X - Longitude
 			Transform3D transLon = new Transform3D();
 			Transform3D rotLon = new Transform3D();
-			transLon.set(new Vector3d(10.0d - _lonArrow / 2.0d, 0.0d, 10.0d));
-			rotLon.rotZ(Math.PI / 2.0d);
+			transLon.set(new Vector3d(10.0 - _lonArrow / 2.0, 0.0, 10.0));
+			rotLon.rotZ(Math.PI / 2.0);
 			transLon.mul(rotLon);
 			TransformGroup tgLon = new TransformGroup(transLon);
 
@@ -706,7 +705,7 @@ public class Java3DWindow implements ThreeDWindow
 
 			// Y - Altitude
 			Transform3D transAlt = new Transform3D();
-			transAlt.set(new Vector3d(10.0d, _altArrow / 2.0d, -10.0d));
+			transAlt.set(new Vector3d(10.0, _altArrow / 2.0, -10.0));
 			TransformGroup tgAlt = new TransformGroup(transAlt);
 
 			Cylinder axisAlt = new Cylinder(0.1f, (float) _altArrow);
@@ -725,8 +724,8 @@ public class Java3DWindow implements ThreeDWindow
 			// Z - Latitude
 			Transform3D transLat = new Transform3D();
 			Transform3D rotLat = new Transform3D();
-			transLat.set(new Vector3d(10.0d, 0.0d, 10.0d - _latArrow / 2.0d));
-			rotLat.rotX(Math.PI / 2.0d);
+			transLat.set(new Vector3d(10.0, 0.0, 10.0 - _latArrow / 2.0));
+			rotLat.rotX(Math.PI / 2.0);
 			transLat.mul(rotLat);
 			TransformGroup tgZ = new TransformGroup(transLat);
 
@@ -752,7 +751,7 @@ public class Java3DWindow implements ThreeDWindow
 		aLgt.setInfluencingBounds(bounds);
 		objTrans.addChild(aLgt);
 
-		if (_cartographic)
+		if (_lighting.equals(_cartLighting))
 		{
 			DirectionalLight dl = new DirectionalLight(true,
 				new Color3f(1.0f, 1.0f, 1.0f),
@@ -798,7 +797,7 @@ public class Java3DWindow implements ThreeDWindow
 		//		-->			: rotate cw
 		// z-axis :
 		//		^ 			: move away from viewer
-		//      v			: approach to viewer
+		//		v			: approach to viewer
 		//		+			: zoom in
 		//		-			: zoom out
 		_keyNav = new KeyNavigatorBehavior(objTrans);
@@ -812,12 +811,13 @@ public class Java3DWindow implements ThreeDWindow
 		return objRoot;
 	}
 
+
 	/**
-	 * Create a text object for compass point, N S E or W
+	 * Create a text object for compass point, N S E or W.
 	 *
-	 * @param text text to display
-	 * @param locn position at which to display
-	 * @param font 3d font to use
+	 * @param inText	text to display
+	 * @param inLocn	position at which to display
+	 * @param inFont	3d font to use
 	 * @return Shape3D object
 	 */
 	private Shape3D createCompassPoint(
@@ -839,17 +839,17 @@ public class Java3DWindow implements ThreeDWindow
 
 
 	/**
-	 * Make a Group of the data points to be added
+	 * Make a Group of the data points to be added.
 	 *
 	 * @param inModel	model containing data
-	 * @return			Group object containing spheres, rods etc
+	 * @return Group object containing spheres, rods etc
 	 */
 	private static Group createDataPoints(ThreeDModel inModel)
 	{
 		// Add points to model
 		Group group = new Group();
 		int numPoints = inModel.getNumPoints();
-		for (int i = 0; i < numPoints; i++)
+		for (int i=0; i<numPoints; i++)
 		{
 			byte pointType = inModel.getPointType(i);
 			if (pointType == ThreeDModel.POINT_TYPE_WAYPOINT)
@@ -877,10 +877,10 @@ public class Java3DWindow implements ThreeDWindow
 
 
 	/**
-	 * Create a waypoint sphere
+	 * Create a waypoint sphere.
 	 *
 	 * @param inPointPos	position of point
-	 * @return				Group object containing sphere
+	 * @return Group object containing sphere
 	 */
 	private static Group createWaypoint(Point3d inPointPos)
 	{
@@ -892,7 +892,7 @@ public class Java3DWindow implements ThreeDWindow
 
 
 	/**
-	 * @return a new Material object to define waypoint colour / shine etc
+	 * @return a new Material object to define waypoint colour / shine etc.
 	 */
 	private static Material getWaypointMaterial()
 	{
@@ -903,7 +903,7 @@ public class Java3DWindow implements ThreeDWindow
 
 
 	/**
-	 * @return track point object
+	 * @return track point object.
 	 */
 	private static Group createTrackpoint(Point3d inPointPos, byte inHeightCode)
 	{
@@ -921,8 +921,10 @@ public class Java3DWindow implements ThreeDWindow
 	private static Material getTrackpointMaterial(byte inHeightCode)
 	{
 		// create default material
-		Material mat = new Material(new Color3f(0.3f, 0.2f, 0.1f),
-			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.0f, 0.6f, 0.0f),
+		Material mat = new Material(
+			new Color3f(0.3f, 0.2f, 0.1f),
+			new Color3f(0.0f, 0.0f, 0.0f),
+			new Color3f(0.0f, 0.6f, 0.0f),
 			new Color3f(1.0f, 0.6f, 0.6f), 70.0f);
 		// change colour according to height code
 		if (inHeightCode == 1)
@@ -941,12 +943,12 @@ public class Java3DWindow implements ThreeDWindow
 
 
 	/**
-	 * Create a ball at the given point
+	 * Create a ball at the given point.
 	 *
 	 * @param inPosition	scaled position of point
-	 * @param inSphere		sphere object
+	 * @param inSphere	sphere object
 	 * @param inMaterial	material object
-	 * @return 				Group containing sphere
+	 * @return Group containing sphere
 	 */
 	private static Group createBall(
 		Point3d inPosition, Sphere inSphere, Material inMaterial)
@@ -964,9 +966,9 @@ public class Java3DWindow implements ThreeDWindow
 		ballShiftTrans.addChild(inSphere);
 		group.addChild(ballShiftTrans);
 
-		if (_showRods)
+		if (_style.equals(_spheresSticksStyle))
 		{
-			// Also create rod for ball to sit on
+			// Also create rod for sphere to sit on
 			Cylinder rod = new Cylinder(_rodSize, (float) inPosition.y);
 			Material rodMat = new Material(new Color3f(0.2f, 0.2f, 0.2f),
 				new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.2f, 0.2f, 0.2f),
@@ -983,6 +985,7 @@ public class Java3DWindow implements ThreeDWindow
 			group.addChild(rodShiftTrans);
 		}
 
+		// return the pair
 		return group;
 	}
 
@@ -1048,14 +1051,17 @@ public class Java3DWindow implements ThreeDWindow
 		return new Shape3D(gi.getGeometryArray(), tAppearance);
 	}
 
+
 	/**
-	 * Calculate the angles and call them back to the app
-	 * @param inFunction function to call for export
+	 * Calculate the angles and call them back to the app.
+	 *
+	 * @param inFunction	function to call for export
 	 */
 	private void callbackRender(Export3dFunction inFunction)
 	{
 		Transform3D trans3d = new Transform3D();
-		_orbit.getViewingPlatform().getViewPlatformTransform().getTransform(trans3d);
+		_orbit.getViewingPlatform().getViewPlatformTransform()
+			.getTransform(trans3d);
 		Matrix3d matrix = new Matrix3d();
 		trans3d.get(matrix);
 		Point3d point = new Point3d(0.0, 0.0, 1.0);
@@ -1073,6 +1079,11 @@ public class Java3DWindow implements ThreeDWindow
 		// Give the settings to the rendering function
 		inFunction.setCameraCoordinates(result.x, result.y, result.z);
 		inFunction.setAltitudeExaggeration(_altFactor);
+		inFunction.setSphereSize("" + _sphereSize);
+		inFunction.setRodSize("" + _rodSize);
+		inFunction.setProjection(_projection);
+		inFunction.setLighting(_lighting);
+		inFunction.setStyle(_style);
 		inFunction.setTerrainDefinition(_terrainDefinition);
 		inFunction.setImageDefinition(_imageDefinition);
 
