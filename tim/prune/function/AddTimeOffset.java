@@ -120,7 +120,7 @@ public class AddTimeOffset extends GenericFunction
 			/** Key typed */
 			public void keyTyped(KeyEvent event) {
 				final boolean isNumber = "1234567890".indexOf(event.getKeyChar()) >= 0;
-                _okButton.setEnabled(isNumber || getOffsetSecs() != 0L);
+				_okButton.setEnabled(isNumber || getOffsetSecs() != 0L);
 			}
 		};
 		MouseAdapter mouseListener = new MouseAdapter() {

@@ -211,6 +211,7 @@ public class SelectorDisplay extends GenericDisplay
 		{
 			_trackpointsLabel.setText(I18nManager.getText("details.notrack"));
 			_filenameLabel.setText("");
+			_filenameLabel.setToolTipText("");
 		}
 		else
 		{
@@ -219,14 +220,22 @@ public class SelectorDisplay extends GenericDisplay
 			int numFiles = _trackInfo.getFileInfo().getNumFiles();
 			if (numFiles == 1)
 			{
+				final String filenameString = _trackInfo.getFileInfo().getFilename();
 				_filenameLabel.setText(I18nManager.getText("details.track.file") + ": "
-					+ _trackInfo.getFileInfo().getFilename());
+					+ filenameString);
+				_filenameLabel.setToolTipText(filenameString);
 			}
 			else if (numFiles > 1)
 			{
-				_filenameLabel.setText(I18nManager.getText("details.track.numfiles") + ": " + numFiles);
+				final String labelText = I18nManager.getText("details.track.numfiles") + ": " + numFiles;
+				_filenameLabel.setText(labelText);
+				_filenameLabel.setToolTipText(labelText);
 			}
-			else _filenameLabel.setText("");
+			else
+			{
+				_filenameLabel.setText("");
+				_filenameLabel.setToolTipText("");
+			}
 		}
 
 		// Update scroller settings

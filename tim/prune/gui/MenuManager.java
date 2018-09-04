@@ -88,6 +88,7 @@ public class MenuManager implements DataSubscriber
 	private JCheckBoxMenuItem _mapCheckbox = null;
 	private JMenuItem _show3dItem = null;
 	private JMenu     _browserMapMenu = null;
+	private JMenuItem _routingGraphHopperItem = null;
 	private JMenuItem _chartItem = null;
 	private JMenuItem _getGpsiesItem = null;
 	private JMenuItem _uploadGpsiesItem = null;
@@ -279,6 +280,10 @@ public class MenuManager implements DataSubscriber
 		_browserMapMenu.add(yahooMapsItem);
 		JMenuItem bingMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_BING, "menu.view.browser.bing"));
 		_browserMapMenu.add(bingMapsItem);
+		JMenuItem inlineMapItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_INLINESKATE, "menu.view.browser.inlinemap"));
+		_browserMapMenu.add(inlineMapItem);
+		_routingGraphHopperItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_GRAPHHOPPER, "menu.view.browser.graphhopper"));
+		_browserMapMenu.add(_routingGraphHopperItem);
 		onlineMenu.add(_browserMapMenu);
 		// wikipedia
 		_nearbyWikipediaItem = makeMenuItem(FunctionLibrary.FUNCTION_NEARBY_WIKIPEDIA, false);
@@ -327,7 +332,7 @@ public class MenuManager implements DataSubscriber
 		trackMenu.add(_clearUndoItem);
 		trackMenu.addSeparator();
 		_compressItem = makeMenuItem(FunctionLibrary.FUNCTION_COMPRESS, false);
-		setShortcut(_compressItem, "shortcut.menu.edit.compress");
+		setShortcut(_compressItem, "shortcut.menu.track.compress");
 		trackMenu.add(_compressItem);
 		_markRectangleItem = new JMenuItem(I18nManager.getText("menu.track.markrectangle"));
 		_markRectangleItem.addActionListener(new ActionListener() {
@@ -465,6 +470,7 @@ public class MenuManager implements DataSubscriber
 		};
 		_editPointItem.addActionListener(_editPointAction);
 		_editPointItem.setEnabled(false);
+		setShortcut(_editPointItem, "shortcut.menu.point.edit");
 		pointMenu.add(_editPointItem);
 		_editWaypointNameItem = makeMenuItem(FunctionLibrary.FUNCTION_EDIT_WAYPOINT_NAME, false);
 		pointMenu.add(_editWaypointNameItem);
@@ -962,6 +968,8 @@ public class MenuManager implements DataSubscriber
 			|| _selection.getCurrentPointIndex() > (_selection.getEnd()+1));
 		_cutAndMoveItem.setEnabled(canCutAndMove);
 		_cutAndMoveButton.setEnabled(canCutAndMove);
+		final boolean isTrackLengthTwo = hasData && _track.getNumPoints() == 2;
+		_routingGraphHopperItem.setEnabled(isTrackLengthTwo || (hasData && hasRange));
 		// Has the map been switched on/off?
 		boolean mapsOn = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
 		if (_mapCheckbox.isSelected() != mapsOn) {

@@ -8,6 +8,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -51,6 +53,7 @@ public class PointEditor
 	private Track _track = null;
 	private DataPoint _point = null;
 	private EditFieldsTableModel _model = null;
+	private JButton _cancelButton = null;
 	private int _prevRowIndex = -1;
 
 
@@ -95,6 +98,7 @@ public class PointEditor
 			public void run() {
 				_valueField.setVisible(false);
 				_valueAreaPane.setVisible(false);
+				_cancelButton.requestFocus();
 			}
 		});
 		_dialog.setVisible(true);
@@ -176,14 +180,19 @@ public class PointEditor
 		// Bottom panel for OK, cancel buttons
 		JPanel lowerPanel = new JPanel();
 		lowerPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
+		_cancelButton = new JButton(I18nManager.getText("button.cancel"));
+		_cancelButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
 				_dialog.dispose();
 			}
 		});
-		lowerPanel.add(cancelButton);
+		_cancelButton.addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent inE) {
+				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
+			}
+		});
+		lowerPanel.add(_cancelButton);
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
 		okButton.addActionListener(okListener);
 		lowerPanel.add(okButton);

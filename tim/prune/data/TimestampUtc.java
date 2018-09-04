@@ -366,7 +366,7 @@ public class TimestampUtc extends Timestamp
 		{
 			return _text;
 		}
-		
+
 		// Nothing cached, so use the regular one
 		return super.getText(inFormat, inTimezone);
 	}

@@ -469,7 +469,7 @@ public class SelectTimezoneFunction extends GenericFunction
 			}
 		}
 		// If the region and offset were given, then list is unlimited
-		nameList.setUnlimited(inRegion != null && inOffset != null && inRegion != null);
+		nameList.setUnlimited(inRegion != null && inOffset != null);
 		// Add all the found names to the listbox
 		for (String name : zoneNames)
 		{

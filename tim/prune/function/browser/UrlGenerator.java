@@ -24,13 +24,15 @@ public abstract class UrlGenerator
 
 	public enum WebService
 	{
-		MAP_SOURCE_GOOGLE,     /* Google maps */
-		MAP_SOURCE_OSM,        /* OpenStreetMap */
-		MAP_SOURCE_MAPQUEST,   /* Mapquest */
-		MAP_SOURCE_YAHOO,      /* Yahoo */
-		MAP_SOURCE_BING,       /* Bing */
-		MAP_SOURCE_PEAKFINDER, /* PeakFinder */
-		MAP_SOURCE_GEOHACK,    /* Geohack */
+		MAP_SOURCE_GOOGLE,      /* Google maps */
+		MAP_SOURCE_OSM,         /* OpenStreetMap */
+		MAP_SOURCE_MAPQUEST,    /* Mapquest */
+		MAP_SOURCE_YAHOO,       /* Yahoo */
+		MAP_SOURCE_BING,        /* Bing */
+		MAP_SOURCE_PEAKFINDER,  /* PeakFinder */
+		MAP_SOURCE_GEOHACK,     /* Geohack */
+		MAP_SOURCE_INLINESKATE, /* Inlinemap.net */
+		MAP_SOURCE_GRAPHHOPPER  /* Routing with GraphHopper */
 	}
 
 	/**
@@ -53,7 +55,10 @@ public abstract class UrlGenerator
 				return generateBingUrl(inTrackInfo);
 			case MAP_SOURCE_PEAKFINDER:
 			case MAP_SOURCE_GEOHACK:
+			case MAP_SOURCE_INLINESKATE:
 				return generateUrlForPoint(inSource, inTrackInfo);
+			case MAP_SOURCE_GRAPHHOPPER:
+				return generateGraphHopperUrl(inTrackInfo);
 			case MAP_SOURCE_OSM:
 			default:
 				return generateOpenStreetMapUrl(inTrackInfo);
@@ -156,6 +161,52 @@ public abstract class UrlGenerator
 	}
 
 	/**
+	 * Generate a url for routing with GraphHopper
+	 * @param inTrackInfo track information
+	 * @return URL
+	 */
+	private static String generateGraphHopperUrl(TrackInfo inTrackInfo)
+	{
+		// Check if any data to display
+		if (inTrackInfo != null && inTrackInfo.getTrack() != null && inTrackInfo.getTrack().getNumPoints() >= 2)
+		{
+			if (inTrackInfo.getTrack().getNumPoints() == 2)
+			{
+				// Use first and last point of track
+				return generateGraphHopperUrl(inTrackInfo.getTrack().getPoint(0),
+					inTrackInfo.getTrack().getPoint(1));
+			}
+			else if (inTrackInfo.getSelection().hasRangeSelected())
+			{
+				// Use first and last point of selection
+				final int startIndex = inTrackInfo.getSelection().getStart();
+				final int endIndex = inTrackInfo.getSelection().getEnd();
+				return generateGraphHopperUrl(inTrackInfo.getTrack().getPoint(startIndex),
+					inTrackInfo.getTrack().getPoint(endIndex));
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Generate a url for routing with GraphHopper
+	 * @param inStartPoint start point of routing
+	 * @param inEndPoint end point of routing
+	 * @return URL
+	 */
+	private static String generateGraphHopperUrl(DataPoint inStartPoint, DataPoint inEndPoint)
+	{
+		final String url = "https://graphhopper.com/maps/"
+			+ "?point=" + FIVE_DP.format(inStartPoint.getLatitude().getDouble())
+			+ "%2C" + FIVE_DP.format(inStartPoint.getLongitude().getDouble())
+			+ "&point=" + FIVE_DP.format(inEndPoint.getLatitude().getDouble())
+			+ "%2C" + FIVE_DP.format(inEndPoint.getLongitude().getDouble())
+			+ "&locale=" + I18nManager.getText("wikipedia.lang")
+			+ "&elevation=true&weighting=fastest";
+		return url;
+	}
+
+	/**
 	 * Generate a url for Open Street Map
 	 * @param inTrackInfo track information
 	 * @return URL
@@ -207,6 +258,8 @@ public abstract class UrlGenerator
 				return generatePeakfinderUrl(currPoint);
 			case MAP_SOURCE_GEOHACK:
 				return generateGeohackUrl(currPoint);
+			case MAP_SOURCE_INLINESKATE:
+				return generateInlinemapUrl(currPoint);
 			default:
 				return null;
 		}
@@ -220,7 +273,7 @@ public abstract class UrlGenerator
 	 */
 	private static String generatePeakfinderUrl(DataPoint inPoint)
 	{
-		return "http://peakfinder.org/?lat=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
+		return "https://www.peakfinder.org/?lat=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
 			+ "&lng=" + FIVE_DP.format(inPoint.getLongitude().getDouble());
 	}
 
@@ -233,9 +286,19 @@ public abstract class UrlGenerator
 	{
 		return "https://tools.wmflabs.org/geohack/geohack.php?params=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
 			+ "_N_" + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "_E";
-		// TODO: Could use absolute values and S, W but this seems to work
+		// Note: Could use absolute values and S, W but this seems to work
 	}
 
+	/**
+	 * Generate a url for Inlinemap.net
+	 * @param inPoint current point, not null
+	 * @return URL
+	 */
+	private static String generateInlinemapUrl(DataPoint inPoint)
+	{
+		return "http://www.inlinemap.net/en/?tab=new#/z14/" + FIVE_DP.format(inPoint.getLatitude().getDouble())
+			+ "," + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "/terrain";
+	}
 
 	/**
 	 * Get the median value from the given lat/long range

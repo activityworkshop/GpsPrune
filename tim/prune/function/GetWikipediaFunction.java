@@ -191,35 +191,33 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 		{
 			InputStream in = GetWikipediaFunction.class.getResourceAsStream("/tim/prune/function/search/wikimedia_galleries.txt");
 			reader = new BufferedReader(new InputStreamReader(in));
-			if (reader != null)
+
+			ArrayList<SearchResult> trackList = new ArrayList<SearchResult>();
+			DataPoint herePoint = new DataPoint(new Latitude(inLat, Latitude.FORMAT_DEG), new Longitude(inLon, Longitude.FORMAT_DEG), null);
+			// Loop through the file line by line, looking for nearby points
+			String line = null;
+			while ((line = reader.readLine()) != null)
 			{
-				ArrayList<SearchResult> trackList = new ArrayList<SearchResult>();
-				DataPoint herePoint = new DataPoint(new Latitude(inLat, Latitude.FORMAT_DEG), new Longitude(inLon, Longitude.FORMAT_DEG), null);
-				// Loop through the file line by line, looking for nearby points
-				String line = null;
-				while ((line = reader.readLine()) != null)
+				String[] lineComps = line.split("\t");
+				if (lineComps.length == 4)
 				{
-					String[] lineComps = line.split("\t");
-					if (lineComps.length == 4)
+					DataPoint p = new DataPoint(new Latitude(lineComps[2]), new Longitude(lineComps[3]), null);
+					double distFromHere = Distance.convertRadiansToDistance(
+						DataPoint.calculateRadiansBetween(p, herePoint), UnitSetLibrary.UNITS_KILOMETRES);
+					if (distFromHere < MAX_DISTANCE)
 					{
-						DataPoint p = new DataPoint(new Latitude(lineComps[2]), new Longitude(lineComps[3]), null);
-						double distFromHere = Distance.convertRadiansToDistance(
-							DataPoint.calculateRadiansBetween(p, herePoint), UnitSetLibrary.UNITS_KILOMETRES);
-						if (distFromHere < MAX_DISTANCE)
-						{
-							SearchResult gallery = new SearchResult();
-							gallery.setTrackName(I18nManager.getText("dialog.wikipedia.gallery") + ": " + lineComps[0]);
-							gallery.setDescription(lineComps[1]);
-							gallery.setLatitude(lineComps[2]);
-							gallery.setLongitude(lineComps[3]);
-							gallery.setWebUrl("https://commons.wikimedia.org/wiki/" + lineComps[0]);
-							gallery.setLength(distFromHere * 1000.0); // convert from km to m
-							trackList.add(gallery);
-						}
+						SearchResult gallery = new SearchResult();
+						gallery.setTrackName(I18nManager.getText("dialog.wikipedia.gallery") + ": " + lineComps[0]);
+						gallery.setDescription(lineComps[1]);
+						gallery.setLatitude(lineComps[2]);
+						gallery.setLongitude(lineComps[3]);
+						gallery.setWebUrl("https://commons.wikimedia.org/wiki/" + lineComps[0]);
+						gallery.setLength(distFromHere * 1000.0); // convert from km to m
+						trackList.add(gallery);
 					}
 				}
-				_trackListModel.addTracks(trackList, true);
 			}
+			_trackListModel.addTracks(trackList, true);
 		}
 		catch (java.io.IOException e) {
 			System.err.println("Exception trying to read wikimedia file : " + e.getMessage());

@@ -16,7 +16,10 @@ public abstract class SpeedCalculator
 	 */
 	public static void calculateSpeed(Track inTrack, int inIndex, SpeedValue inValue)
 	{
-		inValue.setInvalid();
+		if (inValue != null)
+		{
+			inValue.setInvalid();
+		}
 		if (inTrack == null || inIndex < 0 || inValue == null)
 		{
 			System.err.println("Cannot calculate speed for index " + inIndex);

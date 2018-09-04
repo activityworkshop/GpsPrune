@@ -39,6 +39,110 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		}
 	}
 
+	/** Inner class to remember a single index */
+	class PointIndex
+	{
+		public int index = -1;
+		public boolean hasValue = false;
+		public PointIndex()
+		{
+			index = -1;
+			hasValue = false;
+		}
+		/** Set a single value */
+		public void set(int inValue)
+		{
+			index = inValue;
+			hasValue = (inValue != -1);
+		}
+		/** Add an index to the minimum calculation */
+		public void setMin(PointIndex other)
+		{
+			if (!other.hasValue) {return;}
+			if (!hasValue) {
+				index = other.index;
+				hasValue = other.hasValue;
+			}
+			else {
+				index = Math.min(index, other.index);
+			}
+		}
+		/** Add an index to the maximum calculation */
+		public void setMax(PointIndex other)
+		{
+			if (!other.hasValue) {return;}
+			if (!hasValue) {
+				index = other.index;
+				hasValue = other.hasValue;
+			}
+			else {
+				index = Math.max(index, other.index);
+			}
+		}
+		/** @return true if two Indexes are equal */
+		public boolean equals(PointIndex other)
+		{
+			if (!hasValue || !other.hasValue) {
+				return hasValue == other.hasValue;
+			}
+			return index == other.index;
+		}
+	}
+
+	/** Inner class to remember previous chart parameters */
+	class ChartParameters
+	{
+		public PointIndex selectedPoint = new PointIndex();
+		public PointIndex rangeStart = new PointIndex(), rangeEnd = new PointIndex();
+		public void clear()
+		{
+			selectedPoint.hasValue = false;
+			rangeStart.hasValue = false;
+			rangeEnd.hasValue = false;
+		}
+		/** Get the minimum index which has changed between two sets of parameters */
+		public int getMinChangedIndex(ChartParameters other)
+		{
+			PointIndex minIndex = new PointIndex();
+			if (!selectedPoint.equals(other.selectedPoint)) {
+				minIndex.setMin(selectedPoint);
+				minIndex.setMin(other.selectedPoint);
+			}
+			if (!rangeStart.equals(other.rangeStart)) {
+				minIndex.setMin(rangeStart);
+				minIndex.setMin(other.rangeStart);
+			}
+			if (!rangeEnd.equals(other.rangeEnd)) {
+				minIndex.setMin(rangeEnd);
+				minIndex.setMin(other.rangeEnd);
+			}
+			return minIndex.index;
+		}
+		/** Get the maximum index which has changed between two sets of parameters */
+		public int getMaxChangedIndex(ChartParameters other)
+		{
+			PointIndex maxIndex = new PointIndex();
+			if (!selectedPoint.equals(other.selectedPoint)) {
+				maxIndex.setMax(selectedPoint);
+				maxIndex.setMax(other.selectedPoint);
+			}
+			if (!rangeStart.equals(other.rangeStart)) {
+				maxIndex.setMax(rangeStart);
+				maxIndex.setMax(other.rangeStart);
+			}
+			if (!rangeEnd.equals(other.rangeEnd)) {
+				maxIndex.setMax(rangeEnd);
+				maxIndex.setMax(other.rangeEnd);
+			}
+			return maxIndex.index;
+		}
+		/** @return true if the parameters are completely empty (cleared) */
+		public boolean isEmpty()
+		{
+			return !selectedPoint.hasValue && !rangeStart.hasValue && !rangeEnd.hasValue;
+		}
+	}
+
 	/** Current scale factor in x direction*/
 	private double _xScaleFactor = 0.0;
 	/** Data to show on chart */
@@ -47,6 +151,8 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	private JLabel _label = null;
 	/** Right-click popup menu */
 	private JPopupMenu _popup = null;
+	/** Parameters last time chart was drawn */
+	private ChartParameters _previousParameters = new ChartParameters();
 
 	/** Possible scales to use */
 	private static final int[] LINE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50, 10, 5, 2, 1};
@@ -94,141 +200,146 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			Config.getConfigBoolean(Config.KEY_ANTIALIAS) ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
 		ColourScheme colourScheme = Config.getColourScheme();
 		paintBackground(g, colourScheme);
-		if (_track != null && _track.getNumPoints() > 0)
+
+		if (_track == null || _track.getNumPoints() <= 0)
 		{
-			_label.setText(_data.getLabel());
-			int width = getWidth();
-			int height = getHeight();
-
-			// Set up colours
-			final Color barColour = colourScheme.getColour(ColourScheme.IDX_POINT);
-			final Color rangeColour = colourScheme.getColour(ColourScheme.IDX_SELECTION);
-			final Color currentColour = colourScheme.getColour(ColourScheme.IDX_PRIMARY);
-			final Color secondColour = colourScheme.getColour(ColourScheme.IDX_SECONDARY);
-			final Color lineColour = colourScheme.getColour(ColourScheme.IDX_LINES);
-
-			// message if no data for the current field in track
-			if (!_data.hasData())
-			{
-				g.setColor(lineColour);
-				g.drawString(I18nManager.getText(_data.getNoDataKey()), 50, (height+_label.getHeight())/2);
-				paintChildren(g);
-				return;
-			}
-
-			// Find minimum and maximum values to plot
-			double minValue = _data.getMinValue();
-			double maxValue = _data.getMaxValue();
-			if (maxValue <= minValue) {maxValue = minValue + 1; minValue--;}
-
-			final int numPoints = _track.getNumPoints();
-			_xScaleFactor = 1.0 * (width - 2 * BORDER_WIDTH - 1) / numPoints;
-			int usableHeight = height - 2 * BORDER_WIDTH - _label.getHeight();
-			double yScaleFactor = 1.0 * usableHeight / (maxValue - minValue);
-			int barWidth = (int) (_xScaleFactor + 1.0);
-			int selectedPoint = _trackInfo.getSelection().getCurrentPointIndex();
-			// selection start, end
-			int selectionStart = -1, selectionEnd = -1;
-			if (_trackInfo.getSelection().hasRangeSelected()) {
-				selectionStart = _trackInfo.getSelection().getStart();
-				selectionEnd = _trackInfo.getSelection().getEnd();
-			}
-
-			// horizontal lines for scale - set to round numbers eg 500
-			int lineScale = getLineScale(minValue, maxValue);
-			double scaleValue = Math.ceil(minValue/lineScale) * lineScale;
-			int x = 0, y = 0;
-			final int zeroY = height - BORDER_WIDTH - (int) (yScaleFactor * (0.0 - minValue));
-
-			double value = 0.0;
-			g.setColor(lineColour);
-			if (lineScale >= 1)
-			{
-				while (scaleValue < maxValue)
-				{
-					y = height - BORDER_WIDTH - (int) (yScaleFactor * (scaleValue - minValue));
-					g.drawLine(BORDER_WIDTH + 1, y, width - BORDER_WIDTH - 1, y);
-					scaleValue += lineScale;
-				}
-			}
-			else if (minValue < 0.0)
-			{
-				// just draw zero line
-				y = zeroY;
-				g.drawLine(BORDER_WIDTH + 1, y, width - BORDER_WIDTH - 1, y);
-			}
-
-			try
-			{
-				// loop through points
-				g.setColor(barColour);
-				for (int p = 0; p < numPoints; p++)
-				{
-					x = (int) (_xScaleFactor * p) + 1;
-					if (p == selectionStart)
-						g.setColor(rangeColour);
-					else if (p == (selectionEnd+1))
-						g.setColor(barColour);
-					if (_data.hasData(p))
-					{
-						value = _data.getData(p);
-						// Normal case is the minimum value greater than zero
-						if (minValue >= 0)
-						{
-							y = (int) (yScaleFactor * (value - minValue));
-							g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
-						}
-						else if (value >= 0.0) {
-							// Bar upwards from the zero line
-							y = height-BORDER_WIDTH - (int) (yScaleFactor * (value - minValue));
-							g.fillRect(BORDER_WIDTH+x, y, barWidth, zeroY - y);
-						}
-						else {
-							// Bar downwards from the zero line
-							int barHeight = (int) (yScaleFactor * value);
-							g.fillRect(BORDER_WIDTH+x, zeroY, barWidth, -barHeight);
-						}
-					}
-				}
-				// current point (make sure it's drawn last)
-				if (selectedPoint >= 0)
-				{
-					x = (int) (_xScaleFactor * selectedPoint) + 1;
-					g.setColor(secondColour);
-					g.fillRect(BORDER_WIDTH + x, height-usableHeight-BORDER_WIDTH+1, barWidth, usableHeight-2);
-					if (_data.hasData(selectedPoint))
-					{
-						g.setColor(currentColour);
-						value = _data.getData(selectedPoint);
-						y = (int) (yScaleFactor * (value - minValue));
-						g.fillRect(BORDER_WIDTH + x, height-BORDER_WIDTH - y, barWidth, y);
-					}
-				}
-			}
-			catch (NullPointerException npe) { // ignore, probably due to data being changed
-			}
-			// Draw numbers on top of the graph to mark scale
-			if (lineScale >= 1)
-			{
-				int textHeight = g.getFontMetrics().getHeight();
-				scaleValue = (int) (minValue / lineScale + 1) * lineScale;
-				if (minValue < 0.0) {scaleValue -= lineScale;}
-				y = 0;
-				g.setColor(currentColour);
-				while (scaleValue < maxValue)
-				{
-					y = height - BORDER_WIDTH - (int) (yScaleFactor * (scaleValue - minValue));
-					// Limit y so String isn't above border
-					if (y < (BORDER_WIDTH + textHeight)) {
-						y = BORDER_WIDTH + textHeight;
-					}
-					g.drawString(""+(int)scaleValue, BORDER_WIDTH + 5, y);
-					scaleValue += lineScale;
-				}
-			}
-			// Paint label on top
-			paintChildren(g);
+			return;
 		}
+
+		_label.setText(_data.getLabel());
+		int width = getWidth();
+		int height = getHeight();
+
+		// Set up colours
+		final Color barColour = colourScheme.getColour(ColourScheme.IDX_POINT);
+		final Color rangeColour = colourScheme.getColour(ColourScheme.IDX_SELECTION);
+		final Color currentColour = colourScheme.getColour(ColourScheme.IDX_PRIMARY);
+		final Color secondColour = colourScheme.getColour(ColourScheme.IDX_SECONDARY);
+		final Color lineColour = colourScheme.getColour(ColourScheme.IDX_LINES);
+
+		// message if no data for the current field in track
+		if (!_data.hasData())
+		{
+			g.setColor(lineColour);
+			g.drawString(I18nManager.getText(_data.getNoDataKey()), 50, (height+_label.getHeight())/2);
+			paintChildren(g);
+			return;
+		}
+
+		// Find minimum and maximum values to plot
+		double minValue = _data.getMinValue();
+		double maxValue = _data.getMaxValue();
+		if (maxValue <= minValue) {maxValue = minValue + 1; minValue--;}
+
+		final int numPoints = _track.getNumPoints();
+		_xScaleFactor = 1.0 * (width - 2 * BORDER_WIDTH - 1) / numPoints;
+		int usableHeight = height - 2 * BORDER_WIDTH - _label.getHeight();
+		double yScaleFactor = 1.0 * usableHeight / (maxValue - minValue);
+		int barWidth = (int) (_xScaleFactor + 1.0);
+		int selectedPoint = _trackInfo.getSelection().getCurrentPointIndex();
+		// selection start, end
+		int selectionStart = -1, selectionEnd = -1;
+		if (_trackInfo.getSelection().hasRangeSelected()) {
+			selectionStart = _trackInfo.getSelection().getStart();
+			selectionEnd = _trackInfo.getSelection().getEnd();
+		}
+
+		int y = 0;
+		double value = 0.0;
+		// horizontal lines for scale - set to round numbers eg 500
+		final int lineScale = getLineScale(minValue, maxValue);
+		double scaleValue = Math.ceil(minValue/lineScale) * lineScale;
+		final int zeroY = height - BORDER_WIDTH - (int) (yScaleFactor * (0.0 - minValue));
+
+		g.setColor(lineColour);
+		if (lineScale >= 1)
+		{
+			while (scaleValue < maxValue)
+			{
+				y = height - BORDER_WIDTH - (int) (yScaleFactor * (scaleValue - minValue));
+				g.drawLine(BORDER_WIDTH + 1, y, width - BORDER_WIDTH - 1, y);
+				scaleValue += lineScale;
+			}
+		}
+		else if (minValue < 0.0)
+		{
+			// just draw zero line
+			y = zeroY;
+			g.drawLine(BORDER_WIDTH + 1, y, width - BORDER_WIDTH - 1, y);
+		}
+
+		try
+		{
+			// loop through points
+			g.setColor(barColour);
+			for (int p = 0; p < numPoints; p++)
+			{
+				if (p == selectionStart)
+					g.setColor(rangeColour);
+				else if (p == (selectionEnd+1))
+					g.setColor(barColour);
+
+				final int x = (int) (_xScaleFactor * p) + 1;
+				if (_data.hasData(p))
+				{
+					value = _data.getData(p);
+					// Normal case is the minimum value greater than zero
+					if (minValue >= 0)
+					{
+						y = (int) (yScaleFactor * (value - minValue));
+						g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
+					}
+					else if (value >= 0.0) {
+						// Bar upwards from the zero line
+						y = height-BORDER_WIDTH - (int) (yScaleFactor * (value - minValue));
+						g.fillRect(BORDER_WIDTH+x, y, barWidth, zeroY - y);
+					}
+					else {
+						// Bar downwards from the zero line
+						int barHeight = (int) (yScaleFactor * value);
+						g.fillRect(BORDER_WIDTH+x, zeroY, barWidth, -barHeight);
+					}
+				}
+			}
+
+			// current point (make sure it's drawn last)
+			if (selectedPoint >= 0)
+			{
+				final int sel_x = (int) (_xScaleFactor * selectedPoint) + 1;
+				g.setColor(secondColour);
+				g.fillRect(BORDER_WIDTH + sel_x, height-usableHeight-BORDER_WIDTH+1, barWidth, usableHeight-2);
+				if (_data.hasData(selectedPoint))
+				{
+					g.setColor(currentColour);
+					value = _data.getData(selectedPoint);
+					y = (int) (yScaleFactor * (value - minValue));
+					g.fillRect(BORDER_WIDTH + sel_x, height-BORDER_WIDTH - y, barWidth, y);
+				}
+			}
+		}
+		catch (NullPointerException npe) { // ignore, probably due to data being changed
+		}
+		// Draw numbers on top of the graph to mark scale
+		if (lineScale >= 1)
+		{
+			int textHeight = g.getFontMetrics().getHeight();
+			scaleValue = (int) (minValue / lineScale + 1) * lineScale;
+			if (minValue < 0.0) {scaleValue -= lineScale;}
+			y = 0;
+			g.setColor(currentColour);
+			while (scaleValue < maxValue)
+			{
+				y = height - BORDER_WIDTH - (int) (yScaleFactor * (scaleValue - minValue));
+				// Limit y so String isn't above border
+				if (y < (BORDER_WIDTH + textHeight)) {
+					y = BORDER_WIDTH + textHeight;
+				}
+				g.drawString(""+(int)scaleValue, BORDER_WIDTH + 5, y);
+				scaleValue += lineScale;
+			}
+		}
+		// Paint label on top
+		paintChildren(g);
 	}
 
 
@@ -254,7 +365,8 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			inG.setColor(COLOR_NODATA_TEXT);
 			inG.drawString(I18nManager.getText("display.nodata"), 50, height/2);
 		}
-		else {
+		else
+		{
 			inG.setColor(borderColour);
 			inG.drawRect(BORDER_WIDTH, BORDER_WIDTH + _label.getHeight(),
 				width - 2*BORDER_WIDTH, height-2*BORDER_WIDTH-_label.getHeight());
@@ -337,14 +449,49 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	public void dataUpdated(byte inUpdateType)
 	{
 		// Try not to recalculate all the values unless necessary
-		if (inUpdateType != SELECTION_CHANGED) {
+		if (inUpdateType != SELECTION_CHANGED)
+		{
 			_data.init(Config.getUnitSet());
+			_previousParameters.clear();
 		}
 		// Update the menu if necessary
 		if ((inUpdateType & DATA_ADDED_OR_REMOVED) > 0) {
 			makePopup();
 		}
-		repaint();
+		if (inUpdateType == SELECTION_CHANGED) {
+			triggerPartialRepaint();
+		}
+		else
+		{
+			repaint();
+		}
+	}
+
+	/**
+	 * For performance reasons, only repaint the part of the graphics affected by
+	 * the change in selection
+	 */
+	private void triggerPartialRepaint()
+	{
+		ChartParameters currentParameters = new ChartParameters();
+		currentParameters.selectedPoint.set(_trackInfo.getSelection().getCurrentPointIndex());
+		if (_trackInfo.getSelection().hasRangeSelected())
+		{
+			currentParameters.rangeStart.set(_trackInfo.getSelection().getStart());
+			currentParameters.rangeEnd.set(_trackInfo.getSelection().getEnd());
+		}
+
+		int minPointIndex = currentParameters.getMinChangedIndex(_previousParameters);
+		minPointIndex = Math.max(minPointIndex, 0);
+		int maxPointIndex = currentParameters.getMaxChangedIndex(_previousParameters);
+		if (maxPointIndex < minPointIndex) {
+			maxPointIndex = _trackInfo.getTrack().getNumPoints() - 1;
+		}
+		// System.out.println("Redraw from index: " + minPointIndex + " to " + maxPointIndex);
+		_previousParameters = currentParameters;
+		final int region_x = (int) (_xScaleFactor * minPointIndex) + BORDER_WIDTH;
+		final int region_width = (int) (_xScaleFactor * (maxPointIndex-minPointIndex+2)) + 2;
+		repaint(region_x, 0, region_width, getHeight());
 	}
 
 	/**

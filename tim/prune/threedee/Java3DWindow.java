@@ -13,6 +13,7 @@ import java.awt.geom.GeneralPath;
 
 import javax.media.j3d.AmbientLight;
 import javax.media.j3d.Appearance;
+import javax.media.j3d.Billboard;
 import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
@@ -384,10 +385,10 @@ public class Java3DWindow implements ThreeDWindow
 		Font3D compassFont = new Font3D(
 			new Font(CARDINALS_FONT, Font.PLAIN, 1),
 			new FontExtrusion(bevelPath));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.n"), new Point3f(0f, 0f, -10f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.s"), new Point3f(0f, 0f, 10f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.w"), new Point3f(-11f, 0f, 0f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"), new Point3f(10f, 0f, 0f), compassFont));
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.n"), new Point3f(0f, 0f, -11.5f), compassFont));
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.s"), new Point3f(0f, 0f, 11.5f), compassFont));
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.w"), new Point3f(-11.5f, 0f, 0f), compassFont));
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"), new Point3f(11.5f, 0f, 0f), compassFont));
 
 		// Add points to model
 		objTrans.addChild(createDataPoints(_model));
@@ -422,12 +423,12 @@ public class Java3DWindow implements ThreeDWindow
 
 	/**
 	 * Create a text object for compass point, N S E or W
-	 * @param text text to display
-	 * @param locn position at which to display
-	 * @param font 3d font to use
-	 * @return Shape3D object
+	 * @param inText text to display
+	 * @param inLocn position at which to display
+	 * @param inFont 3d font to use
+	 * @return compound object
 	 */
-	private Shape3D createCompassPoint(String inText, Point3f inLocn, Font3D inFont)
+	private TransformGroup createCompassPoint(String inText, Point3f inLocn, Font3D inFont)
 	{
 		Text3D txt = new Text3D(inFont, inText, inLocn, Text3D.ALIGN_FIRST, Text3D.PATH_RIGHT);
 		Material mat = new Material(new Color3f(0.5f, 0.5f, 0.55f),
@@ -437,7 +438,16 @@ public class Java3DWindow implements ThreeDWindow
 		Appearance app = new Appearance();
 		app.setMaterial(mat);
 		Shape3D shape = new Shape3D(txt, app);
-		return shape;
+
+		// Make transform group with billboard behaviour
+		TransformGroup subGroup = new TransformGroup();
+		subGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+		subGroup.addChild(shape);
+		Billboard billboard = new Billboard(subGroup, Billboard.ROTATE_ABOUT_POINT, inLocn);
+		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 100.0);
+		billboard.setSchedulingBounds(bounds);
+		subGroup.addChild(billboard);
+		return subGroup;
 	}
 
 
