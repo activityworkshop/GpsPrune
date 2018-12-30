@@ -71,9 +71,18 @@ public class MapTileManager implements ImageObserver
 	 */
 	public boolean isOverzoomed()
 	{
+		return _zoom > getMaxZoomLevel();
+	}
+
+	/**
+	 * @return the maximum useable zoom level for tiles
+	 */
+	public int getMaxZoomLevel()
+	{
 		// Ask current map source what maximum zoom is
 		int maxZoom = (_mapSource == null?0:_mapSource.getMaxZoomLevel());
-		return (_zoom > maxZoom);
+		return maxZoom;
+
 	}
 
 	/**

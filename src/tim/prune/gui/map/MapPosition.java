@@ -30,14 +30,14 @@ public class MapPosition
 	 * @param inWidth width of display
 	 * @param inHeight height of display
 	 */
-	public void zoomToXY(double inMinX, double inMaxX, double inMinY, double inMaxY, int inWidth, int inHeight)
+	public void zoomToXY(double inMinX, double inMaxX, double inMinY, double inMaxY, int inWidth, int inHeight, int maxZoom)
 	{
 		// System.out.println("Zooming to " + inMinX + ", " + inMaxX + ", " + inMinY + ", " + inMaxY + "; width=" + inWidth + ", height=" + inHeight);
 		double diffX = Math.abs(inMaxX - inMinX);
 		double diffY = Math.abs(inMaxY - inMinY);
 		// Find out what zoom level to go to
 		int requiredZoom = -1;
-		for (int currZoom = MAX_ZOOM; currZoom >= 2; currZoom--)
+		for (int currZoom = maxZoom; currZoom >= 2; currZoom--)
 		{
 			if (transformToPixels(diffX, currZoom) < inWidth
 				&& transformToPixels(diffY, currZoom) < inHeight)

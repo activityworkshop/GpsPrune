@@ -345,8 +345,11 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			MapUtils.getXFromLongitude(_lonRange.getMaximum()));
 		_yRange = new DoubleRange(MapUtils.getYFromLatitude(_latRange.getMinimum()),
 			MapUtils.getYFromLatitude(_latRange.getMaximum()));
-		_mapPosition.zoomToXY(_xRange.getMinimum(), _xRange.getMaximum(), _yRange.getMinimum(), _yRange.getMaximum(),
-			getWidth(), getHeight());
+		_mapPosition.zoomToXY(
+		        _xRange.getMinimum(), _xRange.getMaximum(),
+			_yRange.getMinimum(), _yRange.getMaximum(),
+			getWidth(), getHeight(),
+			_tileManager.getMaxZoomLevel());
 	}
 
 
