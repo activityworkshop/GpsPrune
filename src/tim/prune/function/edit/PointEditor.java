@@ -307,10 +307,23 @@ public class PointEditor
 			if (_model.getChanged(i))
 			{
 				Field field = fieldList.getField(i);
+				if (field == field.WAYPT_NAME) {
+					if (wasNameAdded(_model.getValue(i))) {
+						_app.createPoint(_point.clonePoint());
+					}
+				}
 				editList.addEdit(new FieldEdit(field, _model.getValue(i)));
 				undoList.addEdit(new FieldEdit(field, _point.getFieldValue(field)));
 			}
 		}
 		_app.completePointEdit(editList, undoList);
+	}
+
+	private boolean wasNameAdded(String newName)
+	{
+		String prevName = _point.getWaypointName();
+		boolean prevNull = (prevName == null || prevName.equals(""));
+		boolean newNull = (newName == null || newName.equals(""));
+		return (prevNull && !newNull);
 	}
 }

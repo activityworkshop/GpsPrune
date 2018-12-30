@@ -206,7 +206,14 @@ public class PointNameEditor extends GenericFunction
 		// Check whether name has really changed
 		if (hasNameChanged())
 		{
-			// Make lists for edit and undo, and add the changed field
+			// If a new name has been added, changing the point
+			// from trackpoint to waypoint, duplicate it
+			if (wasNameAdded())
+			{
+				_app.createPoint(_point.clonePoint());
+			}
+
+			// make lists for edit and undo, and add the changed field
 			FieldEditList editList = new FieldEditList();
 			FieldEditList undoList = new FieldEditList();
 			editList.addEdit(new FieldEdit(Field.WAYPT_NAME, _nameField.getText().trim()));
@@ -230,5 +237,18 @@ public class PointNameEditor extends GenericFunction
 		return (prevNull && !newNull)
 			|| (!prevNull && newNull)
 			|| (!prevNull && !newNull && !prevName.equals(newName));
+	}
+
+	/**
+	 * Check whether a new name has been added
+	 * @return true if it has indeed
+	 */
+	private boolean wasNameAdded()
+	{
+		String prevName = _point.getWaypointName();
+		String newName = _nameField.getText().trim();
+		boolean prevNull = (prevName == null || prevName.equals(""));
+		boolean newNull = (newName == null || newName.equals(""));
+		return (prevNull && !newNull);
 	}
 }
