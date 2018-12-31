@@ -40,4 +40,12 @@ public class Viewport
 		double maxLon = MapUtils.getLongitudeFromX(mapPosition.getXFromPixels(width, width));
 		return new double[] {minLat, minLon, maxLat, maxLon};
 	}
+
+	/**
+	 * Recentre the viewport on the data
+	 */
+	public void recentreViewport()
+	{
+		_mapCanvas.zoomToFit();
+	}
 }

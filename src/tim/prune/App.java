@@ -759,6 +759,8 @@ public class App
 			+ " '" + inSourceInfo.getName() + "'");
 		// update menu
 		_menuManager.informFileLoaded();
+		// recentre viewport on new file data
+		_viewport.recentreViewport();
 		// Remove busy lock
 		_busyLoading = false;
 		// load next file if there's a queue
