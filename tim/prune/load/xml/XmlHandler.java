@@ -36,4 +36,12 @@ public abstract class XmlHandler extends DefaultHandler
 	public String[] getLinkArray() {
 		return null;
 	}
+
+	/**
+	 * Can be overridden (eg by gpx handler) to provide the title of the file
+	 * @return file title, or null
+	 */
+	public String getFileTitle() {
+		return null;
+	}
 }

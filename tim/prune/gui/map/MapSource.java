@@ -89,7 +89,7 @@ public abstract class MapSource
 		// check prefix
 		try
 		{
-			urlOk = new URL(urlstr.replace('[', 'w').replace(']', 'w')) != null;
+			urlOk = new URL(urlstr.replace('[', 'w').replace(']', 'w')).toString() != null;
 		}
 		catch (MalformedURLException e)
 		{

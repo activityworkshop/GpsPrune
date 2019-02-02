@@ -38,14 +38,9 @@ public abstract class MapSourceLibrary
 	 */
 	private static void addFixedSources()
 	{
-		final String THUNDERFOREST_APIKEY = "c32212f10b13496786b98dc6c42e5c3c";
-		_sourceList.add(new OsmMapSource("Mapnik", "http://[abc].tile.openstreetmap.org/"));
-		OsmMapSource cycleSource = new OsmMapSource("OpenCycleMap", "http://[abc].tile.thunderforest.com/cycle/");
-		cycleSource.setApiKey(THUNDERFOREST_APIKEY);
-		_sourceList.add(cycleSource);
-		OsmMapSource outdoorsSource = new OsmMapSource("Outdoors", "http://[abc].tile.thunderforest.com/outdoors/");
-		outdoorsSource.setApiKey(THUNDERFOREST_APIKEY);
-		_sourceList.add(outdoorsSource);
+		_sourceList.add(new OsmMapSource("Mapnik", "https://[abc].tile.openstreetmap.org/"));
+		_sourceList.add(new OsmMapSource("Cycling Trails", "https://[abc].tile.openstreetmap.org/", "png",
+			"https://tile.waymarkedtrails.org/cycling/", "png", 18));
 		_sourceList.add(new OsmMapSource("Reitkarte", "http://topo[234].wanderreitkarte.de/topo/"));
 		_sourceList.add(new MffMapSource("Mapsforfree", "http://maps-for-free.com/layer/relief/", "jpg",
 			"http://maps-for-free.com/layer/water/", "gif", 11));

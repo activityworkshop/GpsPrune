@@ -91,14 +91,17 @@ public class TimestampLocal extends Timestamp
 	/**
 	 * Utility method for formatting dates / times
 	 * @param inFormat formatter object
-	 * @param inTimezone timezone to use
+	 * @param inTimezone timezone to use, or null
 	 * @return formatted String
 	 */
 	@Override
 	protected String format(DateFormat inFormat, TimeZone inTimezone)
 	{
 		Calendar cal = getCalendar(inTimezone);
-		inFormat.setTimeZone(inTimezone);
+		if (inTimezone != null)
+		{
+			inFormat.setTimeZone(inTimezone);
+		}
 		return inFormat.format(cal.getTime());
 	}
 }

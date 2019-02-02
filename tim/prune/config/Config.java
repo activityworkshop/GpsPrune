@@ -238,7 +238,9 @@ public abstract class Config
 		return val;
 	}
 
-	/** @return File from which config was loaded (or null) */
+	/**
+	 * @return File from which config was loaded (or null)
+	 */
 	public static File getConfigFile()
 	{
 		return _configFile;

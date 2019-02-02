@@ -17,6 +17,8 @@ public class SourceInfo
 	private String _sourceName = null;
 	/** File type */
 	private FILE_TYPE _fileType = null;
+	/** File title, if any */
+	private String _fileTitle = null;
 
 	/** Array of datapoints */
 	private DataPoint[] _points = null;
@@ -51,6 +53,14 @@ public class SourceInfo
 	}
 
 	/**
+	 * @param inTitle title of file, eg from <name> tag in gpx
+	 */
+	public void setFileTitle(String inTitle)
+	{
+		_fileTitle = inTitle;
+	}
+
+	/**
 	 * @return source file
 	 */
 	public File getFile()
@@ -72,6 +82,14 @@ public class SourceInfo
 	public FILE_TYPE getFileType()
 	{
 		return _fileType;
+	}
+
+	/**
+	 * @return title of file
+	 */
+	public String getFileTitle()
+	{
+		return _fileTitle;
 	}
 
 	/**

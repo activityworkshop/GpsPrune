@@ -306,7 +306,8 @@ public class TrackInfo
 	{
 		boolean firstTrackPoint = true;
 		// Loop between start and end
-		for (int i=inStart; i<=inEnd; i++) {
+		for (int i=inStart; i<=inEnd; i++)
+		{
 			DataPoint point = _track.getPoint(i);
 			// Set all segments to false apart from first track point
 			if (point != null && !point.isWaypoint()) {
@@ -316,7 +317,9 @@ public class TrackInfo
 		}
 		// Find following track point, if any
 		DataPoint nextPoint = _track.getNextTrackPoint(inEnd+1);
-		if (nextPoint != null) {nextPoint.setSegmentStart(true);}
+		if (nextPoint != null) {
+			nextPoint.setSegmentStart(true);
+		}
 		_selection.markInvalid();
 		UpdateMessageBroker.informSubscribers();
 		return true;
@@ -353,8 +356,10 @@ public class TrackInfo
 	public void incrementPointIndex(int inPointIncrement)
 	{
 		int index = _selection.getCurrentPointIndex() + inPointIncrement;
-		if (index < 0) index = 0;
-		else if (index >= _track.getNumPoints()) index = _track.getNumPoints()-1;
+		if (index < 0)
+			index = 0;
+		else if (index >= _track.getNumPoints())
+			index = _track.getNumPoints()-1;
 		selectPoint(index);
 	}
 
@@ -364,7 +369,9 @@ public class TrackInfo
 	 */
 	public void selectPoint(int inPointIndex)
 	{
-		if (_selection.getCurrentPointIndex() == inPointIndex || inPointIndex >= _track.getNumPoints()) {return;}
+		if (_selection.getCurrentPointIndex() == inPointIndex || inPointIndex >= _track.getNumPoints()) {
+			return;
+		}
 		DataPoint selectedPoint = _track.getPoint(inPointIndex);
 		// get the index of the current photo
 		int photoIndex = _selection.getCurrentPhotoIndex();
@@ -397,7 +404,9 @@ public class TrackInfo
 	 */
 	public void selectPhoto(int inPhotoIndex)
 	{
-		if (_selection.getCurrentPhotoIndex() == inPhotoIndex) {return;}
+		if (_selection.getCurrentPhotoIndex() == inPhotoIndex) {
+			return;
+		}
 		// Photo is primary selection here, not as a result of a point selection
 		// Therefore the photo selection takes priority, deselecting point if necessary
 		// Find Photo object
@@ -426,11 +435,13 @@ public class TrackInfo
 		// Has the new point got an audio clip?
 		DataPoint selectedPoint = _track.getPoint(pointIndex);
 		int audioIndex = _selection.getCurrentAudioIndex();
-		if (selectedPoint != null && selectedPoint.getAudio() != null) {
+		if (selectedPoint != null && selectedPoint.getAudio() != null)
+		{
 			// New point has an audio, so select it
 			audioIndex = _audioList.getAudioIndex(selectedPoint.getAudio());
 		}
-		else if (currPoint != null && selectedPoint != currPoint && currPoint.getAudio() != null) {
+		else if (currPoint != null && selectedPoint != currPoint && currPoint.getAudio() != null)
+		{
 			// Old point had an audio, so deselect it
 			audioIndex = -1;
 		}
@@ -444,7 +455,9 @@ public class TrackInfo
 	 */
 	public void selectAudio(int inAudioIndex)
 	{
-		if (_selection.getCurrentAudioIndex() == inAudioIndex) {return;}
+		if (_selection.getCurrentAudioIndex() == inAudioIndex) {
+			return;
+		}
 		// Audio selection takes priority, deselecting point if necessary
 		AudioClip audio = _audioList.getAudio(inAudioIndex);
 		int pointIndex = _selection.getCurrentPointIndex();

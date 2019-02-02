@@ -1,14 +1,14 @@
 package tim.prune;
 
-import java.awt.event.WindowAdapter;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Image;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.Locale;
 import java.util.ArrayList;
+import java.util.Locale;
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
@@ -17,10 +17,10 @@ import javax.swing.WindowConstants;
 import tim.prune.config.Config;
 import tim.prune.config.ConfigException;
 import tim.prune.gui.DetailsDisplay;
-import tim.prune.gui.SidebarController;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MenuManager;
 import tim.prune.gui.SelectorDisplay;
+import tim.prune.gui.SidebarController;
 import tim.prune.gui.StatusBar;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.map.MapCanvas;
@@ -36,9 +36,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "19.1";
+	public static final String VERSION_NUMBER = "19.2";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "363c";
+	public static final String BUILD_NUMBER = "363d";
 	/** Static reference to App object */
 	private static App APP = null;
 

@@ -93,9 +93,11 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 			}
 			else
 			{
+				SourceInfo.FILE_TYPE sourceType = (_handler instanceof GpxHandler ? SourceInfo.FILE_TYPE.GPX : SourceInfo.FILE_TYPE.KML);
+				SourceInfo sourceInfo = new SourceInfo(_file, sourceType);
+				sourceInfo.setFileTitle(_handler.getFileTitle());
+
 				// Pass information back to app
-				SourceInfo sourceInfo = new SourceInfo(_file,
-					(_handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
 				_app.informDataLoaded(_handler.getFieldArray(), _handler.getDataArray(),
 					null, sourceInfo, _handler.getTrackNameList(),
 					new MediaLinkInfo(_handler.getLinkArray()));

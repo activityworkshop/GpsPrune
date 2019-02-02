@@ -41,6 +41,7 @@ import tim.prune.data.Field;
 import tim.prune.data.MediaObject;
 import tim.prune.data.Photo;
 import tim.prune.data.RecentFile;
+import tim.prune.data.SourceInfo;
 import tim.prune.data.Timestamp;
 import tim.prune.data.TrackInfo;
 import tim.prune.data.UnitSetLibrary;
@@ -66,6 +67,8 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private JPanel _encodingsPanel = null;
 	private JRadioButton _useSystemRadio = null, _forceUtf8Radio = null;
 	private File _exportFile = null;
+	/** Remember the previous sourceInfo object to tell whether it has changed */
+	private SourceInfo _previousSourceInfo = null;
 
 	/** this program name */
 	private static final String GPX_CREATOR = "GpsPrune v" + GpsPrune.VERSION_NUMBER + " activityworkshop.net";
@@ -108,6 +111,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 			_useSystemRadio.setText(I18nManager.getText("dialog.exportgpx.encoding.system")
 				+ " (" + (systemEncoding == null ? "unknown" : systemEncoding) + ")");
 		}
+		setFileTitle();
 		_dialog.setVisible(true);
 	}
 
@@ -196,6 +200,34 @@ public class GpxExporter extends GenericFunction implements Runnable
 		return dialogPanel;
 	}
 
+	/**
+	 * Set the suggestion for the name with which to export
+	 */
+	private void setFileTitle()
+	{
+		// Get the most recent file info
+		SourceInfo currentSource = _app.getTrackInfo().getFileInfo().getLastFileInfo();
+		if (currentSource != _previousSourceInfo)
+		{
+			String lastTitle = currentSource.getFileTitle();
+			if (lastTitle != null && !lastTitle.equals(""))
+			{
+				// Take the title of the last file loaded
+				_nameField.setText(lastTitle);
+			}
+		}
+		if (_nameField.getText().equals(""))
+		{
+			// no name given in the field already, so try to overwrite it
+			String lastTitle = _app.getTrackInfo().getFileInfo().getLastFileTitle();
+			if (lastTitle != null && !lastTitle.equals(""))
+			{
+				_nameField.setText(lastTitle);
+			}
+		}
+		// Remember this source info so we don't use it again
+		_previousSourceInfo = currentSource;
+	}
 
 	/**
 	 * Start the export process based on the input parameters
@@ -758,16 +790,21 @@ public class GpxExporter extends GenericFunction implements Runnable
 			inWriter.write(inPoint.hasAltitude() ? inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES) : "0");
 			inWriter.write("</ele>\n");
 		}
+		// Maybe take timestamp from photo if the point hasn't got one
+		Timestamp pointTimestamp = getPointTimestamp(inPoint, inSettings);
 		// timestamp if available (and selected)
-		if (inPoint.hasTimestamp() && inSettings.getExportTimestamps())
+		if (pointTimestamp != null && inSettings.getExportTimestamps())
 		{
 			inWriter.write("\t\t\t\t<time>");
-			inWriter.write(inPoint.getTimestamp().getText(Timestamp.Format.ISO8601, null));
+			inWriter.write(pointTimestamp.getText(Timestamp.Format.ISO8601, null));
 			inWriter.write("</time>\n");
 		}
 		// photo, audio
-		if (inPoint.getPhoto() != null && inSettings.getExportPhotoPoints()) {
+		if (inPoint.getPhoto() != null && inSettings.getExportPhotoPoints())
+		{
+			inWriter.write("\t\t\t\t");
 			inWriter.write(makeMediaLink(inPoint.getPhoto()));
+			inWriter.write("\n");
 		}
 		if (inPoint.getAudio() != null && inSettings.getExportAudioPoints()) {
 			inWriter.write(makeMediaLink(inPoint.getAudio()));
@@ -824,5 +861,34 @@ public class GpxExporter extends GenericFunction implements Runnable
 	private static String stripTime(String inPointSource)
 	{
 		return inPointSource.replaceAll("[ \t]*<time>.*?</time>", "");
+	}
+
+	/**
+	 * Get the timestamp from the point or its media
+	 * @param inPoint point object
+	 * @param inSettings export settings
+	 * @return Timestamp object if available, or null
+	 */
+	private static Timestamp getPointTimestamp(DataPoint inPoint, SettingsForExport inSettings)
+	{
+		if (inPoint.hasTimestamp())
+		{
+			return inPoint.getTimestamp();
+		}
+		if (inPoint.getPhoto() != null && inSettings.getExportPhotoPoints())
+		{
+			if (inPoint.getPhoto().hasTimestamp())
+			{
+				return inPoint.getPhoto().getTimestamp();
+			}
+		}
+		if (inPoint.getAudio() != null && inSettings.getExportAudioPoints())
+		{
+			if (inPoint.getAudio().hasTimestamp())
+			{
+				return inPoint.getAudio().getTimestamp();
+			}
+		}
+		return null;
 	}
 }

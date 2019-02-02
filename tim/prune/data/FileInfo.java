@@ -68,16 +68,18 @@ public class FileInfo
 	 */
 	public String getFilename()
 	{
-		if (getNumFiles() == 1)
+		if (getNumFiles() == 1) {
 			return _sources.get(0).getName();
+		}
 		return "";
 	}
 
 	/**
-	 * @param inIndex index number
+	 * @param inIndex index number, starting from zero
 	 * @return source info object
 	 */
-	public SourceInfo getSource(int inIndex) {
+	public SourceInfo getSource(int inIndex)
+	{
 		return _sources.get(inIndex);
 	}
 
@@ -88,9 +90,47 @@ public class FileInfo
 	 */
 	public SourceInfo getSourceForPoint(DataPoint inPoint)
 	{
-		for (SourceInfo source : _sources) {
+		for (SourceInfo source : _sources)
+		{
 			if (source.getIndex(inPoint) >= 0) {
 				return source;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @return the info about the last file loaded, if any
+	 */
+	public SourceInfo getLastFileInfo()
+	{
+		if (getNumFiles() == 0)
+		{
+			return null;
+		}
+		return getSource(getNumFiles()-1);
+	}
+
+	/**
+	 * @return the most recent file title loaded, if any
+	 */
+	public String getLastFileTitle()
+	{
+		final int numFiles = getNumFiles();
+		if (numFiles == 0)
+		{
+			return null;
+		}
+		for (int i=(numFiles-1); i>=0; i--)
+		{
+			SourceInfo info = getSource(i);
+			if (info != null)
+			{
+				String title = info.getFileTitle();
+				if (title != null && !title.equals(""))
+				{
+					return title;
+				}
 			}
 		}
 		return null;

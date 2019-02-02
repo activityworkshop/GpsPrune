@@ -19,7 +19,8 @@ public class GpxHandler extends XmlHandler
 	private boolean _startSegment = true;
 	private boolean _isTrackPoint = false;
 	private int _trackNum = -1;
-	private GpxTag _name = new GpxTag(), _trackName = new GpxTag();
+	private GpxTag _fileTitle = new GpxTag();
+	private GpxTag _pointName = new GpxTag(), _trackName = new GpxTag();
 	private String _latitude = null, _longitude = null;
 	private GpxTag _elevation = new GpxTag(), _time = new GpxTag();
 	private GpxTag _type = new GpxTag(), _description = new GpxTag();
@@ -52,7 +53,7 @@ public class GpxHandler extends XmlHandler
 				else if (att.equals("lon")) {_longitude = attributes.getValue(i);}
 			}
 			_elevation.setValue(null);
-			_name.setValue(null);
+			_pointName.setValue(null);
 			_time.setValue(null);
 			_type.setValue(null);
 			_link.setValue(null);
@@ -61,8 +62,18 @@ public class GpxHandler extends XmlHandler
 		else if (tag.equals("ele")) {
 			_currentTag = _elevation;
 		}
-		else if (tag.equals("name")) {
-			_currentTag = (_insidePoint?_name:_trackName);
+		else if (tag.equals("name"))
+		{
+			if (_insidePoint) {
+				_currentTag = _pointName;
+			}
+			else if (_trackNum < 0)
+			{
+				_currentTag = _fileTitle;
+			}
+			else {
+				_currentTag = _trackName;
+			}
 		}
 		else if (tag.equals("time")) {
 			_currentTag = _time;
@@ -146,7 +157,7 @@ public class GpxHandler extends XmlHandler
 		values[0] = _latitude;
 		values[1] = _longitude;
 		values[2] = _elevation.getValue();
-		if (_insideWaypoint) {values[3] = _name.getValue();}
+		if (_insideWaypoint) {values[3] = _pointName.getValue();}
 		values[4] = _time.getValue();
 		if (_startSegment && !_insideWaypoint)
 		{
@@ -211,5 +222,12 @@ public class GpxHandler extends XmlHandler
 	 */
 	public TrackNameList getTrackNameList() {
 		return _trackNameList;
+	}
+
+	/**
+	 * @return file title
+	 */
+	public String getFileTitle() {
+		return _fileTitle.getValue();
 	}
 }

@@ -17,6 +17,7 @@ import javax.media.j3d.Billboard;
 import javax.media.j3d.BoundingSphere;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.Canvas3D;
+import javax.media.j3d.DirectionalLight;
 import javax.media.j3d.Font3D;
 import javax.media.j3d.FontExtrusion;
 import javax.media.j3d.GeometryArray;
@@ -41,6 +42,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 import javax.vecmath.TexCoord2f;
 import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import tim.prune.DataStatus;
 import tim.prune.FunctionLibrary;
@@ -374,11 +376,13 @@ public class Java3DWindow implements ThreeDWindow
 		// N, S, E, W
 		GeneralPath bevelPath = new GeneralPath();
 		bevelPath.moveTo(0.0f, 0.0f);
-		for (int i=0; i<91; i+= 5) {
+		for (int i=0; i<91; i+= 5)
+		{
 			bevelPath.lineTo((float) (0.1 - 0.1 * Math.cos(Math.toRadians(i))),
 			  (float) (0.1 * Math.sin(Math.toRadians(i))));
 		}
-		for (int i=90; i>0; i-=5) {
+		for (int i=90; i>0; i-=5)
+		{
 			bevelPath.lineTo((float) (0.3 + 0.1 * Math.cos(Math.toRadians(i))),
 			  (float) (0.1 * Math.sin(Math.toRadians(i))));
 		}
@@ -393,26 +397,40 @@ public class Java3DWindow implements ThreeDWindow
 		// Add points to model
 		objTrans.addChild(createDataPoints(_model));
 
-		// Create lights
-		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
+		// Create lights - always add ambient light
+		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 100.0);
 		AmbientLight aLgt = new AmbientLight(new Color3f(1.0f, 1.0f, 1.0f));
 		aLgt.setInfluencingBounds(bounds);
 		objTrans.addChild(aLgt);
 
-		PointLight pLgt = new PointLight(new Color3f(1.0f, 1.0f, 1.0f),
-			new Point3f(0f, 0f, 2f), new Point3f(0.25f, 0.05f, 0.0f) );
-		pLgt.setInfluencingBounds(bounds);
-		objTrans.addChild(pLgt);
+		// Additional lights depend on whether there's a terrain or not
+		if (showTerrain)
+		{
+			// If there's a terrain, just have directional light from northwest
+			DirectionalLight dl = new DirectionalLight(true,
+				new Color3f(1.0f, 1.0f, 1.0f),
+				new Vector3f(1.0f, -1.0f, 1.0f));
+			dl.setInfluencingBounds(bounds);
+			objTrans.addChild(dl);
+		}
+		else
+		{
+			// There is no terrain, so use point lights as before
+			PointLight pLgt = new PointLight(new Color3f(1.0f, 1.0f, 1.0f),
+				new Point3f(0f, 0f, 2f), new Point3f(0.25f, 0.05f, 0.0f) );
+			pLgt.setInfluencingBounds(bounds);
+			objTrans.addChild(pLgt);
 
-		PointLight pl2 = new PointLight(new Color3f(0.8f, 0.9f, 0.4f),
-			new Point3f(6f, 1f, 6f), new Point3f(0.2f, 0.1f, 0.05f) );
-		pl2.setInfluencingBounds(bounds);
-		objTrans.addChild(pl2);
+			PointLight pl2 = new PointLight(new Color3f(0.8f, 0.9f, 0.4f),
+				new Point3f(6f, 1f, 6f), new Point3f(0.2f, 0.1f, 0.05f) );
+			pl2.setInfluencingBounds(bounds);
+			objTrans.addChild(pl2);
 
-		PointLight pl3 = new PointLight(new Color3f(0.7f, 0.7f, 0.7f),
-			new Point3f(0.0f, 12f, -2f), new Point3f(0.1f, 0.1f, 0.0f) );
-		pl3.setInfluencingBounds(bounds);
-		objTrans.addChild(pl3);
+			PointLight pl3 = new PointLight(new Color3f(0.7f, 0.7f, 0.7f),
+				new Point3f(0.0f, 12f, -2f), new Point3f(0.1f, 0.1f, 0.0f) );
+			pl3.setInfluencingBounds(bounds);
+			objTrans.addChild(pl3);
+		}
 
 		// Have Java 3D perform optimizations on this scene graph.
 		objRoot.compile();

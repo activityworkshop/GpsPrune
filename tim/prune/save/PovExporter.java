@@ -511,6 +511,18 @@ public class PovExporter extends Export3dFunction
 		// Definition of terrain shape if any
 		final String terrainDefinition = makeTerrainString(inTerrainFile, inImageFile, inLineSeparator);
 
+		final String[] pointLights = {
+			"// lights",
+			"light_source { <-1, 9, -4> color rgb <0.5 0.5 0.5>}",
+			"light_source { <1, 6, -14> color rgb <0.6 0.6 0.6>}",
+			"light_source { <11, 12, 8> color rgb <0.3 0.3 0.3>}"
+		};
+		final String[] northwestLight = {
+			"// lights from NW",
+			"light_source { <-10, 10, 10> color rgb <1.5 1.5 1.5> parallel }",
+		};
+		final String[] lightsLines = (inTerrainFile == null ? pointLights : northwestLight);
+
 		// Set up output
 		String[] outputLines = {
 		  "global_settings { ambient_light rgb <4, 4, 4> }", "",
@@ -626,21 +638,30 @@ public class PovExporter extends Export3dFunction
 		  "  ttf \"" + fontPath + "\" \"" + I18nManager.getText("cardinal.w") + "\" 0.3, 0",
 		  "  pigment { color rgb <1 1 1> }",
 		  "  translate <-10.3, 0.2, 0>",
-		  "}", "",
-		  // MAYBE: Light positions should relate to model size
-		  "// lights",
-		  "light_source { <-1, 9, -4> color rgb <0.5 0.5 0.5>}",
-		  "light_source { <1, 6, -14> color rgb <0.6 0.6 0.6>}",
-		  "light_source { <11, 12, 8> color rgb <0.3 0.3 0.3>}",
-		  "",
+		  "}"
 		};
+
 		// write strings to file
-		int numLines = outputLines.length;
-		for (int i=0; i<numLines; i++)
+		writeLinesToFile(inWriter, inLineSeparator, outputLines);
+		writeLinesToFile(inWriter, inLineSeparator, lightsLines);
+	}
+
+	/**
+	 * Write the given lines to the file
+	 * @param inWriter writer object
+	 * @param inLineSeparator line separator string
+	 * @param lines array of lines to write
+	 * @throws IOException
+	 */
+	private void writeLinesToFile(FileWriter inWriter, String inLineSeparator, String[] lines)
+		throws IOException
+	{
+		for (int i=0; i<lines.length; i++)
 		{
-			inWriter.write(outputLines[i]);
+			inWriter.write(lines[i]);
 			inWriter.write(inLineSeparator);
 		}
+		inWriter.write(inLineSeparator);
 	}
 
 	/**

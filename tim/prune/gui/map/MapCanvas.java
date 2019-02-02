@@ -1076,7 +1076,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	{
 		if (_track != null && _track.getNumPoints() > 0)
 		{
-			 // select point if it's a left-click
+			// select point if it's a left-click
 			if (!inE.isMetaDown())
 			{
 				if (inE.getClickCount() == 1)
@@ -1269,9 +1269,27 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	public void mouseDragged(MouseEvent inE)
 	{
-		if (!inE.isMetaDown())
+		// Note: One would expect inE.isMetaDown() to give information about whether this is a
+		//       drag with the right mouse button or not - but since java 9 this is buggy,
+		//       so we use the beautifully-named getModifiersEx() instead.
+		//       And logically BUTTON3 refers to the secondary mouse button, not the tertiary one!
+		final boolean isRightDrag = (inE.getModifiersEx() & InputEvent.BUTTON3_DOWN_MASK) > 0;
+		if (isRightDrag)
 		{
-			// Left mouse drag - either drag the point or pan the map
+			// Right-click and drag - update rectangle
+			_drawMode = MODE_ZOOM_RECT;
+			if (_dragFromX == -1) {
+				_dragFromX = inE.getX();
+				_dragFromY = inE.getY();
+			}
+			_dragToX = inE.getX();
+			_dragToY = inE.getY();
+			repaint();
+		}
+		else
+		{
+			// Left mouse drag - decide whether to drag the point, drag the
+			// marking rectangle or pan the map
 			if (_drawMode == MODE_DRAG_POINT || _drawMode == MODE_CREATE_MIDPOINT)
 			{
 				// move point
@@ -1301,18 +1319,6 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				_dragFromX = _dragToX = inE.getX();
 				_dragFromY = _dragToY = inE.getY();
 			}
-		}
-		else
-		{
-			// Right-click and drag - update rectangle
-			_drawMode = MODE_ZOOM_RECT;
-			if (_dragFromX == -1) {
-				_dragFromX = inE.getX();
-				_dragFromY = inE.getY();
-			}
-			_dragToX = inE.getX();
-			_dragToY = inE.getY();
-			repaint();
 		}
 	}
 

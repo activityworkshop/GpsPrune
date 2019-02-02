@@ -126,16 +126,6 @@ public class AltitudeRange
 				_previousValue = altValue;
 				_gotPreviousValue = true;
 			}
-
-//			if (!_empty)
-//			{
-//				if (altValue > _previousValue)
-//					_climb += (altValue - _previousValue);
-//				else
-//					_descent += (_previousValue - altValue);
-//			}
-//			_previousValue = altValue;
-//			_empty = false;
 		}
 	}
 

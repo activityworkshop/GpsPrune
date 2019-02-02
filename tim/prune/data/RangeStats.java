@@ -21,7 +21,7 @@ public class RangeStats
 	private boolean _timesIncomplete = false;
 	private boolean _timesOutOfSequence = false;
 	private double _totalDistanceRads = 0.0, _movingDistanceRads = 0.0;
-	// Note, maximum speed is not calculated here, use the SpeedData method instead
+	// Note, maximum speed is not calculated here, use the SpeedData class instead
 
 	private static final double STEEP_ANGLE = 0.15; // gradient steeper than 15% counts as steep
 
@@ -50,7 +50,8 @@ public class RangeStats
 	 */
 	private boolean calculateStats(Track inTrack, int inStartIndex, int inEndIndex)
 	{
-		_startIndex = inStartIndex;  _endIndex = inEndIndex;
+		_startIndex = inStartIndex;
+		_endIndex = inEndIndex;
 		_numPoints = inEndIndex - inStartIndex + 1;
 		_totalAltitudeRange  = new AltitudeRange();
 		_movingAltitudeRange = new AltitudeRange();
@@ -70,7 +71,9 @@ public class RangeStats
 			// ignore all waypoints
 			if (p.isWaypoint()) continue;
 
-			if (p.getSegmentStart()) {_numSegments++;}
+			if (p.getSegmentStart()) {
+				_numSegments++;
+			}
 			// Get the distance to the previous track point
 			if (prevPoint != null)
 			{
