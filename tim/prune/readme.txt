@@ -27,6 +27,31 @@ or other link can of course be made should you wish.
 To specify a language other than the default, use an additional parameter, eg:
    java -jar gpsprune_19.2.jar --lang=DE
 
+Maven
+=====
+
+To build GpsPrune, simply execute:
+   mvn clean install
+
+The resulting jar will be placed in target/ folder
+
+To run GpsPrune, simply execute:
+   mvn clean install exec:java
+
+The resources in pom.xml are changed (so they are not the maven common ones) because of the backward compatibility with the project.
+
+Eclipse
+=======
+
+You can import the project in Eclipse either by calling:
+   mvn eclipse:eclipse
+
+and then File > Import > Existing Projects into Workspace or using File > Import > Existing Maven Projects.
+
+Java 3D
+=======
+
+You can download Java 3D libraries from [Java Client Technology Downloads](https://www.oracle.com/technetwork/java/javasebusiness/downloads/java-archive-downloads-java-client-419417.html#java3d-1.5.1-oth-JPR) and then read the [Instructions for Installing Java 3D 1.5.1](https://download.java.net/media/java3d/builds/release/1.5.1/README-download.html).
 
 New with version 19.2
 =====================

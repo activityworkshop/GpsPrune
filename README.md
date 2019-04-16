@@ -5,3 +5,6 @@ It's a cross-platform java application, and its home page is at https://gpsprune
 
 Here on github you'll find all the sources from version 1 to the current version 19.2, and in the wiki at https://github.com/activityworkshop/GpsPrune/wiki there's the beginning of a translation effort for anyone to contribute.
 Currently just the Spanish translations are online, to see whether it's a workable idea or not.  Please help with this if you can.
+
+# Development
+Check `Eclipse` and `Maven` section in <https://github.com/activityworkshop/GpsPrune/blob/master/tim/prune/readme.txt>.
