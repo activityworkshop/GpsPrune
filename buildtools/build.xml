@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+
+<project name="Prune" default="dist" basedir=".">
+	<!-- This file was supplied by Denny from the OpenSuse build service project -->
+
+	<property file="build.properties" />
+	<property file="version.properties" />
+	<property name="src" value="." />
+	<property name="build" value="build" />
+	<property name="dist" value="dist" />
+
+	<!-- Init -->
+
+	<target name="init">
+		<mkdir dir="${build}" />
+		<mkdir dir="${dist}" />
+	</target>
+
+	<!-- Clean -->
+
+	<target name="clean" description="Clean build directory">
+
+		<delete dir="${build}" />
+		<delete dir="${dist}" />
+	</target>
+
+	<!-- Build -->
+
+	<target name="build" description="Build from source" depends="clean,init">
+		<javac srcdir="${src}" destdir="${build}" />
+	</target>
+
+	<!-- Distribution -->
+
+	<target name="dist" description="Create distributable jar from sources" depends="build,jar">
+		<fileset dir="${build}" casesensitive="yes">
+			<include name="**/*" />
+			<exclude name="**/*test*" />
+		</fileset>
+	</target>
+
+	<!-- Jar -->
+
+	<target name="jar" description="Create jar file">
+		<fileset dir="${build}" casesensitive="yes">
+			<include name="build/*" />
+			<include name="tim/prune/lang/*" />
+			<include name="license.txt" />
+			<include name="readme.txt" />
+			<include name="tim/prune/gui/images/*" />
+			<exclude name="tim/prune/test/*" />
+		</fileset>
+		<jar destfile="${dist}/${ant.project.name}-${version}.jar" basedir="${build}">
+			<!-- define MANIFEST.MF -->
+			<manifest>
+				<!-- Who is building this jar? -->
+				<attribute name="Built-By" value="${user.name}" />
+				<!-- Information about the program itself -->
+				<attribute name="Implementation-Vendor" value="ActivityWorkshop.net" />
+				<attribute name="Implementation-Title" value="${ant.project.name}" />
+				<attribute name="Implementation-Version" value="${version}" />
+				<!-- details -->
+				<attribute name="Main-Class" value="GpsPruner" />
+				<attribute name="Class-Path" value="${ant.project.name}.jar" />
+				<section name="AntDemo.class">
+					<attribute name="Sealed" value="false" />
+				</section>
+			</manifest>
+		</jar>
+	</target>
+</project>
