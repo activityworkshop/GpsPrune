@@ -1,0 +1,85 @@
+How to build GpsPrune
+=====================
+
+As with any Java program, there are several different ways to build the GpsPrune application from source, and which method you choose depends a lot on what other Java technologies you're familiar with.
+
+The most popular methods used to build GpsPrune are probably:
+
+ 1.  Using any Java IDE, and linking the project to your installed Java3d jars
+ 2.  Using a build script
+ 2.  Using ant
+ 3.  Using maven
+ 4.  Using gradle
+
+Note: in order not to pollute the root directory with every configuration file for each and every possible build tool, they have all been collected into the separate "buildtools" subdirectory.  For some of these methods (such as ant and maven), the corresponding configuration files should first be selected and moved up to the parent directory before running the tool from there.
+
+
+1.  Using an IDE
+================
+
+There are many IDEs to choose from, including Eclipse, IntelliJ, Netbeans and many others.  A list can be found at https://en.wikipedia.org/wiki/Java_IDEs#Java
+
+Most of these will have the ability to automatically build, run and debug the GpsPrune application, providing that they are told where the Java3d libraries can be found.  This can be done by editing the project dependencies to additionally include the external jar files.  Where these jar files can be found will vary from system to system, but on most linux systems they are in /usr/share/java/.
+
+
+2.  Using a build script
+========================
+
+Requirements: some kind of linux, unix or osx system; build.sh modified to your own paths
+
+First it is necessary to manually edit the build.sh script to add the paths to where your java3d libraries are installed.  This tells the javac tool where to find them for compilation.  An example is shown in build.sh using the -cp parameter to javac with a colon-separated list of jar files.
+
+To compile the code and build a jar file, run:
+   sh buildtools/build.sh
+
+It should be easily possible to modify the script to run on Windows systems, and any contributions in this direction would be gratefully received.
+
+
+3.  Using ant
+=============
+
+Requirements: ant already installed (eg apt-get install ant); build.xml and version.properties
+Firstly, these two configuration files ("build.xml" and "version.properties") should be moved from the "buildtools" directory to the parent directory.
+Secondly, the paths to the java3d jars should be checked and if necessary corrected in the build.xml file.  This is shown in the section beginning with <path id="j3dlibs">.
+Thirdly, from this directory where the configuration files (and the src directory) are located, run the ant tool:
+    ant
+
+This will firstly compile the java files from "src" into class files under "compile", and then bundle these together (along with the required resources) into a jar file under "dist".
+
+
+4.  Using Maven
+===============
+
+Requirements: Maven already installed (eg apt-get install maven); pom.xml
+Also an internet connection is required whenever a target is run for the first time.
+Note that as well as downloading a variety of plugins, Maven will also download its own versions of the java3d dependencies and store them in its own "repository" to use for the building step.
+
+Before you can use Maven, you need to move the file "pom.xml" from the "buildtools" directory into the parent directory.
+
+Then, to build GpsPrune, execute from this directory:
+   mvn clean install
+
+This doesn't actually install anything, but compiles the code and produces a jar file.  The resulting jar will be placed in the target/ folder.
+
+To rebuild, package and run GpsPrune, execute:
+   mvn clean install exec:java
+
+The resources in pom.xml are changed (so they are not the maven common ones) because of the backward compatibility with the project.
+
+4.1.  Using Maven to setup Eclipse
+==================================
+
+Requirements: Eclipse already installed (eg apt-get install eclipse-jdt); Maven setup as above
+You can import the project in Eclipse either by calling:
+   mvn eclipse:eclipse
+
+and then File > Import > Existing Projects into Workspace or using File > Import > Existing Maven Projects.
+
+
+5.  Using Gradle
+================
+
+TODO
+Requirements: Gradle already installed (eg apt-get install gradle); build.gradle file
+Any contributions to provide a suitable gradle file would be gratefully received.
+

@@ -1,13 +1,16 @@
 <?xml version="1.0"?>
 
-<project name="Prune" default="dist" basedir=".">
+<project name="GpsPrune" default="jar" basedir=".">
 	<!-- This file was supplied by Denny from the OpenSuse build service project -->
 
-	<property file="build.properties" />
 	<property file="version.properties" />
-	<property name="src" value="." />
+	<property name="src" value="src" />
 	<property name="build" value="build" />
 	<property name="dist" value="dist" />
+
+	<path id="j3dlibs">
+		<fileset dir="/usr/share/java/" includes="*.jar"/>
+	</path>
 
 	<!-- Init -->
 
@@ -27,28 +30,28 @@
 	<!-- Build -->
 
 	<target name="build" description="Build from source" depends="clean,init">
-		<javac srcdir="${src}" destdir="${build}" />
-	</target>
-
-	<!-- Distribution -->
-
-	<target name="dist" description="Create distributable jar from sources" depends="build,jar">
-		<fileset dir="${build}" casesensitive="yes">
-			<include name="**/*" />
-			<exclude name="**/*test*" />
-		</fileset>
+		<javac srcdir="${src}" destdir="${build}">
+			<classpath refid="j3dlibs" />
+		</javac>
 	</target>
 
 	<!-- Jar -->
 
-	<target name="jar" description="Create jar file">
+	<target name="jar" description="Create jar file" depends="build">
+		<copy todir="${build}/tim/prune/lang">
+			<fileset dir="${src}/tim/prune/lang"/>
+		</copy>
+		<copy todir="${build}/tim/prune/gui/images">
+			<fileset dir="${src}/tim/prune/gui/images"/>
+		</copy>
+		<copy todir="${build}/tim/prune/">
+			<fileset dir="${src}/tim/prune">
+				<include name="*.txt"/>
+			</fileset>
+		</copy>
+		<copy file="${src}/tim/prune/function/srtm/srtmtiles.dat" todir="${build}/tim/prune/function/srtm"/>
 		<fileset dir="${build}" casesensitive="yes">
 			<include name="build/*" />
-			<include name="tim/prune/lang/*" />
-			<include name="license.txt" />
-			<include name="readme.txt" />
-			<include name="tim/prune/gui/images/*" />
-			<exclude name="tim/prune/test/*" />
 		</fileset>
 		<jar destfile="${dist}/${ant.project.name}-${version}.jar" basedir="${build}">
 			<!-- define MANIFEST.MF -->
@@ -60,11 +63,8 @@
 				<attribute name="Implementation-Title" value="${ant.project.name}" />
 				<attribute name="Implementation-Version" value="${version}" />
 				<!-- details -->
-				<attribute name="Main-Class" value="GpsPruner" />
+				<attribute name="Main-Class" value="tim.prune.GpsPrune" />
 				<attribute name="Class-Path" value="${ant.project.name}.jar" />
-				<section name="AntDemo.class">
-					<attribute name="Sealed" value="false" />
-				</section>
 			</manifest>
 		</jar>
 	</target>
