@@ -36,7 +36,8 @@ public abstract class DisplayUtils
 		if (inNumSecs < 86400L) return "" + (inNumSecs / 60 / 60) + I18nManager.getText("display.range.time.hours")
 			+ " " + ((inNumSecs / 60) % 60) + I18nManager.getText("display.range.time.mins");
 		if (inNumSecs < 432000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days")
-			+ " " + (inNumSecs / 60 / 60) % 24 + I18nManager.getText("display.range.time.hours");
+			+ " " + (inNumSecs / 60 / 60) % 24 + I18nManager.getText("display.range.time.hours")
+			+ " " + ((inNumSecs / 60) % 60) + I18nManager.getText("display.range.time.mins");
 		if (inNumSecs < 86400000L) return "" + (inNumSecs / 86400L) + I18nManager.getText("display.range.time.days");
 		return "big";
 	}
