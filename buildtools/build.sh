@@ -1,3 +1,4 @@
+set -e
 # Build script
 # Version number
 PRUNENAME=gpsprune_19.2
