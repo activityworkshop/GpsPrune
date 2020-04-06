@@ -92,7 +92,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	WpIconDefinition _waypointIconDefinition = null;
 
 	/** Constant for click sensitivity when selecting nearest point */
-	private static final int CLICK_SENSITIVITY = 10;
+	private static final int CLICK_SENSITIVITY = 30;
 	/** Constant for pan distance from key presses */
 	private static final int PAN_DISTANCE = 20;
 	/** Constant for pan distance from autopan */

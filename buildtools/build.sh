@@ -1,3 +1,4 @@
+set -e
 # Build script
 set -e
 # Version number
