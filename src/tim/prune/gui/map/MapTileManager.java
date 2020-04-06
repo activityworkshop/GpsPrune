@@ -162,6 +162,7 @@ public class MapTileManager implements ImageObserver
 			tempCache = _tempCaches[inLayer]; // Should probably guard array indexes here
 			tileImage = tempCache.getTile(inX, inY);
 			if (tileImage != null) {
+				//System.out.println("Got tile from memory: " + inX + ", " + inY);
 				return tileImage;
 			}
 		}
@@ -195,7 +196,6 @@ public class MapTileManager implements ImageObserver
 			try
 			{
 				URL tileUrl = new URL(_mapSource.makeURL(inLayer, _zoom, inX, inY));
-				//System.out.println("Trying to fetch: " + tileUrl);
 				if (useDisk)
 				{
 					DiskTileCacher.saveTile(tileUrl, diskCachePath,

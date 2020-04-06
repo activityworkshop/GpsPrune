@@ -1,24 +1,11 @@
 package tim.prune.function.settings;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.util.Properties;
 
-import javax.swing.BorderFactory;
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
@@ -30,8 +17,6 @@ import tim.prune.config.Config;
  */
 public class SaveConfig extends GenericFunction
 {
-	private JDialog _dialog = null;
-
 	/**
 	 * Constructor
 	 * @param inApp application object for callback
@@ -51,86 +36,6 @@ public class SaveConfig extends GenericFunction
 	 */
 	public void begin()
 	{
-		// Make new dialog window (don't reuse it)
-		_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
-		_dialog.setLocationRelativeTo(_parentFrame);
-		_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		_dialog.getContentPane().add(makeDialogComponents());
-		_dialog.pack();
-		_dialog.setVisible(true);
-	}
-
-
-	/**
-	 * Create dialog components
-	 * @return Panel containing all gui elements in dialog
-	 */
-	private Component makeDialogComponents()
-	{
-		JPanel dialogPanel = new JPanel();
-		dialogPanel.setLayout(new BorderLayout());
-		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
-		JLabel descLabel = new JLabel(I18nManager.getText("dialog.saveconfig.desc"));
-		dialogPanel.add(descLabel, BorderLayout.NORTH);
-
-		// Grid panel in centre
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new GridLayout(0, 2, 15, 2));
-		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 15));
-		Properties conf = Config.getAllConfig();
-		Enumeration<Object> keys = conf.keys();
-		while (keys.hasMoreElements())
-		{
-			String key = keys.nextElement().toString();
-			String keyLabel = I18nManager.getText("dialog.saveconfig." + key);
-			if (!keyLabel.equals("dialog.saveconfig." + key))
-			{
-				mainPanel.add(new JLabel(keyLabel));
-				String val = conf.getProperty(key);
-				String tipText = val;
-				if (Config.isKeyBoolean(key)) {
-					val = Config.getConfigBoolean(key)?I18nManager.getText("dialog.about.yes"):I18nManager.getText("dialog.about.no");
-				}
-				else if (val != null && val.length() > 30) {
-					val = val.substring(0, 30) + " ...";
-				}
-				JLabel label = new JLabel(val);
-				label.setToolTipText(tipText);
-				mainPanel.add(label);
-			}
-		}
-		dialogPanel.add(mainPanel, BorderLayout.CENTER);
-
-		// button panel at bottom
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		});
-		buttonPanel.add(okButton);
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-				_dialog = null;
-			}
-		});
-		buttonPanel.add(cancelButton);
-		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-		return dialogPanel;
-	}
-
-
-	/**
-	 * Finish the dialog when OK pressed
-	 */
-	private void finish()
-	{
 		File configFile = Config.getConfigFile();
 		if (configFile == null) {configFile = Config.HOME_CONFIG_FILE;}
 		JFileChooser chooser = new JFileChooser(configFile.getAbsoluteFile().getParent());
@@ -141,8 +46,6 @@ public class SaveConfig extends GenericFunction
 			File saveFile = chooser.getSelectedFile();
 			saveConfig(saveFile);
 		}
-		_dialog.dispose();
-		_dialog = null;
 	}
 
 	/**
@@ -151,6 +54,24 @@ public class SaveConfig extends GenericFunction
 	public void silentSave()
 	{
 		saveConfig(Config.getConfigFile());
+	}
+
+	/**
+	 * Autosave has been turned on or off, so maybe need to save
+	 * @param inSaveOn true if autosave was switched on
+	 */
+	public void autosaveSwitched(boolean inSaveOn)
+	{
+		File configFile = Config.getConfigFile();
+		if (inSaveOn && configFile == null)
+		{
+			begin();
+		}
+		else if (!inSaveOn && configFile != null)
+		{
+			// TODO: Ask whether to save or not?
+			silentSave();
+		}
 	}
 
 	/**
@@ -165,7 +86,6 @@ public class SaveConfig extends GenericFunction
 			+ currBounds.width + "x" + currBounds.height;
 		Config.setConfigString(Config.KEY_WINDOW_BOUNDS, windowBounds);
 
-		// TODO: Check for null inSaveFile, then just call finish() ?
 		FileOutputStream outStream = null;
 		try
 		{
@@ -180,5 +100,7 @@ public class SaveConfig extends GenericFunction
 		finally {
 			try {outStream.close();} catch (Exception e) {}
 		}
+		// Remember where it was saved to
+		Config.setConfigFile(inSaveFile);
 	}
 }

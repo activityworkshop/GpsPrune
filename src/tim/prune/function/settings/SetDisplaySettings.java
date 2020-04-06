@@ -93,7 +93,10 @@ public class SetDisplaySettings extends GenericFunction
 	private JCheckBox _antialiasCheckbox = null;
 	private JComboBox<Integer> _wpIconCombobox = null;
 	private JRadioButton[] _sizeRadioButtons = null;
+	private JRadioButton[] _windowStyleRadios = null;
 	private JButton _okButton = null;
+
+	private static final String STYLEKEY_NIMBUS = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
 
 
 	/**
@@ -176,6 +179,25 @@ public class SetDisplaySettings extends GenericFunction
 		waypointsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		midPanel.add(waypointsPanel);
 
+		// Panel for window style
+		JPanel windowStylePanel = new JPanel();
+		windowStylePanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
+		);
+		windowStylePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
+		windowStylePanel.add(new JLabel(I18nManager.getText("dialog.displaysettings.windowstyle")));
+		windowStylePanel.add(Box.createHorizontalStrut(10));
+		ButtonGroup styleGroup = new ButtonGroup();
+		final String[] styleKeys = {"default", "nimbus"};
+		_windowStyleRadios = new JRadioButton[2];
+		for (int i=0; i<2; i++)
+		{
+			_windowStyleRadios[i] = new JRadioButton(
+				I18nManager.getText("dialog.displaysettings.windowstyle." + styleKeys[i]));
+			styleGroup.add(_windowStyleRadios[i]);
+			windowStylePanel.add(_windowStyleRadios[i]);
+		}
+		midPanel.add(windowStylePanel);
 		mainPanel.add(midPanel, BorderLayout.CENTER);
 
 		// button panel at bottom
@@ -221,6 +243,7 @@ public class SetDisplaySettings extends GenericFunction
 		_antialiasCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_ANTIALIAS));
 		_wpIconCombobox.setSelectedIndex(Config.getConfigInt(Config.KEY_WAYPOINT_ICONS));
 		selectIconSizeRadio(Config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE));
+		selectWindowStyleRadio(Config.getConfigString(Config.KEY_WINDOW_STYLE));
 		_dialog.setVisible(true);
 	}
 
@@ -238,6 +261,20 @@ public class SetDisplaySettings extends GenericFunction
 		{
 			_sizeRadioButtons[inValue].setSelected(true);
 		}
+	}
+
+	/**
+	 * Select the corresponding radio button according to the selected style
+	 * @param inValue style string saved in Config
+	 */
+	private void selectWindowStyleRadio(String inValue)
+	{
+		int selectedRadio = 0;
+		if (inValue != null && inValue.equals(STYLEKEY_NIMBUS))
+		{
+			selectedRadio = 1;
+		}
+		_windowStyleRadios[selectedRadio].setSelected(true);
 	}
 
 	/**
@@ -267,6 +304,8 @@ public class SetDisplaySettings extends GenericFunction
 		Config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
 		Config.setConfigInt(Config.KEY_WAYPOINT_ICONS, _wpIconCombobox.getSelectedIndex());
 		Config.setConfigInt(Config.KEY_WAYPOINT_ICON_SIZE, getSelectedIconSize());
+		final String styleString = (_windowStyleRadios[1].isSelected() ? STYLEKEY_NIMBUS : null);
+		Config.setConfigString(Config.KEY_WINDOW_STYLE, styleString);
 		// refresh display
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 		_dialog.dispose();

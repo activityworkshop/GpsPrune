@@ -26,7 +26,7 @@ import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
-import tim.prune.data.RangeStats;
+import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Track;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
@@ -100,7 +100,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 	{
 		_progress.setMaximum(100);
 		// Go through the track and collect the range stats for each sample
-		ArrayList<RangeStats> statsList = new ArrayList<RangeStats>(20);
+		ArrayList<RangeStatsWithGradients> statsList = new ArrayList<RangeStatsWithGradients>(20);
 		Track track = _app.getTrackInfo().getTrack();
 		final int numPoints = track.getNumPoints();
 		final int sampleSize = numPoints / 30;
@@ -108,15 +108,15 @@ public class LearnParameters extends GenericFunction implements Runnable
 		for (int i=0; i<30; i++)
 		{
 			int startIndex = i * sampleSize;
-			RangeStats stats = getRangeStats(track, startIndex, startIndex + sampleSize, prevStartIndex);
+			RangeStatsWithGradients stats = getRangeStats(track, startIndex, startIndex + sampleSize, prevStartIndex);
 			if (stats != null && stats.getMovingDistanceKilometres() > 1.0
 				&& !stats.getTimestampsIncomplete() && !stats.getTimestampsOutOfSequence()
 				&& stats.getTotalDurationInSeconds() > 100
-				&& stats.getStartIndex() > prevStartIndex)
+				&& startIndex > prevStartIndex)
 			{
 				// System.out.println("Got stats for " + stats.getStartIndex() + " to " + stats.getEndIndex());
 				statsList.add(stats);
-				prevStartIndex = stats.getStartIndex();
+				prevStartIndex = startIndex;
 			}
 			_progress.setValue(i);
 		}
@@ -246,7 +246,8 @@ public class LearnParameters extends GenericFunction implements Runnable
 	 * @param inPreviousStartIndex the previously used start index, or -1
 	 * @return range stats object or null if required information missing from this bit of the track
 	 */
-	private RangeStats getRangeStats(Track inTrack, int inStartIndex, int inEndIndex, int inPreviousStartIndex)
+	private RangeStatsWithGradients getRangeStats(Track inTrack, int inStartIndex,
+		int inEndIndex, int inPreviousStartIndex)
 	{
 		// Check parameters
 		if (inTrack == null || inStartIndex < 0 || inEndIndex <= inStartIndex || inStartIndex > inTrack.getNumPoints()) {
@@ -297,7 +298,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 
 		// Check moving distance
 		if (movingRads >= minimumRads) {
-			return new RangeStats(inTrack, start, endIndex);
+			return new RangeStatsWithGradients(inTrack, start, endIndex);
 		}
 		return null;
 	}
@@ -307,12 +308,12 @@ public class LearnParameters extends GenericFunction implements Runnable
 	 * @param inStatsList list of (non-null) RangeStats objects
 	 * @return A matrix with n rows and 5 columns
 	 */
-	private static Matrix buildAMatrix(ArrayList<RangeStats> inStatsList)
+	private static Matrix buildAMatrix(ArrayList<RangeStatsWithGradients> inStatsList)
 	{
 		final Unit METRES = UnitSetLibrary.UNITS_METRES;
 		Matrix result = new Matrix(inStatsList.size(), 5);
 		int row = 0;
-		for (RangeStats stats : inStatsList)
+		for (RangeStatsWithGradients stats : inStatsList)
 		{
 			result.setValue(row, 0, stats.getMovingDistanceKilometres());
 			result.setValue(row, 1, stats.getGentleAltitudeRange().getClimb(METRES));
@@ -329,11 +330,11 @@ public class LearnParameters extends GenericFunction implements Runnable
 	 * @param inStatsList list of (non-null) RangeStats objects
 	 * @return B matrix with single column of n rows
 	 */
-	private static Matrix buildBMatrix(ArrayList<RangeStats> inStatsList)
+	private static Matrix buildBMatrix(ArrayList<RangeStatsWithGradients> inStatsList)
 	{
 		Matrix result = new Matrix(inStatsList.size(), 1);
 		int row = 0;
-		for (RangeStats stats : inStatsList)
+		for (RangeStatsWithGradients stats : inStatsList)
 		{
 			result.setValue(row, 0, stats.getMovingDurationInSeconds() / 60.0); // convert seconds to minutes
 			row++;
@@ -372,12 +373,13 @@ public class LearnParameters extends GenericFunction implements Runnable
 	 * @param inRowToIgnore row index to ignore, or -1 to use them all
 	 * @return true if the samples look ok
 	 */
-	private static boolean isRangeSetSufficient(ArrayList<RangeStats> inRangeSet, int inRowToIgnore)
+	private static boolean isRangeSetSufficient(ArrayList<RangeStatsWithGradients> inRangeSet, int inRowToIgnore)
 	{
-		int numGC = 0, numSC = 0, numGD = 0, numSD = 0; // number of samples with gentle/steep climb/descent values > 0
+		// number of samples with gentle/steep climb/descent values > 0
+		int numGC = 0, numSC = 0, numGD = 0, numSD = 0;
 		final Unit METRES = UnitSetLibrary.UNITS_METRES;
 		int i = 0;
-		for (RangeStats stats : inRangeSet)
+		for (RangeStatsWithGradients stats : inRangeSet)
 		{
 			if (i != inRowToIgnore)
 			{
@@ -396,7 +398,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 	 * @param inStatsList list of stats
 	 * @return results in an object
 	 */
-	private MatrixResults reduceSamples(ArrayList<RangeStats> inStatsList)
+	private MatrixResults reduceSamples(ArrayList<RangeStatsWithGradients> inStatsList)
 	{
 		int statsIndexToRemove = -1;
 		Matrix answer = null;

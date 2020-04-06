@@ -37,9 +37,9 @@ public abstract class SingleParameterAlgorithm extends CompressionAlgorithm
 		_parameterField = new JTextField();
 		// Add listener to parameter field to re-run preview (and en/disable ok) when param changed
 		_parameterField.addKeyListener(new KeyListener() {
-			public void keyTyped(java.awt.event.KeyEvent arg0) {};
-			public void keyPressed(java.awt.event.KeyEvent arg0) {};
-			public void keyReleased(java.awt.event.KeyEvent arg0) {if (isActivated()) _listener.actionPerformed(null);};
+			public void keyTyped(java.awt.event.KeyEvent arg0) {}
+			public void keyPressed(java.awt.event.KeyEvent arg0) {}
+			public void keyReleased(java.awt.event.KeyEvent arg0) {if (isActivated()) _listener.actionPerformed(null);}
 		});
 	}
 

@@ -6,7 +6,7 @@ package tim.prune.load;
  */
 public class FileSplitter
 {
-	private FileCacher _cacher = null;
+	private ContentCacher _cacher = null;
 	private int _numRows = 0;
 	private int _numColumns = 0;
 	private boolean[] _columnStates = null;
@@ -15,9 +15,9 @@ public class FileSplitter
 
 	/**
 	 * Constructor
-	 * @param inCacher FileCacher object holding file contents
+	 * @param inCacher cacher object holding file contents
 	 */
-	public FileSplitter(FileCacher inCacher)
+	public FileSplitter(ContentCacher inCacher)
 	{
 		_cacher = inCacher;
 	}

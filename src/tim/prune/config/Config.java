@@ -55,6 +55,8 @@ public abstract class Config
 	public static final String KEY_POVRAY_FONT = "prune.povrayfont";
 	/** Key for the selected unit set */
 	public static final String KEY_UNITSET_KEY  = "prune.unitsetkey";
+	/** Key for the selected coordinate display format */
+	public static final String KEY_COORD_DISPLAY_FORMAT  = "prune.coorddisplay";
 	/** Key for index of map source */
 	public static final String KEY_MAPSOURCE_INDEX = "prune.mapsource";
 	/** Key for number of fixed map sources */
@@ -87,6 +89,8 @@ public abstract class Config
 	public static final String KEY_ANTIALIAS = "prune.antialias";
 	/** Key for kml track colour */
 	public static final String KEY_KML_TRACK_COLOUR = "prune.kmltrackcolour";
+	/** Key for window style (name of look-and-feel) */
+	public static final String KEY_WINDOW_STYLE = "prune.windowstyle";
 	/** Key for autosaving settings */
 	public static final String KEY_AUTOSAVE_SETTINGS = "prune.autosavesettings";
 	/** Key for recently used files */
@@ -170,6 +174,8 @@ public abstract class Config
 		_unitSet = UnitSetLibrary.getUnitSet(_configValues.getProperty(KEY_UNITSET_KEY));
 		// Adjust map source index if necessary
 		adjustSelectedMap();
+		// Reset coord display format
+		setConfigInt(KEY_COORD_DISPLAY_FORMAT, 0);
 
 		if (loadFailed) {
 			throw new ConfigException();
@@ -197,6 +203,7 @@ public abstract class Config
 		props.put(KEY_ANTIALIAS, "1"); // antialias on by default
 		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
+		props.put(KEY_COORD_DISPLAY_FORMAT, "0"); // original
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
 		props.put(KEY_TERRAIN_GRID_SIZE, "50");
 		props.put(KEY_ALTITUDE_TOLERANCE, "0"); // 0, all exact as before
@@ -244,6 +251,14 @@ public abstract class Config
 	public static File getConfigFile()
 	{
 		return _configFile;
+	}
+
+	/**
+	 * Set the file to which config was saved
+	 */
+	public static void setConfigFile(File inFile)
+	{
+		_configFile = inFile;
 	}
 
 	/**
@@ -379,7 +394,7 @@ public abstract class Config
 	public static void updatePointColourer(PointColourer inColourer)
 	{
 		_pointColourer = inColourer;
-		setConfigString(KEY_POINT_COLOURER, ColourerFactory.PointColourerToString(_pointColourer));
+		setConfigString(KEY_POINT_COLOURER, ColourerFactory.pointColourerToString(_pointColourer));
 	}
 
 	/**

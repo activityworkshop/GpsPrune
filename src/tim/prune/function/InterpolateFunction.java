@@ -122,7 +122,8 @@ public class InterpolateFunction extends SingleNumericParameterFunction
 		// Replace track with new points array
 		if (track.replaceContents(newPoints))
 		{
-			_app.completeFunction(undo, I18nManager.getText("confirm.interpolate"));
+			final String confirmMessage = I18nManager.getTextWithNumber("confirm.pointsadded", totalInserted);
+			_app.completeFunction(undo, confirmMessage);
 			// Alter selection
 			_app.getTrackInfo().getSelection().selectRange(startIndex, endIndex + totalInserted);
 		}

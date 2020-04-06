@@ -30,7 +30,8 @@ public class DuplicatePoint extends GenericFunction
 	public void begin()
 	{
 		DataPoint point = _app.getTrackInfo().getCurrentPoint();
-		if (point != null) {
+		if (point != null)
+		{
 			// Pass information back to App to complete function
 			_app.createPoint(point.clonePoint());
 		}

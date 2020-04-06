@@ -18,10 +18,10 @@ import java.util.ResourceBundle;
 public abstract class I18nManager
 {
 	/** Properties object into which all the texts are copied */
-	private static Properties LocalTexts = null;
+	private static Properties _localTexts = null;
 
 	/** External properties file for developer testing */
-	private static Properties ExternalPropsFile = null;
+	private static Properties _externalPropsFile = null;
 
 
 	/**
@@ -33,7 +33,7 @@ public abstract class I18nManager
 		final String BUNDLE_NAME = "tim.prune.lang.prune-texts";
 		final Locale BACKUP_LOCALE = new Locale("en", "GB");
 
-		LocalTexts = new Properties();
+		_localTexts = new Properties();
 		// Load English texts first to use as defaults
 		loadFromBundle(ResourceBundle.getBundle(BUNDLE_NAME, BACKUP_LOCALE));
 
@@ -65,7 +65,7 @@ public abstract class I18nManager
 		while (e.hasMoreElements())
 		{
 			String key = e.nextElement();
-			LocalTexts.setProperty(key, inBundle.getString(key));
+			_localTexts.setProperty(key, inBundle.getString(key));
 		}
 	}
 
@@ -81,9 +81,9 @@ public abstract class I18nManager
 		try
 		{
 			File file = new File(inFilename);
-			ExternalPropsFile = new Properties();
+			_externalPropsFile = new Properties();
 			fis = new FileInputStream(file);
-			ExternalPropsFile.load(fis);
+			_externalPropsFile.load(fis);
 			fileLoaded = true; // everything worked
 		}
 		catch (IOException ioe) {}
@@ -103,17 +103,17 @@ public abstract class I18nManager
 	public static String getText(String inKey)
 	{
 		// look in external props file if available
-		if (ExternalPropsFile != null)
+		if (_externalPropsFile != null)
 		{
-			String extText = ExternalPropsFile.getProperty(inKey);
+			String extText = _externalPropsFile.getProperty(inKey);
 			if (extText != null) return extText;
 		}
 		// look in texts if available
-		if (LocalTexts != null)
+		if (_localTexts != null)
 		{
 			try
 			{
-				String localText = LocalTexts.getProperty(inKey);
+				String localText = _localTexts.getProperty(inKey);
 				if (localText != null) return localText;
 			}
 			catch (MissingResourceException mre) {}

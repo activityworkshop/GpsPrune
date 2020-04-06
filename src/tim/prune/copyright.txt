@@ -1,4 +1,4 @@
-The source code of GpsPrune is copyright 2006-2018 activityworkshop.net
+The source code of GpsPrune is copyright 2006-2020 activityworkshop.net
 and is distributed under the terms of the Gnu GPL version 2.
 
 Portions of the package jpeg.drew were taken

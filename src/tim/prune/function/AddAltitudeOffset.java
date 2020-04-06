@@ -101,7 +101,7 @@ public class AddAltitudeOffset extends GenericFunction
 		MouseAdapter mouseListener = new MouseAdapter() {
 			public void mouseReleased(java.awt.event.MouseEvent arg0) {
 				_okButton.setEnabled(Math.abs(getOffset()) > 0.001);
-			};
+			}
 		};
 		_editField.addKeyListener(keyListener);
 		_editField.addMouseListener(mouseListener);

@@ -84,7 +84,7 @@ public class SearchOpenCachingDeFunction extends GenericDownloaderFunction
 	private void submitSearch(double inLat, double inLon)
 	{
 		// The only parameters are lat and long from the current point
-		String urlString = "http://opencaching.de/search.php?searchto=searchbydistance&showresult=1"
+		String urlString = "https://opencaching.de/search.php?searchto=searchbydistance&showresult=1"
 			+ "&output=XML&sort=bydistance&lat=" + inLat
 			+ "&lon=" + inLon + "&distance=" + MAX_DISTANCE + "&unit=km";
 		// Parse the returned XML with a special handler

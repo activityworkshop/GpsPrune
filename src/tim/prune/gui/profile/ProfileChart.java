@@ -61,7 +61,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			if (!other.hasValue) {return;}
 			if (!hasValue) {
 				index = other.index;
-				hasValue = other.hasValue;
+				hasValue = true;
 			}
 			else {
 				index = Math.min(index, other.index);
@@ -73,7 +73,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			if (!other.hasValue) {return;}
 			if (!hasValue) {
 				index = other.index;
-				hasValue = other.hasValue;
+				hasValue = true;
 			}
 			else {
 				index = Math.max(index, other.index);
@@ -239,7 +239,8 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		int selectedPoint = _trackInfo.getSelection().getCurrentPointIndex();
 		// selection start, end
 		int selectionStart = -1, selectionEnd = -1;
-		if (_trackInfo.getSelection().hasRangeSelected()) {
+		if (_trackInfo.getSelection().hasRangeSelected())
+		{
 			selectionStart = _trackInfo.getSelection().getStart();
 			selectionEnd = _trackInfo.getSelection().getEnd();
 		}
@@ -289,12 +290,14 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 						y = (int) (yScaleFactor * (value - minValue));
 						g.fillRect(BORDER_WIDTH+x, height-BORDER_WIDTH - y, barWidth, y);
 					}
-					else if (value >= 0.0) {
+					else if (value >= 0.0)
+					{
 						// Bar upwards from the zero line
 						y = height-BORDER_WIDTH - (int) (yScaleFactor * (value - minValue));
 						g.fillRect(BORDER_WIDTH+x, y, barWidth, zeroY - y);
 					}
-					else {
+					else
+					{
 						// Bar downwards from the zero line
 						int barHeight = (int) (yScaleFactor * value);
 						g.fillRect(BORDER_WIDTH+x, zeroY, barWidth, -barHeight);
@@ -317,7 +320,8 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 				}
 			}
 		}
-		catch (NullPointerException npe) { // ignore, probably due to data being changed
+		catch (NullPointerException npe)
+		{ // ignore, probably due to data being changed
 		}
 		// Draw numbers on top of the graph to mark scale
 		if (lineScale >= 1)
@@ -458,21 +462,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		if ((inUpdateType & DATA_ADDED_OR_REMOVED) > 0) {
 			makePopup();
 		}
-		if (inUpdateType == SELECTION_CHANGED) {
-			triggerPartialRepaint();
-		}
-		else
-		{
-			repaint();
-		}
-	}
 
-	/**
-	 * For performance reasons, only repaint the part of the graphics affected by
-	 * the change in selection
-	 */
-	private void triggerPartialRepaint()
-	{
 		ChartParameters currentParameters = new ChartParameters();
 		currentParameters.selectedPoint.set(_trackInfo.getSelection().getCurrentPointIndex());
 		if (_trackInfo.getSelection().hasRangeSelected())
@@ -480,7 +470,24 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			currentParameters.rangeStart.set(_trackInfo.getSelection().getStart());
 			currentParameters.rangeEnd.set(_trackInfo.getSelection().getEnd());
 		}
+		if (inUpdateType == SELECTION_CHANGED)
+		{
+			triggerPartialRepaint(currentParameters);
+		}
+		else
+		{
+			repaint();
+		}
+		_previousParameters = currentParameters;
+	}
 
+	/**
+	 * For performance reasons, only repaint the part of the graphics affected by
+	 * the change in selection
+	 * @param currentParameters - contains the current selected point, range
+	 */
+	private void triggerPartialRepaint(ChartParameters currentParameters)
+	{
 		int minPointIndex = currentParameters.getMinChangedIndex(_previousParameters);
 		minPointIndex = Math.max(minPointIndex, 0);
 		int maxPointIndex = currentParameters.getMaxChangedIndex(_previousParameters);
@@ -488,10 +495,10 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			maxPointIndex = _trackInfo.getTrack().getNumPoints() - 1;
 		}
 		// System.out.println("Redraw from index: " + minPointIndex + " to " + maxPointIndex);
-		_previousParameters = currentParameters;
-		final int region_x = (int) (_xScaleFactor * minPointIndex) + BORDER_WIDTH;
-		final int region_width = (int) (_xScaleFactor * (maxPointIndex-minPointIndex+2)) + 2;
+		final int region_x = (int) (_xScaleFactor * minPointIndex) + BORDER_WIDTH - 2;
+		final int region_width = (int) (_xScaleFactor * (maxPointIndex-minPointIndex+2)) + 6;
 		repaint(region_x, 0, region_width, getHeight());
+		// System.out.println("Partial repaint, x=" + region_x + ", region_width=" + region_width);
 	}
 
 	/**
@@ -520,7 +527,8 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 				}
 			}
 		}
-		else {
+		else
+		{
 			// right clicks
 			_popup.show(this, e.getX(), e.getY());
 		}
@@ -538,12 +546,14 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 				_data = new AltitudeData(_track);
 			}
 		}
-		else if (inField == Field.SPEED) {
+		else if (inField == Field.SPEED)
+		{
 			if (!(_data instanceof SpeedData)) {
 				_data = new SpeedData(_track);
 			}
 		}
-		else if (inField == Field.VERTICAL_SPEED) {
+		else if (inField == Field.VERTICAL_SPEED)
+		{
 			if (!(_data instanceof VerticalSpeedData)) {
 				_data = new VerticalSpeedData(_track);
 			}

@@ -119,7 +119,7 @@ public class RearrangeWaypointsFunction extends RearrangeFunction
 		// Exit if the data is already in the specified order
 		final boolean wpsToStart = (inRearrangeOption == Rearrange.TO_START);
 		final boolean doSort = (inSortOption != SortMode.DONT_SORT);
-		if (numWaypoints == 0 || numNonWaypoints == 0
+		if (numWaypoints == 0
 			|| (wpsToStart && !wayAfterNon && nonAfterWay && !doSort)
 			|| (!wpsToStart && wayAfterNon && !nonAfterWay && !doSort)
 			|| inRearrangeOption == Rearrange.TO_NEAREST)

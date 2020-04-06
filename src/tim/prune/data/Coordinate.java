@@ -475,4 +475,22 @@ public abstract class Coordinate
 		return "Coord: " + _cardinal + " (" + _degrees + ") (" + _minutes + ") (" + _seconds + "."
 			+ formatFraction(_fracs, _fracDenom) + ") = " + _asDouble;
 	}
+
+	/**
+	 * From a saved coordinate format display value, get the corresponding value to use
+	 * @param inValue value from config
+	 * @return coordinate format as int
+	 */
+	public static int getCoordinateFormatForDisplay(int inValue)
+	{
+		switch(inValue)
+		{
+			case FORMAT_DEG:
+			case FORMAT_DEG_MIN:
+			case FORMAT_DEG_MIN_SEC:
+				return inValue;
+			default:
+				return FORMAT_NONE;
+		}
+	}
 }

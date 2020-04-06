@@ -21,10 +21,13 @@ public class TileDownloader implements Runnable
 	private int _layer = 0;
 	private int _x = 0, _y = 0;
 	private int _zoom = 0;
+
 	/** Hashset of all blocked / 404 tiles to avoid requesting them again */
 	private static final HashSet<String> BLOCKED_URLS = new HashSet<String>();
 	/** Hashset of all currently loading tiles to avoid requesting them again */
 	private static final HashSet<String> LOADING_URLS = new HashSet<String>();
+	/** Flag to maintain whether connection is active or not */
+	private static boolean CONNECTION_ACTIVE = true;
 
 
 	/**
@@ -67,6 +70,9 @@ public class TileDownloader implements Runnable
 				LOADING_URLS.add(url);
 				new Thread(new TileDownloader(inManager, inUrl, inLayer, inX, inY, inZoom)).start();
 			}
+			else {
+				System.out.println("Already blocked: " + url);
+			}
 		}
 	}
 
@@ -98,6 +104,17 @@ public class TileDownloader implements Runnable
 
 				// Pass back to manager so it can be stored in its memory cache
 				_manager.notifyImageLoaded(tile, _layer, _x, _y, _zoom);
+
+				if (!CONNECTION_ACTIVE)
+				{
+					// We've just come back online, so forget which tiles gave 404 before
+					System.out.println("Deleting blocked urls, currently holds " + BLOCKED_URLS.size());
+					synchronized(this.getClass())
+					{
+						BLOCKED_URLS.clear();
+					}
+					CONNECTION_ACTIVE = true;
+				}
 			}
 		}
 		catch (IOException e)
@@ -108,6 +125,7 @@ public class TileDownloader implements Runnable
 				BLOCKED_URLS.add(_url.toString());
 			}
 			try {in.close();} catch (Exception e2) {}
+			CONNECTION_ACTIVE = false;	// lost connection?
 		}
 		LOADING_URLS.remove(_url.toString());
 	}

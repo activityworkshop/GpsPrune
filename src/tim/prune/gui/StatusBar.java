@@ -59,7 +59,8 @@ public class StatusBar extends JPanel implements Runnable, DataSubscriber
 		_label.setText(" " + inMessage);
 		_timer = System.currentTimeMillis() + DEFAULT_CLEAR_INTERVAL;
 		// If necessary, start a new checker thread
-		if (_thread == null || !_thread.isAlive()) {
+		if (_thread == null || !_thread.isAlive())
+		{
 			_thread = new Thread(this);
 			_thread.start();
 		}

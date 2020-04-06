@@ -126,7 +126,7 @@ public class AddTimeOffset extends GenericFunction
 		MouseAdapter mouseListener = new MouseAdapter() {
 			public void mouseReleased(java.awt.event.MouseEvent arg0) {
 				_okButton.setEnabled(getOffsetSecs() != 0L);
-			};
+			}
 		};
 		_dayField.addKeyListener(keyListener);
 		_hourField.addKeyListener(keyListener);

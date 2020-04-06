@@ -51,7 +51,9 @@ public class FileInfo
 	 */
 	public void removeSource()
 	{
-		_sources.remove(_sources.size()-1);
+		if (!_sources.isEmpty()) {
+			_sources.remove(_sources.size()-1);
+		}
 	}
 
 	/**

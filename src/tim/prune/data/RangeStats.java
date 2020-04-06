@@ -1,163 +1,133 @@
 package tim.prune.data;
 
-import tim.prune.config.Config;
-
 /**
- * Class to do calculations of range statistics such as distances, durations,
- * speeds, gradients etc, and to hold the results of the calculations.
- * Used by FullRangeDetails as well as the EstimateTime functions.
+ * Class to do basic calculations of range statistics such as distances, durations,
+ * and altitude ranges, and to hold the results of the calculations.
  */
 public class RangeStats
 {
-	// MAYBE: Split into basic stats (quick to calculate, for detailsdisplay) and full stats (for other two)
-	private boolean _valid = false;
-	private int     _numPoints   = 0;
-	private int     _startIndex = 0, _endIndex = 0;
-	private int     _numSegments = 0;
-	private AltitudeRange _totalAltitudeRange = null, _movingAltitudeRange = null;
-	private AltitudeRange _gentleAltitudeRange = null, _steepAltitudeRange = null;
+	private int _numPoints   = 0;
+	private int _numSegments = 0;
+	private boolean _foundTrackPoint = false;
+	protected AltitudeRange _totalAltitudeRange = new AltitudeRange();
+	protected AltitudeRange _movingAltitudeRange = new AltitudeRange();
 	private Timestamp _earliestTimestamp = null, _latestTimestamp = null;
 	private long _movingMilliseconds = 0L;
 	private boolean _timesIncomplete = false;
 	private boolean _timesOutOfSequence = false;
-	private double _totalDistanceRads = 0.0, _movingDistanceRads = 0.0;
-	// Note, maximum speed is not calculated here, use the SpeedData class instead
+	protected double _totalDistanceRads = 0.0, _movingDistanceRads = 0.0;
+	protected DataPoint _prevPoint = null;
 
-	private static final double STEEP_ANGLE = 0.15; // gradient steeper than 15% counts as steep
 
+	/** Constructor */
+	public RangeStats()
+	{}
 
 	/**
-	 * Constructor
-	 * @param inTrack track to compile data for
-	 * @param inStartIndex start index of range to examine
-	 * @param inEndIndex end index (inclusive) of range to examine
+	 * Constructor giving Track
+	 * @param inTrack track object to calculate with
 	 */
 	public RangeStats(Track inTrack, int inStartIndex, int inEndIndex)
 	{
-		if (inTrack != null && inStartIndex >= 0 && inEndIndex > inStartIndex
-			&& inEndIndex < inTrack.getNumPoints())
+		populateFromTrack(inTrack, inStartIndex, inEndIndex);
+	}
+
+	/**
+	 * Add the specified points from the given track to the calculations
+	 * @param inTrack track object
+	 * @param inStartIndex start index (inclusive)
+	 * @param inEndIndex end index (inclusive)
+	 */
+	protected void populateFromTrack(Track inTrack, int inStartIndex, int inEndIndex)
+	{
+		for (int i=inStartIndex; i<=inEndIndex; i++)
 		{
-			_valid = calculateStats(inTrack, inStartIndex, inEndIndex);
+			addPoint(inTrack.getPoint(i));
 		}
 	}
 
 	/**
-	 * Calculate the statistics and populate the member variables with the results
-	 * @param inTrack track
-	 * @param inStartIndex start index of range
-	 * @param inEndIndex end index (inclusive) of range
-	 * @return true on success
+	 * @param inPoint point to add to the calculations
 	 */
-	private boolean calculateStats(Track inTrack, int inStartIndex, int inEndIndex)
+	public void addPoint(DataPoint inPoint)
 	{
-		_startIndex = inStartIndex;
-		_endIndex = inEndIndex;
-		_numPoints = inEndIndex - inStartIndex + 1;
-		_totalAltitudeRange  = new AltitudeRange();
-		_movingAltitudeRange = new AltitudeRange();
-		_gentleAltitudeRange = new AltitudeRange();
-		_steepAltitudeRange  = new AltitudeRange();
-		DataPoint prevPoint = null;
-		Altitude prevAltitude = null;
-		_totalDistanceRads = _movingDistanceRads = 0.0;
-		double radsSinceLastAltitude = 0.0;
-		_movingMilliseconds = 0L;
-
-		// Loop over the points in the range
-		for (int i=inStartIndex; i<= inEndIndex; i++)
+		if (inPoint == null)
 		{
-			DataPoint p = inTrack.getPoint(i);
-			if (p == null) return false;
-			// ignore all waypoints
-			if (p.isWaypoint()) continue;
-
-			if (p.getSegmentStart()) {
-				_numSegments++;
-			}
-			// Get the distance to the previous track point
-			if (prevPoint != null)
-			{
-				double rads = DataPoint.calculateRadiansBetween(prevPoint, p);
-				_totalDistanceRads += rads;
-				if (!p.getSegmentStart()) {
-					_movingDistanceRads += rads;
-				}
-				// Keep track of rads since last point with an altitude
-				radsSinceLastAltitude += rads;
-			}
-			// Get the altitude difference to the previous track point
-			if (p.hasAltitude())
-			{
-				Altitude altitude = p.getAltitude();
-				_totalAltitudeRange.addValue(altitude);
-				if (p.getSegmentStart()) {
-					_movingAltitudeRange.ignoreValue(altitude);
-				}
-				else
-				{
-					_movingAltitudeRange.addValue(altitude);
-					if (prevAltitude != null)
-					{
-						// Work out gradient, see whether to ignore/add to gentle or steep
-						double heightDiff = altitude.getMetricValue() - prevAltitude.getMetricValue();
-						double metricDist = Distance.convertRadiansToDistance(radsSinceLastAltitude, UnitSetLibrary.UNITS_METRES);
-						final boolean isSteep = metricDist < 0.001 || (Math.abs(heightDiff / metricDist) > STEEP_ANGLE);
-						if (isSteep) {
-							_steepAltitudeRange.ignoreValue(prevAltitude);
-							_steepAltitudeRange.addValue(altitude);
-						}
-						else {
-							_gentleAltitudeRange.ignoreValue(prevAltitude);
-							_gentleAltitudeRange.addValue(altitude);
-						}
-					}
-				}
-				prevAltitude = altitude;
-				radsSinceLastAltitude = 0.0;
-			}
-
-			if (p.hasTimestamp())
-			{
-				if (_earliestTimestamp == null || p.getTimestamp().isBefore(_earliestTimestamp)) {
-					_earliestTimestamp = p.getTimestamp();
-				}
-				if (_latestTimestamp == null || p.getTimestamp().isAfter(_latestTimestamp)) {
-					_latestTimestamp = p.getTimestamp();
-				}
-				// Work out duration without segment gaps
-				if (!p.getSegmentStart() && prevPoint != null && prevPoint.hasTimestamp())
-				{
-					long millisLater = p.getTimestamp().getMillisecondsSince(prevPoint.getTimestamp());
-					if (millisLater < 0) {_timesOutOfSequence = true;}
-					else {
-						_movingMilliseconds += millisLater;
-					}
-				}
-			}
-			else {
-				_timesIncomplete = true;
-			}
-
-			prevPoint = p;
+			return;
 		}
-		return true;
+		_numPoints++;
+		// ignore all waypoints
+		if (inPoint.isWaypoint()) {
+			return;
+		}
+		if (inPoint.getSegmentStart() || !_foundTrackPoint) {
+			_numSegments++;
+		}
+		_foundTrackPoint = true;
+		// Get the distance to the previous track point
+		if (_prevPoint != null)
+		{
+			double rads = DataPoint.calculateRadiansBetween(_prevPoint, inPoint);
+			_totalDistanceRads += rads;
+			if (!inPoint.getSegmentStart()) {
+				_movingDistanceRads += rads;
+			}
+		}
+
+		// timestamps
+		if (inPoint.hasTimestamp())
+		{
+			Timestamp currTstamp = inPoint.getTimestamp();
+			if (_earliestTimestamp == null || currTstamp.isBefore(_earliestTimestamp)) {
+				_earliestTimestamp = currTstamp;
+			}
+			if (_latestTimestamp == null || currTstamp.isAfter(_latestTimestamp)) {
+				_latestTimestamp = currTstamp;
+			}
+			// Work out duration without segment gaps
+			if (!inPoint.getSegmentStart() && _prevPoint != null && _prevPoint.hasTimestamp())
+			{
+				long millisLater = currTstamp.getMillisecondsSince(_prevPoint.getTimestamp());
+				if (millisLater < 0) {
+					_timesOutOfSequence = true;
+				}
+				else {
+					_movingMilliseconds += millisLater;
+				}
+			}
+		}
+		else {
+			_timesIncomplete = true;
+		}
+
+		// altitudes
+		if (inPoint.hasAltitude())
+		{
+			Altitude altitude = inPoint.getAltitude();
+			_totalAltitudeRange.addValue(altitude);
+			if (inPoint.getSegmentStart()) {
+				_movingAltitudeRange.ignoreValue(altitude);
+			}
+			else
+			{
+				_movingAltitudeRange.addValue(altitude);
+			}
+		}
+
+		// allow child classes to do additional calculations
+		doFurtherCalculations(inPoint);
+
+		_prevPoint = inPoint;
 	}
 
-
-	/** @return true if results are valid */
-	public boolean isValid() {
-		return _valid;
+	/**
+	 * Hook for subclasses to do what they want in addition
+	 * @param inPoint incoming point
+	 */
+	protected void doFurtherCalculations(DataPoint inPoint)
+	{
 	}
 
-	/** @return start index of range */
-	public int getStartIndex() {
-		return _startIndex;
-	}
-
-	/** @return end index of range */
-	public int getEndIndex() {
-		return _endIndex;
-	}
 
 	/** @return number of points in range */
 	public int getNumPoints() {
@@ -177,16 +147,6 @@ public class RangeStats
 	/** @return altitude range of range just within segments */
 	public AltitudeRange getMovingAltitudeRange() {
 		return _movingAltitudeRange;
-	}
-
-	/** @return altitude range of range just considering low gradient bits */
-	public AltitudeRange getGentleAltitudeRange() {
-		return _gentleAltitudeRange;
-	}
-
-	/** @return altitude range of range just considering high gradient bits */
-	public AltitudeRange getSteepAltitudeRange() {
-		return _steepAltitudeRange;
 	}
 
 	/** @return the earliest timestamp found */
@@ -239,42 +199,26 @@ public class RangeStats
 		return Distance.convertRadiansToDistance(_movingDistanceRads, UnitSetLibrary.UNITS_KILOMETRES);
 	}
 
-	/** @return the total gradient in % (including segment gaps) */
-	public double getTotalGradient()
-	{
-		double dist = Distance.convertRadiansToDistance(_totalDistanceRads, UnitSetLibrary.UNITS_METRES);
-		if (dist > 0.0 && _totalAltitudeRange.hasRange()) {
-			return _totalAltitudeRange.getMetricHeightDiff() / dist * 100.0;
-		}
-		return 0.0;
-	}
-
-	/** @return the moving gradient in % (ignoring segment gaps) */
-	public double getMovingGradient()
-	{
-		double dist = Distance.convertRadiansToDistance(_movingDistanceRads, UnitSetLibrary.UNITS_METRES);
-		if (dist > 0.0 && _movingAltitudeRange.hasRange()) {
-			return _movingAltitudeRange.getMetricHeightDiff() / dist * 100.0;
-		}
-		return 0.0;
-	}
-
-	/** @return the total vertical speed (including segment gaps) in current vspeed units */
+	/**
+	 * @return the total vertical speed (including segment gaps) in metric units
+	 */
 	public double getTotalVerticalSpeed()
 	{
 		long time = getTotalDurationInSeconds();
 		if (time > 0 && _totalAltitudeRange.hasRange()) {
-			return _totalAltitudeRange.getMetricHeightDiff() / time * Config.getUnitSet().getVerticalSpeedUnit().getMultFactorFromStd();
+			return _totalAltitudeRange.getMetricHeightDiff() / time;
 		}
 		return 0.0;
 	}
 
-	/** @return the moving vertical speed (ignoring segment gaps) in current vspeed units */
+	/**
+	 * @return the moving vertical speed (ignoring segment gaps) in metric units
+	 */
 	public double getMovingVerticalSpeed()
 	{
 		long time = getMovingDurationInSeconds();
 		if (time > 0 && _movingAltitudeRange.hasRange()) {
-			return _movingAltitudeRange.getMetricHeightDiff() / time * Config.getUnitSet().getVerticalSpeedUnit().getMultFactorFromStd();
+			return _movingAltitudeRange.getMetricHeightDiff() / time;
 		}
 		return 0.0;
 	}

@@ -95,7 +95,7 @@ public class SetPathsFunction extends GenericFunction
 		_installedLabels = new JLabel[NUM_KEYS];
 		for (int i=0; i<NUM_KEYS; i++)
 		{
-			JLabel label = new JLabel(I18nManager.getText("dialog.saveconfig.prune." + LABEL_KEYS[i] + "path"));
+			JLabel label = new JLabel(I18nManager.getText("dialog.paths.prune." + LABEL_KEYS[i] + "path"));
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			mainPanel.add(label);
 			String configVal = Config.getConfigString(CONFIG_KEYS[i]);

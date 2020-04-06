@@ -130,7 +130,7 @@ public abstract class ColourerFactory
 	 * @param inColourer PointColourer object
 	 * @return string describing object (for later re-creation) or null
 	 */
-	public static String PointColourerToString(PointColourer inColourer)
+	public static String pointColourerToString(PointColourer inColourer)
 	{
 		if (inColourer != null)
 		{

@@ -11,14 +11,11 @@ public class Selection
 {
 	private Track _track = null;
 	private int _currentPoint = -1;
-	private boolean _valid = false;
 	private int _prevNumPoints = 0;
 	private int _startIndex = -1, _endIndex = -1;
 	private int _currentPhotoIndex = -1;
 	private int _currentAudioIndex = -1;
-	private AltitudeRange _altitudeRange = null;
-	private long _movingMilliseconds = 0L;
-	private double _angMovingDistance = -1.0;
+	private RangeStats _rangeStats = null;
 
 
 	/**
@@ -36,7 +33,7 @@ public class Selection
 	 */
 	public void markInvalid()
 	{
-		_valid = false;
+		_rangeStats = null;
 	}
 
 
@@ -63,6 +60,9 @@ public class Selection
 	 */
 	private void recalculate()
 	{
+		if (_rangeStats != null) {
+			return;
+		}
 		final int numPoints = _track.getNumPoints();
 		// Recheck if the number of points has changed
 		if (numPoints != _prevNumPoints)
@@ -72,52 +72,12 @@ public class Selection
 		}
 		if (numPoints > 0 && hasRangeSelected())
 		{
-			_altitudeRange = new AltitudeRange();
-			Altitude altitude = null;
-			Timestamp time = null, previousTime = null;
-			DataPoint lastPoint = null, currPoint = null;
-			_angMovingDistance = 0.0;
-			_movingMilliseconds = 0L;
-			// Loop over points in selection
-			for (int i=_startIndex; i<=_endIndex; i++)
-			{
-				currPoint = _track.getPoint(i);
-				altitude = currPoint.getAltitude();
-				// Ignore waypoints in altitude calculations
-				if (!currPoint.isWaypoint() && altitude.isValid())
-				{
-					if (currPoint.getSegmentStart()) {
-						_altitudeRange.ignoreValue(altitude);
-					}
-					else {
-						_altitudeRange.addValue(altitude);
-					}
-				}
-				// Compare timestamps within the segments
-				time = currPoint.getTimestamp();
-				if (time.isValid())
-				{
-					// add moving time
-					if (!currPoint.getSegmentStart() && previousTime != null && time.isAfter(previousTime)) {
-						_movingMilliseconds += time.getMillisecondsSince(previousTime);
-					}
-					previousTime = time;
-				}
-				// Calculate distances, again ignoring waypoints
-				if (!currPoint.isWaypoint())
-				{
-					if (lastPoint != null)
-					{
-						double radians = DataPoint.calculateRadiansBetween(lastPoint, currPoint);
-						if (!currPoint.getSegmentStart()) {
-							_angMovingDistance += radians;
-						}
-					}
-					lastPoint = currPoint;
-				}
-			}
+			_rangeStats = new RangeStats(_track, _startIndex, _endIndex);
 		}
-		_valid = true;
+		else
+		{
+			_rangeStats = new RangeStats();
+		}
 	}
 
 
@@ -126,7 +86,7 @@ public class Selection
 	 */
 	public int getStart()
 	{
-		if (!_valid) recalculate();
+		recalculate();
 		return _startIndex;
 	}
 
@@ -136,7 +96,7 @@ public class Selection
 	 */
 	public int getEnd()
 	{
-		if (!_valid) recalculate();
+		recalculate();
 		return _endIndex;
 	}
 
@@ -145,8 +105,8 @@ public class Selection
 	 */
 	public AltitudeRange getAltitudeRange()
 	{
-		if (!_valid) recalculate();
-		return _altitudeRange;
+		recalculate();
+		return _rangeStats.getTotalAltitudeRange();
 	}
 
 
@@ -155,8 +115,8 @@ public class Selection
 	 */
 	public long getMovingSeconds()
 	{
-		if (!_valid) recalculate();
-		return _movingMilliseconds / 1000L;
+		recalculate();
+		return _rangeStats.getMovingDurationInSeconds();
 	}
 
 	/**
@@ -164,7 +124,7 @@ public class Selection
 	 */
 	public double getMovingDistance()
 	{
-		return Distance.convertRadiansToDistance(_angMovingDistance);
+		return _rangeStats.getMovingDistance();
 	}
 
 	/**
@@ -176,6 +136,7 @@ public class Selection
 		selectRange(-1, -1);
 		_currentPhotoIndex = -1;
 		_currentAudioIndex = -1;
+		markInvalid();
 		check();
 	}
 
@@ -276,6 +237,7 @@ public class Selection
 		// Clear selected range
 		_startIndex = _endIndex = -1;
 		// Check for consistency and fire update
+		markInvalid();
 		check();
 	}
 
@@ -355,6 +317,7 @@ public class Selection
 		{
 			// track is empty, clear selections
 			_currentPoint = _startIndex = _endIndex = -1;
+			markInvalid();
 		}
 		UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 	}

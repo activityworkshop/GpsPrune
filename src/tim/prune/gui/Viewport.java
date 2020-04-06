@@ -7,7 +7,7 @@ import tim.prune.gui.map.MapUtils;
 /**
  * Class to provide access to current viewport
  * The point of this class is to decouple the view from the MapCanvas object
- * so that when the GetGpsies function needs to know the area currently viewed, it doesn't
+ * so that when a search function needs to know the area currently viewed, it doesn't
  * need to have a direct connection to the MapCanvas.  Instead it asks the App for the viewport,
  * which is then able to get the map position from the MapCanvas.
  * I'm still not sure whether this is ugly or not, but it's more efficient than constantly listening.

@@ -22,7 +22,7 @@ public abstract class Timestamp
 	protected static final DateFormat ISO_8601_FORMAT_WITH_MILLIS
 		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-	private static boolean MillisAddedToTimeFormat = false;
+	private static boolean _millisAddedToTimeFormat = false;
 
 
 	/** Possible formats for parsing and displaying timestamps */
@@ -138,7 +138,7 @@ public abstract class Timestamp
 	{
 		if (!isValid()) return "";
 		// Maybe we should add milliseconds to this format?
-		if (hasMilliseconds() && !MillisAddedToTimeFormat)
+		if (hasMilliseconds() && !_millisAddedToTimeFormat)
 		{
 			try
 			{
@@ -147,7 +147,7 @@ public abstract class Timestamp
 				if (pattern.indexOf("ss") > 0 && pattern.indexOf("SS") < 0)
 				{
 					sdf.applyPattern(pattern.replaceFirst("s+", "$0.SSS"));
-					MillisAddedToTimeFormat = true;
+					_millisAddedToTimeFormat = true;
 				}
 			}
 			catch (ClassCastException cce) {}

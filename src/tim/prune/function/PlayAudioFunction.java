@@ -1,11 +1,11 @@
 package tim.prune.function;
 
+import java.awt.Desktop;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -146,17 +146,10 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 		{
 			try
 			{
-				Class<?> d = Class.forName("java.awt.Desktop");
-				d.getDeclaredMethod("open", new Class[] {File.class}).invoke(
-					d.getDeclaredMethod("getDesktop").invoke(null), new Object[] {inFile});
-				//above code mimics: Desktop.getDesktop().open(audioFile);
+				Desktop.getDesktop().open(inFile);
 				played = true;
 			}
-			catch (InvocationTargetException e) {
-				System.err.println("ITE: " + e.getCause().getClass().getName() + " - " + e.getCause().getMessage());
-				played = false;
-			}
-			catch (Exception ignore) {
+			catch (IOException ignore) {
 				System.err.println(ignore.getClass().getName() + " - " + ignore.getMessage());
 				played = false;
 			}

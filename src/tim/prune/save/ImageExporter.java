@@ -300,6 +300,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		final Track track = _app.getTrackInfo().getTrack();
 		final int numPoints = track.getNumPoints();
 		int prevX = 0, prevY = 0;
+		boolean gotPreviousPoint = false;
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = track.getPoint(i);
@@ -316,7 +317,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 				// use zoom level to calculate pixel coords on image
 				int px = (int) (x * zoomFactor * 256), py = (int) (y * zoomFactor * 256);
 				// System.out.println("Point: x=" + x + ", px=" + px + ", y=" + y + ", py=" + py);
-				if (!point.getSegmentStart()) {
+				if (!point.getSegmentStart() && gotPreviousPoint) {
 					// draw from previous point to this one
 					g.drawLine(prevX, prevY, px, py);
 				}
@@ -327,6 +328,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 				}
 				// save coordinates
 				prevX = px; prevY = py;
+				gotPreviousPoint = true;
 			}
 		}
 
@@ -364,7 +366,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		}
 		// Set text size according to input
 		int fontScalePercent = _textScaleField.getValue();
-		if (fontScalePercent > 10 && fontScalePercent <= 999)
+		if (fontScalePercent > 0 && fontScalePercent <= 999)
 		{
 			Font gFont = g.getFont();
 			g.setFont(gFont.deriveFont((float) (gFont.getSize() * 0.01 * fontScalePercent)));
@@ -395,7 +397,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = track.getPoint(i);
-			if (point.isWaypoint())
+			if (point.isWaypoint() && fontScalePercent > 0)
 			{
 				double x = track.getX(i) - xRange.getMinimum();
 				double y = track.getY(i) - yRange.getMinimum();

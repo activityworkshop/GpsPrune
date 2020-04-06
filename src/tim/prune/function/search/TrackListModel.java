@@ -1,4 +1,4 @@
-package tim.prune.function.gpsies;
+package tim.prune.function.search;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -9,10 +9,9 @@ import javax.swing.table.AbstractTableModel;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.Unit;
-import tim.prune.function.search.SearchResult;
 
 /**
- * Model for list of tracks from a search result (eg gpsies.com, geonames, overpass)
+ * Model for list of tracks from a search result (eg geonames, overpass)
  */
 public class TrackListModel extends AbstractTableModel
 {

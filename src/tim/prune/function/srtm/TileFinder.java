@@ -30,6 +30,11 @@ public abstract class TileFinder
 		URL[] urls = new URL[inTiles.size()];
 		// Read dat file into array
 		byte[] lookup = readDatFile();
+		if (lookup == null)
+		{
+			System.err.println("Build error: resource srtmtiles.dat missing!");
+			return null;
+		}
 		for (int t=0; t<inTiles.size(); t++)
 		{
 			SrtmTile tile = inTiles.get(t);

@@ -1,11 +1,11 @@
-GpsPrune version 19.2
-=====================
+GpsPrune version 20
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
 Full details can be found at https://gpsprune.activityworkshop.net/
 
-GpsPrune is copyright 2006-2018 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2020 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_19.2.jar
+   java -jar gpsprune_20.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,46 +25,37 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_19.2.jar --lang=DE
+   java -jar gpsprune_20.jar --lang=DE
 
 
-New with version 19.2
-=====================
-The following fixes and additions were made since version 19.1:
-  - Fix right-click-and-drag bug for zooming with Java 9 and Java 10
-  - Fix export of timestamps when photo points don't have timestamps
-  - Lighting of 3d views from the northwest (thanks, PeHar)
-  - Remember the name tag from a loaded gpx file, suggest it again for gpx export
-  - Removal of the Thunderforest tile sources (OpenCycleMap, Outdoors)
- 
-New with version 19.1
+New with version 20
 =====================
 The following fixes and additions were made since version 19:
-  - Performance improvements regarding scrolling through points
-  - Keyboard shortcut to access point edit dialog (part of Github issue #10)
-  - Online services Inlinemap.net and Graphhopper.com (routing)
-  - Cardinals in java3d view get billboard behaviour to always face camera (thanks, PeHar)
-  - Fix for PeakFinder urls
+  - Add option to use Nimbus look-and-feel (wishlist 77)
+  - Extend the marker waypoints function to include half the distance, half the climb and half the descent
+  - Remove Ukrainian language
+  - Add support for entering Pluscodes
+  - Add way to copy point details or range details to clipboard (wishlist 76)
+  - Project point using bearing and distance (wishlist 35)
+  - Possibility to paste a list of coordinates instead of just one
+  - Removal of Gpsies functions (both download and upload)
 
 New with version 19
 ===================
 The following fixes and additions were made since version 18:
-  - Fix for duration rounding bug affecting sub-second timestamps
   - Wikipedia search now also includes galleries from wikimedia
   - Photo popup window now gets updated when the track selection changes
-  - Remove export to SVG function as it has fallen behind the java3d and pov options
-  - Remove Turkish language because there haven't been any translators since early 2010
   - Function to add waypoints along the track at intervals of distance or time (eg every 5 km)
   - Optionally draw arrows on the track lines to show direction of travel
   - Waypoint rendering using icons (wishlist 71)
   - Allow user to select timezone in which timestamps are displayed (wishlist 61)
   - Provide call to geonames.org's OSM node search function, to find amenities (like bus stops) close to the current point
-  - Fix OSM download function using overpass API
-  - Fix opencyclemap URLs
-  - Fix reading of Exif data for some unusual cases (from Adobe Lightroom?)
-  - Remove Panoramio
-  - Update wikimedia catalogue
   - Debian and Ubuntu packages no longer rely on external libmetadata jar
+  - Keyboard shortcut to access point edit dialog (part of Github issue #10)
+  - Online services Inlinemap.net and Graphhopper.com (routing)
+  - Cardinals in java3d view get billboard behaviour to always face camera (thanks, PeHar)
+  - Lighting of 3d views from the northwest (thanks, PeHar)
+  - Remember the name tag from a loaded gpx file, suggest it again for gpx export
 
 New with version 18
 ===================
@@ -279,7 +270,7 @@ Further information and updates
 ===============================
 
 To obtain the source code (if it wasn't included in your jar file), or for further information,
-please visit the website:  http://gpsprune.activityworkshop.net/
+please visit the website:  https://gpsprune.activityworkshop.net/
 
 You will find there user guides, screenshots and demo videos illustrating the major features.
 As GpsPrune is further developed, subsequent versions of the program will also be made freely

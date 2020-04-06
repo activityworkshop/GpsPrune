@@ -10,8 +10,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -28,6 +27,7 @@ import tim.prune.data.Field;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.WholeNumberField;
 
 /**
@@ -40,6 +40,10 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 	protected JDialog _dialog = null;
 	/** Radio buttons for splitting by distance and time */
 	private JRadioButton _distLimitRadio = null, _timeLimitRadio = null;
+	/** Radio button for splitting by fraction (such as half-distance) */
+	private JRadioButton _halvesRadio = null;
+	/** Flag for whether to offer halves or not */
+	private boolean _showHalves = false;
 	/** Dropdown for selecting distance units */
 	private JComboBox<String> _distUnitsDropdown = null;
 	/** Text field for entering distance */
@@ -52,29 +56,28 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 
 
 	/**
-	 * React to item changes and key presses
+	 * React to item changes and key presses by enabling / disabling ok button
 	 */
-	private abstract class ChangeListener extends KeyAdapter implements ItemListener
+	private class ChangeListener extends KeyAdapter implements ItemListener
 	{
-		/** Method to be implemented */
-		public abstract void optionsChanged();
-
 		/** Item changed in ItemListener */
 		public void itemStateChanged(ItemEvent arg0) {
-			optionsChanged();
+			enableOkButton();
 		}
 
 		/** Key released in KeyListener */
 		public void keyReleased(KeyEvent arg0) {
-			optionsChanged();
+			enableOkButton();
 		}
 	}
 
 	/**
 	 * Constructor
 	 */
-	public DistanceTimeLimitFunction(App inApp) {
+	public DistanceTimeLimitFunction(App inApp, boolean inShowHalves)
+	{
 		super(inApp);
+		_showHalves = inShowHalves;
 	}
 
 	/**
@@ -112,28 +115,31 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		JPanel dialogPanel = new JPanel();
 		dialogPanel.setLayout(new BorderLayout(5, 5));
 
-		// Make radio buttons for three different options
+		// Make radio buttons for the options
 		_distLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.distancelimit") + ": ");
 		_timeLimitRadio = new JRadioButton(I18nManager.getText("dialog.correlate.options.timelimit") + ": ");
+		if (_showHalves) {
+			_halvesRadio = new JRadioButton(I18nManager.getText("dialog.markers.halves"));
+		}
 		ButtonGroup radioGroup = new ButtonGroup();
 		radioGroup.add(_distLimitRadio);
 		radioGroup.add(_timeLimitRadio);
+		if (_showHalves) {
+			radioGroup.add(_halvesRadio);
+		}
 
 		// central panel for limits
 		JPanel limitsPanel = new JPanel();
-		limitsPanel.setLayout(new BoxLayout(limitsPanel, BoxLayout.Y_AXIS));
-		limitsPanel.add(Box.createVerticalStrut(8));
-		ChangeListener optionsChangedListener = new ChangeListener() {
-			public void optionsChanged() {
-				enableOkButton();
-			}
-		};
+		limitsPanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+		GuiGridLayout grid = new GuiGridLayout(limitsPanel, new double[] {0.5, 1.0},
+			new boolean[] {false, false});
+		ChangeListener optionsChangedListener = new ChangeListener();
 		// distance limits
-		JPanel distLimitPanel = new JPanel();
-		distLimitPanel.setLayout(new FlowLayout());
+		grid.add(_distLimitRadio);
 		_distLimitRadio.setSelected(true);
 		_distLimitRadio.addItemListener(optionsChangedListener);
-		distLimitPanel.add(_distLimitRadio);
+		JPanel distLimitPanel = new JPanel();
+		distLimitPanel.setLayout(new FlowLayout());
 		_distanceField = new WholeNumberField(3);
 		_distanceField.addKeyListener(optionsChangedListener);
 		distLimitPanel.add(_distanceField);
@@ -143,13 +149,13 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		_distUnitsDropdown.addItemListener(optionsChangedListener);
 		distLimitPanel.add(_distUnitsDropdown);
 		distLimitPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		limitsPanel.add(distLimitPanel);
+		grid.add(distLimitPanel);
 
 		// time limit panel
+		grid.add(_timeLimitRadio);
+		_timeLimitRadio.addItemListener(optionsChangedListener);
 		JPanel timeLimitPanel = new JPanel();
 		timeLimitPanel.setLayout(new FlowLayout());
-		_timeLimitRadio.addItemListener(optionsChangedListener);
-		timeLimitPanel.add(_timeLimitRadio);
 		_limitHourField = new WholeNumberField(2);
 		_limitHourField.addKeyListener(optionsChangedListener);
 		timeLimitPanel.add(_limitHourField);
@@ -159,7 +165,14 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		timeLimitPanel.add(_limitMinField);
 		timeLimitPanel.add(new JLabel(I18nManager.getText("units.minutes")));
 		timeLimitPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-		limitsPanel.add(timeLimitPanel);
+		grid.add(timeLimitPanel);
+
+		// halves
+		if (_showHalves)
+		{
+			grid.add(_halvesRadio);
+			_halvesRadio.addItemListener(optionsChangedListener);
+		}
 
 		dialogPanel.add(limitsPanel, BorderLayout.NORTH);
 
@@ -203,6 +216,9 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		else if (_timeLimitRadio.isSelected()) {
 			enabled = _limitHourField.getValue() > 0 || _limitMinField.getValue() > 0;
 		}
+		else if (_halvesRadio != null && _halvesRadio.isSelected()) {
+			enabled = true;
+		}
 		_okButton.setEnabled(enabled);
 
 		// Also enable/disable the other fields
@@ -243,6 +259,21 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 			return distLimitRadians;
 		}
 		return 0.0;
+	}
+
+	/**
+	 * @return selected distance limit in km, or 0.0
+	 */
+	protected double getDistanceLimitKilometres()
+	{
+		return Distance.convertRadiansToDistance(getDistanceLimitRadians(), UnitSetLibrary.UNITS_KILOMETRES);
+	}
+
+	/**
+	 * @return true if "halves" option was selected
+	 */
+	protected boolean isHalvesSelected() {
+		return _halvesRadio != null && _halvesRadio.isSelected();
 	}
 
 	/**

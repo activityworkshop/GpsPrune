@@ -21,9 +21,9 @@ public class ExifTiffHandler
 	private long _thumbnailOffset = -1L, _thumbnailLength = -1L;
 
 	/** This tag is a pointer to the Exif SubIFD. */
-	final int DIR_EXIF_SUB_IFD_OFFSET = 0x8769;
+	private static final int DIR_EXIF_SUB_IFD_OFFSET = 0x8769;
 	/** This tag is a pointer to the Exif GPS IFD. */
-	final int DIR_GPS_INFO_OFFSET = 0x8825;
+	private static final int DIR_GPS_INFO_OFFSET = 0x8825;
 
 	private static final int TAG_GPS_LATITUDE_REF  = 0x0001;
 	private static final int TAG_GPS_LATITUDE      = 0x0002;
@@ -141,6 +141,9 @@ public class ExifTiffHandler
 				break;
 			case TAG_THUMBNAIL_LENGTH:
 				_thumbnailLength = intVal;
+				break;
+			case TAG_GPS_BEARING:
+				_jpegData.setBearing(intVal);
 				break;
 		}
 	}

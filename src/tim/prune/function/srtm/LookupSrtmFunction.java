@@ -173,7 +173,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		String errorMessage = null;
 		// Get urls for each tile
 		URL[] urls = TileFinder.getUrls(inTileList);
-		for (int t=0; t<inTileList.size() && !_progress.isCancelled(); t++)
+		for (int t=0; t<inTileList.size() && !_progress.isCancelled() && urls != null; t++)
 		{
 			if (urls[t] != null)
 			{
@@ -209,54 +209,11 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 
 					if (entryOk)
 					{
-						// Loop over all points in track, try to apply altitude from array
-						for (int p = 0; p < _track.getNumPoints(); p++)
-						{
-							DataPoint point = _track.getPoint(p);
-							if (!point.hasAltitude()
-								|| (inOverwriteZeros && point.getAltitude().getValue() == 0))
-							{
-								if (new SrtmTile(point).equals(tile))
-								{
-									double x = (point.getLongitude().getDouble() - tile.getLongitude()) * 1200;
-									double y = 1201 - (point.getLatitude().getDouble() - tile.getLatitude()) * 1200;
-									int idx1 = ((int)y)*1201 + (int)x;
-									try
-									{
-										int[] fouralts = {heights[idx1], heights[idx1+1], heights[idx1-1201], heights[idx1-1200]};
-										int numVoids = (fouralts[0]==VOID_VAL?1:0) + (fouralts[1]==VOID_VAL?1:0)
-											+ (fouralts[2]==VOID_VAL?1:0) + (fouralts[3]==VOID_VAL?1:0);
-										// if (numVoids > 0) System.out.println(numVoids + " voids found");
-										double altitude = 0.0;
-										switch (numVoids)
-										{
-											case 0:	altitude = bilinearInterpolate(fouralts, x, y); break;
-											case 1: altitude = bilinearInterpolate(fixVoid(fouralts), x, y); break;
-											case 2:
-											case 3: altitude = averageNonVoid(fouralts); break;
-											default: altitude = VOID_VAL;
-										}
-										// Special case for terrain tracks, don't interpolate voids yet
-										if (!_normalTrack && numVoids > 0) {
-											altitude = VOID_VAL;
-										}
-										if (altitude != VOID_VAL)
-										{
-											point.setFieldValue(Field.ALTITUDE, ""+altitude, false);
-											// depending on settings, this value may have been added as feet, we need to force metres
-											point.getAltitude().reset(new Altitude((int)altitude, UnitSetLibrary.UNITS_METRES));
-											numAltitudesFound++;
-										}
-									}
-									catch (ArrayIndexOutOfBoundsException obe) {
-										// System.err.println("lat=" + point.getLatitude().getDouble() + ", x=" + x + ", y=" + y + ", idx=" + idx1);
-									}
-								}
-							}
-						}
+						numAltitudesFound += applySrtmTileToWholeTrack(tile, heights, inOverwriteZeros);
 					}
 				}
-				catch (IOException ioe) {errorMessage = ioe.getClass().getName() + " - " + ioe.getMessage();
+				catch (IOException ioe) {
+					errorMessage = ioe.getClass().getName() + " - " + ioe.getMessage();
 				}
 			}
 		}
@@ -317,6 +274,65 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		_hadToDownload = true;
 		// MAYBE: Only download if we're in online mode?
 		return new ZipInputStream(inUrl.openStream());
+	}
+
+	/**
+	 * Given the height data read in from file, apply the given tile to all points
+	 * in the track with missing altitude
+	 * @param inTile tile being applied
+	 * @param inHeights height data read in from file
+	 * @param inOverwriteZeros true to overwrite zero altitude values
+	 * @return number of altitudes found
+	 */
+	private int applySrtmTileToWholeTrack(SrtmTile inTile, int[] inHeights, boolean inOverwriteZeros)
+	{
+		int numAltitudesFound = 0;
+		// Loop over all points in track, try to apply altitude from array
+		for (int p = 0; p < _track.getNumPoints(); p++)
+		{
+			DataPoint point = _track.getPoint(p);
+			if (!point.hasAltitude()
+				|| (inOverwriteZeros && point.getAltitude().getValue() == 0))
+			{
+				if (new SrtmTile(point).equals(inTile))
+				{
+					double x = (point.getLongitude().getDouble() - inTile.getLongitude()) * 1200;
+					double y = 1201 - (point.getLatitude().getDouble() - inTile.getLatitude()) * 1200;
+					int idx1 = ((int)y)*1201 + (int)x;
+					try
+					{
+						int[] fouralts = {inHeights[idx1], inHeights[idx1+1], inHeights[idx1-1201], inHeights[idx1-1200]};
+						int numVoids = (fouralts[0]==VOID_VAL?1:0) + (fouralts[1]==VOID_VAL?1:0)
+							+ (fouralts[2]==VOID_VAL?1:0) + (fouralts[3]==VOID_VAL?1:0);
+						// if (numVoids > 0) System.out.println(numVoids + " voids found");
+						double altitude = 0.0;
+						switch (numVoids)
+						{
+							case 0:	altitude = bilinearInterpolate(fouralts, x, y); break;
+							case 1: altitude = bilinearInterpolate(fixVoid(fouralts), x, y); break;
+							case 2:
+							case 3: altitude = averageNonVoid(fouralts); break;
+							default: altitude = VOID_VAL;
+						}
+						// Special case for terrain tracks, don't interpolate voids yet
+						if (!_normalTrack && numVoids > 0) {
+							altitude = VOID_VAL;
+						}
+						if (altitude != VOID_VAL)
+						{
+							point.setFieldValue(Field.ALTITUDE, ""+altitude, false);
+							// depending on settings, this value may have been added as feet, we need to force metres
+							point.getAltitude().reset(new Altitude((int)altitude, UnitSetLibrary.UNITS_METRES));
+							numAltitudesFound++;
+						}
+					}
+					catch (ArrayIndexOutOfBoundsException obe) {
+						// System.err.println("lat=" + point.getLatitude().getDouble() + ", x=" + x + ", y=" + y + ", idx=" + idx1);
+					}
+				}
+			}
+		}
+		return numAltitudesFound;
 	}
 
 	/**

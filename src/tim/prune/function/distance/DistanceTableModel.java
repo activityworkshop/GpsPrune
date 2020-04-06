@@ -37,7 +37,7 @@ public class DistanceTableModel extends GenericTableModel
 	{
 		if (inColumnIndex == 0) {return getPointName(inRowIndex);}
 		if (_distances == null) {return 0.0;}
-		return new Double(_distances[inRowIndex]);
+		return Double.valueOf(_distances[inRowIndex]);
 	}
 
 	/**

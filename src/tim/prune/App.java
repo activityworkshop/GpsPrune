@@ -69,7 +69,7 @@ public class App
 	private AppMode _appMode = AppMode.NORMAL;
 
 	/** Enum for the app mode - currently only two options but may expand later */
-	public enum AppMode {NORMAL, DRAWRECT};
+	public enum AppMode {NORMAL, DRAWRECT}
 
 
 	/**
@@ -649,7 +649,8 @@ public class App
 		loadedTrack.load(inFieldArray, inDataArray, inOptions);
 		if (loadedTrack.getNumPoints() <= 0)
 		{
-			showErrorMessage("error.load.dialogtitle", "error.load.nopoints");
+			String msgKey = (inSourceInfo == null ? "error.load.nopointsintext" : "error.load.nopoints");
+			showErrorMessage("error.load.dialogtitle", msgKey);
 			// load next file if there's a queue
 			loadNextFile();
 			return;
@@ -715,9 +716,12 @@ public class App
 				undo.setNumPhotosAudios(_trackInfo.getPhotoList().getNumPhotos(), _trackInfo.getAudioList().getNumAudios());
 				_undoStack.add(undo);
 				_track.combine(inLoadedTrack);
-				// set source information
-				inSourceInfo.populatePointObjects(_track, inLoadedTrack.getNumPoints());
-				_trackInfo.getFileInfo().addSource(inSourceInfo);
+				if (inSourceInfo != null)
+				{
+					// set source information
+					inSourceInfo.populatePointObjects(_track, inLoadedTrack.getNumPoints());
+					_trackInfo.getFileInfo().addSource(inSourceInfo);
+				}
 			}
 			else if (answer == JOptionPane.NO_OPTION)
 			{
@@ -732,8 +736,12 @@ public class App
 				_lastSavePosition = _undoStack.size();
 				_trackInfo.getSelection().clearAll();
 				_track.load(inLoadedTrack);
-				inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
-				_trackInfo.getFileInfo().replaceSource(inSourceInfo);
+				if (inSourceInfo != null)
+				{
+					// set source information
+					inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
+					_trackInfo.getFileInfo().replaceSource(inSourceInfo);
+				}
 				_trackInfo.getPhotoList().removeCorrelatedPhotos();
 				_trackInfo.getAudioList().removeCorrelatedAudios();
 			}
@@ -747,16 +755,22 @@ public class App
 			_lastSavePosition = _undoStack.size();
 			_trackInfo.getSelection().clearAll();
 			_track.load(inLoadedTrack);
-			inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
-			_trackInfo.getFileInfo().addSource(inSourceInfo);
+			if (inSourceInfo != null)
+			{
+				inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
+				_trackInfo.getFileInfo().addSource(inSourceInfo);
+			}
 		}
 		// Update config before subscribers are told
-		boolean isRegularLoad = (inSourceInfo.getFileType() != FILE_TYPE.GPSBABEL);
-		Config.getRecentFileList().addFile(new RecentFile(inSourceInfo.getFile(), isRegularLoad));
+		if (inSourceInfo != null)
+		{
+			boolean isRegularLoad = (inSourceInfo.getFileType() != FILE_TYPE.GPSBABEL);
+			Config.getRecentFileList().addFile(new RecentFile(inSourceInfo.getFile(), isRegularLoad));
+			// Update status bar
+			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile")
+				+ " '" + inSourceInfo.getName() + "'");
+		}
 		UpdateMessageBroker.informSubscribers();
-		// Update status bar
-		UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.loadfile")
-			+ " '" + inSourceInfo.getName() + "'");
 		// update menu
 		_menuManager.informFileLoaded();
 		// Remove busy lock

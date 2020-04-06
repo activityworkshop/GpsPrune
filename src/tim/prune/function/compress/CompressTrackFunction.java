@@ -147,7 +147,7 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 			public void actionPerformed(ActionEvent arg0)
 			{
 				preview();
-			};
+			}
 		};
 		// construct track details to be used by all algorithms
 		TrackDetails details = new TrackDetails(_track);

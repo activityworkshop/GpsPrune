@@ -25,11 +25,10 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.function.browser.BrowserLauncher;
-import tim.prune.function.gpsies.TrackListModel;
 
 /**
  * Function to load track information from any source,
- * subclassed for special cases like gpsies, wikipedia or OSM
+ * subclassed for special cases like wikipedia or OSM
  */
 public abstract class GenericDownloaderFunction extends GenericFunction implements Runnable
 {

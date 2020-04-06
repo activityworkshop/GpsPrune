@@ -720,8 +720,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						final double pointSeparationSqd = (prevX-px) * (prevX-px) + (prevY-py) * (prevY-py);
 						if (pointSeparationSqd > pointSeparationForArrowsSqd)
 						{
-							final double midX = (prevX + px) / 2;
-							final double midY = (prevY + py) / 2;
+							final double midX = (prevX + px) / 2.0;
+							final double midY = (prevY + py) / 2.0;
 							final boolean midPointVisible = midX >= 0 && midX < winWidth && midY >= 0 && midY < winHeight;
 							if (midPointVisible)
 							{

@@ -42,9 +42,9 @@ public class ConnectToPointFunction extends GenericFunction
 		boolean connectPhoto = (point != null && photo != null && point.getPhoto() == null);
 		boolean connectAudio = (point != null && audio != null && point.getAudio() == null);
 
-		if (connectPhoto && connectAudio) {
+		// if (connectPhoto && connectAudio) {
 			// TODO: Let user choose whether to connect photo/audio or both
-		}
+		// }
 		// Make undo object
 		UndoOperation undo = new UndoConnectMedia(point, connectPhoto?photo.getName():null,
 			connectAudio?audio.getName():null);

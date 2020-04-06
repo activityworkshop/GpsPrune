@@ -306,6 +306,9 @@ public class DetailsDisplay extends GenericDisplay
 		if (_timezone == null || (inUpdateType | UNITS_CHANGED) > 0) {
 			_timezone = TimezoneHelper.getSelectedTimezone();
 		}
+		if ((inUpdateType | UNITS_CHANGED) > 0) {
+			Config.setConfigString(Config.KEY_COORD_DISPLAY_FORMAT, "" + getSelectedCoordFormat());
+		}
 
 		if (_track == null || currentPoint == null)
 		{
@@ -327,8 +330,10 @@ public class DetailsDisplay extends GenericDisplay
 			_indexLabel.setText(LABEL_POINT_SELECTED
 				+ (currentPointIndex+1) + " " + I18nManager.getText("details.index.of")
 				+ " " + _track.getNumPoints());
-			_latLabel.setText(makeCoordinateLabel(LABEL_POINT_LATITUDE, currentPoint.getLatitude(), _coordFormatDropdown.getSelectedIndex()));
-			_longLabel.setText(makeCoordinateLabel(LABEL_POINT_LONGITUDE, currentPoint.getLongitude(), _coordFormatDropdown.getSelectedIndex()));
+			_latLabel.setText(LABEL_POINT_LATITUDE
+				+ CoordDisplay.makeCoordinateLabel(currentPoint.getLatitude(), getSelectedCoordFormat()));
+			_longLabel.setText(LABEL_POINT_LONGITUDE
+				+ CoordDisplay.makeCoordinateLabel(currentPoint.getLongitude(), getSelectedCoordFormat()));
 			Unit altUnit = Config.getUnitSet().getAltitudeUnit();
 			_altLabel.setText(currentPoint.hasAltitude()?
 				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getValue(altUnit) + " " +
@@ -346,7 +351,8 @@ public class DetailsDisplay extends GenericDisplay
 			}
 			// Maybe the point has a description?
 			String pointDesc = currentPoint.getFieldValue(Field.DESCRIPTION);
-			if (pointDesc == null || pointDesc.equals("") || currentPoint.hasMedia()) {
+			if (pointDesc == null || pointDesc.equals("") || currentPoint.hasMedia())
+			{
 				_descLabel.setText("");
 				_descLabel.setToolTipText("");
 			}
@@ -409,11 +415,13 @@ public class DetailsDisplay extends GenericDisplay
 					filename = info.getName();
 				}
 			}
-			if (filename != null) {
+			if (filename != null)
+			{
 				_filenameLabel.setText(LABEL_POINT_FILENAME + filename);
 				_filenameLabel.setToolTipText(filename);
 			}
-			else {
+			else
+			{
 				_filenameLabel.setText("");
 				_filenameLabel.setToolTipText("");
 			}
@@ -442,7 +450,8 @@ public class DetailsDisplay extends GenericDisplay
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
 					+ DisplayUtils.roundedNumber(selection.getMovingDistance()/numMovingSeconds*3600.0) + " " + speedUnitsStr);
 			}
-			else {
+			else
+			{
 				_durationLabel.setText("");
 				_aveSpeedLabel.setText("");
 			}
@@ -502,7 +511,9 @@ public class DetailsDisplay extends GenericDisplay
 			_photoThumbnail.setVisible(true);
 			_photoThumbnail.setPhoto(currentPhoto);
 			_rotationButtons.setVisible(true);
-			if ((inUpdateType & DataSubscriber.PHOTOS_MODIFIED) > 0) {_photoThumbnail.refresh();}
+			if ((inUpdateType & DataSubscriber.PHOTOS_MODIFIED) > 0) {
+				_photoThumbnail.refresh();
+			}
 		}
 		_photoThumbnail.repaint();
 
@@ -537,63 +548,6 @@ public class DetailsDisplay extends GenericDisplay
 		_playAudioPanel.setVisible(currentAudio != null);
 	}
 
-
-	/**
-	 * Construct an appropriate coordinate label using the selected format
-	 * @param inPrefix prefix of label
-	 * @param inCoordinate coordinate
-	 * @param inFormat index of format selection dropdown
-	 * @return language-sensitive string
-	 */
-	private static String makeCoordinateLabel(String inPrefix, Coordinate inCoordinate, int inFormat)
-	{
-		String coord = null;
-		switch (inFormat) {
-			case 1: // degminsec
-				coord = inCoordinate.output(Coordinate.FORMAT_DEG_MIN_SEC); break;
-			case 2: // degmin
-				coord = inCoordinate.output(Coordinate.FORMAT_DEG_MIN); break;
-			case 3: // degrees
-				coord = inCoordinate.output(Coordinate.FORMAT_DEG); break;
-			default: // just as it was
-				coord = inCoordinate.output(Coordinate.FORMAT_NONE);
-		}
-		// Fix broken degree signs (due to unicode mangling)
-		final char brokenDeg = 65533;
-		if (coord.indexOf(brokenDeg) >= 0) {
-			coord = coord.replaceAll(String.valueOf(brokenDeg), "\u00B0");
-		}
-		return inPrefix + restrictDP(coord);
-	}
-
-
-	/**
-	 * Restrict the given coordinate to a limited number of decimal places for display
-	 * @param inCoord coordinate string
-	 * @return chopped string
-	 */
-	private static String restrictDP(String inCoord)
-	{
-		final int DECIMAL_PLACES = 7;
-		if (inCoord == null) return "";
-		String result = inCoord;
-		final int dotPos = Math.max(inCoord.lastIndexOf('.'), inCoord.lastIndexOf(','));
-		if (dotPos >= 0)
-		{
-			final int chopPos = dotPos + DECIMAL_PLACES;
-			if (chopPos < (inCoord.length()-1))
-			{
-				result = inCoord.substring(0, chopPos);
-				// Maybe there's an exponential in there too which needs to be appended
-				int expPos = inCoord.toUpperCase().indexOf("E", chopPos);
-				if (expPos > 0 && expPos < (inCoord.length()-1))
-				{
-					result += inCoord.substring(expPos);
-				}
-			}
-		}
-		return result;
-	}
 
 	/**
 	 * Make a details subpanel
@@ -656,5 +610,23 @@ public class DetailsDisplay extends GenericDisplay
 		}
 		// string is too long
 		return inString.substring(0, 20) + "...";
+	}
+
+	/**
+	 * @return the currently selected coordinate display format
+	 */
+	private int getSelectedCoordFormat()
+	{
+		switch (_coordFormatDropdown.getSelectedIndex())
+		{
+			case 1: // degminsec
+				return Coordinate.FORMAT_DEG_MIN_SEC;
+			case 2: // degmin
+				return Coordinate.FORMAT_DEG_MIN;
+			case 3: // degrees
+				return Coordinate.FORMAT_DEG;
+			default: // just as it was
+				return Coordinate.FORMAT_NONE;
+		}
 	}
 }

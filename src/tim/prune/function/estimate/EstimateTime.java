@@ -23,7 +23,7 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
-import tim.prune.data.RangeStats;
+import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Selection;
 import tim.prune.data.Unit;
 import tim.prune.gui.DecimalNumberField;
@@ -54,7 +54,7 @@ public class EstimateTime extends GenericFunction
 	private JLabel _descentParamLabel = null;
 	private DecimalNumberField _gentleDescentField = null, _steepDescentField = null;
 	/** Range stats */
-	private RangeStats _stats = null;
+	private RangeStatsWithGradients _stats = null;
 
 
 	/**
@@ -78,7 +78,8 @@ public class EstimateTime extends GenericFunction
 	{
 		// Get the stats on the selection before launching the dialog
 		Selection selection = _app.getTrackInfo().getSelection();
-		_stats = new RangeStats(_app.getTrackInfo().getTrack(), selection.getStart(), selection.getEnd());
+		_stats = new RangeStatsWithGradients(_app.getTrackInfo().getTrack(),
+			selection.getStart(), selection.getEnd());
 
 		if (_stats.getMovingDistance() < 0.01)
 		{
@@ -297,7 +298,11 @@ public class EstimateTime extends GenericFunction
 		EstimationParameters estParams = new EstimationParameters(Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
 
 		String[] paramValues = estParams.getStrings();
-		if (paramValues == null || paramValues.length != 5) {return;} // TODO: What to do in case of error?
+		if (paramValues == null || paramValues.length != 5)
+		{
+			// TODO: What to do in case of error?
+			return;
+		}
 		// Flat time is either for 5 km, 3 miles or 3 nm
 		_flatSpeedLabel.setText(I18nManager.getText("dialog.estimatetime.parameters.timefor") +
 			" " + EstimationParameters.getStandardDistance() + ": ");

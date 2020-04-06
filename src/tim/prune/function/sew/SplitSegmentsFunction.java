@@ -19,7 +19,7 @@ public class SplitSegmentsFunction extends DistanceTimeLimitFunction
 	 * Constructor
 	 */
 	public SplitSegmentsFunction(App inApp) {
-		super(inApp);
+		super(inApp, false);
 	}
 
 	/**

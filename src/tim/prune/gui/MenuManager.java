@@ -30,10 +30,14 @@ import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.function.ChooseSingleParameter;
+import tim.prune.function.PasteCoordinateList;
+import tim.prune.function.PasteCoordinates;
+import tim.prune.function.PlusCodeFunction;
 import tim.prune.function.SearchOpenCachingDeFunction;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.browser.WebMapFunction;
 import tim.prune.function.search.SearchMapillaryFunction;
+import tim.prune.function.settings.SaveConfig;
 
 /**
  * Class to manage the menu bar and tool bar,
@@ -74,6 +78,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _selectEndItem = null;
 	private JMenuItem _findWaypointItem = null;
 	private JMenuItem _duplicatePointItem = null;
+	private JMenuItem _projectPointItem = null;
 	private JMenuItem _reverseItem = null;
 	private JMenuItem _addTimeOffsetItem = null;
 	private JMenuItem _addAltitudeOffsetItem = null;
@@ -90,8 +95,6 @@ public class MenuManager implements DataSubscriber
 	private JMenu     _browserMapMenu = null;
 	private JMenuItem _routingGraphHopperItem = null;
 	private JMenuItem _chartItem = null;
-	private JMenuItem _getGpsiesItem = null;
-	private JMenuItem _uploadGpsiesItem = null;
 	private JMenuItem _lookupSrtmItem = null;
 	private JMenuItem _downloadSrtmItem = null;
 	private JMenuItem _nearbyWikipediaItem = null;
@@ -103,7 +106,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _downloadOsmItem = null;
 	private JMenuItem _getWeatherItem = null;
 	private JMenuItem _distanceItem = null;
-	private JMenuItem _fullRangeDetailsItem = null;
+	private JMenuItem _viewFullDetailsItem = null;
 	private JMenuItem _estimateTimeItem = null;
 	private JMenuItem _learnEstimationParams = null;
 	private JMenuItem _autoplayTrack = null;
@@ -259,12 +262,6 @@ public class MenuManager implements DataSubscriber
 		onlineMenu.add(_lookupSrtmItem);
 		_downloadSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_SRTM, false);
 		onlineMenu.add(_downloadSrtmItem);
-		// Get gpsies tracks
-		_getGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_GPSIES, false);
-		onlineMenu.add(_getGpsiesItem);
-		// Upload to gpsies
-		_uploadGpsiesItem = makeMenuItem(FunctionLibrary.FUNCTION_UPLOAD_GPSIES, false);
-		onlineMenu.add(_uploadGpsiesItem);
 
 		onlineMenu.addSeparator();
 		// browser submenu
@@ -491,9 +488,17 @@ public class MenuManager implements DataSubscriber
 		// duplicate current point
 		_duplicatePointItem = makeMenuItem(FunctionLibrary.FUNCTION_DUPLICATE_POINT, false);
 		pointMenu.add(_duplicatePointItem);
+		// project current point
+		_projectPointItem = makeMenuItem(FunctionLibrary.FUNCTION_PROJECT_POINT, false);
+		pointMenu.add(_projectPointItem);
 		// paste coordinates function
-		JMenuItem pasteCoordsItem = makeMenuItem(FunctionLibrary.FUNCTION_PASTE_COORDINATES);
+		JMenuItem pasteCoordsItem = makeMenuItem(new PasteCoordinates(_app));
 		pointMenu.add(pasteCoordsItem);
+		JMenuItem pasteCoordsListItem = makeMenuItem(new PasteCoordinateList(_app));
+		pointMenu.add(pasteCoordsListItem);
+		// pluscodes function
+		JMenuItem plusCodeItem = makeMenuItem(new PlusCodeFunction(_app));
+		pointMenu.add(plusCodeItem);
 		menubar.add(pointMenu);
 
 		// Add view menu
@@ -530,8 +535,8 @@ public class MenuManager implements DataSubscriber
 		_distanceItem = makeMenuItem(FunctionLibrary.FUNCTION_DISTANCES, false);
 		viewMenu.add(_distanceItem);
 		// full range details
-		_fullRangeDetailsItem = makeMenuItem(FunctionLibrary.FUNCTION_FULL_RANGE_DETAILS, false);
-		viewMenu.add(_fullRangeDetailsItem);
+		_viewFullDetailsItem = makeMenuItem(FunctionLibrary.FUNCTION_FULL_DETAILS, false);
+		viewMenu.add(_viewFullDetailsItem);
 		// estimate time
 		_estimateTimeItem = makeMenuItem(FunctionLibrary.FUNCTION_ESTIMATE_TIME, false);
 		viewMenu.add(_estimateTimeItem);
@@ -659,7 +664,10 @@ public class MenuManager implements DataSubscriber
 		_autosaveSettingsCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS));
 		_autosaveSettingsCheckbox.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				Config.setConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS, _autosaveSettingsCheckbox.isSelected());
+				final boolean autosaveOn = _autosaveSettingsCheckbox.isSelected();
+				Config.setConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS, autosaveOn);
+				// Maybe want to save config?
+				new SaveConfig(_app).autosaveSwitched(autosaveOn);
 			}
 		});
 		settingsMenu.add(_autosaveSettingsCheckbox);
@@ -868,7 +876,7 @@ public class MenuManager implements DataSubscriber
 		_markRectangleItem.setEnabled(hasData);
 		_markUphillLiftsItem.setEnabled(hasData && _track.hasAltitudeData());
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
-		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasTrackPoints() && _track.hasWaypoints());
+		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasWaypoints() && _track.getNumPoints() > 1);
 		final boolean hasSeveralTrackPoints = hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3;
 		_splitSegmentsItem.setEnabled(hasSeveralTrackPoints);
 		_sewSegmentsItem.setEnabled(hasSeveralTrackPoints);
@@ -880,8 +888,6 @@ public class MenuManager implements DataSubscriber
 		_browserMapMenu.setEnabled(hasData);
 		_distanceItem.setEnabled(hasData);
 		_autoplayTrack.setEnabled(hasData && _track.getNumPoints() > 3);
-		_getGpsiesItem.setEnabled(hasData);
-		_uploadGpsiesItem.setEnabled(hasData && _track.hasTrackPoints());
 		_lookupSrtmItem.setEnabled(hasData);
 		_nearbyWikipediaItem.setEnabled(hasData);
 		_nearbyOsmPoiItem.setEnabled(hasData);
@@ -911,6 +917,7 @@ public class MenuManager implements DataSubscriber
 		_selectEndItem.setEnabled(hasPoint);
 		_selectEndButton.setEnabled(hasPoint);
 		_duplicatePointItem.setEnabled(hasPoint);
+		_projectPointItem.setEnabled(hasPoint);
 		_showPeakfinderItem.setEnabled(hasPoint);
 		_showGeohackItem.setEnabled(hasPoint);
 		_searchOpencachingDeItem.setEnabled(hasPoint);
@@ -958,7 +965,7 @@ public class MenuManager implements DataSubscriber
 		_addAltitudeOffsetItem.setEnabled(hasRange);
 		_convertNamesToTimesItem.setEnabled(hasRange && _track.hasWaypoints());
 		_deleteFieldValuesItem.setEnabled(hasRange);
-		_fullRangeDetailsItem.setEnabled(hasRange);
+		_viewFullDetailsItem.setEnabled(hasRange || hasPoint);
 		_estimateTimeItem.setEnabled(hasRange);
 		_learnEstimationParams.setEnabled(hasData && _track.hasTrackPoints() && _track.hasData(Field.TIMESTAMP)
 			&& _track.hasAltitudeData());

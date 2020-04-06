@@ -142,7 +142,7 @@ public class BaseImageConfigDialog implements Runnable
 		{
 			for (int i=0; i<_zoomDropdown.getItemCount(); i++)
 			{
-				String item = _zoomDropdown.getItemAt(i).toString();
+				String item = _zoomDropdown.getItemAt(i);
 				try {
 					if (Integer.parseInt(item) == zoomLevel)
 					{

@@ -1,7 +1,7 @@
 package tim.prune.function.search;
 
 /**
- * Class to hold a search result from wikipedia / gpsies etc
+ * Class to hold a search result from wikipedia or other online service
  */
 public class SearchResult implements Comparable<SearchResult>
 {

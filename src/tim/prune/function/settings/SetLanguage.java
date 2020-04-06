@@ -44,12 +44,11 @@ public class SetLanguage extends GenericFunction
 	private static final String[] LANGUAGE_NAMES = {"afrikaans", "\u010de\u0161tina", "deutsch", "english", "american english",
 		"espa\u00F1ol", "fran\u00E7ais", "italiano", "magyar", "nederlands", "polski", "portugu\u00EAs", "rom\u00E2n\u0103",
 		"suomi", "\u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian)", "\u4e2d\u6587 (chinese)",
-		"\u65E5\u672C\u8A9E (japanese)", "\uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean)", "schwiizerd\u00FC\u00FCtsch",
-		"\u0443\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0430 \u043c\u043e\u0432\u0430 (ukrainian)"
+		"\u65E5\u672C\u8A9E (japanese)", "\uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean)", "schwiizerd\u00FC\u00FCtsch"
 	};
 	/** Associated language codes (must be in same order as names!) */
 	private static final String[] LANGUAGE_CODES = {"af", "cz", "de", "en", "en_us", "es", "fr", "it", "hu",
-		"nl", "pl", "pt", "ro", "fi", "ru", "zh", "ja", "ko", "de_ch", "uk"
+		"nl", "pl", "pt", "ro", "fi", "ru", "zh", "ja", "ko", "de_ch"
 	};
 
 

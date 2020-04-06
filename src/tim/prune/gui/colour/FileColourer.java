@@ -26,13 +26,13 @@ public class FileColourer extends DiscretePointColourer
 
 	/**
 	 * Calculate the colours for each of the points in the given track
-	 * @param inTrack track object
+	 * @param inTrackInfo track info object
 	 */
 	@Override
 	public void calculateColours(TrackInfo inTrackInfo)
 	{
 		// initialise the array to the right size
-		final int numPoints = inTrackInfo == null ? 0 : inTrackInfo.getTrack().getNumPoints();
+		final int numPoints = inTrackInfo.getTrack().getNumPoints();
 		init(numPoints);
 
 		// loop over track points

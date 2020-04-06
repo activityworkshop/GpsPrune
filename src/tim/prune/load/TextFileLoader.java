@@ -48,7 +48,7 @@ public class TextFileLoader
 	private JTextField _otherDelimiterText = null;
 	private JLabel _statusLabel = null;
 	private DelimiterInfo[] _delimiterInfos = null;
-	private FileCacher _fileCacher = null;
+	private ContentCacher _contentCacher = null;
 	private JList<String> _snippetBox = null;
 	private FileExtractTableModel _fileExtractTableModel = null;
 	private JTable _fieldTable;
@@ -117,29 +117,7 @@ public class TextFileLoader
 		_file = inFile;
 		if (preCheckFile(_file))
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.openoptions.title"), true);
-			_dialog.setLocationRelativeTo(_parentFrame);
-			_dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-			// add closing listener
-			_dialog.addWindowListener(new WindowAdapter() {
-				public void windowClosing(WindowEvent e) {
-					_dialog.dispose();
-					_app.informNoDataLoaded();
-				}
-			});
-			_dialog.getContentPane().add(makeDialogComponents());
-
-			// select best separator according to row counts (more is better)
-			int bestDelim = getBestOption(_delimiterInfos[0].getNumWinningRecords(),
-				_delimiterInfos[1].getNumWinningRecords(), _delimiterInfos[2].getNumWinningRecords(),
-				_delimiterInfos[3].getNumWinningRecords());
-			if (bestDelim >= 0)
-				_delimiterRadios[bestDelim].setSelected(true);
-			else
-				_delimiterRadios[_delimiterRadios.length-1].setSelected(true);
-			informDelimiterSelected();
-			_dialog.pack();
-			_dialog.setVisible(true);
+			showDialog();
 		}
 		else
 		{
@@ -152,8 +130,38 @@ public class TextFileLoader
 
 
 	/**
-	 * Check the given file for readability and funny characters,
-	 * and count the fields for the various separators
+	 * Checks passed, so now build and show the dialog
+	 */
+	private void showDialog()
+	{
+		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.openoptions.title"), true);
+		_dialog.setLocationRelativeTo(_parentFrame);
+		_dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+		// add closing listener
+		_dialog.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				_dialog.dispose();
+				_app.informNoDataLoaded();
+			}
+		});
+		_dialog.getContentPane().add(makeDialogComponents());
+
+		// select best separator according to row counts (more is better)
+		int bestDelim = getBestOption(_delimiterInfos[0].getNumWinningRecords(),
+			_delimiterInfos[1].getNumWinningRecords(), _delimiterInfos[2].getNumWinningRecords(),
+			_delimiterInfos[3].getNumWinningRecords());
+		if (bestDelim >= 0)
+			_delimiterRadios[bestDelim].setSelected(true);
+		else
+			_delimiterRadios[_delimiterRadios.length-1].setSelected(true);
+		informDelimiterSelected();
+		_dialog.pack();
+		_dialog.setVisible(true);
+	}
+
+
+	/**
+	 * Check the given file for validity
 	 * @param inFile file to check
 	 */
 	private boolean preCheckFile(File inFile)
@@ -164,11 +172,20 @@ public class TextFileLoader
 			return false;
 		}
 		// Use a FileCacher to read the file into an array
-		_fileCacher = new FileCacher(inFile);
+		_contentCacher = new FileCacher(inFile);
 
+		return preCheckContents();
+	}
+
+	/**
+	 * Check the contents for readability and funny characters,
+	 * and count the fields for the various separators
+	 */
+	private boolean preCheckContents()
+	{
 		// Check each line of the file
-		String[] fileContents = _fileCacher.getContents();
-		if (fileContents == null) {
+		String[] contents = _contentCacher.getContents();
+		if (contents == null) {
 			return false; // nothing cached, might be binary
 		}
 		boolean fileOK = true;
@@ -178,9 +195,9 @@ public class TextFileLoader
 		String currLine = null;
 		String[] splitFields = null;
 		int commaFields = 0, semicolonFields = 0, tabFields = 0, spaceFields = 0;
-		for (int lineNum=0; lineNum<fileContents.length && fileOK; lineNum++)
+		for (int lineNum=0; lineNum<contents.length && fileOK; lineNum++)
 		{
-			currLine = fileContents[lineNum];
+			currLine = contents[lineNum];
 			// check for invalid characters
 			if (currLine.indexOf('\0') >= 0) {fileOK = false;}
 			// check for commas
@@ -209,6 +226,39 @@ public class TextFileLoader
 				_delimiterInfos[bestScorer].incrementNumWinningRecords();
 		}
 		return fileOK;
+	}
+
+	/**
+	 * @param inText text to load (as if it came from a file)
+	 */
+	public void loadText(String inText)
+	{
+		_file = null;
+		if (preCheckText(inText))
+		{
+			showDialog();
+		}
+		else
+		{
+			// Didn't pass pre-check
+			_app.showErrorMessage("error.load.dialogtitle", "error.load.nopointsintext");
+		}
+	}
+
+	/**
+	 * Check the given text for validity
+	 * @param inText (pasted) text to check
+	 */
+	private boolean preCheckText(String inText)
+	{
+		if (inText == null || inText.length() < 6)
+		{
+			return false;
+		}
+		// Use a cacher to split the text into an array
+		_contentCacher = new TextCacher(inText);
+
+		return preCheckContents();
 	}
 
 
@@ -326,7 +376,7 @@ public class TextFileLoader
 		delimsPanel.add(_statusLabel);
 		firstCard.add(delimsPanel, BorderLayout.SOUTH);
 		// load snippet to show first few lines
-		_snippetBox = new JList<String>(_fileCacher.getSnippet(SNIPPET_SIZE, MAX_SNIPPET_WIDTH));
+		_snippetBox = new JList<String>(_contentCacher.getSnippet(SNIPPET_SIZE, MAX_SNIPPET_WIDTH));
 		_snippetBox.setEnabled(false);
 		firstCard.add(makeLabelledPanel("dialog.openoptions.filesnippet", _snippetBox), BorderLayout.CENTER);
 
@@ -531,11 +581,13 @@ public class TextFileLoader
 	 */
 	public DelimiterInfo getSelectedDelimiterInfo()
 	{
-		for (int i=0; i<4; i++)
+		for (int i=0; i<4; i++) {
 			if (_delimiterRadios[i].isSelected()) return _delimiterInfos[i];
+		}
 		// must be "other" - build info if necessary
-		if (_delimiterInfos[4] == null)
+		if (_delimiterInfos[4] == null) {
 			_delimiterInfos[4] = new DelimiterInfo(_otherDelimiterText.getText().charAt(0));
+		}
 		return _delimiterInfos[4];
 	}
 
@@ -567,7 +619,7 @@ public class TextFileLoader
 	private void prepareSecondPanel()
 	{
 		DelimiterInfo info = getSelectedDelimiterInfo();
-		FileSplitter splitter = new FileSplitter(_fileCacher);
+		FileSplitter splitter = new FileSplitter(_contentCacher);
 		// Check info makes sense - num fields > 0, num records > 0
 		// set "Finished" button to disabled if not ok
 		// Add data to GUI elements
@@ -637,7 +689,7 @@ public class TextFileLoader
 		_lastSelectedFields = _fieldTableModel.getFieldArray();
 		// TODO: Remember all the units selections for next load?
 		// Get the selected units for altitudes and speeds
-		SourceInfo sourceInfo = new SourceInfo(_file, SourceInfo.FILE_TYPE.TEXT);
+		SourceInfo sourceInfo = (_file == null ? null : new SourceInfo(_file, SourceInfo.FILE_TYPE.TEXT));
 		PointCreateOptions options = new PointCreateOptions();
 		options.setAltitudeUnits(_altitudeUnitsDropdown.getSelectedIndex() == 0 ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);
 		Unit hSpeedUnit = UnitSetLibrary.ALL_SPEED_UNITS[_hSpeedUnitsDropdown.getSelectedIndex()];
@@ -649,7 +701,7 @@ public class TextFileLoader
 		_app.informDataLoaded(_fieldTableModel.getFieldArray(),
 			_fileExtractTableModel.getData(), options, sourceInfo, null);
 		// clear up file cacher
-		_fileCacher.clear();
+		_contentCacher.clear();
 		// dispose of dialog
 		_dialog.dispose();
 	}

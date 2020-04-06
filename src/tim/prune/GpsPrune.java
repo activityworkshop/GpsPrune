@@ -9,9 +9,11 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Locale;
+
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
+import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
 import tim.prune.config.Config;
@@ -29,16 +31,16 @@ import tim.prune.gui.profile.ProfileChart;
 /**
  * GpsPrune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or https://activityworkshop.net
- * This software is copyright activityworkshop.net 2006-2018 and made available through the Gnu GPL version 2.
+ * This software is copyright activityworkshop.net 2006-2020 and made available through the Gnu GPL version 2.
  * For license details please see the included license.txt.
  * GpsPrune is the main entry point to the application, including initialisation and launch
  */
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "19.2";
+	public static final String VERSION_NUMBER = "20";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "363d";
+	public static final String BUILD_NUMBER = "378";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -149,6 +151,14 @@ public class GpsPrune
 				Config.setConfigString(Config.KEY_LANGUAGE_FILE, "");
 			}
 		}
+
+		// Set look-and-feel
+		try {
+			String windowStyle = Config.getConfigString(Config.KEY_WINDOW_STYLE);
+			UIManager.setLookAndFeel(windowStyle);
+		}
+		catch (Exception e) {}
+
 		// Set up the window and go
 		launch(dataFiles);
 	}

@@ -183,7 +183,8 @@ public class PasteCoordinates extends GenericFunction
 		else if (items.length == 3) {
 			point = parseValues(items[0].trim(), items[1].trim(), items[2].trim());
 		}
-		else {
+		else
+		{
 			// Splitting with commas didn't work, so try spaces
 			items = _coordField.getText().split(" ");
 			if (items.length == 2) {
@@ -211,7 +212,8 @@ public class PasteCoordinates extends GenericFunction
 				I18nManager.getText("dialog.pastecoordinates.nothingfound"),
 				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
 		}
-		else {
+		else
+		{
 			// See if name was entered
 			String name = _nameField.getText();
 			if (name != null && name.length() > 0) {

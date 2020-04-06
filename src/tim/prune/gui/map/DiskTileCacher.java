@@ -25,10 +25,20 @@ public class DiskTileCacher implements Runnable
 	private File _file = null;
 	/** Observer to be notified */
 	private ImageObserver _observer = null;
+	/** True if cacher is active, false if blocked */
+	private boolean _active = false;
+
 	/** Time limit to cache images for */
 	private static final long CACHE_TIME_LIMIT = 20 * 24 * 60 * 60 * 1000; // 20 days in ms
 	/** Hashset of all blocked / 404 tiles to avoid requesting them again */
 	private static final HashSet<String> BLOCKED_URLS = new HashSet<String>();
+	/**Hashset of files which are currently being processed */
+	private static final HashSet<String> DOWNLOADING_FILES = new HashSet<String>();
+	/** Number of currently active threads */
+	private static int NUMBER_ACTIVE_THREADS = 0;
+	/** Flag to remember whether any server connection is possible */
+	private static boolean CONNECTION_ACTIVE = true;
+
 
 	/**
 	 * Private constructor
@@ -40,6 +50,7 @@ public class DiskTileCacher implements Runnable
 		_url = inUrl;
 		_file = inFile;
 		_observer = inObserver;
+		_active = registerCacher(inFile.getAbsolutePath());
 	}
 
 	/**
@@ -81,38 +92,36 @@ public class DiskTileCacher implements Runnable
 		if (inBasePath == null || inTilePath == null) {return;}
 		// save file if possible
 		File basePath = new File(inBasePath);
-		if (!basePath.exists() || !basePath.isDirectory() || !basePath.canWrite()) {
+		if (!basePath.exists() || !basePath.isDirectory() || !basePath.canWrite())
+		{
 			// Can't write to base path
 			return;
 		}
 		File tileFile = new File(basePath, inTilePath);
-		// Check if this file is already being loaded
-		if (isBeingLoaded(tileFile)) {return;}
+
 		// Check if it has already failed
-		if (BLOCKED_URLS.contains(inUrl.toString())) {return;}
+		if (BLOCKED_URLS.contains(inUrl.toString())) {
+			return;
+		}
 
 		File dir = tileFile.getParentFile();
-		// Start a new thread to load the image if necessary
+		// Construct a cacher to load the image if necessary
 		if ((dir.exists() || dir.mkdirs()) && dir.canWrite())
 		{
-			new Thread(new DiskTileCacher(inUrl, tileFile, inObserver)).start();
+			DiskTileCacher cacher = new DiskTileCacher(inUrl, tileFile, inObserver);
+			cacher.startDownloading();
 		}
 	}
 
 	/**
-	 * Check whether the given tile is already being loaded
-	 * @param inFile desired file
-	 * @return true if temporary file with this name exists
+	 * Start downloading the configured tile
 	 */
-	private static boolean isBeingLoaded(File inFile)
+	private void startDownloading()
 	{
-		File tempFile = new File(inFile.getAbsolutePath() + ".temp");
-		if (!tempFile.exists()) {
-			return false;
+		if (_active)
+		{
+			new Thread(this).start();
 		}
-		// File exists, so check if it was created recently
-		final long fileAge = System.currentTimeMillis() - tempFile.lastModified();
-		return fileAge < 1000000L; // overwrite if the temp file is still there after 1000s
 	}
 
 	/**
@@ -120,24 +129,60 @@ public class DiskTileCacher implements Runnable
 	 */
 	public void run()
 	{
+		waitUntilAllowedToRun();
+		if (doDownload())
+		{
+			if (!CONNECTION_ACTIVE)
+			{
+				// wasn't active before but this download worked - we've come back online
+				BLOCKED_URLS.clear();
+				CONNECTION_ACTIVE = true;
+			}
+		}
+		// Release file and thread
+		unregisterCacher(_file.getAbsolutePath());
+		threadFinished();
+	}
+
+	/**
+	 * Blocks (in separate thread) until allowed by concurrent thread limit
+	 */
+	private void waitUntilAllowedToRun()
+	{
+		while (!canStartNewThread())
+		{
+			try {
+				Thread.sleep(400);
+			}
+			catch (InterruptedException e) {}
+		}
+	}
+
+	/**
+	 * @return true if download was successful
+	 */
+	private boolean doDownload()
+	{
 		boolean finished = false;
 		InputStream in = null;
 		FileOutputStream out = null;
 		File tempFile = new File(_file.getAbsolutePath() + ".temp");
-		// Use a synchronized block across all threads to make sure this url is only fetched once
-		synchronized (DiskTileCacher.class)
+
+		if (tempFile.exists())
 		{
-			if (tempFile.exists()) {tempFile.delete();}
-			try {
-				if (!tempFile.createNewFile()) {return;}
-			}
-			catch (Exception e) {return;}
+			tempFile.delete();
 		}
+		try
+		{
+			if (!tempFile.createNewFile()) {return false;}
+		}
+		catch (Exception e) {return false;}
+
 		try
 		{
 			// Open streams from URL and to file
 			out = new FileOutputStream(tempFile);
-			//System.out.println("Opening URL: " + _url.toString());
+			//System.out.println("DiskTileCacher opening URL: " + _url.toString());
 			// Set http user agent on connection
 			URLConnection conn = _url.openConnection();
 			conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
@@ -148,27 +193,97 @@ public class DiskTileCacher implements Runnable
 				out.write(d);
 			}
 			finished = true;
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			System.err.println("ioe: " + e.getClass().getName() + " - " + e.getMessage());
 			BLOCKED_URLS.add(_url.toString());
+			CONNECTION_ACTIVE = false;
 		}
 		finally
 		{
 			// clean up files
 			try {in.close();} catch (Exception e) {} // ignore
 			try {out.close();} catch (Exception e) {} // ignore
-			if (!finished) {
+			if (!finished)
+			{
 				tempFile.delete();
 			}
 		}
+		boolean success = false;
 		// Move temp file to desired file location
-		if (tempFile.exists() && !tempFile.renameTo(_file))
+		if (tempFile.exists() && tempFile.length() > 0L)
 		{
-			// File couldn't be moved - delete both to be sure
-			tempFile.delete();
-			_file.delete();
+			if (tempFile.renameTo(_file))
+			{
+				success = true;
+			}
+			else
+			{
+				// File couldn't be moved - delete both to be sure
+				System.out.println("Failed to rename temp file: " + tempFile.getAbsolutePath());
+				tempFile.delete();
+				_file.delete();
+			}
 		}
+
 		// Tell parent that load is finished (parameters ignored)
 		_observer.imageUpdate(null, ImageObserver.ALLBITS, 0, 0, 0, 0);
+		return success;
+	}
+
+	// Blocking of cachers working on same file
+
+	/**
+	 * Register a cacher writing to the specified file path
+	 * @param inFilePath destination path to tile file
+	 * @return true if nobody else has claimed this file yet
+	 */
+	private synchronized static boolean registerCacher(String inFilePath)
+	{
+		if (DOWNLOADING_FILES.contains(inFilePath))
+		{
+			return false;
+		}
+		// Nobody has claimed this file yet
+		DOWNLOADING_FILES.add(inFilePath);
+		return true;
+	}
+
+	/**
+	 * Cacher has finished dealing with the specified file
+	 * @param inFilePath destination path to tile file
+	 */
+	private synchronized static void unregisterCacher(String inFilePath)
+	{
+		DOWNLOADING_FILES.remove(inFilePath);
+	}
+
+	// Limiting of active threads
+
+	/**
+	 * @return true if another thread is allowed to become active
+	 */
+	private synchronized static boolean canStartNewThread()
+	{
+		final int MAXIMUM_NUM_THREADS = 8;
+		if (NUMBER_ACTIVE_THREADS < MAXIMUM_NUM_THREADS)
+		{
+			NUMBER_ACTIVE_THREADS++;
+			return true;
+		}
+		// Already too many threads active
+		return false;
+	}
+
+	/**
+	 * Inform that one of the previously active threads has now completed
+	 */
+	private synchronized static void threadFinished()
+	{
+		if (NUMBER_ACTIVE_THREADS > 0)
+		{
+			NUMBER_ACTIVE_THREADS--;
+		}
 	}
 }

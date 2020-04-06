@@ -114,12 +114,7 @@ public class DistanceFunction extends GenericFunction
 		// second table for distances
 		_distModel = new DistanceTableModel();
 		JTable distTable = new JTable(_distModel);
-		// Use reflection to call distTable.setAutoCreateRowSorter(true) which is new with Java 1.6
-		try {
-			Class<?> d = Class.forName("javax.swing.JTable");
-			d.getDeclaredMethod("setAutoCreateRowSorter", new Class[]{Boolean.TYPE}).invoke(distTable, Boolean.TRUE);
-		}
-		catch (Exception e) {}
+		distTable.setAutoCreateRowSorter(true);
 		scrollPane = new JScrollPane(distTable);
 		scrollPane.setPreferredSize(new Dimension(200, 250));
 		mainPanel.add(scrollPane);

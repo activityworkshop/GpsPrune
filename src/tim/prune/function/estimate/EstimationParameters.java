@@ -6,7 +6,7 @@ import java.util.Locale;
 
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
-import tim.prune.data.RangeStats;
+import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
 
@@ -254,9 +254,11 @@ public class EstimationParameters
 	 * @param inStats stats of current range
 	 * @return estimated number of minutes required
 	 */
-	public double applyToStats(RangeStats inStats)
+	public double applyToStats(RangeStatsWithGradients inStats)
 	{
-		if (inStats == null || !inStats.isValid()) return 0.0;
+		if (inStats == null) {
+			return 0.0;
+		}
 		final Unit METRES = UnitSetLibrary.UNITS_METRES;
 		final double STANDARD_CLIMB = 100.0; // metres
 		final double STANDARD_DISTANCE = 5.0; // kilometres
