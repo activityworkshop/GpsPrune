@@ -239,6 +239,8 @@ public class ShowFullDetails extends GenericFunction
 
 		addTextPair(result, "fieldname.description", point.getFieldValue(Field.DESCRIPTION));
 
+		addTextPair(result, "fieldname.comment", point.getFieldValue(Field.COMMENT));
+
 		addTextPair(result, "fieldname.waypointtype", point.getFieldValue(Field.WAYPT_TYPE));
 
 		// Speed can come from either timestamps and distances, or speed values in data

@@ -583,6 +583,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 			}
 			source = replaceGpxTags(source, "<desc>", "</desc>",
 				XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION)));
+			source = replaceGpxTags(source, "<cmt>", "</cmt>", inPoint.getFieldValue(Field.COMMENT));
 		}
 		// photo / audio links
 		if (source != null && (inPoint.hasMedia() || source.indexOf("</link>") > 0)) {
@@ -733,12 +734,20 @@ public class GpxExporter extends GenericFunction implements Runnable
 		inWriter.write(XmlUtils.fixCdata(inPoint.getWaypointName().trim()));
 		inWriter.write("</name>\n");
 		// description, if any
-		String desc = XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION));
+		final String desc = XmlUtils.fixCdata(inPoint.getFieldValue(Field.DESCRIPTION));
 		if (desc != null && !desc.equals(""))
 		{
 			inWriter.write("\t\t<desc>");
 			inWriter.write(desc);
 			inWriter.write("</desc>\n");
+		}
+		// comment, if any
+		final String comment = XmlUtils.fixCdata(inPoint.getFieldValue(Field.COMMENT));
+		if (comment != null && !comment.equals(""))
+		{
+			inWriter.write("\t\t<cmt>");
+			inWriter.write(comment);
+			inWriter.write("</cmt>\n");
 		}
 		// Media links, if any
 		if (inSettings.getExportPhotoPoints() && inPoint.getPhoto() != null)

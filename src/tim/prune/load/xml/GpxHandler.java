@@ -24,7 +24,7 @@ public class GpxHandler extends XmlHandler
 	private String _latitude = null, _longitude = null;
 	private GpxTag _elevation = new GpxTag(), _time = new GpxTag();
 	private GpxTag _type = new GpxTag(), _description = new GpxTag();
-	private GpxTag _link = new GpxTag();
+	private GpxTag _link = new GpxTag(), _comment = new GpxTag();
 	private GpxTag _currentTag = null;
 	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
 	private ArrayList<String> _linkList = new ArrayList<String>();
@@ -58,6 +58,7 @@ public class GpxHandler extends XmlHandler
 			_type.setValue(null);
 			_link.setValue(null);
 			_description.setValue(null);
+			_comment.setValue(null);
 		}
 		else if (tag.equals("ele")) {
 			_currentTag = _elevation;
@@ -83,6 +84,9 @@ public class GpxHandler extends XmlHandler
 		}
 		else if (tag.equals("description") || tag.equals("desc")) {
 			_currentTag = _description;
+		}
+		else if (tag.equals("cmt")) {
+			_currentTag = _comment;
 		}
 		else if (tag.equals("link")) {
 			_link.setValue(attributes.getValue("href"));
@@ -153,7 +157,7 @@ public class GpxHandler extends XmlHandler
 	private void processPoint()
 	{
 		// Put the values into a String array matching the order in getFieldArray()
-		String[] values = new String[8];
+		String[] values = new String[9];
 		values[0] = _latitude;
 		values[1] = _longitude;
 		values[2] = _elevation.getValue();
@@ -166,6 +170,7 @@ public class GpxHandler extends XmlHandler
 		}
 		values[6] = _type.getValue();
 		values[7] = _description.getValue();
+		values[8] = _comment.getValue();
 		_pointList.add(values);
 		_trackNameList.addPoint(_trackNum, _trackName.getValue(), _isTrackPoint);
 		_linkList.add(_link.getValue());
@@ -179,7 +184,7 @@ public class GpxHandler extends XmlHandler
 	{
 		final Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
 			Field.WAYPT_NAME, Field.TIMESTAMP, Field.NEW_SEGMENT,
-			Field.WAYPT_TYPE, Field.DESCRIPTION};
+			Field.WAYPT_TYPE, Field.DESCRIPTION, Field.COMMENT};
 		return fields;
 	}
 

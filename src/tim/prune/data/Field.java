@@ -18,6 +18,7 @@ public class Field
 	public static final Field WAYPT_NAME = new Field("fieldname.waypointname", true);
 	public static final Field WAYPT_TYPE = new Field("fieldname.waypointtype", true);
 	public static final Field DESCRIPTION = new Field("fieldname.description", true);
+	public static final Field COMMENT = new Field("fieldname.comment", true);
 	public static final Field NEW_SEGMENT = new Field("fieldname.newsegment", true);
 
 	public static final Field SPEED          = new Field("fieldname.speed", true);
@@ -66,8 +67,9 @@ public class Field
 	 */
 	public String getName()
 	{
-		if (_labelKey != null)
+		if (_labelKey != null) {
 			return I18nManager.getText(_labelKey);
+		}
 		return _customLabel;
 	}
 
