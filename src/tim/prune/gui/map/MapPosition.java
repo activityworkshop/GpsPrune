@@ -17,6 +17,8 @@ public class MapPosition
 	private int _zoom = 12;
 	/** Factor to zoom by, 2 to the power of zoom */
 	private int _zoomFactor = 1 << _zoom;
+	/** Flag to mark if this position has ever been set */
+	private boolean _empty = true;
 	/** Maximum zoom level */
 	private static final int MAX_ZOOM = 21;
 
@@ -51,6 +53,7 @@ public class MapPosition
 		setZoom(requiredZoom);
 		_xPosition = transformToPixels((inMinX + inMaxX) / 2.0);
 		_yPosition = transformToPixels((inMinY + inMaxY) / 2.0);
+		_empty = false;
 	}
 
 	/**
@@ -61,6 +64,7 @@ public class MapPosition
 	{
 		_zoom = inZoom;
 		_zoomFactor = 1 << _zoom;
+		_empty = false;
 	}
 
 	/**
@@ -93,6 +97,7 @@ public class MapPosition
 		// Set position
 		_xPosition = (_xPosition - inWidth/2 + (inMinX + inMaxX) / 2) * multFactor;
 		_yPosition = (_yPosition - inHeight/2 + (inMinY + inMaxY) / 2) * multFactor;
+		_empty = false;
 	}
 
 	/**
@@ -276,5 +281,13 @@ public class MapPosition
 		// TODO: Check bounds?
 		_xPosition += inDeltaX;
 		_yPosition += inDeltaY;
+	}
+
+	/**
+	 * @return true if this position has never been set
+	 */
+	public boolean isEmpty()
+	{
+		return _empty;
 	}
 }

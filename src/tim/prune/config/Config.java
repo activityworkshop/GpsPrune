@@ -109,6 +109,8 @@ public abstract class Config
 	public static final String KEY_WAYPOINT_ICON_SIZE = "prune.waypointiconsize";
 	/** Id of selected timezone */
 	public static final String KEY_TIMEZONE_ID = "prune.timezoneid";
+	/** Last used latlon range */
+	public static final String KEY_LATLON_RANGE = "prune.latlonrange";
 
 
 	/** Initialise the default properties */

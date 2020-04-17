@@ -11,6 +11,8 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
+import tim.prune.data.DoubleRange;
+import tim.prune.data.Track;
 
 /**
  * Class to provide the function to save the config settings
@@ -86,6 +88,12 @@ public class SaveConfig extends GenericFunction
 			+ currBounds.width + "x" + currBounds.height;
 		Config.setConfigString(Config.KEY_WINDOW_BOUNDS, windowBounds);
 
+		final String latlonString = createLatLonStringForConfig();
+		if (latlonString != null)
+		{
+			Config.setConfigString(Config.KEY_LATLON_RANGE, latlonString);
+		}
+
 		FileOutputStream outStream = null;
 		try
 		{
@@ -102,5 +110,31 @@ public class SaveConfig extends GenericFunction
 		}
 		// Remember where it was saved to
 		Config.setConfigFile(inSaveFile);
+	}
+
+	/**
+	 * @return semicolon-separated string containing the four values, or null
+	 */
+	private String createLatLonStringForConfig()
+	{
+		Track track = _app.getTrackInfo().getTrack();
+		if (track.getNumPoints() >= 2)
+		{
+			final DoubleRange latRange = track.getLatRange();
+			final DoubleRange lonRange = track.getLonRange();
+			if (latRange.getRange() > 0.0 && lonRange.getRange() > 0.0)
+			{
+				StringBuffer buffer = new StringBuffer();
+				buffer.append(Double.toString(latRange.getMinimum()));
+				buffer.append(';');
+				buffer.append(Double.toString(latRange.getMaximum()));
+				buffer.append(';');
+				buffer.append(Double.toString(lonRange.getMinimum()));
+				buffer.append(';');
+				buffer.append(Double.toString(lonRange.getMaximum()));
+				return buffer.toString();
+			}
+		}
+		return null;
 	}
 }
