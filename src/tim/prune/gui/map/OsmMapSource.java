@@ -1,7 +1,7 @@
 package tim.prune.gui.map;
 
-import java.util.regex.Matcher;
 import tim.prune.I18nManager;
+
 
 /**
  * Class to provide a map source for all OSM-like sources
@@ -96,7 +96,9 @@ public class OsmMapSource extends MapSource
 		_maxZoom = inMaxZoom;
 	}
 
-	/** Set the API key (if required) */
+	/**
+	 * @param inKey the API key (if required)
+	 */
 	public void setApiKey(String inKey)
 	{
 		_apiKey = inKey;
@@ -135,31 +137,80 @@ public class OsmMapSource extends MapSource
 		return _name;
 	}
 
-	/** Number of layers */
+	/**
+	 * @return Number of layers
+	 */
 	public int getNumLayers() {
 		return _baseUrls[1] == null?1:2;
 	}
 
-	/** Base url for this source */
+	/**
+	 * @param inLayerNum layer number, either 0 or 1
+	 * @return Base url for this source
+	 */
 	public String getBaseUrl(int inLayerNum) {
 		return _baseUrls[inLayerNum];
 	}
 
-	/** site name without protocol or www. */
+	/**
+	 * @param inLayerNum layer number, either 0 or 1
+	 * @return site name without protocol or www.
+	 */
 	public String getSiteName(int inLayerNum) {
 		return _siteNames[inLayerNum];
 	}
 
 	/**
 	 * Make the URL to get the specified tile
+	 * @param inLayerNum layer number
+	 * @param inZoom zoom level
+	 * @param inX x coordinate of tile
+	 * @param inY y coordinate of tile
+	 * @return url to get tile as String
 	 */
 	public String makeURL(int inLayerNum, int inZoom, int inX, int inY)
 	{
 		// Check if the base url has a [1234], if so replace at random
-		StringBuffer url = new StringBuffer();
-		url.append(pickServerUrl(_baseUrls[inLayerNum]));
+		String baseUrl = pickServerUrl(_baseUrls[inLayerNum]);
+		if (baseUrl.contains("{x}"))
+		{
+			return completeCustomUrl(baseUrl, inZoom, inX, inY);
+		}
+		else
+		{
+			return completeRegularUrl(baseUrl, inZoom, inX, inY, getFileExtension(inLayerNum));
+		}
+	}
+
+	/**
+	 * Add the tile specification to a custom base url with {x}, {y} and {z} placeholders
+	 * @param inBaseUrl base url with custom structure
+	 * @param inZoom zoom level for z
+	 * @param inX x coordinate of tile for x
+	 * @param inY y coordinate of tile for y
+	 * @return complete url for tile, as a String
+	 */
+	private static String completeCustomUrl(String inBaseUrl, int inZoom, int inX, int inY)
+	{
+		return inBaseUrl.replace("{z}", Integer.toString(inZoom))
+				.replace("{x}", Integer.toString(inX))
+				.replace("{y}", Integer.toString(inY));
+	}
+
+	/**
+	 * Add the tile specification to a regular base url
+	 * @param inBaseUrl base url with a regular structure
+	 * @param inZoom zoom level
+	 * @param inX x coordinate of tile
+	 * @param inY y coordinate of tile
+	 * @param inExtension file extension like "png"
+	 * @return complete url for tile, as a String
+	 */
+	private String completeRegularUrl(String inBaseUrl, int inZoom, int inX, int inY, String inExtension)
+	{
+		StringBuffer url = new StringBuffer(inBaseUrl);
 		url.append(inZoom).append('/').append(inX).append('/').append(inY);
-		url.append('.').append(getFileExtension(inLayerNum));
+		url.append('.').append(inExtension);
 		if (_apiKey != null)
 		{
 			url.append("?apikey=").append(_apiKey);
@@ -176,40 +227,10 @@ public class OsmMapSource extends MapSource
 	}
 
 	/**
-	 * If the base url contains something like [1234], then pick a server
-	 * @param inBaseUrl base url
-	 * @return modified base url
-	 */
-	protected static final String pickServerUrl(String inBaseUrl)
-	{
-		if (inBaseUrl == null || inBaseUrl.indexOf('[') < 0) {
-			return inBaseUrl;
-		}
-		// Check for [.*] (once only)
-		// Only need to support one, make things a bit easier
-		final Matcher matcher = WILD_PATTERN.matcher(inBaseUrl);
-		// if not, return base url unchanged
-		if (!matcher.matches()) {
-			return inBaseUrl;
-		}
-		// if so, pick one at random and replace in the String
-		final String match = matcher.group(2);
-		final int numMatches = match.length();
-		String server = null;
-		if (numMatches > 0)
-		{
-			int matchNum = (int) Math.floor(Math.random() * numMatches);
-			server = "" + match.charAt(matchNum);
-		}
-		final String result = matcher.group(1) + (server==null?"":server) + matcher.group(3);
-		return result;
-	}
-
-	/**
 	 * @return semicolon-separated list of all fields
 	 */
 	public String getConfigString()
 	{
-		return "o:" +  getName() + ";" + getSiteStrings() + getMaxZoomLevel();
+		return "o:" + getName() + ";" + getSiteStrings() + getMaxZoomLevel();
 	}
 }
