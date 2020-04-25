@@ -97,6 +97,7 @@ public class SetDisplaySettings extends GenericFunction
 	private JButton _okButton = null;
 
 	private static final String STYLEKEY_NIMBUS = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
+	private static final String STYLEKEY_GTK = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
 
 
 	/**
@@ -188,14 +189,17 @@ public class SetDisplaySettings extends GenericFunction
 		windowStylePanel.add(new JLabel(I18nManager.getText("dialog.displaysettings.windowstyle")));
 		windowStylePanel.add(Box.createHorizontalStrut(10));
 		ButtonGroup styleGroup = new ButtonGroup();
-		final String[] styleKeys = {"default", "nimbus"};
-		_windowStyleRadios = new JRadioButton[2];
-		for (int i=0; i<2; i++)
+		final String[] styleKeys = {"default", "nimbus", "gtk"};
+		_windowStyleRadios = new JRadioButton[3];
+		for (int i=0; i<3; i++)
 		{
 			_windowStyleRadios[i] = new JRadioButton(
 				I18nManager.getText("dialog.displaysettings.windowstyle." + styleKeys[i]));
 			styleGroup.add(_windowStyleRadios[i]);
-			windowStylePanel.add(_windowStyleRadios[i]);
+			if (i != 2 || platformHasPlaf(STYLEKEY_GTK))
+			{
+				windowStylePanel.add(_windowStyleRadios[i]);
+			}
 		}
 		midPanel.add(windowStylePanel);
 		mainPanel.add(midPanel, BorderLayout.CENTER);
@@ -223,6 +227,19 @@ public class SetDisplaySettings extends GenericFunction
 		return mainPanel;
 	}
 
+	/**
+	 * @return true if the specified style name is available on this platform
+	 */
+	private static boolean platformHasPlaf(String styleName)
+	{
+		for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels())
+		{
+			if (info.getClassName().equals(styleName)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Show window
@@ -274,6 +291,10 @@ public class SetDisplaySettings extends GenericFunction
 		{
 			selectedRadio = 1;
 		}
+		else if (inValue != null && inValue.equals(STYLEKEY_GTK) && _windowStyleRadios[2] != null)
+		{
+			selectedRadio = 2;
+		}
 		_windowStyleRadios[selectedRadio].setSelected(true);
 	}
 
@@ -293,6 +314,20 @@ public class SetDisplaySettings extends GenericFunction
 	}
 
 	/**
+	 * @return the style string according to the selected radio button
+	 */
+	private String getSelectedStyleString()
+	{
+		if (_windowStyleRadios[1].isSelected()) {
+			return STYLEKEY_NIMBUS;
+		}
+		if (_windowStyleRadios[2] != null && _windowStyleRadios[2].isSelected()) {
+			return STYLEKEY_GTK;
+		}
+		return null;
+	}
+
+	/**
 	 * Save settings and close
 	 */
 	public void finish()
@@ -304,8 +339,7 @@ public class SetDisplaySettings extends GenericFunction
 		Config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
 		Config.setConfigInt(Config.KEY_WAYPOINT_ICONS, _wpIconCombobox.getSelectedIndex());
 		Config.setConfigInt(Config.KEY_WAYPOINT_ICON_SIZE, getSelectedIconSize());
-		final String styleString = (_windowStyleRadios[1].isSelected() ? STYLEKEY_NIMBUS : null);
-		Config.setConfigString(Config.KEY_WINDOW_STYLE, styleString);
+		Config.setConfigString(Config.KEY_WINDOW_STYLE, getSelectedStyleString());
 		// refresh display
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 		_dialog.dispose();
