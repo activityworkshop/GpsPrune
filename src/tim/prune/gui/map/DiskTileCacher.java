@@ -38,6 +38,8 @@ public class DiskTileCacher implements Runnable
 	private static int NUMBER_ACTIVE_THREADS = 0;
 	/** Flag to remember whether any server connection is possible */
 	private static boolean CONNECTION_ACTIVE = true;
+	/** Flag to remember whether we have already tried to create the base path */
+	private static boolean TRIED_TO_CREATE_BASEPATH = false;
 
 
 	/**
@@ -86,16 +88,17 @@ public class DiskTileCacher implements Runnable
 	 * @param inBasePath base path to disk cache
 	 * @param inTilePath relative path to this tile
 	 * @param inObserver observer to inform when load complete
+	 * @throws CacheFailure if tile could not be saved
 	 */
-	public static void saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver)
+	public static void saveTile(URL inUrl, String inBasePath, String inTilePath, ImageObserver inObserver) throws CacheFailure
 	{
 		if (inBasePath == null || inTilePath == null) {return;}
 		// save file if possible
 		File basePath = new File(inBasePath);
-		if (!basePath.exists() || !basePath.isDirectory() || !basePath.canWrite())
+		if (!checkBasePath(basePath))
 		{
 			// Can't write to base path
-			return;
+			throw new CacheFailure();
 		}
 		File tileFile = new File(basePath, inTilePath);
 
@@ -111,6 +114,21 @@ public class DiskTileCacher implements Runnable
 			DiskTileCacher cacher = new DiskTileCacher(inUrl, tileFile, inObserver);
 			cacher.startDownloading();
 		}
+	}
+
+	/**
+	 * Check the given base path, and try (once) to create it if necessary
+	 * @return true if base path can be written to
+	 */
+	private static boolean checkBasePath(File inBasePath)
+	{
+		if (!inBasePath.exists() && !TRIED_TO_CREATE_BASEPATH)
+		{
+			TRIED_TO_CREATE_BASEPATH = true;
+			System.out.println("Base path '" + inBasePath.getAbsolutePath() + "' does not exist, trying to create");
+			return inBasePath.mkdirs();
+		}
+		return inBasePath.exists() && inBasePath.isDirectory() && inBasePath.canWrite();
 	}
 
 	/**
@@ -218,12 +236,14 @@ public class DiskTileCacher implements Runnable
 			{
 				success = true;
 			}
+			else if (_file.delete() && tempFile.renameTo(_file))
+			{
+				success = true;
+			}
 			else
 			{
-				// File couldn't be moved - delete both to be sure
 				System.out.println("Failed to rename temp file: " + tempFile.getAbsolutePath());
 				tempFile.delete();
-				_file.delete();
 			}
 		}
 

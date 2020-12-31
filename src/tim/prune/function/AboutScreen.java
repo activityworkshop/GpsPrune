@@ -196,7 +196,7 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" Gy\u00F6rgy, HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter, Cristian,"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" Roman, Erkki"),
+			new JLabel(" Roman, Erkki, Carlos, Tche333"),
 			1, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),

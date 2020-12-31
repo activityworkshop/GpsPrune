@@ -7,4 +7,7 @@ public interface TileConsumer
 {
 	/** Let the consumer know that the tiles have been updated */
 	public void tilesUpdated(boolean inIsOk);
+
+	/** Let the consume know that a cache failure occurred */
+	public void reportCacheFailure();
 }

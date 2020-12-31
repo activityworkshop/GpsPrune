@@ -109,6 +109,8 @@ public abstract class Config
 	public static final String KEY_WAYPOINT_ICON_SIZE = "prune.waypointiconsize";
 	/** Id of selected timezone */
 	public static final String KEY_TIMEZONE_ID = "prune.timezoneid";
+	/** Last used latlon range */
+	public static final String KEY_LATLON_RANGE = "prune.latlonrange";
 
 
 	/** Initialise the default properties */
@@ -194,14 +196,14 @@ public abstract class Config
 		props.put(KEY_GPS_DEVICE, "usb:");
 		props.put(KEY_GPS_FORMAT, "garmin");
 		props.put(KEY_POVRAY_FONT, "crystal.ttf"); // alternative: DejaVuSans-Bold.ttf
-		props.put(KEY_SHOW_MAP, "0"); // hide by default
+		props.put(KEY_SHOW_MAP, "1"); // show by default
 		props.put(KEY_EXIFTOOL_PATH, "exiftool");
 		props.put(KEY_GNUPLOT_PATH, "gnuplot");
 		props.put(KEY_GPSBABEL_PATH, "gpsbabel");
 		props.put(KEY_IMPORT_FILE_FORMAT, "-1"); // no file format selected
 		props.put(KEY_KMZ_IMAGE_SIZE, "240");
 		props.put(KEY_ANTIALIAS, "1"); // antialias on by default
-		props.put(KEY_AUTOSAVE_SETTINGS, "0"); // autosave false by default
+		props.put(KEY_AUTOSAVE_SETTINGS, "1"); // autosave by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		props.put(KEY_COORD_DISPLAY_FORMAT, "0"); // original
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration

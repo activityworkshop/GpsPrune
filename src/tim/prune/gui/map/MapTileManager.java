@@ -210,6 +210,9 @@ public class MapTileManager implements ImageObserver
 				}
 			}
 			catch (MalformedURLException urle) {} // ignore
+			catch (CacheFailure cf) {
+				_consumer.reportCacheFailure();
+			}
 		}
 		return tileImage;
 	}

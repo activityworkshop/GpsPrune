@@ -59,7 +59,6 @@ import tim.prune.function.settings.SetMapBgFunction;
 import tim.prune.function.settings.SetPathsFunction;
 import tim.prune.function.sew.SewTrackSegmentsFunction;
 import tim.prune.function.sew.SplitSegmentsFunction;
-import tim.prune.function.srtm.DownloadSrtmFunction;
 import tim.prune.function.srtm.LookupSrtmFunction;
 import tim.prune.function.weather.GetWeatherForecastFunction;
 import tim.prune.load.AudioLoader;
@@ -102,7 +101,6 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_DELETE_BY_DATE = null;
 	public static SingleNumericParameterFunction FUNCTION_INTERPOLATE = null;
 	public static GenericFunction FUNCTION_LOOKUP_SRTM = null;
-	public static GenericFunction FUNCTION_DOWNLOAD_SRTM = null;
 	public static GenericFunction FUNCTION_NEARBY_WIKIPEDIA = null;
 	public static GenericFunction FUNCTION_SEARCH_WIKIPEDIA = null;
 	public static GenericFunction FUNCTION_SEARCH_OSMPOIS = null;
@@ -180,7 +178,6 @@ public abstract class FunctionLibrary
 		FUNCTION_DELETE_BY_DATE = new DeleteByDateFunction(inApp);
 		FUNCTION_INTERPOLATE = new InterpolateFunction(inApp);
 		FUNCTION_LOOKUP_SRTM = new LookupSrtmFunction(inApp);
-		FUNCTION_DOWNLOAD_SRTM = new DownloadSrtmFunction(inApp);
 		FUNCTION_NEARBY_WIKIPEDIA = new GetWikipediaFunction(inApp);
 		FUNCTION_SEARCH_WIKIPEDIA = new SearchWikipediaNames(inApp);
 		FUNCTION_SEARCH_OSMPOIS = new SearchOsmPoisFunction(inApp);

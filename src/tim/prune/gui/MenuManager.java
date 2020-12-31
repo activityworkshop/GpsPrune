@@ -96,7 +96,6 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _routingGraphHopperItem = null;
 	private JMenuItem _chartItem = null;
 	private JMenuItem _lookupSrtmItem = null;
-	private JMenuItem _downloadSrtmItem = null;
 	private JMenuItem _nearbyWikipediaItem = null;
 	private JMenuItem _nearbyOsmPoiItem = null;
 	private JMenuItem _showPeakfinderItem = null;
@@ -260,8 +259,6 @@ public class MenuManager implements DataSubscriber
 		// SRTM
 		_lookupSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_SRTM, false);
 		onlineMenu.add(_lookupSrtmItem);
-		_downloadSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_SRTM, false);
-		onlineMenu.add(_downloadSrtmItem);
 
 		onlineMenu.addSeparator();
 		// browser submenu
@@ -894,8 +891,6 @@ public class MenuManager implements DataSubscriber
 		_downloadOsmItem.setEnabled(hasData);
 		_getWeatherItem.setEnabled(hasData);
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
-		// have we got a cache?
-		_downloadSrtmItem.setEnabled(hasData && Config.getConfigString(Config.KEY_DISK_CACHE) != null);
 		// have we got any timestamps?
 		_deleteByDateItem.setEnabled(hasData && _track.hasData(Field.TIMESTAMP));
 
@@ -1003,6 +998,7 @@ public class MenuManager implements DataSubscriber
 			}
 			else
 			{
+				rfl.verifyAll();
 				// Rebuild menus
 				_recentFileMenu.removeAll();
 				for (int i=0; i<rfl.getSize(); i++)

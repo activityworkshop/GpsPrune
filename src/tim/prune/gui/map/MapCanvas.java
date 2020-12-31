@@ -85,7 +85,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/** coordinates of popup menu */
 	private int _popupMenuX = -1, _popupMenuY = -1;
 	/** Flag to prevent showing too often the error message about loading maps */
-	private boolean _shownOsmErrorAlready = false;
+	private boolean _shownMapLoadErrorAlready = false;
 	/** Current drawing mode */
 	private int _drawMode = MODE_DEFAULT;
 	/** Current waypoint icon definition */
@@ -339,8 +339,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	private void zoomToFit()
 	{
-		_latRange = _track.getLatRange();
-		_lonRange = _track.getLonRange();
+		if (_track.getNumPoints() > 0)
+		{
+			_latRange = _track.getLatRange();
+			_lonRange = _track.getLonRange();
+		}
+		if (_latRange == null || _lonRange == null
+			|| !_latRange.hasData() || !_lonRange.hasData())
+		{
+			setDefaultLatLonRange();
+		}
 		_xRange = new DoubleRange(MapUtils.getXFromLongitude(_lonRange.getMinimum()),
 			MapUtils.getXFromLongitude(_lonRange.getMaximum()));
 		_yRange = new DoubleRange(MapUtils.getYFromLatitude(_latRange.getMinimum()),
@@ -349,6 +357,37 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			getWidth(), getHeight());
 	}
 
+	/**
+	 * Track data is empty, so find a default area on the map to show
+	 */
+	private void setDefaultLatLonRange()
+	{
+		String storedRange = Config.getConfigString(Config.KEY_LATLON_RANGE);
+		// Parse it into four latlon values
+		try
+		{
+			String[] values = storedRange.split(";");
+			if (values.length == 4)
+			{
+				final double lat1 = Double.valueOf(values[0]);
+				final double lat2 = Double.valueOf(values[1]);
+				if (lat1 >= -90.0 && lat1 <= 90.0 && lat2 >= -90.0 && lat2 <= 90.0 && lat1 != lat2)
+				{
+					_latRange = new DoubleRange(lat1, lat2);
+					final double lon1 = Double.valueOf(values[2]);
+					final double lon2 = Double.valueOf(values[3]);
+					if (lon1 >= -180.0 && lon1 <= 180.0 && lon2 >= -180.0 && lon2 <= 180.0 && lon1 != lon2)
+					{
+						_lonRange = new DoubleRange(lon1, lon2);
+						return;
+					}
+				}
+			}
+		}
+		catch (Exception e) {}
+		_latRange = new DoubleRange(45.8, 47.9);
+		_lonRange = new DoubleRange(5.9, 10.6);
+	}
 
 	/**
 	 * Paint method
@@ -360,7 +399,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		if (_mapImage != null && (_mapImage.getWidth() != getWidth() || _mapImage.getHeight() != getHeight())) {
 			_mapImage = null;
 		}
-		if (_track.getNumPoints() > 0)
+		final boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		final boolean showSomething = _track.getNumPoints() > 0 || showMap;
+		if (showSomething)
 		{
 			// Check for autopan if enabled / necessary
 			if (_autopanCheckBox.isSelected())
@@ -371,6 +412,14 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					autopanToPoint(selectedPoint);
 				}
 				_prevSelectedPoint = selectedPoint;
+			}
+
+			// Recognise empty map position, if no data has been loaded
+			if (_mapPosition.isEmpty())
+			{
+				// Set to some default area
+				zoomToFit();
+				_recalculate = true;
 			}
 
 			// Draw the map contents if necessary
@@ -425,6 +474,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			inG.drawString(I18nManager.getText("display.nodata"), 50, getHeight()/2);
 			_scaleBar.updateScale(-1, 0);
 		}
+		// enable or disable panels
+		_topPanel.setVisible(showSomething);
+		_sidePanel.setVisible(showSomething);
 		// Draw slider etc on top
 		paintChildren(inG);
 	}
@@ -503,7 +555,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 
 		// reset error message
-		if (!showMap) {_shownOsmErrorAlready = false;}
+		if (!showMap) {_shownMapLoadErrorAlready = false;}
 		_recalculate = false;
 		// Only get map tiles if selected
 		if (showMap)
@@ -941,9 +993,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		synchronized(this)
 		{
 			// Show message if loading failed (but not too many times)
-			if (!inIsOk && !_shownOsmErrorAlready && _mapCheckBox.isSelected())
+			if (!inIsOk && !_shownMapLoadErrorAlready && _mapCheckBox.isSelected())
 			{
-				_shownOsmErrorAlready = true;
+				_shownMapLoadErrorAlready = true;
 				// use separate thread to show message about failing to load osm images
 				new Thread(new Runnable() {
 					public void run() {
@@ -955,6 +1007,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			_recalculate = true;
 			repaint();
 		}
+	}
+
+	/**
+	 * Inform that a cache failure occurred
+	 */
+	public void reportCacheFailure()
+	{
+		// Cache can't be used, so disable it - user will be reminded to set it up by the tips
+		Config.setConfigString(Config.KEY_DISK_CACHE, null);
 	}
 
 	/**
@@ -1074,15 +1135,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	public void mouseClicked(MouseEvent inE)
 	{
-		if (_track != null && _track.getNumPoints() > 0)
+		final boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		final boolean hasPoints = _track != null && _track.getNumPoints() > 0;
+		if (showMap || hasPoints)
 		{
 			// select point if it's a left-click
 			if (!inE.isMetaDown())
 			{
 				if (inE.getClickCount() == 1)
 				{
-					// single click
-					if (_drawMode == MODE_DEFAULT)
+					// single left click
+					if (_drawMode == MODE_DEFAULT && hasPoints)
 					{
 						int pointIndex = _clickedPoint;
 						if (pointIndex == INDEX_UNKNOWN)
@@ -1408,10 +1471,6 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 		}
 		repaint();
-		// enable or disable components
-		boolean hasData = _track.getNumPoints() > 0;
-		_topPanel.setVisible(hasData);
-		_sidePanel.setVisible(hasData);
 		// grab focus for the key presses
 		this.requestFocus();
 	}

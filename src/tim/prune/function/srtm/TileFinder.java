@@ -3,15 +3,17 @@ package tim.prune.function.srtm;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 
 
 /**
  * Class to get the URLs of the SRTM tiles
  * using the srtmtiles.dat file
  */
-public abstract class TileFinder
+public class TileFinder
 {
+	/** tile data loaded from file */
+	private byte[] _tileData = null;
+
 	/** URL prefix for all tiles */
 	private static final String URL_PREFIX = "https://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
 	/** Directory names for each continent */
@@ -24,33 +26,33 @@ public abstract class TileFinder
 	 * @param inTiles list of Tiles to get
 	 * @return array of URLs
 	 */
-	public static URL[] getUrls(ArrayList<SrtmTile> inTiles)
+	public URL getUrl(SrtmTile inTile)
 	{
-		if (inTiles == null || inTiles.size() < 1) {return null;}
-		URL[] urls = new URL[inTiles.size()];
-		// Read dat file into array
-		byte[] lookup = readDatFile();
-		if (lookup == null)
+		if (inTile == null) {return null;}
+		if (_tileData == null)
 		{
-			System.err.println("Build error: resource srtmtiles.dat missing!");
-			return null;
-		}
-		for (int t=0; t<inTiles.size(); t++)
-		{
-			SrtmTile tile = inTiles.get(t);
-			// Get byte from lookup array
-			int idx = (tile.getLatitude() + 59)*360 + (tile.getLongitude() + 180);
-			try
+			_tileData = readDatFile();
+			if (_tileData == null)
 			{
-				int dir = lookup[idx];
-				if (dir > 0) {
-					try {
-						urls[t] = new URL(URL_PREFIX + CONTINENTS[dir] + "/" + tile.getTileName());
-					} catch (MalformedURLException e) {} // ignore error, url stays null
-				}
-			} catch (ArrayIndexOutOfBoundsException e) {} // ignore error, url stays null
+				System.err.println("Build error: resource srtmtiles.dat missing!");
+				return null;
+			}
 		}
-		return urls;
+
+		URL url = null;
+		// Get byte from lookup array
+		int idx = (inTile.getLatitude() + 59)*360 + (inTile.getLongitude() + 180);
+		try
+		{
+			int dir = _tileData[idx];
+			if (dir > 0) {
+				try {
+					url = new URL(URL_PREFIX + CONTINENTS[dir] + "/" + inTile.getTileName());
+				} catch (MalformedURLException e) {} // ignore error, url stays null
+			}
+		} catch (ArrayIndexOutOfBoundsException e) {} // ignore error, url stays null
+
+		return url;
 	}
 
 	/**

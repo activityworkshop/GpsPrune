@@ -36,14 +36,25 @@ public class SrtmTile
 		_longitude = inLongitude;
 	}
 
+	@Override
+	public int hashCode()
+	{
+		return _latitude * 1000 + _longitude;
+	}
+
 	/**
 	 * Check for equality
 	 * @param inOther other tile object
 	 * @return true if both represent same tile
 	 */
-	public boolean equals(SrtmTile inOther)
+	@Override
+	public boolean equals(Object inOther)
 	{
-		return (_latitude == inOther._latitude) && (_longitude == inOther._longitude);
+		if (inOther == null || inOther.getClass() != getClass()) {
+			return false;
+		}
+		SrtmTile otherTile = (SrtmTile) inOther;
+		return (_latitude == otherTile._latitude) && (_longitude == otherTile._longitude);
 	}
 
 	/** @return latitude as int */

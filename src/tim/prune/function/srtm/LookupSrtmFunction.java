@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -40,6 +40,8 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	private boolean _normalTrack = true;
 	/** Flag set when any tiles had to be downloaded (rather than just loaded locally) */
 	private boolean _hadToDownload = false;
+	/** Count the number of tiles downloaded and cached */
+	private int _numCached = 0;
 	/** Flag to check whether this function is currently running or not */
 	private boolean _running = false;
 
@@ -100,8 +102,6 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
-		// Compile list of tiles to get
-		ArrayList<SrtmTile> tileList = new ArrayList<SrtmTile>();
 		boolean hasZeroAltitudePoints = false;
 		boolean hasNonZeroAltitudePoints = false;
 		// First, loop to see what kind of points we have
@@ -128,64 +128,63 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		}
 
 		// Now loop again to extract the required tiles
+		HashSet<SrtmTile> tileSet = new HashSet<SrtmTile>();
 		for (int i = 0; i < _track.getNumPoints(); i++)
 		{
 			// Consider points which don't have altitudes or have zero values
 			if (!_track.getPoint(i).hasAltitude()
 				|| (overwriteZeros && _track.getPoint(i).getAltitude().getValue() == 0))
 			{
-				SrtmTile tile = new SrtmTile(_track.getPoint(i));
-				boolean alreadyGot = false;
-				for (int t = 0; t < tileList.size(); t++)
-				{
-					if (tileList.get(t).equals(tile)) {
-						alreadyGot = true;
-					}
-				}
-				if (!alreadyGot) {tileList.add(tile);}
+				tileSet.add(new SrtmTile(_track.getPoint(i)));
 			}
 		}
-		lookupValues(tileList, overwriteZeros);
+		lookupValues(tileSet, overwriteZeros);
 		// Finished
 		_running = false;
 		// Show tip if lots of online lookups were necessary
 		if (_hadToDownload) {
 			_app.showTip(TipManager.Tip_DownloadSrtm);
 		}
+		else if (_numCached > 0) {
+			showConfirmMessage(_numCached);
+		}
 	}
 
 
 	/**
 	 * Lookup the values from SRTM data
-	 * @param inTileList list of tiles to get
+	 * @param inTileSet set of tiles to get
 	 * @param inOverwriteZeros true to overwrite zero altitude values
 	 */
-	private void lookupValues(ArrayList<SrtmTile> inTileList, boolean inOverwriteZeros)
+	private void lookupValues(HashSet<SrtmTile> inTileSet, boolean inOverwriteZeros)
 	{
 		UndoLookupSrtm undo = new UndoLookupSrtm(_app.getTrackInfo());
 		int numAltitudesFound = 0;
+		TileFinder tileFinder = new TileFinder();
+		String errorMessage = null;
+		final int numTiles = inTileSet.size();
+
 		// Update progress bar
 		if (_progress != null)
 		{
-			_progress.setMaximum(inTileList.size());
+			_progress.setMaximum(numTiles);
 			_progress.setValue(0);
 		}
-		String errorMessage = null;
-		// Get urls for each tile
-		URL[] urls = TileFinder.getUrls(inTileList);
-		for (int t=0; t<inTileList.size() && !_progress.isCancelled() && urls != null; t++)
+		int currentTileIndex = 0;
+		_numCached = 0;
+		for (SrtmTile tile : inTileSet)
 		{
-			if (urls[t] != null)
+			URL url = tileFinder.getUrl(tile);
+			if (url != null)
 			{
-				SrtmTile tile = inTileList.get(t);
 				try
 				{
 					// Set progress
-					_progress.setValue(t);
+					_progress.setValue(currentTileIndex++);
 					final int ARRLENGTH = 1201 * 1201;
 					int[] heights = new int[ARRLENGTH];
 					// Open zipinputstream on url and check size
-					ZipInputStream inStream = getStreamToHgtFile(urls[t]);
+					ZipInputStream inStream = getStreamToSrtmData(url);
 					boolean entryOk = false;
 					if (inStream != null)
 					{
@@ -238,7 +237,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		else if (errorMessage != null) {
 			_app.showErrorMessageNoLookup(getNameKey(), errorMessage);
 		}
-		else if (inTileList.size() > 0) {
+		else if (numTiles > 0) {
 			_app.showErrorMessage(getNameKey(), "error.lookupsrtm.nonefound");
 		}
 		else {
@@ -251,7 +250,45 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 * @param inUrl URL for online resource
 	 * @return ZipInputStream either on the local file or on the downloaded zip file
 	 */
-	private ZipInputStream getStreamToHgtFile(URL inUrl)
+	private ZipInputStream getStreamToSrtmData(URL inUrl)
+	throws IOException
+	{
+		ZipInputStream localData = null;
+		try {
+			localData = getStreamToLocalHgtFile(inUrl);
+		}
+		catch (IOException ioe) {
+			localData = null;
+		}
+		if (localData != null)
+		{
+			return localData;
+		}
+		// try to download to cache
+		TileDownloader cacher = new TileDownloader();
+		TileDownloader.Result result = cacher.downloadTile(inUrl);
+		System.out.println("Result: " + result);
+		if (result == TileDownloader.Result.DOWNLOADED)
+		{
+			_numCached++;
+			return getStreamToLocalHgtFile(inUrl);
+		}
+		// If we don't have a cache, we may be able to download it temporarily
+		if (result != TileDownloader.Result.DOWNLOAD_FAILED)
+		{
+			_hadToDownload = true;
+			return new ZipInputStream(inUrl.openStream());
+		}
+		// everything failed
+		return null;
+	}
+
+	/**
+	 * Get the SRTM file from the local cache, if available
+	 * @param inUrl URL for online resource
+	 * @return ZipInputStream on the local file or null if not there
+	 */
+	private ZipInputStream getStreamToLocalHgtFile(URL inUrl)
 	throws IOException
 	{
 		String diskCachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
@@ -270,10 +307,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 				}
 			}
 		}
-		// System.out.println("Lookup: Trying online: " + inUrl.toString());
-		_hadToDownload = true;
-		// MAYBE: Only download if we're in online mode?
-		return new ZipInputStream(inUrl.openStream());
+		return null;
 	}
 
 	/**
@@ -398,5 +432,19 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	public boolean isRunning()
 	{
 		return _running;
+	}
+
+	private void showConfirmMessage(int numDownloaded)
+	{
+		if (numDownloaded == 1)
+		{
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getTextWithNumber("confirm.downloadsrtm.1", numDownloaded),
+				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		}
+		else if (numDownloaded > 1)
+		{
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getTextWithNumber("confirm.downloadsrtm", numDownloaded),
+				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 }

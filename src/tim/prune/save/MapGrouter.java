@@ -108,14 +108,11 @@ public class MapGrouter implements TileConsumer
 						// Wait until tile is available (loaded asynchronously)
 						while (tile.getWidth(null) < 0 && !inDownload)
 						{
-							// System.out.println("Wait for tile width");
 							try {
-								Thread.sleep(inDownload ? 500 : 100);
+								Thread.sleep(100);
 							}
 							catch (InterruptedException ie) {}
 						}
-						// work out where to copy it to, paint it
-						// System.out.println("Painting tile " + x + "," + y + " at " + xOffset + "," + yOffset);
 						numTilesUsed++;
 						g.drawImage(tile, xOffset, yOffset, null);
 					}
@@ -174,6 +171,12 @@ public class MapGrouter implements TileConsumer
 
 	/** React to tiles being updated by the tile manager */
 	public void tilesUpdated(boolean inIsOk)
+	{
+		// Doesn't need any action
+	}
+
+	/** React to cache problem */
+	public void reportCacheFailure()
 	{
 		// Doesn't need any action
 	}

@@ -1,5 +1,5 @@
-GpsPrune version 20
-===================
+GpsPrune version 20.1
+=====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_20.jar
+   java -jar gpsprune_20.1.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,11 +25,24 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_20.jar --lang=DE
+   java -jar gpsprune_20.1.jar --lang=DE
 
+
+New with version 20.1
+=====================
+The following fixes and additions were made since version 20:
+  - Starting with an empty map (fperrin)
+  - Reading and writing <cmt> tags from gpx files (Willy)
+  - Add option to use GTK look-and-feel (fperrin)
+  - Translation updates (Carlos, Tche333)
+  - Solve issue #29/973910 regarding missing tile cache (Peter Gervai)
+  - Remove "Download SRTM" function and just do it automatically
+  - Tweak waypoint icons
+  - Fix problem with a recently-used file which has disappeared
+  - Fix problem with moving / renaming downloaded tile files
 
 New with version 20
-=====================
+===================
 The following fixes and additions were made since version 19:
   - Add option to use Nimbus look-and-feel (wishlist 77)
   - Extend the marker waypoints function to include half the distance, half the climb and half the descent

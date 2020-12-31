@@ -9,6 +9,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -17,6 +18,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.border.EtchedBorder;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
@@ -62,6 +64,9 @@ public class DiskCacheConfig extends GenericFunction
 	private Component makeContents()
 	{
 		JPanel dialogPanel = new JPanel();
+		dialogPanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(4, 4, 4, 4))
+		);
 		dialogPanel.setLayout(new BorderLayout(0, 5));
 		// top panel
 		JPanel topPanel = new JPanel();
