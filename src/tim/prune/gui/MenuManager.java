@@ -79,6 +79,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _findWaypointItem = null;
 	private JMenuItem _duplicatePointItem = null;
 	private JMenuItem _projectPointItem = null;
+	private JMenuItem _projectCircleItem = null;
 	private JMenuItem _reverseItem = null;
 	private JMenuItem _addTimeOffsetItem = null;
 	private JMenuItem _addAltitudeOffsetItem = null;
@@ -488,6 +489,9 @@ public class MenuManager implements DataSubscriber
 		// project current point
 		_projectPointItem = makeMenuItem(FunctionLibrary.FUNCTION_PROJECT_POINT, false);
 		pointMenu.add(_projectPointItem);
+		_projectCircleItem = makeMenuItem(FunctionLibrary.FUNCTION_PROJECT_CIRCLE, false);
+		pointMenu.add(_projectCircleItem);
+		pointMenu.addSeparator();
 		// paste coordinates function
 		JMenuItem pasteCoordsItem = makeMenuItem(new PasteCoordinates(_app));
 		pointMenu.add(pasteCoordsItem);
@@ -913,6 +917,7 @@ public class MenuManager implements DataSubscriber
 		_selectEndButton.setEnabled(hasPoint);
 		_duplicatePointItem.setEnabled(hasPoint);
 		_projectPointItem.setEnabled(hasPoint);
+		_projectCircleItem.setEnabled(hasPoint);
 		_showPeakfinderItem.setEnabled(hasPoint);
 		_showGeohackItem.setEnabled(hasPoint);
 		_searchOpencachingDeItem.setEnabled(hasPoint);

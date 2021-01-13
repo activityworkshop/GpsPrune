@@ -26,6 +26,7 @@ import tim.prune.function.IgnoreExifThumb;
 import tim.prune.function.InterpolateFunction;
 import tim.prune.function.PhotoPopupFunction;
 import tim.prune.function.PlayAudioFunction;
+import tim.prune.function.ProjectCircle;
 import tim.prune.function.RearrangePhotosFunction;
 import tim.prune.function.RearrangeWaypointsFunction;
 import tim.prune.function.RemoveAudioFunction;
@@ -86,6 +87,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_SAVECONFIG  = null;
 	public static GenericFunction FUNCTION_EDIT_WAYPOINT_NAME = null;
 	public static GenericFunction FUNCTION_PROJECT_POINT = null;
+	public static GenericFunction FUNCTION_PROJECT_CIRCLE = null;
 	public static GenericFunction FUNCTION_REARRANGE_WAYPOINTS = null;
 	public static GenericFunction FUNCTION_SELECT_SEGMENT = null;
 	public static GenericFunction FUNCTION_SPLIT_SEGMENTS = null;
@@ -163,6 +165,7 @@ public abstract class FunctionLibrary
 		FUNCTION_SAVECONFIG = new SaveConfig(inApp);
 		FUNCTION_EDIT_WAYPOINT_NAME = new PointNameEditor(inApp);
 		FUNCTION_PROJECT_POINT = new ProjectPoint(inApp);
+		FUNCTION_PROJECT_CIRCLE = new ProjectCircle(inApp);
 		FUNCTION_REARRANGE_WAYPOINTS = new RearrangeWaypointsFunction(inApp);
 		FUNCTION_SELECT_SEGMENT = new SelectSegmentFunction(inApp);
 		FUNCTION_SPLIT_SEGMENTS = new SplitSegmentsFunction(inApp);
