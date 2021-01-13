@@ -382,6 +382,11 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	 */
 	private synchronized void makePopup()
 	{
+		if (_track.getNumPoints() < 1)
+		{
+			_popup = null;
+			return;
+		}
 		_popup = new JPopupMenu();
 		JMenuItem altItem = new JMenuItem(I18nManager.getText("fieldname.altitude"));
 		altItem.addActionListener(new ActionListener() {
@@ -527,7 +532,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 				}
 			}
 		}
-		else
+		else if (_popup != null)
 		{
 			// right clicks
 			_popup.show(this, e.getX(), e.getY());
