@@ -38,6 +38,7 @@ import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.browser.WebMapFunction;
 import tim.prune.function.search.SearchMapillaryFunction;
 import tim.prune.function.settings.SaveConfig;
+import tim.prune.function.srtm.ConfigureSrtmSources;
 
 /**
  * Class to manage the menu bar and tool bar,
@@ -97,6 +98,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _routingGraphHopperItem = null;
 	private JMenuItem _chartItem = null;
 	private JMenuItem _lookupSrtmItem = null;
+	private JMenuItem _configureSrtmItem = null;
 	private JMenuItem _nearbyWikipediaItem = null;
 	private JMenuItem _nearbyOsmPoiItem = null;
 	private JMenuItem _showPeakfinderItem = null;
@@ -260,6 +262,8 @@ public class MenuManager implements DataSubscriber
 		// SRTM
 		_lookupSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_SRTM, false);
 		onlineMenu.add(_lookupSrtmItem);
+		_configureSrtmItem = makeMenuItem(new ConfigureSrtmSources(_app), true);
+		onlineMenu.add(_configureSrtmItem);
 
 		onlineMenu.addSeparator();
 		// browser submenu
