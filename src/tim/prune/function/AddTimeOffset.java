@@ -104,7 +104,7 @@ public class AddTimeOffset extends GenericFunction
 		JPanel descPanel = new JPanel();
 		descPanel.setLayout(new GridLayout(0, 2));
 		descPanel.add(makeRightLabel("dialog.addtimeoffset.days"));
-		_dayField = new WholeNumberField(3);
+		_dayField = new WholeNumberField(4);
 		descPanel.add(_dayField);
 		descPanel.add(makeRightLabel("dialog.addtimeoffset.hours"));
 		_hourField = new WholeNumberField(3);
