@@ -202,7 +202,6 @@ public class ProjectPoint extends GenericFunction
 		final double projectRads = Distance.convertDistanceToRadians(_distanceField.getValue(), distUnit);
 		final double origLatRads = Math.toRadians(currPoint.getLatitude().getDouble());
 		final double origLonRads = Math.toRadians(currPoint.getLongitude().getDouble());
-		System.out.println("Project from: " + origLatRads + ", " + origLonRads);
 		final double bearingRads = Math.toRadians(_bearingField.getValue());
 
 		double lat2 = Math.asin(Math.sin(origLatRads) * Math.cos(projectRads)
@@ -212,7 +211,6 @@ public class ProjectPoint extends GenericFunction
 
 		double finalLatDeg = Math.toDegrees(lat2);
 		double finalLonDeg = Math.toDegrees(lon2);
-		System.out.println("Result is: lat=" + finalLatDeg + ", lon=" + finalLonDeg);
 
 		// Create point and append to track
 		DataPoint point = new DataPoint(new Latitude(finalLatDeg, Coordinate.FORMAT_DEG),

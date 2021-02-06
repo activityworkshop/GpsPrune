@@ -1,11 +1,11 @@
-GpsPrune version 20.1
+GpsPrune version 20.2
 =====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
 Full details can be found at https://gpsprune.activityworkshop.net/
 
-GpsPrune is copyright 2006-2020 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2021 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_20.1.jar
+   java -jar gpsprune_20.2.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,15 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_20.1.jar --lang=DE
+   java -jar gpsprune_20.2.jar --lang=DE
 
+
+New with version 20.2
+=====================
+The following fixes and additions were made since version 20.1:
+  - Fix for intermittent startup problems
+  - Addition of Swedish (erikiiofph7)
+  - Allow four digits for adding day offsets (fperrin)
 
 New with version 20.1
 =====================
