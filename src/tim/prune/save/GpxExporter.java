@@ -347,6 +347,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 				 + " " + _exportFile.getAbsolutePath());
 			// export successful so need to close dialog and return
 			_dialog.dispose();
+			_app.informDataSaved();
 			return;
 		}
 		catch (IOException ioe)
