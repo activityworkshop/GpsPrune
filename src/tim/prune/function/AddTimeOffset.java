@@ -33,8 +33,8 @@ public class AddTimeOffset extends GenericFunction
 {
 	private JDialog _dialog = null;
 	private JRadioButton _addRadio = null, _subtractRadio = null;
-	private WholeNumberField _dayField = null, _hourField = null;
-	private WholeNumberField _minuteField = null;
+	private WholeNumberField _weekField = null, _dayField = null;
+	private WholeNumberField _hourField = null, _minuteField = null;
 	private JButton _okButton = null;
 
 
@@ -103,8 +103,11 @@ public class AddTimeOffset extends GenericFunction
 		// Make a central panel with the text boxes
 		JPanel descPanel = new JPanel();
 		descPanel.setLayout(new GridLayout(0, 2));
+		descPanel.add(makeRightLabel("dialog.addtimeoffset.weeks"));
+		_weekField = new WholeNumberField(4);
+		descPanel.add(_weekField);
 		descPanel.add(makeRightLabel("dialog.addtimeoffset.days"));
-		_dayField = new WholeNumberField(3);
+		_dayField = new WholeNumberField(4);
 		descPanel.add(_dayField);
 		descPanel.add(makeRightLabel("dialog.addtimeoffset.hours"));
 		_hourField = new WholeNumberField(3);
@@ -128,6 +131,7 @@ public class AddTimeOffset extends GenericFunction
 				_okButton.setEnabled(getOffsetSecs() != 0L);
 			}
 		};
+		_weekField.addKeyListener(keyListener);
 		_dayField.addKeyListener(keyListener);
 		_hourField.addKeyListener(keyListener);
 		_minuteField.addKeyListener(keyListener);
@@ -180,7 +184,8 @@ public class AddTimeOffset extends GenericFunction
 	{
 		long offsetSecs = _minuteField.getValue() * 60L
 		  + _hourField.getValue() * 60L * 60L
-		  + _dayField.getValue() * 60L * 60L * 24L;
+		  + _dayField.getValue() * 60L * 60L * 24L
+		  + _weekField.getValue() * 7L * 60L * 60L * 24L;
 		if (_subtractRadio.isSelected()) {offsetSecs = -offsetSecs;}
 		return offsetSecs;
 	}
