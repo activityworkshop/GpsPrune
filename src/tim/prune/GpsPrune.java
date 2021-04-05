@@ -31,16 +31,16 @@ import tim.prune.gui.profile.ProfileChart;
 /**
  * GpsPrune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or https://activityworkshop.net
- * This software is copyright activityworkshop.net 2006-2020 and made available through the Gnu GPL version 2.
+ * This software is copyright activityworkshop.net 2006-2021 and made available through the Gnu GPL version 2.
  * For license details please see the included license.txt.
  * GpsPrune is the main entry point to the application, including initialisation and launch
  */
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "20.2";
+	public static final String VERSION_NUMBER = "20.3";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "384";
+	public static final String BUILD_NUMBER = "385";
 	/** Static reference to App object */
 	private static App APP = null;
 
