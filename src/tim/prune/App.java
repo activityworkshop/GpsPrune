@@ -733,11 +733,11 @@ public class App
 				UndoLoad undo = new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), photos);
 				undo.setNumPhotosAudios(_trackInfo.getPhotoList().getNumPhotos(), _trackInfo.getAudioList().getNumAudios());
 				_undoStack.add(undo);
-				_lastSavePosition = _undoStack.size();
 				_trackInfo.getSelection().clearAll();
 				_track.load(inLoadedTrack);
 				if (inSourceInfo != null)
 				{
+					_lastSavePosition = _undoStack.size();
 					// set source information
 					inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
 					_trackInfo.getFileInfo().replaceSource(inSourceInfo);
@@ -752,11 +752,11 @@ public class App
 			UndoLoad undo = new UndoLoad(_trackInfo, inLoadedTrack.getNumPoints(), null);
 			undo.setNumPhotosAudios(_trackInfo.getPhotoList().getNumPhotos(), _trackInfo.getAudioList().getNumAudios());
 			_undoStack.add(undo);
-			_lastSavePosition = _undoStack.size();
 			_trackInfo.getSelection().clearAll();
 			_track.load(inLoadedTrack);
 			if (inSourceInfo != null)
 			{
+				_lastSavePosition = _undoStack.size();
 				inSourceInfo.populatePointObjects(_track, _track.getNumPoints());
 				_trackInfo.getFileInfo().addSource(inSourceInfo);
 			}

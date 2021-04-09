@@ -15,7 +15,7 @@ public class TileFinder
 	private byte[] _tileData = null;
 
 	/** URL prefix for all tiles */
-	private static final String URL_PREFIX = "https://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
+	private static final String URL_PREFIX = "https://srtm.kurviger.de/SRTM3/";
 	/** Directory names for each continent */
 	private static final String[] CONTINENTS = {"", "Eurasia", "North_America", "Australia",
 		"Islands", "South_America", "Africa"};

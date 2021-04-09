@@ -77,8 +77,9 @@ public class DistanceFunction extends GenericFunction
 		}
 		_fromModel.init(pointList);
 		_distModel.init(pointList);
-		_pointTable.getSelectionModel().setSelectionInterval(0, 0);
-		_distModel.recalculate(0);
+		final int pointIndex = getPointIndex(pointList, _app.getTrackInfo());
+		_pointTable.getSelectionModel().setSelectionInterval(pointIndex, pointIndex);
+		_distModel.recalculate(pointIndex);
 		_dialog.setVisible(true);
 	}
 
@@ -162,5 +163,26 @@ public class DistanceFunction extends GenericFunction
 			pointList.add(0, currPoint);
 		}
 		return pointList;
+	}
+
+	/**
+	 * Find the point to select from the given point list
+	 * @param pointList list of points
+	 * @param inTrackInfo current track info to get selected point (if any)
+	 * @return index of point to be selected
+	 */
+	private static int getPointIndex(ArrayList<DataPoint> pointList, TrackInfo inTrackInfo)
+	{
+		DataPoint currPoint = inTrackInfo.getCurrentPoint();
+		if (currPoint != null && currPoint.isWaypoint())
+		{
+			// Currently selected point is a waypoint, so select this one for convenience
+			for (int i=0; i<pointList.size(); i++) {
+				if (pointList.get(i) == currPoint) {
+					return i;
+				}
+			}
+		}
+		return 0;
 	}
 }

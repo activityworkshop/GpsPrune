@@ -1,4 +1,4 @@
-GpsPrune version 20.2
+GpsPrune version 20.3
 =====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_20.2.jar
+   java -jar gpsprune_20.3.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,16 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_20.2.jar --lang=DE
+   java -jar gpsprune_20.3.jar --lang=DE
 
+
+New with version 20.3
+=====================
+The following fixes and additions were made since version 20.2:
+  - If a waypoint is selected, the distances function should use it
+  - If a point list has been pasted, closing should prompt about unsaved data
+  - Some additional translations
+  - Switching SRTM downloads to use kurviger.de instead of usgs.gov (thanks, kurviger.de!)
 
 New with version 20.2
 =====================
