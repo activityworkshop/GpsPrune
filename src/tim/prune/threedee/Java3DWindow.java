@@ -54,7 +54,6 @@ import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.save.GroutedImage;
 import tim.prune.save.MapGrouter;
 
-import com.sun.j3d.utils.behaviors.vp.OrbitBehavior;
 import com.sun.j3d.utils.geometry.Box;
 import com.sun.j3d.utils.geometry.Cylinder;
 import com.sun.j3d.utils.geometry.GeometryInfo;
@@ -73,7 +72,7 @@ public class Java3DWindow implements ThreeDWindow
 	private JFrame _parentFrame = null;
 	private JFrame _frame = null;
 	private ThreeDModel _model = null;
-	private OrbitBehavior _orbit = null;
+	private UprightOrbiter _orbit = null;
 	private double _altFactor = -1.0;
 	private ImageDefinition _imageDefinition = null;
 	private GroutedImage _baseImage = null;
@@ -204,7 +203,7 @@ public class Java3DWindow implements ThreeDWindow
 		u.getViewingPlatform().setNominalViewingTransform();
 
 		// Add behaviour to rotate using mouse
-		_orbit = new OrbitBehavior(canvas, OrbitBehavior.REVERSE_ALL | OrbitBehavior.STOP_ZOOM);
+		_orbit = new UprightOrbiter(canvas, INITIAL_X_ROTATION);
 		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0,0.0,0.0), 100.0);
 		_orbit.setSchedulingBounds(bounds);
 		u.getViewingPlatform().setViewPlatformBehavior(_orbit);
@@ -359,7 +358,6 @@ public class Java3DWindow implements ThreeDWindow
 				// Store this back in the cache, maybe we'll need it again
 				TerrainCache.storeTerrainTrack(terrainTrack, _dataStatus, _terrainDefinition);
 			}
-			// else System.out.println("Yay - reusing the cached track!");
 
 			// Give the terrain definition to the _model as well
 			_model.setTerrain(terrainTrack);

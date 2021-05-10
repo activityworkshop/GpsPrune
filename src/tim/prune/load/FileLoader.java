@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import tim.prune.App;
 import tim.prune.config.Config;
 import tim.prune.data.Photo;
+import tim.prune.load.json.JsonFileLoader;
 import tim.prune.load.xml.GzipFileLoader;
 import tim.prune.load.xml.XmlFileLoader;
 import tim.prune.load.xml.ZipFileLoader;
@@ -141,6 +142,10 @@ public class FileLoader
 			photoSet.add(photo);
 			_app.informPhotosLoaded(photoSet);
 			_app.informNoDataLoaded(); // To trigger load of next file if any
+		}
+		else if (fileExtension.equals("json"))
+		{
+			new JsonFileLoader(_app).openFile(inFile);
 		}
 		else
 		{

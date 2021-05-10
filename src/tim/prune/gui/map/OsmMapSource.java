@@ -1,6 +1,5 @@
 package tim.prune.gui.map;
 
-import java.util.regex.Matcher;
 import tim.prune.I18nManager;
 
 /**
@@ -84,8 +83,8 @@ public class OsmMapSource extends MapSource
 		_extensions[0] = inExt1;
 		_extensions[1] = inExt2;
 		_siteNames = new String[2];
-		_siteNames[0] = fixSiteName(_baseUrls[0]);
-		_siteNames[1] = fixSiteName(_baseUrls[1]);
+		_siteNames[0] = SiteNameUtils.convertUrlToDirectory(_baseUrls[0]);
+		_siteNames[1] = SiteNameUtils.convertUrlToDirectory(_baseUrls[1]);
 		// Swap layers if second layer given without first
 		if (_baseUrls[0] == null && _baseUrls[1] != null)
 		{
@@ -157,7 +156,7 @@ public class OsmMapSource extends MapSource
 	{
 		// Check if the base url has a [1234], if so replace at random
 		StringBuffer url = new StringBuffer();
-		url.append(pickServerUrl(_baseUrls[inLayerNum]));
+		url.append(SiteNameUtils.pickServerUrl(_baseUrls[inLayerNum]));
 		url.append(inZoom).append('/').append(inX).append('/').append(inY);
 		url.append('.').append(getFileExtension(inLayerNum));
 		if (_apiKey != null)
@@ -173,36 +172,6 @@ public class OsmMapSource extends MapSource
 	public final int getMaxZoomLevel()
 	{
 		return _maxZoom;
-	}
-
-	/**
-	 * If the base url contains something like [1234], then pick a server
-	 * @param inBaseUrl base url
-	 * @return modified base url
-	 */
-	protected static final String pickServerUrl(String inBaseUrl)
-	{
-		if (inBaseUrl == null || inBaseUrl.indexOf('[') < 0) {
-			return inBaseUrl;
-		}
-		// Check for [.*] (once only)
-		// Only need to support one, make things a bit easier
-		final Matcher matcher = WILD_PATTERN.matcher(inBaseUrl);
-		// if not, return base url unchanged
-		if (!matcher.matches()) {
-			return inBaseUrl;
-		}
-		// if so, pick one at random and replace in the String
-		final String match = matcher.group(2);
-		final int numMatches = match.length();
-		String server = null;
-		if (numMatches > 0)
-		{
-			int matchNum = (int) Math.floor(Math.random() * numMatches);
-			server = "" + match.charAt(matchNum);
-		}
-		final String result = matcher.group(1) + (server==null?"":server) + matcher.group(3);
-		return result;
 	}
 
 	/**

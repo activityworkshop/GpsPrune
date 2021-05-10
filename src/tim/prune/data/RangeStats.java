@@ -11,7 +11,7 @@ public class RangeStats
 	private boolean _foundTrackPoint = false;
 	protected AltitudeRange _totalAltitudeRange = new AltitudeRange();
 	protected AltitudeRange _movingAltitudeRange = new AltitudeRange();
-	private Timestamp _earliestTimestamp = null, _latestTimestamp = null;
+	private Timestamp _earliestTimestamp = null, _latestTimestamp = null, _movingTimestamp = null;
 	private long _movingMilliseconds = 0L;
 	private boolean _timesIncomplete = false;
 	private boolean _timesOutOfSequence = false;
@@ -75,6 +75,12 @@ public class RangeStats
 		}
 
 		// timestamps
+		if (inPoint.getSegmentStart())
+		{
+			// reset movingTimestamp for moving time at the start
+			// of each segment
+			_movingTimestamp = null;
+		}
 		if (inPoint.hasTimestamp())
 		{
 			Timestamp currTstamp = inPoint.getTimestamp();
@@ -84,10 +90,11 @@ public class RangeStats
 			if (_latestTimestamp == null || currTstamp.isAfter(_latestTimestamp)) {
 				_latestTimestamp = currTstamp;
 			}
+
 			// Work out duration without segment gaps
-			if (!inPoint.getSegmentStart() && _prevPoint != null && _prevPoint.hasTimestamp())
+			if (_movingTimestamp != null)
 			{
-				long millisLater = currTstamp.getMillisecondsSince(_prevPoint.getTimestamp());
+				long millisLater = currTstamp.getMillisecondsSince(_movingTimestamp);
 				if (millisLater < 0) {
 					_timesOutOfSequence = true;
 				}
@@ -95,6 +102,7 @@ public class RangeStats
 					_movingMilliseconds += millisLater;
 				}
 			}
+			_movingTimestamp = currTstamp;
 		}
 		else {
 			_timesIncomplete = true;

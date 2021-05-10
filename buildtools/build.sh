@@ -1,7 +1,7 @@
 # Build script
 set -e
 # Version number
-PRUNENAME=gpsprune_20
+PRUNENAME=gpsprune_20.4
 # remove compile directory
 rm -rf compile
 # remove dist directory

@@ -32,8 +32,8 @@ public class MffMapSource extends MapSource
 		_baseUrls[0] = fixBaseUrl(inUrl1);
 		_baseUrls[1] = fixBaseUrl(inUrl2);
 		_siteNames = new String[2];
-		_siteNames[0] = fixSiteName(_baseUrls[0]);
-		_siteNames[1] = fixSiteName(_baseUrls[1]);
+		_siteNames[0] = SiteNameUtils.convertUrlToDirectory(_baseUrls[0]);
+		_siteNames[1] = SiteNameUtils.convertUrlToDirectory(_baseUrls[1]);
 		_extensions = new String[2];
 		_extensions[0] = inExt1;
 		_extensions[1] = inExt2;

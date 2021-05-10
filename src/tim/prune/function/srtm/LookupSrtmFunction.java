@@ -267,7 +267,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		// try to download to cache
 		TileDownloader cacher = new TileDownloader();
 		TileDownloader.Result result = cacher.downloadTile(inUrl);
-		System.out.println("Result: " + result);
+		// System.out.println("Result: " + result);
 		if (result == TileDownloader.Result.DOWNLOADED)
 		{
 			_numCached++;
