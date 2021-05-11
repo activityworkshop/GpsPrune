@@ -691,8 +691,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		final int[] xPixels = new int[numPoints];
 		final int[] yPixels = new int[numPoints];
 
-		final int pointSeparationForArrowsSqd = 350;
+		final int pointSeparationForArrowsSqd = 400;
 		final int pointSeparation1dForArrows = (int) (Math.sqrt(pointSeparationForArrowsSqd) * 0.7);
+		final int hugePointSeparationForArrows = 120;
 
 		// try to set line width for painting
 		if (inG instanceof Graphics2D)
@@ -765,35 +766,38 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					pointsPainted = true;
 
 					// Now consider whether we need to draw an arrow as well
-					if (drawArrows
-					 && !drawnLastArrow
-					 && (Math.abs(prevX-px) > pointSeparation1dForArrows || Math.abs(prevY-py) > pointSeparation1dForArrows))
+					if (drawArrows)
 					{
-						final double pointSeparationSqd = (prevX-px) * (prevX-px) + (prevY-py) * (prevY-py);
-						if (pointSeparationSqd > pointSeparationForArrowsSqd)
+						final double pointDist = Math.max(Math.abs(prevX - px), Math.abs(prevY - py));
+						final int separationLimit = (drawnLastArrow ? hugePointSeparationForArrows : pointSeparation1dForArrows);
+						if (pointDist > separationLimit)
 						{
-							final double midX = (prevX + px) / 2.0;
-							final double midY = (prevY + py) / 2.0;
-							final boolean midPointVisible = midX >= 0 && midX < winWidth && midY >= 0 && midY < winHeight;
-							if (midPointVisible)
+							final double pointSeparationSqd = (prevX-px) * (prevX-px) + (prevY-py) * (prevY-py);
+							if (pointSeparationSqd > pointSeparationForArrowsSqd)
 							{
-								final double alpha = Math.atan2(py - prevY, px - prevX);
-								//System.out.println("Draw arrow from (" + prevX + "," + prevY + ") to (" + px + "," + py
-								//	+ ") with angle" + (int) (alpha * 180/Math.PI));
-								final double MID_TO_VERTEX = 3.0;
-								final double arrowX = MID_TO_VERTEX * Math.cos(alpha);
-								final double arrowY = MID_TO_VERTEX * Math.sin(alpha);
-								final double vertexX = midX + arrowX;
-								final double vertexY = midY + arrowY;
-								inG.drawLine((int)(midX-arrowX-2*arrowY), (int)(midY-arrowY+2*arrowX), (int)vertexX, (int)vertexY);
-								inG.drawLine((int)(midX-arrowX+2*arrowY), (int)(midY-arrowY-2*arrowX), (int)vertexX, (int)vertexY);
+								final double midX = (prevX + px) / 2.0;
+								final double midY = (prevY + py) / 2.0;
+								final boolean midPointVisible = midX >= 0 && midX < winWidth && midY >= 0 && midY < winHeight;
+								if (midPointVisible)
+								{
+									final double alpha = Math.atan2(py - prevY, px - prevX);
+									//System.out.println("Draw arrow from (" + prevX + "," + prevY + ") to (" + px + "," + py
+									//	+ ") with angle" + (int) (alpha * 180/Math.PI));
+									final double MID_TO_VERTEX = 3.0;
+									final double arrowX = MID_TO_VERTEX * Math.cos(alpha);
+									final double arrowY = MID_TO_VERTEX * Math.sin(alpha);
+									final double vertexX = midX + arrowX;
+									final double vertexY = midY + arrowY;
+									inG.drawLine((int)(midX-arrowX-2*arrowY), (int)(midY-arrowY+2*arrowX), (int)vertexX, (int)vertexY);
+									inG.drawLine((int)(midX-arrowX+2*arrowY), (int)(midY-arrowY-2*arrowX), (int)vertexX, (int)vertexY);
+								}
+								drawnLastArrow = midPointVisible;
 							}
-							drawnLastArrow = midPointVisible;
 						}
-					}
-					else
-					{
-						drawnLastArrow = false;
+						else
+						{
+							drawnLastArrow = false;
+						}
 					}
 				}
 				prevX = px; prevY = py;

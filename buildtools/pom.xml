@@ -7,7 +7,7 @@
 
 	<groupId>tim.prune</groupId>
 	<artifactId>gpsprune</artifactId>
-	<version>20</version>
+	<version>20.4</version>
 	<packaging>jar</packaging>
 
 	<name>tim.prune.gpsprune</name>
@@ -44,12 +44,25 @@
 			<artifactId>j3dutils</artifactId>
 			<version>${j3dutils.version}</version>
 		</dependency>
+		<dependency>
+		  <groupId>org.junit.jupiter</groupId>
+		  <artifactId>junit-jupiter-engine</artifactId>
+		  <version>5.7.1</version>
+		  <scope>test</scope>
+		</dependency>
+		<dependency>
+		  <groupId>org.junit.jupiter</groupId>
+		  <artifactId>junit-jupiter-api</artifactId>
+		  <version>5.7.1</version>
+		  <scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<outputDirectory>${project.build.directory}/classes</outputDirectory>
 		<finalName>${project.artifactId}_${project.version}</finalName>
-		<sourceDirectory>${project.basedir}/</sourceDirectory>
+		<sourceDirectory>${project.basedir}/src</sourceDirectory>
+		<testSourceDirectory>${project.basedir}/test</testSourceDirectory>
 		<resources>
 			<resource>
 				<directory>${project.basedir}/src/</directory>
@@ -78,6 +91,11 @@
 				<plugin>
 					<artifactId>maven-compiler-plugin</artifactId>
 					<version>3.8.0</version>
+					<configuration>
+					  <compilerArgs>
+					    <arg>-Xlint:deprecation</arg>
+					  </compilerArgs>
+					</configuration>
 				</plugin>
 				<plugin>
 					<artifactId>maven-jar-plugin</artifactId>
@@ -126,7 +144,14 @@
 						<mainClass>${app.mainClass}</mainClass>
 					</configuration>
 				</plugin>
-
+				<plugin>
+				  <artifactId>maven-surefire-plugin</artifactId>
+				  <version>2.22.2</version>
+				</plugin>
+				<plugin>
+				  <artifactId>maven-failsafe-plugin</artifactId>
+				  <version>2.22.2</version>
+				</plugin>
 			</plugins>
 		</pluginManagement>
 	</build>

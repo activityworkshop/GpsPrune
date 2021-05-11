@@ -2,8 +2,7 @@ package tim.prune.gui.map;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 /**
  * Class to represent any map source, whether an OsmMapSource
@@ -15,9 +14,6 @@ public abstract class MapSource
 {
 	/** File extensions */
 	protected String[] _extensions = null;
-
-	/** Regular expression for catching server wildcards */
-	protected static final Pattern WILD_PATTERN = Pattern.compile("^(.*)\\[(.*)\\](.*)$");
 
 
 	/**
@@ -120,32 +116,6 @@ public abstract class MapSource
 		return urlstr;
 	}
 
-	/**
-	 * Fix the site name by stripping off protocol and www.
-	 * This is used to create the file path for disk caching
-	 * @param inUrl url to strip
-	 * @return stripped url
-	 */
-	protected static String fixSiteName(String inUrl)
-	{
-		if (inUrl == null || inUrl.equals("")) {return null;}
-		String url = inUrl.toLowerCase();
-		int idx = url.indexOf("://");
-		if (idx >= 0) {url = url.substring(idx + 3);}
-		if (url.startsWith("www.")) {url = url.substring(4);}
-		// Strip out any "[.*]" as well
-		if (url.indexOf('[') >= 0)
-		{
-			Matcher matcher = WILD_PATTERN.matcher(url);
-			if (matcher.matches()) {
-				url = matcher.group(1) + matcher.group(3);
-				if (url.length() > 1 && url.charAt(0) == '.') {
-					url = url.substring(1);
-				}
-			}
-		}
-		return url;
-	}
 
 	/**
 	 * @return string which can be written to the Config

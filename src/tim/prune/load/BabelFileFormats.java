@@ -100,6 +100,7 @@ public abstract class BabelFileFormats
 			"GeocachingDB for Palm/OS", "gcdb", null,
 			"Geogrid-Viewer ascii overlay file", "ggv_ovl", ".ovl",
 			"Geogrid-Viewer tracklogs", "ggv_log", ".log",
+			"GeoJSON", "geojson", ".json",
 			"GEOnet Names Server (GNS)", "geonet", null,
 			"GlobalSat DG-100/BT-335", "dg-100", null,
 			"GlobalSat DG-200", "dg-200", null,

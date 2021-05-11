@@ -63,15 +63,14 @@ public class TileDownloader implements Runnable
 		if (inManager != null && inUrl != null)
 		{
 			String url = inUrl.toString();
-			// System.out.println("Trigger load: " + url);
-			if (!BLOCKED_URLS.contains(url) && !LOADING_URLS.contains(url))
+			if (BLOCKED_URLS.contains(url))
 			{
-				// System.out.println("Not blocked: " + url);
+				System.out.println("Already blocked: " + url);
+			}
+			else if (!LOADING_URLS.contains(url))
+			{
 				LOADING_URLS.add(url);
 				new Thread(new TileDownloader(inManager, inUrl, inLayer, inX, inY, inZoom)).start();
-			}
-			else {
-				System.out.println("Already blocked: " + url);
 			}
 		}
 	}
