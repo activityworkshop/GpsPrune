@@ -4,4 +4,4 @@ GpsPrune is a map-based application for viewing, editing and converting coordina
 It's a cross-platform java application, and its home page is at https://gpsprune.activityworkshop.net .
 
 Here on github you'll find all the sources from version 1 to the current version 20.4, and in the wiki at https://github.com/activityworkshop/GpsPrune/wiki there's the beginning of a translation effort for anyone to contribute.
-Currently just the missing French texts and Polish texts are online, to see whether it's a workable idea or not.  Please help with these if you can.
+Currently just the missing Spanish, French and Polish texts are online, to see whether it's a workable idea or not.  Please help with these if you can.
