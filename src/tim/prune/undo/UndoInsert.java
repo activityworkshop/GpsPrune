@@ -27,18 +27,6 @@ public class UndoInsert implements UndoOperation
 
 
 	/**
-	 * Constructor with segment flag
-	 * @param inStart start of insert
-	 * @param inNumInserted number of points inserted
-	 * @param inSegmentFlag segment flag of following point
-	 */
-	public UndoInsert(int inStart, int inNumInserted, boolean inSegmentFlag)
-	{
-		this(inStart, inNumInserted, true, inSegmentFlag);
-	}
-
-
-	/**
 	 * Constructor
 	 * @param inStart start of insert
 	 * @param inNumInserted number of points inserted
@@ -79,3 +67,4 @@ public class UndoInsert implements UndoOperation
 		inTrackInfo.getSelection().clearAll();
 	}
 }
+

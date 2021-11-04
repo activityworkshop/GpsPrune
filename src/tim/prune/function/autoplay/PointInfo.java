@@ -81,18 +81,14 @@ public class PointInfo implements Comparable<PointInfo>
 	@Override
 	public boolean equals(Object inOther)
 	{
-		if (inOther == null) return false;
-		try
-		{
-			PointInfo other = (PointInfo) inOther;
-			if (_pointIndex != other._pointIndex) return false;
-			final boolean thisHasTime = (_timestamp != null);
-			final boolean otherHasTime = (other._timestamp != null);
-			if (thisHasTime != otherHasTime) {return false;}
-			if (!thisHasTime && !otherHasTime) {return true;}
-			return _timestamp.isEqual(other._timestamp);
-		}
-		catch (ClassCastException cce) {}
-		return false;
+		if (inOther == null || !(inOther instanceof PointInfo)) return false;
+
+		PointInfo other = (PointInfo) inOther;
+		if (_pointIndex != other._pointIndex) return false;
+		final boolean thisHasTime = (_timestamp != null);
+		final boolean otherHasTime = (other._timestamp != null);
+		if (thisHasTime != otherHasTime) {return false;}
+		if (!thisHasTime && !otherHasTime) {return true;}
+		return _timestamp.isEqual(other._timestamp);
 	}
 }

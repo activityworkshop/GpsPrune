@@ -436,7 +436,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			switch (_drawMode)
 			{
 				case MODE_DRAG_POINT:
-					drawDragLines(inG, _selection.getCurrentPointIndex()-1, _selection.getCurrentPointIndex()+1);
+					DataPoint currPoint = _track.getPoint(_selection.getCurrentPointIndex());
+					if (currPoint != null)
+					{
+						if (currPoint.isWaypoint()) {
+							drawDragLines(inG, _selection.getCurrentPointIndex(), _selection.getCurrentPointIndex());
+						}
+						else {
+							drawDragLines(inG, _selection.getCurrentPointIndex()-1, _selection.getCurrentPointIndex()+1);
+						}
+					}
 					break;
 
 				case MODE_CREATE_MIDPOINT:
@@ -563,7 +572,6 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			// init tile cacher
 			_tileManager.centreMap(_mapPosition.getZoom(), _mapPosition.getCentreTileX(), _mapPosition.getCentreTileY());
 
-			boolean loadingFailed = false;
 			if (_mapImage == null) return;
 
 			if (_tileManager.isOverzoomed())
@@ -578,7 +586,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				// Loop over tiles drawing each one
 				int[] tileIndices = _mapPosition.getTileIndices(getWidth(), getHeight());
 				int[] pixelOffsets = _mapPosition.getDisplayOffsets(getWidth(), getHeight());
-				for (int tileX = tileIndices[0]; tileX <= tileIndices[1] && !loadingFailed; tileX++)
+				for (int tileX = tileIndices[0]; tileX <= tileIndices[1]; tileX++)
 				{
 					int x = (tileX - tileIndices[0]) * 256 - pixelOffsets[0];
 					for (int tileY = tileIndices[2]; tileY <= tileIndices[3]; tileY++)
@@ -1539,7 +1547,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	}
 
 	/**
-	 * @param inE key released event, ignored
+	 * @param e key released event, ignored
 	 */
 	public void keyReleased(KeyEvent e)
 	{

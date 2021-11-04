@@ -42,11 +42,11 @@ public class WaypointComparer implements Comparator<DataPoint>
 		}
 		// names and times equal, try longitude
 		if (result == 0) {
-			result = inP1.getLongitude().getDouble() > inP2.getLongitude().getDouble() ? 1 : -1;
+			result = Double.compare(inP1.getLongitude().getDouble(), inP2.getLongitude().getDouble());
 		}
 		// and latitude
 		if (result == 0) {
-			result = inP1.getLatitude().getDouble() > inP2.getLatitude().getDouble() ? 1 : -1;
+			result = Double.compare(inP1.getLatitude().getDouble(), inP2.getLatitude().getDouble());
 		}
 		return result;
 	}

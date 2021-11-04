@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.util.Iterator;
 import java.util.TreeSet;
 
 import javax.swing.BoxLayout;
@@ -269,10 +268,8 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 		// Copy info to point list
 		numPoints = set.size();
 		PointList list = new PointList(numPoints);
-		Iterator<PointInfo> it = set.iterator();
-		while (it.hasNext())
+		for (PointInfo info : set)
 		{
-			PointInfo info = it.next();
 			if (previousTime != null)
 			{
 				if (info.getSegmentFlag()) {

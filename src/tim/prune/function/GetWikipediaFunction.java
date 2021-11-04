@@ -1,8 +1,6 @@
 package tim.prune.function;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -12,16 +10,14 @@ import javax.xml.parsers.SAXParserFactory;
 import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Distance;
 import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
-import tim.prune.data.UnitSetLibrary;
 import tim.prune.function.search.GenericDownloaderFunction;
 import tim.prune.function.search.SearchResult;
 
 /**
- * Function to load nearby point information from Wikipedia (and Wikimedia)
+ * Function to load nearby point information from Wikipedia
  * according to the currently viewed area
  */
 public class GetWikipediaFunction extends GenericDownloaderFunction
@@ -80,9 +76,6 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 			lat = point.getLatitude().getDouble();
 			lon = point.getLongitude().getDouble();
 		}
-
-		// Before we ask geonames online, let's get wikimedia galleries first
-		searchWikimediaGalleries(lat, lon);
 
 		// For geonames, firstly try the local language
 		String lang = I18nManager.getText("wikipedia.lang");
@@ -177,60 +170,5 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 		// Close the dialog
 		_cancelled = true;
 		_dialog.dispose();
-	}
-
-	/**
-	 * Search the local wikimedia index to see if there are any galleries nearby
-	 * @param inLat latitude
-	 * @param inLon longitude
-	 */
-	private void searchWikimediaGalleries(double inLat, double inLon)
-	{
-		BufferedReader reader = null;
-		try
-		{
-			InputStream in = GetWikipediaFunction.class.getResourceAsStream("/tim/prune/function/search/wikimedia_galleries.txt");
-			reader = new BufferedReader(new InputStreamReader(in));
-
-			ArrayList<SearchResult> trackList = new ArrayList<SearchResult>();
-			DataPoint herePoint = new DataPoint(new Latitude(inLat, Latitude.FORMAT_DEG), new Longitude(inLon, Longitude.FORMAT_DEG), null);
-			// Loop through the file line by line, looking for nearby points
-			String line = null;
-			while ((line = reader.readLine()) != null)
-			{
-				String[] lineComps = line.split("\t");
-				if (lineComps.length == 4)
-				{
-					DataPoint p = new DataPoint(new Latitude(lineComps[2]), new Longitude(lineComps[3]), null);
-					double distFromHere = Distance.convertRadiansToDistance(
-						DataPoint.calculateRadiansBetween(p, herePoint), UnitSetLibrary.UNITS_KILOMETRES);
-					if (distFromHere < MAX_DISTANCE)
-					{
-						SearchResult gallery = new SearchResult();
-						gallery.setTrackName(I18nManager.getText("dialog.wikipedia.gallery") + ": " + lineComps[0]);
-						gallery.setDescription(lineComps[1]);
-						gallery.setLatitude(lineComps[2]);
-						gallery.setLongitude(lineComps[3]);
-						gallery.setWebUrl("https://commons.wikimedia.org/wiki/" + lineComps[0]);
-						gallery.setLength(distFromHere * 1000.0); // convert from km to m
-						trackList.add(gallery);
-					}
-				}
-			}
-			_trackListModel.addTracks(trackList, true);
-		}
-		catch (java.io.IOException e) {
-			System.err.println("Exception trying to read wikimedia file : " + e.getMessage());
-		}
-		catch (NullPointerException e) {
-			System.err.println("Couldn't find wikimedia file : " + e.getMessage());
-		}
-		finally
-		{
-			try {
-				reader.close();
-			}
-			catch (Exception e) {} // ignore
-		}
 	}
 }

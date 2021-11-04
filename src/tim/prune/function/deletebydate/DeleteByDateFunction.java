@@ -8,6 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Date;
 
 import javax.swing.BorderFactory;
@@ -17,6 +19,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.border.EtchedBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.AbstractTableModel;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
@@ -34,8 +40,14 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 {
 	/** dialog for selecting dates */
 	private JDialog _dialog = null;
+	/** table */
+	private JTable _infoTable = null;
 	/** Ok button */
 	private JButton _okButton = null;
+	// panel for selection buttons
+	private JPanel _selButtonPanel = null;
+	private JButton _keepSelectedButton = null;
+	private JButton _delSelectedButton = null;
 	/** date info list */
 	private DateInfoList _infoList = new DateInfoList();
 
@@ -94,6 +106,9 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 				_dialog.getContentPane().add(makeDialogComponents());
 				_dialog.pack();
 			}
+			_infoTable.clearSelection();
+			_selButtonPanel.setVisible(_infoList.getNumEntries() > 4);
+			enableButtons();
 			// Show dialog
 			_dialog.setVisible(true);
 		}
@@ -121,11 +136,49 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 			}
 		};
 
-		JTable infoTable = new JTable(new DeletionTableModel(_infoList));
-		JScrollPane pane = new JScrollPane(infoTable);
-		pane.setPreferredSize(new Dimension(300, 80));
+		_infoTable = new JTable(new DeletionTableModel(_infoList));
+		_infoTable.getTableHeader().addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent mouseEvent) {
+				int index = _infoTable.convertColumnIndexToModel(_infoTable.columnAtPoint(mouseEvent.getPoint()));
+				if (index >= 2) {
+					modifyAllCheckboxes(index == 3); // parameter is true for delete, false for keep
+				}
+			}
+		});
+		_infoTable.getSelectionModel().addListSelectionListener(
+			new ListSelectionListener() {
+				public void valueChanged(ListSelectionEvent e) {
+					enableButtons();
+				}
+		});
+
+		JScrollPane pane = new JScrollPane(_infoTable);
+		pane.setPreferredSize(new Dimension(300, 180));
 		pane.setBorder(BorderFactory.createEmptyBorder(2, 50, 2, 50));
-		dialogPanel.add(pane, BorderLayout.CENTER);
+		JPanel middlePanel = new JPanel();
+		middlePanel.setLayout(new BorderLayout());
+		middlePanel.add(pane, BorderLayout.CENTER);
+		_selButtonPanel = new JPanel();
+		_selButtonPanel.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(4, 4, 4, 4))
+		);
+		_selButtonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		_keepSelectedButton = new JButton(I18nManager.getText("button.keepselected"));
+		_keepSelectedButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				changeSelectedRowsToKeep();
+			}
+		});
+		_selButtonPanel.add(_keepSelectedButton);
+		_delSelectedButton = new JButton(I18nManager.getText("button.deleteselected"));
+		_delSelectedButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				changeSelectedRowsToDelete();
+			}
+		});
+		_selButtonPanel.add(_delSelectedButton);
+		middlePanel.add(_selButtonPanel, BorderLayout.SOUTH);
+		dialogPanel.add(middlePanel, BorderLayout.CENTER);
 
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
@@ -154,6 +207,66 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
+	}
+
+	/**
+	 * Select a column of checkboxes
+	 * @param isDelete true for delete all, false for keep all
+	 */
+	private void modifyAllCheckboxes(boolean isDelete)
+	{
+		for (int rowIndex=0; rowIndex<_infoList.getNumEntries(); rowIndex++)
+		{
+			_infoList.getDateInfo(rowIndex).setDeleteFlag(isDelete);
+		}
+		enableButtons();
+	}
+
+	private void changeSelectedRowsToKeep()
+	{
+		changeSelectedRows(false);
+	}
+	private void changeSelectedRowsToDelete()
+	{
+		changeSelectedRows(true);
+	}
+
+	/**
+	 * Change the selected rows to either all keep or all delete
+	 * @param isDelete true for delete, false for keep
+	 */
+	private void changeSelectedRows(boolean isDelete)
+	{
+		int firstRow = -1, lastRow = -1;
+		for (int rowIndex : _infoTable.getSelectedRows())
+		{
+			if (firstRow == -1) {firstRow = rowIndex;}
+			_infoList.getDateInfo(rowIndex).setDeleteFlag(isDelete);
+			lastRow = rowIndex;
+		}
+		// Make sure all rows between first and last updated ones are updated in the table
+		((AbstractTableModel) _infoTable.getModel()).fireTableRowsUpdated(firstRow, lastRow);
+		enableButtons();
+	}
+
+	/**
+	 * Enable or disable the keepSelected and deleteSelected buttons
+	 * according to the current selection
+	 */
+	private void enableButtons()
+	{
+		boolean hasKeep = false, hasDelete = false;
+		for (int rowIndex : _infoTable.getSelectedRows())
+		{
+			if (_infoList.getDateInfo(rowIndex).getDeleteFlag()) {
+				hasDelete = true;
+			}
+			else {
+				hasKeep = true;
+			}
+		}
+		_delSelectedButton.setEnabled(hasKeep);
+		_keepSelectedButton.setEnabled(hasDelete);
 	}
 
 	/**
@@ -198,8 +311,8 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 		}
 		else
 		{
-			// Do nothing   //System.out.println("Nothing selected to delete!");
-			// delete flags might have been reset, so refresh display
+			// Nothing to be deleted
+			// Delete flags might have been reset, so refresh display
 			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 		}
 		_dialog.dispose();

@@ -13,6 +13,7 @@ import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.DoubleRange;
 import tim.prune.data.Track;
+import tim.prune.tips.TipManager;
 
 /**
  * Class to provide the function to save the config settings
@@ -47,6 +48,11 @@ public class SaveConfig extends GenericFunction
 		{
 			File saveFile = chooser.getSelectedFile();
 			saveConfig(saveFile);
+			if (!saveFile.getName().equals(Config.DEFAULT_CONFIG_FILE.getName()))
+			{
+				// User chose a name which isn't the default, so show a tip
+				_app.showTip(TipManager.Tip_NonStandardConfigFile);
+			}
 		}
 	}
 
@@ -124,15 +130,10 @@ public class SaveConfig extends GenericFunction
 			final DoubleRange lonRange = track.getLonRange();
 			if (latRange.getRange() > 0.0 && lonRange.getRange() > 0.0)
 			{
-				StringBuffer buffer = new StringBuffer();
-				buffer.append(Double.toString(latRange.getMinimum()));
-				buffer.append(';');
-				buffer.append(Double.toString(latRange.getMaximum()));
-				buffer.append(';');
-				buffer.append(Double.toString(lonRange.getMinimum()));
-				buffer.append(';');
-				buffer.append(Double.toString(lonRange.getMaximum()));
-				return buffer.toString();
+				return Double.toString(latRange.getMinimum()) + ";"
+					+ Double.toString(latRange.getMaximum()) + ";"
+					+ Double.toString(lonRange.getMinimum()) + ";"
+					+ Double.toString(lonRange.getMaximum());
 			}
 		}
 		return null;

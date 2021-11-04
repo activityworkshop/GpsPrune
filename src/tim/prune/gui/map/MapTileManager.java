@@ -52,8 +52,8 @@ public class MapTileManager implements ImageObserver
 		setZoom(inZoom);
 		// Pass params onto all memory cachers
 		if (_tempCaches != null) {
-			for (int i=0; i<_tempCaches.length; i++) {
-				_tempCaches[i].centreMap(inZoom, inTileX, inTileY);
+			for (MemTileCacher cacher : _tempCaches) {
+				cacher.centreMap(inZoom, inTileX, inTileY);
 			}
 		}
 	}

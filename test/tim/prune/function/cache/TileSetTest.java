@@ -38,7 +38,7 @@ class TileSetTest
 		// numeric but no dot, should be false
 		assertFalse(TileSet.isNumericUntilDot("1234"));
 		// numeric, should be true
-		System.out.println(TileSet.isNumericUntilDot("44.jpg"));
-		System.out.println(TileSet.isNumericUntilDot("0."));
+		assertTrue(TileSet.isNumericUntilDot("44.jpg"));
+		assertTrue(TileSet.isNumericUntilDot("0."));
 	}
 }

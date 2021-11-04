@@ -10,29 +10,11 @@ public class TerrainDefinition
 	private int     _gridSize   = 0;
 
 	/**
-	 * Empty constructor specifying no terrain
-	 */
-	public TerrainDefinition()
-	{
-		this(false, 0);
-	}
-
-	/**
 	 * Constructor
 	 * @param inUse true to use a terrain
 	 * @param inGridSize size of grid
 	 */
 	public TerrainDefinition(boolean inUse, int inGridSize)
-	{
-		setUseTerrain(inUse, inGridSize);
-	}
-
-	/**
-	 * Set the parameters
-	 * @param inUse true to use a terrain
-	 * @param inGridSize size of grid
-	 */
-	public void setUseTerrain(boolean inUse, int inGridSize)
 	{
 		_useTerrain = inUse;
 		_gridSize   = inGridSize;
@@ -52,10 +34,10 @@ public class TerrainDefinition
 		return _gridSize;
 	}
 
-	@Override
 	/**
 	 * Compare two TerrainDefinitions to see if they're equal
 	 */
+	@Override
 	public boolean equals(Object obj)
 	{
 		if (obj == null || !(obj instanceof TerrainDefinition)) {

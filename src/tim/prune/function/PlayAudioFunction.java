@@ -99,7 +99,7 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 
 	/**
 	 * Try to play the sound file using built-in java libraries
-	 * @param inAudio audio clip to play
+	 * @param inClip audio clip to play
 	 * @return true if play was successful
 	 */
 	private boolean playClip(AudioClip inClip)
@@ -160,7 +160,7 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 		{
 			// If system looks like a Mac, try the open command
 			String osName = System.getProperty("os.name").toLowerCase();
-			boolean isMacOsx = osName.indexOf("mac os") >= 0 || osName.indexOf("darwin") >= 0;
+			boolean isMacOsx = osName.contains("mac os") || osName.contains("darwin");
 			if (isMacOsx)
 			{
 				String[] command = new String[] {"open", inFile.getAbsolutePath()};

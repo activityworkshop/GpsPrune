@@ -109,7 +109,7 @@ public class PasteCoordinates extends GenericFunction
 		MouseAdapter mouseListener = new MouseAdapter() {
 			public void mouseReleased(MouseEvent inE) {
 				enableOK();
-			};
+			}
 		};
 		_coordField.addKeyListener(keyListener);
 		_coordField.addMouseListener(mouseListener);

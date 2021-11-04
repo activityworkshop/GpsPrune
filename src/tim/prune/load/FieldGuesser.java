@@ -171,9 +171,9 @@ public abstract class FieldGuesser
 	 */
 	private static boolean checkArrayHasField(Field[] inFields, Field inCheckField)
 	{
-		for (int f=0; f<inFields.length; f++)
+		for (Field field : inFields)
 		{
-			if (inFields[f] != null && inFields[f].equals(inCheckField)) {
+			if (field != null && field.equals(inCheckField)) {
 				return true;
 			}
 		}

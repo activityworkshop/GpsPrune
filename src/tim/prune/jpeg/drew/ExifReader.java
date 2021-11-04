@@ -74,7 +74,7 @@ public class ExifReader
 			throw new ExifException("Jpeg file failed Magic check");
 		}
 
-		final Byte segmentTypeByte = (byte)0xE1; // JpegSegmentType.APP1.byteValue;
+		final byte segmentTypeByte = (byte)0xE1; // JpegSegmentType.APP1.byteValue;
 
 		do {
 			// Find the segment marker. Markers are zero or more 0xFF bytes, followed
@@ -173,9 +173,6 @@ public class ExifReader
 			);
 
 		} catch (ExifException e) {
-			// TODO what to do with this error state?
-			e.printStackTrace(System.err);
-		} catch (IOException e) {
 			// TODO what to do with this error state?
 			e.printStackTrace(System.err);
 		}

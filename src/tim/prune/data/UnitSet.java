@@ -16,7 +16,6 @@ public class UnitSet
 	 * @param inNameKey name key
 	 * @param inDistanceUnit distance unit
 	 * @param inAltitudeUnit altitude unit
-	 * @param inAltitudeFormat default altitude format
 	 * @param inSpeedUnit unit for horizontal speeds
 	 * @param inVerticalSpeedUnit unit for vertical speeds
 	 */

@@ -163,7 +163,7 @@ public class DiskCacheConfig extends GenericFunction
 			else
 			{
 				// checkbox is on, check value
-				if (path.equals("") || (_initialCacheDir != null && path.equals(_initialCacheDir))) {
+				if (path.equals("") || path.equals(_initialCacheDir)) {
 					// Value blank or same as before
 					ok = false;
 				}

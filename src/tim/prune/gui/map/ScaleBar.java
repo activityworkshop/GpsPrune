@@ -8,6 +8,7 @@ import javax.swing.JPanel;
 import tim.prune.I18nManager;
 import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
+import tim.prune.data.Distance;
 import tim.prune.data.Unit;
 
 /**
@@ -20,24 +21,8 @@ public class ScaleBar extends JPanel
 	/** y position */
 	private double _yPos = 0.0;
 
-	// Dimensions
-	/** Offset from left side in pixels */
-	private static final int LEFT_OFFSET = 20;
-	/** Offset from top in pixels */
-	private static final int Y_OFFSET = 10;
-	/** Tick height in pixels */
-	private static final int TICK_HEIGHT = 5;
-	/** Margin between bar and end text in pixels */
-	private static final int MARGIN_WIDTH = 8;
-
-	/** scales for each zoom level */
-	private static final int[] _scales = {10000, 5000, 2000, 2000, 1000, 500, 200, 100,
-		50, 20, 10, 5, 2, 2, 1,
-		-2, -5, -10, -20, -50, -100, -200};
-	/** pixel counts for each zoom level (metric) */
-	private static final double[] _metricPixels = {64, 64, 51, 102, 102, 102, 81, 81,
-		81, 65, 65, 65, 52, 105, 105,
-		105, 83, 83, 83, 67, 67, 67};
+	/** Invalid scale, do not draw */
+	private static final int INVALID_SCALE = 0;
 
 
 	/**
@@ -57,63 +42,110 @@ public class ScaleBar extends JPanel
 	public void paint(Graphics inG)
 	{
 		super.paint(inG);
-		if (_zoomLevel > -1)
+		if (_zoomLevel < 2) {return;}
+
+		final double distScaleFactor = getPixelsPerDist();
+		final int scale = getScaleToUse(distScaleFactor);
+		if (scale != INVALID_SCALE)
 		{
-			try {
-				final double distScaleFactor = Config.getUnitSet().getDistanceUnit().getMultFactorFromStd();
-				double drightSide = LEFT_OFFSET + _metricPixels[_zoomLevel] / 1000.0 / distScaleFactor;
-				int scale = _scales[_zoomLevel];
-
-				// work out cos(latitude) from y position, and apply to scale
-				final double angle = Math.PI * (1 - 2*_yPos);
-				final double lat = Math.atan(Math.sinh(angle));
-				final double cosLat = Math.cos(lat);
-				int rightSide = (int) (drightSide / cosLat);
-				// Adjust if scale is too large
-				while (rightSide > 300)
-				{
-					rightSide /= 2;
-					scale /= 2;
-					// Abort if scale is now less than 1 unit (shouldn't ever be)
-					if (scale < 1) {return;}
-				}
-				// Abort if scale is negative (around poles)
-				if (rightSide < 1) {return;}
-
-				// Determine colours to use
-				Color barColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
-				Color blankColour = new Color(255-barColour.getRed(), 255-barColour.getGreen(), 255-barColour.getBlue());
-				// Should this blank colour be set to saturation zero?
-				// Draw blank bars behind
-				inG.setColor(blankColour);
-				inG.drawLine(LEFT_OFFSET, Y_OFFSET-1, rightSide+2, Y_OFFSET-1);
-				inG.drawLine(LEFT_OFFSET, Y_OFFSET+2, rightSide+2, Y_OFFSET+2);
-				inG.drawLine(LEFT_OFFSET-1, Y_OFFSET+2, LEFT_OFFSET-1, Y_OFFSET-TICK_HEIGHT);
-				inG.drawLine(LEFT_OFFSET+2, Y_OFFSET+2, LEFT_OFFSET+2, Y_OFFSET-TICK_HEIGHT);
-				inG.drawLine(rightSide-1, Y_OFFSET+2, rightSide-1, Y_OFFSET-TICK_HEIGHT);
-				inG.drawLine(rightSide+2, Y_OFFSET+2, rightSide+2, Y_OFFSET-TICK_HEIGHT);
-				// horizontal
-				inG.setColor(barColour);
-				inG.drawLine(LEFT_OFFSET, Y_OFFSET, rightSide, Y_OFFSET);
-				inG.drawLine(LEFT_OFFSET, Y_OFFSET+1, rightSide, Y_OFFSET+1);
-				// 0 tick
-				inG.drawLine(LEFT_OFFSET, Y_OFFSET, LEFT_OFFSET, Y_OFFSET-TICK_HEIGHT);
-				inG.drawLine(LEFT_OFFSET+1, Y_OFFSET, LEFT_OFFSET+1, Y_OFFSET-TICK_HEIGHT);
-				// end tick
-				inG.drawLine(rightSide, Y_OFFSET+1, rightSide, Y_OFFSET-TICK_HEIGHT);
-				inG.drawLine(rightSide+1, Y_OFFSET+1, rightSide+1, Y_OFFSET-TICK_HEIGHT);
-				// text
-				String text = getScaleText(scale, Config.getUnitSet().getDistanceUnit());
-				inG.setColor(blankColour);
-				inG.drawString(text, rightSide+MARGIN_WIDTH-1, Y_OFFSET);
-				inG.drawString(text, rightSide+MARGIN_WIDTH+1, Y_OFFSET);
-				inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET-1);
-				inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET+1);
-				inG.setColor(barColour);
-				inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET);
-			}
-			catch (ArrayIndexOutOfBoundsException ai) {}
+			final int barWidth = getBarWidth(distScaleFactor, scale);
+			paintScaleBar(inG, scale, barWidth);
 		}
+	}
+
+	/**
+	 * @return scale factor in pixels per unit distance
+	 */
+	private double getPixelsPerDist()
+	{
+		// work out cos(latitude) from y position
+		final double angle = Math.PI * (1 - 2*_yPos);
+		final double lat = Math.atan(Math.sinh(angle));
+		final double distAroundEarth = Distance.convertRadiansToDistance(2 * Math.PI) * Math.cos(lat);
+		// pixels at this zoom level
+		return (256 << _zoomLevel) / distAroundEarth;
+	}
+
+	/**
+	 * @param inScaleFactor distance factor depending on current units
+	 * @return scale to use, or INVALID_SCALE if not possible
+	 */
+	private static int getScaleToUse(double inScaleFactor)
+	{
+		// possible scales to use
+		final int[] scales = {10000, 5000, 2000, 1000, 500, 200, 100,
+			50, 20, 10, 5, 2, 1, -2, -5, -10, -20, -50, -100, -200};
+		final int MAX_BAR_WIDTH = 280;
+		for (int scale : scales)
+		{
+			int width = getBarWidth(inScaleFactor, scale);
+			if (width <= MAX_BAR_WIDTH) {
+				return scale;
+			}
+		}
+		return INVALID_SCALE;
+	}
+
+	/**
+	 * @param inScaleFactor distance factor depending on current units
+	 * @param inScale selected scale
+	 * @return bar width in pixels
+	 */
+	private static int getBarWidth(double inScaleFactor, int inScale)
+	{
+		double dDist = (inScale > 0 ? inScale : (-1.0/inScale)) * inScaleFactor;
+		return (int) dDist;
+	}
+
+	/**
+	 * Draw the components of the scale bar
+	 * @param inG graphics object
+	 * @param inScale scale level related to selected units
+	 * @param inWidth width of scale bar, in pixels
+	 */
+	private void paintScaleBar(Graphics inG, int inScale, int inWidth)
+	{
+		// Offset from left side in pixels
+		final int LEFT_OFFSET = 20;
+		// Offset from top in pixels
+		final int Y_OFFSET = 10;
+		// Tick height in pixels
+		final int TICK_HEIGHT = 5;
+		// Margin between bar and end text in pixels
+		final int MARGIN_WIDTH = 8;
+
+		// Determine colours to use
+		Color barColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
+		Color blankColour = new Color(255-barColour.getRed(), 255-barColour.getGreen(), 255-barColour.getBlue());
+		final int rightSide = LEFT_OFFSET + inWidth;
+
+		// Draw blank bars behind
+		inG.setColor(blankColour);
+		inG.drawLine(LEFT_OFFSET, Y_OFFSET-1, rightSide+2, Y_OFFSET-1);
+		inG.drawLine(LEFT_OFFSET, Y_OFFSET+2, rightSide+2, Y_OFFSET+2);
+		inG.drawLine(LEFT_OFFSET-1, Y_OFFSET+2, LEFT_OFFSET-1, Y_OFFSET-TICK_HEIGHT);
+		inG.drawLine(LEFT_OFFSET+2, Y_OFFSET+2, LEFT_OFFSET+2, Y_OFFSET-TICK_HEIGHT);
+		inG.drawLine(rightSide-1, Y_OFFSET+2, rightSide-1, Y_OFFSET-TICK_HEIGHT);
+		inG.drawLine(rightSide+2, Y_OFFSET+2, rightSide+2, Y_OFFSET-TICK_HEIGHT);
+		// horizontal
+		inG.setColor(barColour);
+		inG.drawLine(LEFT_OFFSET, Y_OFFSET, rightSide, Y_OFFSET);
+		inG.drawLine(LEFT_OFFSET, Y_OFFSET+1, rightSide, Y_OFFSET+1);
+		// 0 tick
+		inG.drawLine(LEFT_OFFSET, Y_OFFSET, LEFT_OFFSET, Y_OFFSET-TICK_HEIGHT);
+		inG.drawLine(LEFT_OFFSET+1, Y_OFFSET, LEFT_OFFSET+1, Y_OFFSET-TICK_HEIGHT);
+		// end tick
+		inG.drawLine(rightSide, Y_OFFSET+1, rightSide, Y_OFFSET-TICK_HEIGHT);
+		inG.drawLine(rightSide+1, Y_OFFSET+1, rightSide+1, Y_OFFSET-TICK_HEIGHT);
+		// text
+		final String text = getScaleText(inScale, Config.getUnitSet().getDistanceUnit());
+		inG.setColor(blankColour);
+		inG.drawString(text, rightSide+MARGIN_WIDTH-1, Y_OFFSET);
+		inG.drawString(text, rightSide+MARGIN_WIDTH+1, Y_OFFSET);
+		inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET-1);
+		inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET+1);
+		inG.setColor(barColour);
+		inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET);
 	}
 
 	/**

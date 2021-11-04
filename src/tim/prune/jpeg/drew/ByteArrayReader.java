@@ -9,8 +9,6 @@
 
 package tim.prune.jpeg.drew;
 
-import java.io.IOException;
-
 
 /**
  * Provides methods to read specific values from a byte array,
@@ -73,7 +71,7 @@ public class ByteArrayReader
 	 *
 	 * @param index position within the data buffer to read byte
 	 * @return the 8 bit int value, between 0 and 255
-	 * @throws IOException the buffer does not contain enough bytes to service the request, or index is negative
+	 * @throws ExifException the buffer does not contain enough bytes to service the request, or index is negative
 	 */
 	public short getUInt8(int index) throws ExifException
 	{
@@ -87,7 +85,7 @@ public class ByteArrayReader
 	 *
 	 * @param index position within the data buffer to read byte
 	 * @return the 8 bit int value, between 0x00 and 0xFF
-	 * @throws IOException the buffer does not contain enough bytes to service the request, or index is negative
+	 * @throws ExifException the buffer does not contain enough bytes to service the request, or index is negative
 	 */
 	public byte getInt8(int index) throws ExifException
 	{
@@ -101,7 +99,7 @@ public class ByteArrayReader
 	 *
 	 * @param index position within the data buffer to read first byte
 	 * @return the 16 bit int value, between 0x0000 and 0xFFFF
-	 * @throws IOException the buffer does not contain enough bytes to service the request, or index is negative
+	 * @throws ExifException the buffer does not contain enough bytes to service the request, or index is negative
 	 */
 	public int getUInt16(int index) throws ExifException
 	{
@@ -123,7 +121,7 @@ public class ByteArrayReader
 	 *
 	 * @param index position within the data buffer to read first byte
 	 * @return the 16 bit int value, between 0x0000 and 0xFFFF
-	 * @throws IOException the buffer does not contain enough bytes to service the request, or index is negative
+	 * @throws ExifException the buffer does not contain enough bytes to service the request, or index is negative
 	 */
 	public short getInt16(int index) throws ExifException
 	{
@@ -145,7 +143,7 @@ public class ByteArrayReader
 	 *
 	 * @param index position within the data buffer to read first byte
 	 * @return the unsigned 32-bit int value as a long, between 0x00000000 and 0xFFFFFFFF
-	 * @throws IOException the buffer does not contain enough bytes to service the request, or index is negative
+	 * @throws ExifException the buffer does not contain enough bytes to service the request, or index is negative
 	 */
 	public long getUInt32(int index) throws ExifException
 	{
@@ -171,7 +169,7 @@ public class ByteArrayReader
 	 *
 	 * @param index position within the data buffer to read first byte
 	 * @return the signed 32 bit int value, between 0x00000000 and 0xFFFFFFFF
-	 * @throws IOException the buffer does not contain enough bytes to service the request, or index is negative
+	 * @throws ExifException the buffer does not contain enough bytes to service the request, or index is negative
 	 */
 	public int getInt32(int index) throws ExifException
 	{
@@ -200,7 +198,7 @@ public class ByteArrayReader
 	 * @param maxLengthBytes The maximum number of bytes to read.  If a zero-byte is not reached within this limit,
 	 *                       reading will stop and the string will be truncated to this length.
 	 * @return The read string.
-	 * @throws IOException The buffer does not contain enough bytes to satisfy this request.
+	 * @throws ExifException The buffer does not contain enough bytes to satisfy this request.
 	 */
 	public String getNullTerminatedString(int index, int maxLengthBytes) throws ExifException
 	{

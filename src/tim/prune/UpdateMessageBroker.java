@@ -77,11 +77,10 @@ public abstract class UpdateMessageBroker
 	{
 		// TODO: Launch separate thread so that whatever caused the inform can finish
 		if (!_enabled) return;
-		for (int i=0; i<_subscribers.length; i++)
+		for (DataSubscriber subscriber : _subscribers)
 		{
-			if (_subscribers[i] != null)
-			{
-				_subscribers[i].dataUpdated(inChange);
+			if (subscriber != null) {
+				subscriber.dataUpdated(inChange);
 			}
 		}
 	}
@@ -93,11 +92,10 @@ public abstract class UpdateMessageBroker
 	public static void informSubscribers(String inMessage)
 	{
 		if (!_enabled) return;
-		for (int i=0; i<_subscribers.length; i++)
+		for (DataSubscriber subscriber : _subscribers)
 		{
-			if (_subscribers[i] != null)
-			{
-				_subscribers[i].actionCompleted(inMessage);
+			if (subscriber != null) {
+				subscriber.actionCompleted(inMessage);
 			}
 		}
 	}

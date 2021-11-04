@@ -38,9 +38,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "20.4";
+	public static final String VERSION_NUMBER = "21";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "387";
+	public static final String BUILD_NUMBER = "390";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -67,9 +67,8 @@ public class GpsPrune
 			System.setProperty("com.apple.mrj.application.apple.menu.about.name", PROGRAM_NAME);
 		}
 		// Loop over given arguments, if any
-		for (int i=0; i<args.length; i++)
+		for (String arg : args)
 		{
-			String arg = args[i];
 			if (arg.startsWith("--lang="))
 			{
 				localeCode = arg.substring(7);

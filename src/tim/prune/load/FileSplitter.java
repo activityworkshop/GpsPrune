@@ -37,12 +37,12 @@ public class FileSplitter
 		// Count non-blank rows and max field count
 		_numRows = 0;
 		int maxFields = 0;
-		for (int i=0; i<contents.length; i++)
+		for (String line : contents)
 		{
-			if (contents[i] != null && !contents[i].trim().equals(""))
+			if (line != null && !line.trim().equals(""))
 			{
 				_numRows++;
-				String[] splitLine = contents[i].split(delimStr);
+				String[] splitLine = line.split(delimStr);
 				if (splitLine != null && splitLine.length > maxFields)
 				{
 					maxFields = splitLine.length;

@@ -7,8 +7,8 @@ import tim.prune.data.Field;
  */
 public class FieldEdit
 {
-	private Field _field = null;
-	private String _value = null;
+	private final Field _field;
+	private final String _value;
 
 	/**
 	 * Constructor

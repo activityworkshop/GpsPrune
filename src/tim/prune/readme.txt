@@ -1,5 +1,5 @@
-GpsPrune version 20.4
-=====================
+GpsPrune version 21
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_20.4.jar
+   java -jar gpsprune_21.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,43 +25,21 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_20.4.jar --lang=DE
+   java -jar gpsprune_21.jar --lang=DE
 
 
-New with version 20.4
-=====================
-The following fixes and additions were made since version 20.3:
-  - Loading of GeoJSON files, either directly or via GPSBabel
-  - Fix for calculations when some timestamps are missing (fperrin)
-  - Make 3d rotations more intuitive, avoid rotating upside-down (Issue #34)
-
-New with version 20.3
-=====================
-The following fixes and additions were made since version 20.2:
-  - If a waypoint is selected, the distances function should use it
-  - If a point list has been pasted, closing should prompt about unsaved data
-  - Some additional translations
-  - Switching SRTM downloads to use kurviger.de instead of usgs.gov (thanks, kurviger.de!)
-
-New with version 20.2
-=====================
-The following fixes and additions were made since version 20.1:
-  - Fix for intermittent startup problems
-  - Addition of Swedish (erikiiofph7)
-  - Allow four digits for adding day offsets (fperrin)
-
-New with version 20.1
-=====================
+New with version 21
+===================
 The following fixes and additions were made since version 20:
-  - Starting with an empty map (fperrin)
-  - Reading and writing <cmt> tags from gpx files (Willy)
-  - Add option to use GTK look-and-feel (fperrin)
-  - Translation updates (Carlos, Tche333)
-  - Solve issue #29/973910 regarding missing tile cache (Peter Gervai)
-  - Remove "Download SRTM" function and just do it automatically
-  - Tweak waypoint icons
-  - Fix problem with a recently-used file which has disappeared
-  - Fix problem with moving / renaming downloaded tile files
+  - New function to draw a circle of new points around the current point (project circle around point)
+  - Remove wikimedia galleries
+  - For SRTM data, now offer a choice between high resolution (requiring NASA login) or the previous low resolution
+  - Add time offset function now allows weeks too (Issue #30)
+  - Delete by date function has extra buttons useful when the number of dates is large
+  - Truncation or rounding of coordinate values
+  - Extra messages to avoid confusion about saving the settings
+  - Allow editing comment and description when these are not yet in the track's field list
+  - Apply estimated timestamps to range (related to Issue #35)
 
 New with version 20
 ===================
@@ -74,6 +52,12 @@ The following fixes and additions were made since version 19:
   - Project point using bearing and distance (wishlist 35)
   - Possibility to paste a list of coordinates instead of just one
   - Removal of Gpsies functions (both download and upload)
+  - Remove "Download SRTM" function and just do it automatically
+  - Add option to use GTK look-and-feel (fperrin)
+  - Starting with an empty map (fperrin)
+  - Switching SRTM downloads to use kurviger.de instead of usgs.gov (thanks, kurviger.de!)
+  - Make 3d rotations more intuitive, avoid rotating upside-down (Issue #34)
+  - Loading of GeoJSON files, either directly or via GPSBabel
 
 New with version 19
 ===================

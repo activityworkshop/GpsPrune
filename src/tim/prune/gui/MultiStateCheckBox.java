@@ -76,8 +76,8 @@ public class MultiStateCheckBox extends JCheckBox implements ItemListener
 		_icons[inIndex % _numStates] = inIcon;
 	}
 
-	@Override
 	/** Intercept listener adding by putting a proxy inbetween */
+	@Override
 	public void addItemListener(ItemListener inListener) {
 		super.addItemListener(new ProxyListener(inListener));
 	}

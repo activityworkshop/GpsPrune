@@ -496,30 +496,6 @@ public class Track
 
 
 	/**
-	 * Interpolate extra points between two selected ones
-	 * @param inStartIndex start index of interpolation
-	 * @param inNumPoints num points to insert
-	 * @return true if successful
-	 */
-	public boolean interpolate(int inStartIndex, int inNumPoints)
-	{
-		// check parameters
-		if (inStartIndex < 0 || inStartIndex >= _numPoints || inNumPoints <= 0)
-			return false;
-
-		// get start and end points
-		DataPoint startPoint = getPoint(inStartIndex);
-		DataPoint endPoint = getPoint(inStartIndex + 1);
-
-		// Make array of points to insert
-		DataPoint[] insertedPoints = startPoint.interpolate(endPoint, inNumPoints);
-
-		// Insert points into track
-		return insertRange(insertedPoints, inStartIndex + 1);
-	}
-
-
-	/**
 	 * Average selected points
 	 * @param inStartIndex start index of selection
 	 * @param inEndIndex end index of selection

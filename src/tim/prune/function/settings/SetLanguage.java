@@ -288,7 +288,7 @@ public class SetLanguage extends GenericFunction
 				if (currLine.trim().length() > 0 && currLine.matches("[a-z.]+=.+")) {
 					ok = true;
 				}
-				if (currLine.indexOf('\0', 0) >= 0) {
+				if (currLine.indexOf('\0') >= 0) {
 					wrong = true;
 				}
 				currLine = reader.readLine();

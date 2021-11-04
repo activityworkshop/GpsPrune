@@ -55,10 +55,10 @@ public class SingleForecast
 		String tempMin = null, tempMax = null;
 		try {
 			tempMin = "" + Math.round(Double.parseDouble(inMin));
-		} catch (Exception e) {}; // tempMin stays null if temp can't be parsed
+		} catch (Exception e) {} // tempMin stays null if temp can't be parsed
 		try {
 			tempMax = "" + Math.round(Double.parseDouble(inMax));
-		} catch (Exception e) {}; // tempMax stays null if temp can't be parsed
+		} catch (Exception e) {} // tempMax stays null if temp can't be parsed
 
 		_tempString = tempMin;
 		if (tempMin != null && tempMax != null) {

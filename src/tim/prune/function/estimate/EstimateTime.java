@@ -2,13 +2,13 @@ package tim.prune.function.estimate;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
-import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.Calendar;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -22,7 +22,10 @@ import javax.swing.SwingUtilities;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
+import tim.prune.data.DataPoint;
+import tim.prune.data.Field;
 import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Selection;
 import tim.prune.data.Unit;
@@ -30,6 +33,7 @@ import tim.prune.gui.DecimalNumberField;
 import tim.prune.gui.DisplayUtils;
 import tim.prune.gui.GuiGridLayout;
 import tim.prune.tips.TipManager;
+import tim.prune.undo.UndoApplyTimestamps;
 
 /**
  * Class to calculate and show the results of estimating (hike) time for the current range
@@ -55,6 +59,7 @@ public class EstimateTime extends GenericFunction
 	private DecimalNumberField _gentleDescentField = null, _steepDescentField = null;
 	/** Range stats */
 	private RangeStatsWithGradients _stats = null;
+	private JButton _applyButton = null;
 
 
 	/**
@@ -251,7 +256,17 @@ public class EstimateTime extends GenericFunction
 		dialogPanel.add(mainPanel, BorderLayout.NORTH);
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
+		buttonPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+		_applyButton = new JButton(I18nManager.getText("button.apply"));
+		_applyButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				applyTimestampsToRange();
+			}
+		});
+		buttonPanel.add(_applyButton);
+		buttonPanel.add(Box.createGlue());
+		// Close (and save parameters)
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
 		closeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
@@ -265,6 +280,14 @@ public class EstimateTime extends GenericFunction
 			}
 		});
 		buttonPanel.add(closeButton);
+		// cancel
+		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
+		cancelButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				_dialog.dispose();
+			}
+		});
+		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
 	}
@@ -300,8 +323,8 @@ public class EstimateTime extends GenericFunction
 		String[] paramValues = estParams.getStrings();
 		if (paramValues == null || paramValues.length != 5)
 		{
-			// TODO: What to do in case of error?
-			return;
+			estParams.resetToDefaults();
+			paramValues = estParams.getStrings();
 		}
 		// Flat time is either for 5 km, 3 miles or 3 nm
 		_flatSpeedLabel.setText(I18nManager.getText("dialog.estimatetime.parameters.timefor") +
@@ -343,12 +366,14 @@ public class EstimateTime extends GenericFunction
 			_steepClimbField.getText(), _gentleDescentField.getText(), _steepDescentField.getText());
 		if (!params.isValid()) {
 			_estimatedDurationLabel.setText("- - -");
+			_applyButton.setEnabled(false);
 		}
 		else
 		{
 			final long numSeconds = (long) (params.applyToStats(_stats) * 60.0);
 			_estimatedDurationLabel.setText(I18nManager.getText("dialog.estimatetime.results.estimatedtime") + ": "
 				+ DisplayUtils.buildDurationString(numSeconds));
+			_applyButton.setEnabled(numSeconds > 0L);
 		}
 	}
 
@@ -378,5 +403,50 @@ public class EstimateTime extends GenericFunction
 		if (currParams.sameAsDefaults()) {
 			_app.showTip(TipManager.Tip_LearnTimeParams);
 		}
+	}
+
+	/**
+	 * Use the current parameters to calculate and overwrite the timestamps
+	 * for all the track points in the current range (leave waypoints untouched)
+	 */
+	private void applyTimestampsToRange()
+	{
+		// Populate an EstimationParameters object from the four strings
+		EstimationParameters params = new EstimationParameters();
+		params.populateWithStrings(_flatSpeedField.getText(), _gentleClimbField.getText(),
+			_steepClimbField.getText(), _gentleDescentField.getText(), _steepDescentField.getText());
+		if (params.isValid())
+		{
+			// Make undo object to store existing timestamps
+			UndoApplyTimestamps undo = new UndoApplyTimestamps(_app.getTrackInfo());
+			long startMillis = getTimeAtMidnight();
+			// Loop over all points in selected range
+			RangeStatsWithGradients stats = new RangeStatsWithGradients();
+			Selection selection = _app.getTrackInfo().getSelection();
+			for (int pointIdx=selection.getStart(); pointIdx <= selection.getEnd(); pointIdx++)
+			{
+				DataPoint point = _app.getTrackInfo().getTrack().getPoint(pointIdx);
+				if (point.isWaypoint()) continue;
+				stats.addPoint(point);
+				final double numSeconds = params.applyToStats(stats) * 60.0;
+				final long pointMillis = startMillis + (long) (numSeconds * 1000.0);
+				point.setFieldValue(Field.TIMESTAMP, "" + pointMillis, false);
+			}
+			UpdateMessageBroker.informSubscribers();
+			_app.completeFunction(undo, I18nManager.getText("confirm.applytimestamps"));
+		}
+	}
+
+	/**
+	 * @return timestamp at midnight, beginning of today
+	 */
+	private static long getTimeAtMidnight()
+	{
+		Calendar startTime = Calendar.getInstance();
+		startTime.set(Calendar.HOUR_OF_DAY, 0);
+		startTime.set(Calendar.MINUTE, 0);
+		startTime.set(Calendar.SECOND, 0);
+		startTime.set(Calendar.MILLISECOND, 0);
+		return startTime.getTimeInMillis();
 	}
 }

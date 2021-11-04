@@ -24,7 +24,7 @@ public class GpxCacher implements TagReceiver
 
 	/**
 	 * Constructor
-	 * @param inSourceInfo source information
+	 * @param inInfo source information
 	 */
 	public GpxCacher(SourceInfo inInfo)
 	{

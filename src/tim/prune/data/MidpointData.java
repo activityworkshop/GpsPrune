@@ -44,18 +44,22 @@ public class MidpointData
 			_valids  = new boolean[numPoints];
 		}
 		if (numPoints <= 0) return;
-		_valids[0] = false;
 
 		// Loop over the points in the track
-		for (int i=1; i<numPoints; i++)
+		int prevIndex = 0;
+		for (int i=0; i<numPoints; i++)
 		{
 			boolean pointValid = false;
 			DataPoint point = _track.getPoint(i);
-			if (point != null && !point.getSegmentStart() && !point.isWaypoint())
+			if (point != null && !point.isWaypoint())
 			{
-				_xValues[i] = (_track.getX(i) + _track.getX(i-1)) / 2.0;
-				_yValues[i] = (_track.getY(i) + _track.getY(i-1)) / 2.0;
-				pointValid = true;
+				if (!point.getSegmentStart())
+				{
+					_xValues[i] = (_track.getX(i) + _track.getX(prevIndex)) / 2.0;
+					_yValues[i] = (_track.getY(i) + _track.getY(prevIndex)) / 2.0;
+					pointValid = true;
+				}
+				prevIndex = i;
 			}
 			_valids[i] = pointValid;
 		}

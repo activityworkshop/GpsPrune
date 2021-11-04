@@ -65,8 +65,8 @@ public class NmeaFileLoader
 						{
 							if (lastDate == null && !messages.isEmpty()) {
 								// Backfill first few messages received before the first date
-								for (int m=0; m<messages.size(); m++) {
-									messages.get(m).setDate(date);
+								for (NmeaMessage msg : messages) {
+									msg.setDate(date);
 								}
 							}
 							lastDate = date;

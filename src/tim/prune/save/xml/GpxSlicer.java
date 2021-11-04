@@ -40,7 +40,7 @@ public class GpxSlicer
 	 */
 	public void slice(InputStream inStream)
 	{
-		StringBuffer beginBuffer = new StringBuffer(200);
+		StringBuilder beginBuffer = new StringBuilder();
 		ByteBuffer byteBuffer = new ByteBuffer();
 		boolean insideTag = false;
 		boolean insideCdata = false;

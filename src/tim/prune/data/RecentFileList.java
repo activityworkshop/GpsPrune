@@ -88,8 +88,7 @@ public class RecentFileList
 	public String getConfigString()
 	{
 		StringBuilder builder = new StringBuilder(100);
-		int size = getSize();
-		builder.append("" + size);
+		builder.append(getSize());
 		for (RecentFile f : _files)
 		{
 			builder.append(';');

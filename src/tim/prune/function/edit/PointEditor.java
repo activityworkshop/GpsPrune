@@ -51,6 +51,7 @@ public class PointEditor
 	private JTextArea _valueArea = null;
 	private JScrollPane _valueAreaPane = null;
 	private Track _track = null;
+	private FieldList _fieldList = null;
 	private DataPoint _point = null;
 	private EditFieldsTableModel _model = null;
 	private JButton _cancelButton = null;
@@ -81,13 +82,13 @@ public class PointEditor
 		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.pointedit.title"), true);
 		_dialog.setLocationRelativeTo(_parentFrame);
 		// Check field list
-		FieldList fieldList = _track.getFieldList();
-		int numFields = fieldList.getNumFields();
+		_fieldList = getFieldList(_track);
+		int numFields = _fieldList.getNumFields();
 		// Create table model for point editor
 		_model = new EditFieldsTableModel(numFields);
 		for (int i=0; i<numFields; i++)
 		{
-			Field field = fieldList.getField(i);
+			Field field = _fieldList.getField(i);
 			_model.addFieldInfo(field.getName(), _point.getFieldValue(field), i);
 		}
 		// Create Gui
@@ -104,6 +105,19 @@ public class PointEditor
 		_dialog.setVisible(true);
 	}
 
+	/**
+	 * @param inTrack current track
+	 * @return list of fields for the editor
+	 */
+	private static FieldList getFieldList(Track inTrack)
+	{
+		// Make a copy of the list
+		FieldList fields = inTrack.getFieldList().merge(new FieldList());
+		// Add extra fields (if not already present) to allow adding values
+		fields.extendList(Field.DESCRIPTION);
+		fields.extendList(Field.COMMENT);
+		return fields;
+	}
 
 	/**
 	 * Make the dialog components
@@ -211,7 +225,7 @@ public class PointEditor
 		// Check the current values
 		if (_prevRowIndex >= 0)
 		{
-			Field prevField = _track.getFieldList().getField(_prevRowIndex);
+			Field prevField = _fieldList.getField(_prevRowIndex);
 			boolean littleField = prevField.isBuiltIn() && prevField != Field.DESCRIPTION;
 			String newValue = littleField ? _valueField.getText() : _valueArea.getText();
 			// Update the model from the current GUI values
@@ -225,7 +239,7 @@ public class PointEditor
 		else
 		{
 			String currValue = _model.getValue(rowNum);
-			Field  field     = _track.getFieldList().getField(rowNum);
+			Field  field     = _fieldList.getField(rowNum);
 			_fieldnameLabel.setText(makeFieldLabel(field, _point));
 			_fieldnameLabel.setVisible(true);
 			boolean littleField = field.isBuiltIn() && field != Field.DESCRIPTION;
@@ -290,15 +304,14 @@ public class PointEditor
 		int rowNum = _table.getSelectedRow();
 		if (rowNum >= 0)
 		{
-			Field currField = _track.getFieldList().getField(rowNum);
+			Field currField = _fieldList.getField(rowNum);
 			boolean littleField = currField.isBuiltIn() && currField != Field.DESCRIPTION;
 			String newValue = littleField ? _valueField.getText() : _valueArea.getText();
 			_model.updateValue(_prevRowIndex, newValue);
 		}
 
 		// Package the modified fields into an object
-		FieldList fieldList = _track.getFieldList();
-		int numFields = fieldList.getNumFields();
+		int numFields = _fieldList.getNumFields();
 		// Make lists for edit and undo, and add each changed field in turn
 		FieldEditList editList = new FieldEditList();
 		FieldEditList undoList = new FieldEditList();
@@ -306,7 +319,7 @@ public class PointEditor
 		{
 			if (_model.getChanged(i))
 			{
-				Field field = fieldList.getField(i);
+				Field field = _fieldList.getField(i);
 				editList.addEdit(new FieldEdit(field, _model.getValue(i)));
 				undoList.addEdit(new FieldEdit(field, _point.getFieldValue(field)));
 			}

@@ -236,7 +236,7 @@ public abstract class UrlGenerator
 	/**
 	 * Generate a URL which only needs the current point
 	 * This is just a helper method to simplify the calls to the service-specific methods
-	 * @param inSource service to call
+	 * @param inService service to call
 	 * @param inTrackInfo track info
 	 * @return URL if available, or null
 	 */

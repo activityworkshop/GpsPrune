@@ -38,6 +38,7 @@ import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.browser.WebMapFunction;
 import tim.prune.function.search.SearchMapillaryFunction;
 import tim.prune.function.settings.SaveConfig;
+import tim.prune.function.srtm.ConfigureSrtmSources;
 
 /**
  * Class to manage the menu bar and tool bar,
@@ -62,6 +63,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _editPointItem = null;
 	private JMenuItem _editWaypointNameItem = null;
 	private JMenuItem _deletePointItem = null;
+	private JMenuItem _truncatePointCoordsItem = null;
 	private JMenuItem _deleteRangeItem = null;
 	private JMenuItem _cropTrackItem = null;
 	private JMenuItem _compressItem = null;
@@ -79,6 +81,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _findWaypointItem = null;
 	private JMenuItem _duplicatePointItem = null;
 	private JMenuItem _projectPointItem = null;
+	private JMenuItem _projectCircleItem = null;
 	private JMenuItem _reverseItem = null;
 	private JMenuItem _addTimeOffsetItem = null;
 	private JMenuItem _addAltitudeOffsetItem = null;
@@ -96,6 +99,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _routingGraphHopperItem = null;
 	private JMenuItem _chartItem = null;
 	private JMenuItem _lookupSrtmItem = null;
+	private JMenuItem _configureSrtmItem = null;
 	private JMenuItem _nearbyWikipediaItem = null;
 	private JMenuItem _nearbyOsmPoiItem = null;
 	private JMenuItem _showPeakfinderItem = null;
@@ -259,6 +263,8 @@ public class MenuManager implements DataSubscriber
 		// SRTM
 		_lookupSrtmItem = makeMenuItem(FunctionLibrary.FUNCTION_LOOKUP_SRTM, false);
 		onlineMenu.add(_lookupSrtmItem);
+		_configureSrtmItem = makeMenuItem(new ConfigureSrtmSources(_app), true);
+		onlineMenu.add(_configureSrtmItem);
 
 		onlineMenu.addSeparator();
 		// browser submenu
@@ -478,6 +484,8 @@ public class MenuManager implements DataSubscriber
 		_deletePointItem.setEnabled(false);
 		_deletePointItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 		pointMenu.add(_deletePointItem);
+		_truncatePointCoordsItem = makeMenuItem(FunctionLibrary.FUNCTION_TRUNCATE_POINT_COORDS, false);
+		pointMenu.add(_truncatePointCoordsItem);
 		pointMenu.addSeparator();
 		// find a waypoint
 		_findWaypointItem = makeMenuItem(FunctionLibrary.FUNCTION_FIND_WAYPOINT, false);
@@ -488,6 +496,9 @@ public class MenuManager implements DataSubscriber
 		// project current point
 		_projectPointItem = makeMenuItem(FunctionLibrary.FUNCTION_PROJECT_POINT, false);
 		pointMenu.add(_projectPointItem);
+		_projectCircleItem = makeMenuItem(FunctionLibrary.FUNCTION_PROJECT_CIRCLE, false);
+		pointMenu.add(_projectCircleItem);
+		pointMenu.addSeparator();
 		// paste coordinates function
 		JMenuItem pasteCoordsItem = makeMenuItem(new PasteCoordinates(_app));
 		pointMenu.add(pasteCoordsItem);
@@ -854,7 +865,7 @@ public class MenuManager implements DataSubscriber
 
 
 	/**
-	 * @see tim.prune.DataSubscriber#dataUpdated(tim.prune.data.Track)
+	 * @see tim.prune.DataSubscriber#dataUpdated
 	 */
 	public void dataUpdated(byte inUpdateType)
 	{
@@ -907,12 +918,14 @@ public class MenuManager implements DataSubscriber
 		_editWaypointNameItem.setEnabled(hasPoint);
 		_deletePointItem.setEnabled(hasPoint);
 		_deletePointButton.setEnabled(hasPoint);
+		_truncatePointCoordsItem.setEnabled(hasPoint);
 		_selectStartItem.setEnabled(hasPoint);
 		_selectStartButton.setEnabled(hasPoint);
 		_selectEndItem.setEnabled(hasPoint);
 		_selectEndButton.setEnabled(hasPoint);
 		_duplicatePointItem.setEnabled(hasPoint);
 		_projectPointItem.setEnabled(hasPoint);
+		_projectCircleItem.setEnabled(hasPoint);
 		_showPeakfinderItem.setEnabled(hasPoint);
 		_showGeohackItem.setEnabled(hasPoint);
 		_searchOpencachingDeItem.setEnabled(hasPoint);

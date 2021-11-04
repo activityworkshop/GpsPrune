@@ -25,7 +25,7 @@ public class TiffProcessor
 	/**
 	 * Processes a TIFF data sequence.
 	 *
-	 * @param reader the {@link RandomAccessReader} from which the data should be read
+	 * @param reader the reader from which the data should be read
 	 * @param jpegData the data to populate
 	 * @param tiffHeaderOffset the offset within <code>reader</code> at which the TIFF header starts
 	 * @throws ExifException if an error occurred during the processing of TIFF data that could
@@ -33,7 +33,7 @@ public class TiffProcessor
 	 * @throws IOException an error occurred while accessing the required data
 	 */
 	public static void processTiff(final ByteArrayReader reader, JpegData jpegData,
-		final int tiffHeaderOffset) throws ExifException, IOException
+		final int tiffHeaderOffset) throws ExifException
 	{
 		// This must be either "MM" or "II".
 		short byteOrderIdentifier = reader.getInt16(tiffHeaderOffset);
@@ -86,7 +86,7 @@ public class TiffProcessor
 	 * @param ifdOffset the offset within <code>reader</code> at which the IFD data starts
 	 * @param tiffHeaderOffset the offset within <code>reader</code> at which the TIFF header starts
 	 * @param inDirectoryId directory id
-	 * @throws IOException an error occurred while accessing the required data
+	 * @throws ExifException an error occurred while accessing the required data
 	 */
 	private static void processDirectory(final ExifTiffHandler handler,
 		final ByteArrayReader reader, final Set<Integer> processedIfdOffsets,

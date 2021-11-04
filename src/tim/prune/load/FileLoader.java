@@ -79,11 +79,9 @@ public class FileLoader
 			ArrayList<File> dataFiles = new ArrayList<File>();
 			if (files != null)
 			{
-				for (int i=0; i<files.length; i++)
+				for (File file : files)
 				{
-					File file = files[i];
-					if (file.exists() && file.isFile() && file.canRead())
-					{
+					if (file.exists() && file.isFile() && file.canRead()) {
 						dataFiles.add(file);
 					}
 				}

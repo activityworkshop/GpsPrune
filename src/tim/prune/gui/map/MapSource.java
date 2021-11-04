@@ -95,7 +95,7 @@ public abstract class MapSource
 		if (!urlOk)
 		{
 			// fail if protocol specified
-			if (urlstr.indexOf("://") >= 0) {return null;}
+			if (urlstr.contains("://")) {return null;}
 			// add the http protocol
 			urlstr = "http://" + urlstr;
 		}

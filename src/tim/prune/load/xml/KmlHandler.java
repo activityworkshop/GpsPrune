@@ -155,11 +155,11 @@ public class KmlHandler extends XmlHandler
 			{
 				// Add each of the unnamed track points to list
 				boolean firstPoint = true;
-				for (int p=0; p<numPoints; p++)
+				for (String coord : coordArray)
 				{
-					if (coordArray[p] != null && coordArray[p].trim().length()>3)
+					if (coord != null && coord.trim().length()>3)
 					{
-						String[] pointArray = makeStringArray(coordArray[p], null, null, null);
+						String[] pointArray = makeStringArray(coord, null, null, null);
 						if (firstPoint) {pointArray[5] = "1";} // start of segment flag
 						firstPoint = false;
 						_pointList.add(pointArray);
@@ -238,7 +238,7 @@ public class KmlHandler extends XmlHandler
 	 * @param inCoordinates coordinate string in Kml format
 	 * @param inName name of waypoint, or null if track point
 	 * @param inDesc description of waypoint, if any
-	 * @param inDesc timestamp of waypoint, if any
+	 * @param inTimestamp timestamp of waypoint, if any
 	 * @return String array for point
 	 */
 	private static String[] makeStringArray(String inCoordinates,

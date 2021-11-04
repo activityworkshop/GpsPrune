@@ -1,6 +1,7 @@
 package tim.prune.gui;
 
 import java.awt.Dimension;
+import java.text.DecimalFormatSymbols;
 
 import javax.swing.JTextField;
 import javax.swing.text.AttributeSet;
@@ -18,11 +19,15 @@ public class DecimalNumberField extends JTextField
 	 */
 	protected static class DecimalNumberDocument extends PlainDocument
 	{
-		private boolean _allowNegative = false;
+		private final boolean _allowNegative;
+		private final char _decimalPoint;
 
 		/** constructor */
-		DecimalNumberDocument(boolean inAllowNegative) {
+		DecimalNumberDocument(boolean inAllowNegative)
+		{
 			_allowNegative = inAllowNegative;
+			DecimalFormatSymbols dfs = new DecimalFormatSymbols();
+			_decimalPoint = dfs.getDecimalSeparator();
 		}
 
 		/**
@@ -35,14 +40,18 @@ public class DecimalNumberField extends JTextField
 		public void insertString(int offs, String str, AttributeSet a)
 			throws BadLocationException
 		{
-			char[] source = str.toCharArray();
-			char[] result = new char[source.length];
-			int j = 0;
-			for (int i = 0; i < result.length; i++) {
-				if (!Character.isLetter(source[i]) && (_allowNegative || source[i] != '-') && source[i] != ' ') // no letters, no minus sign or space
-					result[j++] = source[i];
+			StringBuilder buffer = new StringBuilder();
+			for (int i = 0; i < str.length(); i++)
+			{
+				final char c = str.charAt(i);
+				if (!_allowNegative && c == '-') {
+					continue; // negative not allowed
+				}
+				if (c == _decimalPoint || ("01234567890-".indexOf(c) >= 0)) {
+					buffer.append(c);
+				}
 			}
-			super.insertString(offs, new String(result, 0, j), a);
+			super.insertString(offs, buffer.toString(), a);
 		}
 	}
 

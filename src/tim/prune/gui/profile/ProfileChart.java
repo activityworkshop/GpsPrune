@@ -273,6 +273,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		{
 			// loop through points
 			g.setColor(barColour);
+			int previousX = -1;
 			for (int p = 0; p < numPoints; p++)
 			{
 				if (p == selectionStart)
@@ -281,7 +282,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 					g.setColor(barColour);
 
 				final int x = (int) (_xScaleFactor * p) + 1;
-				if (_data.hasData(p))
+				if (_data.hasData(p) && x != previousX)
 				{
 					value = _data.getData(p);
 					// Normal case is the minimum value greater than zero
@@ -302,6 +303,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 						int barHeight = (int) (yScaleFactor * value);
 						g.fillRect(BORDER_WIDTH+x, zeroY, barWidth, -barHeight);
 					}
+					previousX = x;
 				}
 			}
 
@@ -437,10 +439,8 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		if ((inMax - inMin) < 2.0) {
 			return -1;
 		}
-		int numScales = LINE_SCALES.length;
-		for (int i=0; i<numScales; i++)
+		for (int scale : LINE_SCALES)
 		{
-			int scale = LINE_SCALES[i];
 			int numLines = (int)(inMax / scale) - (int)(inMin / scale);
 			// Check for too many lines
 			if (numLines > 10) return -1;
@@ -448,7 +448,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			if (numLines > 1) return scale;
 		}
 		// no suitable scale found so just use minimum
-		return LINE_SCALES[numScales-1];
+		return LINE_SCALES[LINE_SCALES.length-1];
 	}
 
 
@@ -458,6 +458,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	public void dataUpdated(byte inUpdateType)
 	{
 		// Try not to recalculate all the values unless necessary
+		if (inUpdateType == SELECTION_CHANGED && !_data._hasData) {return;}
 		if (inUpdateType != SELECTION_CHANGED)
 		{
 			_data.init(Config.getUnitSet());
@@ -475,7 +476,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			currentParameters.rangeStart.set(_trackInfo.getSelection().getStart());
 			currentParameters.rangeEnd.set(_trackInfo.getSelection().getEnd());
 		}
-		if (inUpdateType == SELECTION_CHANGED)
+		if (inUpdateType == SELECTION_CHANGED && _trackInfo.getTrack().getNumPoints() > 20)
 		{
 			triggerPartialRepaint(currentParameters);
 		}
@@ -503,7 +504,6 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		final int region_x = (int) (_xScaleFactor * minPointIndex) + BORDER_WIDTH - 2;
 		final int region_width = (int) (_xScaleFactor * (maxPointIndex-minPointIndex+2)) + 6;
 		repaint(region_x, 0, region_width, getHeight());
-		// System.out.println("Partial repaint, x=" + region_x + ", region_width=" + region_width);
 	}
 
 	/**

@@ -20,7 +20,7 @@ public abstract class Config
 	/** File from which Config was loaded */
 	private static File _configFile = null;
 
-	/** Hashtable containing all config values */
+	/** key/value pairs containing all config values */
 	private static Properties _configValues = null;
 	/** Colour scheme object is also part of config */
 	private static ColourScheme _colourScheme = new ColourScheme();
@@ -111,7 +111,8 @@ public abstract class Config
 	public static final String KEY_TIMEZONE_ID = "prune.timezoneid";
 	/** Last used latlon range */
 	public static final String KEY_LATLON_RANGE = "prune.latlonrange";
-
+	/** Username/password to the Earthdata server for SRTM 1-arcsecond tiles */
+	public static final String KEY_EARTHDATA_AUTH = "prune.earthdataauth";
 
 	/** Initialise the default properties */
 	static
@@ -414,5 +415,30 @@ public abstract class Config
 		_unitSet = UnitSetLibrary.getUnitSet(inIndex);
 		// Set name of set in config
 		setConfigString(KEY_UNITSET_KEY, _unitSet.getNameKey());
+	}
+
+	/**
+	 * @param inKey config key
+	 * @return true if there's a non-blank value stored
+	 */
+	private static boolean hasString(String inKey)
+	{
+		final String value = getConfigString(inKey);
+		return value != null && !value.isEmpty();
+	}
+
+	/**
+	 * @return true if the config hasn't been saved but some things have been set
+	 */
+	public static boolean hasUnsavedChanges()
+	{
+		return _configFile == null						// hasn't been saved
+			&& getConfigBoolean(KEY_AUTOSAVE_SETTINGS)  // and user expects it to be saved
+			&& (getConfigInt(KEY_MAPSOURCE_INDEX) > 0   // and something significant has been set
+				|| hasString(KEY_MAPSOURCE_LIST)
+				|| hasString(KEY_DISK_CACHE)
+				|| hasString(KEY_EARTHDATA_AUTH)
+				|| getConfigInt(KEY_POINT_COLOURER) > 0
+				|| getConfigInt(KEY_WAYPOINT_ICONS) > 0);
 	}
 }

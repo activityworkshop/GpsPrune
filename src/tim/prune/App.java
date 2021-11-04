@@ -252,18 +252,34 @@ public class App
 		_frame.requestFocus();
 		// check if ok to exit
 		Object[] buttonTexts = {I18nManager.getText("button.exit"), I18nManager.getText("button.cancel")};
-		if (!hasDataUnsaved()
-			|| JOptionPane.showOptionDialog(_frame, I18nManager.getText("dialog.exit.confirm.text"),
+
+		// Has the user got unsaved data?
+		if (hasDataUnsaved()
+			&& JOptionPane.showOptionDialog(_frame, I18nManager.getText("dialog.exit.unsaveddata.text"),
 				I18nManager.getText("dialog.exit.confirm.title"), JOptionPane.YES_NO_OPTION,
 				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
-			== JOptionPane.YES_OPTION)
+			!= JOptionPane.YES_OPTION)
 		{
-			// save settings
-			if (Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS)) {
-				new SaveConfig(this).silentSave();
-			}
-			System.exit(0);
+			// No, the user chose to cancel
+			return;
 		}
+
+		// Has the user got unsaved settings?
+		if (Config.hasUnsavedChanges()
+			&& JOptionPane.showOptionDialog(_frame, I18nManager.getText("dialog.exit.unsavedsettings.text"),
+				I18nManager.getText("dialog.exit.confirm.title"), JOptionPane.YES_NO_OPTION,
+				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
+			!= JOptionPane.YES_OPTION)
+		{
+			// No, the user chose to cancel
+			return;
+		}
+
+		// Checks passed, let's save settings and exit
+		if (Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS)) {
+			new SaveConfig(this).silentSave();
+		}
+		System.exit(0);
 	}
 
 

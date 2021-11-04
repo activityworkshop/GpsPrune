@@ -77,7 +77,7 @@ public class DateColourer extends DiscretePointColourer
 				if (date != null)
 				{
 					// Check if it's the previous one
-					if (prevDate != null && date.equals(prevDate)) {
+					if (date.equals(prevDate)) {
 						dayIndex = prevIndex;
 					}
 					else

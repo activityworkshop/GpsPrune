@@ -172,7 +172,7 @@ public abstract class DeleteBitOfTrackFunction extends GenericFunction
 
 	/**
 	 * Resolve the media from the given points by either detaching or deleting
-	 * @param inTrack track object
+	 * @param inTrackInfo track info object
 	 * @param inStart start index of range
 	 * @param inDeleteFlags media deletion flags
 	 */

@@ -277,13 +277,12 @@ public class SelectTimezoneFunction extends GenericFunction
 	 */
 	private void radioSelected(boolean inUseSystem)
 	{
-		for (int i=0; i<_listBoxes.length; i++)
+		for (CombinedListAndModel listBox : _listBoxes)
 		{
-			if (inUseSystem)
-			{
-				_listBoxes[i].clear();
+			if (inUseSystem) {
+				listBox.clear();
 			}
-			_listBoxes[i].setEnabled(!inUseSystem);
+			listBox.setEnabled(!inUseSystem);
 		}
 		if (!inUseSystem)
 		{
@@ -588,16 +587,15 @@ public class SelectTimezoneFunction extends GenericFunction
 			testTimeMillis += testPeriodInMillis;
 		}
 		// Make String describing the sorted set
-		StringBuffer buff = new StringBuffer();
+		StringBuilder builder = new StringBuilder();
 		for (Integer offset : offsetsinMinutes)
 		{
-			if (buff.length() > 0)
-			{
-				buff.append(" / ");
+			if (builder.length() > 0) {
+				builder.append(" / ");
 			}
-			buff.append(makeOffsetString(offset));
+			builder.append(makeOffsetString(offset));
 		}
-		return buff.toString();
+		return builder.toString();
 	}
 
 	/**

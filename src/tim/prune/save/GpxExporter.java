@@ -372,7 +372,7 @@ public class GpxExporter extends GenericFunction implements Runnable
 	 * @param inInfo track info object
 	 * @param inName name of track (optional)
 	 * @param inDesc description of track (optional)
-	 * @param inExportSettings flags for what to export and how
+	 * @param inSettings flags for what to export and how
 	 * @param inGpxCachers list of Gpx cachers containing input data
 	 * @return number of points written
 	 * @throws IOException if io errors occur on write
@@ -541,11 +541,8 @@ public class GpxExporter extends GenericFunction implements Runnable
 							inWriter.write(pointSource);
 							inWriter.write('\n');
 						}
-						else
-						{
-							if (!inOnlyCopies) {
-								exportTrackpoint(point, inWriter, inSettings);
-							}
+						else if (!inOnlyCopies) {
+							exportTrackpoint(point, inWriter, inSettings);
 						}
 						numSaved++;
 					}

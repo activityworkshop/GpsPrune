@@ -83,8 +83,8 @@ implements Runnable, Cancellable
 	{
 		// Count links first so that progress bar can be shown
 		int numLinks = 0;
-		for (int i=0; i<_linkArray.length; i++) {
-			if (_linkArray[i] != null) {
+		for (String link : _linkArray) {
+			if (link != null) {
 				numLinks++;
 			}
 		}

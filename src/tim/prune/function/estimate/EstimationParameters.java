@@ -186,7 +186,7 @@ public class EstimationParameters
 	 */
 	public boolean isValid()
 	{
-		return !_parseFailed; // && _flatMins > 0.0 && _gentleClimbMins >= 0.0 && _steepClimbMins >= 0.0;
+		return !_parseFailed;
 	}
 
 	/**

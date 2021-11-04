@@ -32,10 +32,10 @@ public class WebMapFunction extends GenericFunction
 		return _nameKey;
 	}
 
-	@Override
 	/**
 	 * Do the function call
 	 */
+	@Override
 	public void begin()
 	{
 		String url = UrlGenerator.generateUrl(_service, _app.getTrackInfo());

@@ -692,7 +692,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 					coordList.append(point.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT)).append(' ');
 					coordList.append(point.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT)).append(' ');
 					if (point.hasAltitude()) {
-						coordList.append("" + point.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
+						coordList.append(point.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 					}
 					else {
 						coordList.append('0');

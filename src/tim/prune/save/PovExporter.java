@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -656,9 +655,9 @@ public class PovExporter extends Export3dFunction
 	private void writeLinesToFile(FileWriter inWriter, String inLineSeparator, String[] lines)
 		throws IOException
 	{
-		for (int i=0; i<lines.length; i++)
+		for (String line : lines)
 		{
-			inWriter.write(lines[i]);
+			inWriter.write(line);
 			inWriter.write(inLineSeparator);
 		}
 		inWriter.write(inLineSeparator);
@@ -766,11 +765,8 @@ public class PovExporter extends Export3dFunction
 		inWriter.write(inLineSeparator);
 
 		// Loop over all the track segments
-		ArrayList<ModelSegment> segmentList = getSegmentList(inModel);
-		Iterator<ModelSegment> segmentIterator = segmentList.iterator();
-		while (segmentIterator.hasNext())
+		for (ModelSegment segment : getSegmentList(inModel))
 		{
-			ModelSegment segment = segmentIterator.next();
 			int segLength = segment.getNumTrackPoints();
 
 			// if the track segment is long enough, do a cubic spline sphere sweep

@@ -185,13 +185,13 @@ public class PointNameEditor extends GenericFunction
 		{
 			return "";
 		}
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		// loop through characters
 		char lastChar = ' ', currChar = ' ';
 		for (int i=0; i<inString.length(); i++)
 		{
 			currChar = inString.charAt(i);
-			buffer.append(lastChar == ' '?Character.toUpperCase(currChar):Character.toLowerCase(currChar));
+			buffer.append(lastChar == ' ' ? Character.toUpperCase(currChar) : Character.toLowerCase(currChar));
 			lastChar = currChar;
 		}
 		return buffer.toString();

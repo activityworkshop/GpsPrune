@@ -155,7 +155,7 @@ public class OsmMapSource extends MapSource
 	public String makeURL(int inLayerNum, int inZoom, int inX, int inY)
 	{
 		// Check if the base url has a [1234], if so replace at random
-		StringBuffer url = new StringBuffer();
+		StringBuilder url = new StringBuilder();
 		url.append(SiteNameUtils.pickServerUrl(_baseUrls[inLayerNum]));
 		url.append(inZoom).append('/').append(inX).append('/').append(inY);
 		url.append('.').append(getFileExtension(inLayerNum));

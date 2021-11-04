@@ -540,7 +540,7 @@ public class BaseImageConfigDialog implements Runnable
 	}
 
 	/**
-	 * @return method triggered by "download" button, to asynchronously download the missing tiles
+	 * method triggered by "download" button, to asynchronously download the missing tiles
 	 */
 	private void downloadRemainingTiles()
 	{

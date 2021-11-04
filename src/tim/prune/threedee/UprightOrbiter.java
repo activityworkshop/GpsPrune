@@ -137,9 +137,11 @@ public class UprightOrbiter extends ViewPlatformAWTBehavior
 	protected synchronized void processAWTEvents( final AWTEvent[] events )
 	{
 		motion = false;
-		for(int i=0; i<events.length; i++)
-			if (events[i] instanceof MouseEvent) 
-				processMouseEvent( (MouseEvent)events[i] );
+		for (AWTEvent event : events) {
+			if (event instanceof MouseEvent) {
+				processMouseEvent((MouseEvent) event);
+			}
+		}
 	}
 
 	protected void processMouseEvent( final MouseEvent evt )

@@ -1,8 +1,6 @@
 package tim.prune.data;
 
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Locale;
 
 /**
  * Class to represent a lat/long coordinate
@@ -26,17 +24,7 @@ public abstract class Coordinate
 	public static final int FORMAT_DECIMAL_FORCE_POINT = 17;
 	public static final int FORMAT_NONE = 19;
 
-	/** Number formatter for fixed decimals with forced decimal point */
-	private static final NumberFormat EIGHT_DP = NumberFormat.getNumberInstance(Locale.UK);
-	// Select the UK locale for this formatter so that decimal point is always used (not comma)
-	static {
-		if (EIGHT_DP instanceof DecimalFormat) ((DecimalFormat) EIGHT_DP).applyPattern("0.00000000");
-	}
-	/** Number formatter for fixed decimals with forced decimal point */
-	private static final NumberFormat FIVE_DP = NumberFormat.getNumberInstance(Locale.UK);
-	static {
-		if (FIVE_DP instanceof DecimalFormat) ((DecimalFormat) FIVE_DP).applyPattern("0.00000");
-	}
+	private static final int NUMDIGITS_DEFAULT = -1;
 
 	// Instance variables
 	private boolean _valid = false;
@@ -250,7 +238,7 @@ public abstract class Coordinate
 		_minutes = (int) numMins;
 		double numSecs = (numMins - _minutes) * 60.0;
 		_seconds = (int) numSecs;
-		_fracs = (int) ((numSecs - _seconds) * 10);
+		_fracs = (int) Math.round((numSecs - _seconds) * 10.);
 		_fracDenom = 10; // fixed for now
 		// Make a string to display on screen
 		_cardinal = inCardinal;
@@ -296,28 +284,50 @@ public abstract class Coordinate
 	 */
 	public String output(int inFormat)
 	{
+		return output(inFormat, NUMDIGITS_DEFAULT);
+	}
+
+	/**
+	 * Output the Coordinate in the given format
+	 * @param inFormat format to use, eg FORMAT_DEG_MIN_SEC
+	 * @param inNumDigits number of digits, or -1 for default
+	 * @return String for output
+	 */
+	public String output(int inFormat, int inNumDigits)
+	{
 		String answer = _originalString;
 		if (inFormat != FORMAT_NONE && inFormat != _originalFormat)
 		{
-			// TODO: allow specification of precision for output of d-m and d
 			// format as specified
 			switch (inFormat)
 			{
 				case FORMAT_DEG_MIN_SEC:
 				{
-					StringBuffer buffer = new StringBuffer();
-					buffer.append(PRINTABLE_CARDINALS[_cardinal])
+					StringBuilder builder = new StringBuilder();
+					builder.append(PRINTABLE_CARDINALS[_cardinal])
 						.append(threeDigitString(_degrees)).append('\u00B0')
-						.append(twoDigitString(_minutes)).append('\'')
-						.append(twoDigitString(_seconds)).append('.')
-						.append(formatFraction(_fracs, _fracDenom));
-					answer = buffer.toString();
+						.append(twoDigitString(_minutes)).append('\'');
+					if (inNumDigits == NUMDIGITS_DEFAULT || inNumDigits == 1)
+					{
+						builder.append(twoDigitString(_seconds)).append('.')
+							.append(formatFraction(_fracs, _fracDenom))
+							.append('"');
+					}
+					else
+					{
+						NumberFormat secFormatter = CoordFormatters.getFormatter(inNumDigits);
+						final double numSecs = ((Math.abs(_asDouble) - _degrees) * 60.0 - _minutes) * 60.0;
+						builder.append(secFormatter.format(numSecs)).append('"');
+					}
+					answer = builder.toString();
 					break;
 				}
 				case FORMAT_DEG_MIN:
 				{
+					final int numMinuteDigits = (inNumDigits == NUMDIGITS_DEFAULT ? 5 : inNumDigits);
+					NumberFormat minFormatter = CoordFormatters.getFormatter(numMinuteDigits);
 					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "\u00B0"
-						+ FIVE_DP.format((Math.abs(_asDouble) - _degrees) * 60.0) + "'";
+						+ minFormatter.format((Math.abs(_asDouble) - _degrees) * 60.0) + "'";
 					break;
 				}
 				case FORMAT_DEG_WHOLE_MIN:
@@ -343,9 +353,13 @@ public abstract class Coordinate
 				case FORMAT_DECIMAL_FORCE_POINT:
 				{
 					// Forcing a decimal point instead of system-dependent commas etc
-					if (_originalFormat != FORMAT_DEG_WITHOUT_CARDINAL || answer.indexOf('.') < 0) {
-						answer = EIGHT_DP.format(_asDouble);
+					if (_originalFormat == FORMAT_DEG_WITHOUT_CARDINAL && answer.indexOf('.') >= 0 && inNumDigits == NUMDIGITS_DEFAULT)
+					{
+						break;
 					}
+					final int numDegDigits = (inNumDigits == NUMDIGITS_DEFAULT ? 8 : inNumDigits);
+					NumberFormat degFormatter = CoordFormatters.getFormatter(numDegDigits);
+					answer = degFormatter.format(_asDouble);
 					break;
 				}
 				case FORMAT_DEG_MIN_SEC_WITH_SPACES:

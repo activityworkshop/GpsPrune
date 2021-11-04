@@ -63,7 +63,7 @@ public class TileCacheModel
 	/**
 	 * Get all the tilesets from the given directory
 	 * @param inDir directory to search
-	 * @return array of TileSet objects
+	 * @param inTsList arraylist to hold the results
 	 */
 	private static void getTileSets(File inDir, String inParentPath, ArrayList<TileSet> inTsList)
 	{

@@ -149,8 +149,8 @@ public class SelectTracksFunction extends GenericFunction
 		{
 			// build array of which tracks have been selected
 			boolean[] selectedTracks = new boolean[_trackNameList.getNumTracks()];
-			for (int i=0; i<tracks.length; i++) {
-				selectedTracks[tracks[i]] = true;
+			for (int trackIdx : tracks) {
+				selectedTracks[trackIdx] = true;
 			}
 			// Loop over all points, counting points which survive filter and making flag array
 			int numPointsSelected = 0;

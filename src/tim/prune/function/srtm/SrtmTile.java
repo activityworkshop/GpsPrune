@@ -13,6 +13,7 @@ public class SrtmTile
 	/** Longitude in degrees east/west */
 	private int _longitude = 0;
 
+
 	/**
 	 * Constructor working out the tile for a single point
 	 * @param inPoint data point
@@ -57,6 +58,17 @@ public class SrtmTile
 		return (_latitude == otherTile._latitude) && (_longitude == otherTile._longitude);
 	}
 
+	/**
+	 * @param inPoint point to test
+	 * @return true if this tile contains data for the specified point
+	 */
+	public boolean contains(DataPoint inPoint)
+	{
+		final int pointLatitude = (int) Math.floor(inPoint.getLatitude().getDouble());
+		final int pointLongitude = (int) Math.floor(inPoint.getLongitude().getDouble());
+		return pointLatitude == _latitude && pointLongitude == _longitude;
+	}
+
 	/** @return latitude as int */
 	public int getLatitude() {
 		return _latitude;
@@ -68,7 +80,7 @@ public class SrtmTile
 	}
 
 	/**
-	 * @return filename of tile
+	 * @return name of tile (without filename suffix)
 	 */
 	public String getTileName()
 	{
@@ -78,7 +90,6 @@ public class SrtmTile
 			+ (_longitude >= 0?"E":"W")
 			+ (Math.abs(_longitude) < 100?"0":"")
 			+ (Math.abs(_longitude) < 10?"0":"")
-			+ Math.abs(_longitude)
-			+ ".hgt.zip";
+			+ Math.abs(_longitude);
 	}
 }

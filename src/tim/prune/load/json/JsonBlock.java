@@ -221,7 +221,7 @@ public class JsonBlock
 		if (pointCoords.size() < 2 || pointCoords.size() > 3) {return null;}
 		final String longitude = pointCoords.get(0);
 		final String latitude = pointCoords.get(1);
-		final String altitude = ((pointCoords.size() == 3) ? pointCoords.get(3) : null);
+		final String altitude = ((pointCoords.size() == 3) ? pointCoords.get(2) : null);
 		return new JsonPoint(latitude, longitude, altitude, inIndex == 0);
 	}
 }

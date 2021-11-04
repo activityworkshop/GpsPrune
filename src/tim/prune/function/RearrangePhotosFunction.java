@@ -110,8 +110,7 @@ public class RearrangePhotosFunction extends RearrangeFunction
 	/**
 	 * Sort the given photo list either by filename or by time
 	 * @param inPhotos array of DataPoint objects to sort
-	 * @param inSortOrder sort order
-	 * @return sorted array
+	 * @param inSortMode sort mode
 	 */
 	private static void sortPhotos(DataPoint[] inPhotos, SortMode inSortMode)
 	{

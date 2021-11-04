@@ -47,7 +47,8 @@ public class AddMapSourceDialog
 
 	/**
 	 * Constructor
-	 * @param inParent parent dialog
+	 * @param inParentDialog parent dialog
+	 * @param inParentFunction parent function used for callbacks
 	 */
 	public AddMapSourceDialog(JDialog inParentDialog, SetMapBgFunction inParentFunction)
 	{

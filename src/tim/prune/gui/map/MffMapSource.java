@@ -20,7 +20,10 @@ public class MffMapSource extends MapSource
 	/**
 	 * Constructor giving name, url and maximum zoom
 	 * @param inName source name
-	 * @param inUrl base url
+	 * @param inUrl1 base url for layer 1
+	 * @param inExt1 extension for layer 1
+	 * @param inUrl2 base url for layer 2
+	 * @param inExt2 extension for layer 2
 	 * @param inMaxZoom maximum zoom level
 	 */
 	public MffMapSource(String inName, String inUrl1, String inExt1,

@@ -93,7 +93,7 @@ public class TrackExtents
 		DataPoint westPoint = new DataPoint(new Latitude(latRange.getMidValue(), Coordinate.FORMAT_DEG),
 			new Longitude(lonRange.getMinimum(), Coordinate.FORMAT_DEG), null);
 		DataPoint eastPoint = new DataPoint(new Latitude(latRange.getMidValue(), Coordinate.FORMAT_DEG),
-			new Longitude(lonRange.getMinimum(), Coordinate.FORMAT_DEG), null);
+			new Longitude(lonRange.getMaximum(), Coordinate.FORMAT_DEG), null);
 		double ewDist = Distance.convertRadiansToDistance(
 			DataPoint.calculateRadiansBetween(westPoint, eastPoint), UnitSetLibrary.UNITS_METRES); // both in m
 		final double horizDistance = Math.max(nsDist, ewDist) * BORDER_MULTIPLIER;

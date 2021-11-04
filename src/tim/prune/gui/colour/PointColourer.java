@@ -59,7 +59,7 @@ public abstract class PointColourer
 	}
 
 	/**
-	 * @param inColor default colour to use
+	 * @param inColour default colour to use
 	 */
 	protected void setDefaultColour(Color inColour)
 	{

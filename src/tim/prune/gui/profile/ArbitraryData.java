@@ -6,7 +6,7 @@ import tim.prune.data.UnitSet;
 
 /**
  * Class to provide a source of values for the profile chart
- * using any arbitary (non-built-in) field, units unknown
+ * using any arbitrary (non-built-in) field, units unknown
  */
 public class ArbitraryData extends ProfileData
 {
