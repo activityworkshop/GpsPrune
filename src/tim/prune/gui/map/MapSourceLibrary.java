@@ -42,8 +42,8 @@ public abstract class MapSourceLibrary
 		_sourceList.add(new OsmMapSource("Cycling Trails", "https://[abc].tile.openstreetmap.org/", "png",
 			"https://tile.waymarkedtrails.org/cycling/", "png", 18));
 		_sourceList.add(new OsmMapSource("Reitkarte", "http://topo[234].wanderreitkarte.de/topo/"));
-		_sourceList.add(new MffMapSource("Mapsforfree", "https://maps-for-free.com/layer/relief/", "jpg",
-			"https://maps-for-free.com/layer/water/", "gif", 11));
+		_sourceList.add(new OsmMapSource("Mapsforfree", "https://maps-for-free.com/layer/relief/z{z}/row{y}/{z}_{x}-{y}.jpg", "jpg",
+			"https://maps-for-free.com/layer/water/z{z}/row{y}/{z}_{x}-{y}.gif", "gif", 11));
 		_sourceList.add(new OsmMapSource("Hikebikemap", "https://tiles.wmflabs.org/hikebike/",
 			"https://tiles.wmflabs.org/hillshading/", 18));
 		_sourceList.add(new OsmMapSource("OpenSeaMap", "http://tile.openstreetmap.org/",

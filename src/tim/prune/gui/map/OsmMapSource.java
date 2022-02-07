@@ -17,9 +17,7 @@ public class OsmMapSource extends MapSource
 	/** Site names */
 	private String[] _siteNames = null;
 	/** Maximum zoom level */
-	private int _maxZoom = 0;
-	/** API key, usually remains empty */
-	private String _apiKey = null;
+	private final int _maxZoom;
 
 
 	/**
@@ -41,10 +39,13 @@ public class OsmMapSource extends MapSource
 	 */
 	public OsmMapSource(String inName, String inStr1, String inStr2, int inMaxZoom)
 	{
-		if (inStr2 != null && inStr2.length() == 3)
-			init(inName, inStr1, inStr2, null, null, inMaxZoom);
-		else
-			init(inName, inStr1, "png", inStr2, "png", inMaxZoom);
+		if (inStr2 != null && inStr2.length() == 3) {
+			init(inName, inStr1, inStr2, null, null);
+		}
+		else {
+			init(inName, inStr1, "png", inStr2, "png");
+		}
+		_maxZoom = inMaxZoom;
 	}
 
 	/**
@@ -59,7 +60,8 @@ public class OsmMapSource extends MapSource
 	public OsmMapSource(String inName, String inUrl1, String inExt1,
 		String inUrl2, String inExt2, int inMaxZoom)
 	{
-		init(inName, inUrl1, inExt1, inUrl2, inExt2, inMaxZoom);
+		init(inName, inUrl1, inExt1, inUrl2, inExt2);
+		_maxZoom = inMaxZoom;
 	}
 
 	/**
@@ -69,10 +71,9 @@ public class OsmMapSource extends MapSource
 	 * @param inExt1 extension for base layer
 	 * @param inUrl2 upper layer url
 	 * @param inExt2 extension for top layer
-	 * @param inMaxZoom maximum zoom level
 	 */
 	private void init(String inName, String inUrl1, String inExt1,
-		String inUrl2, String inExt2, int inMaxZoom)
+		String inUrl2, String inExt2)
 	{
 		_name = inName;
 		if (_name == null || _name.trim().equals("")) {_name = I18nManager.getText("mapsource.unknown");}
@@ -92,13 +93,6 @@ public class OsmMapSource extends MapSource
 			_siteNames[0] = _siteNames[1];
 			_baseUrls[1] = _siteNames[1] = null;
 		}
-		_maxZoom = inMaxZoom;
-	}
-
-	/** Set the API key (if required) */
-	public void setApiKey(String inKey)
-	{
-		_apiKey = inKey;
 	}
 
 	/**
@@ -122,7 +116,7 @@ public class OsmMapSource extends MapSource
 				else if (items.length == 6) { // two urls and two extensions
 					source = new OsmMapSource(items[0], items[1], items[2], items[3], items[4], Integer.parseInt(items[5]));
 				}
-			} catch (NumberFormatException nfe) {}
+			} catch (NumberFormatException ignored) {}
 		}
 		return source;
 	}
@@ -155,15 +149,14 @@ public class OsmMapSource extends MapSource
 	public String makeURL(int inLayerNum, int inZoom, int inX, int inY)
 	{
 		// Check if the base url has a [1234], if so replace at random
-		StringBuilder url = new StringBuilder();
-		url.append(SiteNameUtils.pickServerUrl(_baseUrls[inLayerNum]));
-		url.append(inZoom).append('/').append(inX).append('/').append(inY);
-		url.append('.').append(getFileExtension(inLayerNum));
-		if (_apiKey != null)
-		{
-			url.append("?apikey=").append(_apiKey);
+		String path = SiteNameUtils.pickServerUrl(_baseUrls[inLayerNum]);
+		if (path.indexOf('{') < 0) {
+			return path + inZoom + '/' + inX + '/' + inY +
+					'.' + getFileExtension(inLayerNum);
 		}
-		return url.toString();
+		return path.replace("{z}", Integer.toString(inZoom))
+				.replace("{x}", Integer.toString(inX))
+				.replace("{y}", Integer.toString(inY));
 	}
 
 	/**
@@ -179,6 +172,6 @@ public class OsmMapSource extends MapSource
 	 */
 	public String getConfigString()
 	{
-		return "o:" +  getName() + ";" + getSiteStrings() + getMaxZoomLevel();
+		return "o:" + getName() + ";" + getSiteStrings() + getMaxZoomLevel();
 	}
 }

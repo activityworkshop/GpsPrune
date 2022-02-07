@@ -73,47 +73,73 @@ public abstract class MapSource
 
 	/**
 	 * Checks the given url for having the right prefix and trailing slash
-	 * @param inUrl url to check
+	 * @param inUrlString url to check
 	 * @return validated url with correct prefix and trailing slash, or null
 	 */
-	public static String fixBaseUrl(String inUrl)
+	public static String fixBaseUrl(String inUrlString)
 	{
-		if (inUrl == null || inUrl.equals("")) {return null;}
-		String urlstr = inUrl;
-		boolean urlOk = false;
+		if (inUrlString == null || inUrlString.equals("")) {return null;}
+		String urlstr = inUrlString;
 
 		// check prefix
-		try
-		{
-			urlOk = new URL(urlstr.replace('[', 'w').replace(']', 'w')).toString() != null;
+		URL url = null;
+		try {
+			url = new URL(urlstr.replace('[', 'w').replace(']', 'w'));
 		}
-		catch (MalformedURLException e)
-		{
-			urlOk = false;
-		}
-
-		if (!urlOk)
-		{
+		catch (MalformedURLException me) {
 			// fail if protocol specified
 			if (urlstr.contains("://")) {return null;}
-			// add the http protocol
+			// add the http protocol and try again
 			urlstr = "http://" + urlstr;
+			try {
+				url = new URL(urlstr.replace('[', 'w').replace(']', 'w'));
+			}
+			catch (MalformedURLException e) {
+				return null;
+			}
 		}
-		// check trailing /
-		if (!urlstr.endsWith("/")) {
+		// url host must contain a dot (but not two consecutively)
+		if (url.getHost().indexOf('.') < 0
+			|| url.getHost().contains("..")
+			|| !placeHoldersOk(url.getPath())) {
+			return null;
+		}
+		// Possibly add trailing slash, but only if placeholders aren't used
+		if (urlstr.indexOf('{') < 0 && !urlstr.endsWith("/")) {
 			urlstr = urlstr + "/";
 		}
-		// Validate current url, return null if not ok
-		try
-		{
-			URL url = new URL(urlstr.replace('[', 'w').replace(']', 'w'));
-			// url host must contain a dot
-			if (url.getHost().indexOf('.') < 0) {return null;}
-		}
-		catch (MalformedURLException e) {
-			urlstr = null;
-		}
 		return urlstr;
+	}
+
+	private static boolean placeHoldersOk(String path) {
+		if (path.indexOf('{') < 0 && path.indexOf('}') < 0) {
+			return true; // no placeholders
+		}
+		boolean expectLetter = false, expectClose = false;
+		boolean foundX = false, foundY = false, foundZ = false;
+		for (char c : path.toCharArray()) {
+			if (expectClose) {
+				if (c != '}') {return false;}
+				expectClose = false;
+			}
+			else if (expectLetter) {
+				switch (c) {
+					case 'x': foundX = true; break;
+					case 'y': foundY = true; break;
+					case 'z': foundZ = true; break;
+					default: return false;
+				}
+				expectLetter = false;
+				expectClose = true;
+			}
+			else if (c == '{') {
+				expectLetter = true;
+			}
+			else if (c == '}') {
+				return false; // close not expected
+			}
+		}
+		return foundX && foundY && foundZ;
 	}
 
 

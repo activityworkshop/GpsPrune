@@ -89,7 +89,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/** Current drawing mode */
 	private int _drawMode = MODE_DEFAULT;
 	/** Current waypoint icon definition */
-	WpIconDefinition _waypointIconDefinition = null;
+	private WpIconDefinition _waypointIconDefinition = null;
+	/** Remember whether map is being drawn with empty track or not */
+	private boolean _emptyTrack = true;
 
 	/** Constant for click sensitivity when selecting nearest point */
 	private static final int CLICK_SENSITIVITY = 10;
@@ -415,12 +417,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			}
 
 			// Recognise empty map position, if no data has been loaded
-			if (_mapPosition.isEmpty())
+			if (_emptyTrack && _track.getNumPoints() > 1)
 			{
-				// Set to some default area
 				zoomToFit();
 				_recalculate = true;
 			}
+			_emptyTrack = (_track.getNumPoints() == 0);
 
 			// Draw the map contents if necessary
 			if (_mapImage == null || _recalculate)
@@ -466,12 +468,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					break;
 
 				case MODE_DRAW_POINTS_CONT:
-					// draw line to mouse position to show drawing mode
-					inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
-					int prevIndex = _track.getNumPoints()-1;
-					int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(prevIndex));
-					int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(prevIndex));
-					inG.drawLine(px, py, _dragToX, _dragToY);
+					int prevIndex = _track.getNumPoints() - 1;
+					if (prevIndex >= 0)
+					{
+						// draw line to mouse position to show drawing mode
+						inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
+						int px = getWidth() / 2 + _mapPosition.getXFromCentre(_track.getX(prevIndex));
+						int py = getHeight() / 2 + _mapPosition.getYFromCentre(_track.getY(prevIndex));
+						inG.drawLine(px, py, _dragToX, _dragToY);
+					}
 					break;
 			}
 		}

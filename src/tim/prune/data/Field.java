@@ -107,9 +107,8 @@ public class Field
 	 */
 	public static Field getField(String inFieldName)
 	{
-		for (int i=0; i<ALL_AVAILABLE_FIELDS.length; i++)
+		for (Field field : ALL_AVAILABLE_FIELDS)
 		{
-			Field field = ALL_AVAILABLE_FIELDS[i];
 			if (field.getName().equals(inFieldName)) {
 				return field;
 			}

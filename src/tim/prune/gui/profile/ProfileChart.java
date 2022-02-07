@@ -3,13 +3,14 @@ package tim.prune.gui.profile;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -26,7 +27,7 @@ import tim.prune.gui.GenericDisplay;
 /**
  * Chart component for the profile display
  */
-public class ProfileChart extends GenericDisplay implements MouseListener
+public class ProfileChart extends GenericDisplay
 {
 	/** Inner class to handle popup menu clicks */
 	class MenuClicker implements ActionListener
@@ -155,7 +156,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	private ChartParameters _previousParameters = new ChartParameters();
 
 	/** Possible scales to use */
-	private static final int[] LINE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50, 10, 5, 2, 1};
+	private static final int[] LINE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1};
 	/** Border width around black line */
 	private static final int BORDER_WIDTH = 6;
 	/** Minimum size for profile chart in pixels */
@@ -172,7 +173,12 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	{
 		super(inTrackInfo);
 		_data = new AltitudeData(inTrackInfo.getTrack());
-		addMouseListener(this);
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				processMouseClick(e);
+			}
+		});
 		setLayout(new FlowLayout(FlowLayout.LEFT));
 		_label = new JLabel("Altitude"); // text will be replaced later
 		add(_label);
@@ -245,10 +251,14 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 			selectionEnd = _trackInfo.getSelection().getEnd();
 		}
 
+		FontMetrics fm = g.getFontMetrics();
+		final int fontHeight = fm.getHeight();
+		final int minLines = Math.max(2, getHeight() / fontHeight / 4);
+
 		int y = 0;
 		double value = 0.0;
 		// horizontal lines for scale - set to round numbers eg 500
-		final int lineScale = getLineScale(minValue, maxValue);
+		final int lineScale = getLineScale(minValue, maxValue, minLines);
 		double scaleValue = Math.ceil(minValue/lineScale) * lineScale;
 		final int zeroY = height - BORDER_WIDTH - (int) (yScaleFactor * (0.0 - minValue));
 
@@ -432,20 +442,19 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	 * Work out the scale for the horizontal lines
 	 * @param inMin min value of data
 	 * @param inMax max value of data
+	 * @param inMinLines minimum number of lines to draw, depending on space
 	 * @return scale separation, or -1 for no scale
 	 */
-	private int getLineScale(double inMin, double inMax)
+	private int getLineScale(double inMin, double inMax, int inMinLines)
 	{
-		if ((inMax - inMin) < 2.0) {
+		if ((inMax - inMin) <= 2.0) {
 			return -1;
 		}
 		for (int scale : LINE_SCALES)
 		{
 			int numLines = (int)(inMax / scale) - (int)(inMin / scale);
-			// Check for too many lines
-			if (numLines > 10) return -1;
-			// If more than 1 line then use this scale
-			if (numLines > 1) return scale;
+			// If enough lines produced then use this scale
+			if (numLines >= inMinLines) return scale;
 		}
 		// no suitable scale found so just use minimum
 		return LINE_SCALES[LINE_SCALES.length-1];
@@ -509,7 +518,7 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 	/**
 	 * React to click on profile display
 	 */
-	public void mouseClicked(MouseEvent e)
+	private void processMouseClick(MouseEvent e)
 	{
 		if (_track == null || _track.getNumPoints() < 1) {return;}
 		// left clicks
@@ -572,28 +581,4 @@ public class ProfileChart extends GenericDisplay implements MouseListener
 		_data.init(Config.getUnitSet());
 		repaint();
 	}
-
-	/**
-	 * mouse enter events ignored
-	 */
-	public void mouseEntered(MouseEvent e)
-	{}
-
-	/**
-	 * mouse exit events ignored
-	 */
-	public void mouseExited(MouseEvent e)
-	{}
-
-	/**
-	 * ignore mouse pressed for now too
-	 */
-	public void mousePressed(MouseEvent e)
-	{}
-
-	/**
-	 * and also ignore mouse released
-	 */
-	public void mouseReleased(MouseEvent e)
-	{}
 }

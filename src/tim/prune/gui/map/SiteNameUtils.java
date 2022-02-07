@@ -68,6 +68,18 @@ public abstract class SiteNameUtils
 				}
 			}
 		}
+		if (url.indexOf('{') > 0) {
+			url = removePlaceholders(url);
+		}
 		return url;
+	}
+
+
+	private static String removePlaceholders(String url) {
+		final int lastSlashPos = url.lastIndexOf('/');
+		if (lastSlashPos >= 0) {
+			url = url.substring(0, lastSlashPos+1);
+		}
+		return url.replace("{x}", "x").replace("{y}", "y").replace("{z}", "z");
 	}
 }

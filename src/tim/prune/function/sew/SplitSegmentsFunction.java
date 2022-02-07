@@ -47,13 +47,13 @@ public class SplitSegmentsFunction extends DistanceTimeLimitFunction
 		// Make undo object
 		UndoSplitSegments undo = new UndoSplitSegments(_app.getTrackInfo().getTrack());
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
-		DataPoint currPoint = null, prevPoint = null;
+		DataPoint prevPoint = null;
 		int numSplitsMade = 0;
 
 		// Now actually do it, looping through the points in the track
 		for (int i=0; i<numPoints; i++)
 		{
-			currPoint = _app.getTrackInfo().getTrack().getPoint(i);
+			DataPoint currPoint = _app.getTrackInfo().getTrack().getPoint(i);
 			if (!currPoint.isWaypoint())
 			{
 				boolean splitHere = (prevPoint != null)

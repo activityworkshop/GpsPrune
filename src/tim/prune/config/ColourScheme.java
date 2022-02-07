@@ -79,11 +79,11 @@ public class ColourScheme
 	 */
 	public String toString()
 	{
-		StringBuffer buff = new StringBuffer();
+		StringBuilder builder = new StringBuilder();
 		for (int i=0; i<NUM_COLOURS; i++) {
-			buff.append(ColourUtils.makeHexCode(getColour(i)));
-			buff.append(',');
+			builder.append(ColourUtils.makeHexCode(getColour(i)));
+			builder.append(',');
 		}
-		return buff.toString();
+		return builder.toString();
 	}
 }

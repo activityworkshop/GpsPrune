@@ -31,16 +31,16 @@ import tim.prune.gui.profile.ProfileChart;
 /**
  * GpsPrune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or https://activityworkshop.net
- * This software is copyright activityworkshop.net 2006-2021 and made available through the Gnu GPL version 2.
+ * This software is copyright activityworkshop.net 2006-2022 and made available through the Gnu GPL version 2.
  * For license details please see the included license.txt.
  * GpsPrune is the main entry point to the application, including initialisation and launch
  */
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "21";
+	public static final String VERSION_NUMBER = "21.1";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "390";
+	public static final String BUILD_NUMBER = "392";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -238,17 +238,15 @@ public class GpsPrune
 		// Avoid automatically shutting down if window closed
 		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
-		// set window icons of different resolutions (1.6+)
+		// set window icons of different resolutions
 		try
 		{
-			ArrayList<Image> icons = new ArrayList<Image>();
+			ArrayList<Image> icons = new ArrayList<>();
 			String[] resolutions = {"_16", "_20", "_22", "_24", "_32", "_36", "_48", "_64", "_72", "_96", "_128"};
 			for (String r : resolutions) {
 				icons.add(IconManager.getImageIcon(IconManager.WINDOW_ICON + r + ".png").getImage());
 			}
-			Class<?> d = java.awt.Window.class;
-			// This is the same as frame.setIconImages(icons) but is compilable also for java1.5 where this isn't available
-			d.getDeclaredMethod("setIconImages", new Class[]{java.util.List.class}).invoke(frame, icons);
+			frame.setIconImages(icons);
 		}
 		catch (Exception e)
 		{

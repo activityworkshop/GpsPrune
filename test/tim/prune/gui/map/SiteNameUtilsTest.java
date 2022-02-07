@@ -60,4 +60,17 @@ class SiteNameUtilsTest
 			assertTrue(results.contains(expec));
 		}
 	}
+
+	@Test
+	void testDirectorySpec()
+	{
+		assertEquals(null, SiteNameUtils.convertUrlToDirectory(""));
+		assertEquals("acme.com/tiles/", SiteNameUtils.convertUrlToDirectory("http://www.acme.com/tiles/"));
+		assertEquals("acme.com/tiles/", SiteNameUtils.convertUrlToDirectory("https://acme.com/tiles/"));
+
+		assertEquals("acme.com/tiles/", SiteNameUtils.convertUrlToDirectory("https://[abcd].acme.com/tiles/"));
+		assertEquals("acme.com/tiles/", SiteNameUtils.convertUrlToDirectory("https://www.[abcd].acme.com/tiles/"));
+
+		assertEquals("m-f-f.com/layer/water/zz/rowy/", SiteNameUtils.convertUrlToDirectory("m-f-f.com/layer/water/z{z}/row{y}/{z}_{x}-{y}.gif"));
+	}
 }

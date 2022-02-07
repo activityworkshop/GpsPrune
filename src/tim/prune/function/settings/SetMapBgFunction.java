@@ -42,6 +42,7 @@ public class SetMapBgFunction extends GenericFunction
 	private String _initialSource = null;
 	private JButton _okButton = null, _cancelButton = null;
 	private JButton _deleteButton = null, _editButton = null;
+	private boolean _sourceAdded = false;
 	// Add dialog
 	private AddMapSourceDialog _addDialog = null;
 	// Flags for what has been edited
@@ -183,6 +184,7 @@ public class SetMapBgFunction extends GenericFunction
 		// Scroll down to see selected index
 		_list.ensureIndexIsVisible(currSource);
 		_sourcesEdited = false;
+		_sourceAdded = false;
 	}
 
 	/**
@@ -225,6 +227,7 @@ public class SetMapBgFunction extends GenericFunction
 		if (_addDialog == null) {
 			_addDialog = new AddMapSourceDialog(_dialog, this);
 		}
+		_sourceAdded = (inSource == null);
 		_addDialog.showDialog(inSource);
 	}
 
@@ -234,6 +237,7 @@ public class SetMapBgFunction extends GenericFunction
 	private void deleteMapSource()
 	{
 		int serverNum = getSelectedServer();
+		_sourceAdded = false;
 		MapSourceLibrary.deleteSource(serverNum);
 		updateList();
 		enableButtons();
@@ -252,10 +256,15 @@ public class SetMapBgFunction extends GenericFunction
 	 */
 	public void updateList()
 	{
-		_listModel.fireChanged();
 		_sourcesEdited = true;
 		Config.setConfigString(Config.KEY_MAPSOURCE_LIST, MapSourceLibrary.getConfigString());
 		enableButtons();
+		if (_sourceAdded) {
+			// Select the last one in the list (the one just added)
+			_list.setSelectedIndex(_listModel.getSize()-1);
+		}
+		_listModel.fireChanged();
+		_list.ensureIndexIsVisible(_list.getSelectedIndex());
 	}
 
 	/**

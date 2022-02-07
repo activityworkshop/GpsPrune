@@ -161,13 +161,12 @@ public class FieldList
 	 */
 	public String toString()
 	{
-		StringBuffer buffer = new StringBuffer();
-		buffer.append('(');
-		for (int i=0; i<_fieldArray.length; i++)
-		{
-			buffer.append(_fieldArray[i].getName()).append(',');
+		StringBuilder result = new StringBuilder();
+		result.append('(');
+		for (Field field : _fieldArray) {
+			result.append(field.getName()).append(',');
 		}
-		buffer.append(')');
-		return buffer.toString();
+		result.append(')');
+		return result.toString();
 	}
 }

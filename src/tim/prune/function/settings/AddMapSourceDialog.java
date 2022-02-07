@@ -6,7 +6,6 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -31,8 +30,8 @@ import tim.prune.gui.map.OsmMapSource;
  */
 public class AddMapSourceDialog
 {
-	private SetMapBgFunction _parent = null;
-	private JDialog _addDialog = null;
+	private final SetMapBgFunction _parent;
+	private final JDialog _addDialog;
 	private MapSource _originalSource = null;
 	// controls for osm panel
 	private JTextField _oNameField = null;
@@ -84,11 +83,7 @@ public class AddMapSourceDialog
 			}
 		};
 		// Listener for any gui changes (to enable ok when anything changes on an edit)
-		ActionListener okEnabler = new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				enableOK();
-			}
-		};
+		ActionListener okEnabler = arg0 -> enableOK();
 
 		// openstreetmap panel
 		JPanel osmPanel = new JPanel();
@@ -104,8 +99,9 @@ public class AddMapSourceDialog
 		c.ipadx = 3; c.ipady = 5;
 		c.insets = new Insets(0, 0, 5, 0);
 		c.anchor = GridBagConstraints.FIRST_LINE_START;
+		c.fill = GridBagConstraints.HORIZONTAL;
 		gbPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.sourcename")), c);
-		_oNameField = new JTextField(18);
+		_oNameField = new JTextField();
 		_oNameField.addKeyListener(keyListener);
 		c.gridx = 1; c.weightx = 1.0;
 		gbPanel.add(_oNameField, c);
@@ -114,7 +110,7 @@ public class AddMapSourceDialog
 		c.weightx = 0.0;
 		c.insets = new Insets(0, 0, 0, 0);
 		gbPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.layer1url")), c);
-		_baseUrlField = new JTextField(18);
+		_baseUrlField = new JTextField(25);
 		_baseUrlField.addKeyListener(keyListener);
 		c.gridx = 1; c.weightx = 1.0;
 		gbPanel.add(_baseUrlField, c);
@@ -133,7 +129,7 @@ public class AddMapSourceDialog
 		// Top layer
 		c.gridx = 0; c.gridy = 2;
 		gbPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.layer2url")), c);
-		_topUrlField = new JTextField(18);
+		_topUrlField = new JTextField();
 		_topUrlField.addKeyListener(keyListener);
 		c.gridx = 1; c.weightx = 1.0;
 		gbPanel.add(_topUrlField, c);
@@ -150,8 +146,9 @@ public class AddMapSourceDialog
 		}
 		// Max zoom
 		c.gridx = 0; c.gridy = 3;
+		c.fill = GridBagConstraints.NONE;
 		gbPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.maxzoom")), c);
-		_oZoomCombo = new JComboBox<Integer>();
+		_oZoomCombo = new JComboBox<>();
 		for (int i=10; i<=20; i++) {
 			_oZoomCombo.addItem(i);
 		}
@@ -171,21 +168,10 @@ public class AddMapSourceDialog
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> finish());
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_addDialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _addDialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
@@ -213,8 +199,6 @@ public class AddMapSourceDialog
 		_topUrlField.setText("");
 		_topTypeRadios[0].setSelected(true);
 		_oZoomCombo.setSelectedIndex(8);
-		_okButton.setEnabled(false);
-		_addDialog.setVisible(true);
 	}
 
 	/**
@@ -225,23 +209,18 @@ public class AddMapSourceDialog
 		if (_originalSource == null)
 		{
 			clearAllFields();
-			return;
 		}
-
-		// See if it's an osm source
-		try
+		else
 		{
-			OsmMapSource osmSource = (OsmMapSource) _originalSource;
-			_oNameField.setText(osmSource.getName());
-			_baseUrlField.setText(osmSource.getBaseUrl(0));
-			int baseType = getBaseType(osmSource.getFileExtension(0));
+			_oNameField.setText(_originalSource.getName());
+			_baseUrlField.setText(_originalSource.getBaseUrl(0));
+			int baseType = getBaseType(_originalSource.getFileExtension(0));
 			_baseTypeRadios[baseType].setSelected(true);
-			_topUrlField.setText(osmSource.getNumLayers()==0?"":osmSource.getBaseUrl(1));
-			int topType = getBaseType(osmSource.getFileExtension(1));
+			_topUrlField.setText(_originalSource.getNumLayers()==0 ? "" : _originalSource.getBaseUrl(1));
+			int topType = getBaseType(_originalSource.getFileExtension(1));
 			_topTypeRadios[topType].setSelected(true);
-			_oZoomCombo.setSelectedIndex(getZoomIndex(osmSource.getMaxZoomLevel()));
+			_oZoomCombo.setSelectedIndex(getZoomIndex(_originalSource.getMaxZoomLevel()));
 		}
-		catch (ClassCastException cce) {} // ignore, sourceFound flag stays false
 
 		_okButton.setEnabled(false);
 		_addDialog.setVisible(true);
@@ -250,8 +229,7 @@ public class AddMapSourceDialog
 	/**
 	 * Check the currently entered details and enable the OK button if it looks OK
 	 */
-	private void enableOK()
-	{
+	private void enableOK()	{
 		_okButton.setEnabled(isOsmPanelOk());
 	}
 
@@ -262,14 +240,13 @@ public class AddMapSourceDialog
 	private boolean isOsmPanelOk()
 	{
 		boolean ok = _oNameField.getText().trim().length() > 1;
-		String baseUrl = null, topUrl = null;
 		// Try to parse base url if given
 		String baseText = _baseUrlField.getText().trim();
-		baseUrl = MapSource.fixBaseUrl(baseText);
+		final String baseUrl = MapSource.fixBaseUrl(baseText);
 		if (baseText.length() > 0 && baseUrl == null) {ok = false;}
 		// Same again for top url if given
 		String topText = _topUrlField.getText().trim();
-		topUrl = MapSource.fixBaseUrl(topText);
+		final String topUrl = MapSource.fixBaseUrl(topText);
 		if (topText.length() > 0 && topUrl == null) {ok = false;}
 		// looks ok if at least one url given
 		return (ok && (baseUrl != null || topUrl != null));
