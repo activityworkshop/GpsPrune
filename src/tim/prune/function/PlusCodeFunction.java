@@ -16,7 +16,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import tim.prune.App;
@@ -25,6 +24,7 @@ import tim.prune.I18nManager;
 import tim.prune.data.Field;
 import tim.prune.function.olc.OlcArea;
 import tim.prune.function.olc.OlcDecoder;
+import tim.prune.function.olc.OlcField;
 import tim.prune.gui.GuiGridLayout;
 
 /**
@@ -34,7 +34,7 @@ import tim.prune.gui.GuiGridLayout;
 public class PlusCodeFunction extends GenericFunction
 {
 	private JDialog _dialog = null;
-	private JTextField _codeField = null;
+	private OlcField _codeField = null;
 	private JButton _okButton = null;
 
 
@@ -84,7 +84,7 @@ public class PlusCodeFunction extends GenericFunction
 		dialogPanel.add(new JLabel(I18nManager.getText("dialog.pluscode.desc")), BorderLayout.NORTH);
 		JPanel mainPanel = new JPanel();
 		GuiGridLayout grid = new GuiGridLayout(mainPanel);
-		_codeField = new JTextField("", 12);
+		_codeField = new OlcField();
 		// Listeners to enable/disable ok button
 		KeyAdapter keyListener = new KeyAdapter() {
 			/** Key released */
@@ -139,9 +139,8 @@ public class PlusCodeFunction extends GenericFunction
 	 */
 	private void enableOK()
 	{
-		String text = _codeField.getText();
-		_okButton.setEnabled(text != null && text.length() > 7
-			&& text.indexOf(' ') < 0 && text.indexOf(',') < 0);
+		String text = _codeField.getText().trim();
+		_okButton.setEnabled(OlcDecoder.isValidLongForm(text) || OlcDecoder.isValidShortForm(text));
 	}
 
 	/**
@@ -149,7 +148,8 @@ public class PlusCodeFunction extends GenericFunction
 	 */
 	private void finish()
 	{
-		OlcArea area = OlcDecoder.decode(_codeField.getText());
+		OlcArea area = OlcDecoder.decode(_codeField.getText(), _app.getViewport().getCentreLatitude(),
+			_app.getViewport().getCentreLongitude());
 
 		if (area == null)
 		{
@@ -180,11 +180,12 @@ public class PlusCodeFunction extends GenericFunction
 
 		if (inArea.minLat == inArea.maxLat && inArea.minLon == inArea.maxLon)
 		{
+			// Not actually an area, just a single point
 			String[][] pointData = new String[1][];
 			pointData[0] = new String[3]; // lat, long, name
 			pointData[0][0] = "" + inArea.minLat;
 			pointData[0][1] = "" + inArea.minLon;
-			pointData[0][2] = _codeField.getText();
+			pointData[0][2] = inArea.code;
 			_app.informDataLoaded(fields, pointData, null, null);
 		}
 		else
@@ -201,7 +202,7 @@ public class PlusCodeFunction extends GenericFunction
 			pointData[5] = new String[3]; // lat, long, name
 			pointData[5][0] = "" + ((inArea.minLat + inArea.maxLat) / 2.0);
 			pointData[5][1] = "" + ((inArea.minLon + inArea.maxLon) / 2.0);
-			pointData[5][2] = _codeField.getText();
+			pointData[5][2] = inArea.code;
 			_app.informDataLoaded(fields, pointData, null, null);
 		}
 		return true;

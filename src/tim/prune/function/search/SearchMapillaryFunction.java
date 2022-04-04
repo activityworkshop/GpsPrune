@@ -52,13 +52,13 @@ public class SearchMapillaryFunction extends GenericDownloaderFunction
 	{
 		_statusLabel.setText(I18nManager.getText("confirm.running"));
 		// Get coordinates from current point (if any) or from centre of screen
-		double lat = 0.0, lon = 0.0;
+		final double lat;
+		final double lon;
 		DataPoint currentPoint = _app.getTrackInfo().getCurrentPoint();
 		if (currentPoint == null)
 		{
-			double[] coords = _app.getViewport().getBounds();
-			lat = (coords[0] + coords[2]) / 2.0;
-			lon = (coords[1] + coords[3]) / 2.0;
+			lat = _app.getViewport().getCentreLatitude();
+			lon = _app.getViewport().getCentreLongitude();
 		}
 		else
 		{
@@ -69,7 +69,7 @@ public class SearchMapillaryFunction extends GenericDownloaderFunction
 		// Construct URL
 		final String urlString = "http://api.mapillary.com/v1/im/close?lat="
 			+ lat + "&lon=" + lon + "&distance=1000&limit=" + MAX_RESULTS;
-		//System.out.println(urlString);
+
 		InputStream inStream = null;
 		try
 		{

@@ -1,29 +1,31 @@
 package tim.prune.gui.map;
 
-import java.awt.Image;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import tim.prune.config.Config;
+import tim.prune.gui.map.tile.*;
 
 
 /**
  * Class responsible for managing the map tiles,
  * including invoking the correct memory cacher(s) and/or disk cacher(s)
  */
-public class MapTileManager implements ImageObserver
+public class MapTileManager implements TileManager
 {
 	/** Consumer object to inform when tiles received */
-	private TileConsumer _consumer = null;
+	private final TileConsumer _consumer;
 	/** Current map source */
 	private MapSource _mapSource = null;
 	/** Array of tile caches, one per layer */
-	private MemTileCacher[] _tempCaches = null;
+	private final MemTileCacher[] _tempCaches;
+	/** Handler for reading from and writing to the disk cache */
+	private final DiskCache _diskCache = new DiskCache();
+	/** Coordinator of the asynchronous downloaders */
+	private final TileWorkerCoordinator _coordinator = new TileWorkerCoordinator(this, TileDownloader::new);
 	/** Flag for whether to download any tiles or just pull from disk */
 	private boolean _downloadTiles = true;
-	/** Flag for whether to return incomplete images or just pass to tile cache until they're done */
-	private boolean _returnIncompleteImages = false;
 	/** Number of layers */
 	private int _numLayers = -1;
 	/** Current zoom level */
@@ -39,6 +41,10 @@ public class MapTileManager implements ImageObserver
 	public MapTileManager(TileConsumer inConsumer)
 	{
 		_consumer = inConsumer;
+		_tempCaches = new MemTileCacher[2];
+		for (int i=0; i<2; i++) {
+			_tempCaches[i] = new MemTileCacher();
+		}
 	}
 
 	/**
@@ -51,10 +57,8 @@ public class MapTileManager implements ImageObserver
 	{
 		setZoom(inZoom);
 		// Pass params onto all memory cachers
-		if (_tempCaches != null) {
-			for (MemTileCacher cacher : _tempCaches) {
-				cacher.centreMap(inZoom, inTileX, inTileY);
-			}
+		for (MemTileCacher cacher : _tempCaches) {
+			cacher.centreMap(inZoom, inTileX, inTileY);
 		}
 	}
 
@@ -72,7 +76,7 @@ public class MapTileManager implements ImageObserver
 	public boolean isOverzoomed()
 	{
 		// Ask current map source what maximum zoom is
-		int maxZoom = (_mapSource == null?0:_mapSource.getMaxZoomLevel());
+		int maxZoom = (_mapSource == null ? 0 : _mapSource.getMaxZoomLevel());
 		return (_zoom > maxZoom);
 	}
 
@@ -85,31 +89,13 @@ public class MapTileManager implements ImageObserver
 		_downloadTiles = inEnabled;
 	}
 
-	/** Configure to return incomplete images instead of going via caches (and another call) */
-	public void setReturnIncompleteImages()
-	{
-		_returnIncompleteImages = true;
-	}
-
 	/**
 	 * Clear all the memory caches due to changed config / zoom
 	 */
 	public void clearMemoryCaches()
 	{
-		int numLayers = _mapSource.getNumLayers();
-		if (_tempCaches == null || _tempCaches.length != numLayers)
-		{
-			// Cachers don't match, so need to create the right number of them
-			_tempCaches = new MemTileCacher[numLayers];
-			for (int i=0; i<numLayers; i++) {
-				_tempCaches[i] = new MemTileCacher();
-			}
-		}
-		else {
-			// Cachers already there, just need to be cleared
-			for (int i=0; i<numLayers; i++) {
-				_tempCaches[i].clearAll();
-			}
+		for (MemTileCacher cacher : _tempCaches) {
+			cacher.clearAll();
 		}
 	}
 
@@ -150,115 +136,136 @@ public class MapTileManager implements ImageObserver
 	 */
 	public Image getTile(int inLayer, int inX, int inY, boolean inDownloadIfNecessary)
 	{
-		if (inY < 0 || inY >= _numTileIndices) return null;
+		if (inY < 0 || inY >= _numTileIndices) {return null;}
+		if (inLayer < 0 || inLayer >= _mapSource.getNumLayers()) {return null;}
 		// Wrap tile indices which are too big or too small
 		inX = ((inX % _numTileIndices) + _numTileIndices) % _numTileIndices;
 
 		// Check first in memory cache for tile
-		Image tileImage = null;
-		MemTileCacher tempCache = null;
-		if (_tempCaches != null)
-		{
-			tempCache = _tempCaches[inLayer]; // Should probably guard array indexes here
-			tileImage = tempCache.getTile(inX, inY);
-			if (tileImage != null) {
-				//System.out.println("Got tile from memory: " + inX + ", " + inY);
-				return tileImage;
-			}
+		MemTileCacher tempCache = _tempCaches[inLayer];
+		Image tileImage = tempCache.getTile(inX, inY);
+		if (tileImage != null) {
+			return tileImage;
 		}
 
+		TileDef tileDef = new TileDef(_mapSource, inLayer, inX, inY, _zoom);
 		// Tile wasn't in memory, but maybe it's in disk cache (if there is one)
-		String diskCachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
-		boolean useDisk = (diskCachePath != null);
-		boolean onlineMode = Config.getConfigBoolean(Config.KEY_ONLINE_MODE);
-		MapTile mapTile = null;
-		if (useDisk)
+		final String diskCachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
+		_diskCache.setBasePath(diskCachePath);
+		MapTile mapTile = _diskCache.getTile(tileDef);
+		if (mapTile != null && mapTile.getImage() != null)
 		{
-			// Get the map tile from cache
-			mapTile = DiskTileCacher.getTile(diskCachePath, _mapSource.makeFilePath(inLayer, _zoom, inX, inY));
-			if (mapTile != null && mapTile.getImage() != null)
-			{
-				tileImage = mapTile.getImage();
-				if (_returnIncompleteImages) {return tileImage;}
-				// Pass tile to memory cache
-				if (tempCache != null) {
-					tempCache.setTile(tileImage, inX, inY, _zoom);
-				}
-				tileImage.getWidth(this); // trigger the load from file
-			}
+			tileImage = mapTile.getImage();
+			// System.out.println("Got an image from the disk cache, width = " + tileImage.getWidth(null));
+			// Pass tile to memory cache
+			tempCache.setTile(tileImage, inX, inY, _zoom);
+			// trigger the load from file
+			tileImage.getWidth((img, infoFlags, x, y, width, height) -> tileUpdate(infoFlags));
 		}
-		// Maybe we've got an image now, maybe it's expired
-		final boolean shouldDownload = (tileImage == null || mapTile == null || mapTile.isExpired());
 
+		// Maybe we've got an image now, maybe it's expired
+		final boolean shouldDownload = (tileImage == null || mapTile.isExpired());
 		// If we're online then try to download the tile
+		final boolean onlineMode = Config.getConfigBoolean(Config.KEY_ONLINE_MODE);
 		if (onlineMode && _downloadTiles && inDownloadIfNecessary && shouldDownload)
 		{
-			try
-			{
-				URL tileUrl = new URL(_mapSource.makeURL(inLayer, _zoom, inX, inY));
-				if (useDisk)
-				{
-					DiskTileCacher.saveTile(tileUrl, diskCachePath,
-						_mapSource.makeFilePath(inLayer, _zoom, inX, inY), this);
-					// Image will now be copied directly from URL stream to disk cache
-				}
-				else
-				{
-					// Load image asynchronously, using observer
-					// In order to set the http user agent, need to use a TileDownloader instead
-					TileDownloader.triggerLoad(this, tileUrl, inLayer, inX, inY, _zoom);
-				}
-			}
-			catch (MalformedURLException urle) {} // ignore
-			catch (CacheFailure cf) {
-				_consumer.reportCacheFailure();
-			}
+			// Use coordinator to trigger an asynchronous download
+			_coordinator.triggerDownload(_mapSource.isDoubleRes(inLayer) ? tileDef.zoomOut() : tileDef);
 		}
+
 		return tileImage;
 	}
 
 	/**
 	 * Method called by image loader to inform of updates to the tiles
-	 * @param img the image
-	 * @param infoflags flags describing how much of the image is known
-	 * @param x ignored
-	 * @param y ignored
-	 * @param width ignored
-	 * @param height ignored
+	 * @param infoFlags flags describing how much of the image is known
 	 * @return false to carry on loading, true to stop
 	 */
-	public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height)
+	public boolean tileUpdate(int infoFlags)
 	{
-		boolean loaded = (infoflags & ImageObserver.ALLBITS) > 0;
-		boolean error = (infoflags & ImageObserver.ERROR) > 0;
-		if (loaded || error) {
+		boolean loaded = (infoFlags & ImageObserver.ALLBITS) > 0;
+		boolean error = (infoFlags & ImageObserver.ERROR) > 0;
+		if ((loaded || error) && _consumer != null) {
 			_consumer.tilesUpdated(loaded);
 		}
 		return !loaded;
 	}
 
 	/**
-	 * Callback method from TileDownloader to let us know that an image has been loaded
-	 * @param inTile Loaded Image object
-	 * @param inLayer layer index from 0
-	 * @param inX x coordinate of tile
-	 * @param inY y coordinate of tile
-	 * @param inZoom zoom level of loaded image
+	 * Callback method from download coordinator
+	 * @param inDef tile definition
+	 * @param inResult bytes of result
 	 */
-	public void notifyImageLoaded(Image inTile, int inLayer, int inX, int inY, int inZoom)
+	@Override
+	public void returnTile(TileDef inDef, TileBytes inResult)
 	{
-		if (inTile != null && _tempCaches != null)
-		{
-			MemTileCacher tempCache = _tempCaches[inLayer]; // Should probably guard against nulls and array indexes here
-			if (tempCache.getTile(inX, inY) == null)
+		if (inDef == null || inDef._mapSource == null || inResult == null || inResult.data.length == 0) {
+			return;
+		}
+		// construct image from result bytes
+		Image image = Toolkit.getDefaultToolkit().createImage(inResult.data);
+		image.getWidth((img, infoFlags, x, y, width, height) -> processReturnedTile(inDef, inResult, image, infoFlags));
+	}
+
+	private boolean processReturnedTile(TileDef inDef, TileBytes inResult, Image image, int infoFlags)
+	{
+		final boolean imgComplete = (infoFlags & ImageObserver.ALLBITS) > 0;
+		final boolean hasError = (infoFlags & (ImageObserver.ERROR | ImageObserver.ABORT)) > 0;
+		if (!imgComplete || hasError) {
+			return !imgComplete;
+		}
+		try {
+			final int imgWidth = image.getWidth(null);
+			if (imgWidth == 512)
 			{
-				// Check with cache that the zoom level is still valid
-				tempCache.setTile(inTile, inX, inY, inZoom);
-				inTile.getWidth(this); // trigger imageUpdate when image is ready
+				// Double resolution, so need to slice and store as 4 separate tiles
+				_mapSource.setDoubleRes(inDef._layerIdx);
+				// Construct four different images, pass each one in turn
+				for (int subtile=0; subtile<4; subtile++)
+				{
+					BufferedImage quarter = createSubtile(image, subtile);
+					processDownloadedTile(quarter, inDef.zoomIn(subtile));
+				}
+			} else
+			{
+				// Regular resolution, so store the single image
+				processDownloadedTile(image, inResult, inDef);
 			}
 		}
-		else if (inTile != null) {
-			inTile.getWidth(this);
+		catch (CacheFailure cacheFailure) {
+			System.err.println("Cache failure - report to consumer?");
 		}
+		if (_consumer != null) {
+			_consumer.tilesUpdated(true);
+		}
+		return false; // no more information needed
+	}
+
+	private BufferedImage createSubtile(Image image, int subtile)
+	{
+		BufferedImage result = new BufferedImage(256, 256, BufferedImage.TYPE_INT_RGB);
+		Graphics g = result.createGraphics();
+		final int xOffset = (subtile % 2) * 256;
+		final int yOffset = (subtile / 2) * 256;
+		g.drawImage(image, -xOffset, -yOffset, null);
+		return result;
+	}
+
+	// Got a possible race condition here where a tile is requested and triggered, and then it's requested _again_
+	// exactly when the coordinator has finished downloading it but it's not in the memcaches yet - in worst case
+	// a second download will be triggered for the same tile
+
+	private void processDownloadedTile(Image inImage, TileBytes inBytes, TileDef inDefinition) throws CacheFailure
+	{
+		// Pass image to appropriate memcacher
+		_tempCaches[inDefinition._layerIdx].setTile(inImage, inDefinition._x, inDefinition._y, inDefinition._zoom);
+		_diskCache.saveTileBytes(inBytes, inDefinition);
+	}
+
+	private void processDownloadedTile(BufferedImage inImage, TileDef inDefinition) throws CacheFailure
+	{
+		// Pass image to appropriate memcacher
+		_tempCaches[inDefinition._layerIdx].setTile(inImage, inDefinition._x, inDefinition._y, inDefinition._zoom);
+		_diskCache.saveTileImage(inImage, inDefinition);
 	}
 }

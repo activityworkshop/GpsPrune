@@ -3,44 +3,77 @@ package tim.prune.gui.map;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import tim.prune.I18nManager;
+
 
 /**
- * Class to represent any map source, whether an OsmMapSource
- * or one of the more complicated ones.
- * Map sources may contain just one or several layers, and may
- * build their URLs in different ways depending on the source
+ * Class to represent any map source, consisting of one or two layers
  */
 public abstract class MapSource
 {
+	/** Name for this source */
+	private final String _name;
 	/** File extensions */
-	protected String[] _extensions = null;
+	private MapLayer[] _layers = new MapLayer[2];
 
+
+	/**
+	 * Constructor
+	 * @param inName name of source
+	 */
+	protected MapSource(String inName)
+	{
+		String name = inName;
+		if (name == null || name.trim().equals("")) {
+			name = I18nManager.getText("mapsource.unknown");
+		}
+		_name = name;
+	}
+
+	/**
+	 * @return name
+	 */
+	public String getName() {
+		return _name;
+	}
 
 	/**
 	 * @return the number of layers used in this source
 	 */
-	public abstract int getNumLayers();
+	public int getNumLayers() {
+		return (_layers[0] == null ? 0 : 1)
+			+ (_layers[1] == null ? 0 : 1);
+	}
 
-	/**
-	 * @return the name of the source
-	 */
-	public abstract String getName();
+	/** Base url for this source */
+	public String getBaseUrl(int inLayerNum) {
+		if (inLayerNum < 0 || inLayerNum >= getNumLayers()) {return "";}
+		return _layers[inLayerNum].getBaseUrl();
+	}
 
-	/**
-	 * @return the base url for the specified layer
-	 */
-	public abstract String getBaseUrl(int inLayerNum);
-
-	/**
-	 * @return the site name for the specified layer
-	 */
-	public abstract String getSiteName(int inLayerNum);
+	/** site name without protocol or www. */
+	public String getSiteName(int inLayerNum) {
+		if (inLayerNum < 0 || inLayerNum >= getNumLayers()) {return "";}
+		return _layers[inLayerNum].getSiteName();
+	}
 
 	/**
 	 * @return the file extension for the specified layer
 	 */
 	public final String getFileExtension(int inLayerNum) {
-		return _extensions[inLayerNum];
+		if (inLayerNum < 0 || inLayerNum >= getNumLayers()) {return "";}
+		return _layers[inLayerNum].getExtension();
+	}
+
+	/**
+	 * Add a new layer to the source
+	 * @param inBaseUrl base url
+	 * @param inExt file extension
+	 */
+	protected void addLayer(String inBaseUrl, String inExt) {
+		if (inBaseUrl != null) {
+			_layers[getNumLayers()] = new MapLayer(inBaseUrl, inExt);
+		}
 	}
 
 	/**
@@ -111,7 +144,13 @@ public abstract class MapSource
 		return urlstr;
 	}
 
-	private static boolean placeHoldersOk(String path) {
+	/**
+	 * Check that all the required placeholders are present
+	 * @param path path to tile
+	 * @return true if no placeholders or all placeholders, false if error
+	 */
+	private static boolean placeHoldersOk(String path)
+	{
 		if (path.indexOf('{') < 0 && path.indexOf('}') < 0) {
 			return true; // no placeholders
 		}
@@ -166,5 +205,13 @@ public abstract class MapSource
 			}
 		}
 		return sb.toString();
+	}
+
+	public void setDoubleRes(int inLayerNum) {
+		if (inLayerNum < 0 || inLayerNum >= getNumLayers()) {return;}
+		_layers[inLayerNum].setDoubleRes();
+	}
+	public boolean isDoubleRes(int inLayerNum) {
+		return inLayerNum >= 0 && inLayerNum < getNumLayers() && _layers[inLayerNum].isDoubleRes();
 	}
 }

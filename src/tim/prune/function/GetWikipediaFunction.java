@@ -67,9 +67,8 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 		DataPoint point = _app.getTrackInfo().getCurrentPoint();
 		if (point == null)
 		{
-			double[] coords = _app.getViewport().getBounds();
-			lat = (coords[0] + coords[2]) / 2.0;
-			lon = (coords[1] + coords[3]) / 2.0;
+			lat = _app.getViewport().getCentreLatitude();
+			lon = _app.getViewport().getCentreLongitude();
 		}
 		else
 		{

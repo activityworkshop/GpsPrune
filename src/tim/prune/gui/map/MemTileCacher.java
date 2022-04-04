@@ -22,7 +22,7 @@ public class MemTileCacher
 	private int _gridCentreY = 0;
 
 	/** Grid size */
-	private static final int GRID_SIZE = 15;
+	private static final int GRID_SIZE = 20;
 
 	/**
 	 * Recentre the map and clear the cache

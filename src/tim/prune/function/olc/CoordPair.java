@@ -10,8 +10,8 @@ class CoordPair
 	/** Alphabet of allowed characters */
 	private static final String ALPHABET = "23456789CFGHJMPQRVWX";
 
-	public double lat = 0.0;
-	public double lon = 0.0;
+	public final double lat;
+	public final double lon;
 
 	/** Constructor */
 	public CoordPair(double inLat, double inLon)
@@ -66,10 +66,18 @@ class CoordPair
 	private static int decodeChar(char inChar) throws ParseException
 	{
 		final int index = ALPHABET.indexOf(inChar);
-		if (index < 0)
-		{
+		if (index < 0) {
 			throw new ParseException();
 		}
 		return index;
+	}
+
+	/**
+	 * Get the character for the given index
+	 * @param inValue from 0 to 19
+	 */
+	public static char encode(int inValue)
+	{
+		return ALPHABET.charAt((inValue + 20) % 20);
 	}
 }

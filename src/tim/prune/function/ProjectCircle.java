@@ -103,6 +103,9 @@ public class ProjectCircle extends GenericFunction
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					_dialog.dispose();
 				}
+				else if (inE.getKeyCode() == KeyEvent.VK_ENTER && _okButton.isEnabled()) {
+					finish();
+				}
 			}
 		};
 		MouseAdapter mouseListener = new MouseAdapter() {

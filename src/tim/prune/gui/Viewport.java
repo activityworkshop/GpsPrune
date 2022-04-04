@@ -1,7 +1,6 @@
 package tim.prune.gui;
 
 import tim.prune.gui.map.MapCanvas;
-import tim.prune.gui.map.MapPosition;
 import tim.prune.gui.map.MapUtils;
 
 /**
@@ -27,17 +26,29 @@ public class Viewport
 	}
 
 	/**
-	 * @return coordinate bounds of current viewport
+	 * @return latitude at centre of viewport
 	 */
-	public double[] getBounds()
+	public double getCentreLatitude()
 	{
-		int width = _mapCanvas.getWidth();
-		int height = _mapCanvas.getHeight();
-		MapPosition mapPosition = _mapCanvas.getMapPosition();
-		double minLat = MapUtils.getLatitudeFromY(mapPosition.getYFromPixels(height, height));
-		double maxLat = MapUtils.getLatitudeFromY(mapPosition.getYFromPixels(0, height));
-		double minLon = MapUtils.getLongitudeFromX(mapPosition.getXFromPixels(0, width));
-		double maxLon = MapUtils.getLongitudeFromX(mapPosition.getXFromPixels(width, width));
-		return new double[] {minLat, minLon, maxLat, maxLon};
+		final double minLat = MapUtils.getLatitudeFromY(_mapCanvas.getMinYValue());
+		final double maxLat = MapUtils.getLatitudeFromY(_mapCanvas.getMaxYValue());
+		return (minLat + maxLat) / 2.0;
+	}
+
+	/**
+	 * @return longitude at centre of viewport
+	 */
+	public double getCentreLongitude()
+	{
+		final double minLon = MapUtils.getLongitudeFromX(_mapCanvas.getMinXValue());
+		double maxLon = MapUtils.getLongitudeFromX(_mapCanvas.getMaxXValue());
+		if (maxLon < minLon) {
+			maxLon += 360.0;
+		}
+		double result = (minLon + maxLon) / 2.0;
+		if (result > 360.0) {
+			result -= 360.0;
+		}
+		return result;
 	}
 }

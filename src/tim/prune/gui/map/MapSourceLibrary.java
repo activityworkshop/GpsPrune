@@ -18,7 +18,7 @@ public abstract class MapSourceLibrary
 	// Static block to initialise source list
 	static
 	{
-		_sourceList = new ArrayList<MapSource>();
+		_sourceList = new ArrayList<>();
 		addFixedSources();
 		_numFixedSources = _sourceList.size();
 		addConfigSources();
@@ -137,9 +137,9 @@ public abstract class MapSourceLibrary
 	{
 		if (inName == null) {return false;}
 		String checkName = inName.toLowerCase().trim();
-		for (int i=0; i<getNumSources(); i++)
+		for (MapSource source : _sourceList)
 		{
-			String name = getSource(i).getName().toLowerCase();
+			String name = source.getName().toLowerCase();
 			if (name.equals(checkName)) {return true;}
 		}
 		return false;

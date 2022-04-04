@@ -78,7 +78,6 @@ public class MapGrouter implements TileConsumer
 		MapTileManager tileManager = new MapTileManager(this);
 		tileManager.setMapSource(inMapSource);
 		tileManager.enableTileDownloading(inDownload);
-		tileManager.setReturnIncompleteImages();
 		tileManager.setZoom(inZoom);
 
 		int numTilesUsed = 0;

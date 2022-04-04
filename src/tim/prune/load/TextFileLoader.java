@@ -221,7 +221,7 @@ public class TextFileLoader
 			if (spaceFields > 1) _delimiterInfos[3].incrementNumRecords();
 			_delimiterInfos[3].updateMaxFields(spaceFields);
 			// increment counters
-			int bestScorer = getBestOption(commaFields, tabFields, semicolonFields, spaceFields);
+			int bestScorer = getBestOption(commaFields, tabFields, semicolonFields, spaceFields-2);
 			if (bestScorer >= 0)
 				_delimiterInfos[bestScorer].incrementNumWinningRecords();
 		}
@@ -269,7 +269,7 @@ public class TextFileLoader
 	private static int getBestOption(int inOpt0, int inOpt1, int inOpt2, int inOpt3)
 	{
 		int bestIndex = -1;
-		int maxScore = 1;
+		int maxScore = 0;
 		if (inOpt0 > maxScore) {bestIndex = 0; maxScore = inOpt0;}
 		if (inOpt1 > maxScore) {bestIndex = 1; maxScore = inOpt1;}
 		if (inOpt2 > maxScore) {bestIndex = 2; maxScore = inOpt2;}

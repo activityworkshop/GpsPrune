@@ -65,9 +65,8 @@ public class SearchOsmPoisFunction extends GenericDownloaderFunction
 		DataPoint point = _app.getTrackInfo().getCurrentPoint();
 		if (point == null)
 		{
-			double[] coords  = _app.getViewport().getBounds();
-			_searchLatitude  = (coords[0] + coords[2]) / 2.0;
-			_searchLongitude = (coords[1] + coords[3]) / 2.0;
+			_searchLatitude = _app.getViewport().getCentreLatitude();
+			_searchLongitude = _app.getViewport().getCentreLongitude();
 		}
 		else
 		{

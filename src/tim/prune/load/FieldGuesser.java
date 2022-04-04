@@ -188,7 +188,7 @@ public abstract class FieldGuesser
 	 * @param inIsHeader true if this is a header line, false for data
 	 * @return true if it could be latitude
 	 */
-	private static boolean fieldLooksLikeLatitude(String inValue, boolean inIsHeader)
+	public static boolean fieldLooksLikeLatitude(String inValue, boolean inIsHeader)
 	{
 		if (inValue == null || inValue.equals("")) {return false;}
 		if (inIsHeader)
@@ -202,7 +202,7 @@ public abstract class FieldGuesser
 		{
 			// Note this will also catch longitudes too
 			Latitude lat = new Latitude(inValue);
-			return lat.isValid();
+			return couldBeCoordinateString(inValue) && lat.isValid();
 		}
 	}
 
@@ -212,7 +212,7 @@ public abstract class FieldGuesser
 	 * @param inIsHeader true if this is a header line, false for data
 	 * @return true if it could be longitude
 	 */
-	private static boolean fieldLooksLikeLongitude(String inValue, boolean inIsHeader)
+	public static boolean fieldLooksLikeLongitude(String inValue, boolean inIsHeader)
 	{
 		if (inValue == null || inValue.equals("")) {return false;}
 		if (inIsHeader)
@@ -226,8 +226,36 @@ public abstract class FieldGuesser
 		{
 			// Note this will also catch latitudes too
 			Longitude lon = new Longitude(inValue);
-			return lon.isValid();
+			return couldBeCoordinateString(inValue) && lon.isValid();
 		}
+	}
+
+	/**
+	 * @return true if this string could represent a lat/long coordinate
+	 */
+	public static boolean couldBeCoordinateString(String inValue)
+	{
+		final String value = inValue == null ? "" : inValue.strip().toUpperCase();
+		if (value.length() < 2) {
+			return false;
+		}
+		int totalLetters = 0, totalNumbers = 0;
+		boolean prevCharWasLetter = false;
+		for (int i=0; i<value.length(); i++) {
+			char c = value.charAt(i);
+			if (Character.isAlphabetic(c)) {
+				if (prevCharWasLetter) {return false;} // no consecutive letters allowed
+				totalLetters++;
+				prevCharWasLetter = true;
+			}
+			else {
+				prevCharWasLetter = false;
+			}
+			if (Character.isDigit(c)) {
+				totalNumbers++;
+			}
+		}
+		return totalLetters < 3 && totalNumbers > 1;
 	}
 
 	/**

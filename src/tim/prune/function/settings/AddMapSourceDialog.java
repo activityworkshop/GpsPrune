@@ -216,7 +216,7 @@ public class AddMapSourceDialog
 			_baseUrlField.setText(_originalSource.getBaseUrl(0));
 			int baseType = getBaseType(_originalSource.getFileExtension(0));
 			_baseTypeRadios[baseType].setSelected(true);
-			_topUrlField.setText(_originalSource.getNumLayers()==0 ? "" : _originalSource.getBaseUrl(1));
+			_topUrlField.setText(_originalSource.getNumLayers()==1 ? "" : _originalSource.getBaseUrl(1));
 			int topType = getBaseType(_originalSource.getFileExtension(1));
 			_topTypeRadios[topType].setSelected(true);
 			_oZoomCombo.setSelectedIndex(getZoomIndex(_originalSource.getMaxZoomLevel()));

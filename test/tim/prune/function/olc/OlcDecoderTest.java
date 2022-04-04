@@ -63,13 +63,51 @@ class OlcDecoderTest
 	@Test
 	void testMountainView()
 	{
-		OlcArea area = OlcDecoder.decode("6PH57VP3+PR6");
+		OlcArea area = OlcDecoder.decode("849VCWC8+R9");
 		assertNotEquals(area, null, "Decoding with separator gives non-null");
-		System.out.println("Min lat: " + area.minLat);
-		System.out.println("Max lat: " + area.maxLat);
-		System.out.println("Min lon: " + area.minLon);
-		System.out.println("Max lon: " + area.maxLon);
+//		System.out.println("Lat: " + area.minLat + " to " + area.maxLat);
+//		System.out.println("lon: " + area.minLon + " to " + area.maxLon);
 		assertTrue(area.maxLat > area.minLat, "latitude range");
 		assertTrue(area.maxLon > area.minLon, "longitude range");
+	}
+
+	@Test
+	void testShortForms()
+	{
+		OlcArea area = OlcDecoder.decode("7VP3+PR6");
+		assertNull(area); // not a valid long code
+		// Now try as a short form
+		area = OlcDecoder.decode("7VP3+PR6", 1.0, 104.0);
+		assertNotNull(area);
+		assertTrue(area.code.startsWith("6PH5"), "Singapore");
+		assertTrue(area.minLat > 0.0);
+		// same code but different reference location, gives different code and latitude
+		area = OlcDecoder.decode("7VP3+", -19.0, 48.0);
+		assertNotNull(area);
+		assertTrue(area.code.startsWith("5HH9"), "Madagaskar");
+		assertTrue(area.minLat < -18.0);
+	}
+
+	@Test
+	void testLengthChecks()
+	{
+		assertFalse(OlcDecoder.isValidLongForm("123456"));
+		assertFalse(OlcDecoder.isValidShortForm("123456"));
+		assertTrue(OlcDecoder.isValidLongForm("12345678")); // even though 1 isn't valid
+		assertTrue(OlcDecoder.isValidLongForm("ABCDEFGH+")); // even though A isn't valid
+		assertFalse(OlcDecoder.isValidLongForm("ABCDEFG+H")); // + in wrong position
+		assertTrue(OlcDecoder.isValidLongForm("ABCDEFGH+IJ"));
+		assertTrue(OlcDecoder.isValidLongForm("ABCDEFGH+IJK"));
+		assertTrue(OlcDecoder.isValidLongForm("ABCDEFGH+IJKL")); // even though too long
+		assertTrue(OlcDecoder.isValidLongForm("ABCD0000+IJ+")); // despite second +
+
+		assertFalse(OlcDecoder.isValidLongForm("ABCD"));
+		assertFalse(OlcDecoder.isValidShortForm("ABCD"));
+		assertFalse(OlcDecoder.isValidLongForm("ABCD+"));
+		assertTrue(OlcDecoder.isValidShortForm("ABCD+")); // even though A isn't valid
+		assertTrue(OlcDecoder.isValidShortForm("ABCD+EF"));
+		assertTrue(OlcDecoder.isValidShortForm("ABCD+EFG"));
+
+		assertTrue(OlcDecoder.isValidShortForm("ABCD+E+")); // even though second + is invalid
 	}
 }

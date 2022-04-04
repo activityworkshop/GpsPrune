@@ -1,4 +1,4 @@
-GpsPrune version 21.1
+GpsPrune version 21.2
 =====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_21.1.jar
+   java -jar gpsprune_21.2.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,14 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_21.1.jar --lang=DE
+   java -jar gpsprune_21.2.jar --lang=DE
 
+
+New with version 21.2
+=====================
+  - Don't apply display scaling of OS to map tiles, so that they remain sharp (Issue #16)
+  - Ability to use 512-pixel tiles (related to Issue #16)
+  - Ability to parse truncated Pluscodes and find the nearest one
 
 New with version 21.1
 =====================

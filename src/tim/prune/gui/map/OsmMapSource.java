@@ -1,7 +1,5 @@
 package tim.prune.gui.map;
 
-import tim.prune.I18nManager;
-
 /**
  * Class to provide a map source for all OSM-like sources
  * (eg mapnik, opencyclemap, openpistemap etc).
@@ -10,12 +8,6 @@ import tim.prune.I18nManager;
  */
 public class OsmMapSource extends MapSource
 {
-	/** Name for this source */
-	private String _name = null;
-	/** Base urls */
-	private String[] _baseUrls = null;
-	/** Site names */
-	private String[] _siteNames = null;
 	/** Maximum zoom level */
 	private final int _maxZoom;
 
@@ -39,11 +31,12 @@ public class OsmMapSource extends MapSource
 	 */
 	public OsmMapSource(String inName, String inStr1, String inStr2, int inMaxZoom)
 	{
+		super(inName);
 		if (inStr2 != null && inStr2.length() == 3) {
-			init(inName, inStr1, inStr2, null, null);
+			init(inStr1, inStr2, null, null);
 		}
 		else {
-			init(inName, inStr1, "png", inStr2, "png");
+			init(inStr1, "png", inStr2, "png");
 		}
 		_maxZoom = inMaxZoom;
 	}
@@ -60,39 +53,22 @@ public class OsmMapSource extends MapSource
 	public OsmMapSource(String inName, String inUrl1, String inExt1,
 		String inUrl2, String inExt2, int inMaxZoom)
 	{
-		init(inName, inUrl1, inExt1, inUrl2, inExt2);
+		super(inName);
+		init(inUrl1, inExt1, inUrl2, inExt2);
 		_maxZoom = inMaxZoom;
 	}
 
 	/**
-	 * Initialisation giving name, urls, extensions and maximum zoom
-	 * @param inName source name
+	 * Initialisation giving urls, extensions and maximum zoom
 	 * @param inUrl1 base layer url
 	 * @param inExt1 extension for base layer
 	 * @param inUrl2 upper layer url
 	 * @param inExt2 extension for top layer
 	 */
-	private void init(String inName, String inUrl1, String inExt1,
-		String inUrl2, String inExt2)
+	private void init(String inUrl1, String inExt1, String inUrl2, String inExt2)
 	{
-		_name = inName;
-		if (_name == null || _name.trim().equals("")) {_name = I18nManager.getText("mapsource.unknown");}
-		_baseUrls = new String[2];
-		_baseUrls[0] = fixBaseUrl(inUrl1);
-		_baseUrls[1] = fixBaseUrl(inUrl2);
-		_extensions = new String[2];
-		_extensions[0] = inExt1;
-		_extensions[1] = inExt2;
-		_siteNames = new String[2];
-		_siteNames[0] = SiteNameUtils.convertUrlToDirectory(_baseUrls[0]);
-		_siteNames[1] = SiteNameUtils.convertUrlToDirectory(_baseUrls[1]);
-		// Swap layers if second layer given without first
-		if (_baseUrls[0] == null && _baseUrls[1] != null)
-		{
-			_baseUrls[0] = _baseUrls[1];
-			_siteNames[0] = _siteNames[1];
-			_baseUrls[1] = _siteNames[1] = null;
-		}
+		addLayer(fixBaseUrl(inUrl1), inExt1);
+		addLayer(fixBaseUrl(inUrl2), inExt2);
 	}
 
 	/**
@@ -122,34 +98,12 @@ public class OsmMapSource extends MapSource
 	}
 
 	/**
-	 * @return name
-	 */
-	public String getName() {
-		return _name;
-	}
-
-	/** Number of layers */
-	public int getNumLayers() {
-		return _baseUrls[1] == null?1:2;
-	}
-
-	/** Base url for this source */
-	public String getBaseUrl(int inLayerNum) {
-		return _baseUrls[inLayerNum];
-	}
-
-	/** site name without protocol or www. */
-	public String getSiteName(int inLayerNum) {
-		return _siteNames[inLayerNum];
-	}
-
-	/**
 	 * Make the URL to get the specified tile
 	 */
 	public String makeURL(int inLayerNum, int inZoom, int inX, int inY)
 	{
 		// Check if the base url has a [1234], if so replace at random
-		String path = SiteNameUtils.pickServerUrl(_baseUrls[inLayerNum]);
+		String path = SiteNameUtils.pickServerUrl(getBaseUrl(inLayerNum));
 		if (path.indexOf('{') < 0) {
 			return path + inZoom + '/' + inX + '/' + inY +
 					'.' + getFileExtension(inLayerNum);
