@@ -21,6 +21,8 @@ import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MultiStateCheckBox;
 import tim.prune.gui.colour.PointColourer;
+import tim.prune.gui.colour.WaypointColours;
+import tim.prune.gui.colour.WaypointSymbolPainter;
 import tim.prune.tips.TipManager;
 
 /**
@@ -87,6 +89,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private int _drawMode = MODE_DEFAULT;
 	/** Current waypoint icon definition */
 	private WpIconDefinition _waypointIconDefinition = null;
+	/** Colours for waypoint icons */
+	private final WaypointColours _waypointColours = new WaypointColours();
 	/** Remember whether map is being drawn with empty track or not */
 	private boolean _emptyTrack = true;
 
@@ -787,6 +791,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			// TODO: Expand font size of inG using _lastScale
 			FontMetrics fm = inG.getFontMetrics();
 			final int nameHeight = fm.getHeight();
+			_waypointColours.setSalt(Config.getConfigInt(Config.KEY_WPICON_SALT));
 			int numWaypoints = 0;
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
@@ -803,9 +808,11 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						else
 						{
 							ImageIcon icon = _waypointIconDefinition.getImageIcon();
-							if (icon != null)
+							Color paintColor = _waypointColours.getColourForType(_track.getPoint(i).getFieldValue(Field.WAYPT_TYPE));
+							Image painted = WaypointSymbolPainter.paintSymbol(icon, paintColor);
+							if (painted != null)
 							{
-								inG.drawImage(icon.getImage(), px-_waypointIconDefinition.getXOffset(),
+								inG.drawImage(painted, px-_waypointIconDefinition.getXOffset(),
 									py-_waypointIconDefinition.getYOffset(), null);
 							}
 						}
