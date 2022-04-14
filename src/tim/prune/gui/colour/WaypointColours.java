@@ -12,6 +12,13 @@ public class WaypointColours
 
 
 	/**
+	 * @return maximum salt value (min is always 0)
+	 */
+	public static int getMaxSalt() {
+		return NUM_SALTS - 1;
+	}
+
+	/**
 	 * @param inSalt salt value to use (or -1 for no salt)
 	 */
 	public void setSalt(int inSalt) {

@@ -348,7 +348,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				}
 			}
 		}
-		catch (Exception e) {}
+		catch (Exception ignored) {}
 		_latRange = new DoubleRange(45.8, 47.9);
 		_lonRange = new DoubleRange(5.9, 10.6);
 	}
