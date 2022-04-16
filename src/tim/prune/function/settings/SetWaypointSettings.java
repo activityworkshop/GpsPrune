@@ -6,13 +6,19 @@ import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.colour.WaypointColours;
 import tim.prune.gui.map.WpIconLibrary;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.FlowLayout;
+import java.awt.image.BufferedImage;
+
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
-import java.awt.*;
+
 
 /**
  * Class to show the dialog for setting the waypoint display settings
- * like icons, colours
+ * like icon style, size, colours
  */
 public class SetWaypointSettings extends GenericFunction
 {
@@ -71,6 +77,10 @@ public class SetWaypointSettings extends GenericFunction
 	/** Slider for salt */
 	private JSlider _saltSlider = null;
 	private JLabel _saltLabel = null;
+	private JLabel _noTypesLabel = null;
+	/** Type information */
+	private final WaypointTypeList _typeList = new WaypointTypeList();
+	private JList<String> _typeListBox = null;
 
 
 	/**
@@ -146,9 +156,27 @@ public class SetWaypointSettings extends GenericFunction
 		coloursPanel.add(_saltSlider);
 		_saltLabel = new JLabel("some label");
 		coloursPanel.add(_saltLabel);
+		_noTypesLabel = new JLabel(I18nManager.getText("dialog.waypointsettings.notypesintrack"));
+		coloursPanel.add(_noTypesLabel);
+		_typeListBox = new JList<String>(_typeList);
+		_typeListBox.setVisibleRowCount(4);
+		_typeListBox.setLayoutOrientation(JList.HORIZONTAL_WRAP);
+		_typeListBox.setCellRenderer(new DefaultListCellRenderer() {
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
+					boolean isSelected, boolean cellHasFocus) {
+				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+				setText(value.toString());
+				setHorizontalTextPosition(JLabel.LEFT);
+				setIconTextGap(7);
+				setIcon(makeImageIcon(value.toString(), _saltSlider.getValue()));
+				return this;
+			}
+		});
+		JScrollPane listScroller = new JScrollPane(_typeListBox);
+		coloursPanel.add(listScroller);
 		midPanel.add(coloursPanel);
 		// attach signals
-		_saltSlider.addChangeListener(changeEvent -> setSaltLabel(_saltSlider.getValue()));
+		_saltSlider.addChangeListener(changeEvent -> showPreview(_saltSlider.getValue()));
 		_coloursCheckbox.addChangeListener(changeEvent -> coloursSwitched());
 
 		mainPanel.add(midPanel, BorderLayout.CENTER);
@@ -174,7 +202,7 @@ public class SetWaypointSettings extends GenericFunction
 	private void coloursSwitched()
 	{
 		final boolean coloursOn = _coloursCheckbox.isSelected();
-		setSaltLabel(coloursOn ? Math.max(_saltSlider.getValue(), 0) : -1);
+		showPreview(coloursOn ? Math.max(_saltSlider.getValue(), 0) : -1);
 		_saltSlider.setEnabled(coloursOn);
 	}
 
@@ -197,16 +225,20 @@ public class SetWaypointSettings extends GenericFunction
 		_coloursCheckbox.setSelected(salt >= 0);
 		_saltSlider.setValue(Math.max(salt, 0));
 		_saltSlider.setEnabled(salt >= 0);
-		setSaltLabel(salt);
+		_typeList.compile(_app.getTrackInfo().getTrack());
+		showPreview(salt);
 		_dialog.setVisible(true);
 	}
 
 	/**
 	 * @param salt current salt value from slider
 	 */
-	private void setSaltLabel(int salt) {
+	private void showPreview(int salt)
+	{
 		final String label = salt < 0 ? "" : (I18nManager.getText("dialog.waypointsettings.saltvalue") + " : " + salt);
 		_saltLabel.setText(label);
+		_noTypesLabel.setVisible(_typeList.getSize() == 0);
+		_typeListBox.repaint();
 	}
 
 	/**
@@ -235,6 +267,31 @@ public class SetWaypointSettings extends GenericFunction
 			}
 		}
 		return 1; // default is medium
+	}
+
+	/**
+	 * @param typeString waypoint type string
+	 * @param saltValue current salt value
+	 * @return image icon for list
+	 */
+	private Icon makeImageIcon(String typeString, int saltValue)
+	{
+		final Color color = WaypointColours.getColourForType(typeString, saltValue);
+		if (color == null) {
+			return null;
+		}
+		final int rgb = color.getRGB();
+		BufferedImage bi = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB);
+		for (int x=1; x<19; x++) {
+			bi.setRGB(x, 0, 0);
+			bi.setRGB(0, x, 0);
+			for (int y=1; y<19; y++) {
+				bi.setRGB(x, y, rgb);
+			}
+			bi.setRGB(x, 19, 0);
+			bi.setRGB(19, x, 0);
+		}
+		return new ImageIcon(bi);
 	}
 
 	/**

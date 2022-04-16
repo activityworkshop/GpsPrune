@@ -31,11 +31,21 @@ public class WaypointColours
 	 */
 	public Color getColourForType(String inType)
 	{
+		return getColourForType(inType, _salt);
+	}
+
+	/**
+	 * @param inType waypoint type (if any)
+	 * @param inSalt salt value
+	 * @return Colour to use for symbol
+	 */
+	public static Color getColourForType(String inType, int inSalt)
+	{
 		String type = (inType == null ? "" : inType.strip().toLowerCase());
-		if (_salt < 0 || type.isEmpty()) {
+		if (inSalt < 0 || type.isEmpty()) {
 			return null;
 		}
-		final int hash = makeHash(type, _salt);
+		final int hash = makeHash(type, inSalt);
 		final float hue = (float) ((hash % 16) / 16.0);
 		final int series = hash / 16;
 		float[] saturations = new float[] {1.0f, 0.8f, 0.5f, 1.0f, 0.22f};
