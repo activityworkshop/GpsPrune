@@ -24,8 +24,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 
 import tim.prune.App;
@@ -135,18 +133,15 @@ public class PointEditor
 			{
 				Component comp = super.prepareRenderer(renderer, row, column);
 				boolean changed = ((EditFieldsTableModel) getModel()).getChanged(row);
-				comp.setBackground(changed ? Color.orange : getBackground());
+				if (row != getSelectedRow()) {
+					comp.setBackground(changed ? Color.orange : getBackground());
+				}
 				return comp;
 			}
 		};
 		_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_table.getSelectionModel().clearSelection();
-		_table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e)
-			{
-				fieldSelected();
-			}
-		});
+		_table.getSelectionModel().addListSelectionListener((e) -> fieldSelected());
 		_table.setPreferredScrollableViewportSize(new Dimension(_table.getWidth() * 2, _table.getRowHeight() * 6));
 		JScrollPane tablePane = new JScrollPane(_table);
 		tablePane.setPreferredSize(new Dimension(150, 100));
@@ -157,13 +152,9 @@ public class PointEditor
 		panel.add(topLabel, BorderLayout.NORTH);
 
 		// listener for ok event
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// update App with edit
-				confirmEdit();
-				_dialog.dispose();
-			}
+		ActionListener okListener = (e) -> {
+			confirmEdit();
+			_dialog.dispose();
 		};
 
 		JPanel rightPanel = new JPanel();
