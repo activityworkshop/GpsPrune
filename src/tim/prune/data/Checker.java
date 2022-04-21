@@ -5,33 +5,43 @@ package tim.prune.data;
  */
 public abstract class Checker
 {
+	/**
+	 * Possible return values of double status
+	 */
+	public enum DoubleStatus {
+		NOTHING, DOUBLED, DOUBLED_WAYPOINTS_TRACKPOINTS
+	}
 
 	/**
 	 * Check if a given track is doubled, so that each point is given twice,
 	 * once as waypoint and again as track point
 	 * @param inTrack track to check
-	 * @return true if track is doubled, false otherwise
+	 * @return enum value describing status
 	 */
-	public static boolean isDoubledTrack(Track inTrack)
+	public static DoubleStatus isDoubledTrack(Track inTrack)
 	{
 		// Check for empty track
-		if (inTrack == null || inTrack.getNumPoints() < 2) {return false;}
+		if (inTrack == null || inTrack.getNumPoints() < 2) {return DoubleStatus.NOTHING;}
 		// Check for non-even number of points
 		final int numPoints = inTrack.getNumPoints();
-		if (numPoints % 2 != 0) {return false;}
+		if (numPoints % 2 != 0) {return DoubleStatus.NOTHING;}
 		// Loop through first half of track
 		final int halfNum = numPoints / 2;
+		boolean trackPointsAndWaypoints = true;
 		for (int i=0; i<halfNum; i++)
 		{
 			DataPoint firstPoint = inTrack.getPoint(i);
 			DataPoint secondPoint = inTrack.getPoint(i + halfNum);
 			if (!firstPoint.getLatitude().equals(secondPoint.getLatitude())
 				|| !firstPoint.getLongitude().equals(secondPoint.getLongitude())) {
-				return false;
+				return DoubleStatus.NOTHING;
+			}
+			if (firstPoint.isWaypoint() == secondPoint.isWaypoint()) {
+				trackPointsAndWaypoints = false;
 			}
 		}
 		// Passed the test, so contents must all be doubled
-		return true;
+		return trackPointsAndWaypoints ? DoubleStatus.DOUBLED_WAYPOINTS_TRACKPOINTS : DoubleStatus.DOUBLED;
 	}
 
 	/**
