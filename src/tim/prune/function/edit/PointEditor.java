@@ -135,7 +135,9 @@ public class PointEditor
 			{
 				Component comp = super.prepareRenderer(renderer, row, column);
 				boolean changed = ((EditFieldsTableModel) getModel()).getChanged(row);
-				comp.setBackground(changed ? Color.orange : getBackground());
+				if (row != getSelectedRow()) {
+					comp.setBackground(changed ? Color.orange : getBackground());
+				}
 				return comp;
 			}
 		};

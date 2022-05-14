@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.ImageObserver;
 
 import javax.swing.*;
 
@@ -389,13 +390,15 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				_scaleBar.updateScale(_mapPosition.getZoom(), _mapPosition.getYFromPixels(0, 0));
 			}
 			// Draw the prepared image onto the panel
-			if (_mapImage != null) {
+			if (_mapImage != null)
+			{
 				Graphics2D g2 = (Graphics2D) (inG.create());
 				final double preScale = g2.getTransform().getScaleX();
-				if (preScale != _lastScale) {
-					// System.out.println("Scale: " + preScale);
+				if (preScale != _lastScale)
+				{
 					_lastScale = preScale;
 					_mapPosition.setDisplayScaling(_lastScale);
+					_scaleBar.setDisplayScaling(_lastScale);
 				}
 				AffineTransform at = g2.getTransform();
 				final double xTranslate = at.getTranslateX();
@@ -567,7 +570,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						{
 							Image image = _tileManager.getTile(l, tileX, tileY, true);
 							if (image != null) {
-								g.drawImage(image, x, y, 256, 256, null);
+								g.drawImage(image, x, y, 256, 256, (img, flags, px, py, width, height) -> checkPaintedTile(flags));
 							}
 						}
 					}
@@ -641,6 +644,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_checkBounds = false;
 		// enable / disable transparency slider
 		_transparencySlider.setEnabled(showMap);
+	}
+
+
+	private boolean checkPaintedTile(int flags)
+	{
+		if ((flags & ImageObserver.ALLBITS) == 0) {
+			tilesUpdated(true);
+			return true;
+		}
+		return false;
 	}
 
 

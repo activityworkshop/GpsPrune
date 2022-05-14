@@ -84,7 +84,6 @@ public class MapPosition
 	 */
 	public void zoomToPixels(int inMinX, int inMaxX, int inMinY, int inMaxY, int inWidth, int inHeight)
 	{
-		// System.out.println("Current position is " + _xPosition + ", " + _yPosition);
 		int diffX = Math.abs(inMaxX - inMinX);
 		int diffY = Math.abs(inMaxY - inMinY);
 		// Find out what zoom level to go to
@@ -101,8 +100,8 @@ public class MapPosition
 		}
 		setZoom(requiredZoom);
 		// Set position
-		_xPosition = (_xPosition - inWidth/2 + (inMinX + inMaxX) / 2) * multFactor;
-		_yPosition = (_yPosition - inHeight/2 + (inMinY + inMaxY) / 2) * multFactor;
+		_xPosition = (_xPosition + (inMinX + inMaxX - inWidth) / 2 * _displayScaling) * multFactor;
+		_yPosition = (_yPosition + (inMinY + inMaxY - inHeight) / 2 * _displayScaling) * multFactor;
 	}
 
 	/**
@@ -220,7 +219,7 @@ public class MapPosition
 	 * @return tile index for that point
 	 */
 	private int getTileIndex(int inPosition) {
-		return inPosition / MAP_TILE_SIZE;
+		return Math.floorDiv(inPosition, MAP_TILE_SIZE);
 	}
 
 	/**
@@ -228,7 +227,7 @@ public class MapPosition
 	 * @return pixel offset for that point
 	 */
 	private int getDisplayOffset(int inPosition) {
-		return inPosition % MAP_TILE_SIZE;
+		return inPosition - getTileIndex(inPosition) * MAP_TILE_SIZE;
 	}
 
 	/**

@@ -20,6 +20,8 @@ public class ScaleBar extends JPanel
 	private int _zoomLevel = -1;
 	/** y position */
 	private double _yPos = 0.0;
+	/** Scaling factor on screen (usually 1.0) */
+	private double _displayScaling = 1.0;
 
 	/** Invalid scale, do not draw */
 	private static final int INVALID_SCALE = 0;
@@ -63,7 +65,7 @@ public class ScaleBar extends JPanel
 		final double lat = Math.atan(Math.sinh(angle));
 		final double distAroundEarth = Distance.convertRadiansToDistance(2 * Math.PI) * Math.cos(lat);
 		// pixels at this zoom level
-		return (256 << _zoomLevel) / distAroundEarth;
+		return (256 << _zoomLevel) / distAroundEarth / _displayScaling;
 	}
 
 	/**
@@ -175,5 +177,12 @@ public class ScaleBar extends JPanel
 	{
 		_zoomLevel = inZoom;
 		_yPos = inYPos;
+	}
+
+	/**
+	 * @param inScaling current display scaling factor from OS
+	 */
+	public void setDisplayScaling(double inScaling) {
+		_displayScaling = inScaling;
 	}
 }

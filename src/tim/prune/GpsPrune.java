@@ -38,9 +38,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "21.2";
+	public static final String VERSION_NUMBER = "21.3";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "395";
+	public static final String BUILD_NUMBER = "396";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -58,7 +58,7 @@ public class GpsPrune
 		String localeCode = null;
 		String langFilename = null;
 		String configFilename = null;
-		ArrayList<File> dataFiles = new ArrayList<File>();
+		ArrayList<File> dataFiles = new ArrayList<>();
 		boolean showUsage = false;
 
 		// Mac OSX - specific properties (Mac insists that this is done as soon as possible)

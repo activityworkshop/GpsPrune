@@ -133,7 +133,7 @@ public class PasteCoordinateList extends GenericFunction
 	{
 		String text = _coordArea.getText();
 		_okButton.setEnabled(text != null && text.length() > 6
-			&& (text.indexOf(' ') >= 0 || text.indexOf(',') >= 0));
+			&& (text.indexOf(' ') >= 0 || text.indexOf(',') >= 0 || text.indexOf(';') >= 0));
 	}
 
 	/**
