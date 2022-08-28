@@ -7,9 +7,9 @@ import tim.prune.I18nManager;
  */
 public class Field
 {
-	private String _labelKey = null;
+	private final String _labelKey;
 	private String _customLabel = null;
-	private boolean _builtin = false;
+	private final boolean _builtin;
 
 	public static final Field LATITUDE = new Field("fieldname.latitude", true);
 	public static final Field LONGITUDE = new Field("fieldname.longitude", true);
@@ -97,7 +97,9 @@ public class Field
 	 */
 	public boolean equals(Field inOther)
 	{
-		return (isBuiltIn() == inOther.isBuiltIn() && getName().equals(inOther.getName()));
+		return inOther != null
+				&& isBuiltIn() == inOther.isBuiltIn()
+				&& getName().equals(inOther.getName());
 	}
 
 	/**

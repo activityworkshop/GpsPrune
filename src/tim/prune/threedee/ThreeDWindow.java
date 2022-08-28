@@ -21,6 +21,11 @@ public interface ThreeDWindow
 	public void setAltitudeFactor(double inFactor);
 
 	/**
+	 * @param inFactor symbol scaling factor to use
+	 */
+	public void setSymbolScalingFactor(double inFactor);
+
+	/**
 	 * @param inDefinition image definition (image or not, source, zoom)
 	 */
 	public void setBaseImageParameters(ImageDefinition inDefinition);

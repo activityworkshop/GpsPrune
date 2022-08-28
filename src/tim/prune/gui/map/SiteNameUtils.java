@@ -38,8 +38,7 @@ public abstract class SiteNameUtils
 			int matchNum = (int) Math.floor(Math.random() * numMatches);
 			server = "" + match.charAt(matchNum);
 		}
-		final String result = matcher.group(1) + (server==null?"":server) + matcher.group(3);
-		return result;
+		return matcher.group(1) + (server==null?"":server) + matcher.group(3);
 	}
 
 

@@ -46,8 +46,8 @@ public class SidebarController
 				}
 			}
 			// Set visibility of components
-			for (int i=0; i<_components.length; i++) {
-				_components[i].setVisible(!visible);
+			for (Component component : _components) {
+				component.setVisible(!visible);
 			}
 			// Restore divider locations
 			for (int i=0; i<_components.length; i++) {

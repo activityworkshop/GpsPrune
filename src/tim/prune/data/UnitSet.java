@@ -5,11 +5,11 @@ package tim.prune.data;
  */
 public class UnitSet
 {
-	private String _nameKey = null;
-	private Unit _distanceUnit = null;
-	private Unit _speedUnit = null;
-	private Unit _altitudeUnit = null;
-	private Unit _vertSpeedUnit = null;
+	private final String _nameKey;
+	private final Unit _distanceUnit;
+	private final Unit _speedUnit;
+	private final Unit _altitudeUnit;
+	private final Unit _vertSpeedUnit;
 
 	/**
 	 * Constructor

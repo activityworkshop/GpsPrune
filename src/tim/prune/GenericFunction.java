@@ -8,9 +8,9 @@ import javax.swing.JFrame;
 public abstract class GenericFunction
 {
 	/** Reference to app object */
-	protected App _app = null;
+	protected final App _app;
 	/** Reference to parent frame */
-	protected JFrame _parentFrame = null;
+	protected final JFrame _parentFrame;
 
 
 	/**

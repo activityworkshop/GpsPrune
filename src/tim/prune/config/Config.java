@@ -87,6 +87,8 @@ public abstract class Config
 	public static final String KEY_LINE_WIDTH = "prune.linewidth";
 	/** Key for whether to use antialiasing or not */
 	public static final String KEY_ANTIALIAS = "prune.antialias";
+	/** Key for whether to allow OS to scale maps or not */
+	public static final String KEY_OSSCALING = "prune.osscaling";
 	/** Key for kml track colour */
 	public static final String KEY_KML_TRACK_COLOUR = "prune.kmltrackcolour";
 	/** Key for window style (name of look-and-feel) */
@@ -107,12 +109,16 @@ public abstract class Config
 	public static final String KEY_WAYPOINT_ICONS = "prune.waypointicons";
 	/** Size of waypoint icons to use */
 	public static final String KEY_WAYPOINT_ICON_SIZE = "prune.waypointiconsize";
+	/** Salt to use for waypoint colouring */
+	public static final String KEY_WPICON_SALT = "prune.waypointsalt";
 	/** Id of selected timezone */
 	public static final String KEY_TIMEZONE_ID = "prune.timezoneid";
 	/** Last used latlon range */
 	public static final String KEY_LATLON_RANGE = "prune.latlonrange";
 	/** Username/password to the Earthdata server for SRTM 1-arcsecond tiles */
 	public static final String KEY_EARTHDATA_AUTH = "prune.earthdataauth";
+	/** Settings for track compression */
+	public static final String KEY_COMPRESSION_SETTINGS = "prune.compression";
 
 	/** Initialise the default properties */
 	static
@@ -204,6 +210,7 @@ public abstract class Config
 		props.put(KEY_IMPORT_FILE_FORMAT, "-1"); // no file format selected
 		props.put(KEY_KMZ_IMAGE_SIZE, "240");
 		props.put(KEY_ANTIALIAS, "1"); // antialias on by default
+		props.put(KEY_OSSCALING, "0"); // OS shouldn't scale maps
 		props.put(KEY_AUTOSAVE_SETTINGS, "1"); // autosave by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		props.put(KEY_COORD_DISPLAY_FORMAT, "0"); // original
@@ -211,6 +218,7 @@ public abstract class Config
 		props.put(KEY_TERRAIN_GRID_SIZE, "50");
 		props.put(KEY_ALTITUDE_TOLERANCE, "0"); // 0, all exact as before
 		props.put(KEY_WAYPOINT_ICON_SIZE, "1"); // medium size
+		props.put(KEY_WPICON_SALT, "-1"); // no waypoint colouring by default
 		return props;
 	}
 
@@ -379,7 +387,7 @@ public abstract class Config
 	{
 		return inKey != null && (
 			inKey.equals(KEY_SHOW_MAP) || inKey.equals(KEY_AUTOSAVE_SETTINGS) || inKey.equals(KEY_ONLINE_MODE)
-			|| inKey.equals(KEY_ANTIALIAS));
+			|| inKey.equals(KEY_ANTIALIAS) || inKey.equals(KEY_OSSCALING));
 	}
 
 	/**

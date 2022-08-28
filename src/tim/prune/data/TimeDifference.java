@@ -95,7 +95,7 @@ public class TimeDifference
 	public String getDescription()
 	{
 		if (_description != null) {return _description;}
-		StringBuffer buffer = new StringBuffer();
+		StringBuilder buffer = new StringBuilder();
 		boolean started = false;
 		// hours
 		if (_hours > 0)

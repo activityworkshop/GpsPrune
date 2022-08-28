@@ -2,9 +2,8 @@ package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -12,13 +11,16 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
+import tim.prune.data.SymbolScaleFactor;
 import tim.prune.gui.BaseImageDefinitionPanel;
 import tim.prune.gui.DecimalNumberField;
+import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.TerrainDefinitionPanel;
 import tim.prune.threedee.TerrainDefinition;
 import tim.prune.threedee.ThreeDException;
@@ -35,6 +37,8 @@ public class ShowThreeDFunction extends GenericFunction
 	private JDialog _dialog = null;
 	/** Field for altitude exaggeration value */
 	private DecimalNumberField _exaggField = null;
+	/** Field for symbol scaling value */
+	private DecimalNumberField _symbolScaleField = null;
 	/** Component for defining the base image */
 	private BaseImageDefinitionPanel _baseImagePanel = null;
 	/** Component for defining the terrain */
@@ -44,8 +48,7 @@ public class ShowThreeDFunction extends GenericFunction
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public ShowThreeDFunction(App inApp)
-	{
+	public ShowThreeDFunction(App inApp) {
 		super(inApp);
 	}
 
@@ -102,14 +105,26 @@ public class ShowThreeDFunction extends GenericFunction
 
 		JPanel innerPanel = new JPanel();
 		innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.Y_AXIS));
-		// Panel for altitude exaggeration
-		JPanel exaggPanel = new JPanel();
-		exaggPanel.setLayout(new FlowLayout());
-		exaggPanel.add(new JLabel(I18nManager.getText("dialog.3d.altitudefactor") + ": "));
+		innerPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		// grid
+		JPanel gridPanel = new JPanel();
+		GuiGridLayout grid = new GuiGridLayout(gridPanel, new double[] {3.0, 1.0},
+			new boolean[] {true, false});
+		// Row for altitude exaggeration
+		final JLabel altLabel = new JLabel(I18nManager.getText("dialog.3d.altitudefactor") + ": ");
+		altLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+		grid.add(altLabel);
 		_exaggField = new DecimalNumberField(); // don't allow negative numbers
 		_exaggField.setText("5.0");
-		exaggPanel.add(_exaggField);
-		innerPanel.add(exaggPanel);
+		grid.add(_exaggField);
+		// Row for symbol scaling
+		JLabel scaleLabel = new JLabel(I18nManager.getText("dialog.3d.symbolscalefactor") + ": ");
+		scaleLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+		grid.add(scaleLabel);
+		_symbolScaleField = new DecimalNumberField(); // don't allow negative numbers
+		_symbolScaleField.setText("1.0");
+		grid.add(_symbolScaleField);
+		innerPanel.add(gridPanel);
 		innerPanel.add(Box.createVerticalStrut(4));
 
 		// Panel for terrain
@@ -126,25 +141,13 @@ public class ShowThreeDFunction extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-				new Thread(new Runnable() {
-					public void run() {
-						finish();  // needs to be in separate thread
-					}
-				}).start();
-			}
+		okButton.addActionListener((e) -> {
+			_dialog.dispose();
+			new Thread(() -> {finish();}).start();
 		});
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener((e) -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -170,6 +173,10 @@ public class ShowThreeDFunction extends GenericFunction
 				// Pass the parameters to use and show the window
 				window.setTrack(_app.getTrackInfo().getTrack());
 				window.setAltitudeFactor(_exaggField.getValue());
+				if (_symbolScaleField.isEmpty()) {
+					_symbolScaleField.setValue(1.0);
+				}
+				window.setSymbolScalingFactor(SymbolScaleFactor.validateFactor(_symbolScaleField.getValue()));
 				// Also pass the base image parameters from input dialog
 				window.setBaseImageParameters(_baseImagePanel.getImageDefinition());
 				window.setTerrainParameters(new TerrainDefinition(_terrainPanel.getUseTerrain(), _terrainPanel.getGridSize()));

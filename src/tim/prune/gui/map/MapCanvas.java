@@ -22,6 +22,8 @@ import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MultiStateCheckBox;
 import tim.prune.gui.colour.PointColourer;
+import tim.prune.gui.colour.WaypointColours;
+import tim.prune.gui.colour.WaypointSymbolPainter;
 import tim.prune.tips.TipManager;
 
 /**
@@ -88,6 +90,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private int _drawMode = MODE_DEFAULT;
 	/** Current waypoint icon definition */
 	private WpIconDefinition _waypointIconDefinition = null;
+	/** Colours for waypoint icons */
+	private final WaypointColours _waypointColours = new WaypointColours();
 	/** Remember whether map is being drawn with empty track or not */
 	private boolean _emptyTrack = true;
 
@@ -345,7 +349,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				}
 			}
 		}
-		catch (Exception e) {}
+		catch (Exception ignored) {}
 		_latRange = new DoubleRange(45.8, 47.9);
 		_lonRange = new DoubleRange(5.9, 10.6);
 	}
@@ -393,19 +397,23 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if (_mapImage != null)
 			{
 				Graphics2D g2 = (Graphics2D) (inG.create());
-				final double preScale = g2.getTransform().getScaleX();
+				final boolean allowScaling = Config.getConfigBoolean(Config.KEY_OSSCALING);
+				final double preScale = allowScaling ? 1.0 : g2.getTransform().getScaleX();
 				if (preScale != _lastScale)
 				{
 					_lastScale = preScale;
 					_mapPosition.setDisplayScaling(_lastScale);
 					_scaleBar.setDisplayScaling(_lastScale);
 				}
-				AffineTransform at = g2.getTransform();
-				final double xTranslate = at.getTranslateX();
-				final double yTranslate = at.getTranslateY();
-				at.setToScale(1.0, 1.0);
-				at.translate(xTranslate, yTranslate);
-				g2.setTransform(at);
+				if (!allowScaling)
+				{
+					AffineTransform at = g2.getTransform();
+					final double xTranslate = at.getTranslateX();
+					final double yTranslate = at.getTranslateY();
+					at.setToScale(1.0, 1.0);
+					at.translate(xTranslate, yTranslate);
+					g2.setTransform(at);
+				}
 				g2.drawImage(_mapImage, 0, 0, getScaledWidth(), getScaledHeight(), null);
 			}
 
@@ -800,6 +808,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			// TODO: Expand font size of inG using _lastScale
 			FontMetrics fm = inG.getFontMetrics();
 			final int nameHeight = fm.getHeight();
+			_waypointColours.setSalt(Config.getConfigInt(Config.KEY_WPICON_SALT));
 			int numWaypoints = 0;
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
@@ -816,9 +825,11 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						else
 						{
 							ImageIcon icon = _waypointIconDefinition.getImageIcon();
-							if (icon != null)
+							Color paintColor = _waypointColours.getColourForType(_track.getPoint(i).getFieldValue(Field.WAYPT_TYPE));
+							Image painted = WaypointSymbolPainter.paintSymbol(icon, paintColor);
+							if (painted != null)
 							{
-								inG.drawImage(icon.getImage(), px-_waypointIconDefinition.getXOffset(),
+								inG.drawImage(painted, px-_waypointIconDefinition.getXOffset(),
 									py-_waypointIconDefinition.getYOffset(), null);
 							}
 						}

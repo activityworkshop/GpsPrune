@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.Iterator;
+import java.util.TimeZone;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -43,6 +44,7 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.ColourUtils;
 import tim.prune.config.Config;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
@@ -60,13 +62,13 @@ import tim.prune.load.GenericFileFilter;
 import tim.prune.save.xml.XmlUtils;
 
 /**
- * Class to export track information
+ * Class to export the current track information
  * into a specified Kml or Kmz file
  */
 public class KmlExporter extends GenericFunction implements Runnable
 {
-	private TrackInfo _trackInfo = null;
-	private Track _track = null;
+	private final TrackInfo _trackInfo;
+	private final Track _track;
 	private JDialog _dialog = null;
 	private JTextField _descriptionField = null;
 	private PointTypeSelector _pointTypeSelector = null;
@@ -777,12 +779,13 @@ public class KmlExporter extends GenericFunction implements Runnable
 			// Create html for the thumbnail images
 			desc = "<![CDATA[<br/><table border='0'><tr><td><center><img src='images/image"
 				+ inImageNumber + ".jpg' width='" + imageSize.width + "' height='" + imageSize.height + "'></center></td></tr>"
-				+ "<tr><td><center>" + name + "</center></td></tr></table>]]>";
+				+ "<tr><td><center>" + name + wrapInBrackets(getPhotoTimeString(inPoint))
+				+ "</center></td></tr>"
+				+ wrapInTableRow(getPointCaption(inPoint)) + "</table>]]>";
 		}
 		// Export point
 		exportNamedPoint(inPoint, inWriter, name, desc, "camera_icon", inAbsoluteAltitude);
 	}
-
 
 	/**
 	 * Export the specified named point into the file, like waypoint or photo point
@@ -933,5 +936,55 @@ public class KmlExporter extends GenericFunction implements Runnable
 			}
 		}
 		return numPhotos;
+	}
+
+	/**
+	 * @param inPoint photo point
+	 * @return either point timestamp or photo timestamp, as string
+	 */
+	private static String getPhotoTimeString(DataPoint inPoint)
+	{
+		TimeZone timezone = TimezoneHelper.getSelectedTimezone();
+		if (inPoint.hasTimestamp()) {
+			return inPoint.getTimestamp().getTimeText(timezone);
+		}
+		if (inPoint.getPhoto().hasTimestamp()) {
+			return inPoint.getPhoto().getTimestamp().getTimeText(timezone);
+		}
+		return null;
+	}
+
+	/**
+	 * @return given string wrapped in brackets (unless it's missing)
+	 */
+	private static String wrapInBrackets(String fieldString)
+	{
+		if (fieldString == null || fieldString.isBlank()) {
+			return "";
+		}
+		return " (" + fieldString + ")";
+	}
+
+	/**
+	 * @return either point description or comment
+	 */
+	private static String getPointCaption(DataPoint inPoint)
+	{
+		final String desc = inPoint.getFieldValue(Field.DESCRIPTION);
+		if (desc != null && !desc.isBlank()) {
+			return desc;
+		}
+		return inPoint.getFieldValue(Field.COMMENT);
+	}
+
+	/**
+	 * @return given string wrapped in a table row (unless it's missing)
+	 */
+	private static String wrapInTableRow(String fieldString)
+	{
+		if (fieldString == null || fieldString.isBlank()) {
+			return "";
+		}
+		return "<tr><td>" + fieldString + "</td></tr>";
 	}
 }

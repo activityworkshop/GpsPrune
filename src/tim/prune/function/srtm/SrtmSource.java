@@ -17,7 +17,7 @@ public abstract class SrtmSource
 {
 	/** Possible results of the download */
 	public enum Result {DOWNLOADED, NOTHING_TO_DO, DOWNLOAD_FAILED,
-		CACHE_FAILED, NOT_ENABLED, AUTH_FAILED};
+		CACHE_FAILED, NOT_ENABLED};
 
 	/** Altitude below which is considered void */
 	public static final int VOID_VAL = -32768;
@@ -34,7 +34,7 @@ public abstract class SrtmSource
 	 * Download a single tile of SRTM data
 	 * @param inTile tile to get
 	 */
-	public abstract Result downloadTile(SrtmTile inTile);
+	public abstract Result downloadTile(SrtmTile inTile) throws SrtmAuthException;
 
 	/**
 	 * @return filename with which this tile data will be cached

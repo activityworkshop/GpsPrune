@@ -1,5 +1,5 @@
-GpsPrune version 21.3
-=====================
+GpsPrune version 22
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_21.3.jar
+   java -jar gpsprune_22.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,28 +25,19 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_21.3.jar --lang=DE
+   java -jar gpsprune_22.jar --lang=DE
 
 
-New with version 21.3
+New with version 22
 =====================
-  - Bugfix for map scalebar due to display scaling of OS (introduced by 21.2)
-  - Bugfix for intermittent tile loading issues (introduced by 21.2)
-  - Bugfix for cosmetics of edit point dialog
-  - Make coordinate pasting tolerant of semicolons as separators
-
-New with version 21.2
-=====================
-  - Don't apply display scaling of OS to map tiles, so that they remain sharp (Issue #16)
-  - Ability to use 512-pixel tiles (related to Issue #16)
-  - Ability to parse truncated Pluscodes and find the nearest one
-
-New with version 21.1
-=====================
-  - Addition of Catalan language thanks to J.M. Ferrer i Gener
-  - Modification of zoom behaviour when started with data file(s) (Issue #43)
-  - Ability to use parameterized tile server definitions
-  - Tweak scale lines on profile view
+The following fixes and additions were made since version 21:
+  - Rendering of waypoint icons using different colours according to chosen colour set (Issue #47)
+  - Possibility to scale the spheres and cylinders in the 3d rendering (Issue #49)
+  - Additional photo details in KMZ export (wishlist 79)
+  - Possibility to choose whether to apply display scaling of OS to map tiles (Issue #50, related to Issue #16)
+  - Saving compression parameters in settings (Issue #51)
+  - Remove HikeBikeMap, add OpenTopoMap instead
+  - Menu item to toggle the current point's segment flag
 
 New with version 21
 ===================
@@ -60,6 +51,10 @@ The following fixes and additions were made since version 20:
   - Extra messages to avoid confusion about saving the settings
   - Allow editing comment and description when these are not yet in the track's field list
   - Apply estimated timestamps to range (related to Issue #35)
+  - Don't apply display scaling of OS to map tiles, so that they remain sharp (Issue #16)
+  - Ability to use 512-pixel tiles (related to Issue #16)
+  - Ability to parse truncated Pluscodes and find the nearest one
+  - Addition of Catalan language thanks to J.M. Ferrer i Gener
 
 New with version 20
 ===================

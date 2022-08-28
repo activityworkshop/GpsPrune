@@ -16,10 +16,10 @@ import tim.prune.data.Track;
  */
 public abstract class CompressionAlgorithm
 {
-	protected JCheckBox _activateCheckBox = null;
+	protected final JCheckBox _activateCheckBox;
 	protected SummaryLabel _summaryLabel = null;
-	protected Track _track = null;
-	protected TrackDetails _trackDetails = null;
+	protected final Track _track;
+	protected final TrackDetails _trackDetails;
 
 
 	/**
@@ -106,4 +106,17 @@ public abstract class CompressionAlgorithm
 	 */
 	protected abstract int compress(boolean[] inFlags);
 
+	/**
+	 * @return String to save in Settings
+	 */
+	public String getSettingsString() {
+		return _activateCheckBox.isSelected() ? "1" : "";
+	}
+
+	/**
+	 * @param inSettings settings string from Config
+	 */
+	public void applySettingsString(String inSettings) {
+		_activateCheckBox.setSelected(inSettings != null && !inSettings.isEmpty());
+	}
 }

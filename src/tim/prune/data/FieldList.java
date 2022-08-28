@@ -1,48 +1,33 @@
 package tim.prune.data;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 /**
  * Class to hold an ordered list of fields
  * to match the value list in a data point
  */
 public class FieldList
 {
-	/** Array of Field objects making the list */
-	private Field[] _fieldArray;
+	/** List of Field objects */
+	private final ArrayList<Field> _fields;
 
 
 	/**
 	 * Constructor for an empty field list
 	 */
-	public FieldList()
-	{
-		_fieldArray = new Field[0];
+	public FieldList() {
+		_fields = new ArrayList<>();
 	}
 
 	/**
-	 * Constructor for a given number of empty fields
-	 * @param inNumFields
+	 * Constructor giving multiple Field objects
+	 * @param inFields Field objects
 	 */
-	public FieldList(int inNumFields)
+	public FieldList(Field ... inFields)
 	{
-		if (inNumFields < 0) inNumFields = 0;
-		_fieldArray = new Field[inNumFields];
-	}
-
-	/**
-	 * Constructor giving array of Field objects
-	 * @param inFieldArray array of Field objects
-	 */
-	public FieldList(Field[] inFieldArray)
-	{
-		if (inFieldArray == null || inFieldArray.length == 0)
-		{
-			_fieldArray = new Field[0];
-		}
-		else
-		{
-			_fieldArray = new Field[inFieldArray.length];
-			System.arraycopy(inFieldArray, 0, _fieldArray, 0, inFieldArray.length);
-		}
+		this();
+		Collections.addAll(_fields, inFields);
 	}
 
 	/**
@@ -52,11 +37,13 @@ public class FieldList
 	 */
 	public int getFieldIndex(Field inField)
 	{
-		if (inField == null) return -1;
-		for (int f=0; f<_fieldArray.length; f++)
+		int index = 0;
+		for (Field field : _fields)
 		{
-			if (_fieldArray[f] != null && _fieldArray[f].equals(inField))
-				return f;
+			if (field != null && field.equals(inField)) {
+				return index;
+			}
+			index++;
 		}
 		return -1;
 	}
@@ -67,19 +54,16 @@ public class FieldList
 	 * @param inField Field to check
 	 * @return true if the FieldList contains the given field
 	 */
-	public boolean contains(Field inField)
-	{
-		return (getFieldIndex(inField) >= 0);
+	public boolean contains(Field inField) {
+		return getFieldIndex(inField) >= 0;
 	}
 
 
 	/**
 	 * @return number of fields in list
 	 */
-	public int getNumFields()
-	{
-		if (_fieldArray == null) return 0;
-		return _fieldArray.length;
+	public int getNumFields() {
+		return _fields.size();
 	}
 
 
@@ -90,11 +74,12 @@ public class FieldList
 	 */
 	public Field getField(int inIndex)
 	{
-		if (_fieldArray == null || inIndex < 0 || inIndex >= _fieldArray.length)
-		{
+		try {
+			return _fields.get(inIndex);
+		}
+		catch (IndexOutOfBoundsException e) {
 			return null;
 		}
-		return _fieldArray[inIndex];
 	}
 
 
@@ -105,33 +90,18 @@ public class FieldList
 	 */
 	public FieldList merge(FieldList inOtherList)
 	{
-		// count number of fields
-		int totalFields = _fieldArray.length;
-		for (int f=0; f<inOtherList._fieldArray.length; f++)
+		FieldList superset = new FieldList();
+		superset._fields.addAll(_fields);
+		if (inOtherList != null)
 		{
-			if (inOtherList._fieldArray[f] != null && !contains(inOtherList._fieldArray[f]))
+			for (Field field : inOtherList._fields)
 			{
-				totalFields++;
-			}
-		}
-		FieldList list = new FieldList(totalFields);
-		// copy these fields into array
-		System.arraycopy(_fieldArray, 0, list._fieldArray, 0, _fieldArray.length);
-		// copy additional fields from other array if any
-		if (totalFields > _fieldArray.length)
-		{
-			int fieldCounter = _fieldArray.length;
-			for (int f=0; f<inOtherList._fieldArray.length; f++)
-			{
-				if (inOtherList._fieldArray[f] != null && !contains(inOtherList._fieldArray[f]))
-				{
-					list._fieldArray[fieldCounter] = inOtherList._fieldArray[f];
-					fieldCounter++;
+				if (!contains(field)) {
+					superset._fields.add(field);
 				}
 			}
 		}
-		// return the merged list
-		return list;
+		return superset;
 	}
 
 
@@ -144,15 +114,12 @@ public class FieldList
 	{
 		// See if field is already in list
 		int currIndex = getFieldIndex(inField);
-		if (currIndex >= 0) return currIndex;
-		// Need to extend - increase array size
-		int oldNumFields = _fieldArray.length;
-		Field[] fields = new Field[oldNumFields + 1];
-		System.arraycopy(_fieldArray, 0, fields, 0, oldNumFields);
-		_fieldArray = fields;
+		if (currIndex >= 0) {
+			return currIndex;
+		}
 		// Add new field and return index
-		_fieldArray[oldNumFields] = inField;
-		return oldNumFields;
+		_fields.add(inField);
+		return getNumFields() - 1;
 	}
 
 
@@ -163,7 +130,7 @@ public class FieldList
 	{
 		StringBuilder result = new StringBuilder();
 		result.append('(');
-		for (Field field : _fieldArray) {
+		for (Field field : _fields) {
 			result.append(field.getName()).append(',');
 		}
 		result.append(')');

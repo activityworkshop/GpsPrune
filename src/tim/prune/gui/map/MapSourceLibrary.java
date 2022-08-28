@@ -11,9 +11,9 @@ import tim.prune.config.Config;
 public abstract class MapSourceLibrary
 {
 	/** list of map sources */
-	private static ArrayList<MapSource> _sourceList = null;
+	private static final ArrayList<MapSource> _sourceList;
 	/** Number of fixed sources */
-	private static int _numFixedSources = 0;
+	private static final int _numFixedSources;
 
 	// Static block to initialise source list
 	static
@@ -44,8 +44,7 @@ public abstract class MapSourceLibrary
 		_sourceList.add(new OsmMapSource("Reitkarte", "http://topo[234].wanderreitkarte.de/topo/"));
 		_sourceList.add(new OsmMapSource("Mapsforfree", "https://maps-for-free.com/layer/relief/z{z}/row{y}/{z}_{x}-{y}.jpg", "jpg",
 			"https://maps-for-free.com/layer/water/z{z}/row{y}/{z}_{x}-{y}.gif", "gif", 11));
-		_sourceList.add(new OsmMapSource("Hikebikemap", "https://tiles.wmflabs.org/hikebike/",
-			"https://tiles.wmflabs.org/hillshading/", 18));
+		_sourceList.add(new OsmMapSource("OpenTopoMap", "https://[abc].tile.opentopomap.org", "png", 17));
 		_sourceList.add(new OsmMapSource("OpenSeaMap", "http://tile.openstreetmap.org/",
 			"http://tiles.openseamap.org/seamark/", 18));
 	}

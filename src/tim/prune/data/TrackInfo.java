@@ -9,11 +9,11 @@ import tim.prune.UpdateMessageBroker;
  */
 public class TrackInfo
 {
-	private Track _track = null;
-	private Selection _selection = null;
+	private final Track _track;
+	private final Selection _selection;
 	private FileInfo _fileInfo = null;
-	private PhotoList _photoList = null;
-	private AudioList _audioList = null;
+	private final PhotoList _photoList;
+	private final AudioList _audioList;
 
 
 	/**

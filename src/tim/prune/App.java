@@ -23,6 +23,7 @@ import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.data.SourceInfo.FILE_TYPE;
 import tim.prune.data.Unit;
+import tim.prune.data.Checker.DoubleStatus;
 import tim.prune.function.AsyncMediaLoader;
 import tim.prune.function.SelectTracksFunction;
 import tim.prune.function.edit.FieldEditList;
@@ -672,8 +673,11 @@ public class App
 			return;
 		}
 		// Check for doubled track
-		if (Checker.isDoubledTrack(loadedTrack)) {
-			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.open.contentsdoubled"),
+		Checker.DoubleStatus doubleStatus = Checker.isDoubledTrack(loadedTrack);
+		if (doubleStatus != DoubleStatus.NOTHING)
+		{
+			String keySuffix = (doubleStatus == DoubleStatus.DOUBLED_WAYPOINTS_TRACKPOINTS ? "contentsdoubled.wayandtrack" : "contentsdoubled");
+			JOptionPane.showMessageDialog(_frame, I18nManager.getText("dialog.open." + keySuffix),
 				I18nManager.getText("function.open"), JOptionPane.WARNING_MESSAGE);
 		}
 

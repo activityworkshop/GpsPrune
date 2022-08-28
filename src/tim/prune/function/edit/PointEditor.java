@@ -6,7 +6,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -24,8 +23,6 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellRenderer;
 
 import tim.prune.App;
@@ -109,14 +106,8 @@ public class PointEditor
 	 * @param inTrack current track
 	 * @return list of fields for the editor
 	 */
-	private static FieldList getFieldList(Track inTrack)
-	{
-		// Make a copy of the list
-		FieldList fields = inTrack.getFieldList().merge(new FieldList());
-		// Add extra fields (if not already present) to allow adding values
-		fields.extendList(Field.DESCRIPTION);
-		fields.extendList(Field.COMMENT);
-		return fields;
+	private static FieldList getFieldList(Track inTrack) {
+		return inTrack.getFieldList().merge(new FieldList(Field.DESCRIPTION, Field.COMMENT));
 	}
 
 	/**
@@ -128,8 +119,7 @@ public class PointEditor
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout(20, 10));
 		// Create GUI layout for point editor
-		_table = new JTable(_model)
-		{
+		_table = new JTable(_model) {
 			// Paint the changed fields orange
 			public Component prepareRenderer(TableCellRenderer renderer, int row, int column)
 			{
@@ -143,12 +133,7 @@ public class PointEditor
 		};
 		_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_table.getSelectionModel().clearSelection();
-		_table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e)
-			{
-				fieldSelected();
-			}
-		});
+		_table.getSelectionModel().addListSelectionListener((e) -> fieldSelected());
 		_table.setPreferredScrollableViewportSize(new Dimension(_table.getWidth() * 2, _table.getRowHeight() * 6));
 		JScrollPane tablePane = new JScrollPane(_table);
 		tablePane.setPreferredSize(new Dimension(150, 100));
@@ -159,13 +144,9 @@ public class PointEditor
 		panel.add(topLabel, BorderLayout.NORTH);
 
 		// listener for ok event
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// update App with edit
-				confirmEdit();
-				_dialog.dispose();
-			}
+		ActionListener okListener = (e) -> {
+			confirmEdit();
+			_dialog.dispose();
 		};
 
 		JPanel rightPanel = new JPanel();
@@ -197,12 +178,7 @@ public class PointEditor
 		JPanel lowerPanel = new JPanel();
 		lowerPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		_cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		_cancelButton.addActionListener((e) -> _dialog.dispose());
 		_cancelButton.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent inE) {
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}

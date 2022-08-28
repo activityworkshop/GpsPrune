@@ -95,7 +95,6 @@ public abstract class SpeedCalculator
 			if (milliseconds >= 1000L)
 			{
 				double dist = Distance.convertRadiansToDistance(totalRadians);
-				// Store the value and maintain max and min values
 				speedValue = dist / milliseconds * 1000.0 * 60.0 * 60.0; // convert from per millisec to per hour
 				pointHasSpeed = true;
 			}

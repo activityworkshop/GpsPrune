@@ -36,7 +36,7 @@ public class Track
 	public Track()
 	{
 		// create field list
-		_masterFieldList = new FieldList(null);
+		_masterFieldList = new FieldList();
 		// make empty DataPoint array
 		_dataPoints = new DataPoint[0];
 		_numPoints = 0;
@@ -75,13 +75,11 @@ public class Track
 		_masterFieldList = new FieldList(inFieldArray);
 		// make DataPoint object from each point in inPointList
 		_dataPoints = new DataPoint[inPointArray.length];
-		String[] dataArray = null;
 		int pointIndex = 0;
-		for (int p=0; p < inPointArray.length; p++)
+		for (Object[] objects : inPointArray)
 		{
-			dataArray = (String[]) inPointArray[p];
 			// Convert to DataPoint objects
-			DataPoint point = new DataPoint(dataArray, _masterFieldList, inOptions);
+			DataPoint point = new DataPoint((String[]) objects, _masterFieldList, inOptions);
 			if (point.isValid())
 			{
 				_dataPoints[pointIndex] = point;
@@ -223,10 +221,8 @@ public class Track
 	 * @param inIndex point index
 	 * @return true if successful
 	 */
-	public boolean deletePoint(int inIndex)
-	{
-		boolean answer = deleteRange(inIndex, inIndex);
-		return answer;
+	public boolean deletePoint(int inIndex) {
+		return deleteRange(inIndex, inIndex);
 	}
 
 
@@ -1111,9 +1107,7 @@ public class Track
 				Field editField = edit.getField();
 				inPoint.setFieldValue(editField, edit.getValue(), inUndo);
 				// Check that master field list has this field already (maybe point name has been added)
-				if (!_masterFieldList.contains(editField)) {
-					_masterFieldList.extendList(editField);
-				}
+				_masterFieldList.extendList(editField);
 				// check coordinates
 				coordsChanged |= (editField.equals(Field.LATITUDE)
 					|| editField.equals(Field.LONGITUDE) || editField.equals(Field.ALTITUDE));

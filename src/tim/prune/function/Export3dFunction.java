@@ -12,6 +12,8 @@ public abstract class Export3dFunction extends GenericFunction
 {
 	/** altitude exaggeration factor */
 	protected double _altFactor = 5.0;
+	/** symbol scaling factor */
+	protected double _symbolScaleFactor = 1.0;
 	/** definition of terrain */
 	protected TerrainDefinition _terrainDef = null;
 	/** definition of base image */
@@ -44,18 +46,23 @@ public abstract class Export3dFunction extends GenericFunction
 	}
 
 	/**
+	 * @param inFactor scaling factor
+	 */
+	public void setSymbolScalingFactor(double inFactor) {
+		_symbolScaleFactor = inFactor;
+	}
+
+	/**
 	 * @param inDefinition terrain definition, or null
 	 */
-	public void setTerrainDefinition(TerrainDefinition inDefinition)
-	{
+	public void setTerrainDefinition(TerrainDefinition inDefinition) {
 		_terrainDef = inDefinition;
 	}
 
 	/**
 	 * @param inDefinition image definition, or null
 	 */
-	public void setImageDefinition(ImageDefinition inDefinition)
-	{
+	public void setImageDefinition(ImageDefinition inDefinition) {
 		_imageDef = inDefinition;
 	}
 }

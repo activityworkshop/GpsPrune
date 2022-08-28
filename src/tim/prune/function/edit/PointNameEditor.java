@@ -37,8 +37,7 @@ public class PointNameEditor extends GenericFunction
 	 * Constructor
 	 * @param inApp application object to inform of success
 	 */
-	public PointNameEditor(App inApp)
-	{
+	public PointNameEditor(App inApp) {
 		super(inApp);
 	}
 
@@ -94,8 +93,7 @@ public class PointNameEditor extends GenericFunction
 			public void keyReleased(KeyEvent e)
 			{
 				// close dialog if escape pressed
-				if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
-				{
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					_dialog.dispose();
 				}
 				// Enable ok button if name changed
@@ -147,12 +145,7 @@ public class PointNameEditor extends GenericFunction
 		JPanel lowerPanel = new JPanel();
 		lowerPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener((e) -> _dialog.dispose());
 		lowerPanel.add(cancelButton);
 		_okButton = new JButton(I18nManager.getText("button.ok"));
 		_okButton.setEnabled(false);
@@ -178,11 +171,10 @@ public class PointNameEditor extends GenericFunction
 	 * @param inString String to convert
 	 * @return capitalized String
 	 */
-	private static String titleCase(String inString)
+	static String titleCase(String inString)
 	{
 		// Check first for empty strings
-		if (inString == null || inString.equals(""))
-		{
+		if (inString == null || inString.equals("")) {
 			return "";
 		}
 		StringBuilder buffer = new StringBuilder();

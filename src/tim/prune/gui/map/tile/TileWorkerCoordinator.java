@@ -97,7 +97,7 @@ public class TileWorkerCoordinator implements Coordinator
 			ArrayList<Thread> livingThreads = new ArrayList<>();
 			for (Thread t : _threads)
 			{
-				if (t.isAlive()) {
+				if (t.isAlive() && t != Thread.currentThread()) {
 					livingThreads.add(t);
 				}
 			}

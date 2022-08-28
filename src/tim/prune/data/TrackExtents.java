@@ -7,9 +7,9 @@ package tim.prune.data;
 public class TrackExtents
 {
 	/** Track object */
-	private Track _track = null;
+	private final Track _track;
 	/** X and Y ranges */
-	private DoubleRange _xRange   = null, _yRange   = null;
+	private final DoubleRange _xRange, _yRange;
 
 	/** Border multiplier */
 	private static final double BORDER_MULTIPLIER = 1.1; // 10% border

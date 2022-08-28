@@ -199,11 +199,11 @@ public class MapTileManager implements TileManager
 	@Override
 	public void returnTile(TileDef inDef, TileBytes inResult)
 	{
-		if (inDef == null || inDef._mapSource == null || inResult == null || inResult.data.length == 0) {
+		if (inDef == null || inDef._mapSource == null || inResult == null || inResult.isEmpty()) {
 			return;
 		}
 		// construct image from result bytes
-		Image image = Toolkit.getDefaultToolkit().createImage(inResult.data);
+		Image image = Toolkit.getDefaultToolkit().createImage(inResult.getData());
 		image.getWidth((img, infoFlags, x, y, width, height) -> processReturnedTile(inDef, inResult, image, infoFlags));
 	}
 

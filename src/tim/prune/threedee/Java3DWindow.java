@@ -5,8 +5,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.GeneralPath;
@@ -74,6 +72,7 @@ public class Java3DWindow implements ThreeDWindow
 	private ThreeDModel _model = null;
 	private UprightOrbiter _orbit = null;
 	private double _altFactor = -1.0;
+	private double _symbolScaleFactor = -1.0;
 	private ImageDefinition _imageDefinition = null;
 	private GroutedImage _baseImage = null;
 	private TerrainDefinition _terrainDefinition = null;
@@ -94,8 +93,7 @@ public class Java3DWindow implements ThreeDWindow
 	 * Constructor
 	 * @param inFrame parent frame
 	 */
-	public Java3DWindow(JFrame inFrame)
-	{
+	public Java3DWindow(JFrame inFrame) {
 		_parentFrame = inFrame;
 	}
 
@@ -104,17 +102,20 @@ public class Java3DWindow implements ThreeDWindow
 	 * Set the track object
 	 * @param inTrack Track object
 	 */
-	public void setTrack(Track inTrack)
-	{
+	public void setTrack(Track inTrack) {
 		_track = inTrack;
 	}
 
 	/**
 	 * @param inFactor altitude factor to use
 	 */
-	public void setAltitudeFactor(double inFactor)
-	{
+	public void setAltitudeFactor(double inFactor) {
 		_altFactor = inFactor;
+	}
+
+	@Override
+	public void setSymbolScalingFactor(double inFactor) {
+		_symbolScaleFactor = inFactor;
 	}
 
 	/**
@@ -129,22 +130,22 @@ public class Java3DWindow implements ThreeDWindow
 			_baseImage = new MapGrouter().createMapImage(_track, MapSourceLibrary.getSource(inDefinition.getSourceIndex()),
 				inDefinition.getZoom());
 		}
-		else _baseImage = null;
+		else {
+			_baseImage = null;
+		}
 	}
 
 	/**
 	 * Set the terrain parameters
 	 */
-	public void setTerrainParameters(TerrainDefinition inDefinition)
-	{
+	public void setTerrainParameters(TerrainDefinition inDefinition) {
 		_terrainDefinition = inDefinition;
 	}
 
 	/**
 	 * Set the current data status
 	 */
-	public void setDataStatus(DataStatus inStatus)
-	{
+	public void setDataStatus(DataStatus inStatus) {
 		_dataStatus = inStatus;
 	}
 
@@ -220,24 +221,17 @@ public class Java3DWindow implements ThreeDWindow
 		panel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		// Add button for exporting pov
 		JButton povButton = new JButton(I18nManager.getText("function.exportpov"));
-		povButton.addActionListener(new ActionListener() {
-			/** Export pov button pressed */
-			public void actionPerformed(ActionEvent e)
-			{
-				if (_orbit != null) {
-					callbackRender(FunctionLibrary.FUNCTION_POVEXPORT);
-				}
-			}});
+		povButton.addActionListener((e) -> {
+			if (_orbit != null) {
+				callbackRender(FunctionLibrary.FUNCTION_POVEXPORT);
+			}
+		});
 		panel.add(povButton);
 		// Close button
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
-		closeButton.addActionListener(new ActionListener()
-		{
-			/** Close button pressed - clean up */
-			public void actionPerformed(ActionEvent e) {
-				dispose();
-				_orbit = null;
-			}
+		closeButton.addActionListener((e) -> {
+			dispose();
+			_orbit = null;
 		});
 		panel.add(closeButton);
 		_frame.getContentPane().add(panel, BorderLayout.SOUTH);
@@ -472,7 +466,7 @@ public class Java3DWindow implements ThreeDWindow
 	 * @param inModel model containing data
 	 * @return Group object containing spheres, rods etc
 	 */
-	private static Group createDataPoints(ThreeDModel inModel)
+	private Group createDataPoints(ThreeDModel inModel)
 	{
 		// Add points to model
 		Group group = new Group();
@@ -508,11 +502,10 @@ public class Java3DWindow implements ThreeDWindow
 	 * @param inPointPos position of point
 	 * @return Group object containing sphere
 	 */
-	private static Group createWaypoint(Point3d inPointPos)
+	private Group createWaypoint(Point3d inPointPos)
 	{
 		Material mat = getWaypointMaterial();
-		// MAYBE: sort symbol scaling
-		Sphere dot = new Sphere(0.35f); // * symbolScaling / 100f);
+		Sphere dot = new Sphere((float) (0.35 * _symbolScaleFactor));
 		return createBall(inPointPos, dot, mat);
 	}
 
@@ -531,11 +524,10 @@ public class Java3DWindow implements ThreeDWindow
 	/**
 	 * @return track point object
 	 */
-	private static Group createTrackpoint(Point3d inPointPos, byte inHeightCode)
+	private Group createTrackpoint(Point3d inPointPos, byte inHeightCode)
 	{
 		Material mat = getTrackpointMaterial(inHeightCode);
-		// MAYBE: sort symbol scaling
-		Sphere dot = new Sphere(0.2f);
+		Sphere dot = new Sphere((float) (0.2 * _symbolScaleFactor));
 		return createBall(inPointPos, dot, mat);
 	}
 
@@ -567,7 +559,7 @@ public class Java3DWindow implements ThreeDWindow
 	 * @param inMaterial material object
 	 * @return Group containing sphere
 	 */
-	private static Group createBall(Point3d inPosition, Sphere inSphere, Material inMaterial)
+	private Group createBall(Point3d inPosition, Sphere inSphere, Material inMaterial)
 	{
 		Group group = new Group();
 		// Create ball and add to group
@@ -581,7 +573,8 @@ public class Java3DWindow implements ThreeDWindow
 		ballShiftTrans.addChild(inSphere);
 		group.addChild(ballShiftTrans);
 		// Also create rod for ball to sit on
-		Cylinder rod = new Cylinder(0.1f, (float) inPosition.y);
+		final double cylinderRadius = 0.1 * _symbolScaleFactor;
+		Cylinder rod = new Cylinder((float) cylinderRadius, (float) inPosition.y);
 		Material rodMat = new Material(new Color3f(0.2f, 0.2f, 0.2f),
 			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.2f, 0.2f, 0.2f),
 			new Color3f(0.05f, 0.05f, 0.05f), 0.4f);
@@ -679,6 +672,7 @@ public class Java3DWindow implements ThreeDWindow
 		// Give the settings to the rendering function
 		inFunction.setCameraCoordinates(result.x, result.y, result.z);
 		inFunction.setAltitudeExaggeration(_altFactor);
+		inFunction.setSymbolScalingFactor(_symbolScaleFactor);
 		inFunction.setTerrainDefinition(_terrainDefinition);
 		inFunction.setImageDefinition(_imageDefinition);
 

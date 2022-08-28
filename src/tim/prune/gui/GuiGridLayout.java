@@ -62,6 +62,13 @@ public class GuiGridLayout
 	}
 
 	/**
+	 * @param inPadding y padding of grid cells (default 1)
+	 */
+	public void setYPadding(int inPadding) {
+		_constraints.ipady = inPadding;
+	}
+
+	/**
 	 * Add the given component to the grid
 	 * @param inComponent component to add
 	 */

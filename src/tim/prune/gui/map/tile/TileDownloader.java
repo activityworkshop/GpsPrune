@@ -30,19 +30,16 @@ public class TileDownloader extends TileWorker
 			URLConnection conn = tileUrl.openConnection();
 			conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
 			in = conn.getInputStream();
-			int len = conn.getContentLength();
-			if (len > 0)
+			result = new TileBytes();
+			int bytesRead = 0;
+			byte[] buffer = new byte[4096];
+			while (bytesRead >= 0)
 			{
-				result = new TileBytes(len);
-				int totalRead = 0;
-				while (totalRead < len)
-				{
-					int numRead = in.read(result.data, totalRead, len-totalRead);
-					totalRead += numRead;
-				}
-
-				// TODO: if this worked, maybe we just came back online?
+				bytesRead = in.read(buffer, 0, buffer.length);
+				result.addBytes(buffer, bytesRead);
 			}
+
+			// TODO: if this worked, maybe we just came back online?
 		}
 		catch (IOException e)
 		{

@@ -49,7 +49,6 @@ public class TextFileLoader
 	private JLabel _statusLabel = null;
 	private DelimiterInfo[] _delimiterInfos = null;
 	private ContentCacher _contentCacher = null;
-	private JList<String> _snippetBox = null;
 	private FileExtractTableModel _fileExtractTableModel = null;
 	private JTable _fieldTable;
 	private FieldSelectionTableModel _fieldTableModel = null;
@@ -364,10 +363,10 @@ public class TextFileLoader
 		// Group radio buttons
 		ButtonGroup delimGroup = new ButtonGroup();
 		DelimListener delimListener = new DelimListener();
-		for (int i=0; i<_delimiterRadios.length; i++)
+		for (JRadioButton delimiterRadio : _delimiterRadios)
 		{
-			delimGroup.add(_delimiterRadios[i]);
-			_delimiterRadios[i].addActionListener(delimListener);
+			delimGroup.add(delimiterRadio);
+			delimiterRadio.addActionListener(delimListener);
 		}
 		_otherDelimiterText.getDocument().addDocumentListener(delimListener);
 		delimsPanel.add(new JLabel(""));
@@ -376,9 +375,9 @@ public class TextFileLoader
 		delimsPanel.add(_statusLabel);
 		firstCard.add(delimsPanel, BorderLayout.SOUTH);
 		// load snippet to show first few lines
-		_snippetBox = new JList<String>(_contentCacher.getSnippet(SNIPPET_SIZE, MAX_SNIPPET_WIDTH));
-		_snippetBox.setEnabled(false);
-		firstCard.add(makeLabelledPanel("dialog.openoptions.filesnippet", _snippetBox), BorderLayout.CENTER);
+		JList<String> snippetBox = new JList<>(_contentCacher.getSnippet(SNIPPET_SIZE, MAX_SNIPPET_WIDTH));
+		snippetBox.setEnabled(false);
+		firstCard.add(makeLabelledPanel("dialog.openoptions.filesnippet", snippetBox), BorderLayout.CENTER);
 
 		// Second screen, for field order selection
 		JPanel secondCard = new JPanel();
@@ -644,11 +643,9 @@ public class TextFileLoader
 		_fieldTableModel.updateData(startFieldArray);
 		_fieldTable.setModel(_fieldTableModel);
 		// add dropdowns to second column
-		JComboBox<String> fieldTypesBox = new JComboBox<String>();
-		String[] fieldNames = Field.getFieldNames();
-		for (int i=0; i<fieldNames.length; i++)
-		{
-			fieldTypesBox.addItem(fieldNames[i]);
+		JComboBox<String> fieldTypesBox = new JComboBox<>();
+		for (String fieldName : Field.getFieldNames()) {
+			fieldTypesBox.addItem(fieldName);
 		}
 		_fieldTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(fieldTypesBox));
 
@@ -692,6 +689,7 @@ public class TextFileLoader
 		SourceInfo sourceInfo = (_file == null ? null : new SourceInfo(_file, SourceInfo.FILE_TYPE.TEXT));
 		PointCreateOptions options = new PointCreateOptions();
 		options.setAltitudeUnits(_altitudeUnitsDropdown.getSelectedIndex() == 0 ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);
+		_lastAltitudeUnit = options.getAltitudeUnits();
 		Unit hSpeedUnit = UnitSetLibrary.ALL_SPEED_UNITS[_hSpeedUnitsDropdown.getSelectedIndex()];
 		options.setSpeedUnits(hSpeedUnit);
 		Unit vSpeedUnit = UnitSetLibrary.ALL_SPEED_UNITS[_vSpeedUnitsDropdown.getSelectedIndex()];

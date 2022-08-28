@@ -77,10 +77,20 @@ public abstract class SingleParameterAlgorithm extends CompressionAlgorithm
 	}
 
 	/**
-	 * @return the text field component
+	 * @return String to save in Settings
 	 */
-	protected JTextField getTextField()
+	public String getSettingsString() {
+		return _activateCheckBox.isSelected() ? _parameterField.getText() : "";
+	}
+
+	/**
+	 * @param inSettings settings string from Config
+	 */
+	public void applySettingsString(String inSettings)
 	{
-		return _parameterField;
+		super.applySettingsString(inSettings);
+		if (isActivated()) {
+			_parameterField.setText(inSettings);
+		}
 	}
 }

@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashSet;
 import java.util.zip.ZipEntry;
@@ -195,6 +196,8 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 					}
 					catch (IOException ioe) {
 						errorMessage = ioe.getClass().getName() + " - " + ioe.getMessage();
+					} catch (SrtmAuthException authExc) {
+						errorMessage = I18nManager.getText("error.srtm.authenticationfailed") + " - " + authExc.getMessage();
 					}
 				}
 			}
@@ -205,6 +208,9 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			return;
 		}
 
+		if (errorMessage != null) {
+			_app.showErrorMessageNoLookup(getNameKey(), errorMessage);
+		}
 		if (numAltitudesFound > 0)
 		{
 			// Inform app including undo information
@@ -216,9 +222,6 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 				_app.completeFunction(undo,
 					I18nManager.getTextWithNumber("confirm.lookupsrtm", numAltitudesFound));
 			}
-		}
-		else if (errorMessage != null) {
-			_app.showErrorMessageNoLookup(getNameKey(), errorMessage);
 		}
 		else if (numTiles > 0) {
 			_app.showErrorMessage(getNameKey(), "error.lookupsrtm.nonefound");
@@ -234,9 +237,10 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 * @param inTileSource tile source to use
 	 * @return int array containing heights
 	 * @throws IOException on IO failure
+	 * @throws SrtmAuthException on authentication failure
 	 */
 	private int[] getHeightsForTile(SrtmTile inTile, SrtmSource inTileSource)
-		throws IOException
+		throws IOException, SrtmAuthException
 	{
 		int[] heights = null;
 		// Open zipinputstream on url and check size
@@ -262,8 +266,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			inStream.close();
 		}
 
-		if (!entryOk)
-		{
+		if (!entryOk) {
 			heights = null;
 		}
 		return heights;
@@ -274,9 +277,10 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 * @param inTile tile to get
 	 * @param inSrtmSource source of data to use
 	 * @return ZipInputStream either on the local file or on the downloaded zip file
+	 * @throws SrtmAuthException if authentication failed
 	 */
 	private ZipInputStream getStreamToSrtmData(SrtmTile inTile, SrtmSource inSrtmSource)
-	throws IOException
+	throws IOException, SrtmAuthException
 	{
 		ZipInputStream localData = null;
 		try {
@@ -297,15 +301,18 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			_numCached++;
 			return getStreamToLocalHgtFile(inSrtmSource.getCacheDir(), inSrtmSource.getFilename(inTile));
 		}
-		if (result == SrtmSource.Result.NOT_ENABLED || result == SrtmSource.Result.AUTH_FAILED)
-		{
+		if (result == SrtmSource.Result.NOT_ENABLED) {
 			return null;
 		}
 		// If we don't have a cache, we may be able to download it temporarily
 		if (result != SrtmSource.Result.DOWNLOAD_FAILED)
 		{
 			_hadToDownload = true;
-			URLConnection conn = inSrtmSource.getUrl(inTile).openConnection();
+			URL tileUrl = inSrtmSource.getUrl(inTile);
+			if (tileUrl == null) {
+				return null;
+			}
+			URLConnection conn = tileUrl.openConnection();
 			conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
 			return new ZipInputStream(conn.getInputStream());
 		}

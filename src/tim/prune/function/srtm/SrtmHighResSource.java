@@ -24,6 +24,7 @@ public class SrtmHighResSource extends SrtmSource
 
 	private static final int HTTP_CODE_OK = 200;
 	private static final int HTTP_CODE_REDIRECT = 302;
+	private static final int HTTP_CODE_NOTFOUND = 404;
 
 
 	@Override
@@ -45,7 +46,7 @@ public class SrtmHighResSource extends SrtmSource
 	}
 
 	@Override
-	public Result downloadTile(SrtmTile inTile)
+	public Result downloadTile(SrtmTile inTile) throws SrtmAuthException
 	{
 		final String authString = getAuthString();
 		if (authString == null || !_enabled) {return Result.NOT_ENABLED;}
@@ -60,9 +61,8 @@ public class SrtmHighResSource extends SrtmSource
 		}
 		catch (SrtmAuthException authExc)
 		{
-			System.err.println("Auth exception: " + authExc.getMessage());
 			_enabled = false;
-			return Result.AUTH_FAILED;
+			throw authExc;
 		}
 		catch (Exception e) {}
 		return Result.DOWNLOAD_FAILED;
@@ -132,6 +132,9 @@ public class SrtmHighResSource extends SrtmSource
 			{
 				// 302 is a redirect, so we go round the loop again.
 				url = new URL(connection.getHeaderField("Location"));
+			}
+			else if (status == HTTP_CODE_NOTFOUND) {
+				throw new Exception("SRTM file not found");
 			}
 			else {
 				throw new SrtmAuthException(status);

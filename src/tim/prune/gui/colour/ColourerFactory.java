@@ -120,8 +120,7 @@ public abstract class ColourerFactory
 				return createColourer(colourerType, startColour, endColour, maxColours);
 			}
 		}
-		catch (NullPointerException npe) {}
-		catch (NumberFormatException nfe) {}
+		catch (NullPointerException | NumberFormatException ignored) {}
 		return null;
 	}
 

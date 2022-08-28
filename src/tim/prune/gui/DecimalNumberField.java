@@ -9,7 +9,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
 
 /**
- * text field for holding a decimal number with validation
+ * Text field for holding a decimal number with validation
  * - doesn't allow certain characters such as a-z to be entered
  */
 public class DecimalNumberField extends JTextField
@@ -59,8 +59,7 @@ public class DecimalNumberField extends JTextField
 	/**
 	 * Constructor
 	 */
-	public DecimalNumberField()
-	{
+	public DecimalNumberField() {
 		this(false);
 	}
 
@@ -77,16 +76,21 @@ public class DecimalNumberField extends JTextField
 	/**
 	 * @return double value
 	 */
-	public double getValue()
-	{
+	public double getValue() {
 		return parseValue(getText());
+	}
+
+	/**
+	 * @return true if there is no text in the field
+	 */
+	public boolean isEmpty() {
+		return getText().isEmpty();
 	}
 
 	/**
 	 * @param inValue value to set
 	 */
-	public void setValue(double inValue)
-	{
+	public void setValue(double inValue) {
 		setText("" + inValue);
 	}
 

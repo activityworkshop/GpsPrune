@@ -66,7 +66,7 @@ public class DiskCache
 		if (directoryOk(tileFile))
 		{
 			try (FileOutputStream fos = new FileOutputStream(tileFile)) {
-				fos.write(inBytes.data);
+				fos.write(inBytes.getData());
 			} catch (IOException ioe) {
 				System.out.println("Failed to write to: " + inDefinition.getFilePath());
 				ioe.printStackTrace();

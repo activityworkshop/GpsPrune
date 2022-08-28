@@ -32,10 +32,12 @@ import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.NumberUtils;
+import tim.prune.data.SymbolScaleFactor;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
 import tim.prune.function.srtm.LookupSrtmFunction;
 import tim.prune.gui.BaseImageDefinitionPanel;
+import tim.prune.gui.DecimalNumberField;
 import tim.prune.gui.DialogCloser;
 import tim.prune.gui.TerrainDefinitionPanel;
 import tim.prune.gui.map.MapSource;
@@ -57,7 +59,11 @@ public class PovExporter extends Export3dFunction
 	private JFileChooser _fileChooser = null;
 	private String _cameraX = null, _cameraY = null, _cameraZ = null;
 	private JTextField _cameraXField = null, _cameraYField = null, _cameraZField = null;
-	private JTextField _fontName = null, _altitudeFactorField = null;
+	private JTextField _fontName = null;
+	/** Field for altitude exaggeration value */
+	private DecimalNumberField _altitudeFactorField = null;
+	/** Field for symbol scaling factor */
+	private DecimalNumberField _symbolScaleField = null;
 	private JRadioButton _ballsAndSticksButton = null;
 	/** Panel for defining the base image */
 	private BaseImageDefinitionPanel _baseImagePanel = null;
@@ -129,7 +135,8 @@ public class PovExporter extends Export3dFunction
 		_cameraXField.setText(_cameraX);
 		_cameraYField.setText(_cameraY);
 		_cameraZField.setText(_cameraZ);
-		_altitudeFactorField.setText("" + _altFactor);
+		_altitudeFactorField.setValue(_altFactor);
+		_symbolScaleField.setValue(_symbolScaleFactor);
 		// Pass terrain and image def parameters (if any) to the panels
 		if (_terrainDef != null) {
 			_terrainPanel.initTerrainParameters(_terrainDef);
@@ -217,11 +224,19 @@ public class PovExporter extends Export3dFunction
 		_cameraZField = new JTextField("" + _cameraZ);
 		centralPanel.add(_cameraZField);
 		// Altitude exaggeration
-		JLabel altitudeCapLabel = new JLabel(I18nManager.getText("dialog.3d.altitudefactor"));
-		altitudeCapLabel.setHorizontalAlignment(SwingConstants.TRAILING);
-		centralPanel.add(altitudeCapLabel);
-		_altitudeFactorField = new JTextField("1.0");
+		JLabel altFactorLabel = new JLabel(I18nManager.getText("dialog.3d.altitudefactor"));
+		altFactorLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+		centralPanel.add(altFactorLabel);
+		_altitudeFactorField = new DecimalNumberField();
+		_altitudeFactorField.setText("1.0");
 		centralPanel.add(_altitudeFactorField);
+		// Symbol scaling
+		JLabel symbolScaleLabel = new JLabel(I18nManager.getText("dialog.3d.symbolscalefactor"));
+		symbolScaleLabel.setHorizontalAlignment(SwingConstants.TRAILING);
+		centralPanel.add(symbolScaleLabel);
+		_symbolScaleField = new DecimalNumberField();
+		_symbolScaleField.setText("1.0");
+		centralPanel.add(_symbolScaleField);
 
 		// Radio buttons for style - balls on sticks or tubes
 		JPanel stylePanel = new JPanel();
@@ -359,16 +374,14 @@ public class PovExporter extends Export3dFunction
 			// create and scale model
 			ThreeDModel model = new ThreeDModel(_track);
 			model.setModelSize(MODEL_SCALE_FACTOR);
-			try
-			{
-				// try to use given altitude cap
-				double givenFactor = Double.parseDouble(_altitudeFactorField.getText());
-				if (givenFactor > 0.0) _altFactor = givenFactor;
-			}
-			catch (NumberFormatException nfe) { // parse failed, reset
-				_altitudeFactorField.setText("" + _altFactor);
+			// set altitude factor
+			double givenFactor = _altitudeFactorField.getValue();
+			if (givenFactor > 0.0) {
+				_altFactor = givenFactor;
 			}
 			model.setAltitudeFactor(_altFactor);
+			// symbol scaling
+			_symbolScaleFactor = SymbolScaleFactor.validateFactor(_symbolScaleField.getValue());
 
 			// Write base image if necessary
 			ImageDefinition imageDef = _baseImagePanel.getImageDefinition();
@@ -434,7 +447,8 @@ public class PovExporter extends Export3dFunction
 
 			// Create file and write basics
 			writer = new FileWriter(inPovFile);
-			writeStartOfFile(writer, lineSeparator, useImage ? inImageFile : null, useTerrain ? inTerrainFile : null);
+			writeStartOfFile(writer, lineSeparator, useImage ? inImageFile : null,
+			                 useTerrain ? inTerrainFile : null);
 
 			// write out points
 			if (_ballsAndSticksButton.isSelected()) {
@@ -486,8 +500,7 @@ public class PovExporter extends Export3dFunction
 		inWriter.write(inLineSeparator);
 		// Select font based on user input
 		String fontPath = _fontName.getText();
-		if (fontPath == null || fontPath.equals(""))
-		{
+		if (fontPath == null || fontPath.equals("")) {
 			fontPath = DEFAULT_FONT_FILE;
 		}
 		else {
@@ -503,7 +516,7 @@ public class PovExporter extends Export3dFunction
 				+ "   scale 20.0 rotate <90, 0, 0>" + inLineSeparator
 				+ "   translate <-10.0, 0, -10.0>"
 			: "   <-10.0, -0.15, -10.0>," + inLineSeparator
-				+ "   <10.0, 0.0, 10.0>" + inLineSeparator
+				+ "   <10.0, -0.03, 10.0>" + inLineSeparator
 				+ "   pigment { color rgb <0.5 0.75 0.8> }");
 		// TODO: Maybe could use the same geometry for the imageless case, would simplify code a bit
 
@@ -538,7 +551,7 @@ public class PovExporter extends Export3dFunction
 		  "  cylinder {",
 		  "   <0, 0, 0>,",
 		  "   <0, 1, 0>,",
-		  "   0.15",
+		  "   " + getScaledSymbolSize(0.15),
 		  "   open",
 		  "   texture {",
 		  "    pigment { color rgb <0.5 0.5 0.5> }",
@@ -547,7 +560,7 @@ public class PovExporter extends Export3dFunction
 		  // MAYBE: Export rods to POV?  How to store in data?
 		  "#declare waypoint_sphere =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.4",
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.4),
 		  "    texture {",
 		  "       pigment {color rgb <0.1 0.1 1.0>}",
 		  "       finish { phong 1 }",
@@ -555,7 +568,7 @@ public class PovExporter extends Export3dFunction
 		  "  }",
 		  "#declare track_sphere0 =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.3", // size should depend on model size
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
 		  "   texture {",
 		  "      pigment {color rgb <0.1 0.6 0.1>}", // dark green
 		  "      finish { phong 1 }",
@@ -563,7 +576,7 @@ public class PovExporter extends Export3dFunction
 		  " }",
 		  "#declare track_sphere1 =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.3", // size should depend on model size
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
 		  "   texture {",
 		  "      pigment {color rgb <0.4 0.9 0.2>}", // green
 		  "      finish { phong 1 }",
@@ -571,7 +584,7 @@ public class PovExporter extends Export3dFunction
 		  " }",
 		  "#declare track_sphere2 =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.3", // size should depend on model size
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
 		  "   texture {",
 		  "      pigment {color rgb <0.7 0.8 0.2>}", // yellow
 		  "      finish { phong 1 }",
@@ -579,7 +592,7 @@ public class PovExporter extends Export3dFunction
 		  " }",
 		  "#declare track_sphere3 =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.3", // size should depend on model size
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
 		  "   texture {",
 		  "      pigment {color rgb <0.5 0.8 0.6>}", // greeny
 		  "      finish { phong 1 }",
@@ -587,7 +600,7 @@ public class PovExporter extends Export3dFunction
 		  " }",
 		  "#declare track_sphere4 =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.3", // size should depend on model size
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
 		  "   texture {",
 		  "      pigment {color rgb <0.2 0.9 0.9>}", // cyan
 		  "      finish { phong 1 }",
@@ -595,7 +608,7 @@ public class PovExporter extends Export3dFunction
 		  " }",
 		  "#declare track_sphere5 =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.3", // size should depend on model size
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
 		  "   texture {",
 		  "      pigment {color rgb <1.0 1.0 1.0>}", // white
 		  "      finish { phong 1 }",
@@ -603,7 +616,7 @@ public class PovExporter extends Export3dFunction
 		  " }",
 		  "#declare track_sphere_t =",
 		  "  sphere {",
-		  "   <0, 0, 0>, 0.25", // size should depend on model size
+		  "   <0, 0, 0>, " + getScaledSymbolSize(0.25),
 		  "   texture {",
 		  "      pigment {color rgb <0.6 1.0 0.2>}",
 		  "      finish { phong 1 }",
@@ -646,6 +659,14 @@ public class PovExporter extends Export3dFunction
 	}
 
 	/**
+	 * @param inSize size of symbol
+	 * @return scaled symbol size, as string
+	 */
+	private String getScaledSymbolSize(double inSize) {
+		return "" + (inSize * _symbolScaleFactor);
+	}
+
+	/**
 	 * Write the given lines to the file
 	 * @param inWriter writer object
 	 * @param inLineSeparator line separator string
@@ -679,7 +700,7 @@ public class PovExporter extends Export3dFunction
 			.append("\tpng \"").append(inTerrainFile.getName()).append("\" smooth").append(inLineSeparator)
 			.append("\tfinish {diffuse 0.7 phong 0.2}").append(inLineSeparator);
 		if (inImageFile != null) {
-			sb.append("\tpigment {image_map { png \"").append(inImageFile.getName()).append("\"  } rotate x*90}").append(inLineSeparator);
+			sb.append("\tpigment {image_map { png \"").append(inImageFile.getName()).append("\" } rotate x*90}").append(inLineSeparator);
 		}
 		else {
 			sb.append("\tpigment {color rgb <0.55 0.7 0.55> }").append(inLineSeparator);
@@ -738,7 +759,7 @@ public class PovExporter extends Export3dFunction
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private static void writeDataPointsTubesAndWalls(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
+	private void writeDataPointsTubesAndWalls(FileWriter inWriter, ThreeDModel inModel, String inLineSeparator)
 	throws IOException
 	{
 		inWriter.write("// Data points:");
@@ -801,7 +822,7 @@ public class PovExporter extends Export3dFunction
 	 * @param inLineSeparator line separator to use
 	 * @throws IOException on file writing error
 	 */
-	private static void writeSphereSweep(FileWriter inWriter, ThreeDModel inModel, ModelSegment inSegment, String inLineSeparator)
+	private void writeSphereSweep(FileWriter inWriter, ThreeDModel inModel, ModelSegment inSegment, String inLineSeparator)
 	throws IOException
 	{
 		// 3d sphere sweep
@@ -817,7 +838,7 @@ public class PovExporter extends Export3dFunction
 			if (inModel.getPointType(i) != ThreeDModel.POINT_TYPE_WAYPOINT)
 			{
 				inWriter.write("  <" + inModel.getScaledHorizValue(i) + "," + inModel.getScaledAltValue(i)
-					+ "," + inModel.getScaledVertValue(i) + ">, 0.25");
+					+ "," + inModel.getScaledVertValue(i) + ">, " + getScaledSymbolSize(0.25));
 				inWriter.write(inLineSeparator);
 			}
 		}
@@ -900,8 +921,7 @@ public class PovExporter extends Export3dFunction
 	private static String checkCoordinate(String inString)
 	{
 		double value = 0.0;
-		try
-		{
+		try {
 			value = Double.parseDouble(inString);
 		}
 		catch (Exception e) {} // ignore parse failures

@@ -3,7 +3,6 @@ package tim.prune.function.compress;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
@@ -17,6 +16,8 @@ import javax.swing.JPanel;
 import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
+import tim.prune.config.ParamSet;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
 
@@ -25,7 +26,7 @@ import tim.prune.data.Track;
  */
 public class CompressTrackFunction extends MarkAndDeleteFunction
 {
-	private Track _track = null;
+	private final Track _track;
 	private JDialog _dialog = null;
 	private JButton _okButton = null;
 	private CompressionAlgorithm[] _algorithms = null;
@@ -61,6 +62,7 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
+			initDialogFromConfig();
 		}
 		preview();
 		_dialog.setVisible(true);
@@ -115,21 +117,10 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
 		_okButton.setEnabled(false);
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener((e) -> finish());
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener((e) -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -143,12 +134,7 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 	private void makeAlgorithms()
 	{
 		// make listener to be informed of algorithm activation
-		ActionListener changeListener = new ActionListener() {
-			public void actionPerformed(ActionEvent arg0)
-			{
-				preview();
-			}
-		};
+		ActionListener changeListener = (e) -> preview();
 		// construct track details to be used by all algorithms
 		TrackDetails details = new TrackDetails(_track);
 		// make array of algorithm objects
@@ -177,6 +163,8 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 			point.setMarkedForDeletion(deletePoint);
 			if (deletePoint) numMarked++;
 		}
+		// Save settings
+		Config.setConfigString(Config.KEY_COMPRESSION_SETTINGS, createConfigString());
 
 		// Close dialog and inform listeners
 		UpdateMessageBroker.informSubscribers();
@@ -190,6 +178,33 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.compress.confirmnone"),
 				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+
+	/**
+	 * @return String describing all config settings
+	 */
+	private String createConfigString() {
+		StringBuilder builder = new StringBuilder();
+		for (CompressionAlgorithm algo : _algorithms) {
+			builder.append(algo.getSettingsString());
+			builder.append(';');
+		}
+		return builder.toString();
+	}
+
+	/**
+	 * Fill in the dialog according to the saved settings
+	 */
+	private void initDialogFromConfig()
+	{
+		String params = Config.getConfigString(Config.KEY_COMPRESSION_SETTINGS);
+		if (params == null || params.isEmpty()) {
+			return;
+		}
+		ParamSet paramSet = new ParamSet(params);
+		for (CompressionAlgorithm algo : _algorithms) {
+			algo.applySettingsString(paramSet.getNext());
 		}
 	}
 }
