@@ -35,7 +35,6 @@ import tim.prune.function.PlusCodeFunction;
 import tim.prune.function.SearchOpenCachingDeFunction;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.browser.WebMapFunction;
-import tim.prune.function.search.SearchMapillaryFunction;
 import tim.prune.function.settings.SaveConfig;
 import tim.prune.function.srtm.ConfigureSrtmSources;
 
@@ -104,7 +103,6 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _showPeakfinderItem = null;
 	private JMenuItem _showGeohackItem = null;
 	private JMenuItem _searchOpencachingDeItem = null;
-	private JMenuItem _searchMapillaryItem = null;
 	private JMenuItem _downloadOsmItem = null;
 	private JMenuItem _getWeatherItem = null;
 	private JMenuItem _distanceItem = null;
@@ -259,12 +257,10 @@ public class MenuManager implements DataSubscriber
 		_browserMapMenu.add(openMapsItem);
 		JMenuItem mapquestMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_MAPQUEST, "menu.view.browser.mapquest"));
 		_browserMapMenu.add(mapquestMapsItem);
-		JMenuItem yahooMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_YAHOO, "menu.view.browser.yahoo"));
-		_browserMapMenu.add(yahooMapsItem);
 		JMenuItem bingMapsItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_BING, "menu.view.browser.bing"));
 		_browserMapMenu.add(bingMapsItem);
-		JMenuItem inlineMapItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_INLINESKATE, "menu.view.browser.inlinemap"));
-		_browserMapMenu.add(inlineMapItem);
+		JMenuItem mapillaryItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_MAPILLARY, "menu.view.browser.mapillary"));
+		_browserMapMenu.add(mapillaryItem);
 		_routingGraphHopperItem = makeMenuItem(new WebMapFunction(_app, UrlGenerator.WebService.MAP_SOURCE_GRAPHHOPPER, "menu.view.browser.graphhopper"));
 		_browserMapMenu.add(_routingGraphHopperItem);
 		onlineMenu.add(_browserMapMenu);
@@ -283,8 +279,6 @@ public class MenuManager implements DataSubscriber
 		onlineMenu.addSeparator();
 		_searchOpencachingDeItem = makeMenuItem(new SearchOpenCachingDeFunction(_app), false);
 		onlineMenu.add(_searchOpencachingDeItem);
-		_searchMapillaryItem = makeMenuItem(new SearchMapillaryFunction(_app), false);
-		onlineMenu.add(_searchMapillaryItem);
 		_downloadOsmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_OSM, false);
 		onlineMenu.add(_downloadOsmItem);
 		_getWeatherItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_WEATHER_FORECAST, false);
@@ -831,7 +825,6 @@ public class MenuManager implements DataSubscriber
 		_showPeakfinderItem.setEnabled(hasPoint);
 		_showGeohackItem.setEnabled(hasPoint);
 		_searchOpencachingDeItem.setEnabled(hasPoint);
-		_searchMapillaryItem.setEnabled(hasPoint);
 		// is it a waypoint?
 		_selectSegmentItem.setEnabled(hasPoint && !currPoint.isWaypoint());
 		// are there any photos?

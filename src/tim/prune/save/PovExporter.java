@@ -381,6 +381,9 @@ public class PovExporter extends Export3dFunction
 			}
 			model.setAltitudeFactor(_altFactor);
 			// symbol scaling
+			if (_symbolScaleField.isEmpty()) {
+				_symbolScaleField.setValue(1.0);
+			}
 			_symbolScaleFactor = SymbolScaleFactor.validateFactor(_symbolScaleField.getValue());
 
 			// Write base image if necessary

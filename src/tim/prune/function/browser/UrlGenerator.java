@@ -1,12 +1,7 @@
 package tim.prune.function.browser;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.Locale;
-
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
-import tim.prune.data.DoubleRange;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -15,23 +10,15 @@ import tim.prune.data.TrackInfo;
  */
 public abstract class UrlGenerator
 {
-	/** Number formatter for five dp */
-	private static final NumberFormat FIVE_DP = NumberFormat.getNumberInstance(Locale.UK);
-	// Select the UK locale for this formatter so that decimal point is always used (not comma)
-	static {
-		if (FIVE_DP instanceof DecimalFormat) ((DecimalFormat) FIVE_DP).applyPattern("0.00000");
-	}
-
 	public enum WebService
 	{
 		MAP_SOURCE_GOOGLE,      /* Google maps */
 		MAP_SOURCE_OSM,         /* OpenStreetMap */
 		MAP_SOURCE_MAPQUEST,    /* Mapquest */
-		MAP_SOURCE_YAHOO,       /* Yahoo */
 		MAP_SOURCE_BING,        /* Bing */
 		MAP_SOURCE_PEAKFINDER,  /* PeakFinder */
 		MAP_SOURCE_GEOHACK,     /* Geohack */
-		MAP_SOURCE_INLINESKATE, /* Inlinemap.net */
+		MAP_SOURCE_MAPILLARY,
 		MAP_SOURCE_GRAPHHOPPER  /* Routing with GraphHopper */
 	}
 
@@ -49,14 +36,14 @@ public abstract class UrlGenerator
 				return generateGoogleUrl(inTrackInfo);
 			case MAP_SOURCE_MAPQUEST:
 				return generateMapquestUrl(inTrackInfo);
-			case MAP_SOURCE_YAHOO:
-				return generateYahooUrl(inTrackInfo);
 			case MAP_SOURCE_BING:
 				return generateBingUrl(inTrackInfo);
+			case MAP_SOURCE_MAPILLARY:
+				return generateMapillaryUrl(inTrackInfo);
 			case MAP_SOURCE_PEAKFINDER:
+				return generatePeakfinderUrl(inTrackInfo);
 			case MAP_SOURCE_GEOHACK:
-			case MAP_SOURCE_INLINESKATE:
-				return generateUrlForPoint(inSource, inTrackInfo);
+				return generateGeohackUrl(inTrackInfo);
 			case MAP_SOURCE_GRAPHHOPPER:
 				return generateGraphHopperUrl(inTrackInfo);
 			case MAP_SOURCE_OSM:
@@ -72,24 +59,19 @@ public abstract class UrlGenerator
 	 */
 	private static String generateGoogleUrl(TrackInfo inTrackInfo)
 	{
-		// Check if any data to display
-		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
-		{
+		MapCoords coords = MapCoords.from(inTrackInfo);
+		if (coords == null) {
 			return null;
 		}
-		double medianLat = getMedianValue(inTrackInfo.getTrack().getLatRange());
-		double medianLon = getMedianValue(inTrackInfo.getTrack().getLonRange());
-		double latSpan = getSpan(inTrackInfo.getTrack().getLatRange());
-		double lonSpan = getSpan(inTrackInfo.getTrack().getLonRange());
 		// Build basic url with centre position and span
 		String url = "http://" + I18nManager.getText("url.googlemaps")
-			+ "/?ll=" + FIVE_DP.format(medianLat) + "," + FIVE_DP.format(medianLon)
-			+ "&spn=" + FIVE_DP.format(latSpan) + "," + FIVE_DP.format(lonSpan);
+			+ "/?ll=" + coords.getLatitude() + "," + coords.getLongitude()
+			+ "&spn=" + coords.getLatSpan() + "," + coords.getLonSpan();
 		DataPoint currPoint = inTrackInfo.getCurrentPoint();
 		// Add selected point, if any
-		if (currPoint != null) {
-			url = url + "&q=" + FIVE_DP.format(currPoint.getLatitude().getDouble()) + ","
-				+ FIVE_DP.format(currPoint.getLongitude().getDouble());
+		if (currPoint != null)
+		{
+			url = url + "&q=" + coords.getLatitude() + "," + coords.getLongitude();
 			if (currPoint.getWaypointName() != null) {
 				url = url + "(" + currPoint.getWaypointName() + ")";
 			}
@@ -104,38 +86,12 @@ public abstract class UrlGenerator
 	 */
 	private static String generateMapquestUrl(TrackInfo inTrackInfo)
 	{
-		// Check if any data to display
-		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
-		{
+		MapCoords coords = MapCoords.from(inTrackInfo);
+		if (coords == null) {
 			return null;
 		}
-		double medianLat = getMedianValue(inTrackInfo.getTrack().getLatRange());
-		double medianLon = getMedianValue(inTrackInfo.getTrack().getLonRange());
-		// Build basic url with centre position
-		String url = "http://atlas.mapquest.com/maps/map.adp?latlongtype=decimal&latitude="
-			+ FIVE_DP.format(medianLat) + "&longitude=" + FIVE_DP.format(medianLon);
-		return url;
-	}
-
-
-	/**
-	 * Generate a url for Yahoo maps
-	 * @param inTrackInfo track information
-	 * @return URL
-	 */
-	private static String generateYahooUrl(TrackInfo inTrackInfo)
-	{
-		// Check if any data to display
-		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
-		{
-			return null;
-		}
-		double medianLat = getMedianValue(inTrackInfo.getTrack().getLatRange());
-		double medianLon = getMedianValue(inTrackInfo.getTrack().getLonRange());
-		// Build basic url with centre position
-		String url = "http://maps.yahoo.com/#lat=" + FIVE_DP.format(medianLat)
-			+ "&lon=" + FIVE_DP.format(medianLon) + "&zoom=13";
-		return url;
+		return "http://atlas.mapquest.com/maps/map.adp?latlongtype=decimal&latitude="
+			+ coords.getLatitude() + "&longitude=" + coords.getLongitude();
 	}
 
 	/**
@@ -145,19 +101,12 @@ public abstract class UrlGenerator
 	 */
 	private static String generateBingUrl(TrackInfo inTrackInfo)
 	{
-		// Check if any data to display
-		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
-		{
+		MapCoords coords = MapCoords.from(inTrackInfo);
+		if (coords == null) {
 			return null;
 		}
-		double medianLat = getMedianValue(inTrackInfo.getTrack().getLatRange());
-		double medianLon = getMedianValue(inTrackInfo.getTrack().getLonRange());
-		// Build basic url with centre position
-		String latStr = FIVE_DP.format(medianLat);
-		String lonStr = FIVE_DP.format(medianLon);
-		String url = "http://bing.com/maps/default.aspx?cp=" + latStr + "~" + lonStr
-			+ "&where1=" + latStr + "%2C%20" + lonStr;
-		return url;
+		return "http://bing.com/maps/default.aspx?cp=" + coords.getLatitude() + "~" + coords.getLongitude()
+			+ "&where1=" + coords.getLatitude() + "%2C%20" + coords.getLongitude();
 	}
 
 	/**
@@ -196,14 +145,16 @@ public abstract class UrlGenerator
 	 */
 	private static String generateGraphHopperUrl(DataPoint inStartPoint, DataPoint inEndPoint)
 	{
-		final String url = "https://graphhopper.com/maps/"
-			+ "?point=" + FIVE_DP.format(inStartPoint.getLatitude().getDouble())
-			+ "%2C" + FIVE_DP.format(inStartPoint.getLongitude().getDouble())
-			+ "&point=" + FIVE_DP.format(inEndPoint.getLatitude().getDouble())
-			+ "%2C" + FIVE_DP.format(inEndPoint.getLongitude().getDouble())
+		MapCoords startCoords = MapCoords.from(inStartPoint);
+		MapCoords endCoords = MapCoords.from(inEndPoint);
+		if (startCoords == null || endCoords == null) {
+			return null;
+		}
+		return "https://graphhopper.com/maps/"
+			+ "?point=" + startCoords.getLatitude() + "%2C" + startCoords.getLongitude()
+			+ "&point=" + endCoords.getLatitude() + "%2C" + endCoords.getLongitude()
 			+ "&locale=" + I18nManager.getText("wikipedia.lang")
 			+ "&elevation=true&weighting=fastest";
-		return url;
 	}
 
 	/**
@@ -213,110 +164,65 @@ public abstract class UrlGenerator
 	 */
 	private static String generateOpenStreetMapUrl(TrackInfo inTrackInfo)
 	{
-		// Check if any data to display
-		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
-		{
+		MapCoords minCoords = MapCoords.minValues(inTrackInfo);
+		MapCoords maxCoords = MapCoords.maxValues(inTrackInfo);
+		if (minCoords == null || maxCoords == null) {
 			return null;
 		}
-		DoubleRange latRange = inTrackInfo.getTrack().getLatRange();
-		DoubleRange lonRange = inTrackInfo.getTrack().getLonRange();
-		// Build basic url using min and max lat and long
-		String url = "http://openstreetmap.org/?minlat=" + FIVE_DP.format(latRange.getMinimum())
-			+ "&maxlat=" + FIVE_DP.format(latRange.getMaximum())
-			+ "&minlon=" + FIVE_DP.format(lonRange.getMinimum()) + "&maxlon=" + FIVE_DP.format(lonRange.getMaximum());
-		DataPoint currPoint = inTrackInfo.getCurrentPoint();
+		String url = "http://openstreetmap.org/?minlat=" + minCoords.getLatitude()
+			+ "&maxlat=" + maxCoords.getLatitude()
+			+ "&minlon=" + minCoords.getLongitude() + "&maxlon=" + maxCoords.getLongitude();
+		MapCoords pointCoords = MapCoords.from(inTrackInfo.getCurrentPoint());
 		// Add selected point, if any (no way to add point name?)
-		if (currPoint != null) {
-			url = url + "&mlat=" + FIVE_DP.format(currPoint.getLatitude().getDouble())
-				+ "&mlon=" + FIVE_DP.format(currPoint.getLongitude().getDouble());
+		if (pointCoords != null) {
+			url = url + "&mlat=" + pointCoords.getLatitude()
+				+ "&mlon=" + pointCoords.getLongitude();
 		}
 		return url;
 	}
 
 	/**
-	 * Generate a URL which only needs the current point
-	 * This is just a helper method to simplify the calls to the service-specific methods
-	 * @param inService service to call
-	 * @param inTrackInfo track info
-	 * @return URL if available, or null
-	 */
-	private static String generateUrlForPoint(WebService inService, TrackInfo inTrackInfo)
-	{
-		if (inTrackInfo == null || inTrackInfo.getTrack() == null || inTrackInfo.getTrack().getNumPoints() < 1)
-		{
-			return null;
-		}
-		// Need a current point
-		DataPoint currPoint = inTrackInfo.getCurrentPoint();
-		if (currPoint == null)
-		{
-			return null;
-		}
-		switch (inService)
-		{
-			case MAP_SOURCE_PEAKFINDER:
-				return generatePeakfinderUrl(currPoint);
-			case MAP_SOURCE_GEOHACK:
-				return generateGeohackUrl(currPoint);
-			case MAP_SOURCE_INLINESKATE:
-				return generateInlinemapUrl(currPoint);
-			default:
-				return null;
-		}
-	}
-
-
-	/**
 	 * Generate a url for PeakFinder
-	 * @param inPoint current point, not null
+	 * @param inTrackInfo track information
 	 * @return URL
 	 */
-	private static String generatePeakfinderUrl(DataPoint inPoint)
+	private static String generatePeakfinderUrl(TrackInfo inTrackInfo)
 	{
-		return "https://www.peakfinder.org/?lat=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
-			+ "&lng=" + FIVE_DP.format(inPoint.getLongitude().getDouble());
+		MapCoords coords = MapCoords.from(inTrackInfo.getCurrentPoint());
+		if (coords == null) {
+			return null;
+		}
+		return "https://www.peakfinder.org/?lat=" + coords.getLatitude()
+			+ "&lng=" + coords.getLongitude();
 	}
 
 	/**
 	 * Generate a url for Geohack
-	 * @param inPoint current point, not null
+	 * @param inTrackInfo track information
 	 * @return URL
 	 */
-	private static String generateGeohackUrl(DataPoint inPoint)
+	private static String generateGeohackUrl(TrackInfo inTrackInfo)
 	{
-		return "https://tools.wmflabs.org/geohack/geohack.php?params=" + FIVE_DP.format(inPoint.getLatitude().getDouble())
-			+ "_N_" + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "_E";
+		MapCoords coords = MapCoords.from(inTrackInfo.getCurrentPoint());
+		if (coords == null) {
+			return null;
+		}
+		return "https://tools.wmflabs.org/geohack/geohack.php?params=" + coords.getLatitude()
+			+ "_N_" + coords.getLongitude() + "_E";
 		// Note: Could use absolute values and S, W but this seems to work
 	}
 
 	/**
-	 * Generate a url for Inlinemap.net
-	 * @param inPoint current point, not null
+	 * Generate a url for Mapillary
+	 * @param inTrackInfo track information
 	 * @return URL
 	 */
-	private static String generateInlinemapUrl(DataPoint inPoint)
+	private static String generateMapillaryUrl(TrackInfo inTrackInfo)
 	{
-		return "http://www.inlinemap.net/en/?tab=new#/z14/" + FIVE_DP.format(inPoint.getLatitude().getDouble())
-			+ "," + FIVE_DP.format(inPoint.getLongitude().getDouble()) + "/terrain";
-	}
-
-	/**
-	 * Get the median value from the given lat/long range
-	 * @param inRange range of values
-	 * @return median value
-	 */
-	private static double getMedianValue(DoubleRange inRange)
-	{
-		return (inRange.getMaximum() + inRange.getMinimum()) / 2.0;
-	}
-
-	/**
-	 * Get the span of the given lat/long range
-	 * @param inRange range of values
-	 * @return span
-	 */
-	private static double getSpan(DoubleRange inRange)
-	{
-		return inRange.getMaximum() - inRange.getMinimum();
+		MapCoords coords = MapCoords.from(inTrackInfo);
+		if (coords == null) {
+			return null;
+		}
+		return "https://www.mapillary.com/app/?lat=" + coords.getLatitude() + "&lng=" + coords.getLongitude() + "&z=16";
 	}
 }

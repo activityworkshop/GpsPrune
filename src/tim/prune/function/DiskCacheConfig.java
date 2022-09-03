@@ -3,8 +3,6 @@ package tim.prune.function;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -45,16 +43,14 @@ public class DiskCacheConfig extends GenericFunction
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public DiskCacheConfig(App inApp)
-	{
+	public DiskCacheConfig(App inApp) {
 		super(inApp);
 	}
 
 	/**
 	 * Return the name key for this function
 	 */
-	public String getNameKey()
-	{
+	public String getNameKey() {
 		return "function.diskcache";
 	}
 
@@ -71,11 +67,7 @@ public class DiskCacheConfig extends GenericFunction
 		// top panel
 		JPanel topPanel = new JPanel();
 		_cacheCheckbox = new JCheckBox(I18nManager.getText("dialog.diskcache.save"));
-		_cacheCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				enableButtons();
-			}
-		});
+		_cacheCheckbox.addActionListener(e -> enableButtons());
 		topPanel.add(_cacheCheckbox);
 		dialogPanel.add(topPanel, BorderLayout.NORTH);
 		// dir panel
@@ -91,11 +83,7 @@ public class DiskCacheConfig extends GenericFunction
 		});
 		dirPanel.add(_cacheDirBox, BorderLayout.CENTER);
 		_browseButton = new JButton(I18nManager.getText("button.browse"));
-		_browseButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				chooseDir();
-			}
-		});
+		_browseButton.addActionListener(e -> chooseDir());
 		dirPanel.add(_browseButton, BorderLayout.EAST);
 		// holder panel so it doesn't expand vertically
 		JPanel dirHolderPanel = new JPanel();
@@ -107,33 +95,22 @@ public class DiskCacheConfig extends GenericFunction
 		JPanel buttonPanelr = new JPanel();
 		buttonPanelr.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-				_dialog.dispose();
-			}
+		_okButton.addActionListener(e -> {
+			finish();
+			_dialog.dispose();
 		});
 		buttonPanelr.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanelr.add(cancelButton);
 
 		// Manage button at the bottom left
 		JPanel buttonPanell = new JPanel();
 		buttonPanell.setLayout(new FlowLayout(FlowLayout.LEFT));
 		_manageButton = new JButton(I18nManager.getText("button.manage"));
-		_manageButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-				new ManageCacheFunction(_app).begin();
-			}
+		_manageButton.addActionListener(e -> {
+			finish();
+			new ManageCacheFunction(_app).begin();
 		});
 		buttonPanell.add(_manageButton);
 		// Put them together
@@ -156,19 +133,19 @@ public class DiskCacheConfig extends GenericFunction
 		_browseButton.setEnabled(checkState);
 		boolean ok = false;
 		// If checkbox has stayed off then disable ok
-		if (!_initialCheckState && !checkState) {ok = false;}
-		else {
+		if (!_initialCheckState && !checkState) {
+			ok = false;
+		}
+		else
+		{
 			// If checkbox has been switched off then enable
-			if (!checkState) {ok = true;}
-			else
+			ok = true;
+			if (checkState)
 			{
 				// checkbox is on, check value
 				if (path.equals("") || path.equals(_initialCacheDir)) {
 					// Value blank or same as before
 					ok = false;
-				}
-				else {
-					ok = true;
 				}
 			}
 		}
@@ -196,9 +173,10 @@ public class DiskCacheConfig extends GenericFunction
 			_dialog.pack();
 		}
 		// Set controls according to current config
-		String currPath = Config.getConfigString(Config.KEY_DISK_CACHE);
+		final String currPath = Config.getConfigString(Config.KEY_DISK_CACHE);
 		_cacheCheckbox.setSelected(currPath != null);
 		_cacheDirBox.setText(currPath==null?"":currPath);
+		_initialCacheDir = currPath;
 		enableButtons();
 		// Remember current state
 		_initialCheckState = _cacheCheckbox.isSelected();
@@ -214,9 +192,10 @@ public class DiskCacheConfig extends GenericFunction
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		// Set start path from currently selected dir
 		String path = _cacheDirBox.getText();
-		if (path.length() > 1) {chooser.setCurrentDirectory(new File(path));}
-		if (chooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
-		{
+		if (path.length() > 1) {
+			chooser.setCurrentDirectory(new File(path));
+		}
+		if (chooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION) {
 			_cacheDirBox.setText(chooser.getSelectedFile().getAbsolutePath());
 		}
 		enableButtons();
