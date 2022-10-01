@@ -78,7 +78,7 @@ public class MidpointData
 		if (_track == null) return -1;
 		if (_needRefresh) updateData();
 		final int numPoints = _track.getNumPoints();
-		int nearestPoint = 0;
+		int nearestPoint = -1;
 		double nearestDist = -1.0;
 		double currDist;
 		for (int i=1; i < numPoints; i++)

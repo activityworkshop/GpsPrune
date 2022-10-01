@@ -115,14 +115,14 @@ public class ShowThreeDFunction extends GenericFunction
 		altLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		grid.add(altLabel);
 		_exaggField = new DecimalNumberField(); // don't allow negative numbers
-		_exaggField.setText("5.0");
+		_exaggField.setValue(5.0);
 		grid.add(_exaggField);
 		// Row for symbol scaling
 		JLabel scaleLabel = new JLabel(I18nManager.getText("dialog.3d.symbolscalefactor") + ": ");
 		scaleLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		grid.add(scaleLabel);
 		_symbolScaleField = new DecimalNumberField(); // don't allow negative numbers
-		_symbolScaleField.setText("1.0");
+		_symbolScaleField.setValue(1.0);
 		grid.add(_symbolScaleField);
 		innerPanel.add(gridPanel);
 		innerPanel.add(Box.createVerticalStrut(4));
@@ -176,7 +176,9 @@ public class ShowThreeDFunction extends GenericFunction
 				if (_symbolScaleField.isEmpty()) {
 					_symbolScaleField.setValue(1.0);
 				}
-				window.setSymbolScalingFactor(SymbolScaleFactor.validateFactor(_symbolScaleField.getValue()));
+				final double symbolScaleFactor = SymbolScaleFactor.validateFactor(_symbolScaleField.getValue());
+				window.setSymbolScalingFactor(symbolScaleFactor);
+				_symbolScaleField.setValue(symbolScaleFactor);
 				// Also pass the base image parameters from input dialog
 				window.setBaseImageParameters(_baseImagePanel.getImageDefinition());
 				window.setTerrainParameters(new TerrainDefinition(_terrainPanel.getUseTerrain(), _terrainPanel.getGridSize()));

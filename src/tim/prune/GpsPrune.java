@@ -38,9 +38,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "22.1";
+	public static final String VERSION_NUMBER = "22.2";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "399";
+	public static final String BUILD_NUMBER = "401";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -330,7 +330,9 @@ public class GpsPrune
 		{
 			String name = file.getName();
 			file = file.getParentFile();
-			if (file != null && file.exists() && file.canRead()) return "Tried to load file '" + inParam + "' but cannot find '" + name + "'";
+			if (file != null && file.exists() && file.canRead()) {
+				return "Tried to load file '" + inParam + "' but cannot find '" + name + "'";
+			}
 		}
 		while (file != null);
 

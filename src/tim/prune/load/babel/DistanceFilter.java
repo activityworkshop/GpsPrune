@@ -70,7 +70,7 @@ public class DistanceFilter extends FilterDefinition
 	 */
 	public boolean isFilterValid()
 	{
-		if (_distField.getText() == null || _distField.getText().trim().equals("")) {
+		if (_distField.isEmpty()) {
 			return false; // no distance given
 		}
 		final boolean timeGiven = _secondsField.getText() != null && _secondsField.getText().trim().length() > 0;

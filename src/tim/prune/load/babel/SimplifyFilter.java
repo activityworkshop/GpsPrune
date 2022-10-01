@@ -91,8 +91,8 @@ public class SimplifyFilter extends FilterDefinition
 	 */
 	public boolean isFilterValid()
 	{
-		final boolean countGiven = _maxPointsField.getText() != null && _maxPointsField.getText().trim().length() > 0;
-		final boolean distGiven = _distField.getText() != null && _distField.getText().trim().length() > 0;
+		final boolean countGiven = !_maxPointsField.isEmpty();
+		final boolean distGiven = !_distField.isEmpty();
 		if ((!countGiven && !distGiven) || (countGiven && distGiven)) {
 			return false; // only one or the other allowed
 		}
@@ -114,18 +114,14 @@ public class SimplifyFilter extends FilterDefinition
 		if (!isFilterValid()) return null;
 		StringBuilder builder = new StringBuilder();
 		// type
-		final boolean countGiven = _maxPointsField.getText() != null && _maxPointsField.getText().trim().length() > 0;
-		final boolean distGiven = _distField.getText() != null && _distField.getText().trim().length() > 0;
+		final boolean countGiven = !_maxPointsField.isEmpty();
+		final boolean distGiven = !_distField.isEmpty();
 		if (countGiven) {
 			builder.append(",count=").append(_maxPointsField.getValue());
 		}
 		else if (distGiven)
 		{
-			double dValue = 1.0;
-			try {
-				dValue = Double.parseDouble(_distField.getText());
-			}
-			catch (Exception e) {} // shouldn't happen, otherwise validation would have failed
+			double dValue = _distField.getValue();
 			builder.append(",error=").append(dValue);
 			// units of distance (miles by default)
 			if (_distUnitsCombo.getSelectedIndex() == 0) {

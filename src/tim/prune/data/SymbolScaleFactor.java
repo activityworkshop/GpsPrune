@@ -6,7 +6,7 @@ package tim.prune.data;
 public abstract class SymbolScaleFactor
 {
 	private static final double MIN_FACTOR = 0.1;
-	private static final double MAX_FACTOR = 2.0;
+	private static final double MAX_FACTOR = 3.0;
 
 	/**
 	 * @param inFactor value entered by user

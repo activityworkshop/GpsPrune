@@ -1,12 +1,16 @@
 package tim.prune.gui;
 
 import java.awt.Dimension;
+import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.text.ParseException;
 
 import javax.swing.JTextField;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.PlainDocument;
+
 
 /**
  * Text field for holding a decimal number with validation
@@ -14,6 +18,11 @@ import javax.swing.text.PlainDocument;
  */
 public class DecimalNumberField extends JTextField
 {
+	/** Are negative numbers allowed or not */
+	private final boolean _allowNegative;
+	/** formatter responsible for parsing and formatting */
+	private final NumberFormat _localFormatter;
+
 	/**
 	 * Inner class to act as document for validation
 	 */
@@ -21,6 +30,7 @@ public class DecimalNumberField extends JTextField
 	{
 		private final boolean _allowNegative;
 		private final char _decimalPoint;
+		private static final int MAX_LENGTH = 10;
 
 		/** constructor */
 		DecimalNumberDocument(boolean inAllowNegative)
@@ -40,6 +50,9 @@ public class DecimalNumberField extends JTextField
 		public void insertString(int offs, String str, AttributeSet a)
 			throws BadLocationException
 		{
+			if (getLength() > MAX_LENGTH) {
+				return;
+			}
 			StringBuilder buffer = new StringBuilder();
 			for (int i = 0; i < str.length(); i++)
 			{
@@ -70,45 +83,64 @@ public class DecimalNumberField extends JTextField
 	public DecimalNumberField(boolean inAllowNegative)
 	{
 		super(6);
+		_allowNegative = inAllowNegative;
 		setDocument(new DecimalNumberDocument(inAllowNegative));
+		_localFormatter = NumberFormat.getNumberInstance();
+		if (_localFormatter instanceof DecimalFormat) {
+			((DecimalFormat) _localFormatter).applyPattern("0.00");
+		}
+	}
+
+	@Override
+	public String getText() {
+		throw new IllegalArgumentException("Should not be called, use getValue instead");
 	}
 
 	/**
 	 * @return double value
 	 */
-	public double getValue() {
-		return parseValue(getText());
+	public double getValue()
+	{
+		double value = 0.0;
+		try {
+			value = _localFormatter.parse(super.getText()).doubleValue();
+		}
+		catch (NumberFormatException | ParseException e) {
+			// value stays zero
+		}
+		if (!_allowNegative) {
+			value = Math.max(0.0, value);
+		}
+		return value;
 	}
 
 	/**
 	 * @return true if there is no text in the field
 	 */
 	public boolean isEmpty() {
-		return getText().isEmpty();
+		return super.getText().isEmpty();
 	}
 
 	/**
 	 * @param inValue value to set
 	 */
-	public void setValue(double inValue) {
-		setText("" + inValue);
+	public void setValue(double inValue)
+	{
+		double valueToSet = _allowNegative ? inValue : Math.max(0.0, inValue);
+		setText(_localFormatter.format(valueToSet));
 	}
 
 	/**
-	 * @param inText text to parse
-	 * @return value as double
+	 * @param inValue String value to set, using regular (non-local) formatting
 	 */
-	private static double parseValue(String inText)
+	public void setValue(String inValue)
 	{
-		double value = 0.0;
 		try {
-			value = Double.parseDouble(inText);
+			setValue(Double.parseDouble(inValue));
 		}
-		catch (NumberFormatException nfe) {}
-		if (value < 0) {
-			value = 0;
+		catch (Exception e) {
+			setValue(0.0);
 		}
-		return value;
 	}
 
 	/**

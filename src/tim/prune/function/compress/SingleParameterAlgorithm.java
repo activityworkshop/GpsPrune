@@ -7,11 +7,11 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import tim.prune.I18nManager;
 import tim.prune.data.Track;
+import tim.prune.gui.DecimalNumberField;
 
 /**
  * Superclass for compression algorithms with a single text field parameter
@@ -19,7 +19,7 @@ import tim.prune.data.Track;
 public abstract class SingleParameterAlgorithm extends CompressionAlgorithm
 {
 	/** Text field for entering parameter */
-	private JTextField _parameterField = null;
+	private final DecimalNumberField _parameterField;
 	/** Listener from parent dialog */
 	private ActionListener _listener = null;
 
@@ -34,12 +34,16 @@ public abstract class SingleParameterAlgorithm extends CompressionAlgorithm
 	{
 		super(inTrack, inDetails, inListener);
 		_listener = inListener;
-		_parameterField = new JTextField();
+		_parameterField = new DecimalNumberField();
 		// Add listener to parameter field to re-run preview (and en/disable ok) when param changed
 		_parameterField.addKeyListener(new KeyListener() {
 			public void keyTyped(java.awt.event.KeyEvent arg0) {}
 			public void keyPressed(java.awt.event.KeyEvent arg0) {}
-			public void keyReleased(java.awt.event.KeyEvent arg0) {if (isActivated()) _listener.actionPerformed(null);}
+			public void keyReleased(java.awt.event.KeyEvent arg0) {
+				if (isActivated()) {
+					_listener.actionPerformed(null);
+				}
+			}
 		});
 	}
 
@@ -65,22 +69,15 @@ public abstract class SingleParameterAlgorithm extends CompressionAlgorithm
 	 * Parse the text field to get parameter
 	 * @return parameter given as double
 	 */
-	protected double getParameter()
-	{
-		double param = 0.0;
-		try {
-			// Parse from string
-			param = Double.parseDouble(_parameterField.getText());
-		}
-		catch (NumberFormatException nfe) {} // ignore, param stays zero
-		return param;
+	protected double getParameter() {
+		return _parameterField.getValue();
 	}
 
 	/**
 	 * @return String to save in Settings
 	 */
 	public String getSettingsString() {
-		return _activateCheckBox.isSelected() ? _parameterField.getText() : "";
+		return _activateCheckBox.isSelected() ? ("" + _parameterField.getValue()) : "";
 	}
 
 	/**
@@ -90,7 +87,7 @@ public abstract class SingleParameterAlgorithm extends CompressionAlgorithm
 	{
 		super.applySettingsString(inSettings);
 		if (isActivated()) {
-			_parameterField.setText(inSettings);
+			_parameterField.setValue(inSettings);
 		}
 	}
 }

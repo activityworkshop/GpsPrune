@@ -1,7 +1,5 @@
 package tim.prune.jpeg;
 
-import java.util.ArrayList;
-
 /**
  * Class to hold the GPS data extracted from a Jpeg including position and time
  */
@@ -22,7 +20,6 @@ public class JpegData
 	private int _orientationCode = -1;
 	private byte[] _thumbnail = null;
 	private double _bearing = -1.0;
-	private ArrayList<String> _errors = null;
 
 
 	/**
@@ -32,6 +29,7 @@ public class JpegData
 	{
 		_exifDataPresent = true;
 	}
+
 	/**
 	 * @return true if exif data found
 	 */
@@ -215,40 +213,5 @@ public class JpegData
 			&& _latitude != null
 			&& (_longitudeRef == 'E' || _longitudeRef == 'e' || _longitudeRef == 'W' || _longitudeRef == 'w')
 			&& _longitude != null;
-	}
-
-	/**
-	 * Add the given error message to the list of errors
-	 * @param inError String containing error message
-	 */
-	public void addError(String inError)
-	{
-		if (_errors == null) _errors = new ArrayList<String>();
-		_errors.add(inError);
-	}
-
-	/**
-	 * @return the number of errors, if any
-	 */
-	public int getNumErrors()
-	{
-		if (_errors == null) return 0;
-		return _errors.size();
-	}
-
-	/**
-	 * @return true if errors occurred
-	 */
-	public boolean hasErrors()
-	{
-		return getNumErrors() > 0;
-	}
-
-	/**
-	 * @return all errors as a list
-	 */
-	public ArrayList<String> getErrors()
-	{
-		return _errors;
 	}
 }

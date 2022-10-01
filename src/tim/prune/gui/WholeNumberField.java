@@ -69,6 +69,13 @@ public class WholeNumberField extends JTextField
 	}
 
 	/**
+	 * @return true if there is no text in the field
+	 */
+	public boolean isEmpty() {
+		return getText().isEmpty();
+	}
+
+	/**
 	 * @return integer value
 	 */
 	public int getValue()

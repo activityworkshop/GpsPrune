@@ -76,9 +76,8 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 	{
 		int numToDelete = 0;
 		boolean[] deleteFlags = new boolean[_track.getNumPoints()];
-		for (int i=0; i<_algorithms.length; i++)
-		{
-			numToDelete += _algorithms[i].preview(deleteFlags);
+		for (CompressionAlgorithm algorithm : _algorithms) {
+			numToDelete += algorithm.preview(deleteFlags);
 		}
 		_summaryLabel.setValue(numToDelete);
 		_okButton.setEnabled(numToDelete > 0);
@@ -100,9 +99,9 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
 		// Add each of the algorithm components to the panel
-		for (int i=0; i<_algorithms.length; i++)
+		for (CompressionAlgorithm algorithm : _algorithms)
 		{
-			mainPanel.add(_algorithms[i].getGuiComponents());
+			mainPanel.add(algorithm.getGuiComponents());
 			mainPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 		}
 		// Summary label below algorithms

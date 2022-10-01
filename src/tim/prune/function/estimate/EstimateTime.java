@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.Calendar;
@@ -190,7 +188,7 @@ public class EstimateTime extends GenericFunction
 		_flatSpeedLabel = new JLabel(I18nManager.getText("dialog.estimatetime.parameters.timefor") + ": "); // (filled in later)
 		_flatSpeedLabel.setHorizontalAlignment(JLabel.RIGHT);
 		paramsGrid.add(_flatSpeedLabel);
-		_flatSpeedField = new DecimalNumberField();
+		_flatSpeedField = new DecimalNumberField(); // positive only
 		_flatSpeedField.addKeyListener(paramChangeListener);
 		paramsGrid.add(_flatSpeedField);
 		JLabel minsLabel = new JLabel(I18nManager.getText("units.minutes"));
@@ -206,12 +204,12 @@ public class EstimateTime extends GenericFunction
 		_climbParamLabel = new JLabel(I18nManager.getText("dialog.estimatetime.parameters.timefor") + ": "); // (filled in later)
 		_climbParamLabel.setHorizontalAlignment(JLabel.RIGHT);
 		paramsGrid.add(_climbParamLabel);
-		_gentleClimbField = new DecimalNumberField();
+		_gentleClimbField = new DecimalNumberField(true); // negative numbers allowed
 		_gentleClimbField.addKeyListener(paramChangeListener);
 		paramsGrid.add(_gentleClimbField);
 		paramsGrid.add(new JLabel(minsLabel.getText()));
 		// Steep climb
-		_steepClimbField = new DecimalNumberField();
+		_steepClimbField = new DecimalNumberField(true); // negative numbers allowed
 		_steepClimbField.addKeyListener(paramChangeListener);
 		paramsGrid.add(_steepClimbField);
 		paramsGrid.add(new JLabel(minsLabel.getText()));
@@ -259,21 +257,12 @@ public class EstimateTime extends GenericFunction
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		_applyButton = new JButton(I18nManager.getText("button.apply"));
-		_applyButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				applyTimestampsToRange();
-			}
-		});
+		_applyButton.addActionListener(e -> applyTimestampsToRange());
 		buttonPanel.add(_applyButton);
 		buttonPanel.add(Box.createGlue());
 		// Close (and save parameters)
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
-		closeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finishDialog();
-			}
-		});
+		closeButton.addActionListener(e -> finishDialog());
 		closeButton.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent inE) {
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
@@ -282,11 +271,7 @@ public class EstimateTime extends GenericFunction
 		buttonPanel.add(closeButton);
 		// cancel
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
@@ -318,26 +303,24 @@ public class EstimateTime extends GenericFunction
 		_steepDescentLabel.setText(_stats.getSteepAltitudeRange().getDescent(altUnit) + altUnitsStr);
 
 		// Try to get parameters from config
-		EstimationParameters estParams = new EstimationParameters(Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
-
-		String[] paramValues = estParams.getStrings();
-		if (paramValues == null || paramValues.length != 5)
-		{
-			estParams.resetToDefaults();
-			paramValues = estParams.getStrings();
+		EstimationParameters estParams = EstimationParameters.fromConfigString(
+			Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
+		if (estParams == null) {
+			estParams = EstimationParameters.DEFAULT_PARAMS;
 		}
-		// Flat time is either for 5 km, 3 miles or 3 nm
+
+		// Flat time is either for 5 km, 3 miles or 3 nautical miles
 		_flatSpeedLabel.setText(I18nManager.getText("dialog.estimatetime.parameters.timefor") +
 			" " + EstimationParameters.getStandardDistance() + ": ");
-		_flatSpeedField.setText(paramValues[0]);
+		_flatSpeedField.setValue(estParams.getFlatMinutesLocal());
 
 		final String heightString = " " + EstimationParameters.getStandardClimb() + ": ";
 		_climbParamLabel.setText(I18nManager.getText("dialog.estimatetime.climb") + heightString);
-		_gentleClimbField.setText(paramValues[1]);
-		_steepClimbField.setText(paramValues[2]);
+		_gentleClimbField.setValue(estParams.getGentleClimbMinutesLocal());
+		_steepClimbField.setValue(estParams.getSteepClimbMinutesLocal());
 		_descentParamLabel.setText(I18nManager.getText("dialog.estimatetime.descent") + heightString);
-		_gentleDescentField.setText(paramValues[3]);
-		_steepDescentField.setText(paramValues[4]);
+		_gentleDescentField.setValue(estParams.getGentleDescentMinutesLocal());
+		_steepDescentField.setValue(estParams.getSteepDescentMinutesLocal());
 
 		// Use the entered parameters to estimate the time
 		calculateEstimatedTime();
@@ -361,10 +344,10 @@ public class EstimateTime extends GenericFunction
 	private void calculateEstimatedTime()
 	{
 		// Populate an EstimationParameters object from the four strings
-		EstimationParameters params = new EstimationParameters();
-		params.populateWithStrings(_flatSpeedField.getText(), _gentleClimbField.getText(),
-			_steepClimbField.getText(), _gentleDescentField.getText(), _steepDescentField.getText());
-		if (!params.isValid()) {
+		EstimationParameters params = EstimationParameters.fromLocalUnits(_flatSpeedField.getValue(),
+			_gentleClimbField.getValue(), _steepClimbField.getValue(),
+			_gentleDescentField.getValue(), _steepDescentField.getValue());
+		if (params == null) {
 			_estimatedDurationLabel.setText("- - -");
 			_applyButton.setEnabled(false);
 		}
@@ -383,11 +366,11 @@ public class EstimateTime extends GenericFunction
 	 */
 	private void finishDialog()
 	{
-		// Make estimation parameters from entered strings, if valid save to config
-		EstimationParameters params = new EstimationParameters();
-		params.populateWithStrings(_flatSpeedField.getText(), _gentleClimbField.getText(),
-			_steepClimbField.getText(), _gentleDescentField.getText(), _steepDescentField.getText());
-		if (params.isValid()) {
+		// Make estimation parameters from entered values, if valid save to config
+		EstimationParameters params = EstimationParameters.fromLocalUnits(_flatSpeedField.getValue(),
+			_gentleClimbField.getValue(), _steepClimbField.getValue(),
+			_gentleDescentField.getValue(), _steepDescentField.getValue());
+		if (params != null) {
 			Config.setConfigString(Config.KEY_ESTIMATION_PARAMS, params.toConfigString());
 		}
 		_dialog.dispose();
@@ -398,9 +381,9 @@ public class EstimateTime extends GenericFunction
 	 */
 	private void showTip()
 	{
-		EstimationParameters currParams = new EstimationParameters(
+		EstimationParameters currParams = EstimationParameters.fromConfigString(
 			Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
-		if (currParams.sameAsDefaults()) {
+		if (currParams == null || currParams.sameAsDefaults()) {
 			_app.showTip(TipManager.Tip_LearnTimeParams);
 		}
 	}
@@ -411,30 +394,28 @@ public class EstimateTime extends GenericFunction
 	 */
 	private void applyTimestampsToRange()
 	{
-		// Populate an EstimationParameters object from the four strings
-		EstimationParameters params = new EstimationParameters();
-		params.populateWithStrings(_flatSpeedField.getText(), _gentleClimbField.getText(),
-			_steepClimbField.getText(), _gentleDescentField.getText(), _steepDescentField.getText());
-		if (params.isValid())
+		// Populate an EstimationParameters object from the five values
+		EstimationParameters params = EstimationParameters.fromLocalUnits(
+			_flatSpeedField.getValue(), _gentleClimbField.getValue(),
+			_steepClimbField.getValue(), _gentleDescentField.getValue(), _steepDescentField.getValue());
+
+		// Make undo object to store existing timestamps
+		UndoApplyTimestamps undo = new UndoApplyTimestamps(_app.getTrackInfo());
+		long startMillis = getTimeAtMidnight();
+		// Loop over all points in selected range
+		RangeStatsWithGradients stats = new RangeStatsWithGradients();
+		Selection selection = _app.getTrackInfo().getSelection();
+		for (int pointIdx=selection.getStart(); pointIdx <= selection.getEnd(); pointIdx++)
 		{
-			// Make undo object to store existing timestamps
-			UndoApplyTimestamps undo = new UndoApplyTimestamps(_app.getTrackInfo());
-			long startMillis = getTimeAtMidnight();
-			// Loop over all points in selected range
-			RangeStatsWithGradients stats = new RangeStatsWithGradients();
-			Selection selection = _app.getTrackInfo().getSelection();
-			for (int pointIdx=selection.getStart(); pointIdx <= selection.getEnd(); pointIdx++)
-			{
-				DataPoint point = _app.getTrackInfo().getTrack().getPoint(pointIdx);
-				if (point.isWaypoint()) continue;
-				stats.addPoint(point);
-				final double numSeconds = params.applyToStats(stats) * 60.0;
-				final long pointMillis = startMillis + (long) (numSeconds * 1000.0);
-				point.setFieldValue(Field.TIMESTAMP, "" + pointMillis, false);
-			}
-			UpdateMessageBroker.informSubscribers();
-			_app.completeFunction(undo, I18nManager.getText("confirm.applytimestamps"));
+			DataPoint point = _app.getTrackInfo().getTrack().getPoint(pointIdx);
+			if (point.isWaypoint()) continue;
+			stats.addPoint(point);
+			final double numSeconds = params.applyToStats(stats) * 60.0;
+			final long pointMillis = startMillis + (long) (numSeconds * 1000.0);
+			point.setFieldValue(Field.TIMESTAMP, "" + pointMillis, false);
 		}
+		UpdateMessageBroker.informSubscribers();
+		_app.completeFunction(undo, I18nManager.getText("confirm.applytimestamps"));
 	}
 
 	/**

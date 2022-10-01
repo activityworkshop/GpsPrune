@@ -10,7 +10,8 @@ import java.util.Locale;
  */
 public abstract class CoordFormatters
 {
-	private static HashMap<Integer, NumberFormat> _formatters = new HashMap<Integer, NumberFormat>();
+	/** Map of all the formatters created so far */
+	private static final HashMap<Integer, NumberFormat> _formatters = new HashMap<>();
 
 	/**
 	 * Get a formatter for the given number of decimal digits, creating and caching it if necessary
@@ -25,16 +26,12 @@ public abstract class CoordFormatters
 			// Formatter doesn't exist yet, so create a new one
 			formatter = NumberFormat.getNumberInstance(Locale.UK);
 			// Select the UK locale for this formatter so that decimal point is always used (not comma)
-			// Now make a pattern with the right number of digits
-			StringBuilder patternBuilder = new StringBuilder("0.");
-			if (inDigits > 0)
+			if (formatter instanceof DecimalFormat)
 			{
-				for (int i=0; i<inDigits; i++) {
-					patternBuilder.append('0');
-				}
+				// Now make a pattern with the right number of digits
+				final String digitPattern = "0." + "0".repeat(inDigits);
+				((DecimalFormat) formatter).applyPattern(digitPattern);
 			}
-			final String digitPattern = patternBuilder.toString();
-			if (formatter instanceof DecimalFormat) ((DecimalFormat) formatter).applyPattern(digitPattern);
 			// Store in map
 			_formatters.put(inDigits, formatter);
 		}

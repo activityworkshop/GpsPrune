@@ -93,8 +93,8 @@ public class InterpolateFilter extends FilterDefinition
 	{
 		if (!isFilterValid()) return null;
 		StringBuilder builder = new StringBuilder();
-		final boolean distGiven = _distField.getText() != null && _distField.getText().trim().length() > 0;
-		final boolean timeGiven = _secondsField.getText() != null && _secondsField.getText().trim().length() > 0;
+		final boolean distGiven = !_distField.isEmpty();
+		final boolean timeGiven = !_secondsField.isEmpty();
 		if (distGiven)
 		{
 			// Get the distance

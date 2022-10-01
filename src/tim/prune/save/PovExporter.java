@@ -228,7 +228,7 @@ public class PovExporter extends Export3dFunction
 		altFactorLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		centralPanel.add(altFactorLabel);
 		_altitudeFactorField = new DecimalNumberField();
-		_altitudeFactorField.setText("1.0");
+		_altitudeFactorField.setValue(1.0);
 		centralPanel.add(_altitudeFactorField);
 		// Symbol scaling
 		JLabel symbolScaleLabel = new JLabel(I18nManager.getText("dialog.3d.symbolscalefactor"));
@@ -385,6 +385,7 @@ public class PovExporter extends Export3dFunction
 				_symbolScaleField.setValue(1.0);
 			}
 			_symbolScaleFactor = SymbolScaleFactor.validateFactor(_symbolScaleField.getValue());
+			_symbolScaleField.setValue(_symbolScaleFactor);
 
 			// Write base image if necessary
 			ImageDefinition imageDef = _baseImagePanel.getImageDefinition();

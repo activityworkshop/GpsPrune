@@ -12,13 +12,6 @@ public abstract class MediaList
 
 
 	/**
-	 * Empty constructor
-	 */
-	public MediaList() {
-		this(null);
-	}
-
-	/**
 	 * Constructor
 	 * @param inList ArrayList containing media objects
 	 */
@@ -136,20 +129,6 @@ public abstract class MediaList
 				_media.remove(_media.size()-1);
 			}
 		}
-	}
-
-
-	/**
-	 * @return array of file names
-	 */
-	public String[] getNameList()
-	{
-		final int num = getNumMedia();
-		String[] names = new String[num];
-		for (int i=0; i<num; i++) {
-			names[i] = getMedia(i).getName();
-		}
-		return names;
 	}
 
 

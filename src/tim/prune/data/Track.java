@@ -848,7 +848,7 @@ public class Track
 	 */
 	public int getNearestPointIndex(double inX, double inY, double inMaxDist, boolean inJustTrackPoints)
 	{
-		int nearestPoint = 0;
+		int nearestPoint = -1;
 		double nearestDist = -1.0;
 		double mDist, yDist;
 		for (int i=0; i < getNumPoints(); i++)
@@ -869,8 +869,7 @@ public class Track
 			}
 		}
 		// Check whether it's within required distance
-		if (nearestDist > inMaxDist && inMaxDist > 0.0)
-		{
+		if (nearestDist > inMaxDist && inMaxDist > 0.0) {
 			return -1;
 		}
 		return nearestPoint;

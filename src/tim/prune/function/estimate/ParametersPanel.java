@@ -2,6 +2,8 @@ package tim.prune.function.estimate;
 
 import java.awt.Component;
 import java.awt.GridLayout;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
@@ -17,7 +19,7 @@ import tim.prune.gui.DisplayUtils;
 public class ParametersPanel extends JPanel
 {
 	/** Flag for whether average error should be shown */
-	private boolean _showAverageError = false;
+	private final boolean _showAverageError;
 	/** Labels for calculated parameters */
 	private JLabel _fsUnitsLabel = null, _flatSpeedLabel = null;
 	private JLabel _climbUnitsLabel = null;
@@ -25,14 +27,13 @@ public class ParametersPanel extends JPanel
 	private JLabel _descentUnitsLabel = null;
 	private JLabel _gentleDescentLabel = null, _steepDescentLabel = null;
 	private JLabel _averageErrorLabel = null;
-
+	private final NumberFormat _numberFormatter;
 
 	/**
 	 * Constructor
 	 * @param inTitleKey key to use for title of panel
 	 */
-	public ParametersPanel(String inTitleKey)
-	{
+	public ParametersPanel(String inTitleKey) {
 		this(inTitleKey, false);
 	}
 
@@ -44,6 +45,10 @@ public class ParametersPanel extends JPanel
 	public ParametersPanel(String inTitleKey, boolean inShowAvgError)
 	{
 		super();
+		_numberFormatter = NumberFormat.getNumberInstance();
+		if (_numberFormatter instanceof DecimalFormat) {
+			((DecimalFormat) _numberFormatter).applyPattern("0.00");
+		}
 		_showAverageError = inShowAvgError;
 		if (inTitleKey != null) {
 			setBorder(BorderFactory.createTitledBorder(I18nManager.getText(inTitleKey)));
@@ -51,6 +56,7 @@ public class ParametersPanel extends JPanel
 		setLayout(new GridLayout(0, 3, 3, 3));
 		addLabels();
 	}
+
 
 	private void addLabels()
 	{
@@ -102,7 +108,7 @@ public class ParametersPanel extends JPanel
 	 */
 	private void updateParameters(EstimationParameters inParams, double inAverageError, boolean inShowError)
 	{
-		if (inParams == null || !inParams.isValid())
+		if (inParams == null)
 		{
 			_flatSpeedLabel.setText("");
 			_gentleClimbLabel.setText(""); _steepClimbLabel.setText("");
@@ -111,38 +117,39 @@ public class ParametersPanel extends JPanel
 		else
 		{
 			final String minsText = " " + I18nManager.getText("units.minutes");
-			String[] values = inParams.getStrings(); // these strings are already formatted locally
 			_fsUnitsLabel.setText(I18nManager.getText("dialog.estimatetime.parameters.timefor") +
 				" " + EstimationParameters.getStandardDistance() + ": ");
-			_flatSpeedLabel.setText(values[0] + minsText);
+			_flatSpeedLabel.setText(formatMinutes(inParams.getFlatMinutesLocal()) + minsText);
 			final String heightString = " " + EstimationParameters.getStandardClimb() + ": ";
 			_climbUnitsLabel.setText(I18nManager.getText("dialog.estimatetime.climb") + heightString);
-			_gentleClimbLabel.setText(values[1] + minsText);
-			_steepClimbLabel.setText(values[2] + minsText);
+			_gentleClimbLabel.setText(formatMinutes(inParams.getGentleClimbMinutesLocal()) + minsText);
+			_steepClimbLabel.setText(formatMinutes(inParams.getSteepClimbMinutesLocal()) + minsText);
 			_descentUnitsLabel.setText(I18nManager.getText("dialog.estimatetime.descent") + heightString);
-			_gentleDescentLabel.setText(values[3] + minsText);
-			_steepDescentLabel.setText(values[4] + minsText);
+			_gentleDescentLabel.setText(formatMinutes(inParams.getGentleDescentMinutesLocal()) + minsText);
+			_steepDescentLabel.setText(formatMinutes(inParams.getSteepDescentMinutesLocal()) + minsText);
 		}
 		// Average error
 		if (_averageErrorLabel != null)
 		{
-			if (inParams == null || !inParams.isValid() || !inShowError)
-			{
+			if (inParams == null || !inShowError) {
 				_averageErrorLabel.setText("");
 			}
-			else
-			{
+			else {
 				_averageErrorLabel.setText(DisplayUtils.formatOneDp(inAverageError) + " %");
 			}
 		}
+	}
+
+	/** @return the number formatted using the current locale (and 2 decimal places) */
+	private String formatMinutes(double inMinutes) {
+		return _numberFormatter.format(inMinutes);
 	}
 
 	/**
 	 * Just show the parameters, with no average error
 	 * @param inParams parameters to show
 	 */
-	public void updateParameters(EstimationParameters inParams)
-	{
+	public void updateParameters(EstimationParameters inParams) {
 		updateParameters(inParams, 0.0, false);
 	}
 
@@ -151,8 +158,7 @@ public class ParametersPanel extends JPanel
 	 * @param inParams parameters to show
 	 * @param inAverageError average error as percentage
 	 */
-	public void updateParameters(EstimationParameters inParams, double inAverageError)
-	{
+	public void updateParameters(EstimationParameters inParams, double inAverageError) {
 		updateParameters(inParams, inAverageError, true);
 	}
 }

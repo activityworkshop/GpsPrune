@@ -28,14 +28,14 @@ public class UndoApplyTimestamps implements UndoOperation
 		Track track = inTrackInfo.getTrack();
 		Selection selection = inTrackInfo.getSelection();
 		_selectionStart = selection.getStart();
-		int numPoints = selection.getEnd() - selection.getStart() + 1;
+		int numPoints = selection.getEnd() - _selectionStart + 1;
 		_timestamps = new String[numPoints];
-		for (int i=selection.getStart(); i<=selection.getEnd(); i++)
+		for (int i=_selectionStart; i<=selection.getEnd(); i++)
 		{
 			DataPoint point = track.getPoint(i);
 			if (point.isWaypoint()) continue;
 			if (point.hasTimestamp()) {
-				_timestamps[i] = point.getFieldValue(Field.TIMESTAMP);
+				_timestamps[i-_selectionStart] = point.getFieldValue(Field.TIMESTAMP);
 			}
 		}
 	}

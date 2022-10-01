@@ -446,9 +446,8 @@ public class LearnParameters extends GenericFunction implements Runnable
 		}
 		// Copy results to an EstimationParameters object
 		MatrixResults result = new MatrixResults();
-		result._parameters = new EstimationParameters();
-		result._parameters.populateWithMetrics(answer.get(0, 0) * 5, // convert from 1km to 5km
-			answer.get(1, 0) * 100.0, answer.get(2, 0) * 100.0,      // convert from m to 100m
+		result._parameters = EstimationParameters.fromMetricUnits(answer.get(0, 0) * 5, // convert from 1km to 5km
+			answer.get(1, 0) * 100.0, answer.get(2, 0) * 100.0,                         // convert from m to 100m
 			answer.get(3, 0) * 100.0, answer.get(4, 0) * 100.0);
 		result._averageErrorPc = averageErrorPc;
 		return result;
@@ -481,7 +480,10 @@ public class LearnParameters extends GenericFunction implements Runnable
 	private EstimationParameters calculateCombinedParameters()
 	{
 		final double fraction1 = 1 - 0.1 * _weightSlider.getValue(); // slider left = value 0 = fraction 1 = keep current
-		EstimationParameters oldParams = new EstimationParameters(Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
+		EstimationParameters oldParams = EstimationParameters.fromConfigString(Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
+		if (oldParams == null) {
+			return _calculatedParams;
+		}
 		return oldParams.combine(_calculatedParams, fraction1);
 	}
 
@@ -516,6 +518,9 @@ public class LearnParameters extends GenericFunction implements Runnable
 	private void combineAndFinish()
 	{
 		EstimationParameters params = calculateCombinedParameters();
+		if (params == null) {
+			params = EstimationParameters.DEFAULT_PARAMS;
+		}
 		Config.setConfigString(Config.KEY_ESTIMATION_PARAMS, params.toConfigString());
 		_dialog.dispose();
 	}
