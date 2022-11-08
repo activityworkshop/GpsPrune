@@ -41,7 +41,7 @@ public class WaypointColours
 	 */
 	public static Color getColourForType(String inType, int inSalt)
 	{
-		String type = (inType == null ? "" : inType.strip().toLowerCase());
+		String type = (inType == null ? "" : inType.trim().toLowerCase());
 		if (inSalt < 0 || type.isEmpty()) {
 			return null;
 		}

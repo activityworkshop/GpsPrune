@@ -29,8 +29,11 @@ public abstract class CoordFormatters
 			if (formatter instanceof DecimalFormat)
 			{
 				// Now make a pattern with the right number of digits
-				final String digitPattern = "0." + "0".repeat(inDigits);
-				((DecimalFormat) formatter).applyPattern(digitPattern);
+				StringBuilder patternBuilder = new StringBuilder("0.");
+				for (int i=0; i<inDigits; i++) {
+					patternBuilder.append('0');
+				}
+				((DecimalFormat) formatter).applyPattern(patternBuilder.toString());
 			}
 			// Store in map
 			_formatters.put(inDigits, formatter);

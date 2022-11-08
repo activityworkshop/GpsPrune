@@ -959,7 +959,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private static String wrapInBrackets(String fieldString)
 	{
-		if (fieldString == null || fieldString.isBlank()) {
+		if (fieldString == null || fieldString.equals("")) {
 			return "";
 		}
 		return " (" + fieldString + ")";
@@ -971,7 +971,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private static String getPointCaption(DataPoint inPoint)
 	{
 		final String desc = inPoint.getFieldValue(Field.DESCRIPTION);
-		if (desc != null && !desc.isBlank()) {
+		if (desc != null && !desc.equals("")) {
 			return desc;
 		}
 		return inPoint.getFieldValue(Field.COMMENT);
@@ -982,7 +982,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private static String wrapInTableRow(String fieldString)
 	{
-		if (fieldString == null || fieldString.isBlank()) {
+		if (fieldString == null || fieldString.equals("")) {
 			return "";
 		}
 		return "<tr><td>" + fieldString + "</td></tr>";

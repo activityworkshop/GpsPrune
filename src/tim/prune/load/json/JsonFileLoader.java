@@ -81,7 +81,7 @@ public class JsonFileLoader
 	private void processTokensInLine(String inLine)
 	{
 		if (inLine == null) {return;}
-		String line = inLine.strip();
+		String line = inLine.trim();
 		StringBuilder currToken = new StringBuilder();
 		boolean insideQuotes = false;
 		boolean previousSlash = false;
@@ -119,7 +119,7 @@ public class JsonFileLoader
 
 	private void processToken(String inToken)
 	{
-		if (inToken == null || inToken.isBlank()) {return;}
+		if (inToken == null || inToken.equals("")) {return;}
 		if (inToken.equals("\"coordinates\"")) {
 			_newSegment = true;
 		}

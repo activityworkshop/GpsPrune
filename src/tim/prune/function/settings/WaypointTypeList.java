@@ -31,7 +31,7 @@ public class WaypointTypeList extends AbstractListModel<String>
 		{
 			DataPoint point = inTrack.getPoint(i);
 			String type = point.isWaypoint() ? point.getFieldValue(Field.WAYPT_TYPE) : null;
-			if (type != null && !type.isBlank() && !_types.contains(type)) {
+			if (type != null && !type.equals("") && !_types.contains(type)) {
 				_types.add(type);
 			}
 		}

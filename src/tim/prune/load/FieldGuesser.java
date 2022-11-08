@@ -235,7 +235,7 @@ public abstract class FieldGuesser
 	 */
 	public static boolean couldBeCoordinateString(String inValue)
 	{
-		final String value = inValue == null ? "" : inValue.strip().toUpperCase();
+		final String value = inValue == null ? "" : inValue.trim().toUpperCase();
 		if (value.length() < 2) {
 			return false;
 		}

@@ -57,7 +57,7 @@ public class EstimationParameters
 	 */
 	public static EstimationParameters fromConfigString(String inString)
 	{
-		if (inString == null || inString.isBlank()) {
+		if (inString == null || inString.equals("")) {
 			return null;
 		}
 		String[] params = inString.trim().split(";");
