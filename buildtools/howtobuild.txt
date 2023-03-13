@@ -79,7 +79,16 @@ and then File > Import > Existing Projects into Workspace or using File > Import
 5.  Using Gradle
 ================
 
-TODO
-Requirements: Gradle already installed (eg apt-get install gradle); build.gradle file
-Any contributions to provide a suitable gradle file would be gratefully received.
+Requirements: A recent version of Gradle already installed. See https://gradle.org/install/ (the one via apt-get is outdated).
+Also, an internet connection is required whenever a task is run for the first time.
+Gradle will download the java3d dependencies and store them in a local cache to use for the building step.
 
+Before you can use Gradle, you need to move the files "build.gradle.kts" & "settings.gradle" from the "buildtools" directory into the parent directory.
+
+Then, to build GpsPrune, execute from this directory:
+   gradle clean build
+
+The resulting jar will be placed in the build/libs/ folder.
+
+To simply run GpsPrune, execute:
+   gradle run
