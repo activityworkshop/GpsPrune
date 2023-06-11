@@ -6,7 +6,7 @@ package tim.prune.load;
  */
 public class FileSplitter
 {
-	private ContentCacher _cacher = null;
+	private final ContentCacher _cacher;
 	private int _numRows = 0;
 	private int _numColumns = 0;
 	private boolean[] _columnStates = null;
@@ -69,12 +69,11 @@ public class FileSplitter
 					String[] splitLine = wholeLine.split(delimStr);
 					if (splitLine != null)
 					{
-						System.arraycopy(splitLine, 0, result[i], 0, splitLine.length);
 						// Check if columns are blank or not
 						for (int j=0; j<splitLine.length; j++)
 						{
-							if (!_columnStates[j] && splitLine[j].trim().length() > 0)
-							{
+							result[i][j] = splitLine[j].trim();
+							if (!_columnStates[j] && !result[i][j].isEmpty()) {
 								_columnStates[j] = true;
 							}
 						}

@@ -3,8 +3,6 @@ package tim.prune.gui.colour;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -82,12 +80,7 @@ public class ColourerSelectorPanel extends JPanel
 		}
 		_typeCombo = new JComboBox<String>(colourerTypes);
 		_typeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
-		_typeCombo.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				onColourerTypeChanged();
-			}
-		});
+		_typeCombo.addActionListener(e -> onColourerTypeChanged());
 		// Add to the panel
 		grid.add(new JLabel(I18nManager.getText("dialog.colourer.type")));
 		grid.add(_typeCombo);

@@ -3,7 +3,6 @@ package tim.prune.function.charts;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
@@ -96,7 +95,7 @@ public class Charter extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -148,11 +147,7 @@ public class Charter extends GenericFunction
 		mainPanel.add(yPanel);
 
 		// Add validation to prevent choosing invalid (ie dist/dist) combinations
-		ActionListener xAxisListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				enableYbox(0, _timeRadio.isSelected());
-			}
-		};
+		ActionListener xAxisListener = (e) -> enableYbox(0, _timeRadio.isSelected());
 		_timeRadio.addActionListener(xAxisListener);
 		_distanceRadio.addActionListener(xAxisListener);
 
@@ -191,20 +186,14 @@ public class Charter extends GenericFunction
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		// ok button
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				showChart(_app.getTrackInfo().getTrack());
-				_dialog.setVisible(false);
-			}
+		okButton.addActionListener(e -> {
+			showChart(_app.getTrackInfo().getTrack());
+			_dialog.setVisible(false);
 		});
 		buttonPanel.add(okButton);
 		// Cancel button
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.setVisible(false);
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.setVisible(false));
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
@@ -527,8 +516,7 @@ public class Charter extends GenericFunction
 		// Loop over collected points
 		for (int i=0; i<numPoints; i++)
 		{
-			if (speeds.hasData(i))
-			{
+			if (speeds.hasData(i)) {
 				values.setData(i, speeds.getData(i));
 			}
 		}

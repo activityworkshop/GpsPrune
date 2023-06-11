@@ -14,7 +14,7 @@ public abstract class MapSource
 	/** Name for this source */
 	private final String _name;
 	/** File extensions */
-	private MapLayer[] _layers = new MapLayer[2];
+	private final MapLayer[] _layers = new MapLayer[2];
 
 
 	/**

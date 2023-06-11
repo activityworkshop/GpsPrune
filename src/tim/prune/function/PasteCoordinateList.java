@@ -3,8 +3,6 @@ package tim.prune.function;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -56,7 +54,7 @@ public class PasteCoordinateList extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -104,22 +102,13 @@ public class PasteCoordinateList extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				if (_okButton.isEnabled()) {finish();}
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> {
+			if (_okButton.isEnabled()) {finish();}
+		});
 		_okButton.setEnabled(false);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -141,7 +130,8 @@ public class PasteCoordinateList extends GenericFunction
 	 */
 	private void finish()
 	{
-		new TextFileLoader(_app, _parentFrame).loadText(_coordArea.getText());
+		final String coords = _coordArea.getText();
 		_dialog.dispose();
+		new TextFileLoader(_app).loadText(coords);
 	}
 }

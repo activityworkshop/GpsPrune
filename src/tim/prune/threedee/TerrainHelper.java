@@ -27,7 +27,7 @@ import tim.prune.gui.map.MapUtils;
 public class TerrainHelper
 {
 	/** Number of nodes on each side of the square grid */
-	private int _gridSize = 0;
+	private final int _gridSize;
 
 	/**
 	 * Constructor
@@ -195,20 +195,19 @@ public class TerrainHelper
 	public void fixVoids(Track inTerrainTrack)
 	{
 		int numVoids = countVoids(inTerrainTrack);
-		if (numVoids == 0) {return;}
-		//System.out.println("Starting to fix, num voids = " + numVoids);
+		if (numVoids == 0) {
+			return;
+		}
 		// Fix the holes which are surrounded on all four sides by non-holes
 		fixSingleHoles(inTerrainTrack);
-		//System.out.println("Fixed single holes, now num voids = " + countVoids(inTerrainTrack));
 		// Maybe there is something to do in the corners?
 		fixCornersAndEdges(inTerrainTrack);
-		//System.out.println("Fixed corners, now num voids = " + countVoids(inTerrainTrack));
 		// Now fix the bigger holes, which should fix everything left
 		fixBiggerHoles(inTerrainTrack);
-		final int numHolesLeft = countVoids(inTerrainTrack);
-		if (numHolesLeft > 0) {
-			System.out.println("Fixed bigger holes, now num voids = " + countVoids(inTerrainTrack));
-		}
+		// final int numHolesLeft = countVoids(inTerrainTrack);
+		// if (numHolesLeft > 0) {
+		// 	System.out.println("Fixed bigger holes, now num voids = " + countVoids(inTerrainTrack));
+		// }
 	}
 
 	/**
@@ -217,21 +216,6 @@ public class TerrainHelper
 	 */
 	private static int countVoids(Track inTerrainTrack)
 	{
-		// DEBUG: Show state of voids first
-//		final int gridSize = (int) Math.sqrt(inTerrainTrack.getNumPoints());
-//		StringBuilder sb = new StringBuilder();
-//		for (int i=0; i<inTerrainTrack.getNumPoints(); i++)
-//		{
-//			if ((i%gridSize) == 0) sb.append('\n');
-//			if (inTerrainTrack.getPoint(i).hasAltitude()) {
-//				sb.append('A');
-//			} else {
-//				sb.append(' ');
-//			}
-//		}
-//		System.out.println("Voids:" + sb.toString());
-		// END DEBUG
-
 		int numVoids = 0;
 		if (inTerrainTrack != null)
 		{
@@ -312,7 +296,7 @@ public class TerrainHelper
 						// Set this altitude in the point
 						p.setFieldValue(Field.ALTITUDE, "" + altitude, false);
 						// force value to metres
-						p.getAltitude().reset(new Altitude((int) altitude, UnitSetLibrary.UNITS_METRES));
+						p.getAltitude().set(String.valueOf(altitude), UnitSetLibrary.UNITS_METRES);
 					}
 				}
 			}
@@ -370,8 +354,7 @@ public class TerrainHelper
 			{
 				// System.out.println("Averaging values " + alt1.getMetricValue() + " and " + alt2.getMetricValue());
 				int newAltitude = (int) ((alt1.getMetricValue() + alt2.getMetricValue()) / 2.0);
-				corner.setFieldValue(Field.ALTITUDE, "" + newAltitude, false);
-				// TODO: Check forcing metres?  Is there a nicer way?
+				corner.setAltitude("" + newAltitude, UnitSetLibrary.UNITS_METRES, false);
 			}
 		}
 	}
@@ -406,8 +389,7 @@ public class TerrainHelper
 						final double alt = alt1 + (alt2-alt1) * j / gapLen;
 						//System.out.println("Fill in " + (prevIndexWithAlt + j) + "(" + (inCornerIndex + (prevIndexWithAlt + j) * inInc) + ")  with alt " + (int) alt);
 						final DataPoint p = inTerrainTrack.getPoint(inCornerIndex + (prevIndexWithAlt + j) * inInc);
-						p.setFieldValue(Field.ALTITUDE, "" + (int) alt, false);
-						// TODO: Check forcing metres?
+						p.setAltitude("" + (int) alt, UnitSetLibrary.UNITS_METRES, false);
 					}
 				}
 				prevIndexWithAlt = i;
@@ -469,8 +451,7 @@ public class TerrainHelper
 			if (!p.hasAltitude())
 			{
 				final double altitude = patch.getAltitude(i);
-				p.setFieldValue(Field.ALTITUDE, "" + altitude, false);
-				p.getAltitude().reset(new Altitude((int) altitude, UnitSetLibrary.UNITS_METRES));
+				p.setAltitude("" + altitude, UnitSetLibrary.UNITS_METRES, false);
 			}
 		}
 	}

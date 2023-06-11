@@ -4,14 +4,12 @@ import java.util.ArrayList;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.AppendRangeCmd;
+import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
-import tim.prune.data.FieldList;
 import tim.prune.data.RangeStats;
-import tim.prune.data.Track;
 import tim.prune.data.UnitSetLibrary;
-import tim.prune.undo.UndoAppendPoints;
 
 /**
  * Function to create waypoints marking regular distance intervals,
@@ -20,7 +18,7 @@ import tim.prune.undo.UndoAppendPoints;
 public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 {
 	/** ArrayList of points to append to the track */
-	private ArrayList<DataPoint> _pointsToAdd = new ArrayList<DataPoint>();
+	private final ArrayList<DataPoint> _pointsToAdd = new ArrayList<>();
 	/** Counter of previously used multiple */
 	private int _previousMultiple = 0;
 
@@ -75,40 +73,27 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 		if (createByTime || createByDistance) {
 			createWaypointsAtIntervals(timeLimitSeconds, distLimitKm);
 		}
-		else if (createHalves)
-		{
+		else if (createHalves) {
 			createHalfwayWaypoints();
 		}
-		else
-		{
+		else {
 			return;
 		}
 
 		if (!_pointsToAdd.isEmpty())
 		{
-			// Make undo object
-			final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
-			UndoAppendPoints undo = new UndoAppendPoints(numPoints);
-
-			// Append created points to Track
-			Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE, Field.WAYPT_NAME};
-			final int numPointsToAdd = _pointsToAdd.size();
-			DataPoint[] waypoints = new DataPoint[numPointsToAdd];
-			_pointsToAdd.toArray(waypoints);
-			Track wpTrack = new Track(new FieldList(fields), waypoints);
-			_app.getTrackInfo().getTrack().combine(wpTrack);
-
-			undo.setNumPointsAppended(numPointsToAdd);
+			AppendRangeCmd command = new AppendRangeCmd(_pointsToAdd);
+			command.setDescription(getName());
 			final String confirmMessage = I18nManager.getTextWithNumber("confirm.pointsadded", _pointsToAdd.size());
-			_app.completeFunction(undo, confirmMessage);
-			UpdateMessageBroker.informSubscribers();
+			command.setConfirmText(confirmMessage);
+			_app.execute(command);
 		}
 		_dialog.dispose();
 	}
 
 	/**
 	 * Create waypoints according to the given intervals
-	 * @param inTimeLimitSeconds
+	 * @param inTimeLimitSeconds time limit in seconds
 	 * @param inDistLimitKm distance limit in kilometres
 	 */
 	private void createWaypointsAtIntervals(int inTimeLimitSeconds, double inDistLimitKm)
@@ -117,13 +102,14 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 		final boolean createByDistance = (inDistLimitKm > 0.0);
 
 		// Make new waypoints, looping through the points in the track
-		DataPoint currPoint = null, prevPoint = null;
+		DataPoint prevPoint = null;
 		double currValue = 0.0, prevValue = 0.0;
-		RangeStats rangeStats = new RangeStats();
+		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		RangeStats rangeStats = new RangeStats(altitudeTolerance);
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
 		for (int i=0; i<numPoints; i++)
 		{
-			currPoint = _app.getTrackInfo().getTrack().getPoint(i);
+			DataPoint currPoint = _app.getTrackInfo().getTrack().getPoint(i);
 			rangeStats.addPoint(currPoint);
 
 			if (!currPoint.isWaypoint())
@@ -179,11 +165,11 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 	{
 		// Calculate the details of the whole track so we can see what to halve
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
-		RangeStats totalStats = new RangeStats();
-		DataPoint currPoint = null;
+		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		RangeStats totalStats = new RangeStats(altitudeTolerance);
 		for (int i=0; i<numPoints; i++)
 		{
-			currPoint = _app.getTrackInfo().getTrack().getPoint(i);
+			DataPoint currPoint = _app.getTrackInfo().getTrack().getPoint(i);
 			totalStats.addPoint(currPoint);
 		}
 		// Calculate total moving distance of track
@@ -197,13 +183,13 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 		final double halfDescent = totalDescent / 2.0;
 
 		// Now loop through points again, looking for the halfway points
-		RangeStats partialStats = new RangeStats();
+		RangeStats partialStats = new RangeStats(altitudeTolerance);
 		DataPoint prevPoint = null;
 		boolean createdDistance = false, createdClimb = false, createdDescent = false;
 		double prevDistance = 0.0, prevClimb = 0.0, prevDescent = 0.0;
 		for (int i=0; i<numPoints; i++)
 		{
-			currPoint = _app.getTrackInfo().getTrack().getPoint(i);
+			DataPoint currPoint = _app.getTrackInfo().getTrack().getPoint(i);
 			partialStats.addPoint(currPoint);
 			if (!currPoint.isWaypoint())
 			{
@@ -269,7 +255,7 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 	 */
 	private String createHalfwayName(HalfwayType inType)
 	{
-		String typeString = null;
+		final String typeString;
 		switch (inType)
 		{
 			case HALF_DISTANCE:
@@ -281,11 +267,9 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 			case HALF_DESCENT:
 				typeString = "descent";
 				break;
+			default:
+				return "half";
 		}
-		if (typeString != null)
-		{
-			return I18nManager.getText("dialog.markers.half." + typeString);
-		}
-		return "half";
+		return I18nManager.getText("dialog.markers.half." + typeString);
 	}
 }

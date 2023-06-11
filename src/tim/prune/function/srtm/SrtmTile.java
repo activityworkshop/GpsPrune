@@ -9,9 +9,9 @@ import tim.prune.data.DataPoint;
 public class SrtmTile
 {
 	/** Latitude in degrees north/south */
-	private int _latitude = 0;
+	private final int _latitude;
 	/** Longitude in degrees east/west */
-	private int _longitude = 0;
+	private final int _longitude;
 
 
 	/**

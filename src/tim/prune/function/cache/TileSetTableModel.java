@@ -10,7 +10,7 @@ import tim.prune.I18nManager;
 public final class TileSetTableModel extends AbstractTableModel
 {
 	/** Model from which values are drawn */
-	private TileCacheModel _model = null;
+	private final TileCacheModel _model;
 
 
 	/**

@@ -1,8 +1,6 @@
 package tim.prune.load.babel;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.regex.Pattern;
@@ -59,11 +57,7 @@ public class BabelFilterPanel extends JPanel
 		_filterField = new JTextField(20);
 		_filterField.addKeyListener(new KeyAdapter() {
 			public void keyTyped(KeyEvent arg0) {
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						checkFilter();
-					}
-				});
+				SwingUtilities.invokeLater(() -> checkFilter());
 			}
 		});
 		JPanel filterFieldPanel = new JPanel();
@@ -79,20 +73,13 @@ public class BabelFilterPanel extends JPanel
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.Y_AXIS));
 		JButton addButton = new JButton(I18nManager.getText("button.addnew"));
-		addButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				// System.out.println("Filter exists: " + hasFilter() + ", valid: " + isFilterValid());
-				_addDialog.showDialog();
-			}
-		});
+		addButton.addActionListener(e -> _addDialog.showDialog());
 		buttonPanel.add(addButton);
 		buttonPanel.add(Box.createVerticalStrut(2));
 		JButton clearButton = new JButton(I18nManager.getText("button.delete"));
-		clearButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				_filterField.setText("");
-				checkFilter();
-			}
+		clearButton.addActionListener(e -> {
+			_filterField.setText("");
+			checkFilter();
 		});
 		buttonPanel.add(clearButton);
 		add(buttonPanel, BorderLayout.EAST);
@@ -115,8 +102,7 @@ public class BabelFilterPanel extends JPanel
 	public String getFilterString()
 	{
 		String filter = _filterField.getText();
-		if (filter != null) filter = filter.trim();
-		return filter;
+		return filter == null ? null : filter.trim();
 	}
 
 	/**
@@ -134,8 +120,7 @@ public class BabelFilterPanel extends JPanel
 	public boolean isFilterValid()
 	{
 		String str = getFilterString();
-		if (str == null) return false;
-		return FILTER_PATTERN.matcher(str).matches();
+		return str != null && FILTER_PATTERN.matcher(str).matches();
 	}
 
 	/**
@@ -176,8 +161,7 @@ public class BabelFilterPanel extends JPanel
 				_validIcon.setStatusInvalid();
 			}
 		}
-		else
-		{
+		else {
 			_validIcon.setStatusBlank();
 		}
 	}

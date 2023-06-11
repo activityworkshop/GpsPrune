@@ -131,19 +131,6 @@ public class DecimalNumberField extends JTextField
 	}
 
 	/**
-	 * @param inValue String value to set, using regular (non-local) formatting
-	 */
-	public void setValue(String inValue)
-	{
-		try {
-			setValue(Double.parseDouble(inValue));
-		}
-		catch (Exception e) {
-			setValue(0.0);
-		}
-	}
-
-	/**
 	 * Put a minimum on the minimum width
 	 */
 	public Dimension getMinimumSize()

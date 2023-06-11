@@ -3,12 +3,11 @@ package tim.prune.function;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -20,12 +19,12 @@ import javax.swing.SwingConstants;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.AppendRangeCmd;
 import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
-import tim.prune.data.Field;
-import tim.prune.data.PointCreateOptions;
-import tim.prune.data.SourceInfo;
+import tim.prune.data.Latitude;
+import tim.prune.data.Longitude;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.DecimalNumberField;
@@ -49,8 +48,7 @@ public class ProjectCircle extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public ProjectCircle(App inApp)
-	{
+	public ProjectCircle(App inApp) {
 		super(inApp);
 	}
 
@@ -67,7 +65,7 @@ public class ProjectCircle extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -128,23 +126,14 @@ public class ProjectCircle extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				if (_okButton.isEnabled()) {finish();}
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> {
+			if (_okButton.isEnabled()) {finish();}
+		});
 		_okButton.setEnabled(false);
 
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -182,10 +171,9 @@ public class ProjectCircle extends GenericFunction
 		final double projectRads = Distance.convertDistanceToRadians(_distanceField.getValue(), distUnit);
 		final double origLatRads = Math.toRadians(currPoint.getLatitude().getDouble());
 		final double origLonRads = Math.toRadians(currPoint.getLongitude().getDouble());
-		// System.out.println("Project from: " + origLatRads + ", " + origLonRads);
 
 		final int NUM_POINTS_IN_CIRCLE = 24;
-		Object[][] dataArray = new Object[NUM_POINTS_IN_CIRCLE + 1][];
+		ArrayList<DataPoint> points = new ArrayList<>();
 		for (int pointNum=0; pointNum<=NUM_POINTS_IN_CIRCLE; pointNum++)
 		{
 			final double bearingRads = (pointNum % NUM_POINTS_IN_CIRCLE) * 2.0 * Math.PI / NUM_POINTS_IN_CIRCLE;
@@ -196,17 +184,16 @@ public class ProjectCircle extends GenericFunction
 				Math.cos(projectRads) - Math.sin(origLatRads) * Math.sin(lat2));
 
 			// Create point and append to track
-			dataArray[pointNum] = new String[2];
-			dataArray[pointNum][0] = "" + Math.toDegrees(lat2);
-			dataArray[pointNum][1] = "" + Math.toDegrees(lon2);
+			DataPoint point = new DataPoint(new Latitude("" + Math.toDegrees(lat2)), new Longitude("" + Math.toDegrees(lon2)), null);
+			point.setSegmentStart(pointNum == 0);
+			points.add(point);
 		}
 
 		// give data to App
-		SourceInfo sourceInfo = null;
-		Field[] fieldArray = {Field.LATITUDE, Field.LONGITUDE};
-		_app.autoAppendNextFile();
-		_app.informDataLoaded(fieldArray, dataArray, new PointCreateOptions(), sourceInfo, null);
-
+		AppendRangeCmd command = new AppendRangeCmd(points);
+		command.setDescription(getName());
+		command.setConfirmText(I18nManager.getTextWithNumber("confirm.pointsadded", points.size()));
+		_app.execute(command);
 		_dialog.dispose();
 	}
 }

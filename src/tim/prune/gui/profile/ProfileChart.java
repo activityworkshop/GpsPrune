@@ -32,7 +32,7 @@ public class ProfileChart extends GenericDisplay
 	/** Inner class to handle popup menu clicks */
 	class MenuClicker implements ActionListener
 	{
-		private Field _field = null;
+		private final Field _field;
 		MenuClicker(Field inField) {_field = inField;}
 		/** React to menu click by changing the field */
 		public void actionPerformed(ActionEvent arg0) {
@@ -41,15 +41,10 @@ public class ProfileChart extends GenericDisplay
 	}
 
 	/** Inner class to remember a single index */
-	class PointIndex
+	static class PointIndex
 	{
 		public int index = -1;
 		public boolean hasValue = false;
-		public PointIndex()
-		{
-			index = -1;
-			hasValue = false;
-		}
 		/** Set a single value */
 		public void set(int inValue)
 		{
@@ -91,7 +86,7 @@ public class ProfileChart extends GenericDisplay
 	}
 
 	/** Inner class to remember previous chart parameters */
-	class ChartParameters
+	private static class ChartParameters
 	{
 		public PointIndex selectedPoint = new PointIndex();
 		public PointIndex rangeStart = new PointIndex(), rangeEnd = new PointIndex();
@@ -137,11 +132,6 @@ public class ProfileChart extends GenericDisplay
 			}
 			return maxIndex.index;
 		}
-		/** @return true if the parameters are completely empty (cleared) */
-		public boolean isEmpty()
-		{
-			return !selectedPoint.hasValue && !rangeStart.hasValue && !rangeEnd.hasValue;
-		}
 	}
 
 	/** Current scale factor in x direction*/
@@ -149,20 +139,18 @@ public class ProfileChart extends GenericDisplay
 	/** Data to show on chart */
 	private ProfileData _data = null;
 	/** Label for chart type, units */
-	private JLabel _label = null;
+	private final JLabel _label;
 	/** Right-click popup menu */
 	private JPopupMenu _popup = null;
 	/** Parameters last time chart was drawn */
 	private ChartParameters _previousParameters = new ChartParameters();
 
 	/** Possible scales to use */
-	private static final int[] LINE_SCALES = {10000, 5000, 2000, 1000, 500, 200, 100, 50, 20, 10, 5, 2, 1};
+	private final ChartScale _chartScale = new ChartScale();
 	/** Border width around black line */
 	private static final int BORDER_WIDTH = 6;
 	/** Minimum size for profile chart in pixels */
 	private static final Dimension MINIMUM_SIZE = new Dimension(200, 110);
-	/** Colour to use for text if no data found */
-	private static final Color COLOR_NODATA_TEXT = Color.GRAY;
 
 
 	/**
@@ -189,8 +177,7 @@ public class ProfileChart extends GenericDisplay
 	/**
 	 * Override minimum size method to restrict slider
 	 */
-	public Dimension getMinimumSize()
-	{
+	public Dimension getMinimumSize() {
 		return MINIMUM_SIZE;
 	}
 
@@ -202,17 +189,19 @@ public class ProfileChart extends GenericDisplay
 	{
 		super.paint(g);
 		// Set antialiasing depending on Config
-		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-			Config.getConfigBoolean(Config.KEY_ANTIALIAS) ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+		if (g instanceof Graphics2D) {
+			((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+				Config.getConfigBoolean(Config.KEY_ANTIALIAS) ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+		}
 		ColourScheme colourScheme = Config.getColourScheme();
 		paintBackground(g, colourScheme);
 
-		if (_track == null || _track.getNumPoints() <= 0)
-		{
+		if (_track == null || _track.getNumPoints() <= 0) {
 			return;
 		}
 
 		_label.setText(_data.getLabel());
+		_label.setForeground(colourScheme.getColour(ColourScheme.IDX_TEXT));
 		int width = getWidth();
 		int height = getHeight();
 
@@ -235,7 +224,13 @@ public class ProfileChart extends GenericDisplay
 		// Find minimum and maximum values to plot
 		double minValue = _data.getMinValue();
 		double maxValue = _data.getMaxValue();
-		if (maxValue <= minValue) {maxValue = minValue + 1; minValue--;}
+		if ((maxValue - minValue) < 2.0)
+		{
+			final double middleValue = (minValue + maxValue) / 2.0;
+			final double spread = Math.max(maxValue - minValue, 2.0);
+			minValue = middleValue - spread / 2.0;
+			maxValue = middleValue + spread / 2.0;
+		}
 
 		final int numPoints = _track.getNumPoints();
 		_xScaleFactor = 1.0 * (width - 2 * BORDER_WIDTH - 1) / numPoints;
@@ -256,9 +251,8 @@ public class ProfileChart extends GenericDisplay
 		final int minLines = Math.max(2, getHeight() / fontHeight / 4);
 
 		int y = 0;
-		double value = 0.0;
 		// horizontal lines for scale - set to round numbers eg 500
-		final int lineScale = getLineScale(minValue, maxValue, minLines);
+		final int lineScale = _chartScale.getLineScale(minValue, maxValue, minLines);
 		double scaleValue = Math.ceil(minValue/lineScale) * lineScale;
 		final int zeroY = height - BORDER_WIDTH - (int) (yScaleFactor * (0.0 - minValue));
 
@@ -286,15 +280,17 @@ public class ProfileChart extends GenericDisplay
 			int previousX = -1;
 			for (int p = 0; p < numPoints; p++)
 			{
-				if (p == selectionStart)
+				if (p == selectionStart) {
 					g.setColor(rangeColour);
-				else if (p == (selectionEnd+1))
+				}
+				else if (p == (selectionEnd+1)) {
 					g.setColor(barColour);
+				}
 
 				final int x = (int) (_xScaleFactor * p) + 1;
 				if (_data.hasData(p) && x != previousX)
 				{
-					value = _data.getData(p);
+					final double value = _data.getData(p);
 					// Normal case is the minimum value greater than zero
 					if (minValue >= 0)
 					{
@@ -326,7 +322,7 @@ public class ProfileChart extends GenericDisplay
 				if (_data.hasData(selectedPoint))
 				{
 					g.setColor(currentColour);
-					value = _data.getData(selectedPoint);
+					final double value = _data.getData(selectedPoint);
 					y = (int) (yScaleFactor * (value - minValue));
 					g.fillRect(BORDER_WIDTH + sel_x, height-BORDER_WIDTH - y, barWidth, y);
 				}
@@ -341,7 +337,6 @@ public class ProfileChart extends GenericDisplay
 			int textHeight = g.getFontMetrics().getHeight();
 			scaleValue = (int) (minValue / lineScale + 1) * lineScale;
 			if (minValue < 0.0) {scaleValue -= lineScale;}
-			y = 0;
 			g.setColor(currentColour);
 			while (scaleValue < maxValue)
 			{
@@ -378,7 +373,7 @@ public class ProfileChart extends GenericDisplay
 		// Display message if no data to be displayed
 		if (_track == null || _track.getNumPoints() <= 0)
 		{
-			inG.setColor(COLOR_NODATA_TEXT);
+			inG.setColor(inColourScheme.getColour(ColourScheme.IDX_TEXT));
 			inG.drawString(I18nManager.getText("display.nodata"), 50, height/2);
 		}
 		else
@@ -401,25 +396,13 @@ public class ProfileChart extends GenericDisplay
 		}
 		_popup = new JPopupMenu();
 		JMenuItem altItem = new JMenuItem(I18nManager.getText("fieldname.altitude"));
-		altItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				changeView(Field.ALTITUDE);
-			}});
+		altItem.addActionListener(e -> changeView(Field.ALTITUDE));
 		_popup.add(altItem);
 		JMenuItem speedItem = new JMenuItem(I18nManager.getText("fieldname.speed"));
-		speedItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				changeView(Field.SPEED);
-			}});
+		speedItem.addActionListener(e -> changeView(Field.SPEED));
 		_popup.add(speedItem);
 		JMenuItem vertSpeedItem = new JMenuItem(I18nManager.getText("fieldname.verticalspeed"));
-		vertSpeedItem.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				changeView(Field.VERTICAL_SPEED);
-			}});
+		vertSpeedItem.addActionListener(e -> changeView(Field.VERTICAL_SPEED));
 		_popup.add(vertSpeedItem);
 		// Go through track's master field list, see if any other fields to list
 		boolean addSeparator = true;
@@ -439,32 +422,9 @@ public class ProfileChart extends GenericDisplay
 	}
 
 	/**
-	 * Work out the scale for the horizontal lines
-	 * @param inMin min value of data
-	 * @param inMax max value of data
-	 * @param inMinLines minimum number of lines to draw, depending on space
-	 * @return scale separation, or -1 for no scale
-	 */
-	private int getLineScale(double inMin, double inMax, int inMinLines)
-	{
-		if ((inMax - inMin) <= 2.0) {
-			return -1;
-		}
-		for (int scale : LINE_SCALES)
-		{
-			int numLines = (int)(inMax / scale) - (int)(inMin / scale);
-			// If enough lines produced then use this scale
-			if (numLines >= inMinLines) return scale;
-		}
-		// no suitable scale found so just use minimum
-		return LINE_SCALES[LINE_SCALES.length-1];
-	}
-
-
-	/**
 	 * Method to inform map that data has changed
 	 */
-	public void dataUpdated(byte inUpdateType)
+	public void dataUpdated(int inUpdateType)
 	{
 		// Try not to recalculate all the values unless necessary
 		if (inUpdateType == SELECTION_CHANGED && !_data._hasData) {return;}
@@ -489,8 +449,7 @@ public class ProfileChart extends GenericDisplay
 		{
 			triggerPartialRepaint(currentParameters);
 		}
-		else
-		{
+		else {
 			repaint();
 		}
 		_previousParameters = currentParameters;

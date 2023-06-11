@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
 import java.util.TimeZone;
@@ -31,13 +30,14 @@ import tim.prune.config.TimezoneHelper;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.Field;
-import tim.prune.data.MediaObject;
 import tim.prune.data.MediaList;
+import tim.prune.data.MediaObject;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.function.Describer;
 import tim.prune.tips.TipManager;
 
 /**
@@ -78,7 +78,7 @@ public abstract class Correlator extends GenericFunction
 	/**
 	 * @return media list
 	 */
-	protected abstract MediaList getMediaList();
+	protected abstract MediaList<?> getMediaList();
 
 	/**
 	 * Begin the function by initialising and showing the dialog
@@ -89,7 +89,7 @@ public abstract class Correlator extends GenericFunction
 		if (!_app.getTrackInfo().getTrack().hasData(Field.TIMESTAMP))
 		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.correlate.notimestamps"),
-				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+				getName(), JOptionPane.INFORMATION_MESSAGE);
 			return;
 		}
 		// Show warning if no uncorrelated audios
@@ -98,7 +98,7 @@ public abstract class Correlator extends GenericFunction
 			Object[] buttonTexts = {I18nManager.getText("button.continue"), I18nManager.getText("button.cancel")};
 			if (JOptionPane.showOptionDialog(_parentFrame,
 					I18nManager.getText("dialog.correlate.nouncorrelated" + getMediaTypeKey() + "s"),
-					I18nManager.getText(getNameKey()), JOptionPane.YES_NO_OPTION,
+					getName(), JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 				== JOptionPane.NO_OPTION)
 			{
@@ -108,7 +108,7 @@ public abstract class Correlator extends GenericFunction
 		// Create dialog if necessary
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogContents());
 			_dialog.pack();
@@ -157,37 +157,21 @@ public abstract class Correlator extends GenericFunction
 		// Button panel at the bottom
 		JPanel buttonPanel = new JPanel();
 		_backButton = new JButton(I18nManager.getText("button.back"));
-		_backButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				showCard(-1);
-			}
-		});
+		_backButton.addActionListener(e -> showCard(-1));
 		_backButton.setEnabled(false);
 		buttonPanel.add(_backButton);
 		_nextButton = new JButton(I18nManager.getText("button.next"));
-		_nextButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				showCard(1);
-			}
-		});
+		_nextButton.addActionListener(e -> showCard(1));
 		buttonPanel.add(_nextButton);
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener()
-			{
-				public void actionPerformed(ActionEvent e)
-				{
-					finishCorrelation();
-					_dialog.dispose();
-				}
-			});
+		_okButton.addActionListener(e -> {
+			finishCorrelation();
+			_dialog.dispose();
+		});
 		_okButton.setEnabled(false);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return mainPanel;
@@ -199,14 +183,14 @@ public abstract class Correlator extends GenericFunction
 	 */
 	protected MediaSelectionTableModel makeSelectionTableModel()
 	{
-		MediaList mediaList = getMediaList();
+		MediaList<?> mediaList = getMediaList();
 		MediaSelectionTableModel model = new MediaSelectionTableModel(
 			"dialog.correlate.select." + getMediaTypeKey() + "name",
 			"dialog.correlate.select." + getMediaTypeKey() + "later");
-		int numMedia = mediaList.getNumMedia();
+		int numMedia = mediaList.getCount();
 		for (int i=0; i<numMedia; i++)
 		{
-			MediaObject media = mediaList.getMedia(i);
+			MediaObject media = mediaList.get(i);
 			// For working out time differences, can't use media which already had point information
 			if (media.getDataPoint() != null && media.getDataPoint().hasTimestamp()
 				&& media.getOriginalStatus() == MediaObject.Status.NOT_CONNECTED)
@@ -260,8 +244,7 @@ public abstract class Correlator extends GenericFunction
 		TreeSet<TimeIndexPair> set = new TreeSet<TimeIndexPair>();
 		// loop through rows of table adding to list
 		int numRows = inModel.getRowCount();
-		int i;
-		for (i=0; i<numRows; i++)
+		for (int i=0; i<numRows; i++)
 		{
 			MediaSelectionTableRow row = inModel.getRow(i);
 			set.add(new TimeIndexPair(row.getTimeDiff().getTotalSeconds(), i));
@@ -269,7 +252,7 @@ public abstract class Correlator extends GenericFunction
 		// pull out middle entry and return index
 		TimeIndexPair pair = null;
 		Iterator<TimeIndexPair> iterator = set.iterator();
-		for (i=0; i<(numRows+1)/2; i++)
+		for (int i=0; i<(numRows+1)/2; i++)
 		{
 			pair = iterator.next();
 		}
@@ -370,11 +353,7 @@ public abstract class Correlator extends GenericFunction
 		card2Top.add(offsetPanel);
 
 		// listener for radio buttons
-		ActionListener radioListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				enableEditBoxes();
-			}
-		};
+		ActionListener radioListener = e -> enableEditBoxes();
 		// time limits section
 		JPanel limitsPanel = new JPanel();
 		limitsPanel.setBorder(BorderFactory.createTitledBorder(I18nManager.getText("dialog.correlate.options.limitspanel")));
@@ -425,11 +404,7 @@ public abstract class Correlator extends GenericFunction
 
 		// preview button
 		JButton previewButton = new JButton(I18nManager.getText("button.preview"));
-		previewButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				createPreview(true);
-			}
-		});
+		previewButton.addActionListener(e -> createPreview(true));
 		card2Top.add(previewButton);
 		card2.add(card2Top, BorderLayout.NORTH);
 		// preview
@@ -511,7 +486,7 @@ public abstract class Correlator extends GenericFunction
 					((MediaSelectionTableModel) _selectionTable.getModel()).getRow(rowNum);
 				timeDiff = selectedRow.getTimeDiff();
 			}
-			setupPreviewCard(timeDiff, getMediaList().getMedia(0));
+			setupPreviewCard(timeDiff, getMediaList().get(0));
 		}
 		// enable ok button if any photos have been selected
 		_okButton.setEnabled(inCardNum == 2 && ((MediaPreviewTableModel) _previewTable.getModel()).hasAnySelected());
@@ -695,5 +670,25 @@ public abstract class Correlator extends GenericFunction
 			}
 		}
 		return pairs;
+	}
+
+	/**
+	 * Make the undo text for the given number of correlated items
+	 */
+	protected String makeUndoText(int inNumMedia)
+	{
+		Describer undoDescriber = new Describer("undo.correlate" + getMediaTypeKey(),
+				"undo.correlate" + getMediaTypeKey() + "s");
+		return undoDescriber.getDescriptionWithCount(inNumMedia);
+	}
+
+	/**
+	 * Make the confirm text for the given number of correlated items
+	 */
+	protected String makeConfirmText(int inNumMedia)
+	{
+		Describer confirmDescriber = new Describer("confirm.correlate" + getMediaTypeKey() + "s.single",
+				"confirm.correlate" + getMediaTypeKey() + "s.multi");
+		return confirmDescriber.getDescriptionWithCount(inNumMedia);
 	}
 }

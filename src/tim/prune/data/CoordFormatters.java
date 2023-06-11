@@ -10,7 +10,6 @@ import java.util.Locale;
  */
 public abstract class CoordFormatters
 {
-	/** Map of all the formatters created so far */
 	private static final HashMap<Integer, NumberFormat> _formatters = new HashMap<>();
 
 	/**

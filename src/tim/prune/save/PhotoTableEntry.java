@@ -8,10 +8,10 @@ import tim.prune.data.Photo;
  */
 public class PhotoTableEntry
 {
-	private Photo _photo = null;
-	private String _photoName = null;
+	private final Photo _photo;
+	private final String _photoName;
+	private final String _status;
 	private boolean _save = true;
-	private String _status = null;
 
 	/**
 	 * Constructor
@@ -20,11 +20,8 @@ public class PhotoTableEntry
 	public PhotoTableEntry(Photo inPhoto)
 	{
 		_photo = inPhoto;
-		if (inPhoto != null)
-		{
-			_photoName = inPhoto.getName();
-			_status = getStatusString(inPhoto.getOriginalStatus(), inPhoto.getCurrentStatus());
-		}
+		_photoName = (_photo == null ? null : _photo.getName());
+		_status = (_photo == null ? null : getStatusString(inPhoto.getOriginalStatus(), inPhoto.getCurrentStatus()));
 	}
 
 

@@ -77,9 +77,8 @@ public class TimestampLocal extends Timestamp
 	}
 
 	@Override
-	public void addOffsetSeconds(long inOffset)
-	{
-		System.err.println("Local timestamps don't support offsets.");
+	public Timestamp addOffsetSeconds(long inOffset) {
+		throw new IllegalArgumentException("Local timestamps don't support offsets.");
 	}
 
 	@Override

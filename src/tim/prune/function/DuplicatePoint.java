@@ -2,6 +2,8 @@ package tim.prune.function;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
+import tim.prune.I18nManager;
+import tim.prune.cmd.InsertPointCmd;
 import tim.prune.data.DataPoint;
 
 /**
@@ -14,8 +16,7 @@ public class DuplicatePoint extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public DuplicatePoint(App inApp)
-	{
+	public DuplicatePoint(App inApp) {
 		super(inApp);
 	}
 
@@ -32,8 +33,10 @@ public class DuplicatePoint extends GenericFunction
 		DataPoint point = _app.getTrackInfo().getCurrentPoint();
 		if (point != null)
 		{
-			// Pass information back to App to complete function
-			_app.createPoint(point.clonePoint());
+			InsertPointCmd command = new InsertPointCmd(point.clonePoint(), -1);
+			command.setDescription(I18nManager.getText("undo.createpoint"));
+			command.setConfirmText(I18nManager.getText("confirm.pointadded"));
+			_app.execute(command);
 		}
 	}
 }

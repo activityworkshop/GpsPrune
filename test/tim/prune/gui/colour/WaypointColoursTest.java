@@ -66,11 +66,13 @@ class WaypointColoursTest
 		assertEquals(c1, c3); // back to first salt
 
 		// Cycle through all salt values for a single type
-		HashSet<String> allColours = new HashSet<String>();
-		for (int i=0; i<30; i++) {
-			allColours.add(wpc.getColourForType("RESTAURANT").toString());
+		HashSet<String> allColours = new HashSet<>();
+		for (int i=0; i<30; i++)
+		{
 			wpc.setSalt(i);
+			Color col = wpc.getColourForType("RESTAURANT");
+			allColours.add(col.toString());
 		}
-		assertEquals(6, allColours.size()); // in general some number <= 10 because of limited colour range
+		assertEquals(10, allColours.size()); // in general some number <= 10 because of limited colour range
 	}
 }

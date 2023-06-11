@@ -2,8 +2,8 @@ package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -17,7 +17,8 @@ import javax.swing.JRadioButton;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
-import tim.prune.data.sort.SortMode;
+import tim.prune.cmd.PointReference;
+import tim.prune.data.SortMode;
 
 /**
  * Abstract superclass for the functions which rearrange points,
@@ -32,7 +33,7 @@ public abstract class RearrangeFunction extends GenericFunction
 	/** Radio buttons for sorting */
 	private JRadioButton[] _sortRadios = null;
 	/** Is the "nearest" option available? */
-	private boolean _nearestAvailable = false;
+	private final boolean _nearestAvailable;
 
 
 	/** Enumeration for rearrange commands */
@@ -66,7 +67,7 @@ public abstract class RearrangeFunction extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -119,16 +120,14 @@ public abstract class RearrangeFunction extends GenericFunction
 		}
 		_sortRadios[0].setSelected(true);
 		// Use listener to disable all sort options if nearest type chosen, re-enable otherwise
-		ActionListener rearrListener = new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				final boolean sortAvailable = !_positionRadios[2].isSelected();
-				for (int i=0; i<_sortRadios.length; i++) {
-					_sortRadios[i].setEnabled(sortAvailable);
-				}
+		ActionListener rearrListener = e -> {
+			final boolean sortAvailable = !_positionRadios[2].isSelected();
+			for (JRadioButton sortRadio : _sortRadios) {
+				sortRadio.setEnabled(sortAvailable);
 			}
 		};
-		for (int i=0; i<_positionRadios.length; i++) {
-			_positionRadios[i].addActionListener(rearrListener);
+		for (JRadioButton positionRadio : _positionRadios) {
+			positionRadio.addActionListener(rearrListener);
 		}
 		// add to middle of dialog
 		JPanel centrePanel = new JPanel();
@@ -140,19 +139,13 @@ public abstract class RearrangeFunction extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				finish();
-				_dialog.dispose();
-			}
+		okButton.addActionListener(e -> {
+			finish();
+			_dialog.dispose();
 		});
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
@@ -161,8 +154,7 @@ public abstract class RearrangeFunction extends GenericFunction
 	/**
 	 * @return true if sorting by time is allowed, false otherwise
 	 */
-	protected boolean isSortByTimeAllowed()
-	{
+	protected boolean isSortByTimeAllowed() {
 		return true;
 	}
 
@@ -204,4 +196,21 @@ public abstract class RearrangeFunction extends GenericFunction
 	 * Perform the rearrange
 	 */
 	protected abstract void finish();
+
+	/**
+	 * Verify a rearrange result and see if it does anything or not
+	 * @return true if the operation has no effect
+	 */
+	protected static boolean isResultANop(List<PointReference> result)
+	{
+		// Compare all indices with their original ones
+		for (int i=0; i<result.size(); i++)
+		{
+			if (result.get(i).getIndex() != i) {
+				return false;
+			}
+		}
+		// Must be all the same
+		return true;
+	}
 }

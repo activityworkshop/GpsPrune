@@ -9,10 +9,10 @@ public class PointList
 	private long[] _millis = null;
 	/** Array of indexes of corresponding points */
 	private int[]  _indexes = null;
-	/** Array index of current position */
-	private int    _currentItem = 0;
 	/** Max array index */
-	private int    _maxItem = 0;
+	private final int _maxItem;
+	/** Array index of current position */
+	private int _currentItem = 0;
 
 	/**
 	 * Constructor

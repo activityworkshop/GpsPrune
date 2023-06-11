@@ -18,19 +18,8 @@ public class Altitude
 	 * @param inString string to parse
 	 * @param inUnit of altitude, either metres or feet
 	 */
-	public Altitude(String inString, Unit inUnit)
-	{
-		_unit = inUnit;
-		if (inString != null && !inString.equals(""))
-		{
-			try
-			{
-				_stringValue = inString;
-				_value = (int) Double.parseDouble(inString.trim());
-				_valid = true;
-			}
-			catch (NumberFormatException nfe) {}
-		}
+	public Altitude(String inString, Unit inUnit) {
+		set(inString, inUnit);
 	}
 
 
@@ -48,30 +37,38 @@ public class Altitude
 	}
 
 	/**
-	 * @return an exact copy of this Altitude object
-	 */
-	public Altitude clone()
-	{
-		return new Altitude(_stringValue, _unit);
-	}
-
-	/**
 	 * Reset the altitude parameters to the same as the given object
-	 * @param inClone clone object to copy
+	 * @param inValue value to set as string
+	 * @param inUnit units
 	 */
-	public void reset(Altitude inClone)
+	public void set(String inValue, Unit inUnit)
 	{
-		_stringValue = inClone._stringValue;
-		_value = inClone._value;
-		_unit = inClone._unit;
-		_valid = inClone._valid;
+		_stringValue = inValue;
+		_unit = inUnit;
+		if (inValue == null || inValue.equals("")) {
+			_valid = false;
+		}
+		else
+		{
+			try
+			{
+				double value = Double.parseDouble(inValue.trim());
+				if (value < Integer.MAX_VALUE)
+				{
+					_value = (int) value;
+					_valid = true;
+				}
+			}
+			catch (NumberFormatException nfe) {
+				_valid = false;
+			}
+		}
 	}
 
 	/**
 	 * @return true if the value could be parsed
 	 */
-	public boolean isValid()
-	{
+	public boolean isValid() {
 		return _valid;
 	}
 
@@ -79,8 +76,7 @@ public class Altitude
 	/**
 	 * @return raw value as int
 	 */
-	public int getValue()
-	{
+	public int getValue() {
 		return _value;
 	}
 
@@ -99,8 +95,7 @@ public class Altitude
 	/**
 	 * @return unit of number
 	 */
-	public Unit getUnit()
-	{
+	public Unit getUnit() {
 		return _unit;
 	}
 
@@ -122,10 +117,13 @@ public class Altitude
 	 */
 	public String getStringValue(Unit inUnit)
 	{
-		if (!_valid) {return "";}
+		if (!_valid) {
+			return "";
+		}
 		// Return string value if the same format or "no format" was requested
 		if ((inUnit == _unit || inUnit == null)
-		 && _stringValue != null && !_stringValue.equals("")) {
+		 && _stringValue != null && !_stringValue.equals(""))
+		{
 			return _stringValue;
 		}
 		return "" + getValue(inUnit);
@@ -156,8 +154,9 @@ public class Altitude
 	public static Altitude interpolate(Altitude inStart, Altitude inEnd, double inFrac)
 	{
 		// Check if altitudes are valid
-		if (inStart == null || inEnd == null || !inStart.isValid() || !inEnd.isValid())
+		if (inStart == null || inEnd == null || !inStart.isValid() || !inEnd.isValid()) {
 			return Altitude.NONE;
+		}
 		// Use altitude format of first point
 		Unit altUnit = inStart.getUnit();
 		int startValue = inStart.getValue();
@@ -165,30 +164,5 @@ public class Altitude
 		// interpolate between start and end
 		int newValue = startValue + (int) ((endValue - startValue) * inFrac);
 		return new Altitude(newValue, altUnit);
-	}
-
-	/**
-	 * Add the given offset to the current altitude
-	 * @param inOffset offset as double
-	 * @param inUnit unit of offset, feet or metres
-	 * @param inDecimals number of decimal places
-	 */
-	public void addOffset(double inOffset, Unit inUnit, int inDecimals)
-	{
-		// Use the maximum number of decimal places from current value and offset
-		int numDecimals = NumberUtils.getDecimalPlaces(_stringValue);
-		if (numDecimals < inDecimals) {numDecimals = inDecimals;}
-		// Convert offset to correct units
-		double offset = inOffset;
-		if (inUnit != _unit && inUnit != null)
-		{
-			offset = inOffset / inUnit.getMultFactorFromStd() * _unit.getMultFactorFromStd();
-		}
-		// FIXME: The following will fail if _stringValue is null - not sure how it can get in that state!
-		if (_stringValue == null) System.err.println("*** Altitude.addOffset - how did the string value get to be null?");
-		// Add the offset
-		double newValue = Double.parseDouble(_stringValue.trim()) + offset;
-		_value = (int) newValue;
-		_stringValue = NumberUtils.formatNumberUk(newValue, numDecimals);
 	}
 }

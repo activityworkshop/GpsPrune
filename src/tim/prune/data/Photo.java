@@ -14,7 +14,6 @@ public class Photo extends MediaObject
 	private Dimension _size = null;
 	/** rotation flag (clockwise from 0 to 3) */
 	private int _rotation = 0;
-	// TODO: Need to store caption for image?
 	/** Bearing, if any */
 	private double _bearing = -1.0;
 	/** thumbnail for image (from exif) */
@@ -46,14 +45,15 @@ public class Photo extends MediaObject
 	private void calculateSize()
 	{
 		ImageIcon icon = null;
-		if (_file != null)
+		if (_file != null) {
 			icon = new ImageIcon(_file.getAbsolutePath());
-		else
+		}
+		else {
 			icon = new ImageIcon(_data);
+		}
 		int width = icon.getIconWidth();
 		int height = icon.getIconHeight();
-		if (width > 0 && height > 0)
-		{
+		if (width > 0 && height > 0) {
 			_size = new Dimension(width, height);
 		}
 	}
@@ -90,26 +90,15 @@ public class Photo extends MediaObject
 	/**
 	 * @return byte array of thumbnail data
 	 */
-	public byte[] getExifThumbnail()
-	{
+	public byte[] getExifThumbnail() {
 		return _exifThumbnail;
 	}
 
 	/**
 	 * @param inBytes byte array from exif
 	 */
-	public void setExifThumbnail(byte[] inBytes)
-	{
+	public void setExifThumbnail(byte[] inBytes) {
 		_exifThumbnail = inBytes;
-	}
-
-	/**
-	 * Delete the cached data when the Photo is no longer needed
-	 */
-	public void resetCachedData()
-	{
-		_size = null;
-		// remove thumbnail too
 	}
 
 	/**
@@ -135,8 +124,7 @@ public class Photo extends MediaObject
 	/**
 	 * @return rotation status
 	 */
-	public int getRotationDegrees()
-	{
+	public int getRotationDegrees() {
 		return _rotation * 90;
 	}
 

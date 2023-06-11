@@ -12,9 +12,9 @@ import java.util.TimeZone;
 public class DateInfo implements Comparable<DateInfo>
 {
 	/** Date, or null for no date - used for earlier/later comparison */
-	private Date _date = null;
+	private final Date _date;
 	/** String representation of date */
-	private String _dateString = null;
+	private final String _dateString;
 	/** Number of points with this date */
 	private int _numPoints = 0;
 	/** Flag for deletion or retention */

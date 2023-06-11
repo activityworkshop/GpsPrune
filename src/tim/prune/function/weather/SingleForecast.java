@@ -43,7 +43,6 @@ public class SingleForecast
 	public void setSymbol(String inNumber, String inImageCode, String inDesc)
 	{
 		_imageName = getIconName(inNumber, inImageCode);
-		// System.out.println("For number " + inNumber + "(" + inDesc + ") and code " + inImageCode + ", the symbol is " + _imageName);
 		_desc = inDesc;
 	}
 
@@ -90,7 +89,7 @@ public class SingleForecast
 	 * Get the name of the image file for the given weather report
 	 * @param inCode numeric three-digit code, as string
 	 * @param inImage filename as given by openweather (just used for day/night)
-	 * @return image file using GpsPrune's icons
+	 * @return image file using GpsPrune's icons (but without the ".png" suffix)
 	 */
 	public static String getIconName(String inCode, String inImage)
 	{
@@ -99,23 +98,23 @@ public class SingleForecast
 		String iconName = null;
 		switch (leadDigit)
 		{
-			case '2':	return "storm.png";
-			case '3':	return "lightrain.png";
+			case '2':	return "storm";
+			case '3':	return "lightrain";
 			case '5':
-				iconName = "rain.png";
-				if (inCode.equals("500")) {iconName = "lightrain.png";}
-				else if (inCode.equals("511")) {iconName = "hail.png";}
+				iconName = "rain";
+				if (inCode.equals("500")) {iconName = "lightrain";}
+				else if (inCode.equals("511")) {iconName = "hail";}
 				break;
-			case '6':	return "snow.png";
-			case '7':	return "fog.png";
+			case '6':	return "snow";
+			case '7':	return "fog";
 			case '8':
-				iconName = daytime ? "clouds-day.png" : "clouds-night.png";
-				if (inCode.equals("800")) {iconName = daytime ? "clear-day.png" : "clear-night.png";}
-				else if (inCode.equals("804")) {iconName = "clouds.png";}
+				iconName = daytime ? "clouds-day" : "clouds-night";
+				if (inCode.equals("800")) {iconName = daytime ? "clear-day" : "clear-night";}
+				else if (inCode.equals("804")) {iconName = "clouds";}
 				break;
 			case '9':
-				iconName = "extreme.png";
-				if (inCode.equals("906")) {iconName = "hail.png";}
+				iconName = "extreme";
+				if (inCode.equals("906")) {iconName = "hail";}
 				break;
 		}
 		return iconName;

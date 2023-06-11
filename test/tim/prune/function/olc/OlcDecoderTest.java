@@ -14,35 +14,35 @@ class OlcDecoderTest
 	void testDecodeStringsTooShort()
 	{
 		OlcArea area = OlcDecoder.decode(null);
-		assertEquals(area, null, "Decoding null gives null");
+		assertNull(area, "Decoding null gives null");
 		area = OlcDecoder.decode("");
-		assertEquals(area, null, "Decoding \"\" gives null");
+		assertNull(area, "Decoding \"\" gives null");
 		area = OlcDecoder.decode("9");
-		assertEquals(area, null, "Decoding \"9\" gives null");
+		assertNull(area, "Decoding \"9\" gives null");
 		area = OlcDecoder.decode("9999999");
-		assertEquals(area, null, "Decoding \"9999999\" gives null");
+		assertNull(area, "Decoding \"9999999\" gives null");
 	}
 
 	@Test
 	void testDecodeStringsInvalid()
 	{
 		OlcArea area = OlcDecoder.decode("11111111");
-		assertEquals(area, null, "Decoding lots of 1s gives null");
+		assertNull(area, "Decoding lots of 1s gives null");
 		area = OlcDecoder.decode("99999991");
-		assertEquals(area, null, "Decoding with a single 1 gives null");
+		assertNull(area, "Decoding with a single 1 gives null");
 		area = OlcDecoder.decode("99999999");
-		assertNotEquals(area, null, "Decoding with all 9s gives non-null");
+		assertNotNull(area, "Decoding with all 9s gives non-null");
 		area = OlcDecoder.decode("00000000");
-		assertEquals(area, null, "Decoding with all padding gives null");
+		assertNull(area, "Decoding with all padding gives null");
 		area = OlcDecoder.decode("99000000");
-		assertNotEquals(area, null, "Decoding with some padding gives non-null");
+		assertNotNull(area, "Decoding with some padding gives non-null");
 	}
 
 	@Test
 	void testDecodeZeroes()
 	{
 		OlcArea area = OlcDecoder.decode("22000000");
-		assertNotEquals(area, null, "Decoding with padding gives non-null");
+		assertNotNull(area, "Decoding with padding gives non-null");
 		assertEquals(-90.0, area.minLat, 0.0, "South 90");
 		assertEquals(-70.0, area.maxLat, 0.0, "South 70");
 		assertEquals(-180.0, area.minLon, 0.0, "West 180");
@@ -53,7 +53,7 @@ class OlcDecoderTest
 	void testDecodeZeroes2()
 	{
 		OlcArea area = OlcDecoder.decode("22220000");
-		assertNotEquals(area, null, "Decoding with padding gives non-null");
+		assertNotNull(area, "Decoding with padding gives non-null");
 		assertEquals(-90.0, area.minLat, 0.0, "South 90");
 		assertEquals(-89.0, area.maxLat, 0.0, "South 89");
 		assertEquals(-180.0, area.minLon, 0.0, "West 180");
@@ -64,7 +64,7 @@ class OlcDecoderTest
 	void testMountainView()
 	{
 		OlcArea area = OlcDecoder.decode("849VCWC8+R9");
-		assertNotEquals(area, null, "Decoding with separator gives non-null");
+		assertNotNull(area, "Decoding with separator gives non-null");
 //		System.out.println("Lat: " + area.minLat + " to " + area.maxLat);
 //		System.out.println("lon: " + area.minLon + " to " + area.maxLon);
 		assertTrue(area.maxLat > area.minLat, "latitude range");

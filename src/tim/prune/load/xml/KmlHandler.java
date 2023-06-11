@@ -19,11 +19,11 @@ public class KmlHandler extends XmlHandler
 	private String _timestamp = null, _imgLink = null;
 	private StringBuffer _coordinates = null;
 	private ArrayList<String> _coordinateList = null;
-	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
-	private ArrayList<String> _linkList = new ArrayList<String>();
+	private ArrayList<String[]> _pointList = new ArrayList<>();
+	private ArrayList<String> _linkList = new ArrayList<>();
 	// variables for gx extensions
-	private ArrayList<String> _whenList = new ArrayList<String>();
-	private ArrayList<String> _whereList = new ArrayList<String>();
+	private ArrayList<String> _whenList = new ArrayList<>();
+	private ArrayList<String> _whereList = new ArrayList<>();
 
 
 	/**

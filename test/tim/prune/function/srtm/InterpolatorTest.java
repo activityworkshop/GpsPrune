@@ -94,7 +94,7 @@ class InterpolatorTest extends Interpolator
 	{
 		int[] altitudes = new int[] {2, 2, 1, 1, 1,
 			2, 2, 3, 3, 1,
-			1, 3, 5, 3, 1, 
+			1, 3, 5, 3, 1,
 			1, 3, 3, 3, 4,
 			1, 1, 1, 1, 1};
 		double botLeftCorner = Interpolator.calculateAltitude(15.0, 18.0, altitudes, true, 5);

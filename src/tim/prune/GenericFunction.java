@@ -29,6 +29,13 @@ public abstract class GenericFunction
 	public abstract void begin();
 
 	/**
+	 * @return the function name
+	 */
+	public String getName() {
+		return I18nManager.getText(getNameKey());
+	}
+
+	/**
 	 * @return the key for the function name
 	 */
 	public abstract String getNameKey();

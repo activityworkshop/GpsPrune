@@ -1,30 +1,31 @@
 package tim.prune.function;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
+import tim.prune.cmd.PointReference;
+import tim.prune.cmd.RearrangePointsCmd;
 import tim.prune.data.Checker;
 import tim.prune.data.DataPoint;
+import tim.prune.data.SortMode;
 import tim.prune.data.Track;
-import tim.prune.data.sort.SortMode;
-import tim.prune.data.sort.WaypointComparer;
-import tim.prune.undo.UndoRearrangeWaypoints;
+
 
 /**
  * Class to provide the function for rearranging waypoints
  */
 public class RearrangeWaypointsFunction extends RearrangeFunction
 {
-
 	/**
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public RearrangeWaypointsFunction(App inApp)
-	{
+	public RearrangeWaypointsFunction(App inApp) {
 		super(inApp, true);
 	}
 
@@ -53,32 +54,32 @@ public class RearrangeWaypointsFunction extends RearrangeFunction
 	 */
 	protected void finish()
 	{
-		Track track = _app.getTrackInfo().getTrack();
 		// Figure out what is required from the radio buttons
 		Rearrange rearrangeOption = getRearrangeOption();
 		SortMode sortOption = getSortMode();
 
-		UndoRearrangeWaypoints undo = new UndoRearrangeWaypoints(track);
-		boolean success = false;
+		final List<PointReference> result;
 		if (rearrangeOption == Rearrange.TO_START || rearrangeOption == Rearrange.TO_END)
 		{
 			// Collect the waypoints to the start or end of the track
-			success = collectWaypoints(rearrangeOption, sortOption);
+			result = collectWaypoints(rearrangeOption, sortOption);
 		}
 		else
 		{
 			// Interleave the waypoints into track order
-			success = track.interleaveWaypoints();
+			result = interleaveWaypoints();
 		}
-		if (success)
-		{
-			_app.getTrackInfo().getSelection().clearAll(); // clear selected point and range
-			_app.completeFunction(undo, I18nManager.getText("confirm.rearrangewaypoints"));
+
+		if (result == null || isResultANop(result)) {
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.rearrange.noop"),
+					I18nManager.getText("error.function.noop.title"), JOptionPane.WARNING_MESSAGE);
 		}
 		else
 		{
-			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("error.rearrange.noop"),
-				I18nManager.getText("error.function.noop.title"), JOptionPane.WARNING_MESSAGE);
+			RearrangePointsCmd command = RearrangePointsCmd.from(result);
+			command.setDescription(getName());
+			command.setConfirmText("confirm.rearrangewaypoints");
+			_app.execute(command);
 		}
 	}
 
@@ -87,103 +88,84 @@ public class RearrangeWaypointsFunction extends RearrangeFunction
 	 * Do the collection and sorting of the waypoints
 	 * @param inRearrangeOption beginning or end
 	 * @param inSortOption optional sort criterion
-	 * @return true on success
+	 * @return list of point references
 	 */
-	private boolean collectWaypoints(Rearrange inRearrangeOption, SortMode inSortOption)
+	private List<PointReference> collectWaypoints(Rearrange inRearrangeOption, SortMode inSortOption)
 	{
-		// Check for mixed data, numbers of waypoints & nons
-		int numWaypoints = 0, numNonWaypoints = 0;
-		boolean wayAfterNon = false, nonAfterWay = false;
 		Track track = _app.getTrackInfo().getTrack();
 		final int numPoints = track.getNumPoints();
-		DataPoint[] waypoints = new DataPoint[numPoints];
-		DataPoint[] nonWaypoints = new DataPoint[numPoints];
-		DataPoint point = null;
+		ArrayList<PointReference> waypoints = new ArrayList<>();
+		ArrayList<PointReference> nonWaypoints = new ArrayList<>();
+		boolean wayAfterNon = false, nonAfterWay = false;
 		for (int i=0; i<numPoints; i++)
 		{
-			point = track.getPoint(i);
+			DataPoint point = track.getPoint(i);
+			PointReference pointReference = new PointReference(i,
+					inSortOption == SortMode.SORTBY_NAME ? point.getWaypointName() : null,
+					inSortOption == SortMode.SORTBY_TIME ? point.getTimestamp() : null);
 			if (point.isWaypoint())
 			{
-				waypoints[numWaypoints] = point;
-				numWaypoints++;
-				wayAfterNon |= (numNonWaypoints > 0);
+				waypoints.add(pointReference);
+				wayAfterNon |= !nonWaypoints.isEmpty();
 			}
 			else
 			{
-				nonWaypoints[numNonWaypoints] = point;
-				numNonWaypoints++;
-				nonAfterWay |= (numWaypoints > 0);
+				nonWaypoints.add(pointReference);
+				nonAfterWay |= !waypoints.isEmpty();
 			}
 		}
 
 		// Exit if the data is already in the specified order
 		final boolean wpsToStart = (inRearrangeOption == Rearrange.TO_START);
 		final boolean doSort = (inSortOption != SortMode.DONT_SORT);
-		if (numWaypoints == 0
+		if (waypoints.isEmpty()
 			|| (wpsToStart && !wayAfterNon && nonAfterWay && !doSort)
 			|| (!wpsToStart && wayAfterNon && !nonAfterWay && !doSort)
 			|| inRearrangeOption == Rearrange.TO_NEAREST)
 		{
-			return false;
+			return null;
 		}
 		// Note: it could still be that the rearrange and sort has no effect, but we don't know yet
-		// Make a copy of the waypoints array first so we can compare it with after the sort
-		DataPoint[] origWaypoints = new DataPoint[numPoints];
-		System.arraycopy(waypoints, 0, origWaypoints, 0, numPoints);
 
-		if (doSort && numWaypoints > 1)
-		{
-			// Sort the waypoints array
-			WaypointComparer comparer = new WaypointComparer(inSortOption);
-			Arrays.sort(waypoints, comparer);
-			final boolean sortDidNothing = areArraysSame(origWaypoints, waypoints);
-			if (sortDidNothing && (numNonWaypoints == 0
-					|| (wpsToStart && !wayAfterNon && nonAfterWay)
-					|| (!wpsToStart && wayAfterNon && !nonAfterWay)))
-			{
-				return false;
-			}
+		if (doSort) {
+			Collections.sort(waypoints);
 		}
 
-		// Copy the arrays into an array in the specified order
-		DataPoint[] neworder = new DataPoint[numPoints];
+		// Combine the two lists into a single one
+		List<PointReference> result = new ArrayList<>();
 		if (wpsToStart)
 		{
-			System.arraycopy(waypoints, 0, neworder, 0, numWaypoints);
-			System.arraycopy(nonWaypoints, 0, neworder, numWaypoints, numNonWaypoints);
+			result.addAll(waypoints);
+			result.addAll(nonWaypoints);
 		}
 		else
 		{
-			System.arraycopy(nonWaypoints, 0, neworder, 0, numNonWaypoints);
-			System.arraycopy(waypoints, 0, neworder, numNonWaypoints, numWaypoints);
+			result.addAll(nonWaypoints);
+			result.addAll(waypoints);
 		}
-		// Give track the new point order
-		return track.replaceContents(neworder);
+		return result;
 	}
 
 	/**
-	 * Compare two arrays of DataPoints and see if they're identical or not
-	 * @param inOriginal original array of points
-	 * @param inSorted array of points after sorting
-	 * @return true if the two arrays have the same points in the same order
+	 * Interleave all waypoints by each nearest track point
+	 * @return list of point references
 	 */
-	private static boolean areArraysSame(DataPoint[] inOriginal, DataPoint[] inSorted)
+	private List<PointReference> interleaveWaypoints()
 	{
-		if (inOriginal == null && inSorted == null) return true;  // both null
-		if (inOriginal == null || inSorted == null) return false; // only one of them null
-		if (inOriginal.length != inSorted.length) return false;
-		// Loop over all points
-		for (int i=0; i<inOriginal.length; i++)
+		Track track = _app.getTrackInfo().getTrack();
+		final int numPoints = track.getNumPoints();
+		ArrayList<PointReference> result = new ArrayList<>();
+		for (int i=0; i<numPoints; i++)
 		{
-			DataPoint origPoint = inOriginal[i];
-			DataPoint sortedPoint = inSorted[i];
-			if ((origPoint != null || sortedPoint != null)
-				&& (origPoint != sortedPoint))
-			{
-				return false; // points different
+			DataPoint point = track.getPoint(i);
+			if (point.isWaypoint()) {
+				result.add(new PointReference(i, track.getNearestTrackPointIndex(i)));
 			}
+			else {
+				result.add(new PointReference(i, i));
 		}
-		// Must be all the same
-		return true;
+		}
+		Collections.sort(result);
+		return result;
 	}
 }

@@ -6,9 +6,9 @@ package tim.prune.data;
  */
 public class Unit
 {
-	private String _nameKey = null;
-	private double _multFactorFromStd = 1.0;
-	private boolean _isStandard = false;
+	private final String _nameKey;
+	private final double _multFactorFromStd;
+	private final boolean _isStandard;
 
 	/**
 	 * Unit constructor

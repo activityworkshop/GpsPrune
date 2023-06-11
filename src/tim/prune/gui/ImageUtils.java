@@ -54,8 +54,6 @@ public abstract class ImageUtils
 		buffG.drawImage(smallerImage, 0, 0, inWidth, inHeight, null);
 		buffG.dispose();
 
-		// clear variables
-		smallerImage = null; tempImage = null;
 		// smooth scaled image using a normalized 3x3 matrix - taking next neighbour
 		buffer = CONVOLVER.filter(buffer, null);
 
@@ -77,7 +75,7 @@ public abstract class ImageUtils
 		// work out maximum zoom ratio available so that thumbnail isn't too big
 		double xZoom = inMaxWidth * 1.0 / inOrigWidth;
 		double yZoom = inMaxHeight * 1.0 / inOrigHeight;
-		double zoom = (xZoom > yZoom?yZoom:xZoom);
+		final double zoom = Math.min(xZoom, yZoom);
 		// Don't make thumbnail bigger than picture
 		if (zoom > 1.0) {return new Dimension(inOrigWidth, inOrigHeight);}
 

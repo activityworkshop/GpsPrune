@@ -2,8 +2,6 @@ package tim.prune.function.autoplay;
 
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.TreeSet;
@@ -28,7 +26,7 @@ import tim.prune.gui.WholeNumberField;
 /**
  * Function to handle the autoplay of a track
  */
-public class AutoplayFunction extends GenericFunction implements Runnable
+public class AutoplayFunction extends GenericFunction
 {
 	/** Dialog */
 	private JDialog _dialog = null;
@@ -68,7 +66,7 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -89,8 +87,7 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 		// Disable point checkbox if there aren't any times
 		final boolean hasTimes = _app.getTrackInfo().getTrack().hasData(Field.TIMESTAMP);
 		_useTimestampsCheckbox.setEnabled(hasTimes);
-		if (!hasTimes)
-		{
+		if (!hasTimes) {
 			_useTimestampsCheckbox.setSelected(false);
 		}
 
@@ -113,11 +110,7 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 		grid.add(new JLabel(I18nManager.getText("dialog.autoplay.duration") + " :"));
 		_durationField = new WholeNumberField(3);
 		_durationField.setValue(60); // default is one minute
-		_durationField.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				onParamsChanged();
-			}
-		});
+		_durationField.addActionListener(e -> onParamsChanged());
 		grid.add(_durationField);
 		durationPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		dialogPanel.add(durationPanel);
@@ -125,35 +118,19 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 		_useTimestampsCheckbox = new JCheckBox(I18nManager.getText("dialog.autoplay.usetimestamps"));
 		_useTimestampsCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		dialogPanel.add(_useTimestampsCheckbox);
-		_useTimestampsCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				onParamsChanged();
-			}
-		});
+		_useTimestampsCheckbox.addActionListener(e -> onParamsChanged());
 		// Button panel
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-		buttonPanel.add(_rewindButton = new JButton(IconManager.getImageIcon(IconManager.AUTOPLAY_REWIND)));
+		buttonPanel.add(_rewindButton = new JButton(IconManager.getImageIcon(IconManager.CONTROL_REWIND)));
 		_rewindButton.setToolTipText(I18nManager.getText("dialog.autoplay.rewind"));
-		_rewindButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				onRewindPressed();
-			}
-		});
-		buttonPanel.add(_pauseButton = new JButton(IconManager.getImageIcon(IconManager.AUTOPLAY_PAUSE)));
+		_rewindButton.addActionListener(e -> onRewindPressed());
+		buttonPanel.add(_pauseButton = new JButton(IconManager.getImageIcon(IconManager.CONTROL_PAUSE)));
 		_pauseButton.setToolTipText(I18nManager.getText("dialog.autoplay.pause"));
-		_pauseButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				onPausePressed();
-			}
-		});
-		buttonPanel.add(_playButton = new JButton(IconManager.getImageIcon(IconManager.AUTOPLAY_PLAY)));
+		_pauseButton.addActionListener(e -> onPausePressed());
+		buttonPanel.add(_playButton = new JButton(IconManager.getImageIcon(IconManager.CONTROL_PLAY)));
 		_playButton.setToolTipText(I18nManager.getText("dialog.autoplay.play"));
-		_playButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				onPlayPressed();
-			}
-		});
+		_playButton.addActionListener(e -> onPlayPressed());
 		buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		dialogPanel.add(buttonPanel);
 		return dialogPanel;
@@ -174,7 +151,6 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 	 */
 	private void onRewindPressed()
 	{
-		//System.out.println("Rewind!  Stop thread if playing");
 		_running = false;
 		if (_pointList != null)
 		{
@@ -188,7 +164,6 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 	 */
 	private void onPausePressed()
 	{
-		//System.out.println("Pause!  Stop thread if playing");
 		_running = false;
 		enableButtons(false, true);
 	}
@@ -198,7 +173,6 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 	 */
 	private void onPlayPressed()
 	{
-		//System.out.println("Play!");
 		if (_needToRecalculate) {
 			recalculateTimes();
 		}
@@ -213,7 +187,7 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 			// Get current millis from pointList, reset _startTime
 			_startTime = System.currentTimeMillis() - _pointList.getCurrentMilliseconds();
 		}
-		new Thread(this).start();
+		new Thread(this::run).start();
 	}
 
 	/**
@@ -221,8 +195,6 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 	 */
 	private void recalculateTimes()
 	{
-		//System.out.println("Recalculate using params " + _durationField.getValue()
-		//	+ " and " + (_useTimestampsCheckbox.isSelected() ? "times" : "indexes"));
 		if (_useTimestampsCheckbox.isSelected()) {
 			_pointList = generatePointListUsingTimes(_app.getTrackInfo().getTrack(), _durationField.getValue());
 		}
@@ -299,8 +271,7 @@ public class AutoplayFunction extends GenericFunction implements Runnable
 		// simple case, just take all the points in the track
 		PointList list = new PointList(inNumPoints);
 		// Add each of the points in turn
-		for (int i=0; i<inNumPoints; i++)
-		{
+		for (int i=0; i<inNumPoints; i++) {
 			list.setPoint(i, i);
 		}
 		list.normalize(inDuration);

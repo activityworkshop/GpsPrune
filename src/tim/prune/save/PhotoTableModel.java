@@ -9,7 +9,7 @@ import tim.prune.I18nManager;
  */
 public class PhotoTableModel extends AbstractTableModel
 {
-	private PhotoTableEntry[] _photos = null;
+	private final PhotoTableEntry[] _photos;
 	private int _addIndex = 0;
 
 
@@ -68,12 +68,10 @@ public class PhotoTableModel extends AbstractTableModel
 	 */
 	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
-		if (inColumnIndex == 0)
-		{
+		if (inColumnIndex == 0) {
 			return _photos[inRowIndex].getName();
 		}
-		else if (inColumnIndex == 1)
-		{
+		else if (inColumnIndex == 1) {
 			return _photos[inRowIndex].getStatus();
 		}
 		return Boolean.valueOf(_photos[inRowIndex].getSaveFlag());
@@ -97,8 +95,9 @@ public class PhotoTableModel extends AbstractTableModel
 	public void setValueAt(Object inValue, int inRowIndex, int inColumnIndex)
 	{
 		// ignore edits to other columns
-		if (inColumnIndex == 2)
+		if (inColumnIndex == 2) {
 			_photos[inRowIndex].setSaveFlag(((Boolean) inValue).booleanValue());
+		}
 	}
 
 
@@ -117,8 +116,12 @@ public class PhotoTableModel extends AbstractTableModel
 	 */
 	public String getColumnName(int inColNum)
 	{
-		if (inColNum == 0) return I18nManager.getText("dialog.saveexif.table.photoname");
-		else if (inColNum == 1) return I18nManager.getText("dialog.saveexif.table.status");
+		if (inColNum == 0) {
+			return I18nManager.getText("dialog.saveexif.table.photoname");
+		}
+		if (inColNum == 1) {
+			return I18nManager.getText("dialog.saveexif.table.status");
+		}
 		return I18nManager.getText("dialog.saveexif.table.save");
 	}
 
@@ -130,8 +133,7 @@ public class PhotoTableModel extends AbstractTableModel
 	 */
 	public PhotoTableEntry getPhotoTableEntry(int inIndex)
 	{
-		if (inIndex < 0 || inIndex >= _photos.length)
-		{
+		if (inIndex < 0 || inIndex >= _photos.length) {
 			return null;
 		}
 		return _photos[inIndex];

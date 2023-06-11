@@ -16,13 +16,13 @@ import tim.prune.data.MediaObject;
 public class MediaSelectionTableModel extends AbstractTableModel
 {
 	/** Text for first column heading */
-	private String _firstColumnHeading = null;
+	private final String _firstColumnHeading;
 	/** Text for last column heading */
-	private String _lastColumnHeading = null;
+	private final String _lastColumnHeading;
 	/** List of rows */
-	private ArrayList<MediaSelectionTableRow> _list = new ArrayList<MediaSelectionTableRow>();
+	private final ArrayList<MediaSelectionTableRow> _list = new ArrayList<>();
 	/** Current timezone */
-	private TimeZone _timezone = null;
+	private final TimeZone _timezone;
 
 
 	/**

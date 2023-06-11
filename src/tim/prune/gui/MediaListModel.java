@@ -11,13 +11,13 @@ import tim.prune.data.MediaList;
 public class MediaListModel extends AbstractListModel<String>
 {
 	/** media list */
-	MediaList _media = null;
+	MediaList<?> _media = null;
 
 	/**
 	 * Constructor giving MediaList object
 	 * @param inList MediaList
 	 */
-	public MediaListModel(MediaList inList) {
+	public MediaListModel(MediaList<?> inList) {
 		_media = inList;
 	}
 
@@ -25,7 +25,7 @@ public class MediaListModel extends AbstractListModel<String>
 	 * @see javax.swing.ListModel#getSize()
 	 */
 	public int getSize() {
-		return _media.getNumMedia();
+		return _media.getCount();
 	}
 
 	/**
@@ -33,7 +33,7 @@ public class MediaListModel extends AbstractListModel<String>
 	 */
 	public String getElementAt(int inIndex)
 	{
-		MediaObject m = _media.getMedia(inIndex);
+		MediaObject m = _media.get(inIndex);
 		// * means modified since loading
 		return (m.getCurrentStatus() == m.getOriginalStatus()?"":"* ") + m.getName();
 	}

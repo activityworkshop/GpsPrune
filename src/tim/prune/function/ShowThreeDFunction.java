@@ -79,7 +79,7 @@ public class ShowThreeDFunction extends GenericFunction
 			// Show a dialog to get the parameters
 			if (_dialog == null)
 			{
-				_dialog = new JDialog(_app.getFrame(), I18nManager.getText(getNameKey()), true);
+				_dialog = new JDialog(_app.getFrame(), getName(), true);
 				_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 				_dialog.getContentPane().add(makeDialogComponents());
 				_dialog.pack();

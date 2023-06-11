@@ -2,9 +2,9 @@ package tim.prune.threedee;
 
 public class TerrainPatch
 {
-	private int      _gridSize = 0;
-	private double[] _altitudes = null;
-	private int[]    _tempDists = null;
+	private final int _gridSize;
+	private final double[] _altitudes;
+	private final int[] _tempDists;
 
 	/**
 	 * Constructor
@@ -110,7 +110,9 @@ public class TerrainPatch
 	 */
 	public double getAltitude(int inPointIndex)
 	{
-		if (_tempDists[inPointIndex] != 0) System.err.println("Dists should be 0 if we're retrieving!");
+		if (_tempDists[inPointIndex] != 0) {
+			System.err.println("Dists should be 0 if we're retrieving!");
+		}
 		return _altitudes[inPointIndex];
 	}
 }

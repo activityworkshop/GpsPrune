@@ -9,7 +9,8 @@ public class TrackExtents
 	/** Track object */
 	private final Track _track;
 	/** X and Y ranges */
-	private final DoubleRange _xRange, _yRange;
+	private final DoubleRange _xRange;
+	private final DoubleRange _yRange;
 
 	/** Border multiplier */
 	private static final double BORDER_MULTIPLIER = 1.1; // 10% border

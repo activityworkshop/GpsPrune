@@ -3,7 +3,6 @@ package tim.prune.function;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -23,6 +22,7 @@ import javax.swing.SwingConstants;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.InsertPointCmd;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
@@ -50,8 +50,7 @@ public class PasteCoordinates extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public PasteCoordinates(App inApp)
-	{
+	public PasteCoordinates(App inApp) {
 		super(inApp);
 	}
 
@@ -68,7 +67,7 @@ public class PasteCoordinates extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -135,11 +134,8 @@ public class PasteCoordinates extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				if (_okButton.isEnabled()) {finish();}
-			}
+		ActionListener okListener = e -> {
+			if (_okButton.isEnabled()) {finish();}
 		};
 		_okButton.addActionListener(okListener);
 		_okButton.setEnabled(false);
@@ -147,12 +143,7 @@ public class PasteCoordinates extends GenericFunction
 		_nameField.addActionListener(okListener);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -210,7 +201,7 @@ public class PasteCoordinates extends GenericFunction
 		if (point == null) {
 			JOptionPane.showMessageDialog(_parentFrame,
 				I18nManager.getText("dialog.pastecoordinates.nothingfound"),
-				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
+				getName(), JOptionPane.ERROR_MESSAGE);
 		}
 		else
 		{
@@ -219,8 +210,14 @@ public class PasteCoordinates extends GenericFunction
 			if (name != null && name.length() > 0) {
 				point.setFieldValue(Field.WAYPT_NAME, name, false);
 			}
-			// Pass information back to App to complete function
-			_app.createPoint(point);
+			else {
+				point.setSegmentStart(true);
+			}
+
+			InsertPointCmd command = new InsertPointCmd(point, -1);
+			command.setDescription(I18nManager.getText("undo.createpoint"));
+			command.setConfirmText(I18nManager.getText("confirm.pointadded"));
+			_app.execute(command);
 			_dialog.dispose();
 		}
 	}

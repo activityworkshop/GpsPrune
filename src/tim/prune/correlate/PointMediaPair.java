@@ -8,7 +8,7 @@ import tim.prune.data.MediaObject;
  */
 public class PointMediaPair
 {
-	private MediaObject _media = null;
+	private final MediaObject _media;
 	private DataPoint _pointBefore = null;
 	private DataPoint _pointAfter = null;
 	private long _secondsBefore = 1L;

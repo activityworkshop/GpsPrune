@@ -5,6 +5,8 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.*;
 
@@ -13,12 +15,15 @@ import tim.prune.DataSubscriber;
 import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.EditPointCmd;
+import tim.prune.cmd.InsertPointCmd;
 import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
 import tim.prune.data.*;
+import tim.prune.function.DeleteCurrentPoint;
+import tim.prune.function.Describer;
 import tim.prune.function.compress.MarkPointsInRectangleFunction;
 import tim.prune.function.edit.FieldEdit;
-import tim.prune.function.edit.FieldEditList;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MultiStateCheckBox;
 import tim.prune.gui.colour.PointColourer;
@@ -105,9 +110,6 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/** Constant for pan distance from autopan */
 	private static final int AUTOPAN_DISTANCE = 75;
 
-	// Colours
-	private static final Color COLOR_MESSAGES   = Color.GRAY;
-
 	// Drawing modes
 	private static final int MODE_DEFAULT = 0;
 	private static final int MODE_ZOOM_RECT = 1;
@@ -123,14 +125,13 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/**
 	 * Constructor
 	 * @param inApp App object for callbacks
-	 * @param inTrackInfo track info object
 	 */
-	public MapCanvas(App inApp, TrackInfo inTrackInfo)
+	public MapCanvas(App inApp)
 	{
 		_app = inApp;
-		_trackInfo = inTrackInfo;
-		_track = inTrackInfo.getTrack();
-		_selection = inTrackInfo.getSelection();
+		_trackInfo = _app.getTrackInfo();
+		_track = _trackInfo.getTrack();
+		_selection = _trackInfo.getSelection();
 		_midpoints = new MidpointData();
 		_mapPosition = new MapPosition();
 		addMouseListener(this);
@@ -290,7 +291,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_popup.add(setMapBgItem);
 		// new point option
 		JMenuItem newPointItem = new JMenuItem(I18nManager.getText("menu.map.newpoint"));
-		newPointItem.addActionListener(e -> _app.createPoint(createPointFromClick(_popupMenuX, _popupMenuY)));
+		newPointItem.addActionListener(e -> insertPoint(createPointFromClick(_popupMenuX, _popupMenuY, true), -1));
 		_popup.add(newPointItem);
 		// draw point series
 		JMenuItem drawPointsItem = new JMenuItem(I18nManager.getText("menu.map.drawpoints"));
@@ -423,11 +424,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					DataPoint currPoint = _track.getPoint(_selection.getCurrentPointIndex());
 					if (currPoint != null)
 					{
+						final int currPointIndex = _selection.getCurrentPointIndex();
 						if (currPoint.isWaypoint()) {
-							drawDragLines(inG, _selection.getCurrentPointIndex(), _selection.getCurrentPointIndex());
+							drawDragLines(inG, currPointIndex, currPointIndex);
 						}
 						else {
-							drawDragLines(inG, _selection.getCurrentPointIndex()-1, _selection.getCurrentPointIndex()+1);
+							drawDragLines(inG, currPointIndex - 1, currPointIndex + 1);
 						}
 					}
 					break;
@@ -466,7 +468,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		{
 			inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND));
 			inG.fillRect(0, 0, getScaledWidth(), getScaledHeight());
-			inG.setColor(COLOR_MESSAGES);
+			inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_TEXT));
 			inG.drawString(I18nManager.getText("display.nodata"), 50, getScaledHeight()/2);
 			_scaleBar.updateScale(-1, 0);
 		}
@@ -558,7 +560,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if (_tileManager.isOverzoomed())
 			{
 				// display overzoom message
-				g.setColor(COLOR_MESSAGES);
+				g.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_TEXT));
 				g.drawString(I18nManager.getText("map.overzoom"), 50, getScaledHeight()/2);
 			}
 			else
@@ -1010,7 +1012,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/**
 	 * Zoom out, if not already at minimum zoom
 	 */
-	public void zoomOut()
+	public final void zoomOut()
 	{
 		_mapPosition.zoomOut();
 		_recalculate = true;
@@ -1020,7 +1022,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	/**
 	 * Zoom in, if not already at maximum zoom
 	 */
-	public void zoomIn()
+	public final void zoomIn()
 	{
 		// See if selected point is currently visible, if so (and autopan on) then autopan after zoom to keep it visible
 		boolean wasVisible = _autopanCheckBox.isSelected() && isCurrentPointVisible();
@@ -1048,14 +1050,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 * Create a DataPoint object from the given click coordinates
 	 * @param inX x coordinate of click
 	 * @param inY y coordinate of click
+	 * @param inNewSegment true to start a new segment, false to continue
 	 * @return DataPoint with given coordinates and no altitude
 	 */
-	private DataPoint createPointFromClick(int inX, int inY)
+	private DataPoint createPointFromClick(int inX, int inY, boolean inNewSegment)
 	{
 		double lat = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(inY, getHeight()));
 		double lon = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(inX, getWidth()));
-		return new DataPoint(new Latitude(lat, Coordinate.FORMAT_NONE),
+		DataPoint point = new DataPoint(new Latitude(lat, Coordinate.FORMAT_NONE),
 			new Longitude(lon, Coordinate.FORMAT_NONE), null);
+		point.setSegmentStart(inNewSegment);
+		return point;
 	}
 
 	/**
@@ -1077,26 +1082,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			return;
 		}
 
-		// Make lists for edit and undo, and add each changed field in turn
-		FieldEditList editList = new FieldEditList();
-		FieldEditList undoList = new FieldEditList();
-
-		// Check field list
-		FieldList fieldList = _track.getFieldList();
-		int numFields = fieldList.getNumFields();
-		for (int i=0; i<numFields; i++)
-		{
-			Field field = fieldList.getField(i);
-			if (field == Field.LATITUDE) {
-				editList.addEdit(new FieldEdit(field, Double.toString(point.getLatitude().getDouble() + lat_delta)));
-				undoList.addEdit(new FieldEdit(field, point.getFieldValue(Field.LATITUDE)));
-			}
-			else if (field == Field.LONGITUDE) {
-				editList.addEdit(new FieldEdit(field, Double.toString(point.getLongitude().getDouble() + lon_delta)));
-				undoList.addEdit(new FieldEdit(field, point.getFieldValue(Field.LONGITUDE)));
-			}
-		}
-		_app.completePointEdit(editList, undoList);
+		final String latitude = Double.toString(point.getLatitude().getDouble() + lat_delta);
+		final String longitude = Double.toString(point.getLongitude().getDouble() + lon_delta);
+		List<FieldEdit> edits = new ArrayList<FieldEdit>();
+		edits.add(new FieldEdit(Field.LATITUDE, latitude));
+		edits.add(new FieldEdit(Field.LONGITUDE, longitude));
+		int pointIndex = _app.getTrackInfo().getSelection().getCurrentPointIndex();
+		EditPointCmd command = new EditPointCmd(pointIndex, edits);
+		Describer undoDescriber = new Describer("undo.editpoint", "undo.editpoint.withname");
+		command.setDescription(undoDescriber.getDescriptionWithNameOrNot(point.getWaypointName()));
+		command.setConfirmText(I18nManager.getText("confirm.point.edit"));
+		_app.execute(command);
 	}
 
 
@@ -1152,15 +1148,16 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					}
 					else if (_drawMode == MODE_DRAW_POINTS_START)
 					{
-						_app.createPoint(createPointFromClick(inE.getX(), inE.getY()));
+						DataPoint point = createPointFromClick(inE.getX(), inE.getY(), true);
+						insertPoint(point, -1);
 						_dragToX = inE.getX();
 						_dragToY = inE.getY();
 						_drawMode = MODE_DRAW_POINTS_CONT;
 					}
 					else if (_drawMode == MODE_DRAW_POINTS_CONT)
 					{
-						DataPoint point = createPointFromClick(inE.getX(), inE.getY());
-						_app.createPoint(point, false); // not a new segment
+						DataPoint point = createPointFromClick(inE.getX(), inE.getY(), false);
+						insertPoint(point, -1); // append
 					}
 				}
 				else if (inE.getClickCount() == 2)
@@ -1189,11 +1186,27 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	}
 
 	/**
+	 * Insert the given point into the track
+	 * @param inPoint point to insert
+	 * @param inInsertIndex index of insertion, or -1 for append
+	 */
+	private void insertPoint(DataPoint inPoint, int inInsertIndex)
+	{
+		if (inInsertIndex < -1) {
+			return;
+		}
+		InsertPointCmd command = new InsertPointCmd(inPoint, inInsertIndex);
+		command.setDescription(I18nManager.getText("undo.createpoint"));
+		command.setConfirmText(I18nManager.getText("confirm.createpoint"));
+		_app.execute(command);
+	}
+
+
+	/**
 	 * Ignore mouse enter events
 	 * @see java.awt.event.MouseListener#mouseEntered(java.awt.event.MouseEvent)
 	 */
-	public void mouseEntered(MouseEvent inE)
-	{
+	public void mouseEntered(MouseEvent inE) {
 		// ignore
 	}
 
@@ -1201,8 +1214,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 * Ignore mouse exited events
 	 * @see java.awt.event.MouseListener#mouseExited(java.awt.event.MouseEvent)
 	 */
-	public void mouseExited(MouseEvent inE)
-	{
+	public void mouseExited(MouseEvent inE) {
 		// ignore
 	}
 
@@ -1213,49 +1225,49 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	public void mousePressed(MouseEvent inE)
 	{
 		_clickedPoint = INDEX_UNKNOWN;
-		if (_track == null || _track.getNumPoints() <= 0)
+		if (_track == null || _track.getNumPoints() <= 0) {
 			return;
-		if (!inE.isMetaDown())
+		}
+		if (inE.isMetaDown()) {
+			return; // right-press ignored
+		}
+		// Left mouse drag - check if point is near; if so select it for dragging
+		if (_drawMode == MODE_DEFAULT)
 		{
-			// Left mouse drag - check if point is near; if so select it for dragging
-			if (_drawMode == MODE_DEFAULT)
+			/* Drag points if edit mode is enabled OR ALT is pressed */
+			if (_editmodeCheckBox.isSelected() || inE.isAltDown() || inE.isAltGraphDown())
 			{
-				/* Drag points if edit mode is enabled OR ALT is pressed */
-				if (_editmodeCheckBox.isSelected() || inE.isAltDown() || inE.isAltGraphDown())
+				final double clickX = _mapPosition.getXFromPixels(inE.getX(), getWidth());
+				final double clickY = _mapPosition.getYFromPixels(inE.getY(), getHeight());
+				final double clickSens = _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY);
+				_clickedPoint = _track.getNearestPointIndex(clickX, clickY, clickSens, false);
+
+				if (_clickedPoint >= 0)
 				{
-					final double clickX = _mapPosition.getXFromPixels(inE.getX(), getWidth());
-					final double clickY = _mapPosition.getYFromPixels(inE.getY(), getHeight());
-					final double clickSens = _mapPosition.getBoundsFromPixels(CLICK_SENSITIVITY);
-					_clickedPoint = _track.getNearestPointIndex(clickX, clickY, clickSens, false);
+					// TODO: maybe use another color of the cross or remove the cross while dragging???
 
-					if (_clickedPoint >= 0)
+					_trackInfo.selectPoint(_clickedPoint);
+					if (_trackInfo.getCurrentPoint() != null)
 					{
-						// TODO: maybe use another color of the cross or remove the cross while dragging???
-
-						_trackInfo.selectPoint(_clickedPoint);
-						if (_trackInfo.getCurrentPoint() != null)
-						{
-							_drawMode = MODE_DRAG_POINT;
-							_dragFromX = _dragToX = inE.getX();
-							_dragFromY = _dragToY = inE.getY();
-						}
+						_drawMode = MODE_DRAG_POINT;
+						_dragFromX = _dragToX = inE.getX();
+						_dragFromY = _dragToY = inE.getY();
 					}
-					else
+				}
+				else
+				{
+					// Not a click on a point, so check half-way between two (connected) trackpoints
+					int midpointIndex = _midpoints.getNearestPointIndex(clickX, clickY, clickSens);
+					if (midpointIndex > 0)
 					{
-						// Not a click on a point, so check half-way between two (connected) trackpoints
-						int midpointIndex = _midpoints.getNearestPointIndex(clickX, clickY, clickSens);
-						if (midpointIndex > 0)
-						{
-							_drawMode = MODE_CREATE_MIDPOINT;
-							_clickedPoint = midpointIndex;
-							_dragFromX = _dragToX = inE.getX();
-							_dragFromY = _dragToY = inE.getY();
-						}
+						_drawMode = MODE_CREATE_MIDPOINT;
+						_clickedPoint = midpointIndex;
+						_dragFromX = _dragToX = inE.getX();
+						_dragFromY = _dragToY = inE.getY();
 					}
 				}
 			}
 		}
-		// else right-press ignored
 	}
 
 	/**
@@ -1268,6 +1280,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 		if (_drawMode == MODE_DRAG_POINT)
 		{
+			if (inE.isMetaDown()) {
+				return;
+			}
 			if (Math.abs(_dragToX - _dragFromX) > 2
 				|| Math.abs(_dragToY - _dragFromY) > 2)
 			{
@@ -1277,8 +1292,11 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 		else if (_drawMode == MODE_CREATE_MIDPOINT)
 		{
+			if (inE.isMetaDown()) {
+				return;
+			}
 			_drawMode = MODE_DEFAULT;
-			_app.createPoint(createPointFromClick(_dragToX, _dragToY), _clickedPoint);
+			insertPoint(createPointFromClick(_dragToX, _dragToY, false), _clickedPoint);
 		}
 		else if (_drawMode == MODE_ZOOM_RECT)
 		{
@@ -1291,6 +1309,9 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 		else if (_drawMode == MODE_MARK_RECTANGLE)
 		{
+			if (inE.isMetaDown()) {
+				return;
+			}
 			// Reset app mode
 			_app.setCurrentMode(App.AppMode.NORMAL);
 			_drawMode = MODE_DEFAULT;
@@ -1389,7 +1410,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		else if (_drawMode == MODE_MARK_RECTANGLE) {
 			useResize = true;
 		}
-		else if (_editmodeCheckBox.isSelected() || inEvent.isAltDown() || inEvent.isAltGraphDown())
+		else if ((_editmodeCheckBox.isSelected() || inEvent.isAltDown() || inEvent.isAltGraphDown())
+				&& _track.getNumPoints() > 0)
 		{
 			// Try to find a point or a midpoint at this location, and if there is one
 			// then change the cursor to crosshairs
@@ -1415,16 +1437,14 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 * Respond to status bar message from broker
 	 * @param inMessage message, ignored
 	 */
-	public void actionCompleted(String inMessage)
-	{
-		// ignore
+	public void actionCompleted(String inMessage) {
 	}
 
 	/**
 	 * Respond to data updated message from broker
 	 * @param inUpdateType type of update
 	 */
-	public void dataUpdated(byte inUpdateType)
+	public void dataUpdated(int inUpdateType)
 	{
 		_recalculate = true;
 		if ((inUpdateType & DataSubscriber.DATA_ADDED_OR_REMOVED) > 0) {
@@ -1515,7 +1535,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				_drawMode = MODE_DEFAULT;
 			// Check for backspace key to delete current point (delete key already handled by menu)
 			else if (code == KeyEvent.VK_BACK_SPACE && currPointIndex >= 0) {
-				_app.deleteCurrentPoint();
+				new DeleteCurrentPoint(_app).begin();
 			}
 		}
 	}
@@ -1524,14 +1544,12 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 * @param e key released event, ignored
 	 */
 	public void keyReleased(KeyEvent e) {
-		// ignore
 	}
 
 	/**
 	 * @param inE key typed event, ignored
 	 */
 	public void keyTyped(KeyEvent inE) {
-		// ignore
 	}
 
 	/**

@@ -9,11 +9,11 @@ import java.io.File;
 public abstract class MediaObject
 {
 	/** File where media is stored (if any) */
-	protected File _file = null;
+	protected final File _file;
 	/** Name of file */
-	protected String _name = null;
+	protected final String _name;
 	/** Cached data if downloaded */
-	protected byte[] _data = null;
+	protected final byte[] _data;
 	/** URL if media came from net */
 	protected String _url = null;
 	/** Timestamp, if any */
@@ -34,7 +34,7 @@ public abstract class MediaObject
 		TAGGED,
 		/** Media is connected to a point */
 		CONNECTED
-	};
+	}
 
 
 	/**
@@ -218,9 +218,4 @@ public abstract class MediaObject
 	{
 		return _currentStatus != _originalStatus;
 	}
-
-	/**
-	 * Reset any cached data (eg thumbnail)
-	 */
-	public void resetCachedData() {}
 }

@@ -1,6 +1,9 @@
 package tim.prune.function;
 
+import java.util.ArrayList;
+
 import tim.prune.App;
+import tim.prune.cmd.Command;
 import tim.prune.data.Track;
 
 /**
@@ -13,8 +16,7 @@ public class CropToSelection extends DeleteBitOfTrackFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public CropToSelection(App inApp)
-	{
+	public CropToSelection(App inApp) {
 		super(inApp);
 	}
 
@@ -24,28 +26,35 @@ public class CropToSelection extends DeleteBitOfTrackFunction
 	}
 
 	/**
-	 * @return name key for undo operation
-	 */
-	protected String getUndoNameKey() {
-		return "undo.croptrack";
-	}
-
-	/**
 	 * Begin the function
 	 */
 	public void begin()
 	{
 		// check track
 		Track track = _app.getTrackInfo().getTrack();
-		if (track == null || track.getNumPoints() <= 0) return;
+		if (track == null || track.getNumPoints() <= 0) {
+			return;
+		}
 		// check selection
 		final int selStart = _app.getTrackInfo().getSelection().getStart();
 		final int selEnd = _app.getTrackInfo().getSelection().getEnd();
-		if (selStart < 0 || selEnd < 0 || selEnd <= selStart) return;
+		if (selStart < 0 || selEnd < 0 || selEnd <= selStart) {
+			return;
+		}
 		// check for all selected
-		if (selStart == 0 && selEnd == (track.getNumPoints() - 1)) return;
+		if (selStart == 0 && selEnd == (track.getNumPoints() - 1)) {
+			return;
+		}
 
-		// Pass indexes to parent class
-		deleteTwoSections(0, selStart-1, selEnd+1, track.getNumPoints()-1);
+		ArrayList<Integer> indexesToKeep = new ArrayList<>();
+		ArrayList<Integer> indexesToDelete = new ArrayList<>();
+		int numMedia = fillLists(indexesToKeep, indexesToDelete, (i) -> i>=selStart && i<=selEnd);
+		Command command = createCommand(indexesToKeep, indexesToDelete, null, numMedia);
+		if (command != null)
+		{
+			Describer undoDescriber = new Describer("undo.deletepoint", "undo.deletepoints");
+			command.setDescription(undoDescriber.getDescriptionWithCount(indexesToDelete.size()));
+			_app.execute(command);
+		}
 	}
 }

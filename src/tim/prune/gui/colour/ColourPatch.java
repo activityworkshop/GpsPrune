@@ -29,7 +29,10 @@ public class ColourPatch extends JPanel
 	 */
 	public void setColour(Color inColour)
 	{
-		super.setBackground(inColour);
-		setToolTipText(ColourUtils.makeHexCode(inColour));
+		if (inColour != null)
+		{
+			super.setBackground(inColour);
+			setToolTipText(ColourUtils.makeHexCode(inColour));
+		}
 	}
 }

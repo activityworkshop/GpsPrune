@@ -15,7 +15,8 @@ public abstract class WpIconLibrary
 	public static final int WAYPT_PLECTRUM = 2;
 	public static final int WAYPT_CIRCLE = 3;
 	public static final int WAYPT_PIN = 4;
-	public static final int WAYPT_NUMBER_OF_ICONS = WAYPT_PIN + 1;
+	public static final int WAYPT_FLAG = 5;
+	public static final int WAYPT_NUMBER_OF_ICONS = WAYPT_FLAG + 1;
 
 	/** Sizes of icon */
 	public static final int SIZE_SMALL = 0;
@@ -29,17 +30,19 @@ public abstract class WpIconLibrary
 	static
 	{
 		_PIXEL_OFFSETS = new int[] {0, 0, 0, 0, 0, 0, // default
-			8,  13, 12, 22, 14, 26, // ringpt
-			7,  15, 12, 24, 14, 27, // plectrum
-			8,  8,  12, 12, 14, 14, // ring
-			2,  15, 4,  23, 4,  27  // pin
+			8,  15, 11, 21, 14, 27, // ringpt
+			9,  17, 12, 23, 14, 28, // plectrum
+			8,  8,  12, 12, 15, 15, // ring
+			3,  16, 4,  22, 4,  28, // pin
+			2,  17, 3,  22, 4,  28  // flag
 		};
 	}
 
 	/** @return array of Integers representing waypoint types */
 	public static Integer[] getWaypointTypes()
 	{
-		return new Integer[] {WAYPT_DEFAULT, WAYPT_RING_POINT, WAYPT_PLECTRUM, WAYPT_CIRCLE, WAYPT_PIN};
+		return new Integer[] {WAYPT_DEFAULT, WAYPT_RING_POINT, WAYPT_PLECTRUM,
+				WAYPT_CIRCLE, WAYPT_PIN, WAYPT_FLAG};
 	}
 
 	/**
@@ -54,6 +57,7 @@ public abstract class WpIconLibrary
 			case WAYPT_PLECTRUM:   return "plectrum";
 			case WAYPT_CIRCLE:     return "ring";
 			case WAYPT_PIN:        return "pin";
+			case WAYPT_FLAG:       return "flag";
 			case WAYPT_DEFAULT:
 			default:               return "default";
 		}
@@ -85,7 +89,7 @@ public abstract class WpIconLibrary
 		WpIconDefinition iconDef = new WpIconDefinition(iconName, xOffset, yOffset);
 		// Get icon
 		ImageIcon icon = IconManager.getImageIcon(IconManager.WAYPOINT_ICON_PREFIX
-			+ iconDef.getName() + sizeSuffix + IconManager.WAYPOINT_ICON_SUFFIX);
+			+ iconDef.getName() + sizeSuffix);
 		iconDef.setIcon(icon);
 		return iconDef;
 	}

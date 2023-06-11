@@ -29,8 +29,7 @@ public class WaypointColours
 	 * @param inType waypoint type (if any)
 	 * @return Colour to use for symbol
 	 */
-	public Color getColourForType(String inType)
-	{
+	public Color getColourForType(String inType) {
 		return getColourForType(inType, _salt);
 	}
 
@@ -64,9 +63,9 @@ public class WaypointColours
 		final int[] multipliers = new int[] {29, 31, 37, 41, 43, 47, 53, 59, 61, 67};
 		final int multiplier = multipliers[inSalt % NUM_SALTS];
 		final int numChars = inType.length();
-		int value = 1;
+		int value = multiplier;
 		for (int i=0; i<numChars; i++) {
-			value = (value * multiplier + inType.charAt(i)) % 80;
+			value = (value * multiplier + (multiplier%11) * inType.charAt(i)) % 80;
 		}
 		return value;
 	}

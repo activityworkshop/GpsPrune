@@ -13,7 +13,7 @@ import tim.prune.gui.DisplayUtils;
 public class WeatherResults
 {
 	/** List of forecasts */
-	private ArrayList<SingleForecast> _forecastList = new ArrayList<SingleForecast>();
+	private final ArrayList<SingleForecast> _forecastList = new ArrayList<>();
 	/** Flag whether the units are metric (Celsius) or not (Fahrenheit) */
 	private boolean _tempsCelsius = true;
 	/** Location name */

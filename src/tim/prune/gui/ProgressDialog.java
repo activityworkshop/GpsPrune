@@ -1,11 +1,8 @@
 package tim.prune.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -16,106 +13,142 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
 import tim.prune.I18nManager;
+import tim.prune.function.Cancellable;
 
 /**
- * Class to show a simple progress dialog
- * similar to swing's ProgressMonitor but with a few
- * modifications
+ * Class to show a progress dialog for various time-consuming functions
  */
-public class ProgressDialog
+public class ProgressDialog implements ProgressIndicator
 {
-	/** Parent frame */
-	private JFrame _parentFrame = null;
-	/** Key for title text */
-	private String _titleKey = null;
-	/** function dialog */
 	private JDialog _dialog = null;
-	/** Progress bar for function */
+	private final String _titleKey;
+	private final String _labelKey;
 	private JProgressBar _progressBar = null;
-	/** Cancel flag */
+	private final JFrame _parentFrame;
+	private final Cancellable _function;
 	private boolean _cancelled = false;
-
+	private int _maxValue = -1;
 
 	/**
 	 * Constructor
-	 * @param inParentFrame parent frame
-	 * @param inNameKey key for title
+	 * @param inParentFrame parent frame for creating dialog
+	 * @param inTitleKey key for dialog title text
+	 * @param inLabelKey key for label text
+	 * @param inFunction function which can be cancelled
 	 */
-	public ProgressDialog(JFrame inParentFrame, String inNameKey)
+	public ProgressDialog(JFrame inParentFrame, String inTitleKey,
+		String inLabelKey, Cancellable inFunction)
 	{
+		_titleKey = inTitleKey;
+		_labelKey = inLabelKey == null ? "confirm.running" : inLabelKey;
 		_parentFrame = inParentFrame;
-		_titleKey = inNameKey;
-	}
-
-	public void show()
-	{
-		if (_dialog == null)
-		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(_titleKey), false);
-			_dialog.setLocationRelativeTo(_parentFrame);
-			_dialog.getContentPane().add(makeDialogComponents());
-			_dialog.pack();
-		}
-		_progressBar.setMinimum(0);
-		_progressBar.setMaximum(100);
-		_progressBar.setValue(0);
-		_progressBar.setIndeterminate(true);
-		_cancelled = false;
-		_dialog.setVisible(true);
+		_function = inFunction;
 	}
 
 	/**
-	 * Make the dialog components
-	 * @return the GUI components for the dialog
+	 * Constructor without cancel button
+	 * @param inParentFrame parent frame
+	 * @param inTitleKey key for dialog title
 	 */
-	private Component makeDialogComponents()
+	public ProgressDialog(JFrame inParentFrame, String inTitleKey) {
+		this(inParentFrame, inTitleKey, null, null);
+	}
+
+	/**
+	 * Create the dialog to show the progress
+	 */
+	private JDialog createProgressDialog()
 	{
-		JPanel dialogPanel = new JPanel();
-		dialogPanel.setLayout(new BorderLayout());
-		dialogPanel.add(new JLabel(I18nManager.getText("confirm.running")), BorderLayout.NORTH);
+		JDialog dialog = new JDialog(_parentFrame, I18nManager.getText(_titleKey));
+		dialog.setLocationRelativeTo(_parentFrame);
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+		panel.add(new JLabel(I18nManager.getText(_labelKey)), BorderLayout.NORTH);
 		// Centre panel with an empty border
 		JPanel centrePanel = new JPanel();
 		centrePanel.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 		centrePanel.setLayout(new BorderLayout());
 		_progressBar = new JProgressBar();
-		_progressBar.setPreferredSize(new Dimension(250, 30));
+		_progressBar.setPreferredSize(new Dimension(300, 30));
+		_progressBar.setValue(0);
+		_progressBar.setStringPainted(true);
+		_progressBar.setString("");
 		centrePanel.add(_progressBar, BorderLayout.CENTER);
-		dialogPanel.add(centrePanel, BorderLayout.CENTER);
-		// Cancel button at the bottom
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_cancelled = true;
-				_dialog.dispose();
-			}
-		});
-		buttonPanel.add(cancelButton);
-		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-		return dialogPanel;
+		panel.add(centrePanel, BorderLayout.CENTER);
+		if (_function != null)
+		{
+			// Cancel button at the bottom
+			JPanel buttonPanel = new JPanel();
+			buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+			JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
+			cancelButton.addActionListener(e -> {_cancelled = true; _function.cancel();});
+			buttonPanel.add(cancelButton);
+			panel.add(buttonPanel, BorderLayout.SOUTH);
+		}
+		dialog.getContentPane().add(panel);
+		dialog.pack();
+		return dialog;
+	}
+
+	/**
+	 * Show the dialog in indeterminate mode, before limits are calculated
+	 */
+	public void show()
+	{
+		_cancelled = false;
+		if (_dialog == null) {
+			_dialog = createProgressDialog();
+		}
+		_dialog.setVisible(true);
+		setMaximumValue(-1);
 	}
 
 	/** Set the maximum value of the progress bar */
-	public void setMaximum(int inMax) {
+	public void setMaximumValue(int inMax)
+	{
+		_maxValue = inMax;
 		_progressBar.setMaximum(inMax);
+		_progressBar.setMinimum(0);
 		_progressBar.setIndeterminate(inMax <= 1);
+		setValue(0);
 	}
 
 	/** Set the current value of the progress bar */
-	public void setValue(int inValue) {
-		_progressBar.setValue(inValue);
+	public void setValue(int inValue)
+	{
+		if (_maxValue > 0)
+		{
+			_progressBar.setString("" + inValue + " / " + _maxValue);
+			_progressBar.setValue(inValue);
+		}
+		else {
+			_progressBar.setString("" + inValue);
+		}
 	}
 
-	/** Close the dialog */
-	public void dispose() {
-		_dialog.dispose();
+	/**
+	 * Close the dialog
+	 */
+	public void close()
+	{
+		if (_dialog != null) {
+			_dialog.dispose();
+		}
 	}
 
 	/**
 	 * @return true if cancel button was pressed
 	 */
-	public boolean isCancelled() {
+	public boolean wasCancelled() {
 		return _cancelled;
+	}
+
+	@Override
+	public void showProgress(int inCurrent, int inMax)
+	{
+		if (inMax != _maxValue) {
+			setMaximumValue(inMax);
+		}
+		setValue(inCurrent);
 	}
 }

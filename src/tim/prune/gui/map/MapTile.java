@@ -9,9 +9,9 @@ import java.awt.Image;
 public class MapTile
 {
 	/** Image or null if no image available */
-	private Image _image = null;
+	private final Image _image;
 	/** True if image expired, false if still fresh */
-	private boolean _expired = false;
+	private final boolean _expired;
 
 	/** Constructor */
 	public MapTile(Image inImage, boolean inExpired)

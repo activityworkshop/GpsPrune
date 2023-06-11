@@ -11,7 +11,7 @@ import tim.prune.data.SourceInfo;
 public class GpxCacherList
 {
 	/** Array of Gpx Cachers */
-	private GpxCacher[] _cacherList = null;
+	private final GpxCacher[] _cacherList;
 
 	/**
 	 * Constructor
@@ -21,7 +21,8 @@ public class GpxCacherList
 	{
 		int numFiles = inInfo.getNumFiles();
 		_cacherList = new GpxCacher[numFiles];
-		for (int i=0; i<numFiles; i++) {
+		for (int i=0; i<numFiles; i++)
+		{
 			SourceInfo info = inInfo.getSource(i);
 			if (info.getFileType() == SourceInfo.FILE_TYPE.GPX) {
 				_cacherList[i] = new GpxCacher(info);
@@ -36,15 +37,15 @@ public class GpxCacherList
 	 */
 	public String getSourceString(DataPoint inPoint)
 	{
-		String str = null;
 		// Loop over sources
-		for (int i=0; i<_cacherList.length && (str == null); i++) {
-			GpxCacher cacher = _cacherList[i];
-			if (cacher != null) {
-				str = cacher.getSourceString(inPoint);
+		for (GpxCacher cacher : _cacherList)
+		{
+			String src = (cacher == null ? null : cacher.getSourceString(inPoint));
+			if (src != null) {
+				return src;
 			}
 		}
-		return str;
+		return null;
 	}
 
 	/**
@@ -52,15 +53,14 @@ public class GpxCacherList
 	 */
 	public String getFirstHeader()
 	{
-		String str = null;
 		// Loop over sources
-		for (int i=0; i<_cacherList.length && (str == null || str.equals("")); i++)
+		for (GpxCacher cacher : _cacherList)
 		{
-			GpxCacher cacher = _cacherList[i];
-			if (cacher != null) {
-				str = cacher.getHeaderString();
+			String str = (cacher == null ? null : cacher.getHeaderString());
+			if (str != null && !str.isEmpty()) {
+				return str;
 			}
 		}
-		return str;
+		return null;
 	}
 }

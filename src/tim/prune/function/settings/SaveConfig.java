@@ -75,9 +75,7 @@ public class SaveConfig extends GenericFunction
 		{
 			begin();
 		}
-		else if (!inSaveOn && configFile != null)
-		{
-			// TODO: Ask whether to save or not?
+		else if (!inSaveOn && configFile != null) {
 			silentSave();
 		}
 	}

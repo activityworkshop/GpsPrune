@@ -7,8 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -81,7 +79,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
@@ -116,11 +114,8 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		_drawTrackPointsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportimage.drawtrackpoints"));
 		_drawTrackPointsCheckbox.setSelected(true);
 		// Add listener to en/disable trackpoints checkbox
-		_drawDataCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				_drawTrackPointsCheckbox.setEnabled(_drawDataCheckbox.isSelected());
-			}
-		});
+		_drawDataCheckbox.addActionListener(e ->
+			_drawTrackPointsCheckbox.setEnabled(_drawDataCheckbox.isSelected()));
 
 		// TODO: Maybe have other controls such as line width, symbol scale factor
 		JPanel controlsPanel = new JPanel();
@@ -134,22 +129,16 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				doExport();
-				_baseImagePanel.getGrouter().clearMapImage();
-				_dialog.dispose();
-			}
+		_okButton.addActionListener(e -> {
+			doExport();
+			_baseImagePanel.getGrouter().clearMapImage();
+			_dialog.dispose();
 		});
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_baseImagePanel.getGrouter().clearMapImage();
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			_baseImagePanel.getGrouter().clearMapImage();
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		panel.add(buttonPanel, BorderLayout.SOUTH);

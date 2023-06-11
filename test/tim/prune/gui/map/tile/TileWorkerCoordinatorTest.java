@@ -93,7 +93,7 @@ class TileWorkerCoordinatorTest
 	}
 
 	private static void waitABit() {
-		try {Thread.sleep(200L);} catch(InterruptedException ignored) {}
+		try {Thread.sleep(100L);} catch(InterruptedException ignored) {}
 	}
 
 	private static MapSource getMapSource() {

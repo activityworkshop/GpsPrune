@@ -21,9 +21,9 @@ import tim.prune.gui.WizardLayout;
 public class AddFilterDialog
 {
 	/** Parent panel to pass the filter back to */
-	private BabelFilterPanel _parentPanel = null;
+	private final BabelFilterPanel _parentPanel;
 	/** Reference to parent frame */
-	private JFrame _parentFrame = null;
+	private final JFrame _parentFrame;
 	/** Main dialog */
 	private JDialog _dialog = null;
 	/** layout for dealing with cards */
@@ -38,8 +38,10 @@ public class AddFilterDialog
 	// Selector class for one of the filter types
 	class FilterTypeListener implements ActionListener
 	{
-		private int _index = 0;
-		public FilterTypeListener(int inIndex) {_index = inIndex;}
+		private final int _index;
+		public FilterTypeListener(int inIndex) {
+			_index = inIndex;
+		}
 		public void actionPerformed(ActionEvent e) {
 			_wizard.showCard(_index);
 			_backButton.setEnabled(true);
@@ -125,33 +127,19 @@ public class AddFilterDialog
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 		_backButton = new JButton(I18nManager.getText("button.back"));
-		_backButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_wizard.showCard(0);
-				_backButton.setEnabled(!_wizard.isFirstCard());
-				_finishButton.setEnabled(false);
-			}
+		_backButton.addActionListener(e -> {
+			_wizard.showCard(0);
+			_backButton.setEnabled(!_wizard.isFirstCard());
+			_finishButton.setEnabled(false);
 		});
 		_backButton.setEnabled(false);
 		buttonPanel.add(_backButton);
 		_finishButton = new JButton(I18nManager.getText("button.finish"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		_finishButton.addActionListener(okListener);
+		_finishButton.addActionListener(e -> finish());
 		_finishButton.setEnabled(false);
 		buttonPanel.add(_finishButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));

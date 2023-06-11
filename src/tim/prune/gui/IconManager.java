@@ -8,96 +8,70 @@ import javax.swing.ImageIcon;
  */
 public abstract class IconManager
 {
-
 	/** Icon for window */
 	public static final String WINDOW_ICON = "window_icon";
 
-	/** Icon for scalebar button on main map display */
-	public static final String SCALEBAR_BUTTON = "scalebar.gif";
-	/** Icon for map button on main map display when selected */
-	public static final String SCALEBAR_BUTTON_ON = "scalebar_on.gif";
-	/** Icon for map button on main map display */
-	public static final String MAP_BUTTON = "map_icon.gif";
-	/** Icon for map button on main map display when selected */
-	public static final String MAP_BUTTON_ON = "map_icon_on.gif";
-	/** Icon for autopan button on main map display */
-	public static final String AUTOPAN_BUTTON = "autopan.gif";
-	/** Icon for autopan button on main map display when selected */
-	public static final String AUTOPAN_BUTTON_ON = "autopan_on.gif";
-	/** Icon for points connected icon on main map display */
-	public static final String POINTS_CONNECTED_BUTTON = "points_connected.png";
-	/** Icon for points disconnected icon on main map display */
-	public static final String POINTS_DISCONNECTED_BUTTON = "points_disconnected.png";
-	/** Icon for points hidden, just lines icon on main map display */
-	public static final String POINTS_HIDDEN_BUTTON = "points_hidden.png";
-	/** Icon for points, lines and arrows on main map display */
-	public static final String POINTS_WITH_ARROWS_BUTTON = "points_arrows.png";
-	 /** Icon for edit mode button on main map display when not selected */
-	public static final String EDIT_MODE_BUTTON = "drag_points_icon.gif";
-	 /** Icon for edit mode button on main map display when selected */
-	public static final String EDIT_MODE_BUTTON_ON = "drag_points_icon_on.gif";
-	/** Icon for zoom in button on main map display */
-	public static final String ZOOM_IN_BUTTON = "zoom_in.gif";
-	/** Icon for zoom out button on main map display */
-	public static final String ZOOM_OUT_BUTTON = "zoom_out.gif";
+	/** Icons for buttons at the top of the main map display */
+	// show scalebar
+	public static final String SCALEBAR_BUTTON = "canvas/scalebar-off";
+	public static final String SCALEBAR_BUTTON_ON = "canvas/scalebar-on";
+	// show map
+	public static final String MAP_BUTTON = "canvas/showmap-off";
+	public static final String MAP_BUTTON_ON = "canvas/showmap-on";
+	// autopan
+	public static final String AUTOPAN_BUTTON = "canvas/autopan-off";
+	public static final String AUTOPAN_BUTTON_ON = "canvas/autopan-on";
+	// four options for points and lines
+	public static final String POINTS_CONNECTED_BUTTON = "canvas/points-connected";
+	public static final String POINTS_DISCONNECTED_BUTTON = "canvas/points-disconnected";
+	public static final String POINTS_HIDDEN_BUTTON = "canvas/points-hidden";
+	public static final String POINTS_WITH_ARROWS_BUTTON = "canvas/points-arrows";
+	// edit mode
+	public static final String EDIT_MODE_BUTTON = "canvas/edit-mode-off";
+	public static final String EDIT_MODE_BUTTON_ON = "canvas/edit-mode-on";
+	/** Zoom in and out buttons, shown on left of map */
+	public static final String ZOOM_IN_BUTTON = "canvas/zoom-in";
+	public static final String ZOOM_OUT_BUTTON = "canvas/zoom-out";
 
-	/** Icon for open file */
-	public static final String OPEN_FILE = "add_textfile_icon.png";
-	/** Icon for add photo */
-	public static final String ADD_PHOTO = "add_photo_icon.png";
-	/** Icon for save */
-	public static final String SAVE_FILE = "save_icon.gif";
-	/** Icon for undo */
-	public static final String UNDO = "undo_icon.gif";
-	/** Icon for edit point */
-	public static final String EDIT_POINT = "edit_point_icon.gif";
-	/** Icon for delete point */
-	public static final String DELETE_POINT = "delete_point_icon.gif";
-	/** Icon for delete range */
-	public static final String DELETE_RANGE = "delete_range_icon.gif";
-	/** Icon for set range start */
-	public static final String SET_RANGE_START = "set_start_icon.png";
-	/** Icon for set range end */
-	public static final String SET_RANGE_END = "set_end_icon.png";
-	/** Icon for connect point to photo */
-	public static final String CONNECT_PHOTO = "link.gif";
-	/** Icon for cut range and move */
-	public static final String CUT_AND_MOVE = "cut_and_move.gif";
+	/** Main toolbar */
+	public static final String TOOLBAR_IMPORT_FILE = "toolbar/import-file";
+	public static final String TOOLBAR_ADD_PHOTO = "toolbar/add-image";
+	public static final String TOOLBAR_EXPORT_FILE = "toolbar/export-file";
+	public static final String TOOLBAR_UNDO = "toolbar/undo";
+	public static final String TOOLBAR_EDIT_POINT = "toolbar/edit-details";
+	public static final String TOOLBAR_VIEW_INFO = "toolbar/view-info";
+	public static final String TOOLBAR_DELETE_POINT = "toolbar/delete-point";
+	public static final String TOOLBAR_DELETE_RANGE = "toolbar/delete-range";
+	public static final String TOOLBAR_SET_RANGE_START = "toolbar/set-range-start";
+	public static final String TOOLBAR_SET_RANGE_END = "toolbar/set-range-end";
+	public static final String TOOLBAR_CUT_AND_MOVE = "toolbar/cut-and-move";
+	public static final String TOOLBAR_CONNECT_PHOTO = "toolbar/link";
+	public static final String TOOLBAR_VIEW_3D = "toolbar/view-3d";
 
-	/** Icon for rotating photos leftwards */
-	public static final String ROTATE_LEFT = "rotate_left_icon.png";
-	/** Icon for rotating photos rightwards */
-	public static final String ROTATE_RIGHT = "rotate_right_icon.png";
-	/** Icon for showing photo popup */
-	public static final String SHOW_DETAILS = "show_details_icon.gif";
-	/** Icon for playing audio clip */
-	public static final String PLAY_AUDIO = "play_audio.gif";
-	/** Icon for stopping the current audio clip */
-	public static final String STOP_AUDIO = "stop_audio.gif";
-	/** Icon for autoplaying a track */
-	public static final String AUTOPLAY_PLAY = "play.png";
-	/** Icon for pausing autoplay of a track */
-	public static final String AUTOPLAY_PAUSE = "pause.png";
-	/** Icon for rewinding the autoplay of a track */
-	public static final String AUTOPLAY_REWIND = "rewind.png";
+	/** Photo details and controls for rotation */
+	public static final String ROTATE_LEFT = "controls/rotate-left";
+	public static final String ROTATE_RIGHT = "controls/rotate-right";
+	public static final String SHOW_DETAILS = "controls/show-image";
+	/** Controls for audio and autoplay */
+	public static final String CONTROL_PLAY = "controls/play";
+	public static final String CONTROL_STOP = "controls/stop";
+	public static final String CONTROL_PAUSE = "controls/pause";
+	public static final String CONTROL_REWIND = "controls/rewind";
 
-	/** Icon for a given entry being valid (green tick) */
-	public static final String ENTRY_VALID = "entry_valid.gif";
-	/** Icon for a given entry being invalid (red cross) */
-	public static final String ENTRY_INVALID = "entry_invalid.gif";
-	/** Icon for a given entry being empty (blank) */
-	public static final String ENTRY_NONE = "entry_none.gif";
+	/** Icons for validity status (eg Gpsbabel filters) */
+	public static final String ENTRY_VALID = "entry-valid";
+	public static final String ENTRY_INVALID = "entry-invalid";
+	public static final String ENTRY_NONE = "entry-none";
 
-	public static final String WAYPOINT_ICON_PREFIX = "wpicon_";
-	public static final String WAYPOINT_ICON_SUFFIX = ".png";
+	public static final String WAYPOINT_ICON_PREFIX = "waypoints/wpicon_";
+
 
 	/**
 	 * Get the specified image
 	 * @param inFilename filename of image (using constants)
 	 * @return ImageIcon object containing image
 	 */
-	public static ImageIcon getImageIcon(String inFilename)
-	{
-		return new ImageIcon(IconManager.class.getResource("images/" + inFilename));
+	public static ImageIcon getImageIcon(String inFilename) {
+		return new ImageIcon(IconManager.class.getResource("images/" + inFilename + ".png"));
 	}
 }

@@ -113,8 +113,9 @@ public abstract class Timestamp
 	/**
 	 * Add the given number of seconds offset
 	 * @param inOffset number of seconds to add/subtract
+	 * @return a new Timestamp offset from the current one
 	 */
-	public abstract void addOffsetSeconds(long inOffset);
+	public abstract Timestamp addOffsetSeconds(long inOffset);
 
 	/**
 	 * @return true if the timestamp has non-zero milliseconds

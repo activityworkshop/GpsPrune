@@ -12,7 +12,7 @@ public class CardStack extends JPanel
 {
 	private int _numCards = 0;
 	private int _currCard = 0;
-	private CardLayout _layout = null;
+	private final CardLayout _layout;
 	private static final String cardName = "card";
 
 	/**

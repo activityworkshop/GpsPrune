@@ -2,6 +2,7 @@ package tim.prune.data;
 
 import tim.prune.DataSubscriber;
 import tim.prune.UpdateMessageBroker;
+import tim.prune.config.Config;
 
 /**
  * Class to represent a selected portion of a Track
@@ -9,7 +10,7 @@ import tim.prune.UpdateMessageBroker;
  */
 public class Selection
 {
-	private Track _track = null;
+	private final Track _track;
 	private int _currentPoint = -1;
 	private int _prevNumPoints = 0;
 	private int _startIndex = -1, _endIndex = -1;
@@ -70,13 +71,12 @@ public class Selection
 			_prevNumPoints = numPoints;
 			check();
 		}
-		if (numPoints > 0 && hasRangeSelected())
-		{
-			_rangeStats = new RangeStats(_track, _startIndex, _endIndex);
+		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		if (numPoints > 0 && hasRangeSelected()) {
+			_rangeStats = new RangeStats(_track, _startIndex, _endIndex, altitudeTolerance);
 		}
-		else
-		{
-			_rangeStats = new RangeStats();
+		else {
+			_rangeStats = new RangeStats(altitudeTolerance);
 		}
 	}
 
@@ -221,44 +221,39 @@ public class Selection
 
 
 	/**
-	 * Modify the selection given that the selected range has been deleted
+	 * Modify the selection when a point has been deleted
+	 * @param inPointIndex index of point which was deleted
 	 */
-	public void modifyRangeDeleted()
+	public void modifyPointDeleted(int inPointIndex)
 	{
-		// Modify current point, if any
-		if (_currentPoint > _endIndex)
-		{
-			_currentPoint -= (_endIndex - _startIndex);
-		}
-		else if (_currentPoint > _startIndex)
-		{
-			_currentPoint = _startIndex;
-		}
-		// Clear selected range
-		_startIndex = _endIndex = -1;
-		// Check for consistency and fire update
-		markInvalid();
-		check();
-	}
-
-
-	/**
-	 * Modify the selection when a point is deleted
-	 */
-	public void modifyPointDeleted()
-	{
-		// current point index doesn't change, just gets checked
-		// range needs to get altered if deleted point is inside or before
-		if (hasRangeSelected() && _currentPoint <= _endIndex)
+		// range needs to get altered if deleted point was inside or before
+		if (hasRangeSelected() && inPointIndex <= _endIndex)
 		{
 			_endIndex--;
-			if (_currentPoint < _startIndex)
+			if (inPointIndex < _startIndex) {
 				_startIndex--;
+			}
 			markInvalid();
 		}
 		check();
 	}
 
+	/**
+	 * Modify the selection when a point is inserted
+	 * @param inPointIndex index of newly inserted point
+	 */
+	public void modifyPointInserted(int inPointIndex)
+	{
+		if (hasRangeSelected() && inPointIndex <= _endIndex)
+		{
+			_endIndex++;
+			if (inPointIndex <= _startIndex) {
+				_startIndex++;
+			}
+			markInvalid();
+			check();
+		}
+	}
 
 	/**
 	 * Select the specified photo and point

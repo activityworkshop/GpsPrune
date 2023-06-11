@@ -5,8 +5,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -18,8 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
@@ -63,7 +59,7 @@ public class DistanceFunction extends GenericFunction
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -101,12 +97,9 @@ public class DistanceFunction extends GenericFunction
 		// First table for 'from point'
 		_fromModel = new FromTableModel();
 		_pointTable = new JTable(_fromModel);
-		_pointTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			/** selection changed */
-			public void valueChanged(ListSelectionEvent e) {
-				if (!e.getValueIsAdjusting()) {
-					_distModel.recalculate(_pointTable.getSelectedRow());
-				}
+		_pointTable.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				_distModel.recalculate(_pointTable.getSelectedRow());
 			}
 		});
 		JScrollPane scrollPane = new JScrollPane(_pointTable);
@@ -136,12 +129,7 @@ public class DistanceFunction extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
-		closeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		closeButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(closeButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;

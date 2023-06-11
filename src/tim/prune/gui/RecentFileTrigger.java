@@ -16,8 +16,8 @@ import tim.prune.load.BabelLoadFromFile;
  */
 public class RecentFileTrigger implements ActionListener
 {
-	private App _app = null;
-	private int _index = 0;
+	private final App _app;
+	private final int _index;
 
 
 	/**
@@ -42,7 +42,7 @@ public class RecentFileTrigger implements ActionListener
 			if (rf.isRegularLoad())
 			{
 				// Trigger a regular file load
-				ArrayList<File> dataFiles = new ArrayList<File>();
+				ArrayList<File> dataFiles = new ArrayList<>();
 				dataFiles.add(rf.getFile());
 				_app.loadDataFiles(dataFiles);
 			}

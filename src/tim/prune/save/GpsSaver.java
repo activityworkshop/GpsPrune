@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
@@ -23,7 +21,6 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import tim.prune.App;
@@ -70,8 +67,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 		// Check if gpsbabel looks like it's installed
 		if (_gpsBabelChecked || ExternalTools.isToolInstalled(ExternalTools.TOOL_GPSBABEL)
 			|| JOptionPane.showConfirmDialog(_dialog,
-				I18nManager.getText("dialog.gpsload.nogpsbabel"),
-				I18nManager.getText(getNameKey()),
+				I18nManager.getText("dialog.gpsload.nogpsbabel"), getName(),
 				JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)
 		{
 			_gpsBabelChecked = true;
@@ -141,12 +137,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 		_trackNameField.addKeyListener(closer);
 
 		// checkboxes
-		ChangeListener checkboxListener = new ChangeListener() {
-			public void stateChanged(ChangeEvent e)
-			{
-				enableOkButton();
-			}
-		};
+		ChangeListener checkboxListener = e -> enableOkButton();
 		_waypointCheckbox = new JCheckBox(I18nManager.getText("dialog.gpssend.sendwaypoints"), true);
 		_waypointCheckbox.addChangeListener(checkboxListener);
 		_waypointCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -165,22 +156,16 @@ public class GpsSaver extends GenericFunction implements Runnable
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// start thread to call gpsbabel
-				_cancelled = false;
-				new Thread(GpsSaver.this).start();
-			}
+		_okButton.addActionListener(e -> {
+			// start thread to call gpsbabel
+			_cancelled = false;
+			new Thread(() -> run()).start();
 		});
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_cancelled = true;
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			_cancelled = true;
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		outerPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -313,7 +298,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 		OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
 		SettingsForExport settings = new SettingsForExport();
 		settings.setExportMissingAltitudesAsZero(true);
-		GpxExporter.exportData(writer, _app.getTrackInfo(), trackName, null, settings, null);
+		new GpxWriter(null, settings).exportData(writer, _app.getTrackInfo(), trackName, null, null);
 		writer.close();
 
 		// Read the error stream to see if there's a better error message there

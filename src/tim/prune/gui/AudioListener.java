@@ -6,7 +6,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JProgressBar;
 
 import tim.prune.FunctionLibrary;
-import tim.prune.function.PlayAudioFunction;
+import tim.prune.function.media.PlayAudioFunction;
 
 /**
  * Class to update the supplied progress bar on the basis of

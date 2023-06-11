@@ -60,19 +60,18 @@ public class DateColourer extends DiscretePointColourer
 		final int numPoints = track == null ? 0 : track.getNumPoints();
 		init(numPoints);
 		// Make a hashmap of the already-used dates
-		HashMap<String, Integer> usedDates = new HashMap<String, Integer>(20);
+		HashMap<String, Integer> usedDates = new HashMap<>(20);
 		// Also store the previous one, because they're probably consecutive
 		String prevDate = null;
 		int prevIndex = -1;
 
 		// loop over track points
-		int dayIndex = -1;
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint p = track.getPoint(i);
 			if (p != null && !p.isWaypoint())
 			{
-				dayIndex = 0; // default index 0 will be used if no date found
+				int dayIndex = 0; // default index 0 will be used if no date found
 				String date = getDate(p.getTimestamp());
 				if (date != null)
 				{

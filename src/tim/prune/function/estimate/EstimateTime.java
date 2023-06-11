@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 import java.util.Calendar;
 
 import javax.swing.BorderFactory;
@@ -20,18 +21,18 @@ import javax.swing.SwingUtilities;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.EditSingleFieldCmd;
 import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Selection;
 import tim.prune.data.Unit;
+import tim.prune.function.edit.PointEdit;
 import tim.prune.gui.DecimalNumberField;
 import tim.prune.gui.DisplayUtils;
 import tim.prune.gui.GuiGridLayout;
 import tim.prune.tips.TipManager;
-import tim.prune.undo.UndoApplyTimestamps;
 
 /**
  * Class to calculate and show the results of estimating (hike) time for the current range
@@ -81,8 +82,9 @@ public class EstimateTime extends GenericFunction
 	{
 		// Get the stats on the selection before launching the dialog
 		Selection selection = _app.getTrackInfo().getSelection();
+		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
 		_stats = new RangeStatsWithGradients(_app.getTrackInfo().getTrack(),
-			selection.getStart(), selection.getEnd());
+			selection.getStart(), selection.getEnd(), altitudeTolerance);
 
 		if (_stats.getMovingDistance() < 0.01)
 		{
@@ -93,7 +95,7 @@ public class EstimateTime extends GenericFunction
 		{
 			// First time in, check whether params are at default, show tip message if unaltered
 			showTip();
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -347,17 +349,10 @@ public class EstimateTime extends GenericFunction
 		EstimationParameters params = EstimationParameters.fromLocalUnits(_flatSpeedField.getValue(),
 			_gentleClimbField.getValue(), _steepClimbField.getValue(),
 			_gentleDescentField.getValue(), _steepDescentField.getValue());
-		if (params == null) {
-			_estimatedDurationLabel.setText("- - -");
-			_applyButton.setEnabled(false);
-		}
-		else
-		{
-			final long numSeconds = (long) (params.applyToStats(_stats) * 60.0);
-			_estimatedDurationLabel.setText(I18nManager.getText("dialog.estimatetime.results.estimatedtime") + ": "
-				+ DisplayUtils.buildDurationString(numSeconds));
-			_applyButton.setEnabled(numSeconds > 0L);
-		}
+		final long numSeconds = (long) (params.applyToStats(_stats) * 60.0);
+		_estimatedDurationLabel.setText(I18nManager.getText("dialog.estimatetime.results.estimatedtime") + ": "
+			+ DisplayUtils.buildDurationString(numSeconds));
+		_applyButton.setEnabled(numSeconds > 0L);
 	}
 
 
@@ -399,23 +394,30 @@ public class EstimateTime extends GenericFunction
 			_flatSpeedField.getValue(), _gentleClimbField.getValue(),
 			_steepClimbField.getValue(), _gentleDescentField.getValue(), _steepDescentField.getValue());
 
-		// Make undo object to store existing timestamps
-		UndoApplyTimestamps undo = new UndoApplyTimestamps(_app.getTrackInfo());
+		// Make list of modified timestamps
+		ArrayList<PointEdit> edits = new ArrayList<>();
 		long startMillis = getTimeAtMidnight();
-		// Loop over all points in selected range
-		RangeStatsWithGradients stats = new RangeStatsWithGradients();
+		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		RangeStatsWithGradients stats = new RangeStatsWithGradients(altitudeTolerance);
 		Selection selection = _app.getTrackInfo().getSelection();
 		for (int pointIdx=selection.getStart(); pointIdx <= selection.getEnd(); pointIdx++)
 		{
 			DataPoint point = _app.getTrackInfo().getTrack().getPoint(pointIdx);
-			if (point.isWaypoint()) continue;
-			stats.addPoint(point);
-			final double numSeconds = params.applyToStats(stats) * 60.0;
-			final long pointMillis = startMillis + (long) (numSeconds * 1000.0);
-			point.setFieldValue(Field.TIMESTAMP, "" + pointMillis, false);
+			if (!point.isWaypoint())
+			{
+				stats.addPoint(point);
+				final double numSeconds = params.applyToStats(stats) * 60.0;
+				final long pointMillis = startMillis + (long) (numSeconds * 1000.0);
+				edits.add(new PointEdit(pointIdx, "" + pointMillis));
+			}
 		}
-		UpdateMessageBroker.informSubscribers();
-		_app.completeFunction(undo, I18nManager.getText("confirm.applytimestamps"));
+		if (!edits.isEmpty())
+		{
+			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.TIMESTAMP, edits);
+			command.setDescription(I18nManager.getText("undo.applytimestamps"));
+			command.setConfirmText(I18nManager.getText("confirm.applytimestamps"));
+			_app.execute(command);
+		}
 	}
 
 	/**

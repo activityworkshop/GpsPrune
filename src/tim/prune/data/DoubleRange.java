@@ -61,9 +61,8 @@ public class DoubleRange
 	/**
 	 * @return true if data values were found
 	 */
-	public boolean hasData()
-	{
-		return (!_empty);
+	public boolean hasData() {
+		return !_empty;
 	}
 
 

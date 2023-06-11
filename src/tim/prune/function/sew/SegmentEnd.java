@@ -10,8 +10,8 @@ import tim.prune.data.DataPoint;
 public class SegmentEnd implements Comparable<SegmentEnd>
 {
 	private SegmentEnd _otherEnd = null;
-	private Coordinate _longitude = null;
-	private Coordinate _latitude  = null;
+	private final Coordinate _longitude;
+	private final Coordinate _latitude;
 	private int        _pointIndex = 0;
 	private boolean    _active = true;
 
@@ -110,7 +110,7 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 	}
 
 	/**
-	 * Deactive this node, don't use it any more (it's already been merged)
+	 * Deactivate this node, don't use it any more (it's already been merged)
 	 */
 	public void deactivate() {
 		_active = false;
@@ -158,18 +158,15 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 		final int maxIndex = forwardsMove ? inMoveTo - 1 : inSegmentStart - 1;
 		if (_pointIndex >= minIndex && _pointIndex <= maxIndex)
 		{
-			// final int origIndex = _pointIndex;
 			if (forwardsMove) {
 				_pointIndex -= segmentSize; // segment moved forwards, point indices reduced
 			}
 			else {
 				_pointIndex += segmentSize; // segment moved backwards, point indices shifted forwards
 			}
-			// System.out.println("    Need to adjust index: " + origIndex + " -> " + _pointIndex);
 		}
 		else if (_pointIndex == inSegmentStart)
 		{
-			// final int origIndex = _pointIndex;
 			if (forwardsMove) {
 				_pointIndex = inMoveTo - segmentSize;
 			}
@@ -178,11 +175,9 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 				// Point index moves to moveTo
 				_pointIndex = inMoveTo;
 			}
-			// System.out.println("    Need to adjust movedseg: " + origIndex + " -> " + _pointIndex);
 		}
 		else if (_pointIndex == inSegmentEnd)
 		{
-			// final int origEndIndex = _otherEnd._pointIndex;
 			if (forwardsMove) {
 				_pointIndex = inMoveTo - 1;
 			}
@@ -191,7 +186,6 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 				// Point index moves to moveTo
 				_pointIndex = inMoveTo + inSegmentEnd - inSegmentStart;
 			}
-			// System.out.println("    Need to adjust movedseg: " + origEndIndex + " -> " + _pointIndex);
 		}
 	}
 }

@@ -14,7 +14,7 @@ public abstract class WindowFactory
 	 * @param inFrame parent frame
 	 * @return object if available, otherwise null
 	 */
-	public static ThreeDWindow getWindow(JFrame inFrame)
+	public synchronized static ThreeDWindow getWindow(JFrame inFrame)
 	{
 		if (isJava3dEnabled())
 		{

@@ -4,7 +4,6 @@ import java.util.TimeZone;
 
 public abstract class TimezoneHelper
 {
-
 	/**
 	 * @return the timezone selected in the Config
 	 */
@@ -14,9 +13,6 @@ public abstract class TimezoneHelper
 		if (zoneId == null || zoneId.equals("")) {
 			return TimeZone.getDefault();
 		}
-		else {
-			return TimeZone.getTimeZone(zoneId);
-		}
+		return TimeZone.getTimeZone(zoneId);
 	}
-
 }

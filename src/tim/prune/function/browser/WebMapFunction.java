@@ -9,9 +9,9 @@ import tim.prune.GenericFunction;
 public class WebMapFunction extends GenericFunction
 {
 	/** Service to call */
-	private UrlGenerator.WebService _service;
+	private final UrlGenerator.WebService _service;
 	/** Key for appearance in menu */
-	private String _nameKey = null;
+	private final String _nameKey;
 
 	/**
 	 * Constructor

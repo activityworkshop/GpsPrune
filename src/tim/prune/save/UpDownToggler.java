@@ -11,8 +11,8 @@ import javax.swing.event.ListSelectionListener;
  */
 public class UpDownToggler implements ListSelectionListener
 {
-	private JButton _upButton = null;
-	private JButton _downButton = null;
+	private final JButton _upButton;
+	private final JButton _downButton;
 	private int _maxIndex = 2;
 
 	/**

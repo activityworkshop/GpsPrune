@@ -21,70 +21,55 @@ public abstract class MediaHelper
 
 
 	/**
+	 * Construct a MediaObject for the given url
+	 * @param inUrl url linked to point
+	 * @return either Photo or AudioClip object as appropriate, or null
+	 */
+	public static MediaObject createMediaObjectFromUrl(URL inUrl)
+	{
+		if (inUrl == null) return null;
+		byte[] data = null;
+		try (InputStream is = inUrl.openStream()) {
+			data = ByteScooper.scoop(is);
+			return createMediaObject(data, inUrl.getFile(), inUrl.toString());
+		}
+		catch (IOException ioe) {
+			System.err.println("Got ioe from url: " + ioe.getMessage());
+		}
+		return null;
+	}
+
+
+	/**
 	 * Construct a MediaObject for the given path
 	 * @param inZipFile path to archive file (if any)
 	 * @param inPath path to media file
 	 * @param inSourceFile file from which data was loaded
 	 * @return either Photo or AudioClip object as appropriate, or null
 	 */
-	public static MediaObject createMediaObject(File inZipFile, String inPath, File inSourceFile)
+	public static MediaObject createMediaObjectRelative(File inZipFile, String inPath, File inSourceFile)
 	{
 		if (inPath == null || inPath.length() < 5) return null;
-		InputStream is = null;
-		ZipFile zf     = null;
-		byte[] data    = null;
-		String url     = null;
-		try
+		byte[] data = null;
+		// See if file is in the zip file
+		if (inZipFile != null && inZipFile.exists() && inZipFile.canRead())
 		{
-			// Check if path is a URL, in which case get an input stream from it
-			if (inPath.substring(0, 5).toLowerCase().equals("http:"))
+			try (ZipFile zf = new ZipFile(inZipFile))
 			{
-				url = inPath;
-				is = new URL(inPath).openStream();
-				data = ByteScooper.scoop(is);
-			}
-		}
-		catch (IOException ioe) {
-			System.err.println("Got ioe from url: " + ioe.getMessage());
-		} // is stays null
-
-		// Now see if file is in the zip file
-		if (is == null && inZipFile != null && inZipFile.exists() && inZipFile.canRead())
-		{
-			try
-			{
-				zf = new ZipFile(inZipFile);
 				ZipEntry entry = zf.getEntry(inPath);
-				if (entry != null && entry.getSize() > 0)
-				{
+				if (entry != null && entry.getSize() > 0) {
 					data = ByteScooper.scoop(zf.getInputStream(entry));
-					// System.out.println("Size of data " + (data.length == entry.getSize()?"matches":"DOESN'T match"));
 				}
 			}
 			catch (IOException ioe) {
 				System.err.println("Got ioe from zip file: " + ioe.getMessage());
 			}
 		}
-		// Clean up input streams
-		if (is != null) try {
-			is.close();
-		} catch (IOException ioe) {}
-		if (zf != null) try {
-			zf.close();
-		} catch (IOException ioe) {}
 
 		if (data != null)
 		{
-			// Create Photo or AudioClip using this entry
-			String filename = new File(inPath).getName();
-			initFilters();
-			if (_jpegFilter.acceptFilename(inPath)) {
-				return new Photo(data, filename, url);
-			}
-			else if (_audioFilter.acceptFilename(inPath)) {
-				return new AudioClip(data, filename, url);
-			}
-			return null;
+			final String filename = new File(inPath).getName();
+			return createMediaObject(data, filename, null);
 		}
 
 		// If we haven't got a result by now, try to load plain file
@@ -92,8 +77,22 @@ public abstract class MediaHelper
 		if (inSourceFile != null && !file.isAbsolute()) {
 			file = new File(inSourceFile.getParent(), inPath);
 		}
-		// awkward construction because new File(startPath, absolutePath) doesn't work
 		return createMediaObject(file);
+	}
+
+	/**
+	 * Create Photo or AudioClip using this entry
+	 */
+	private static MediaObject createMediaObject(byte[] inData, String inFilename, String inUrl)
+	{
+		initFilters();
+		if (_jpegFilter.acceptFilename(inFilename)) {
+			return new Photo(inData, inFilename, inUrl);
+		}
+		else if (_audioFilter.acceptFilename(inFilename)) {
+			return new AudioClip(inData, inFilename, inUrl);
+		}
+		return null;
 	}
 
 	/**

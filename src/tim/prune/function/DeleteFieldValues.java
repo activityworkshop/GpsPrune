@@ -2,8 +2,7 @@ package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -13,18 +12,19 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
-import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.Command;
+import tim.prune.cmd.ConnectMultipleMediaCmd;
+import tim.prune.cmd.EditSingleFieldCmd;
+import tim.prune.cmd.MediaLinkType;
+import tim.prune.cmd.PointAndMedia;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
 import tim.prune.data.Track;
-import tim.prune.undo.UndoDeleteFieldValues;
+import tim.prune.function.edit.PointEdit;
 
 /**
  * Class to provide the function to delete the values of a single field
@@ -42,8 +42,7 @@ public class DeleteFieldValues extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public DeleteFieldValues(App inApp)
-	{
+	public DeleteFieldValues(App inApp) {
 		super(inApp);
 	}
 
@@ -60,7 +59,7 @@ public class DeleteFieldValues extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -91,32 +90,17 @@ public class DeleteFieldValues extends GenericFunction
 		_fieldList = new JList<String>(new String[] {"First field", "Second field"});
 		// These entries will be replaced by the initDialog method
 		_fieldList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		_fieldList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				_okButton.setEnabled(_fieldList.getSelectedIndex() >= 0);
-			}
-		});
+		_fieldList.addListSelectionListener(e -> _okButton.setEnabled(_fieldList.getSelectedIndex() >= 0));
 		dialogPanel.add(new JScrollPane(_fieldList), BorderLayout.CENTER);
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> finish());
 		_okButton.setEnabled(false);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -134,13 +118,21 @@ public class DeleteFieldValues extends GenericFunction
 		// Loop over fields in track
 		final Track track = _app.getTrackInfo().getTrack();
 		FieldList fieldsInTrack = track.getFieldList();
-		for (int i=0; i<fieldsInTrack.getNumFields(); i++) {
+		for (int i=0; i<fieldsInTrack.getNumFields(); i++)
+		{
 			Field field = fieldsInTrack.getField(i);
 			if (field != Field.LATITUDE && field != Field.LONGITUDE
 				&& track.hasData(field, selStart, selEnd))
 			{
 				_listModel.addField(field);
 			}
+		}
+		// These aren't really fields but can also be deleted:
+		if (track.hasData(Field.PHOTO, selStart, selEnd)) {
+			_listModel.addField(Field.PHOTO);
+		}
+		if (track.hasData(Field.AUDIO, selStart, selEnd)) {
+			_listModel.addField(Field.AUDIO);
 		}
 		_fieldList.setModel(_listModel);
 		_fieldList.clearSelection();
@@ -152,21 +144,41 @@ public class DeleteFieldValues extends GenericFunction
 	 */
 	private void finish()
 	{
-		// Complete function
 		Field field = _listModel.getField(_fieldList.getSelectedIndex());
-		if (field != null)
-		{
-			UndoDeleteFieldValues undo = new UndoDeleteFieldValues(_app.getTrackInfo(), field);
-			final int selStart = _app.getTrackInfo().getSelection().getStart();
-			final int selEnd = _app.getTrackInfo().getSelection().getEnd();
-			final Track track = _app.getTrackInfo().getTrack();
-			for (int i=selStart; i<= selEnd; i++) {
-				track.getPoint(i).setFieldValue(field, null, false);
-			}
-			_dialog.dispose();
-			_app.getTrackInfo().getSelection().markInvalid();
-			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_EDITED);
-			_app.completeFunction(undo, I18nManager.getText("confirm.deletefieldvalues"));
+		if (field == null) {
+			return;
 		}
+		final int selStart = _app.getTrackInfo().getSelection().getStart();
+		final int selEnd = _app.getTrackInfo().getSelection().getEnd();
+		_dialog.dispose();
+		_app.getTrackInfo().getSelection().markInvalid();
+		Command command = makeCommand(field, selStart, selEnd);
+		command.setDescription(I18nManager.getText("undo.deletefieldvalues", field.getName()));
+		command.setConfirmText(I18nManager.getText("confirm.deletefieldvalues"));
+		_app.execute(command);
+	}
+
+	/**
+	 * @return a suitable command to delete the field values for the given field
+	 */
+	private Command makeCommand(Field field, int selStart, int selEnd)
+	{
+		if (field == Field.PHOTO || field == Field.AUDIO)
+		{
+			// It's a media field so use a ConnectMultipleMediaCmd instead
+			MediaLinkType linkType = field == Field.PHOTO ? MediaLinkType.LINK_PHOTOS : MediaLinkType.LINK_AUDIOS;
+			ArrayList<PointAndMedia> points = new ArrayList<>();
+			Track track = _app.getTrackInfo().getTrack();
+			for (int i=selStart; i<= selEnd; i++) {
+				points.add(new PointAndMedia(track.getPoint(i), null));
+			}
+			return new ConnectMultipleMediaCmd(linkType, points);
+		}
+		// It's a regular field so use EditSingleFieldCmd with values of null
+		ArrayList<PointEdit> edits = new ArrayList<>();
+		for (int i=selStart; i<= selEnd; i++) {
+			edits.add(new PointEdit(i, null));
+		}
+		return new EditSingleFieldCmd(field, edits);
 	}
 }

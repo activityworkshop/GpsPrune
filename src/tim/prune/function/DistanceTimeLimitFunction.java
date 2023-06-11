@@ -3,8 +3,6 @@ package tim.prune.function;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
@@ -18,6 +16,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.SwingUtilities;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
@@ -61,13 +60,16 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 	private class ChangeListener extends KeyAdapter implements ItemListener
 	{
 		/** Item changed in ItemListener */
-		public void itemStateChanged(ItemEvent arg0) {
+		public void itemStateChanged(ItemEvent event) {
 			enableOkButton();
 		}
 
 		/** Key released in KeyListener */
-		public void keyReleased(KeyEvent arg0) {
+		public void keyReleased(KeyEvent event) {
 			enableOkButton();
+			if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+				_dialog.dispose();
+			}
 		}
 	}
 
@@ -87,7 +89,7 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -97,12 +99,10 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		// TODO: Maybe set distance units according to current Config setting?
 		final boolean hasTimestamps = _app.getTrackInfo().getTrack().hasData(Field.TIMESTAMP);
 		_timeLimitRadio.setEnabled(hasTimestamps);
-		if (!hasTimestamps)
-		{
+		if (!hasTimestamps) {
 			_distLimitRadio.setSelected(true);
 		}
-		// set focus to Cancel button so that pressing "Esc" works
-		_cancelButton.requestFocus();
+		SwingUtilities.invokeLater(() -> _distanceField.requestFocus());
 		_dialog.setVisible(true);
 	}
 
@@ -181,19 +181,11 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		// OK button
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				performFunction();
-			}
-		});
+		_okButton.addActionListener(e -> performFunction());
 		buttonPanel.add(_okButton);
 		// Cancel button
 		_cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		_cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		_cancelButton.addActionListener(e -> _dialog.dispose());
 		_cancelButton.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent inE) {
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
@@ -238,8 +230,9 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		{
 			int timeLimitSeconds = _limitHourField.getValue() * 60 * 60
 				+ _limitMinField.getValue() * 60;
-			if (timeLimitSeconds > 0)
+			if (timeLimitSeconds > 0) {
 				return timeLimitSeconds;
+			}
 		}
 		return 0;
 	}

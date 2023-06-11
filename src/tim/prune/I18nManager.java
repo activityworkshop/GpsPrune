@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.IllegalFormatException;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Properties;
@@ -76,22 +77,19 @@ public abstract class I18nManager
 	 */
 	public static void addLanguageFile(String inFilename) throws FileNotFoundException
 	{
-		FileInputStream fis = null;
 		boolean fileLoaded = false;
-		try
+		File file = new File(inFilename);
+		_externalPropsFile = new Properties();
+		try (FileInputStream fis = new FileInputStream(file))
 		{
-			File file = new File(inFilename);
-			_externalPropsFile = new Properties();
-			fis = new FileInputStream(file);
 			_externalPropsFile.load(fis);
 			fileLoaded = true; // everything worked
 		}
 		catch (IOException ioe) {}
-		finally { try { fis.close();
-			} catch (Exception e) {}
-		}
 		// complain if file wasn't loaded, by throwing a filenotfound exception
-		if (!fileLoaded) throw new FileNotFoundException();
+		if (!fileLoaded) {
+			throw new FileNotFoundException();
+		}
 	}
 
 
@@ -124,6 +122,23 @@ public abstract class I18nManager
 
 	/**
 	 * Lookup the given key and return the associated text, formatting with the number
+	 * @param inKey key to lookup (text should contain a %s)
+	 * @param inPlaceholderValue value to substitute into the %s
+	 * @return associated text, or the key if not found
+	 */
+	public static String getText(String inKey, String inPlaceholderValue )
+	{
+		String localText = getText(inKey);
+		try {
+			localText = String.format(localText, inPlaceholderValue);
+		}
+		catch (IllegalFormatException e)
+		{} // printf formatting didn't work, maybe the placeholders are wrong?
+		return localText;
+	}
+
+	/**
+	 * Lookup the given key and return the associated text, formatting with the number
 	 * @param inKey key to lookup (text should contain a %d)
 	 * @param inNumber number to substitute into the %d
 	 * @return associated text, or the key if not found
@@ -131,11 +146,10 @@ public abstract class I18nManager
 	public static String getTextWithNumber(String inKey, int inNumber)
 	{
 		String localText = getText(inKey);
-		try
-		{
+		try {
 			localText = String.format(localText, inNumber);
 		}
-		catch (Exception e)
+		catch (IllegalFormatException e)
 		{} // printf formatting didn't work, maybe the placeholders are wrong?
 		return localText;
 	}

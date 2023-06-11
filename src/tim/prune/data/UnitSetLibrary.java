@@ -28,12 +28,14 @@ public abstract class UnitSetLibrary
 		SPEED_UNITS_FEETPERSEC, SPEED_UNITS_MILESPERHOUR};
 
 	/** Array of available unit sets */
-	private static UnitSet[] _sets =
+	private static final UnitSet[] _sets =
 	{
 		new UnitSet("unitset.kilometres", UNITS_KILOMETRES, UNITS_METRES, SPEED_UNITS_KMPERHOUR, SPEED_UNITS_METRESPERSEC),
 		new UnitSet("unitset.miles", UNITS_MILES, UNITS_FEET, SPEED_UNITS_MILESPERHOUR, SPEED_UNITS_FEETPERSEC),
 		new UnitSet("unitset.nautical", UNITS_NAUTICAL_MILES, UNITS_FEET, SPEED_UNITS_KNOTS, SPEED_UNITS_FEETPERSEC)
 	};
+	/** Index for the metric unit set (km, m, km/h, m/sec) */
+	public static final int UNITSET_METRIC = 0;
 
 	/**
 	 * @return number of available unit sets

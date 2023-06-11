@@ -6,7 +6,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
 import tim.prune.data.Field;
-import tim.prune.load.TrackNameList;
 
 
 /**
@@ -17,7 +16,6 @@ public class GpxHandler extends XmlHandler
 	private boolean _insidePoint = false;
 	private boolean _insideWaypoint = false;
 	private boolean _startSegment = true;
-	private boolean _isTrackPoint = false;
 	private int _trackNum = -1;
 	private GpxTag _fileTitle = new GpxTag();
 	private GpxTag _pointName = new GpxTag(), _trackName = new GpxTag();
@@ -25,10 +23,10 @@ public class GpxHandler extends XmlHandler
 	private GpxTag _elevation = new GpxTag(), _time = new GpxTag();
 	private GpxTag _type = new GpxTag(), _description = new GpxTag();
 	private GpxTag _link = new GpxTag(), _comment = new GpxTag();
+	private GpxTag _sym = new GpxTag();
 	private GpxTag _currentTag = null;
 	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
 	private ArrayList<String> _linkList = new ArrayList<String>();
-	private TrackNameList _trackNameList = new TrackNameList();
 
 
 	/**
@@ -44,7 +42,6 @@ public class GpxHandler extends XmlHandler
 		{
 			_insidePoint = true;
 			_insideWaypoint = tag.equals("wpt");
-			_isTrackPoint = tag.equals("trkpt");
 			final int numAttributes = attributes.getLength();
 			for (int i=0; i<numAttributes; i++)
 			{
@@ -59,6 +56,7 @@ public class GpxHandler extends XmlHandler
 			_link.setValue(null);
 			_description.setValue(null);
 			_comment.setValue(null);
+			_sym.setValue(null);
 		}
 		else if (tag.equals("ele")) {
 			_currentTag = _elevation;
@@ -87,6 +85,9 @@ public class GpxHandler extends XmlHandler
 		}
 		else if (tag.equals("cmt")) {
 			_currentTag = _comment;
+		}
+		else if (tag.equals("sym")) {
+			_currentTag = _sym;
 		}
 		else if (tag.equals("link")) {
 			_link.setValue(attributes.getValue("href"));
@@ -157,7 +158,7 @@ public class GpxHandler extends XmlHandler
 	private void processPoint()
 	{
 		// Put the values into a String array matching the order in getFieldArray()
-		String[] values = new String[9];
+		String[] values = new String[10];
 		values[0] = _latitude;
 		values[1] = _longitude;
 		values[2] = _elevation.getValue();
@@ -171,8 +172,8 @@ public class GpxHandler extends XmlHandler
 		values[6] = _type.getValue();
 		values[7] = _description.getValue();
 		values[8] = _comment.getValue();
+		values[9] = _sym.getValue();
 		_pointList.add(values);
-		_trackNameList.addPoint(_trackNum, _trackName.getValue(), _isTrackPoint);
 		_linkList.add(_link.getValue());
 	}
 
@@ -184,7 +185,7 @@ public class GpxHandler extends XmlHandler
 	{
 		final Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
 			Field.WAYPT_NAME, Field.TIMESTAMP, Field.NEW_SEGMENT,
-			Field.WAYPT_TYPE, Field.DESCRIPTION, Field.COMMENT};
+			Field.WAYPT_TYPE, Field.DESCRIPTION, Field.COMMENT, Field.SYMBOL};
 		return fields;
 	}
 
@@ -220,13 +221,6 @@ public class GpxHandler extends XmlHandler
 		}
 		if (!hasLink) {result = null;}
 		return result;
-	}
-
-	/**
-	 * @return track name list
-	 */
-	public TrackNameList getTrackNameList() {
-		return _trackNameList;
 	}
 
 	/**

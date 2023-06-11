@@ -30,10 +30,8 @@ public class FileCacher extends ContentCacher
 		ArrayList<String> contentList = new ArrayList<String>();
 		if (inFile != null && inFile.exists() && inFile.canRead())
 		{
-			BufferedReader reader = null;
-			try
+			try (BufferedReader reader = new BufferedReader(new FileReader(inFile)))
 			{
-				reader = new BufferedReader(new FileReader(inFile));
 				String currLine = reader.readLine();
 				if (currLine != null && currLine.startsWith("<?xml")) {
 					return; // it's an xml file, it shouldn't use this cacher
@@ -45,21 +43,13 @@ public class FileCacher extends ContentCacher
 						reader.close();
 						return; // it's a binary file, shouldn't use this cacher
 					}
-					if (currLine.trim().length() > 0)
+					if (currLine.trim().length() > 0) {
 						contentList.add(currLine);
+					}
 					currLine = reader.readLine();
 				}
 			}
-			catch (IOException ioe) {}
-			finally
-			{
-				// close file ignoring errors
-				try
-				{
-					if (reader != null) reader.close();
-				}
-				catch (Exception e) {}
-			}
+			catch (IOException e) {}
 		}
 		setContents(contentList);
 	}

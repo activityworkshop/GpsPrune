@@ -1,44 +1,47 @@
 package tim.prune.load;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.JOptionPane;
 
 import tim.prune.App;
-import tim.prune.data.Field;
+import tim.prune.data.Altitude;
+import tim.prune.data.DataPoint;
+import tim.prune.data.Latitude;
+import tim.prune.data.Longitude;
 import tim.prune.data.SourceInfo;
+import tim.prune.data.UnitSetLibrary;
 
 /**
  * Class to handle the loading of Nmea files
  */
-public class NmeaFileLoader
+public class NmeaFileLoader extends FileTypeLoader
 {
-	/** App for callback of file loading */
-	private App _app = null;
-
 	/**
 	 * Constructor
 	 * @param inApp App object
 	 */
-	public NmeaFileLoader(App inApp)
-	{
-		_app = inApp;
+	public NmeaFileLoader(App inApp) {
+		super(inApp);
 	}
 
 	/**
 	 * Open the selected file
-	 * @param inFile File to open
+	 * @param inFileLock File to open
+	 * @param inAutoAppend true to automatically append
 	 */
-	public void openFile(File inFile)
+	public void openFile(FileToBeLoaded inFileLock, boolean inAutoAppend)
 	{
 		BufferedReader reader = null;
 		ArrayList<NmeaMessage> messages = new ArrayList<NmeaMessage>();
 		String lastDate = null;
 		try
 		{
-			reader = new BufferedReader(new FileReader(inFile));
+			reader = new BufferedReader(new FileReader(inFileLock.getFile()));
 			String currLine = reader.readLine();
 			boolean newSegment = true;
 			while (currLine != null)
@@ -59,7 +62,8 @@ public class NmeaFileLoader
 						// Start a new segment if fix lost
 						newSegment = !message.hasFix();
 					}
-					else {
+					else
+					{
 						String date = getDateFromRMC(currLine);
 						if (date != null)
 						{
@@ -78,7 +82,7 @@ public class NmeaFileLoader
 			}
 		}
 		catch (IOException ioe) {
-			_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");
+			getApp().showErrorMessage("error.load.dialogtitle", "error.load.noread");
 		}
 		finally
 		{
@@ -90,8 +94,12 @@ public class NmeaFileLoader
 		}
 		if (messages.size() > 0)
 		{
-			_app.informDataLoaded(getFieldArray(), makeDataArray(messages),
-				null, new SourceInfo(inFile, SourceInfo.FILE_TYPE.NMEA), null);
+			int appendOption = getAppendOption(inAutoAppend);
+			if (appendOption == JOptionPane.CANCEL_OPTION) {
+				return;
+			}
+			loadData(makePointList(messages), new SourceInfo(inFileLock.getFile(), SourceInfo.FILE_TYPE.NMEA),
+				appendOption == JOptionPane.YES_OPTION);
 		}
 	}
 
@@ -146,22 +154,17 @@ public class NmeaFileLoader
 	 * @param inList list of messages
 	 * @return object array for loading
 	 */
-	private static Object[][] makeDataArray(ArrayList<NmeaMessage> inList)
+	private List<DataPoint> makePointList(ArrayList<NmeaMessage> inList)
 	{
-		Object[][] result = new Object[inList.size()][];
-		for (int i=0; i<inList.size(); i++) {
-			result[i] = inList.get(i).getStrings();
+		ArrayList<DataPoint> points = new ArrayList<>();
+		for (NmeaMessage nmea : inList)
+		{
+			DataPoint point = new DataPoint(new Latitude(nmea.getLatitude()),
+				new Longitude(nmea.getLongitude()),
+				new Altitude(nmea.getAltitude(), UnitSetLibrary.UNITS_METRES));
+			point.setSegmentStart(nmea.getSegmentFlag());
+			points.add(point);
 		}
-		return result;
-	}
-
-	/**
-	 * @see tim.prune.load.xml.XmlHandler#getFieldArray()
-	 */
-	public Field[] getFieldArray()
-	{
-		final Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
-			Field.TIMESTAMP, Field.NEW_SEGMENT};
-		return fields;
+		return points;
 	}
 }

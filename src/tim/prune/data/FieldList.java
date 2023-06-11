@@ -37,6 +37,7 @@ public class FieldList
 	 */
 	public int getFieldIndex(Field inField)
 	{
+		if (inField == null) return -1;
 		int index = 0;
 		for (Field field : _fields)
 		{

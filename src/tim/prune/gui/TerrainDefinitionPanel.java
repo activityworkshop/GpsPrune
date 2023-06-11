@@ -1,8 +1,6 @@
 package tim.prune.gui;
 
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -22,9 +20,9 @@ import tim.prune.threedee.TerrainDefinition;
 public class TerrainDefinitionPanel extends JPanel
 {
 	/** Checkbox to use a terrain or not */
-	private JCheckBox _useCheckbox = null;
+	private final JCheckBox _useCheckbox;
 	/** Field for entering the grid size */
-	private WholeNumberField _gridSizeField = null;
+	private final WholeNumberField _gridSizeField;
 
 
 	/**
@@ -35,11 +33,7 @@ public class TerrainDefinitionPanel extends JPanel
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		// Components
 		_useCheckbox = new JCheckBox(I18nManager.getText("dialog.3d.useterrain"));
-		_useCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				activateGridField();
-			}
-		});
+		_useCheckbox.addActionListener(e -> activateGridField());
 		add(_useCheckbox);
 		add(Box.createHorizontalGlue());
 		JLabel label = new JLabel(I18nManager.getText("dialog.3d.terraingridsize") + ": ");

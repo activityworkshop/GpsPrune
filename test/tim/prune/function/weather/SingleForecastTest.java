@@ -14,26 +14,26 @@ class SingleForecastTest
 	void testWeatherIcons()
 	{
 		testIconName(null, "100", "");
-		testIconName("storm.png", "200", null);
-		testIconName("storm.png", "204", "");
-		testIconName("lightrain.png", "300", null);
-		testIconName("lightrain.png", "301", null);
+		testIconName("storm", "200", null);
+		testIconName("storm", "204", "");
+		testIconName("lightrain", "300", null);
+		testIconName("lightrain", "301", null);
 		testIconName(null, "400", null);
-		testIconName("lightrain.png", "500", null);
-		testIconName("rain.png", "501", null);
-		testIconName("rain.png", "599", null);
-		testIconName("hail.png", "511", null);
-		testIconName("snow.png", "600", null);
-		testIconName("fog.png", "700", null);
-		testIconName("clear-day.png", "800", null);
-		testIconName("clear-day.png", "800", "");
-		testIconName("clear-day.png", "800", "01d");
-		testIconName("clear-night.png", "800", "01n");
-		testIconName("clouds-day.png", "802", "01d");
-		testIconName("clouds-night.png", "802", "01n");
-		testIconName("clouds.png", "804", "01n");
-		testIconName("extreme.png", "900", "01d");
-		testIconName("hail.png", "906", "01n");
+		testIconName("lightrain", "500", null);
+		testIconName("rain", "501", null);
+		testIconName("rain", "599", null);
+		testIconName("hail", "511", null);
+		testIconName("snow", "600", null);
+		testIconName("fog", "700", null);
+		testIconName("clear-day", "800", null);
+		testIconName("clear-day", "800", "");
+		testIconName("clear-day", "800", "01d");
+		testIconName("clear-night", "800", "01n");
+		testIconName("clouds-day", "802", "01d");
+		testIconName("clouds-night", "802", "01n");
+		testIconName("clouds", "804", "01n");
+		testIconName("extreme", "900", "01d");
+		testIconName("hail", "906", "01n");
 	}
 
 	/**

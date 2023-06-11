@@ -17,7 +17,7 @@ import java.util.regex.Pattern;
  */
 public class TimestampUtc extends Timestamp
 {
-	private boolean _valid = false;
+	private final boolean _valid;
 	private long _milliseconds = 0L;
 	private String _text = null;
 
@@ -55,7 +55,7 @@ public class TimestampUtc extends Timestamp
 	}
 
 	/** Array of parse types to loop through (first one is changed to last successful type) */
-	private static ParseType[] ALL_PARSE_TYPES = {ParseType.NONE, ParseType.ISO8601_FRACTIONAL, ParseType.LONG,
+	private static final ParseType[] ALL_PARSE_TYPES = {ParseType.NONE, ParseType.ISO8601_FRACTIONAL, ParseType.LONG,
 		ParseType.FIXED_FORMAT0, ParseType.FIXED_FORMAT1, ParseType.FIXED_FORMAT2, ParseType.FIXED_FORMAT3,
 		ParseType.FIXED_FORMAT4, ParseType.FIXED_FORMAT5, ParseType.FIXED_FORMAT6, ParseType.FIXED_FORMAT7,
 		ParseType.FIXED_FORMAT8, ParseType.GENERAL_STRING};
@@ -98,7 +98,6 @@ public class TimestampUtc extends Timestamp
 	 */
 	public TimestampUtc(String inString)
 	{
-		_valid = false;
 		_text = null;
 		if (inString != null && !inString.equals(""))
 		{
@@ -114,6 +113,7 @@ public class TimestampUtc extends Timestamp
 				}
 			}
 		}
+		_valid = false;
 	}
 
 	/**
@@ -344,11 +344,10 @@ public class TimestampUtc extends Timestamp
 	/**
 	 * Add the given number of seconds offset
 	 * @param inOffset number of seconds to add/subtract
+	 * @return new timestamp, offset from this one
 	 */
-	public void addOffsetSeconds(long inOffset)
-	{
-		_milliseconds += (inOffset * 1000L);
-		_text = null;
+	public Timestamp addOffsetSeconds(long inOffset) {
+		return new TimestampUtc(_milliseconds + (inOffset * 1000L));
 	}
 
 

@@ -5,8 +5,8 @@ package tim.prune.load.json;
  */
 public class JsonPoint
 {
-	public String _latitude = null, _longitude = null, _altitude = null;
-	public boolean _newSegment = false;
+	public final String _latitude, _longitude, _altitude;
+	public final boolean _newSegment;
 
 	/**
 	 * Constructor

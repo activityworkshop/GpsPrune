@@ -51,15 +51,6 @@ public class SetAltitudeTolerance extends SingleNumericParameterFunction
 	}
 
 	/**
-	 * Run function
-	 */
-	public void begin()
-	{
-		// Not required, because this function is started from a ChooseSingleParameter function
-		// and goes directly to the completeFunction method.
-	}
-
-	/**
 	 * Complete the function using the given tolerance parameter
 	 */
 	public void completeFunction(int inTolerance)

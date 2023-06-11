@@ -6,15 +6,18 @@ import java.util.TimeZone;
 
 import org.junit.jupiter.api.Test;
 
+/**
+ * Unit tests for timestamp classes
+ */
 class TimestampTest
 {
 
 	@Test
 	void testLondonMoscow()
 	{
-		Timestamp shouldntChange = new TimestampUtc("2018-03-03T10:22:33");
-		long millisLondon = shouldntChange.getMilliseconds(TimeZone.getTimeZone("GMT"));
-		long millisMoscow = shouldntChange.getMilliseconds(TimeZone.getTimeZone("GMT+03:00"));
+		Timestamp shouldNotChange = new TimestampUtc("2018-03-03T10:22:33");
+		long millisLondon = shouldNotChange.getMilliseconds(TimeZone.getTimeZone("GMT"));
+		long millisMoscow = shouldNotChange.getMilliseconds(TimeZone.getTimeZone("GMT+03:00"));
 		// Shouldn't change, millis are the same in Moscow
 		assertEquals(millisLondon, millisMoscow);
 

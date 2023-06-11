@@ -3,8 +3,6 @@ package tim.prune.function.settings;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -18,8 +16,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
 import tim.prune.DataSubscriber;
@@ -71,7 +67,7 @@ public class SetMapBgFunction extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -100,11 +96,7 @@ public class SetMapBgFunction extends GenericFunction
 		_list = new JList<String>(_listModel);
 		_list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		dialogPanel.add(new JScrollPane(_list), BorderLayout.CENTER);
-		_list.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent arg0) {
-				enableButtons();
-			}
-		});
+		_list.addListSelectionListener(e -> enableButtons());
 		_list.addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent e) {
 				super.keyReleased(e);
@@ -117,29 +109,17 @@ public class SetMapBgFunction extends GenericFunction
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 		JButton addButton = new JButton(I18nManager.getText("button.addnew"));
-		addButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				addNewSource();
-			}
-		});
+		addButton.addActionListener(e -> addNewSource());
 		rightPanel.add(addButton);
 		rightPanel.add(Box.createVerticalStrut(5));
 		// edit
 		_editButton = new JButton(I18nManager.getText("button.edit"));
-		_editButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				editMapSource();
-			}
-		});
+		_editButton.addActionListener(e -> editMapSource());
 		rightPanel.add(_editButton);
 		rightPanel.add(Box.createVerticalStrut(5));
 		// delete
 		_deleteButton = new JButton(I18nManager.getText("button.delete"));
-		_deleteButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				deleteMapSource();
-			}
-		});
+		_deleteButton.addActionListener(e -> deleteMapSource());
 		rightPanel.add(_deleteButton);
 		dialogPanel.add(rightPanel, BorderLayout.EAST);
 
@@ -147,21 +127,10 @@ public class SetMapBgFunction extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> finish());
 		buttonPanel.add(_okButton);
 		_cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		_cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		_cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(_cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;

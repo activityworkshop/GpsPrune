@@ -1,16 +1,19 @@
 package tim.prune.load;
 
 import java.io.File;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
+import tim.prune.cmd.LoadPhotosWithPointsCmd;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
@@ -22,27 +25,27 @@ import tim.prune.data.Timestamp;
 import tim.prune.data.TimestampLocal;
 import tim.prune.data.TimestampUtc;
 import tim.prune.data.UnitSetLibrary;
-import tim.prune.function.Cancellable;
+import tim.prune.function.Describer;
 import tim.prune.jpeg.InternalExifLibrary;
 import tim.prune.jpeg.JpegData;
 
 /**
  * Class to manage the loading of Jpegs and dealing with the GPS data from them
  */
-public class JpegLoader implements Runnable, Cancellable
+public class JpegLoader
 {
-	private App _app = null;
-	private JFrame _parentFrame = null;
+	private final App _app;
+	private final JFrame _parentFrame;
 	private JFileChooser _fileChooser = null;
-	private GenericFileFilter _fileFilter = null;
+	private final GenericFileFilter _fileFilter;
 	private JCheckBox _subdirCheckbox = null;
 	private JCheckBox _noExifCheckbox = null;
 	private JCheckBox _outsideAreaCheckbox = null;
 	private MediaLoadProgressDialog _progressDialog = null;
-	private int[] _fileCounts = null;
+	private LoadCounts _counters = null;
 	private boolean _cancelled = false;
 	private LatLonRectangle _trackRectangle = null;
-	private TreeSet<Photo> _photos = null;
+	private ArrayList<Photo> _photos = null;
 
 
 	/**
@@ -57,6 +60,10 @@ public class JpegLoader implements Runnable, Cancellable
 		_fileFilter = new JpegFileFilter();
 	}
 
+	/** @return function name for dialog title */
+	private String getName() {
+		return I18nManager.getText("menu.file.addphotos");
+	}
 
 	/**
 	 * Open the GUI to select options and start the load
@@ -71,7 +78,7 @@ public class JpegLoader implements Runnable, Cancellable
 			_fileChooser.setMultiSelectionEnabled(true);
 			_fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 			_fileChooser.setFileFilter(_fileFilter);
-			_fileChooser.setDialogTitle(I18nManager.getText("menu.file.addphotos"));
+			_fileChooser.setDialogTitle(getName());
 			_subdirCheckbox = new JCheckBox(I18nManager.getText("dialog.jpegload.subdirectories"));
 			_subdirCheckbox.setSelected(true);
 			_noExifCheckbox = new JCheckBox(I18nManager.getText("dialog.jpegload.loadjpegswithoutcoords"));
@@ -86,8 +93,12 @@ public class JpegLoader implements Runnable, Cancellable
 			_fileChooser.setAccessory(panel);
 			// start from directory in config if already set by other operations
 			String configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);
-			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_TRACK_DIR);}
-			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
+			if (configDir == null) {
+				configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			}
+			if (configDir != null) {
+				_fileChooser.setCurrentDirectory(new File(configDir));
+			}
 		}
 		// enable/disable track checkbox
 		_trackRectangle = inRectangle;
@@ -96,18 +107,12 @@ public class JpegLoader implements Runnable, Cancellable
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
 			// Bring up dialog before starting
-			_progressDialog = new MediaLoadProgressDialog(_parentFrame, this);
+			_progressDialog = new MediaLoadProgressDialog(_parentFrame, () -> _cancelled = true);
 			_progressDialog.show();
 			// start thread for processing
-			new Thread(this).start();
+			new Thread(this::run).start();
 		}
 	}
-
-	/** Cancel */
-	public void cancel() {
-		_cancelled = true;
-	}
-
 
 	/**
 	 * Run method for performing tasks in separate thread
@@ -115,8 +120,8 @@ public class JpegLoader implements Runnable, Cancellable
 	public void run()
 	{
 		// Initialise arrays, errors, summaries
-		_fileCounts = new int[3]; // files, jpegs, gps
-		_photos = new TreeSet<Photo>(new MediaSorter());
+		_counters = new LoadCounts();
+		_photos = new ArrayList<>();
 		File[] files = _fileChooser.getSelectedFiles();
 		// Loop recursively over selected files/directories to count files
 		int numFiles = countFileList(files, true, _subdirCheckbox.isSelected());
@@ -126,20 +131,17 @@ public class JpegLoader implements Runnable, Cancellable
 
 		// Process the files recursively and build lists of photos
 		processFileList(files, true, _subdirCheckbox.isSelected());
-		_progressDialog.close();
-		if (_cancelled) {return;}
-
-		if (_fileCounts[0] == 0)
-		{
-			// No files found at all
+		SwingUtilities.invokeLater(() -> _progressDialog.close());
+		if (_cancelled) {
+			return;
+		}
+		if (_counters.getNumFiles() == 0) {
 			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nofilesfound");
 		}
-		else if (_fileCounts[1] == 0)
-		{
-			// No jpegs found
+		else if (_counters.getNumPhotos() == 0) {
 			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nojpegsfound");
 		}
-		else if (!_noExifCheckbox.isSelected() && _fileCounts[2] == 0)
+		else if (!_noExifCheckbox.isSelected() && _counters.getNumPhotos() == 0)
 		{
 			// Need coordinates but no gps information found
 			_app.showErrorMessage("error.jpegload.dialogtitle", "error.jpegload.nogpsfound");
@@ -147,7 +149,15 @@ public class JpegLoader implements Runnable, Cancellable
 		else
 		{
 			// Found some photos to load - pass information back to app
-			_app.informPhotosLoaded(_photos);
+			Collections.sort(_photos, new MediaSorter());
+			LoadPhotosWithPointsCmd command = new LoadPhotosWithPointsCmd(_photos);
+			final int numPhotos = _photos.size();
+			Describer confirmDescriber = new Describer("confirm.jpegload.single", "confirm.jpegload.multi");
+			command.setConfirmText(confirmDescriber.getDescriptionWithCount(numPhotos));
+			Describer undoDescriber = new Describer("undo.loadphoto", "undo.loadphotos");
+			String firstAudioName = _photos.get(0).getName();
+			command.setDescription(undoDescriber.getDescriptionWithNameOrCount(firstAudioName, numPhotos));
+			_app.execute(command);
 		}
 	}
 
@@ -191,20 +201,21 @@ public class JpegLoader implements Runnable, Cancellable
 	 */
 	private void processFile(File inFile)
 	{
-		// Update progress bar
-		_fileCounts[0]++; // file found
-		_progressDialog.showProgress(_fileCounts[0], -1);
+		_counters.foundFile();
+		_progressDialog.setValue(_counters.getNumFiles());
 
 		// Check whether filename corresponds with accepted filenames
-		if (!_fileFilter.acceptFilename(inFile.getName())) {return;}
+		if (!_fileFilter.acceptFilename(inFile.getName())) {
+			return;
+		}
 		// If it's a Jpeg, we can use ExifReader to get coords, otherwise we could try exiftool (if it's installed)
 
 		if (inFile.exists() && inFile.canRead()) {
-			_fileCounts[1]++; // jpeg found
+			_counters.foundPhoto();
 		}
 		Photo photo = createPhoto(inFile);
 		if (photo.getDataPoint() != null) {
-			_fileCounts[2]++; // photo has coordinates
+			_counters.foundPhotoWithCoords();
 		}
 		// Check the criteria for adding the photo - check whether the photo has coordinates and if so if they're within the rectangle
 		if ( (photo.getDataPoint() != null || _noExifCheckbox.isSelected())
@@ -376,7 +387,7 @@ public class JpegLoader implements Runnable, Cancellable
 				Integer.parseInt(inStamp.substring(14, 16)),
 				Integer.parseInt(inStamp.substring(17)));
 		}
-		catch (NumberFormatException nfe) {}
+		catch (NumberFormatException | StringIndexOutOfBoundsException e) {}
 		return stamp;
 	}
 }

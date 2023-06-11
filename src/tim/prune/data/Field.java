@@ -19,11 +19,14 @@ public class Field
 	public static final Field WAYPT_TYPE = new Field("fieldname.waypointtype", true);
 	public static final Field DESCRIPTION = new Field("fieldname.description", true);
 	public static final Field COMMENT = new Field("fieldname.comment", true);
+	public static final Field SYMBOL = new Field("fieldname.symbol", true);
 	public static final Field NEW_SEGMENT = new Field("fieldname.newsegment", true);
 
 	public static final Field SPEED          = new Field("fieldname.speed", true);
 	public static final Field VERTICAL_SPEED = new Field("fieldname.verticalspeed", true);
-	public static final Field MEDIA_FILENAME = new Field("fieldname.mediafilename", true);
+
+	public static final Field PHOTO = new Field("fieldname.photo", true);
+	public static final Field AUDIO = new Field("fieldname.audio", true);
 
 	// TODO: Ability to load media (from text) and save (to text)
 

@@ -57,7 +57,7 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -76,8 +76,9 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 	{
 		int numToDelete = 0;
 		boolean[] deleteFlags = new boolean[_track.getNumPoints()];
-		for (CompressionAlgorithm algorithm : _algorithms) {
-			numToDelete += algorithm.preview(deleteFlags);
+		for (int i=0; i<_algorithms.length; i++)
+		{
+			numToDelete += _algorithms[i].preview(deleteFlags);
 		}
 		_summaryLabel.setValue(numToDelete);
 		_okButton.setEnabled(numToDelete > 0);
@@ -99,9 +100,9 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
 		// Add each of the algorithm components to the panel
-		for (CompressionAlgorithm algorithm : _algorithms)
+		for (int i=0; i<_algorithms.length; i++)
 		{
-			mainPanel.add(algorithm.getGuiComponents());
+			mainPanel.add(_algorithms[i].getGuiComponents());
 			mainPanel.add(Box.createRigidArea(new Dimension(0, 2)));
 		}
 		// Summary label below algorithms
@@ -176,7 +177,7 @@ public class CompressTrackFunction extends MarkAndDeleteFunction
 		else
 		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.compress.confirmnone"),
-				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+				getName(), JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 

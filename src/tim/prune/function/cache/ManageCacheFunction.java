@@ -7,8 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.BorderFactory;
@@ -25,10 +23,6 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
@@ -92,7 +86,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		// Build the dialog if it hasn't already been built
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true); // modal
+			_dialog = new JDialog(_parentFrame, getName(), true); // modal
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_cardPanel = makeContents();
 			_dialog.getContentPane().add(_cardPanel);
@@ -132,12 +126,10 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				// Cancel model building and close dialog
-				if (_model != null) _model.cancel();
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			// Cancel model building and close dialog
+			if (_model != null) _model.cancel();
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		firstCard.add(buttonPanel, BorderLayout.SOUTH);
@@ -156,13 +148,10 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		midPanel.setBorder(BorderFactory.createEmptyBorder(8, 5, 8, 5));
 		secondCard.add(midPanel, BorderLayout.CENTER);
 		// Activate buttons if a tileset is selected
-		_setsTable.getSelectionModel().addListSelectionListener(
-			new ListSelectionListener() {
-				public void valueChanged(ListSelectionEvent e) {
-					ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-					_deleteSetButton.setEnabled(!lsm.isSelectionEmpty());
-				}
-			});
+		_setsTable.getSelectionModel().addListSelectionListener(e -> {
+			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
+			_deleteSetButton.setEnabled(!lsm.isSelectionEmpty());
+		});
 
 		// button panel at bottom
 		buttonPanel = new JPanel();
@@ -170,20 +159,14 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		JPanel leftPanel = new JPanel();
 		leftPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 		_deleteSetButton = new JButton(I18nManager.getText("button.delete"));
-		_deleteSetButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				showDeleteCard();
-			}
-		});
+		_deleteSetButton.addActionListener(e -> showDeleteCard());
 		leftPanel.add(_deleteSetButton);
 		// right group
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
-		closeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				if (_dialog != null) _dialog.dispose();
-			}
+		closeButton.addActionListener(e -> {
+			if (_dialog != null) _dialog.dispose();
 		});
 		rightPanel.add(closeButton);
 		buttonPanel.add(leftPanel, BorderLayout.WEST);
@@ -215,11 +198,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		ButtonGroup bGroup = new ButtonGroup();
 		bGroup.add(_deleteAllRadio);
 		bGroup.add(deleteOldRadio);
-		_deleteAllRadio.addChangeListener(new ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				enableAgeFields();
-			}
-		});
+		_deleteAllRadio.addChangeListener(e -> enableAgeFields());
 		c.gridx = 0; c.gridy = 2;
 		c.anchor = GridBagConstraints.LINE_START;
 		c.ipady = 0;
@@ -247,18 +226,12 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton deleteButton = new JButton(I18nManager.getText("button.delete"));
-		deleteButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				deleteCurrentSets();
-			}
-		});
+		deleteButton.addActionListener(e -> deleteCurrentSets());
 		buttonPanel.add(deleteButton);
 		cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				// Go back to second card
-				_cards.show(_cardPanel, "card2");
-			}
+		cancelButton.addActionListener(e -> {
+			// Go back to second card
+			_cards.show(_cardPanel, "card2");
 		});
 		buttonPanel.add(cancelButton);
 		thirdCard.add(buttonPanel, BorderLayout.SOUTH);
@@ -367,7 +340,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		{
 			// Show confirmation message
 			JOptionPane.showMessageDialog(_dialog, I18nManager.getTextWithNumber("dialog.diskcache.deleted", totalDeleted),
-				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+				getName(), JOptionPane.INFORMATION_MESSAGE);
 			// reload model
 			_cards.first(_cardPanel);
 			new Thread(this).start();

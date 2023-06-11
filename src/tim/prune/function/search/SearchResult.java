@@ -150,14 +150,9 @@ public class SearchResult implements Comparable<SearchResult>
 	 */
 	public int compareTo(SearchResult inOther)
 	{
-		double distDiff = getLength() - inOther.getLength();
-		if (distDiff < 0.0)
-		{
-			return -1;
-		}
-		if (distDiff > 0.0)
-		{
-			return 1;
+		int distDiff = Double.compare(getLength(), inOther.getLength());
+		if (distDiff != 0) {
+			return distDiff;
 		}
 		return getTrackName().compareTo(inOther.getTrackName());
 	}

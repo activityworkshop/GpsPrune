@@ -10,11 +10,11 @@ import java.io.File;
 public class TileSet
 {
 	/** Summary row info for whole tileset */
-	private RowInfo _rowInfo = null;
+	private final RowInfo _rowInfo = new RowInfo();
 	/** Path relative to mapcache root */
-	private String _path = null;
+	private final String _path;
 	/** Comma-separated list of configs using this tileset */
-	private String _usedBy = null;
+	private final String _usedBy;
 
 
 	/**
@@ -27,7 +27,6 @@ public class TileSet
 	{
 		_path = inPath;
 		_usedBy = inUsedBy;
-		_rowInfo = new RowInfo();
 		// Go through zoom directories and construct row info objects
 		if (inDir != null && inDir.exists() && inDir.isDirectory() && inDir.canRead())
 		{
@@ -71,19 +70,16 @@ public class TileSet
 		if (inName == null || inName.equals("") || inName.charAt(0) == '.') {
 			return false;
 		}
-		try
+		for (int i=0; i<inName.length(); i++)
 		{
-			char c = '.';
-			int i = 0;
-			do
-			{
-				c = inName.charAt(i);
-				if (c == '.') return true; // found the dot, so stop
-				if (c < '0' || c > '9') return false; // not numeric
-				i++;
-			} while (c != '\0');
+			char c = inName.charAt(i);
+			if (c == '.') {
+				return true; // found the dot, so stop
+			}
+			if (c < '0' || c > '9') {
+				return false; // not numeric
+			}
 		}
-		catch (IndexOutOfBoundsException iobe) {}
 		// Didn't find a dot, so can't be a valid name
 		return false;
 	}
@@ -96,7 +92,6 @@ public class TileSet
 	private static RowInfo makeRowInfo(File inDir)
 	{
 		RowInfo row = new RowInfo();
-		row.setZoom(Integer.parseInt(inDir.getName()));
 		for (File subdir : inDir.listFiles())
 		{
 			if (subdir != null && subdir.exists() && subdir.isDirectory()

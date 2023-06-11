@@ -13,7 +13,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 
 	private int _numRows = 0;
 	private Field[] _fieldArray = null;
-	private String _customText = null;
+	private final String _customText;
 
 	/**
 	 * Constructor
@@ -41,8 +41,12 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	 */
 	public String getColumnName(int inColNum)
 	{
-		if (inColNum == 0) return I18nManager.getText("dialog.load.table.field");
-		else if (inColNum == 1) return I18nManager.getText("dialog.load.table.datatype");
+		if (inColNum == 0) {
+			return I18nManager.getText("dialog.load.table.field");
+		}
+		else if (inColNum == 1) {
+			return I18nManager.getText("dialog.load.table.datatype");
+		}
 		return I18nManager.getText("dialog.load.table.description");
 	}
 
@@ -52,9 +56,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	 */
 	public int getRowCount()
 	{
-		if (_fieldArray == null)
-			return 2;
-		return _numRows;
+		return _fieldArray == null ? 2 : _numRows;
 	}
 
 
@@ -71,14 +73,10 @@ public class FieldSelectionTableModel extends AbstractTableModel
 		if (inColumnIndex == 1)
 		{
 			// Field name - take name from built-in fields
-			if (field.isBuiltIn())
-				return field.getName();
-			// Otherwise take custom name
-			return _customText;
+			return field.isBuiltIn() ? field.getName() : _customText;
 		}
 		// description column - builtin fields don't have one
-		if (field.isBuiltIn()) return "";
-		return field.getName();
+		return field.isBuiltIn() ? "" : field.getName();
 	}
 
 
@@ -90,8 +88,9 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	 */
 	public boolean isCellEditable(int inRowIndex, int inColumnIndex)
 	{
-		if (inColumnIndex <= 1)
+		if (inColumnIndex <= 1) {
 			return (inColumnIndex == 1);
+		}
 		// Column is 2 so only edit non-builtin field names
 		Field field = _fieldArray[inRowIndex];
 		return !field.isBuiltIn();
@@ -105,10 +104,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	public void updateData(Field[] inData)
 	{
 		_fieldArray = inData;
-		if (_fieldArray != null)
-		{
-			_numRows = _fieldArray.length;
-		}
+		_numRows = _fieldArray == null ? 0 : _fieldArray.length;
 		fireTableStructureChanged();
 	}
 
@@ -125,8 +121,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 		if (inColumnIndex == 1)
 		{
 			Field field = _fieldArray[inRowIndex];
-			if (!field.getName().equals(inValue.toString()))
-			{
+			if (!field.getName().equals(inValue.toString())) {
 				manageFieldChange(inRowIndex, inValue.toString());
 			}
 		}
@@ -134,8 +129,9 @@ public class FieldSelectionTableModel extends AbstractTableModel
 		{
 			// change description if it's custom
 			Field field = _fieldArray[inRowIndex];
-			if (!field.isBuiltIn())
+			if (!field.isBuiltIn()) {
 				field.setName(inValue.toString());
+			}
 		}
 	}
 
@@ -146,8 +142,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	 */
 	public void moveUp(int inIndex)
 	{
-		if (inIndex > 0)
-		{
+		if (inIndex > 0) {
 			swapItems(inIndex-1, inIndex);
 		}
 	}
@@ -159,8 +154,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	 */
 	public void moveDown(int inIndex)
 	{
-		if (inIndex > -1 && inIndex < (_numRows - 1))
-		{
+		if (inIndex > -1 && inIndex < (_numRows - 1)) {
 			swapItems(inIndex, inIndex+1);
 		}
 	}
@@ -189,11 +183,13 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	{
 		// check if it's lat or long - don't allow changes to these fields
 		Field field = _fieldArray[inRow];
-		if (field == Field.LATITUDE || field == Field.LONGITUDE)
+		if (field == Field.LATITUDE || field == Field.LONGITUDE) {
 			return;
+		}
 		if (inValue.equals(I18nManager.getText("fieldname.latitude"))
-		  || inValue.equals(I18nManager.getText("fieldname.longitude")))
+		  || inValue.equals(I18nManager.getText("fieldname.longitude"))) {
 			return;
+		}
 
 		// Changes to custom field need to be handled differently
 		boolean changeToCustom = inValue.equals(I18nManager.getText("fieldname.custom"));
@@ -240,8 +236,11 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	{
 		if (_fieldArray == null || inName == null) return false;
 		for (int i=0; i<_numRows; i++)
-			if (_fieldArray[i].getName().equals(inName))
+		{
+			if (_fieldArray[i].getName().equals(inName)) {
 				return true;
+			}
+		}
 		return false;
 	}
 }

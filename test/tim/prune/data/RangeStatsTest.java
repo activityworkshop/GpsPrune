@@ -2,6 +2,8 @@ package tim.prune.data;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
 /**
@@ -15,35 +17,14 @@ class RangeStatsTest
 	void movingTime()
 	{
 		Track track = new Track();
-		DataPoint[] points = {
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:00",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:05",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:07",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-		};
-		track.appendPoints(points);
+		List<DataPoint> points = List.of(
+			createDataPoint("01-Jan-2020 00:00:00"),
+			createDataPoint("01-Jan-2020 00:00:05"),
+			createDataPoint("01-Jan-2020 00:00:07")
+		);
+		track.appendRange(points);
 
-		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1);
+		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1, 0);
 		assertEquals(7, range.getMovingDurationInSeconds());
 		assertEquals(7, range.getTotalDurationInSeconds());
 		assertFalse(range.getTimestampsIncomplete());
@@ -54,39 +35,15 @@ class RangeStatsTest
 	void movingTimeWithGap()
 	{
 		Track track = new Track();
-		DataPoint[] points = {
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:00",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-			new DataPoint(
-				new String[] {},
-				new FieldList(new Field[] {}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:05",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:07",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-		};
-		track.appendPoints(points);
+		List<DataPoint> points = List.of(
+			createDataPoint("01-Jan-2020 00:00:00"),
+			createDataPoint(""),
+			createDataPoint("01-Jan-2020 00:00:05"),
+			createDataPoint("01-Jan-2020 00:00:07")
+		);
+		track.appendRange(points);
 
-		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1);
+		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1, 0);
 		assertEquals(7, range.getMovingDurationInSeconds());
 		assertEquals(7, range.getTotalDurationInSeconds());
 		assertTrue(range.getTimestampsIncomplete());
@@ -97,58 +54,18 @@ class RangeStatsTest
 	void movingTimeSeveralSegments()
 	{
 		Track track = new Track();
-		DataPoint[] points = {
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:01:00",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-			new DataPoint(
-				new String[] {},
-				new FieldList(new Field[] {}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:01:05",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:01:07",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
+		List<DataPoint> points = List.of(
+			createDataPoint("01-Jan-2020 00:01:00"),
+			createDataPoint(""),
+			createDataPoint("01-Jan-2020 00:01:05"),
+			createDataPoint("01-Jan-2020 00:01:07"),
 			// start a second segment
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:20",
-					"1",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-					Field.NEW_SEGMENT,
-				}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:27",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-		};
-		track.appendPoints(points);
+			createDataPoint("01-Jan-2020 00:00:20", true),
+			createDataPoint("01-Jan-2020 00:00:27")
+		);
+		track.appendRange(points);
 
-		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1);
+		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1, 0);
 		assertEquals(7 + 7, range.getMovingDurationInSeconds());
 		assertEquals(47, range.getTotalDurationInSeconds());
 		assertTrue(range.getEarliestTimestamp().isEqual(new TimestampUtc("01-Jan-2020 00:00:20")));
@@ -164,34 +81,28 @@ class RangeStatsTest
 	void movingTimeMissingFirstTimestamp()
 	{
 		Track track = new Track();
-		DataPoint[] points = {
-			new DataPoint(
-				new String[] {},
-				new FieldList(new Field[] {}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:00",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-			new DataPoint(
-				new String[] {
-					"01-Jan-2020 00:00:05",
-				},
-				new FieldList(new Field[] {
-					Field.TIMESTAMP,
-				}),
-				null),
-		};
-		track.appendPoints(points);
+		List<DataPoint> points = List.of(
+			createDataPoint(""),
+			createDataPoint("01-Jan-2020 00:00:00"),
+			createDataPoint("01-Jan-2020 00:00:05")
+		);
+		track.appendRange(points);
 
-		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1);
+		RangeStats range = new RangeStats(track, 0, track.getNumPoints() - 1, 0);
 		assertEquals(5, range.getMovingDurationInSeconds());
 		assertEquals(5, range.getTotalDurationInSeconds());
 		assertTrue(range.getTimestampsIncomplete());
 		assertFalse(range.getTimestampsOutOfSequence());
+	}
+
+	private DataPoint createDataPoint(String timestamp) {
+		return createDataPoint(timestamp, false);
+	}
+
+	private DataPoint createDataPoint(String timestamp, boolean newSegment) {
+		return new DataPoint(
+			new String[] {timestamp, newSegment ? "1" : "0"},
+			new FieldList(Field.TIMESTAMP, Field.NEW_SEGMENT),
+			null);
 	}
 }

@@ -2,12 +2,12 @@ package tim.prune.load;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.TreeSet;
 
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 
 import tim.prune.App;
+import tim.prune.I18nManager;
+import tim.prune.cmd.InsertPhotoCmd;
 import tim.prune.config.Config;
 import tim.prune.data.Photo;
 import tim.prune.load.json.JsonFileLoader;
@@ -24,7 +24,6 @@ public class FileLoader
 {
 	private App _app;
 	private JFileChooser _fileChooser = null;
-	private JFrame _parentFrame;
 	private TextFileLoader _textFileLoader = null;
 	private NmeaFileLoader _nmeaFileLoader = null;
 	private XmlFileLoader _xmlFileLoader = null;
@@ -35,13 +34,11 @@ public class FileLoader
 	/**
 	 * Constructor
 	 * @param inApp Application object to inform of track load
-	 * @param inParentFrame parent frame to reference for dialogs
 	 */
-	public FileLoader(App inApp, JFrame inParentFrame)
+	public FileLoader(App inApp)
 	{
 		_app = inApp;
-		_parentFrame = inParentFrame;
-		_textFileLoader = new TextFileLoader(inApp, inParentFrame);
+		_textFileLoader = new TextFileLoader(inApp);
 		_nmeaFileLoader = new NmeaFileLoader(inApp);
 		_xmlFileLoader = new XmlFileLoader(inApp);
 		_zipFileLoader = new ZipFileLoader(inApp, _xmlFileLoader);
@@ -72,7 +69,7 @@ public class FileLoader
 			_fileChooser.setMultiSelectionEnabled(true); // Allow multiple selections
 		}
 		// Show the open dialog
-		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
+		if (_fileChooser.showOpenDialog(_app.getFrame()) == JFileChooser.APPROVE_OPTION)
 		{
 			File[] files = _fileChooser.getSelectedFiles();
 			// Loop through files looking for files which exist and are readable
@@ -100,14 +97,16 @@ public class FileLoader
 	/**
 	 * Open the selected input file
 	 * @param inFile file to open
+	 * @param inAutoAppend true to automatically append without asking
 	 */
-	public void openFile(File inFile)
+	public void openFile(File inFile, boolean inAutoAppend)
 	{
 		// Store directory in config for later
-		File parent = inFile.getParentFile();
-		if (parent != null) {
-			Config.setConfigString(Config.KEY_TRACK_DIR, parent.getAbsolutePath());
+		File parentDir = inFile.getParentFile();
+		if (parentDir != null) {
+			Config.setConfigString(Config.KEY_TRACK_DIR, parentDir.getAbsolutePath());
 		}
+		FileToBeLoaded fileLock = new FileToBeLoaded(inFile, () -> _app.informDataLoadComplete());
 		// Check file type to see if it's xml or just normal text
 		String fileExtension = inFile.getName().toLowerCase();
 		if (fileExtension.length() > 4) {
@@ -117,46 +116,47 @@ public class FileLoader
 			|| fileExtension.equals(".xml"))
 		{
 			// Use xml loader for kml, gpx and xml filenames
-			_xmlFileLoader.openFile(inFile);
+			_xmlFileLoader.openFile(fileLock, inAutoAppend);
 		}
 		else if (fileExtension.equals(".kmz") || fileExtension.equals(".zip"))
 		{
 			// Use zip loader for zipped kml (or zipped gpx)
-			_zipFileLoader.openFile(inFile);
+			_zipFileLoader.openFile(fileLock, inAutoAppend);
 		}
 		else if (fileExtension.endsWith(".gz") || fileExtension.equals("gzip"))
 		{
 			// Use gzip loader for gzipped xml
-			_gzipFileLoader.openFile(inFile);
+			_gzipFileLoader.openFile(fileLock, inAutoAppend);
 		}
 		else if (fileExtension.equals("nmea"))
 		{
-			_nmeaFileLoader.openFile(inFile);
+			_nmeaFileLoader.openFile(fileLock, inAutoAppend);
 		}
 		else if (fileExtension.equals(".jpg") || fileExtension.equals("jpeg"))
 		{
 			Photo photo = JpegLoader.createPhoto(inFile);
-			TreeSet<Photo> photoSet = new TreeSet<Photo>(new MediaSorter());
-			photoSet.add(photo);
-			_app.informPhotosLoaded(photoSet);
-			_app.informNoDataLoaded(); // To trigger load of next file if any
+			InsertPhotoCmd command = new InsertPhotoCmd(photo);
+			command.setDescription(I18nManager.getText("undo.loadphoto", inFile.getName()));
+			command.setConfirmText(I18nManager.getText("confirm.jpegload.single"));
+			_app.execute(command);
 		}
 		else if (fileExtension.equals("json"))
 		{
-			new JsonFileLoader(_app).openFile(inFile);
+			new JsonFileLoader(_app).openFile(fileLock, inAutoAppend);
 		}
 		else
 		{
 			// Use text loader for everything else
-			_textFileLoader.openFile(inFile);
+			_textFileLoader.openFile(fileLock, inAutoAppend);
 		}
+		// Release our lock, maybe the file type loader has its own now
+		fileLock.release();
 	}
 
 	/**
 	 * @return the last delimiter character used for a text file load
 	 */
-	public char getLastUsedDelimiter()
-	{
+	public char getLastUsedDelimiter() {
 		return _textFileLoader.getLastUsedDelimiter();
 	}
 }
