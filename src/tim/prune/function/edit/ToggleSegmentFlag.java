@@ -2,6 +2,8 @@ package tim.prune.function.edit;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
+import tim.prune.I18nManager;
+import tim.prune.cmd.EditPointCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 
@@ -39,14 +41,10 @@ public class ToggleSegmentFlag extends GenericFunction
 			return;
 		}
 
-		boolean currFlag = point.getSegmentStart();
-		// Make lists for edit and undo, and add the changed field
-		FieldEditList editList = new FieldEditList();
-		FieldEditList undoList = new FieldEditList();
-		editList.addEdit(new FieldEdit(Field.NEW_SEGMENT, currFlag ? "0" : "1"));
-		undoList.addEdit(new FieldEdit(Field.NEW_SEGMENT, currFlag ? "1" : "0"));
-
-		// Pass back to App to perform edit
-		_app.completePointEdit(editList, undoList);
+		final boolean currFlag = point.getSegmentStart();
+		EditPointCmd command = new EditPointCmd(pointIndex, new FieldEdit(Field.NEW_SEGMENT, currFlag ? "0" : "1"));
+		command.setDescription(I18nManager.getText("undo.editpoint"));
+		command.setConfirmText(I18nManager.getText("confirm.point.edit"));
+		_app.execute(command);
 	}
 }

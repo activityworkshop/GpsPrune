@@ -156,7 +156,7 @@ public class SetDisplaySettings extends GenericFunction
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()));
+			_dialog = new JDialog(_parentFrame, getName());
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeContents());
 			_dialog.pack();

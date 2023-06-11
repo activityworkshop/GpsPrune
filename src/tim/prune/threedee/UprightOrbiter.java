@@ -112,8 +112,8 @@ public class UprightOrbiter extends ViewPlatformAWTBehavior
 
 	private static final double MIN_RADIUS = 0.0;
 
-	// the factor to be applied to wheel zooming so that it does not 
-	// look much different with mouse movement zooming. 
+	// the factor to be applied to wheel zooming so that it does not
+	// look much different with mouse movement zooming.
 	private static final float wheelZoomFactor = 50.0f;
 
 	private static final double NOMINAL_ZOOM_FACTOR = .01;
@@ -227,7 +227,7 @@ public class UprightOrbiter extends ViewPlatformAWTBehavior
 	 * Reset the orientation and distance of this behaviour to the current
 	 * values in the ViewPlatform Transform Group
 	 */
-	private void resetView()
+	private synchronized void resetView()
 	{
 		Vector3d centerToView = new Vector3d();
 

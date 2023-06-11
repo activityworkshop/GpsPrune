@@ -14,7 +14,7 @@ import javax.swing.JCheckBox;
 public class MultiStateCheckBox extends JCheckBox implements ItemListener
 {
 	/** Array of icons to be used */
-	private ImageIcon[] _icons = null;
+	private final ImageIcon[] _icons;
 	/** Current state 0 to n-1 */
 	private int _currState = 0;
 	/** Number of states n */
@@ -22,16 +22,16 @@ public class MultiStateCheckBox extends JCheckBox implements ItemListener
 
 
 	/** Inner class to proxy the listening events */
-	private class ProxyListener implements ItemListener
+	private static class ProxyListener implements ItemListener
 	{
 		/** Listener onto which some of the events will be passed */
 		private ItemListener _listener = null;
 		/** Constructor */
 		ProxyListener(ItemListener inListener) {_listener = inListener;}
 		/** React to events, and only pass on the selected ones */
-		public void itemStateChanged(ItemEvent arg0) {
-			if (arg0.getStateChange() == ItemEvent.SELECTED) {
-				_listener.itemStateChanged(arg0);
+		public void itemStateChanged(ItemEvent e) {
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				_listener.itemStateChanged(e);
 			}
 		}
 	}

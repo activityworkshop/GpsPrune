@@ -7,14 +7,7 @@ package tim.prune.function.compress;
 public class XYpoint
 {
 	// x and y coordinates
-	public double x = 0.0, y = 0.0;
-
-	/**
-	 * Empty constructor
-	 */
-	public XYpoint() {
-		this(0.0, 0.0);
-	}
+	public final double x, y;
 
 	/**
 	 * Constructor
@@ -22,7 +15,8 @@ public class XYpoint
 	 * @param inY y value
 	 */
 	public XYpoint(double inX, double inY) {
-		x = inX; y = inY;
+		x = inX;
+		y = inY;
 	}
 
 	/**

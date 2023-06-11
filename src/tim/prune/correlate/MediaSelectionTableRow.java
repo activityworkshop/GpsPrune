@@ -9,8 +9,8 @@ import tim.prune.data.TimeDifference;
  */
 public class MediaSelectionTableRow
 {
-	private MediaObject _media = null;
-	private TimeDifference _timeDiff = null;
+	private final MediaObject _media;
+	private final TimeDifference _timeDiff;
 
 	/**
 	 * Constructor

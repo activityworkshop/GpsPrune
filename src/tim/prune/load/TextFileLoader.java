@@ -13,14 +13,14 @@ import java.awt.event.WindowEvent;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableCellEditor;
 
 import java.io.File;
+import java.util.List;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
+import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.PointCreateOptions;
 import tim.prune.data.SourceInfo;
@@ -32,12 +32,12 @@ import tim.prune.gui.WizardLayout;
 
 /**
  * Class to handle loading of text files including GUI options,
- * and passing loaded data back to App object
+ * and passing loaded data back to the App object
  */
-public class TextFileLoader
+public class TextFileLoader extends FileTypeLoader
 {
-	private File _file = null;
-	private App _app = null;
+	private FileToBeLoaded _fileLock = null;
+	private boolean _autoAppend = false;
 	private JFrame _parentFrame = null;
 	private JDialog _dialog = null;
 	private WizardLayout _wizard = null;
@@ -76,20 +76,16 @@ public class TextFileLoader
 	 */
 	private class DelimListener implements ActionListener, DocumentListener
 	{
-		public void actionPerformed(ActionEvent e)
-		{
+		public void actionPerformed(ActionEvent e) {
 			informDelimiterSelected();
 		}
-		public void changedUpdate(DocumentEvent e)
-		{
+		public void changedUpdate(DocumentEvent e) {
 			informDelimiterSelected();
 		}
-		public void insertUpdate(DocumentEvent e)
-		{
+		public void insertUpdate(DocumentEvent e) {
 			informDelimiterSelected();
 		}
-		public void removeUpdate(DocumentEvent e)
-		{
+		public void removeUpdate(DocumentEvent e) {
 			informDelimiterSelected();
 		}
 	}
@@ -98,32 +94,33 @@ public class TextFileLoader
 	/**
 	 * Constructor
 	 * @param inApp Application object to inform of track load
-	 * @param inParentFrame parent frame to reference for dialogs
 	 */
-	public TextFileLoader(App inApp, JFrame inParentFrame)
+	public TextFileLoader(App inApp)
 	{
-		_app = inApp;
-		_parentFrame = inParentFrame;
+		super(inApp);
+		_parentFrame = inApp.getFrame();
 	}
 
 
 	/**
 	 * Open the selected file and show the GUI dialog to select load options
-	 * @param inFile file to open
+	 * @param inFileLock file to open
+	 * @param inAutoAppend true to auto-append this file
 	 */
-	public void openFile(File inFile)
+	public void openFile(FileToBeLoaded inFileLock, boolean inAutoAppend)
 	{
-		_file = inFile;
-		if (preCheckFile(_file))
+		_fileLock = inFileLock;
+		_autoAppend = inAutoAppend;
+		if (preCheckFile(_fileLock.getFile()))
 		{
+			_fileLock.takeOwnership(); // keep this until dialog is finished
 			showDialog();
 		}
 		else
 		{
 			// Didn't pass pre-check
-			_app.showErrorMessageNoLookup("error.load.dialogtitle",
-				I18nManager.getText("error.load.noread") + ": " + inFile.getName());
-			_app.informNoDataLoaded();
+			getApp().showErrorMessageNoLookup("error.load.dialogtitle",
+				I18nManager.getText("error.load.noread") + ": " + inFileLock.getFile().getName());
 		}
 	}
 
@@ -140,7 +137,7 @@ public class TextFileLoader
 		_dialog.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				_dialog.dispose();
-				_app.informNoDataLoaded();
+				_fileLock.release();
 			}
 		});
 		_dialog.getContentPane().add(makeDialogComponents());
@@ -149,10 +146,12 @@ public class TextFileLoader
 		int bestDelim = getBestOption(_delimiterInfos[0].getNumWinningRecords(),
 			_delimiterInfos[1].getNumWinningRecords(), _delimiterInfos[2].getNumWinningRecords(),
 			_delimiterInfos[3].getNumWinningRecords());
-		if (bestDelim >= 0)
+		if (bestDelim >= 0) {
 			_delimiterRadios[bestDelim].setSelected(true);
-		else
+		}
+		else {
 			_delimiterRadios[_delimiterRadios.length-1].setSelected(true);
+		}
 		informDelimiterSelected();
 		_dialog.pack();
 		_dialog.setVisible(true);
@@ -189,7 +188,9 @@ public class TextFileLoader
 		}
 		boolean fileOK = true;
 		_delimiterInfos = new DelimiterInfo[5];
-		for (int i=0; i<4; i++) _delimiterInfos[i] = new DelimiterInfo(DELIMITERS[i]);
+		for (int i=0; i<4; i++) {
+			_delimiterInfos[i] = new DelimiterInfo(DELIMITERS[i]);
+		}
 
 		String currLine = null;
 		String[] splitFields = null;
@@ -221,8 +222,9 @@ public class TextFileLoader
 			_delimiterInfos[3].updateMaxFields(spaceFields);
 			// increment counters
 			int bestScorer = getBestOption(commaFields, tabFields, semicolonFields, spaceFields-2);
-			if (bestScorer >= 0)
+			if (bestScorer >= 0) {
 				_delimiterInfos[bestScorer].incrementNumWinningRecords();
+			}
 		}
 		return fileOK;
 	}
@@ -232,15 +234,14 @@ public class TextFileLoader
 	 */
 	public void loadText(String inText)
 	{
-		_file = null;
-		if (preCheckText(inText))
-		{
+		_fileLock = new FileToBeLoaded(null, () -> {});
+		_autoAppend = false;
+		if (preCheckText(inText)) {
 			showDialog();
 		}
-		else
-		{
+		else {
 			// Didn't pass pre-check
-			_app.showErrorMessage("error.load.dialogtitle", "error.load.nopointsintext");
+			getApp().showErrorMessage("error.load.dialogtitle", "error.load.nopointsintext");
 		}
 	}
 
@@ -250,8 +251,7 @@ public class TextFileLoader
 	 */
 	private boolean preCheckText(String inText)
 	{
-		if (inText == null || inText.length() < 6)
-		{
+		if (inText == null || inText.length() < 6) {
 			return false;
 		}
 		// Use a cacher to split the text into an array
@@ -290,45 +290,20 @@ public class TextFileLoader
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 		_backButton = new JButton(I18nManager.getText("button.back"));
-		_backButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_wizard.showPreviousCard();
-				_nextButton.setEnabled(!_wizard.isLastCard());
-				_backButton.setEnabled(!_wizard.isFirstCard());
-				_finishButton.setEnabled(false);
-			}
-		});
+		_backButton.addActionListener(e -> onBackPressed());
 		_backButton.setEnabled(false);
 		buttonPanel.add(_backButton);
 		_nextButton = new JButton(I18nManager.getText("button.next"));
-		_nextButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				prepareNextPanel(); // Maybe it needs to be initialized based on previous panels
-				_wizard.showNextCard();
-				_nextButton.setEnabled(!_wizard.isLastCard() && isCurrentCardValid());
-				_backButton.setEnabled(!_wizard.isFirstCard());
-				_finishButton.setEnabled(_wizard.isLastCard() && isCurrentCardValid());
-			}
-		});
+		_nextButton.addActionListener(e -> onNextPressed());
 		buttonPanel.add(_nextButton);
 		_finishButton = new JButton(I18nManager.getText("button.finish"));
-		_finishButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finished();
-			}
-		});
+		_finishButton.addActionListener(e -> finished());
 		_finishButton.setEnabled(false);
 		buttonPanel.add(_finishButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-				_app.informNoDataLoaded();
-			}
+		cancelButton.addActionListener(e -> {
+			_dialog.dispose();
+			_fileLock.release();
 		});
 		buttonPanel.add(cancelButton);
 		wholePanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -397,18 +372,11 @@ public class TextFileLoader
 		_fieldTable = new JTable(new FieldSelectionTableModel());
 		_fieldTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		// add listener for selected table row
-		_fieldTable.getSelectionModel().addListSelectionListener(
-			new ListSelectionListener() {
-				public void valueChanged(ListSelectionEvent e) {
-					ListSelectionModel lsm = (ListSelectionModel) e.getSource();
-					if (lsm.isSelectionEmpty()) {
-						//no rows are selected
-						selectField(-1);
-					} else {
-						selectField(lsm.getMinSelectionIndex());
-					}
-				}
-			});
+		_fieldTable.getSelectionModel().addListSelectionListener(e -> {
+			ListSelectionModel lsm = (ListSelectionModel) e.getSource();
+			final int index = lsm.isSelectionEmpty() ? -1 : lsm.getMinSelectionIndex();
+			selectField(index);
+		});
 		JScrollPane lowerTablePane = new JScrollPane(_fieldTable);
 		lowerTablePane.setPreferredSize(new Dimension(300, 100));
 		innerPanel2.add(lowerTablePane, BorderLayout.CENTER);
@@ -416,35 +384,16 @@ public class TextFileLoader
 		JPanel innerPanel3 = new JPanel();
 		innerPanel3.setLayout(new BoxLayout(innerPanel3, BoxLayout.Y_AXIS));
 		_moveUpButton = new JButton(I18nManager.getText("button.moveup"));
-		_moveUpButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				int currRow = _fieldTable.getSelectedRow();
-				closeTableComboBox(currRow);
-				_fieldTableModel.moveUp(currRow);
-				_fieldTable.setRowSelectionInterval(currRow-1, currRow-1);
-			}
-		});
+		_moveUpButton.addActionListener(e -> onMoveUp());
 		innerPanel3.add(_moveUpButton);
 		_moveDownButton = new JButton(I18nManager.getText("button.movedown"));
-		_moveDownButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				int currRow = _fieldTable.getSelectedRow();
-				closeTableComboBox(currRow);
-				_fieldTableModel.moveDown(currRow);
-				_fieldTable.setRowSelectionInterval(currRow+1, currRow+1);
-			}
-		});
+		_moveDownButton.addActionListener(e -> onMoveDown());
 		innerPanel3.add(_moveDownButton);
 		innerPanel3.add(Box.createVerticalStrut(60));
 		JButton guessButton = new JButton(I18nManager.getText("button.guessfields"));
-		guessButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_lastSelectedFields = null;
-				prepareSecondPanel();
-			}
+		guessButton.addActionListener(e -> {
+			_lastSelectedFields = null;
+			prepareSecondPanel();
 		});
 		innerPanel3.add(guessButton);
 
@@ -523,6 +472,42 @@ public class TextFileLoader
 		return wholePanel;
 	}
 
+	/** Go back to previous card */
+	private void onBackPressed()
+	{
+		_wizard.showPreviousCard();
+		_nextButton.setEnabled(!_wizard.isLastCard());
+		_backButton.setEnabled(!_wizard.isFirstCard());
+		_finishButton.setEnabled(false);
+	}
+
+	/** Go forward to next card */
+	private void onNextPressed()
+	{
+		prepareNextPanel(); // Maybe it needs to be initialised based on previous panels
+		_wizard.showNextCard();
+		_nextButton.setEnabled(!_wizard.isLastCard() && isCurrentCardValid());
+		_backButton.setEnabled(!_wizard.isFirstCard());
+		_finishButton.setEnabled(_wizard.isLastCard() && isCurrentCardValid());
+	}
+
+	/** Move the selected field up */
+	private void onMoveUp()
+	{
+		final int currRow = _fieldTable.getSelectedRow();
+		closeTableComboBox(currRow);
+		_fieldTableModel.moveUp(currRow);
+		_fieldTable.setRowSelectionInterval(currRow-1, currRow-1);
+	}
+
+	/** Move the selected field down */
+	private void onMoveDown()
+	{
+		final int currRow = _fieldTable.getSelectedRow();
+		closeTableComboBox(currRow);
+		_fieldTableModel.moveDown(currRow);
+		_fieldTable.setRowSelectionInterval(currRow+1, currRow+1);
+	}
 
 	/**
 	 * Close the combo box on the selected row of the field table
@@ -531,8 +516,7 @@ public class TextFileLoader
 	private void closeTableComboBox(int inRow)
 	{
 		TableCellEditor editor = _fieldTable.getCellEditor(inRow, 1);
-		if (editor != null)
-		{
+		if (editor != null) {
 			editor.stopCellEditing();
 		}
 	}
@@ -666,8 +650,10 @@ public class TextFileLoader
 	 */
 	private boolean doesFieldArrayContain(Field[] inFields, Field inCheck)
 	{
-		if (inFields != null) {
-			for (int i=0; i<inFields.length; i++) {
+		if (inFields != null)
+		{
+			for (int i=0; i<inFields.length; i++)
+			{
 				if (inFields[i] == inCheck) { // == check ok here because it only checks for built-in fields
 					return true;
 				}
@@ -685,9 +671,10 @@ public class TextFileLoader
 		_lastUsedDelimiter = _currentDelimiter;
 		_lastSelectedFields = _fieldTableModel.getFieldArray();
 		// TODO: Remember all the units selections for next load?
-		// Get the selected units for altitudes and speeds
-		SourceInfo sourceInfo = (_file == null ? null : new SourceInfo(_file, SourceInfo.FILE_TYPE.TEXT));
+		File file = _fileLock.getFile();
+		SourceInfo sourceInfo = (file == null ? null : new SourceInfo(file, SourceInfo.FILE_TYPE.TEXT));
 		PointCreateOptions options = new PointCreateOptions();
+		// Get the selected units for altitudes and speeds
 		options.setAltitudeUnits(_altitudeUnitsDropdown.getSelectedIndex() == 0 ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);
 		_lastAltitudeUnit = options.getAltitudeUnits();
 		Unit hSpeedUnit = UnitSetLibrary.ALL_SPEED_UNITS[_hSpeedUnitsDropdown.getSelectedIndex()];
@@ -695,13 +682,20 @@ public class TextFileLoader
 		Unit vSpeedUnit = UnitSetLibrary.ALL_SPEED_UNITS[_vSpeedUnitsDropdown.getSelectedIndex()];
 		options.setVerticalSpeedUnits(vSpeedUnit, _vSpeedUpwardsRadio.isSelected());
 
-		// give data to App
-		_app.informDataLoaded(_fieldTableModel.getFieldArray(),
-			_fileExtractTableModel.getData(), options, sourceInfo, null);
-		// clear up file cacher
-		_contentCacher.clear();
 		// dispose of dialog
 		_dialog.dispose();
+		// Append or not?
+		int appendOption = getAppendOption(_autoAppend);
+		if (appendOption != JOptionPane.CANCEL_OPTION)
+		{
+			// give data to App
+			List<DataPoint> points = createPoints(_fieldTableModel.getFieldArray(),
+				_fileExtractTableModel.getData(), options);
+			loadData(points, sourceInfo, appendOption == JOptionPane.YES_OPTION);
+		}
+		// clear up file cacher
+		_contentCacher.clear();
+		_fileLock.release();
 	}
 
 	/**
@@ -754,8 +748,7 @@ public class TextFileLoader
 	/**
 	 * @return the last delimiter character used for a load
 	 */
-	public char getLastUsedDelimiter()
-	{
+	public char getLastUsedDelimiter() {
 		return _lastUsedDelimiter;
 	}
 }

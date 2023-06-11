@@ -11,9 +11,9 @@ import tim.prune.data.DoubleRange;
  */
 public class GroutedImage
 {
-	private BufferedImage _image = null;
-	private int   _numTilesFound = 0;
-	private int   _numTilesMissing = 0;
+	private final BufferedImage _image;
+	private final int _numTilesFound;
+	private final int _numTilesMissing;
 	private DoubleRange _xRange = null;
 	private DoubleRange _yRange = null;
 

@@ -4,11 +4,13 @@ import java.awt.Toolkit;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JPopupMenu;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 
@@ -28,15 +30,23 @@ import tim.prune.data.RecentFileList;
 import tim.prune.data.Selection;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.function.AverageSelection;
 import tim.prune.function.ChooseSingleParameter;
+import tim.prune.function.CutAndMoveFunction;
+import tim.prune.function.DeleteCurrentPoint;
 import tim.prune.function.PasteCoordinateList;
 import tim.prune.function.PasteCoordinates;
 import tim.prune.function.PlusCodeFunction;
-import tim.prune.function.SearchOpenCachingDeFunction;
+import tim.prune.function.ReverseSelectedRange;
+import tim.prune.function.SelectExtremePoint;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.browser.WebMapFunction;
+import tim.prune.function.edit.PointEditor;
+import tim.prune.function.search.SearchOpenCachingDeFunction;
+import tim.prune.function.segments.MergeSegmentsFunction;
 import tim.prune.function.settings.SaveConfig;
 import tim.prune.function.srtm.ConfigureSrtmSources;
+import tim.prune.threedee.WindowFactory;
 
 /**
  * Class to manage the menu bar and toolbar,
@@ -47,6 +57,7 @@ public class MenuManager implements DataSubscriber
 	private final App _app;
 	private final Track _track;
 	private final Selection _selection;
+	private final boolean _threeDAvailable;
 
 	// Menu items which need enabling/disabling
 	private JMenuItem _sendGpsItem = null;
@@ -78,6 +89,10 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _selectStartItem = null;
 	private JMenuItem _selectEndItem = null;
 	private JMenuItem _findWaypointItem = null;
+	private JMenu     _gotoPointMenu = null;
+	private JMenuItem _highestPointItem = null;
+	private JMenuItem _lowestPointItem = null;
+	private JMenuItem _fastestPointItem = null;
 	private JMenuItem _duplicatePointItem = null;
 	private JMenuItem _projectPointItem = null;
 	private JMenuItem _projectCircleItem = null;
@@ -86,11 +101,11 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _addAltitudeOffsetItem = null;
 	private JMenuItem _mergeSegmentsItem = null;
 	private JMenuItem _rearrangeWaypointsItem = null;
+	private JMenuItem _dedupeWaypointsItem = null;
 	private JMenuItem _splitSegmentsItem = null;
 	private JMenuItem _sewSegmentsItem = null;
 	private JMenuItem _createMarkerWaypointsItem = null;
 	private JMenuItem _cutAndMoveItem = null;
-	private JMenuItem _convertNamesToTimesItem = null;
 	private JMenuItem _deleteFieldValuesItem = null;
 	private JCheckBoxMenuItem _mapCheckbox = null;
 	private JMenuItem _show3dItem = null;
@@ -129,26 +144,18 @@ public class MenuManager implements DataSubscriber
 	private JCheckBoxMenuItem _onlineCheckbox = null;
 	private JCheckBoxMenuItem _autosaveSettingsCheckbox = null;
 
-	// ActionListeners for reuse by menu and toolbar
-	private ActionListener _openFileAction = null;
-	private ActionListener _addPhotoAction = null;
-	private ActionListener _saveAction = null;
-	private ActionListener _undoAction = null;
-	private ActionListener _editPointAction = null;
-	private ActionListener _deletePointAction = null;
-	private ActionListener _selectStartAction = null;
-	private ActionListener _selectEndAction = null;
-
 	// Toolbar buttons which need enabling/disabling
 	private JButton _saveButton = null;
 	private JButton _undoButton = null;
 	private JButton _editPointButton = null;
+	private JButton _viewInfoButton = null;
 	private JButton _deletePointButton = null;
 	private JButton _deleteRangeButton = null;
 	private JButton _cutAndMoveButton = null;
 	private JButton _selectStartButton = null;
 	private JButton _selectEndButton = null;
 	private JButton _connectButton = null;
+	private JButton _threeDeeButton = null;
 
 	/** Array of key events */
 	private static final int[] KEY_EVENTS = {
@@ -169,12 +176,12 @@ public class MenuManager implements DataSubscriber
 		_app = inApp;
 		_track = inTrackInfo.getTrack();
 		_selection = inTrackInfo.getSelection();
+		_threeDAvailable = WindowFactory.isJava3dEnabled();
 	}
 
 
 	/**
-	 * Create a JMenuBar containing all menu items
-	 * @return JMenuBar
+	 * @return a JMenuBar containing all menu items
 	 */
 	public JMenuBar createMenuBar()
 	{
@@ -184,16 +191,14 @@ public class MenuManager implements DataSubscriber
 		// Open file
 		JMenuItem openMenuItem = new JMenuItem(I18nManager.getText("function.open"));
 		setShortcut(openMenuItem, "shortcut.menu.file.open");
-		_openFileAction = e -> _app.openFile();
-		openMenuItem.addActionListener(_openFileAction);
+		openMenuItem.addActionListener(e -> _app.openFile());
 		fileMenu.add(openMenuItem);
 		// import through gpsbabel
 		JMenuItem importBabelItem = makeMenuItem(FunctionLibrary.FUNCTION_IMPORTBABEL);
 		fileMenu.add(importBabelItem);
 		// Add photos
 		JMenuItem addPhotosMenuItem = new JMenuItem(I18nManager.getText("menu.file.addphotos"));
-		_addPhotoAction = e -> _app.addPhotos();
-		addPhotosMenuItem.addActionListener(_addPhotoAction);
+		addPhotosMenuItem.addActionListener(e -> _app.addPhotos());
 		fileMenu.add(addPhotosMenuItem);
 		// Add audio clips
 		JMenuItem addAudioMenuItem = makeMenuItem(FunctionLibrary.FUNCTION_LOAD_AUDIO);
@@ -214,8 +219,7 @@ public class MenuManager implements DataSubscriber
 		// Save
 		_saveItem = new JMenuItem(I18nManager.getText("menu.file.save"), KeyEvent.VK_S);
 		setShortcut(_saveItem, "shortcut.menu.file.save");
-		_saveAction = e -> _app.saveFile();
-		_saveItem.addActionListener(_saveAction);
+		_saveItem.addActionListener(e -> _app.saveFile());
 		_saveItem.setEnabled(false);
 		fileMenu.add(_saveItem);
 		// Export - Kml
@@ -291,8 +295,7 @@ public class MenuManager implements DataSubscriber
 		setAltKey(trackMenu, "altkey.menu.track");
 		_undoItem = new JMenuItem(I18nManager.getText("menu.track.undo"));
 		setShortcut(_undoItem, "shortcut.menu.track.undo");
-		_undoAction = e -> _app.beginUndo();
-		_undoItem.addActionListener(_undoAction);
+		_undoItem.addActionListener(e -> _app.beginUndo());
 		_undoItem.setEnabled(false);
 		trackMenu.add(_undoItem);
 		_clearUndoItem = new JMenuItem(I18nManager.getText("menu.track.clearundo"));
@@ -320,6 +323,8 @@ public class MenuManager implements DataSubscriber
 		// Rearrange waypoints
 		_rearrangeWaypointsItem = makeMenuItem(FunctionLibrary.FUNCTION_REARRANGE_WAYPOINTS, false);
 		trackMenu.add(_rearrangeWaypointsItem);
+		_dedupeWaypointsItem = makeMenuItem(FunctionLibrary.FUNCTION_DEDUPE_WAYPOINTS, false);
+		trackMenu.add(_dedupeWaypointsItem);
 		// Split track segments
 		_splitSegmentsItem = makeMenuItem(FunctionLibrary.FUNCTION_SPLIT_SEGMENTS, false);
 		trackMenu.add(_splitSegmentsItem);
@@ -351,65 +356,48 @@ public class MenuManager implements DataSubscriber
 		rangeMenu.addSeparator();
 		_selectStartItem = new JMenuItem(I18nManager.getText("menu.range.start"));
 		_selectStartItem.setEnabled(false);
-		_selectStartAction = e -> _selection.selectRangeStart();
-		_selectStartItem.addActionListener(_selectStartAction);
+		_selectStartItem.addActionListener(e -> _selection.selectRangeStart());
 		rangeMenu.add(_selectStartItem);
 		_selectEndItem = new JMenuItem(I18nManager.getText("menu.range.end"));
 		_selectEndItem.setEnabled(false);
-		_selectEndAction = e -> _selection.selectRangeEnd();
-		_selectEndItem.addActionListener(_selectEndAction);
+		_selectEndItem.addActionListener(e -> _selection.selectRangeEnd());
 		rangeMenu.add(_selectEndItem);
 		rangeMenu.addSeparator();
 		_deleteRangeItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_RANGE, false);
 		rangeMenu.add(_deleteRangeItem);
 		_cropTrackItem = makeMenuItem(FunctionLibrary.FUNCTION_CROP_TRACK, false);
 		rangeMenu.add(_cropTrackItem);
-		_reverseItem = new JMenuItem(I18nManager.getText("menu.range.reverse"));
-		_reverseItem.addActionListener(e -> _app.reverseRange());
-		_reverseItem.setEnabled(false);
+		_reverseItem = makeMenuItem(new ReverseSelectedRange(_app), false);
 		rangeMenu.add(_reverseItem);
 		_addTimeOffsetItem = makeMenuItem(FunctionLibrary.FUNCTION_ADD_TIME_OFFSET, false);
 		rangeMenu.add(_addTimeOffsetItem);
 		_addAltitudeOffsetItem = makeMenuItem(FunctionLibrary.FUNCTION_ADD_ALTITUDE_OFFSET, false);
 		rangeMenu.add(_addAltitudeOffsetItem);
-		_mergeSegmentsItem = new JMenuItem(I18nManager.getText("menu.range.mergetracksegments"));
-		_mergeSegmentsItem.addActionListener(e -> _app.mergeTrackSegments());
-		_mergeSegmentsItem.setEnabled(false);
+		_mergeSegmentsItem = makeMenuItem(new MergeSegmentsFunction(_app), false);
 		rangeMenu.add(_mergeSegmentsItem);
 		_deleteFieldValuesItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_FIELD_VALUES, false);
 		rangeMenu.add(_deleteFieldValuesItem);
 		rangeMenu.addSeparator();
 		_interpolateItem = makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_INTERPOLATE), false);
 		rangeMenu.add(_interpolateItem);
-		_averageItem = new JMenuItem(I18nManager.getText("menu.range.average"));
-		_averageItem.addActionListener(e -> _app.averageSelection());
+		_averageItem = makeMenuItem(new AverageSelection(_app), false);
 		_averageItem.setEnabled(false);
 		rangeMenu.add(_averageItem);
-		_cutAndMoveItem = new JMenuItem(I18nManager.getText("menu.range.cutandmove"));
-		_cutAndMoveItem.addActionListener(e -> _app.cutAndMoveSelection());
-		_cutAndMoveItem.setEnabled(false);
+		_cutAndMoveItem = makeMenuItem(new CutAndMoveFunction(_app), false);
 		rangeMenu.add(_cutAndMoveItem);
-		_convertNamesToTimesItem = makeMenuItem(FunctionLibrary.FUNCTION_CONVERT_NAMES_TO_TIMES, false);
-		rangeMenu.add(_convertNamesToTimesItem);
 		menubar.add(rangeMenu);
 
 		// Point menu
 		JMenu pointMenu = new JMenu(I18nManager.getText("menu.point"));
 		setAltKey(pointMenu, "altkey.menu.point");
-		_editPointItem = new JMenuItem(I18nManager.getText("menu.point.editpoint"));
-		_editPointAction = e -> _app.editCurrentPoint();
-		_editPointItem.addActionListener(_editPointAction);
-		_editPointItem.setEnabled(false);
+		_editPointItem = makeMenuItem(new PointEditor(_app), false);
 		setShortcut(_editPointItem, "shortcut.menu.point.edit");
 		pointMenu.add(_editPointItem);
 		_editWaypointNameItem = makeMenuItem(FunctionLibrary.FUNCTION_EDIT_WAYPOINT_NAME, false);
 		pointMenu.add(_editWaypointNameItem);
 		_togglePointSegmentItem = makeMenuItem(FunctionLibrary.FUNCTION_TOGGLE_POINT_SEGMENT, false);
 		pointMenu.add(_togglePointSegmentItem);
-		_deletePointItem = new JMenuItem(I18nManager.getText("menu.point.deletepoint"));
-		_deletePointAction = e -> _app.deleteCurrentPoint();
-		_deletePointItem.addActionListener(_deletePointAction);
-		_deletePointItem.setEnabled(false);
+		_deletePointItem = makeMenuItem(new DeleteCurrentPoint(_app), false);
 		_deletePointItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0));
 		pointMenu.add(_deletePointItem);
 		_truncatePointCoordsItem = makeMenuItem(FunctionLibrary.FUNCTION_TRUNCATE_POINT_COORDS, false);
@@ -418,6 +406,14 @@ public class MenuManager implements DataSubscriber
 		// find a waypoint
 		_findWaypointItem = makeMenuItem(FunctionLibrary.FUNCTION_FIND_WAYPOINT, false);
 		pointMenu.add(_findWaypointItem);
+		_gotoPointMenu = new JMenu(I18nManager.getText("menu.point.goto"));
+		_highestPointItem = makeMenuItem(new SelectExtremePoint(_app, SelectExtremePoint.Extreme.HIGHEST), false);
+		_gotoPointMenu.add(_highestPointItem);
+		_lowestPointItem = makeMenuItem(new SelectExtremePoint(_app, SelectExtremePoint.Extreme.LOWEST), false);
+		_gotoPointMenu.add(_lowestPointItem);
+		_fastestPointItem = makeMenuItem(new SelectExtremePoint(_app, SelectExtremePoint.Extreme.FASTEST), false);
+		_gotoPointMenu.add(_fastestPointItem);
+		pointMenu.add(_gotoPointMenu);
 		// duplicate current point
 		_duplicatePointItem = makeMenuItem(FunctionLibrary.FUNCTION_DUPLICATE_POINT, false);
 		pointMenu.add(_duplicatePointItem);
@@ -455,7 +451,7 @@ public class MenuManager implements DataSubscriber
 		sidebarsCheckbox.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, 0)); // shortcut F11
 		viewMenu.add(sidebarsCheckbox);
 		// 3d
-		_show3dItem = makeMenuItem(FunctionLibrary.FUNCTION_3D, false);
+		_show3dItem = makeMenuItem(FunctionLibrary.FUNCTION_3D_VIEW, false);
 		viewMenu.add(_show3dItem);
 		// Charts
 		_chartItem = makeMenuItem(FunctionLibrary.FUNCTION_CHARTS, false);
@@ -480,7 +476,7 @@ public class MenuManager implements DataSubscriber
 		JMenu photoMenu = new JMenu(I18nManager.getText("menu.photo"));
 		setAltKey(photoMenu, "altkey.menu.photo");
 		addPhotosMenuItem = new JMenuItem(I18nManager.getText("menu.file.addphotos"));
-		addPhotosMenuItem.addActionListener(_addPhotoAction);
+		addPhotosMenuItem.addActionListener(e -> _app.addPhotos());
 		photoMenu.add(addPhotosMenuItem);
 		_saveExifItem = new JMenuItem(I18nManager.getText("menu.photo.saveexif"));
 		_saveExifItem.addActionListener(e -> _app.saveExif());
@@ -621,7 +617,7 @@ public class MenuManager implements DataSubscriber
 	 */
 	private static JMenuItem makeMenuItem(GenericFunction inFunction)
 	{
-		JMenuItem item = new JMenuItem(I18nManager.getText(inFunction.getNameKey()));
+		JMenuItem item = new JMenuItem(inFunction.getName());
 		item.addActionListener(new FunctionLauncher(inFunction));
 		return item;
 	}
@@ -669,99 +665,88 @@ public class MenuManager implements DataSubscriber
 	}
 
 	/**
-	 * Create a JToolBar containing all toolbar buttons
 	 * @return toolbar containing buttons
 	 */
 	public JToolBar createToolBar()
 	{
 		JToolBar toolbar = new JToolBar();
-		// Add text file
-		JButton openFileButton = new JButton(IconManager.getImageIcon(IconManager.OPEN_FILE));
-		openFileButton.setToolTipText(I18nManager.getText("function.open"));
-		openFileButton.addActionListener(_openFileAction);
+		// Open / import file
+		JButton openFileButton = makeToolbarButton(IconManager.TOOLBAR_IMPORT_FILE, "function.open", e -> _app.openFile());
+		openFileButton.setEnabled(true);
 		toolbar.add(openFileButton);
 		// Add photo
-		JButton addPhotoButton = new JButton(IconManager.getImageIcon(IconManager.ADD_PHOTO));
-		addPhotoButton.setToolTipText(I18nManager.getText("menu.file.addphotos"));
-		addPhotoButton.addActionListener(_addPhotoAction);
+		JButton addPhotoButton = makeToolbarButton(IconManager.TOOLBAR_ADD_PHOTO, "menu.file.addphotos", e -> _app.addPhotos());
+		addPhotoButton.setEnabled(true);
 		toolbar.add(addPhotoButton);
-		// Save
-		_saveButton = new JButton(IconManager.getImageIcon(IconManager.SAVE_FILE));
-		_saveButton.setToolTipText(I18nManager.getText("menu.file.save"));
-		_saveButton.addActionListener(_saveAction);
-		_saveButton.setEnabled(false);
+		// Save / export file
+		_saveButton = makeToolbarButton(IconManager.TOOLBAR_EXPORT_FILE, "menu.file.export", e -> showExportMenu());
 		toolbar.add(_saveButton);
 		// Undo
-		_undoButton = new JButton(IconManager.getImageIcon(IconManager.UNDO));
-		_undoButton.setToolTipText(I18nManager.getText("menu.track.undo"));
-		_undoButton.addActionListener(_undoAction);
-		_undoButton.setEnabled(false);
+		_undoButton = makeToolbarButton(IconManager.TOOLBAR_UNDO, "menu.track.undo", e -> _app.beginUndo());
 		toolbar.add(_undoButton);
 		// Edit point
-		_editPointButton = new JButton(IconManager.getImageIcon(IconManager.EDIT_POINT));
-		_editPointButton.setToolTipText(I18nManager.getText("menu.point.editpoint"));
-		_editPointButton.addActionListener(_editPointAction);
-		_editPointButton.setEnabled(false);
+		_editPointButton = makeToolbarButton(IconManager.TOOLBAR_EDIT_POINT, new PointEditor(_app));
 		toolbar.add(_editPointButton);
 		// Delete point
-		_deletePointButton = new JButton(IconManager.getImageIcon(IconManager.DELETE_POINT));
-		_deletePointButton.setToolTipText(I18nManager.getText("menu.point.deletepoint"));
-		_deletePointButton.addActionListener(_deletePointAction);
-		_deletePointButton.setEnabled(false);
+		_deletePointButton = makeToolbarButton(IconManager.TOOLBAR_DELETE_POINT, new DeleteCurrentPoint(_app));
 		toolbar.add(_deletePointButton);
 		// Delete range
-		_deleteRangeButton = new JButton(IconManager.getImageIcon(IconManager.DELETE_RANGE));
-		_deleteRangeButton.setToolTipText(I18nManager.getText("function.deleterange"));
-		_deleteRangeButton.addActionListener(arg0 -> FunctionLibrary.FUNCTION_DELETE_RANGE.begin());
-		_deleteRangeButton.setEnabled(false);
+		_deleteRangeButton = makeToolbarButton(IconManager.TOOLBAR_DELETE_RANGE, FunctionLibrary.FUNCTION_DELETE_RANGE);
 		toolbar.add(_deleteRangeButton);
 		// Cut and move
-		_cutAndMoveButton = new JButton(IconManager.getImageIcon(IconManager.CUT_AND_MOVE));
-		_cutAndMoveButton.setToolTipText(I18nManager.getText("menu.range.cutandmove"));
-		_cutAndMoveButton.addActionListener(arg0 -> _app.cutAndMoveSelection());
-		_cutAndMoveButton.setEnabled(false);
+		_cutAndMoveButton = makeToolbarButton(IconManager.TOOLBAR_CUT_AND_MOVE, new CutAndMoveFunction(_app));
 		toolbar.add(_cutAndMoveButton);
 		// Select start, end
-		_selectStartButton = new JButton(IconManager.getImageIcon(IconManager.SET_RANGE_START));
-		_selectStartButton.setToolTipText(I18nManager.getText("menu.range.start"));
-		_selectStartButton.addActionListener(_selectStartAction);
-		_selectStartButton.setEnabled(false);
+		_selectStartButton = makeToolbarButton(IconManager.TOOLBAR_SET_RANGE_START, "menu.range.start", e -> _selection.selectRangeStart());
 		toolbar.add(_selectStartButton);
-		_selectEndButton = new JButton(IconManager.getImageIcon(IconManager.SET_RANGE_END));
-		_selectEndButton.setToolTipText(I18nManager.getText("menu.range.end"));
-		_selectEndButton.addActionListener(_selectEndAction);
-		_selectEndButton.setEnabled(false);
+		_selectEndButton = makeToolbarButton(IconManager.TOOLBAR_SET_RANGE_END, "menu.range.end", e -> _selection.selectRangeEnd());
 		toolbar.add(_selectEndButton);
+		// View full details
+		_viewInfoButton = makeToolbarButton(IconManager.TOOLBAR_VIEW_INFO, FunctionLibrary.FUNCTION_FULL_DETAILS);
+		toolbar.add(_viewInfoButton);
 		// Connect to point
-		_connectButton = new JButton(IconManager.getImageIcon(IconManager.CONNECT_PHOTO));
-		_connectButton.setToolTipText(I18nManager.getText(FunctionLibrary.FUNCTION_CONNECT_TO_POINT.getNameKey()));
-		_connectButton.addActionListener(arg0 -> FunctionLibrary.FUNCTION_CONNECT_TO_POINT.begin());
-		_connectButton.setEnabled(false);
+		_connectButton = makeToolbarButton(IconManager.TOOLBAR_CONNECT_PHOTO, FunctionLibrary.FUNCTION_CONNECT_TO_POINT);
 		toolbar.add(_connectButton);
+		// 3d
+		_threeDeeButton = makeToolbarButton(IconManager.TOOLBAR_VIEW_3D, FunctionLibrary.FUNCTION_3D_VIEW);
+		toolbar.add(_threeDeeButton);
 		// finish off
 		toolbar.setFloatable(false);
 		return toolbar;
 	}
 
+	/**
+	 * Make a button object for the toolbar
+	 * @param inIconName name of the icon filename
+	 * @param inFunction function to call
+	 */
+	private JButton makeToolbarButton(String inIconName, GenericFunction inFunction)
+	{
+		return makeToolbarButton(inIconName, inFunction.getNameKey(), e -> inFunction.begin());
+	}
 
 	/**
-	 * Method to update menu when file loaded
+	 * Make a button object for the toolbar
+	 * @param inIconName name of the icon filename
+	 * @param inTooltipKey key for the tooltip text
+	 * @param inListener listener which responds to action
 	 */
-	public void informFileLoaded()
+	private JButton makeToolbarButton(String inIconName, String inTooltipKey, ActionListener inListener)
 	{
-		// save, undo, delete enabled
-		_sendGpsItem.setEnabled(true);
-		_saveItem.setEnabled(true);
-		_undoItem.setEnabled(true);
-		_compressItem.setEnabled(true);
-		_deleteMarkedPointsItem.setEnabled(false);
+		JButton button = new JButton(IconManager.getImageIcon(inIconName));
+		button.setEnabled(false);
+		button.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+		button.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
+		button.setToolTipText(I18nManager.getText(inTooltipKey));
+		button.addActionListener(inListener);
+		return button;
 	}
 
 
 	/**
 	 * @see tim.prune.DataSubscriber#dataUpdated
 	 */
-	public void dataUpdated(byte inUpdateType)
+	public void dataUpdated(int inUpdateType)
 	{
 		final boolean hasData = _track != null && _track.getNumPoints() > 0;
 		final boolean hasMultiplePoints = hasData && _track.getNumPoints() > 1;
@@ -779,13 +764,15 @@ public class MenuManager implements DataSubscriber
 		_markUphillLiftsItem.setEnabled(hasData && _track.hasAltitudeData());
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasWaypoints() && _track.getNumPoints() > 1);
+		_dedupeWaypointsItem.setEnabled(hasData && _track.hasWaypoints() && _track.getNumPoints() > 1);
 		final boolean hasSeveralTrackPoints = hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3;
 		_splitSegmentsItem.setEnabled(hasSeveralTrackPoints);
 		_sewSegmentsItem.setEnabled(hasSeveralTrackPoints);
 		_createMarkerWaypointsItem.setEnabled(hasSeveralTrackPoints);
 		_selectAllItem.setEnabled(hasData);
 		_selectNoneItem.setEnabled(hasData);
-		_show3dItem.setEnabled(hasMultiplePoints);
+		_show3dItem.setEnabled(hasMultiplePoints && _threeDAvailable);
+		_threeDeeButton.setEnabled(hasMultiplePoints && _threeDAvailable);
 		_chartItem.setEnabled(hasData);
 		_browserMapMenu.setEnabled(hasData);
 		_distanceItem.setEnabled(hasData);
@@ -796,8 +783,12 @@ public class MenuManager implements DataSubscriber
 		_downloadOsmItem.setEnabled(hasData);
 		_getWeatherItem.setEnabled(hasData);
 		_findWaypointItem.setEnabled(hasData && _track.hasWaypoints());
+		_gotoPointMenu.setEnabled(hasData);
+		_highestPointItem.setEnabled(hasMultiplePoints && _track.hasAltitudeData());
+		_lowestPointItem.setEnabled(hasMultiplePoints && _track.hasAltitudeData());
 		// have we got any timestamps?
 		_deleteByDateItem.setEnabled(hasData && _track.hasData(Field.TIMESTAMP));
+		_fastestPointItem.setEnabled(hasMultiplePoints && (_track.hasData(Field.TIMESTAMP) || _track.hasData(Field.SPEED)));
 
 		// is undo available?
 		boolean hasUndo = !_app.getUndoStack().isEmpty();
@@ -828,7 +819,7 @@ public class MenuManager implements DataSubscriber
 		// is it a waypoint?
 		_selectSegmentItem.setEnabled(hasPoint && !currPoint.isWaypoint());
 		// are there any photos?
-		boolean anyPhotos = _app.getTrackInfo().getPhotoList().getNumPhotos() > 0;
+		boolean anyPhotos = _app.getTrackInfo().getPhotoList().hasAny();
 		_saveExifItem.setEnabled(anyPhotos && _app.getTrackInfo().getPhotoList().hasMediaWithFile());
 		// is there a current photo, audio?
 		Photo currentPhoto = _app.getTrackInfo().getCurrentPhoto();
@@ -849,7 +840,7 @@ public class MenuManager implements DataSubscriber
 		_photoPopupItem.setEnabled(hasPhoto);
 		_ignoreExifThumb.setEnabled(hasPhoto && currentPhoto.getExifThumbnail() != null);
 		_selectNoPhotoItem.setEnabled(hasPhoto);
-		boolean anyAudios = _app.getTrackInfo().getAudioList().getNumAudios() > 0;
+		boolean anyAudios = _app.getTrackInfo().getAudioList().hasAny();
 		_selectNoAudioItem.setEnabled(hasAudio);
 		_removeAudioItem.setEnabled(hasAudio);
 		_connectAudioItem.setEnabled(hasAudio && hasPoint && currentAudio.getDataPoint() == null);
@@ -866,9 +857,9 @@ public class MenuManager implements DataSubscriber
 		_reverseItem.setEnabled(hasRange);
 		_addTimeOffsetItem.setEnabled(hasRange);
 		_addAltitudeOffsetItem.setEnabled(hasRange);
-		_convertNamesToTimesItem.setEnabled(hasRange && _track.hasWaypoints());
 		_deleteFieldValuesItem.setEnabled(hasRange);
 		_viewFullDetailsItem.setEnabled(hasRange || hasPoint);
+		_viewInfoButton.setEnabled(hasRange || hasPoint);
 		_estimateTimeItem.setEnabled(hasRange);
 		_learnEstimationParams.setEnabled(hasData && _track.hasTrackPoints() && _track.hasData(Field.TIMESTAMP)
 			&& _track.hasAltitudeData());
@@ -909,7 +900,7 @@ public class MenuManager implements DataSubscriber
 				rfl.verifyAll();
 				// Rebuild menus
 				_recentFileMenu.removeAll();
-				for (int i=0; i<rfl.getSize(); i++)
+				for (int i=0; i<rfl.getCapacity(); i++)
 				{
 					RecentFile rf = rfl.getFile(i);
 					if (rf != null && rf.isValid())
@@ -924,6 +915,26 @@ public class MenuManager implements DataSubscriber
 		}
 	}
 
+	/**
+	 * React to export button on toolbar
+	 */
+	private void showExportMenu()
+	{
+		JPopupMenu popup = new JPopupMenu();
+		JMenuItem saveTextItem = new JMenuItem(I18nManager.getText("menu.file.save"));
+		saveTextItem.addActionListener(e -> _app.saveFile());
+		popup.add(saveTextItem);
+		JMenuItem exportGpxItem = new JMenuItem(I18nManager.getText("function.exportgpx"));
+		exportGpxItem.addActionListener(e -> FunctionLibrary.FUNCTION_GPXEXPORT.begin());
+		popup.add(exportGpxItem);
+		JMenuItem exportKmlItem = new JMenuItem(I18nManager.getText("function.exportkml"));
+		exportKmlItem.addActionListener(e -> FunctionLibrary.FUNCTION_KMLEXPORT.begin());
+		popup.add(exportKmlItem);
+		JMenuItem exportImageItem = new JMenuItem(I18nManager.getText("function.exportimage"));
+		exportImageItem.addActionListener(e -> FunctionLibrary.FUNCTION_IMAGEEXPORT.begin());
+		popup.add(exportImageItem);
+		popup.show(_saveButton, 20, 15);
+	}
 
 	/**
 	 * Ignore action completed signals

@@ -9,11 +9,11 @@ import tim.prune.data.Timestamp;
 public class PointInfo implements Comparable<PointInfo>
 {
 	/** Timestamp of the point, if any */
-	private Timestamp _timestamp  = null;
+	private final Timestamp _timestamp;
 	/** Point index in the track */
-	private int       _pointIndex = 0;
+	private final int _pointIndex;
 	/** Segment flag of point */
-	private boolean   _segmentFlag = false;
+	private final boolean _segmentFlag;
 
 
 	/**
@@ -23,13 +23,14 @@ public class PointInfo implements Comparable<PointInfo>
 	 */
 	public PointInfo(DataPoint inPoint, int inIndex)
 	{
-		if (inPoint.hasTimestamp())
-		{
+		if (inPoint.hasTimestamp()) {
 			_timestamp = inPoint.getTimestamp();
 		}
-		else if (inPoint.getPhoto() != null && inPoint.getPhoto().hasTimestamp())
-		{
+		else if (inPoint.getPhoto() != null && inPoint.getPhoto().hasTimestamp()) {
 			_timestamp = inPoint.getPhoto().getTimestamp();
+		}
+		else {
+			_timestamp = null;
 		}
 		_pointIndex = inIndex;
 		_segmentFlag = inPoint.getSegmentStart();
@@ -81,7 +82,9 @@ public class PointInfo implements Comparable<PointInfo>
 	@Override
 	public boolean equals(Object inOther)
 	{
-		if (inOther == null || !(inOther instanceof PointInfo)) return false;
+		if (inOther == null || !(inOther instanceof PointInfo)) {
+			return false;
+		}
 
 		PointInfo other = (PointInfo) inOther;
 		if (_pointIndex != other._pointIndex) return false;

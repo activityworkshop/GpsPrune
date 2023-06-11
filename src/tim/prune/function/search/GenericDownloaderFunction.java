@@ -4,10 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -18,16 +17,19 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.AppendRangeCmd;
+import tim.prune.data.DataPoint;
+import tim.prune.data.Field;
+import tim.prune.data.Latitude;
+import tim.prune.data.Longitude;
 import tim.prune.function.browser.BrowserLauncher;
 
 /**
- * Function to load track information from any source,
+ * Function to load track or point information from any source,
  * subclassed for special cases like wikipedia or OSM
  */
 public abstract class GenericDownloaderFunction extends GenericFunction implements Runnable
@@ -68,7 +70,7 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		// Initialise dialog, show empty list
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			// add closing listener
@@ -110,24 +112,9 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		// Main panel with track list
 		_trackListModel = new TrackListModel(getColumnKey(0), getColumnKey(1));
 		_trackTable = new JTable(_trackListModel);
-		_trackTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				if (!e.getValueIsAdjusting())
-				{
-					final int numSelected = _trackTable.getSelectedRowCount();
-					boolean foundUrl = false;
-					if (numSelected > 0)
-					{
-						setDescription(_trackListModel.getTrack(_trackTable.getSelectedRow()).getDescription());
-						_descriptionBox.setCaretPosition(0);
-						foundUrl = _trackListModel.getTrack(_trackTable.getSelectedRow()).getWebUrl() != null;
-					}
-					else {
-						_descriptionBox.setText("");
-					}
-					_loadButton.setEnabled(numSelected > 0);
-					_showButton.setEnabled(numSelected == 1 && foundUrl);
-				}
+		_trackTable.getSelectionModel().addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				onTrackSelected();
 			}
 		});
 		_trackTable.getColumnModel().getColumn(0).setPreferredWidth(300);
@@ -139,7 +126,7 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		// Panel to hold description label and box
 		JPanel descPanel = new JPanel();
 		descPanel.setLayout(new BorderLayout());
-		JLabel descLabel = new JLabel(I18nManager.getText("dialog.gpsies.description") + " :");
+		JLabel descLabel = new JLabel(I18nManager.getText("dialog.pointdownload.description") + " :");
 		descPanel.add(descLabel, BorderLayout.NORTH);
 		_descriptionBox = new JTextArea(5, 20);
 		_descriptionBox.setEditable(false);
@@ -158,34 +145,39 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_loadButton = new JButton(I18nManager.getText("button.load"));
 		_loadButton.setEnabled(false);
-		_loadButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				loadSelected();
-			}
-		});
+		_loadButton.addActionListener(e -> loadSelected());
 		buttonPanel.add(_loadButton);
 		_showButton = new JButton(I18nManager.getText("button.showwebpage"));
 		_showButton.setEnabled(false);
-		_showButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				showSelectedWebpage();
-			}
-		});
+		_showButton.addActionListener(e -> showSelectedWebpage());
 		buttonPanel.add(_showButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_cancelled = true;
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			_cancelled = true;
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 		return dialogPanel;
+	}
+
+	/** React to track selection from list */
+	private void onTrackSelected()
+	{
+		final int numSelected = _trackTable.getSelectedRowCount();
+		boolean foundUrl = false;
+		if (numSelected > 0)
+		{
+			setDescription(_trackListModel.getTrack(_trackTable.getSelectedRow()).getDescription());
+			_descriptionBox.setCaretPosition(0);
+			foundUrl = _trackListModel.getTrack(_trackTable.getSelectedRow()).getWebUrl() != null;
+		}
+		else {
+			_descriptionBox.setText("");
+		}
+		_loadButton.setEnabled(numSelected > 0);
+		_showButton.setEnabled(numSelected == 1 && foundUrl);
 	}
 
 	/**
@@ -202,16 +194,48 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 	{
 		String text = inDesc;
 		if (inDesc == null || inDesc.length() < 2) {
-			text = I18nManager.getText("dialog.gpsies.nodescription");
+			text = I18nManager.getText("dialog.pointdownload.nodescription");
 		}
 		_descriptionBox.setText(text);
 	}
 
 
 	/**
-	 * Load the selected track or point
+	 * Load the selected point(s)
 	 */
-	protected abstract void loadSelected();
+	private final void loadSelected()
+	{
+		// Find the rows selected in the table and get the corresponding coords
+		int numSelected = _trackTable.getSelectedRowCount();
+		if (numSelected < 1) return;
+		int[] rowNums = _trackTable.getSelectedRows();
+		ArrayList<DataPoint> points = new ArrayList<>();
+		for (int i=0; i<numSelected; i++)
+		{
+			int rowNum = rowNums[i];
+			if (rowNum >= 0 && rowNum < _trackListModel.getRowCount())
+			{
+				String lat = _trackListModel.getTrack(rowNum).getLatitude();
+				String lon = _trackListModel.getTrack(rowNum).getLongitude();
+				if (lat != null && lon != null)
+				{
+					DataPoint point = new DataPoint(new Latitude(lat), new Longitude(lon), null);
+					point.setFieldValue(Field.WAYPT_NAME, _trackListModel.getTrack(rowNum).getTrackName(), false);
+					points.add(point);
+				}
+			}
+		}
+		if (!points.isEmpty())
+		{
+			AppendRangeCmd command = new AppendRangeCmd(points);
+			command.setDescription(getName());
+			command.setConfirmText(I18nManager.getTextWithNumber("confirm.pointsadded", points.size()));
+			_app.execute(command);
+		}
+		// Close the dialog
+		_cancelled = true;
+		_dialog.dispose();
+	}
 
 
 	/**

@@ -117,7 +117,7 @@ public class MarkLiftsFunction extends MarkAndDeleteFunction
 	 */
 	private boolean looksLikeLiftRange(Track inTrack, int inStartIndex, int inEndIndex)
 	{
-		RangeStats stats = new RangeStats(inTrack, inStartIndex, inEndIndex);
+		RangeStats stats = new RangeStats(inTrack, inStartIndex, inEndIndex, 0);
 		int descent = stats.getTotalAltitudeRange().getDescent(UnitSetLibrary.UNITS_METRES);
 		if (descent < 20)
 		{

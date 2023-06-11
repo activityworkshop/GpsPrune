@@ -1,12 +1,13 @@
 package tim.prune.load.xml;
 
-import java.io.File;
 import java.util.Enumeration;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import tim.prune.App;
 import tim.prune.data.SourceInfo;
+import tim.prune.load.FileToBeLoaded;
+import tim.prune.load.FileTypeLoader;
 import tim.prune.load.MediaLinkInfo;
 
 /**
@@ -32,13 +33,14 @@ public class ZipFileLoader
 
 	/**
 	 * Open the selected file and select appropriate xml loader
-	 * @param inFile File to open
+	 * @param inFileLock File to open
+	 * @param inAutoAppend true to auto-append
 	 */
-	public void openFile(File inFile)
+	public void openFile(FileToBeLoaded inFileLock, boolean inAutoAppend)
 	{
 		try
 		{
-			ZipFile file = new ZipFile(inFile);
+			ZipFile file = new ZipFile(inFileLock.getFile());
 			Enumeration<?> entries = file.entries();
 			boolean xmlFound = false;
 			while (entries.hasMoreElements() && !xmlFound)
@@ -60,11 +62,10 @@ public class ZipFileLoader
 						else
 						{
 							// Send back to app
-							SourceInfo sourceInfo = new SourceInfo(inFile,
+							SourceInfo sourceInfo = new SourceInfo(inFileLock.getFile(),
 								(handler instanceof GpxHandler?SourceInfo.FILE_TYPE.GPX:SourceInfo.FILE_TYPE.KML));
-							_app.informDataLoaded(handler.getFieldArray(), handler.getDataArray(),
-								null, sourceInfo, handler.getTrackNameList(),
-								new MediaLinkInfo(inFile, handler.getLinkArray()));
+							new FileTypeLoader(_app).loadData(handler, sourceInfo, inAutoAppend,
+								new MediaLinkInfo(inFileLock.getFile(), handler.getLinkArray()));
 							xmlFound = true;
 						}
 					}

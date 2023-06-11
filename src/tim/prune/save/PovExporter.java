@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -54,7 +52,7 @@ import tim.prune.threedee.ThreeDModel;
  */
 public class PovExporter extends Export3dFunction
 {
-	private Track _track = null;
+	private final Track _track;
 	private JDialog _dialog = null;
 	private JFileChooser _fileChooser = null;
 	private String _cameraX = null, _cameraY = null, _cameraZ = null;
@@ -121,7 +119,7 @@ public class PovExporter extends Export3dFunction
 		// Make dialog window to select inputs
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeDialogComponents());
 		}
@@ -166,28 +164,12 @@ public class PovExporter extends Export3dFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// Need to launch export in new thread
-				new Thread(new Runnable() {
-					public void run()
-					{
-						doExport();
-						_baseImagePanel.getGrouter().clearMapImage();
-					}
-				}).start();
-				_dialog.dispose();
-			}
-		});
+		okButton.addActionListener(e -> okPressed());
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_baseImagePanel.getGrouter().clearMapImage();
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			_baseImagePanel.getGrouter().clearMapImage();
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -279,6 +261,17 @@ public class PovExporter extends Export3dFunction
 		return panel;
 	}
 
+	/**
+	 * Ok has been pressed, so launch export in new thread
+	 */
+	private void okPressed()
+	{
+		new Thread(() -> {
+			doExport();
+			_baseImagePanel.getGrouter().clearMapImage();
+		}).start();
+		_dialog.dispose();
+	}
 
 	/**
 	 * Select the file and export data to it

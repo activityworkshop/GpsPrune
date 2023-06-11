@@ -9,7 +9,7 @@ import java.awt.Image;
 public class MemTileCacher
 {
 	/** Array of images to hold tiles */
-	private Image[] _tiles = new Image[GRID_SIZE * GRID_SIZE];
+	private final Image[] _tiles = new Image[GRID_SIZE * GRID_SIZE];
 	/** Current zoom level */
 	private int _zoom = -1;
 	/** X coordinate of central tile */

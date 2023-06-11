@@ -2,11 +2,11 @@ package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -18,10 +18,14 @@ import javax.swing.JTextField;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.EditSingleFieldCmd;
 import tim.prune.config.Config;
+import tim.prune.data.DataPoint;
+import tim.prune.data.Distance;
 import tim.prune.data.Field;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.function.edit.PointEdit;
 
 /**
  * Class to provide the function to add an altitude offset to a track range
@@ -64,7 +68,7 @@ public class AddAltitudeOffset extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -111,23 +115,13 @@ public class AddAltitudeOffset extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
+		ActionListener okListener = e -> finish();
 		_okButton.addActionListener(okListener);
 		_okButton.setEnabled(false);
 		_editField.addActionListener(okListener);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -166,8 +160,31 @@ public class AddAltitudeOffset extends GenericFunction
 	 */
 	private void finish()
 	{
-		// Pass information back to App to complete function
-		_app.finishAddAltitudeOffset(_editField.getText(), _altUnit);
-		_dialog.dispose();
+		final double offset = getOffset();
+		if (offset == 0.0) {
+			return;
+		}
+		ArrayList<PointEdit> edits = new ArrayList<>();
+		final int selStart = _app.getTrackInfo().getSelection().getStart();
+		final int selEnd = _app.getTrackInfo().getSelection().getEnd();
+		for (int i=selStart; i<=selEnd; i++)
+		{
+			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
+			if (point.hasAltitude())
+			{
+				Unit pointUnit = point.getAltitude().getUnit();
+				double valueToAdd = Distance.convertBetweenUnits(offset, _altUnit, pointUnit);
+				double changedValue = point.getAltitude().getValue(pointUnit) + valueToAdd;
+				edits.add(new PointEdit(i, Double.toString(changedValue)));
+			}
+		}
+		if (!edits.isEmpty())
+		{
+			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.ALTITUDE, edits);
+			command.setDescription(getName());
+			command.setConfirmText(I18nManager.getText("confirm.addaltitudeoffset"));
+			_app.execute(command);
+			_dialog.dispose();
+		}
 	}
 }

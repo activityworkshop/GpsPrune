@@ -37,21 +37,15 @@ public abstract class MarkAndDeleteFunction extends GenericFunction
 		int answer = _automaticallyDelete ? JOptionPane.YES_OPTION :
 			JOptionPane.showOptionDialog(_parentFrame,
 			I18nManager.getTextWithNumber("dialog.compress.confirm", inNumMarked),
-			I18nManager.getText(getNameKey()), JOptionPane.YES_NO_CANCEL_OPTION,
+			getName(), JOptionPane.YES_NO_CANCEL_OPTION,
 			JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1]);
 		if (answer == JOptionPane.CANCEL_OPTION) {_automaticallyDelete = true;} // "always" is third option
 
 		// Make sure function knows what to do, whether we'll call it now or later
 		FunctionLibrary.FUNCTION_DELETE_MARKED_POINTS.setParentFunction(
 				getNameKey(), getShouldSplitSegments());
-		if (_automaticallyDelete || answer == JOptionPane.YES_OPTION)
-		{
-			new Thread(new Runnable() {
-				public void run()
-				{
-					FunctionLibrary.FUNCTION_DELETE_MARKED_POINTS.begin();
-				}
-			}).start();
+		if (_automaticallyDelete || answer == JOptionPane.YES_OPTION) {
+			new Thread(() -> FunctionLibrary.FUNCTION_DELETE_MARKED_POINTS.begin()).start();
 		}
 	}
 

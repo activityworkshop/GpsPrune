@@ -17,31 +17,6 @@ public abstract class NumberUtils
 	}
 
 	/**
-	 * Find the number of decimal places represented in the String
-	 * @param inString String to check
-	 * @return number of decimal places, or 0 for integer value
-	 */
-	public static int getDecimalPlaces(String inString)
-	{
-		if (inString == null || inString.equals("")) {return 0;}
-		int places = 0;
-		final int sLen = inString.length();
-		for (int i=sLen-1; i>=0; i--) {
-			char c = inString.charAt(i);
-			if (c >= '0' && c <= '9') {
-				// Numeric character found
-				places++;
-			}
-			else {
-				// Non-numeric character found, return places
-				return places;
-			}
-		}
-		// No non-numeric characters found, so must be integer
-		return 0;
-	}
-
-	/**
 	 * Format the given number in UK format (decimal point) to the given number of decimal places
 	 * @param inNumber double number to format
 	 * @param inDecimalPlaces number of decimal places

@@ -1,11 +1,11 @@
-GpsPrune version 22.2
-=====================
+GpsPrune version 23
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
 Full details can be found at https://gpsprune.activityworkshop.net/
 
-GpsPrune is copyright 2006-2022 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2023 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_22.2.jar
+   java -jar gpsprune_23.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,19 +25,22 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_22.2.jar --lang=DE
+   java -jar gpsprune_23.jar --lang=DE
 
 
-New with version 22.2
-=====================
-  - Fix for a bug in the 3d shape scaling when locale uses decimal commas (Issue #62)
-  - Fix for a bug with applying calculated timestamps to the selected range
-
-New with version 22.1
-=====================
+New with version 23
+===================
+The following fixes and additions were made since version 22:
+  - New icons (almost everywhere)
+  - Restructuring commands (should not have a visible impact)
+  - Suggesting GPX filename for export based on entered track name (part of Issue #58)
+  - Prompting to allow or block media downloads by domain
+  - Navigating to extreme points, like highest, lowest, fastest
+  - Removing duplicate waypoints
+  - Using the 'delete field values' function to detach media (Issue #66)
+  - Maximum zoom level for map sources increased from 20 to 22
   - Removal of Yahoo maps and Inlinemap (from the "map in a browser window" menu)
   - Removal of the built-in Mapillary function, and replacement with a browser call
-
 
 New with version 22
 =====================

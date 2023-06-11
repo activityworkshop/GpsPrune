@@ -26,12 +26,6 @@ public class MapCoords
 		if (FIVE_DP instanceof DecimalFormat) ((DecimalFormat) FIVE_DP).applyPattern("0.00000");
 	}
 
-	/** Empty constructor */
-	private MapCoords() {
-		_latitude = _longitude = null;
-		_latSpan = _lonSpan = null;
-	}
-
 	/** Regular constructor */
 	private MapCoords(double inLatitude, double inLongitude, DoubleRange inLatRange, DoubleRange inLonRange)
 	{

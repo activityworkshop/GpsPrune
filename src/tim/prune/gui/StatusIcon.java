@@ -11,9 +11,9 @@ public class StatusIcon extends JLabel
 	/** Current status */
 	private Status _currStatus = Status.BLANK;
 
-	private static ImageIcon _blankIcon = IconManager.getImageIcon(IconManager.ENTRY_NONE);
-	private static ImageIcon _validIcon = IconManager.getImageIcon(IconManager.ENTRY_VALID);
-	private static ImageIcon _invalidIcon = IconManager.getImageIcon(IconManager.ENTRY_INVALID);
+	private static final ImageIcon _blankIcon = IconManager.getImageIcon(IconManager.ENTRY_NONE);
+	private static final ImageIcon _validIcon = IconManager.getImageIcon(IconManager.ENTRY_VALID);
+	private static final ImageIcon _invalidIcon = IconManager.getImageIcon(IconManager.ENTRY_INVALID);
 
 	/**
 	 * Three possible states for icon

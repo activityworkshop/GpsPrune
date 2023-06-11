@@ -89,31 +89,26 @@ public abstract class SrtmSource
 	 */
 	protected boolean writeFileFromStream(URL inUrl, InputStream inStream)
 	{
-		FileOutputStream outStream = null;
-		boolean success = false;
-		if (inStream != null)
-		{
-			try
-			{
-				int numBytesRead;
-				File outputFile = getFileToWrite(inUrl);
-				if (outputFile != null)
-				{
-					byte[] buffer = new byte[512];
-					outStream = new FileOutputStream(outputFile);
-					while ((numBytesRead = inStream.read(buffer)) != -1) {
-						outStream.write(buffer, 0, numBytesRead);
-					}
-					success = true;
-				}
-			}
-			catch (IOException ioe) {
-				System.err.println(ioe.getClass().getName() + " - " + ioe.getMessage());
-			}
-			// Close output stream; input stream will be closed by creator
-			try {outStream.close();} catch (Exception e) {}
+		if (inStream == null) {
+			return false;
 		}
-
-		return success;
+		int numBytesRead;
+		File outputFile = getFileToWrite(inUrl);
+		if (outputFile == null) {
+			return false;
+		}
+		byte[] buffer = new byte[512];
+		try (FileOutputStream outStream = new FileOutputStream(outputFile))
+		{
+			while ((numBytesRead = inStream.read(buffer)) != -1) {
+				outStream.write(buffer, 0, numBytesRead);
+			}
+			return true;
+		}
+		catch (IOException ioe) {
+			System.err.println(ioe.getClass().getName() + " - " + ioe.getMessage());
+		}
+		// Close output stream; input stream will be closed by creator
+		return false;
 	}
 }

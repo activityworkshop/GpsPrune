@@ -17,13 +17,13 @@ import tim.prune.gui.DisplayUtils;
 public class MediaPreviewTableModel extends AbstractTableModel
 {
 	/** Text for first column heading */
-	private String _firstColumnHeading = null;
+	private final String _firstColumnHeading;
 	/** ArrayList containing TableRow objects */
-	private ArrayList<MediaPreviewTableRow> _list = new ArrayList<MediaPreviewTableRow>();
+	private final ArrayList<MediaPreviewTableRow> _list = new ArrayList<>();
 	/** Distance units */
 	private Unit _distanceUnits = UnitSetLibrary.UNITS_KILOMETRES;
 	/** Current timezone */
-	private TimeZone _timezone = null;
+	private final TimeZone _timezone;
 
 
 	/**
@@ -167,7 +167,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 	{
 		for (int i=0; i<getRowCount(); i++)
 		{
-			if (getRow(i).getCorrelateFlag().booleanValue()) {
+			if (getRow(i).getCorrelateFlag()) {
 				return true;
 			}
 		}
@@ -188,7 +188,7 @@ public class MediaPreviewTableModel extends AbstractTableModel
 			MediaPreviewTableRow row = getRow(inRowIndex);
 			// Don't allow setting of items which can't be correlated
 			if (row.getPointPair().isValid()) {
-				row.setCorrelateFlag(((Boolean) inValue).booleanValue());
+				row.setCorrelateFlag((Boolean) inValue);
 			}
 		}
 	}

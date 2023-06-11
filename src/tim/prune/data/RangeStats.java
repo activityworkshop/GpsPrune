@@ -9,8 +9,8 @@ public class RangeStats
 	private int _numPoints   = 0;
 	private int _numSegments = 0;
 	private boolean _foundTrackPoint = false;
-	protected AltitudeRange _totalAltitudeRange = new AltitudeRange();
-	protected AltitudeRange _movingAltitudeRange = new AltitudeRange();
+	protected final AltitudeRange _totalAltitudeRange;
+	protected final AltitudeRange _movingAltitudeRange;
 	private Timestamp _earliestTimestamp = null, _latestTimestamp = null, _movingTimestamp = null;
 	private long _movingMilliseconds = 0L;
 	private boolean _timesIncomplete = false;
@@ -20,15 +20,19 @@ public class RangeStats
 
 
 	/** Constructor */
-	public RangeStats()
-	{}
+	public RangeStats(int inAltitudeTolerance)
+	{
+		_totalAltitudeRange = new AltitudeRange(inAltitudeTolerance);
+		_movingAltitudeRange = new AltitudeRange(inAltitudeTolerance);
+	}
 
 	/**
 	 * Constructor giving Track
 	 * @param inTrack track object to calculate with
 	 */
-	public RangeStats(Track inTrack, int inStartIndex, int inEndIndex)
+	public RangeStats(Track inTrack, int inStartIndex, int inEndIndex, int inAltitudeTolerance)
 	{
+		this(inAltitudeTolerance);
 		populateFromTrack(inTrack, inStartIndex, inEndIndex);
 	}
 

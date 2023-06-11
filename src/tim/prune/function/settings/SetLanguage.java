@@ -3,11 +3,10 @@ package tim.prune.function.settings;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.Locale;
 
 import javax.swing.BorderFactory;
@@ -103,11 +102,7 @@ public class SetLanguage extends GenericFunction
 		builtinPanel.add(_languageDropDown);
 		builtinPanel.add(Box.createHorizontalGlue());
 		JButton selectLangButton = new JButton(I18nManager.getText("button.select"));
-		selectLangButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				selectLanguage();
-			}
-		});
+		selectLangButton.addActionListener(e -> selectLanguage());
 		builtinPanel.add(selectLangButton);
 		builtinPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		midPanel.add(builtinPanel);
@@ -125,18 +120,10 @@ public class SetLanguage extends GenericFunction
 		// browse button
 		JButton browseButton = new JButton(I18nManager.getText("button.browse"));
 		extraPanel.add(browseButton);
-		browseButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				chooseFile();
-			}
-		});
+		browseButton.addActionListener(e -> chooseFile());
 		extraPanel.add(Box.createHorizontalStrut(5));
 		JButton selectFileButton = new JButton(I18nManager.getText("button.select"));
-		selectFileButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				selectLanguageFile();
-			}
-		});
+		selectFileButton.addActionListener(e -> selectLanguageFile());
 		extraPanel.add(selectFileButton);
 		extraPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		midPanel.add(Box.createVerticalStrut(5));
@@ -148,12 +135,7 @@ public class SetLanguage extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return mainPanel;
@@ -167,7 +149,7 @@ public class SetLanguage extends GenericFunction
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()));
+			_dialog = new JDialog(_parentFrame, getName());
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeContents());
 			_dialog.pack();
@@ -278,11 +260,9 @@ public class SetLanguage extends GenericFunction
 	{
 		boolean ok = false;
 		boolean wrong = false;
-		BufferedReader reader = null;
-		try
+		try (BufferedReader reader = new BufferedReader(new FileReader(inFile)))
 		{
 			// Read through text file looking for lines with the right start
-			reader = new BufferedReader(new FileReader(inFile));
 			String currLine = reader.readLine();
 			while (currLine != null && !ok && !wrong)
 			{
@@ -294,10 +274,8 @@ public class SetLanguage extends GenericFunction
 				}
 				currLine = reader.readLine();
 			}
-		}
-		catch (Exception e) {} // ignore exceptions, flag remains as set
-		finally {
-			try {reader.close();} catch (Exception e2) {}
+		} catch (IOException e) {
+			wrong = true;
 		}
 		return ok && !wrong;
 	}
@@ -327,10 +305,9 @@ public class SetLanguage extends GenericFunction
 	 */
 	private void showEndMessage()
 	{
-		final String messageKey = Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS)?
-			"dialog.setlanguage.endmessagewithautosave":"dialog.setlanguage.endmessage";
-		JOptionPane.showMessageDialog(_parentFrame,
-			I18nManager.getText(messageKey),
-			I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+		final String messageKey = Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS) ?
+			"dialog.setlanguage.endmessagewithautosave" : "dialog.setlanguage.endmessage";
+		JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText(messageKey),
+			getName(), JOptionPane.INFORMATION_MESSAGE);
 	}
 }

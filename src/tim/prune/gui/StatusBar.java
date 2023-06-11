@@ -70,7 +70,6 @@ public class StatusBar extends JPanel implements Runnable, DataSubscriber
 	 * Ignore signals about updated data
 	 * @param inUpdateType update type
 	 */
-	public void dataUpdated(byte inUpdateType)
-	{
+	public void dataUpdated(int inUpdateType) {
 	}
 }

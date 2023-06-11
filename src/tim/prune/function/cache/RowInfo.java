@@ -6,19 +6,10 @@ package tim.prune.function.cache;
  */
 public class RowInfo
 {
-	private int _zoom = -1;
 	private int _minZoom = -1, _maxZoom = -1;
 	private int _numTiles = 0;
 	private long _totalSize = 0L;
 
-
-	/**
-	 * Set the zoom level
-	 * @param inZoom zoom level
-	 */
-	public void setZoom(int inZoom) {
-		_zoom = inZoom;
-	}
 
 	/**
 	 * Add a zoom level and adjust max/min
@@ -26,17 +17,13 @@ public class RowInfo
 	 */
 	public void addZoom(int inZoom)
 	{
-		if (_minZoom < 0 || _minZoom > inZoom)
-			_minZoom = inZoom;
-		if (_maxZoom < inZoom)
-			_maxZoom = inZoom;
-	}
-
-	/**
-	 * @return the zoom level
-	 */
-	public int getZoom() {
-		return _zoom;
+		if (inZoom > 0)
+		{
+			if (_minZoom < 0 || _minZoom > inZoom) {
+				_minZoom = inZoom;
+			}
+			_maxZoom = Math.max(_maxZoom, inZoom);
+		}
 	}
 
 	/**
@@ -96,11 +83,7 @@ public class RowInfo
 		_totalSize += inOther._totalSize;
 		// TODO: Max age
 		// Zoom range
-		if (inOther._minZoom > 0)
-			addZoom(inOther._minZoom);
-		if (inOther._maxZoom > 0)
-			addZoom(inOther._maxZoom);
-		if (inOther._zoom > 0)
-			addZoom(inOther._zoom);
+		addZoom(inOther._minZoom);
+		addZoom(inOther._maxZoom);
 	}
 }

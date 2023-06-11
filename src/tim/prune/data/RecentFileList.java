@@ -60,9 +60,9 @@ public class RecentFileList
 	}
 
 	/**
-	 * @return size of list (may not have this many entries yet)
+	 * @return capacity of list (may not have this many entries yet)
 	 */
-	public int getSize()
+	public int getCapacity()
 	{
 		if (_files == null) return 0;
 		return _files.length;
@@ -88,7 +88,7 @@ public class RecentFileList
 	public String getConfigString()
 	{
 		StringBuilder builder = new StringBuilder(100);
-		builder.append(getSize());
+		builder.append(getCapacity());
 		for (RecentFile f : _files)
 		{
 			builder.append(';');
@@ -140,24 +140,5 @@ public class RecentFileList
 	{
 		if (inIndex < 0 || inIndex >= _files.length) return null;
 		return _files[inIndex];
-	}
-
-	/**
-	 * Resize the list to the new size
-	 * @param inNewSize new size of list
-	 */
-	public void resizeList(int inNewSize)
-	{
-		// don't do anything if size doesn't make sense
-		if (inNewSize > 0 && inNewSize <= MAX_SIZE)
-		{
-			RecentFile[] files = new RecentFile[inNewSize];
-			int numToCopy = _files.length;
-			if (inNewSize < numToCopy) {
-				numToCopy = inNewSize;
-			}
-			System.arraycopy(_files, 0, files, 0, numToCopy);
-			_files = files;
-		}
 	}
 }

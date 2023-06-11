@@ -1,16 +1,18 @@
 package tim.prune.load;
 
 import java.io.File;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.Collections;
+
 import javax.swing.JFileChooser;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
-import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.AppendMediaCmd;
 import tim.prune.config.Config;
 import tim.prune.data.AudioClip;
-import tim.prune.undo.UndoLoadAudios;
+import tim.prune.data.MediaObject;
+import tim.prune.function.Describer;
 
 /**
  * Class to manage the loading of audio clips
@@ -19,7 +21,7 @@ public class AudioLoader extends GenericFunction
 {
 	private JFileChooser _fileChooser = null;
 	private GenericFileFilter _fileFilter = null;
-	private TreeSet<AudioClip> _fileList = null;
+	private ArrayList<MediaObject> _audioList = null;
 
 
 	/**
@@ -49,7 +51,7 @@ public class AudioLoader extends GenericFunction
 			_fileChooser.setMultiSelectionEnabled(true);
 			_fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 			_fileChooser.setFileFilter(_fileFilter);
-			_fileChooser.setDialogTitle(I18nManager.getText(getNameKey()));
+			_fileChooser.setDialogTitle(getName());
 			// start from directory in config if already set by other operations
 			String configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);
 			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_TRACK_DIR);}
@@ -58,19 +60,21 @@ public class AudioLoader extends GenericFunction
 		// Show file dialog to choose file / directory(ies)
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
 		{
-			_fileList = new TreeSet<AudioClip>(new MediaSorter());
+			_audioList = new ArrayList<>();
 			processFileList(_fileChooser.getSelectedFiles());
-			final int numFiles = _fileList.size();
-			if (numFiles == 0) {
+			if (_audioList.isEmpty()) {
 				_app.showErrorMessage(getNameKey(), "error.audioload.nofilesfound");
 			}
 			else
 			{
-				// Construct undo object
-				UndoLoadAudios undo = new UndoLoadAudios(numFiles);
-				_app.getTrackInfo().addAudios(_fileList);
-				_app.completeFunction(undo, I18nManager.getText("confirm.audioload"));
-				UpdateMessageBroker.informSubscribers();
+				Collections.sort(_audioList, new MediaSorter());
+				AppendMediaCmd command = new AppendMediaCmd(_audioList);
+				Describer confirmDescriber = new Describer("confirm.audiosloaded.single", "confirm.audiosloaded");
+				command.setConfirmText(confirmDescriber.getDescriptionWithCount(_audioList.size()));
+				Describer undoDescriber = new Describer("undo.loadaudio", "undo.loadaudios");
+				String firstAudioName = _audioList.get(0).getName();
+				command.setDescription(undoDescriber.getDescriptionWithNameOrCount(firstAudioName, _audioList.size()));
+				_app.execute(command);
 			}
 		}
 	}
@@ -81,13 +85,16 @@ public class AudioLoader extends GenericFunction
 	 */
 	private void processFileList(File[] inFiles)
 	{
+		if (inFiles == null) {
+			return;
+		}
 		for (File file : inFiles)
 		{
 			if (file.exists() && file.canRead())
 			{
 				if (file.isFile()) {
 					if (_fileFilter.accept(file)) {
-						_fileList.add(new AudioClip(file));
+						_audioList.add(new AudioClip(file));
 					}
 				}
 				else if (file.isDirectory()) {

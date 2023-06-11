@@ -1,12 +1,14 @@
 package tim.prune.function;
 
+import java.util.ArrayList;
+
 import javax.swing.JOptionPane;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
+import tim.prune.cmd.InsertVariousPointsCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
-import tim.prune.undo.UndoInterpolate;
 
 /**
  * Function to interpolate between the points in a range
@@ -37,14 +39,6 @@ public class InterpolateFunction extends SingleNumericParameterFunction
 	}
 
 	/**
-	 * Perform the operation
-	 */
-	public void begin()
-	{
-		// not needed, we just use the completeFunction method instead
-	}
-
-	/**
 	 * Complete the function after the input parameter has been chosen
 	 */
 	public void completeFunction(int inParam)
@@ -52,13 +46,17 @@ public class InterpolateFunction extends SingleNumericParameterFunction
 		// Firstly, work out whether the selected range only contains waypoints or not
 		final int startIndex = _app.getTrackInfo().getSelection().getStart();
 		final int endIndex   = _app.getTrackInfo().getSelection().getEnd();
+		if (startIndex < 0 || endIndex < 0 || endIndex <= startIndex || inParam <= 0) {
+			return;
+		}
+
 		boolean betweenWaypoints = false;
 		// if there are only waypoints, then ask whether to interpolate them
-		if (!selectedRangeHasTrackpoints(_app.getTrackInfo().getTrack(), startIndex, endIndex))
+		if (!_app.getTrackInfo().getTrack().isTrackPointWithin(startIndex, endIndex))
 		{
 			int answer = JOptionPane.showConfirmDialog(_parentFrame,
 				I18nManager.getText("dialog.interpolate.betweenwaypoints"),
-				I18nManager.getText(getNameKey()), JOptionPane.YES_NO_OPTION);
+				getName(), JOptionPane.YES_NO_OPTION);
 			if (answer == JOptionPane.NO_OPTION) {
 				// user said no, so nothing to do
 				return;
@@ -66,85 +64,58 @@ public class InterpolateFunction extends SingleNumericParameterFunction
 			betweenWaypoints = true;
 		}
 
-		if (startIndex < 0 || endIndex < 0 || endIndex <= startIndex) {
-			return;
-		}
-
-		// construct new point array with the interpolated points
 		final int numToAdd = inParam;
 		final Track track = _app.getTrackInfo().getTrack();
-		final int maxToAdd = (endIndex-startIndex) * numToAdd;
-		final int extendedSize = track.getNumPoints() + maxToAdd;
-		DataPoint[] oldPoints = track.cloneContents();
-		DataPoint[] newPoints = new DataPoint[extendedSize];
-		// Copy points before
-		System.arraycopy(oldPoints, 0, newPoints, 0, startIndex);
-		// Loop, copying points and interpolating
-		int destIndex = startIndex;
-		DataPoint prevPoint = null;
-		for (int i=startIndex; i<= endIndex; i++)
-		{
-			DataPoint p = _app.getTrackInfo().getTrack().getPoint(i);
-			if (prevPoint != null && ((p.isWaypoint() && betweenWaypoints) || (!p.isWaypoint() && !p.getSegmentStart())))
-			{
-				// interpolate between the previous point and this one
-				DataPoint[] addition = prevPoint.interpolate(p, numToAdd);
-				System.arraycopy(addition, 0, newPoints, destIndex, numToAdd);
-				destIndex += numToAdd;
-			}
-			// copy point
-			newPoints[destIndex] = p;
-			destIndex++;
-			if (!p.isWaypoint() || betweenWaypoints)
-			{
-				prevPoint = p;
-			}
-			else if (!p.isWaypoint()) {
-				prevPoint = null;
-			}
-			// If it's a waypoint, then keep the old prevPoint
-		}
-		final int totalInserted = destIndex - endIndex - 1;
-		// Copy the points after the selected range
-		System.arraycopy(oldPoints, endIndex, newPoints, destIndex-1, track.getNumPoints()-endIndex);
-
-		// If necessary, make a new array of the correct size and do another arraycopy into it
-		final int newTotalPoints = track.getNumPoints() + totalInserted;
-		if (newTotalPoints != newPoints.length)
-		{
-			DataPoint[] croppedPoints = new DataPoint[newTotalPoints];
-			System.arraycopy(newPoints, 0, croppedPoints, 0, newTotalPoints);
-			newPoints = croppedPoints;
-		}
-
-		// Make undo object
-		UndoInterpolate undo = new UndoInterpolate(_app.getTrackInfo(), totalInserted);
-		// Replace track with new points array
-		if (track.replaceContents(newPoints))
-		{
-			final String confirmMessage = I18nManager.getTextWithNumber("confirm.pointsadded", totalInserted);
-			_app.completeFunction(undo, confirmMessage);
-			// Alter selection
-			_app.getTrackInfo().getSelection().selectRange(startIndex, endIndex + totalInserted);
+		InsertVariousPointsCmd command = makeCommand(track, startIndex, endIndex, numToAdd, betweenWaypoints);
+		if (_app.execute(command)) {
+			_app.getTrackInfo().getSelection().selectRange(startIndex, endIndex + command.getNumInserted());
 		}
 	}
 
 	/**
-	 * Check if the given Track has trackpoints in the specified range
+	 * Create the command to do the interpolation
 	 * @param inTrack track object
-	 * @param inStart start index
-	 * @param inEnd end index
-	 * @return true if there are any non-waypoints in the range
+	 * @param inStartIndex start of selection
+	 * @param inEndIndex end of selection, inclusive
+	 * @param inNumToAdd number of points to interpolate between each pair
+	 * @param inBetweenWaypoints true to also interpolate between waypoints
+	 * @return command object
 	 */
-	private static boolean selectedRangeHasTrackpoints(Track inTrack, int inStart, int inEnd)
+	private InsertVariousPointsCmd makeCommand(Track inTrack, int inStartIndex, int inEndIndex, int inNumToAdd,
+		boolean inBetweenWaypoints)
 	{
-		for (int i=inStart; i<= inEnd; i++)
+		ArrayList<Integer> indexes = new ArrayList<>();
+		ArrayList<DataPoint> insertedPoints = new ArrayList<>();
+		// Points before selected range
+		for (int i=0; i<=inStartIndex; i++) {
+			indexes.add(i);
+		}
+		// Interpolate the selection
+		DataPoint prevPoint = inTrack.getPoint(inStartIndex);
+		for (int i=inStartIndex+1; i<=inEndIndex; i++)
 		{
-			DataPoint p = inTrack.getPoint(i);
-			if (p != null && !p.isWaypoint()) {
-				return true;
+			DataPoint currPoint = inTrack.getPoint(i);
+			boolean interpolate = (currPoint.isWaypoint() && prevPoint.isWaypoint() && inBetweenWaypoints)
+				|| (!currPoint.isWaypoint() && !prevPoint.isWaypoint() && !currPoint.getSegmentStart());
+			if (interpolate)
+			{
+				for (int j=0; j<inNumToAdd; j++) {
+					insertedPoints.add(prevPoint.interpolate(currPoint, j, inNumToAdd));
+					indexes.add(inTrack.getNumPoints() + insertedPoints.size() - 1);
+				}
+			}
+			indexes.add(i);
+			if (!currPoint.isWaypoint() || inBetweenWaypoints) {
+				prevPoint = currPoint;
 			}
 		}
-		return false;
+		// Points after selected range
+		for (int i=inEndIndex+1; i<inTrack.getNumPoints(); i++) {
+			indexes.add(i);
+		}
+		InsertVariousPointsCmd command = new InsertVariousPointsCmd(indexes, insertedPoints);
+		command.setDescription(getName());
+		command.setConfirmText(I18nManager.getTextWithNumber("confirm.pointsadded", insertedPoints.size()));
+		return command;
 	}
 }

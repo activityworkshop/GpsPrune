@@ -42,7 +42,6 @@ public abstract class SpeedCalculator
 		{
 			double totalRadians = 0.0;
 			int index = inIndex-1;
-			DataPoint p = null;
 			DataPoint q = point;
 			Timestamp earlyStamp = point.getTimestamp();
 			boolean stop = false;
@@ -52,7 +51,7 @@ public abstract class SpeedCalculator
 			{
 				do
 				{
-					p = inTrack.getPoint(index);
+					DataPoint p = inTrack.getPoint(index);
 					boolean timeOk = p != null && p.hasTimestamp() && p.getTimestamp().isBefore(point.getTimestamp());
 					boolean pValid = timeOk && !p.isWaypoint();
 					if (pValid) {
@@ -74,7 +73,7 @@ public abstract class SpeedCalculator
 			index = inIndex+1;
 			do
 			{
-				p = inTrack.getPoint(index);
+				DataPoint p = inTrack.getPoint(index);
 				boolean timeOk = p != null && p.hasTimestamp() && !p.getTimestamp().isBefore(point.getTimestamp());
 				boolean pValid = timeOk && !p.isWaypoint() && !p.getSegmentStart();
 				if (pValid) {
@@ -137,7 +136,6 @@ public abstract class SpeedCalculator
 			&& point != null && point.hasTimestamp() && point.hasAltitude() && !point.isWaypoint())
 		{
 			int index = inIndex-1;
-			DataPoint p = null;
 			Timestamp earlyStamp = point.getTimestamp();
 			Altitude firstAlt = point.getAltitude();
 			boolean stop = false;
@@ -147,7 +145,7 @@ public abstract class SpeedCalculator
 			{
 				do
 				{
-					p = inTrack.getPoint(index);
+					DataPoint p = inTrack.getPoint(index);
 					boolean timeOk = p != null && p.hasTimestamp() && p.getTimestamp().isBefore(point.getTimestamp());
 					boolean pValid = timeOk && !p.isWaypoint();
 					if (pValid) {
@@ -167,7 +165,7 @@ public abstract class SpeedCalculator
 			index = inIndex+1;
 			do
 			{
-				p = inTrack.getPoint(index);
+				DataPoint p = inTrack.getPoint(index);
 				boolean timeOk = p != null && p.hasTimestamp() && !p.getTimestamp().isBefore(point.getTimestamp());
 				boolean pValid = timeOk && !p.isWaypoint() && !p.getSegmentStart();
 				if (pValid) {

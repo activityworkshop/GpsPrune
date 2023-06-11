@@ -7,15 +7,17 @@ import java.util.Stack;
  */
 class UndoOpWithState
 {
-	public UndoOperation _undoOperation = null;
-	public int           _undoCounter = 0;
+	public final UndoOperation _undoOperation;
+	public final int _undoCounter;
+
 	/** Constructor */
 	public UndoOpWithState(UndoOperation inOp, int inCounter)
 	{
 		_undoOperation = inOp;
-		_undoCounter   = inCounter;
+		_undoCounter = inCounter;
 	}
 }
+
 
 /**
  * Stack of undo operations
@@ -27,7 +29,7 @@ public class UndoStack extends Stack<UndoOpWithState>
 	private int _numUndos = 0;
 
 	@Override
-	public void clear()
+	public synchronized void clear()
 	{
 		_numUndos++;
 		super.clear();

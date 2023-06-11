@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -20,8 +18,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.border.EtchedBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import tim.prune.App;
@@ -100,7 +96,7 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 			// Create and build dialog if necessary
 			if (_dialog == null)
 			{
-				_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+				_dialog = new JDialog(_parentFrame, getName(), true);
 				_dialog.setLocationRelativeTo(_parentFrame);
 				_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 				_dialog.getContentPane().add(makeDialogComponents());
@@ -145,12 +141,7 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 				}
 			}
 		});
-		_infoTable.getSelectionModel().addListSelectionListener(
-			new ListSelectionListener() {
-				public void valueChanged(ListSelectionEvent e) {
-					enableButtons();
-				}
-		});
+		_infoTable.getSelectionModel().addListSelectionListener(e -> enableButtons());
 
 		JScrollPane pane = new JScrollPane(_infoTable);
 		pane.setPreferredSize(new Dimension(300, 180));
@@ -164,18 +155,10 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 		);
 		_selButtonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 		_keepSelectedButton = new JButton(I18nManager.getText("button.keepselected"));
-		_keepSelectedButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				changeSelectedRowsToKeep();
-			}
-		});
+		_keepSelectedButton.addActionListener(e -> changeSelectedRowsToKeep());
 		_selButtonPanel.add(_keepSelectedButton);
 		_delSelectedButton = new JButton(I18nManager.getText("button.deleteselected"));
-		_delSelectedButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				changeSelectedRowsToDelete();
-			}
-		});
+		_delSelectedButton.addActionListener(e -> changeSelectedRowsToDelete());
 		_selButtonPanel.add(_delSelectedButton);
 		middlePanel.add(_selButtonPanel, BorderLayout.SOUTH);
 		dialogPanel.add(middlePanel, BorderLayout.CENTER);
@@ -185,20 +168,12 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		// OK button
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				performDelete();
-			}
-		});
+		_okButton.addActionListener(e -> performDelete());
 		buttonPanel.add(_okButton);
 		_okButton.addKeyListener(escListener);
 		// Cancel button
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e-> _dialog.dispose());
 		cancelButton.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent inE) {
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
@@ -215,19 +190,17 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 	 */
 	private void modifyAllCheckboxes(boolean isDelete)
 	{
-		for (int rowIndex=0; rowIndex<_infoList.getNumEntries(); rowIndex++)
-		{
+		for (int rowIndex=0; rowIndex<_infoList.getNumEntries(); rowIndex++) {
 			_infoList.getDateInfo(rowIndex).setDeleteFlag(isDelete);
 		}
 		enableButtons();
 	}
 
-	private void changeSelectedRowsToKeep()
-	{
+	private void changeSelectedRowsToKeep() {
 		changeSelectedRows(false);
 	}
-	private void changeSelectedRowsToDelete()
-	{
+
+	private void changeSelectedRowsToDelete() {
 		changeSelectedRows(true);
 	}
 

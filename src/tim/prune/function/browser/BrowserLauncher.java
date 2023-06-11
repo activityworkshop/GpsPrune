@@ -1,5 +1,7 @@
 package tim.prune.function.browser;
 
+import java.awt.Desktop;
+import java.io.IOException;
 import java.net.URI;
 import javax.swing.JOptionPane;
 
@@ -18,7 +20,7 @@ public abstract class BrowserLauncher
 	/**
 	 * Init method to set up browser
 	 */
-	private static void init()
+	private static synchronized void init()
 	{
 		_browserCommand = null;
 		// First check if "which" command is available
@@ -86,37 +88,35 @@ public abstract class BrowserLauncher
 	 */
 	public static void launchBrowser(String inUrl)
 	{
-		if (inUrl == null) {return;}
-		// First choice is to try the Desktop library from java 6, if available
+		// First choice is to try the Desktop library if possible
 		try {
-			Class<?> d = Class.forName("java.awt.Desktop");
-			d.getDeclaredMethod("browse", new Class[] {URI.class}).invoke(
-				d.getDeclaredMethod("getDesktop").invoke(null), new Object[] {URI.create(inUrl)});
-			//above code mimics: Desktop.getDesktop().browse(URI.create(inUrl));
+			if (inUrl != null) {
+				Desktop.getDesktop().browse(URI.create(inUrl));
+			}
+			return;
 		}
-		catch (Exception ignore)
+		catch (IOException ioe) {}
+
+		// The Desktop call failed, need to try backup methods
+		if (!_initialised) {
+			init();
+		}
+		if (_browserCommand == null) {
+			JOptionPane.showMessageDialog(null, "Cannot show url: " + inUrl);
+			return;
+		}
+
+		try
 		{
-			// The Desktop call failed, need to try backup methods
-			if (!_initialised) {init();}
-			if (_browserCommand == null) {
-				JOptionPane.showMessageDialog(null, "Cannot show url: " + inUrl);
-			}
-			else
-			{
-				try
-				{
-					// enclose url in quotes if necessary
-					String url = inUrl;
-					if (_urlNeedsQuotes) {url = "\"" + url + "\"";}
-					// Fill in url in last element of command array
-					_browserCommand[_browserCommand.length - 1] = url;
-					// execute command to launch browser
-					Runtime.getRuntime().exec(_browserCommand);
-				}
-				catch (Exception e) {
-					JOptionPane.showMessageDialog(null, "Failed to show url: " + inUrl);
-				}
-			}
+			// enclose url in quotes if necessary
+			final String url = _urlNeedsQuotes ? ("\"" + inUrl + "\"") : inUrl;
+			// Fill in url in last element of command array
+			_browserCommand[_browserCommand.length - 1] = url;
+			// execute command to launch browser
+			Runtime.getRuntime().exec(_browserCommand);
+		}
+		catch (Exception e) {
+			JOptionPane.showMessageDialog(null, "Failed to show url: " + inUrl);
 		}
 	}
 }

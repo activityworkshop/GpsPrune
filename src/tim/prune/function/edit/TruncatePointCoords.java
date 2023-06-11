@@ -3,10 +3,9 @@ package tim.prune.function.edit;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -18,15 +17,15 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.SwingConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.EditPointCmd;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.function.Describer;
 import tim.prune.gui.GuiGridLayout;
 
 /**
@@ -45,8 +44,7 @@ public class TruncatePointCoords extends GenericFunction
 	 * Constructor
 	 * @param inApp application object to inform of success
 	 */
-	public TruncatePointCoords(App inApp)
-	{
+	public TruncatePointCoords(App inApp) {
 		super(inApp);
 	}
 
@@ -63,7 +61,7 @@ public class TruncatePointCoords extends GenericFunction
 		_point = _app.getTrackInfo().getCurrentPoint();
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			// Create Gui and show it
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -88,7 +86,7 @@ public class TruncatePointCoords extends GenericFunction
 
 		String[] coordFormats = {I18nManager.getText("units.degminsec"),
 			I18nManager.getText("units.degmin"), I18nManager.getText("units.deg")};
-		_coordFormatDropdown = new JComboBox<String>(coordFormats);
+		_coordFormatDropdown = new JComboBox<>(coordFormats);
 		_coordFormatDropdown.setSelectedIndex(1); // Go for DD MM.MMM by default
 		_numDigitsField = new JSpinner(new SpinnerNumberModel(3, 0, 10, 1));
 		_numDigitsField.setValue(3);
@@ -102,20 +100,9 @@ public class TruncatePointCoords extends GenericFunction
 				}
 			}
 		};
-		ActionListener formatListener = new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				showPreview();
-			}
-		};
 		_coordFormatDropdown.addKeyListener(keyListener);
-		_coordFormatDropdown.addActionListener(formatListener);
-		_numDigitsField.addChangeListener(new ChangeListener() {
-			@Override
-			public void stateChanged(ChangeEvent arg0) {
-				showPreview();
-			}
-		});
+		_coordFormatDropdown.addActionListener(e -> showPreview());
+		_numDigitsField.addChangeListener(e -> showPreview());
 
 		// Coordinate format
 		JLabel formatLabel = new JLabel(I18nManager.getText("details.coordformat"));
@@ -142,21 +129,10 @@ public class TruncatePointCoords extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		okButton.addActionListener(okListener);
+		okButton.addActionListener(e -> finish());
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -190,19 +166,17 @@ public class TruncatePointCoords extends GenericFunction
 	 */
 	private void finish()
 	{
-		// Make lists for edit and undo, and add the changed fields
-		FieldEditList editList = new FieldEditList();
-		FieldEditList undoList = new FieldEditList();
-
-		// Set latitude, longitude
+		// Set latitude and longitude
 		String[] coordStrings = getTruncatedCoords();
-		editList.addEdit(new FieldEdit(Field.LATITUDE, coordStrings[0]));
-		undoList.addEdit(new FieldEdit(Field.LATITUDE, _point.getFieldValue(Field.LATITUDE)));
-		editList.addEdit(new FieldEdit(Field.LONGITUDE, coordStrings[1]));
-		undoList.addEdit(new FieldEdit(Field.LONGITUDE, _point.getFieldValue(Field.LONGITUDE)));
-
-		// Pass back to App to perform edit
-		_app.completePointEdit(editList, undoList);
+		List<FieldEdit> edits = List.of(new FieldEdit(Field.LATITUDE, coordStrings[0]),
+			new FieldEdit(Field.LONGITUDE, coordStrings[1]));
+		int pointIndex = _app.getTrackInfo().getSelection().getCurrentPointIndex();
+		EditPointCmd command = new EditPointCmd(pointIndex, edits);
+		Describer undoDescriber = new Describer("undo.editpoint", "undo.editpoint.withname");
+		String pointName = _app.getTrackInfo().getCurrentPoint().getWaypointName();
+		command.setDescription(undoDescriber.getDescriptionWithNameOrNot(pointName));
+		command.setConfirmText(I18nManager.getText("confirm.point.edit"));
+		_app.execute(command);
 		_dialog.dispose();
 	}
 }

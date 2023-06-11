@@ -16,7 +16,7 @@ import tim.prune.data.SourceInfo;
  */
 public class GpxCacher implements TagReceiver
 {
-	private SourceInfo _sourceInfo = null;
+	private final SourceInfo _sourceInfo;
 	private String _headerString = null;
 	private String[] _strings = null;
 	private int _pointNum = 0;
@@ -92,8 +92,7 @@ public class GpxCacher implements TagReceiver
 	/**
 	 * @return the header string from the GPX tag
 	 */
-	public String getHeaderString()
-	{
+	public String getHeaderString() {
 		return _headerString;
 	}
 
@@ -104,7 +103,10 @@ public class GpxCacher implements TagReceiver
 	 */
 	public String getSourceString(DataPoint inPoint)
 	{
-		int index = _sourceInfo.getIndex(inPoint);
+		if (_sourceInfo != inPoint.getSourceInfo()) {
+			return null;
+		}
+		int index = inPoint.getOriginalIndex();
 		if (_strings != null && index >= 0 && index < _strings.length) {
 			return _strings[index];
 		}

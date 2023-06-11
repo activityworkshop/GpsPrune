@@ -17,7 +17,6 @@ import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
 import tim.prune.config.Config;
-import tim.prune.config.ConfigException;
 import tim.prune.gui.DetailsDisplay;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MenuManager;
@@ -31,14 +30,14 @@ import tim.prune.gui.profile.ProfileChart;
 /**
  * GpsPrune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or https://activityworkshop.net
- * This software is copyright activityworkshop.net 2006-2022 and made available through the Gnu GPL version 2.
+ * This software is copyright activityworkshop.net 2006-2023 and made available through the Gnu GPL version 2.
  * For license details please see the included license.txt.
  * GpsPrune is the main entry point to the application, including initialisation and launch
  */
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "22.2";
+	public static final String VERSION_NUMBER = "23";
 	/** Build number, just used for about screen */
 	public static final String BUILD_NUMBER = "401";
 	/** Static reference to App object */
@@ -108,17 +107,16 @@ public class GpsPrune
 				+ "\n   --langfile=<file>   used to specify an alternative language file\n");
 		}
 		// Initialise configuration if selected
-		try
+		boolean loadedConfig = false;
+		if (configFilename != null)
 		{
-			if (configFilename != null) {
-				Config.loadFile(new File(configFilename));
-			}
-			else {
-				Config.loadDefaultFile();
+			loadedConfig = Config.loadFile(new File(configFilename));
+			if (!loadedConfig) {
+				System.err.println("Failed to load config file: " + configFilename);
 			}
 		}
-		catch (ConfigException ce) {
-			System.err.println("Failed to load config file: " + configFilename);
+		if (!loadedConfig) {
+			Config.loadDefaultFile();
 		}
 		boolean overrideLang = (locale != null);
 		if (overrideLang) {
@@ -197,7 +195,6 @@ public class GpsPrune
 		// make menu
 		MenuManager menuManager = new MenuManager(APP, APP.getTrackInfo());
 		frame.setJMenuBar(menuManager.createMenuBar());
-		APP.setMenuManager(menuManager);
 		UpdateMessageBroker.addSubscriber(menuManager);
 		// Make toolbar for buttons
 		JToolBar toolbar = menuManager.createToolBar();
@@ -207,7 +204,7 @@ public class GpsPrune
 		UpdateMessageBroker.addSubscriber(leftPanel);
 		DetailsDisplay rightPanel = new DetailsDisplay(APP.getTrackInfo());
 		UpdateMessageBroker.addSubscriber(rightPanel);
-		MapCanvas mapDisp = new MapCanvas(APP, APP.getTrackInfo());
+		MapCanvas mapDisp = new MapCanvas(APP);
 		UpdateMessageBroker.addSubscriber(mapDisp);
 		Viewport viewport = new Viewport(mapDisp);
 		APP.setViewport(viewport);
@@ -243,8 +240,8 @@ public class GpsPrune
 		{
 			ArrayList<Image> icons = new ArrayList<>();
 			String[] resolutions = {"_16", "_20", "_22", "_24", "_32", "_36", "_48", "_64", "_72", "_96", "_128"};
-			for (String r : resolutions) {
-				icons.add(IconManager.getImageIcon(IconManager.WINDOW_ICON + r + ".png").getImage());
+			for (String res : resolutions) {
+				icons.add(IconManager.getImageIcon(IconManager.WINDOW_ICON + res).getImage());
 			}
 			frame.setIconImages(icons);
 		}
@@ -252,7 +249,7 @@ public class GpsPrune
 		{
 			// setting a list of icon images didn't work, so try with just one image instead
 			try {
-				frame.setIconImage(IconManager.getImageIcon(IconManager.WINDOW_ICON + "_16.png").getImage());
+				frame.setIconImage(IconManager.getImageIcon(IconManager.WINDOW_ICON + "_16").getImage());
 			}
 			catch (Exception e2) {}
 		}

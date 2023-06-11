@@ -20,7 +20,7 @@ public class IconRenderer extends JLabel implements TableCellRenderer
 		boolean inHasFocus, int inRow, int inColumn)
 	{
 		if (inValue != null) {
-			setIcon(IconManager.getImageIcon("weather-" + inValue.toString()));
+			setIcon(IconManager.getImageIcon("weather/" + inValue.toString()));
 			setHorizontalAlignment(SwingConstants.CENTER);
 		}
 		else {

@@ -1,6 +1,5 @@
 package tim.prune.gui.colour;
 
-import java.awt.Color;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -11,9 +10,9 @@ import java.awt.event.MouseEvent;
 public class PatchListener extends MouseAdapter
 {
 	/** Associated patch */
-	private ColourPatch _patch = null;
+	private final ColourPatch _patch;
 	/** Colour chooser object, shared between listeners */
-	private ColourChooser _colourChooser = null;
+	private final ColourChooser _colourChooser;
 
 	/**
 	 * Constructor
@@ -30,7 +29,6 @@ public class PatchListener extends MouseAdapter
 	public void mouseClicked(MouseEvent e)
 	{
 		_colourChooser.showDialog(_patch.getBackground());
-		Color colour = _colourChooser.getChosenColour();
-		if (colour != null) _patch.setColour(colour);
+		_patch.setColour(_colourChooser.getChosenColour());
 	}
 }

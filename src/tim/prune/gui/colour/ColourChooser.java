@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -13,8 +11,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import tim.prune.I18nManager;
 
@@ -27,7 +23,7 @@ import tim.prune.I18nManager;
 public class ColourChooser
 {
 	/** main dialog object */
-	private JDialog _dialog = null;
+	private final JDialog _dialog;
 	/** array of three slider objects for rgb */
 	private JSlider[] _rgbSliders = null;
 	/** array of labels for rgb values */
@@ -73,11 +69,7 @@ public class ColourChooser
 			String key = I18nManager.getText("dialog.colourchooser." + labelKeys[i]);
 			sliderPanel.add(new JLabel(key));
 			_rgbSliders[i] = new JSlider(0, 255);
-			_rgbSliders[i].addChangeListener(new ChangeListener() {
-				public void stateChanged(ChangeEvent arg0) {
-					updatePatch();
-				}
-			});
+			_rgbSliders[i].addChangeListener(e -> updatePatch());
 			_rgbSliders[i].setToolTipText(key);
 			JPanel sliderHolder = new JPanel();
 			sliderHolder.setLayout(new BorderLayout(5, 0));
@@ -94,19 +86,15 @@ public class ColourChooser
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_chosenColour = _patch.getBackground();
-				_dialog.setVisible(false);
-			}
+		okButton.addActionListener(e -> {
+			_chosenColour = _patch.getBackground();
+			_dialog.setVisible(false);
 		});
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_chosenColour = null;
-				_dialog.setVisible(false);
-			}
+		cancelButton.addActionListener(e -> {
+			_chosenColour = null;
+			_dialog.setVisible(false);
 		});
 		buttonPanel.add(cancelButton);
 		mainPanel.add(buttonPanel, BorderLayout.SOUTH);

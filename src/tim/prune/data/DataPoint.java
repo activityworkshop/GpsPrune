@@ -12,12 +12,14 @@ public class DataPoint
 	/** Array of Strings holding raw values */
 	private String[] _fieldValues = null;
 	/** list of field definitions */
-	private FieldList _fieldList = null;
+	private final FieldList _fieldList;
 	/** Special fields for coordinates */
 	private Coordinate _latitude = null, _longitude = null;
 	private Altitude _altitude = null;
 	private Speed _hSpeed = null, _vSpeed = null;
 	private Timestamp _timestamp = null;
+	private SourceInfo _sourceInfo = null;
+	private int _originalIndex = -1;
 	/** Attached photo */
 	private Photo _photo = null;
 	/** Attached audio clip */
@@ -67,7 +69,7 @@ public class DataPoint
 			if (_altitude != null && _altitude.getUnit() != null) {
 				altUnit = _altitude.getUnit();
 			}
-			_altitude = new Altitude(getFieldValue(Field.ALTITUDE), altUnit);
+			setAltitudeUnit(altUnit);
 		}
 		if (inField == null || inField == Field.SPEED)
 		{
@@ -90,10 +92,16 @@ public class DataPoint
 		{
 			String segmentStr = getFieldValue(Field.NEW_SEGMENT);
 			if (segmentStr != null) {segmentStr = segmentStr.trim();}
-			_startOfSegment = (segmentStr != null && (segmentStr.equals("1") || segmentStr.toUpperCase().equals("Y")));
+			_startOfSegment = (segmentStr != null && (segmentStr.equals("1") || segmentStr.equalsIgnoreCase("Y")));
 		}
 	}
 
+	/**
+	 * @param inUnit unit to use for altitude, either metres or feet
+	 */
+	public void setAltitudeUnit(Unit inUnit) {
+		_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inUnit);
+	}
 
 	/**
 	 * Constructor for additional points (eg interpolated, photos)
@@ -127,11 +135,9 @@ public class DataPoint
 	 * @param inField field to interrogate
 	 * @return value of field
 	 */
-	public String getFieldValue(Field inField)
-	{
+	public String getFieldValue(Field inField) {
 		return getFieldValue(_fieldList.getFieldIndex(inField));
 	}
-
 
 	/**
 	 * Get the value at the given index
@@ -140,11 +146,11 @@ public class DataPoint
 	 */
 	private String getFieldValue(int inIndex)
 	{
-		if (_fieldValues == null || inIndex < 0 || inIndex >= _fieldValues.length)
+		if (_fieldValues == null || inIndex < 0 || inIndex >= _fieldValues.length) {
 			return null;
+		}
 		return _fieldValues[inIndex];
 	}
-
 
 	/**
 	 * Set (or edit) the specified field value
@@ -160,16 +166,14 @@ public class DataPoint
 		if (fieldIndex < 0)
 		{
 			// If value is empty & field doesn't exist then do nothing
-			if (inValue == null || inValue.equals(""))
-			{
+			if (inValue == null || inValue.equals("")) {
 				return;
 			}
 			// value isn't empty so extend field list
 			fieldIndex = _fieldList.extendList(inField);
 		}
 		// Extend array of field values if necessary
-		if (fieldIndex >= _fieldValues.length)
-		{
+		if (fieldIndex >= _fieldValues.length) {
 			resizeValueArray(fieldIndex);
 		}
 		// Set field value in array
@@ -206,15 +210,13 @@ public class DataPoint
 	/**
 	 * @return field list for this point
 	 */
-	public FieldList getFieldList()
-	{
+	public FieldList getFieldList() {
 		return _fieldList;
 	}
 
 	/** @param inFlag true for start of track segment */
-	public void setSegmentStart(boolean inFlag)
-	{
-		setFieldValue(Field.NEW_SEGMENT, inFlag?"1":null, false);
+	public void setSegmentStart(boolean inFlag) {
+		setFieldValue(Field.NEW_SEGMENT, inFlag ? "1" : null, false);
 	}
 
 	/**
@@ -226,86 +228,81 @@ public class DataPoint
 	}
 
 	/** @return latitude */
-	public Coordinate getLatitude()
-	{
+	public Coordinate getLatitude() {
 		return _latitude;
 	}
+
 	/** @return longitude */
-	public Coordinate getLongitude()
-	{
+	public Coordinate getLongitude() {
 		return _longitude;
 	}
+
 	/** @return true if point has altitude */
-	public boolean hasAltitude()
-	{
+	public boolean hasAltitude() {
 		return _altitude != null && _altitude.isValid();
 	}
+
 	/** @return altitude */
-	public Altitude getAltitude()
-	{
+	public Altitude getAltitude() {
 		return _altitude;
 	}
+
 	/** @return true if point has horizontal speed (loaded as field) */
-	public boolean hasHSpeed()
-	{
+	public boolean hasHSpeed() {
 		return _hSpeed != null && _hSpeed.isValid();
 	}
+
 	/** @return horizontal speed */
-	public Speed getHSpeed()
-	{
+	public Speed getHSpeed() {
 		return _hSpeed;
 	}
+
 	/** @return true if point has vertical speed (loaded as field) */
-	public boolean hasVSpeed()
-	{
+	public boolean hasVSpeed() {
 		return _vSpeed != null && _vSpeed.isValid();
 	}
+
 	/** @return vertical speed */
-	public Speed getVSpeed()
-	{
+	public Speed getVSpeed() {
 		return _vSpeed;
 	}
+
 	/** @return true if point has timestamp */
-	public boolean hasTimestamp()
-	{
-		return _timestamp.isValid();
+	public boolean hasTimestamp() {
+		return _timestamp != null && _timestamp.isValid();
 	}
+
 	/** @return timestamp */
-	public Timestamp getTimestamp()
-	{
+	public Timestamp getTimestamp() {
 		return _timestamp;
 	}
+
 	/** @return waypoint name, if any */
-	public String getWaypointName()
-	{
+	public String getWaypointName() {
 		return _waypointName;
 	}
 
 	/** @return true if start of new track segment */
-	public boolean getSegmentStart()
-	{
+	public boolean getSegmentStart() {
 		return _startOfSegment;
 	}
 
 	/** @return true if point marked for deletion */
-	public boolean getDeleteFlag()
-	{
+	public boolean getDeleteFlag() {
 		return _markedForDeletion;
 	}
 
 	/**
 	 * @return true if point has a waypoint name
 	 */
-	public boolean isWaypoint()
-	{
-		return (_waypointName != null && !_waypointName.equals(""));
+	public boolean isWaypoint() {
+		return _waypointName != null && !_waypointName.equals("");
 	}
 
 	/**
 	 * @return true if point has been modified since loading
 	 */
-	public boolean isModified()
-	{
+	public boolean isModified() {
 		return _modifyCount > 0;
 	}
 
@@ -331,52 +328,23 @@ public class DataPoint
 		}
 		// Note that conversion from decimal to dms can make non-identical points into duplicates
 		// Compare waypoint name (if any)
-		if (!isWaypoint())
-		{
+		if (!isWaypoint()) {
 			return !inOther.isWaypoint();
 		}
 		return (inOther._waypointName != null && inOther._waypointName.equals(_waypointName));
 	}
 
 	/**
-	 * Add an altitude offset to this point, and keep the point's string value in sync
-	 * @param inOffset offset as double
-	 * @param inUnit unit of offset, feet or metres
-	 * @param inDecimals number of decimal places
+	 * Set the altitude including units
+	 * @param inValue value as string
+	 * @param inUnit units
+	 * @param inIsUndo true if it's an undo operation
 	 */
-	public void addAltitudeOffset(double inOffset, Unit inUnit, int inDecimals)
+	public void setAltitude(String inValue, Unit inUnit, boolean inIsUndo)
 	{
-		if (hasAltitude())
-		{
-			_altitude.addOffset(inOffset, inUnit, inDecimals);
-			_fieldValues[_fieldList.getFieldIndex(Field.ALTITUDE)] = _altitude.getStringValue(null);
-			setModified(false);
-		}
-	}
-
-	/**
-	 * Reset the altitude to the previous value (by an undo)
-	 * @param inClone altitude object cloned from earlier
-	 */
-	public void resetAltitude(Altitude inClone)
-	{
-		_altitude.reset(inClone);
-		_fieldValues[_fieldList.getFieldIndex(Field.ALTITUDE)] = _altitude.getStringValue(null);
-		setModified(true);
-	}
-
-	/**
-	 * Add a time offset to this point
-	 * @param inOffset offset to add (-ve to subtract)
-	 */
-	public void addTimeOffsetSeconds(long inOffset)
-	{
-		if (hasTimestamp())
-		{
-			_timestamp.addOffsetSeconds(inOffset);
-			_fieldValues[_fieldList.getFieldIndex(Field.TIMESTAMP)] = _timestamp.getText(null);
-			setModified(false);
-		}
+		_altitude = new Altitude(inValue, inUnit);
+		setFieldValue(Field.ALTITUDE, inValue, inIsUndo);
+		setModified(inIsUndo);
 	}
 
 	/**
@@ -412,28 +380,9 @@ public class DataPoint
 	}
 
 	/**
-	 * Attach the given media object according to type
-	 * @param inMedia either a photo or an audio clip
-	 */
-	public void attachMedia(MediaObject inMedia)
-	{
-		if (inMedia != null) {
-			if (inMedia instanceof Photo) {
-				setPhoto((Photo) inMedia);
-				inMedia.setDataPoint(this);
-			}
-			else if (inMedia instanceof AudioClip) {
-				setAudio((AudioClip) inMedia);
-				inMedia.setDataPoint(this);
-			}
-		}
-	}
-
-	/**
 	 * @return true if the point is valid
 	 */
-	public boolean isValid()
-	{
+	public boolean isValid() {
 		return _latitude.isValid() && _longitude.isValid();
 	}
 
@@ -464,23 +413,18 @@ public class DataPoint
 	}
 
 	/**
-	 * Interpolate a set of points between this one and the given one
+	 * Interpolate a point between this one and the given one
 	 * @param inEndPoint end point of interpolation
+	 * @param inIndex the index of this interpolation (0 to inNumPoints-1)
 	 * @param inNumPoints number of points to generate
-	 * @return the DataPoint array
+	 * @return the interpolated DataPoint
 	 */
-	public DataPoint[] interpolate(DataPoint inEndPoint, int inNumPoints)
+	public DataPoint interpolate(DataPoint inEndPoint, int inIndex, int inNumPoints)
 	{
-		DataPoint[] range = new DataPoint[inNumPoints];
-		// Loop over points
-		for (int i=0; i<inNumPoints; i++)
-		{
-			Coordinate latitude = Coordinate.interpolate(_latitude, inEndPoint.getLatitude(), i, inNumPoints);
-			Coordinate longitude = Coordinate.interpolate(_longitude, inEndPoint.getLongitude(), i, inNumPoints);
-			Altitude altitude = Altitude.interpolate(_altitude, inEndPoint.getAltitude(), i, inNumPoints);
-			range[i] = new DataPoint(latitude, longitude, altitude);
-		}
-		return range;
+		Coordinate latitude = Coordinate.interpolate(_latitude, inEndPoint.getLatitude(), inIndex, inNumPoints);
+		Coordinate longitude = Coordinate.interpolate(_longitude, inEndPoint.getLongitude(), inIndex, inNumPoints);
+		Altitude altitude = Altitude.interpolate(_altitude, inEndPoint.getAltitude(), inIndex, inNumPoints);
+		return new DataPoint(latitude, longitude, altitude);
 	}
 
 	/**
@@ -568,6 +512,21 @@ public class DataPoint
 		return point;
 	}
 
+	public void setSourceInfo(SourceInfo inInfo) {
+		_sourceInfo = inInfo;
+	}
+
+	public SourceInfo getSourceInfo() {
+		return _sourceInfo;
+	}
+
+	public void setOriginalIndex(int inIndex) {
+		_originalIndex = inIndex;
+	}
+
+	public int getOriginalIndex() {
+		return _originalIndex;
+	}
 
 	/**
 	 * Remove all single and double quotes surrounding each value
@@ -589,7 +548,7 @@ public class DataPoint
 	 */
 	private static String removeQuotes(String inValue)
 	{
-		if (inValue == null) {return inValue;}
+		if (inValue == null) {return null;}
 		final int len = inValue.length();
 		if (len <= 1) {return inValue;}
 		// get the first and last characters

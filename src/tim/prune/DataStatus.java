@@ -7,8 +7,8 @@ package tim.prune;
  */
 public class DataStatus
 {
-	private int _undoSize = 0;
-	private int _numUndos = 0;
+	private final int _undoSize;
+	private final int _numUndos;
 
 	/**
 	 * Constructor

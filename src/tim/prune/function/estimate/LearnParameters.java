@@ -3,10 +3,6 @@ package tim.prune.function.estimate;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -98,7 +94,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 	 */
 	public void run()
 	{
-		_progress.setMaximum(100);
+		_progress.setMaximumValue(100);
 		// Go through the track and collect the range stats for each sample
 		ArrayList<RangeStatsWithGradients> statsList = new ArrayList<RangeStatsWithGradients>(20);
 		Track track = _app.getTrackInfo().getTrack();
@@ -122,29 +118,26 @@ public class LearnParameters extends GenericFunction implements Runnable
 		}
 
 		// Check if we've got enough samples
-		// System.out.println("Got a total of " + statsList.size() + " samples");
 		if (statsList.size() < 10)
 		{
-			_progress.dispose();
+			_progress.close();
 			// Show error message, not enough samples
 			_app.showErrorMessage(getNameKey(), "error.learnestimationparams.failed");
 			return;
 		}
 		// Loop around, solving the matrices and removing the highest-error sample
 		MatrixResults results = reduceSamples(statsList);
+		_progress.close();
 		if (results == null)
 		{
-			_progress.dispose();
 			_app.showErrorMessage(getNameKey(), "error.learnestimationparams.failed");
 			return;
 		}
 
-		_progress.dispose();
-
 		// Create the dialog if necessary
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			// Create Gui and show it
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -185,12 +178,9 @@ public class LearnParameters extends GenericFunction implements Runnable
 		mainPanel.add(new JLabel(I18nManager.getText("dialog.learnestimationparams.combine") + ":"));
 		mainPanel.add(Box.createVerticalStrut(4));
 		_weightSlider = new JScrollBar(JScrollBar.HORIZONTAL, 5, 1, 0, 11);
-		_weightSlider.addAdjustmentListener(new AdjustmentListener() {
-			public void adjustmentValueChanged(AdjustmentEvent inEvent)
-			{
-				if (!inEvent.getValueIsAdjusting()) {
-					updateCombinedLabels(calculateCombinedParameters());
-				}
+		_weightSlider.addAdjustmentListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				updateCombinedLabels(calculateCombinedParameters());
 			}
 		});
 		mainPanel.add(_weightSlider);
@@ -212,20 +202,12 @@ public class LearnParameters extends GenericFunction implements Runnable
 
 		// Combine
 		_combineButton = new JButton(I18nManager.getText("button.combine"));
-		_combineButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				combineAndFinish();
-			}
-		});
+		_combineButton.addActionListener(e -> combineAndFinish());
 		buttonPanel.add(_combineButton);
 
 		// Cancel
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		KeyAdapter escapeListener = new KeyAdapter() {
 			public void keyPressed(KeyEvent inE) {
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
@@ -297,8 +279,10 @@ public class LearnParameters extends GenericFunction implements Runnable
 		while (!shouldStop);
 
 		// Check moving distance
-		if (movingRads >= minimumRads) {
-			return new RangeStatsWithGradients(inTrack, start, endIndex);
+		if (movingRads >= minimumRads)
+		{
+			final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+			return new RangeStatsWithGradients(inTrack, start, endIndex, altitudeTolerance);
 		}
 		return null;
 	}

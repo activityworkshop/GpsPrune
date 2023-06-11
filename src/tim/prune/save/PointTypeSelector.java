@@ -65,11 +65,11 @@ public class PointTypeSelector extends JPanel
 	 */
 	public void init(TrackInfo inTrackInfo)
 	{
-		// Get whether track has track points, waypoints, photos
+		// Get whether track has track points, waypoints, photos, audios
 		boolean[] dataFlags = {inTrackInfo.getTrack().hasTrackPoints(),
 				inTrackInfo.getTrack().hasWaypoints(),
-				inTrackInfo.getPhotoList().getNumPhotos() > 0,
-				inTrackInfo.getAudioList().getNumAudios() > 0
+				inTrackInfo.getPhotoList().hasAny(),
+				inTrackInfo.getAudioList().hasAny()
 		};
 		// Rearrange grid to just show the appropriate entries
 		final boolean[] showFlags = {true, true, dataFlags[2] || !dataFlags[3], dataFlags[3]};

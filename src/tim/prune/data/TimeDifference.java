@@ -23,8 +23,8 @@ public class TimeDifference
 	{
 		_totalSeconds = inNumSeconds;
 		if (inNumSeconds < 0) {inNumSeconds = -inNumSeconds;}
-		_hours = (int) (inNumSeconds / 60 / 60);
-		_minutes = (int) (inNumSeconds / 60 - _hours * 60);
+		_hours = (int) (inNumSeconds / 60L / 60L);
+		_minutes = (int) (inNumSeconds / 60L - _hours * 60L);
 		_seconds = (int) (inNumSeconds % 60);
 	}
 

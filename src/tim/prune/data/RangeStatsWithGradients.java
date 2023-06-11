@@ -6,8 +6,8 @@ package tim.prune.data;
  */
 public class RangeStatsWithGradients extends RangeStats
 {
-	private AltitudeRange _gentleAltitudeRange = new AltitudeRange();
-	private AltitudeRange _steepAltitudeRange = new AltitudeRange();
+	private final AltitudeRange _gentleAltitudeRange;
+	private final AltitudeRange _steepAltitudeRange;
 	private Altitude _prevAltitude = null;
 	private double _radsSinceLastAltitude = 0.0;
 
@@ -15,11 +15,14 @@ public class RangeStatsWithGradients extends RangeStats
 
 
 	/**
-	 * Default constructor
+	 * Constructor
+	 * @param inAltitudeTolerance altitude tolerance in metres
 	 */
-	public RangeStatsWithGradients()
+	public RangeStatsWithGradients(int inAltitudeTolerance)
 	{
-		super();
+		super(inAltitudeTolerance);
+		_gentleAltitudeRange = new AltitudeRange(inAltitudeTolerance);
+		_steepAltitudeRange = new AltitudeRange(inAltitudeTolerance);
 	}
 
 	/**
@@ -27,10 +30,11 @@ public class RangeStatsWithGradients extends RangeStats
 	 * @param inTrack track object
 	 * @param inStartIndex start index
 	 * @param inEndIndex end index
+	 * @param inAltitudeTolerance altitude tolerance in metres
 	 */
-	public RangeStatsWithGradients(Track inTrack, int inStartIndex, int inEndIndex)
+	public RangeStatsWithGradients(Track inTrack, int inStartIndex, int inEndIndex, int inAltitudeTolerance)
 	{
-		super();
+		this(inAltitudeTolerance);
 		populateFromTrack(inTrack, inStartIndex, inEndIndex);
 	}
 

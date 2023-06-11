@@ -10,7 +10,8 @@ import tim.prune.GenericFunction;
 public abstract class SingleNumericParameterFunction extends GenericFunction
 {
 	/** Minimum and maximum allowed values */
-	protected int _minAllowedValue, _maxAllowedValue;
+	protected final int _minAllowedValue;
+	protected final int _maxAllowedValue;
 
 	/** Constructor */
 	public SingleNumericParameterFunction(App inApp, int inMinValue, int inMaxValue)
@@ -18,6 +19,15 @@ public abstract class SingleNumericParameterFunction extends GenericFunction
 		super(inApp);
 		_minAllowedValue = inMinValue;
 		_maxAllowedValue = inMaxValue;
+	}
+
+	/**
+	 * Run function
+	 */
+	public void begin()
+	{
+		// Not required, because this function is started from a ChooseSingleParameter function
+		// and goes directly to the completeFunction method.
 	}
 
 	/** Get the current value for display in the dialog */
@@ -30,7 +40,12 @@ public abstract class SingleNumericParameterFunction extends GenericFunction
 	public abstract void completeFunction(int inParam);
 
 	/** @return minimum allowed value */
-	public int getMinAllowedValue() {return _minAllowedValue;}
+	public int getMinAllowedValue() {
+		return _minAllowedValue;
+	}
+
 	/** @return maximum allowed value */
-	public int getMaxAllowedValue() {return _maxAllowedValue;}
+	public int getMaxAllowedValue() {
+		return _maxAllowedValue;
+	}
 }

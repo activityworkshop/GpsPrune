@@ -10,7 +10,7 @@ import tim.prune.DataSubscriber;
 public class ColourerCaretaker implements DataSubscriber
 {
 	/** App object for getting the track */
-	private App _app = null;
+	private final App _app;
 	/** PointColourer object for passing details to */
 	private PointColourer _colourer = null;
 
@@ -18,8 +18,7 @@ public class ColourerCaretaker implements DataSubscriber
 	 * Constructor
 	 * @param inApp app object to use
 	 */
-	public ColourerCaretaker(App inApp)
-	{
+	public ColourerCaretaker(App inApp) {
 		_app = inApp;
 	}
 
@@ -29,21 +28,20 @@ public class ColourerCaretaker implements DataSubscriber
 	public void setColourer(PointColourer inColourer)
 	{
 		_colourer = inColourer;
-		dataUpdated(ALL);
+		dataUpdated(ALL_DATA);
 	}
 
 	/**
 	 * @return point colourer, or null
 	 */
-	public PointColourer getColourer()
-	{
+	public PointColourer getColourer() {
 		return _colourer;
 	}
 
 	/**
 	 * Data has been updated
 	 */
-	public void dataUpdated(byte inUpdateType)
+	public void dataUpdated(int inUpdateType)
 	{
 		if ((inUpdateType &
 			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.UNITS_CHANGED)) > 0

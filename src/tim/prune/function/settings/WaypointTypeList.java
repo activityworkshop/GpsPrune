@@ -12,7 +12,7 @@ import tim.prune.data.Track;
 public class WaypointTypeList extends AbstractListModel<String>
 {
 	/** Sorted list of waypoint types */
-	private ArrayList<String> _types = new ArrayList<>(); 
+	private final ArrayList<String> _types = new ArrayList<>();
 
 	public WaypointTypeList() {
 		_types.add("first one");

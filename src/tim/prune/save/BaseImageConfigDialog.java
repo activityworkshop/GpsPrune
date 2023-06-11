@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
@@ -33,13 +31,13 @@ import tim.prune.threedee.ImageDefinition;
 public class BaseImageConfigDialog implements Runnable
 {
 	/** Parent to notify */
-	private BaseImageConsumer _parent = null;
+	private final BaseImageConsumer _parent;
 	/** Parent dialog for position */
-	private JDialog _parentDialog = null;
+	private final JDialog _parentDialog;
 	/** Track to use for preview image */
-	private Track _track = null;
+	private final Track _track;
 	/** Dialog to show */
-	private JDialog _dialog = null;
+	private final JDialog _dialog;
 	/** Checkbox for using an image or not */
 	private JCheckBox _useImageCheckbox = null;
 	/** Panel to hold the other controls */
@@ -197,7 +195,6 @@ public class BaseImageConfigDialog implements Runnable
 						zoomToSelect = _zoomDropdown.getItemCount() - 1;
 					}
 				}
-				// else System.out.println("Not using zoom " + i + " because pixCount=" + pixCount + " and xyExtent=" + xyExtent);
 			}
 		}
 		_zoomDropdown.setSelectedIndex(zoomToSelect);
@@ -284,11 +281,7 @@ public class BaseImageConfigDialog implements Runnable
 		_useImageCheckbox = new JCheckBox(I18nManager.getText("dialog.baseimage.useimage"));
 		_useImageCheckbox.setBorder(BorderFactory.createEmptyBorder(4, 4, 6, 4));
 		_useImageCheckbox.setHorizontalAlignment(JLabel.CENTER);
-		_useImageCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				refreshDialog();
-			}
-		});
+		_useImageCheckbox.addActionListener(e -> refreshDialog());
 		panel.add(_useImageCheckbox, BorderLayout.NORTH);
 
 		// Outer panel with the grid and the map preview
@@ -304,11 +297,7 @@ public class BaseImageConfigDialog implements Runnable
 		_mapSourceDropdown = new JComboBox<String>();
 		_mapSourceDropdown.addItem("name of map source");
 		// Add listener to dropdown to change zoom levels
-		_mapSourceDropdown.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				refreshDialog();
-			}
-		});
+		_mapSourceDropdown.addActionListener(e -> refreshDialog());
 		controlsPanel.add(_mapSourceDropdown);
 		// zoom level
 		JLabel zoomLabel = new JLabel(I18nManager.getText("dialog.baseimage.zoom") + ": ");
@@ -316,12 +305,10 @@ public class BaseImageConfigDialog implements Runnable
 		controlsPanel.add(zoomLabel);
 		_zoomDropdown = new JComboBox<String>();
 		// Add action listener to enable ok button when zoom changed
-		_zoomDropdown.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				if (_zoomDropdown.getSelectedIndex() >= 0) {
-					_okButton.setEnabled(true);
-					updateImagePreview();
-				}
+		_zoomDropdown.addActionListener(e -> {
+			if (_zoomDropdown.getSelectedIndex() >= 0) {
+				_okButton.setEnabled(true);
+				updateImagePreview();
 			}
 		});
 		controlsPanel.add(_zoomDropdown);
@@ -339,11 +326,7 @@ public class BaseImageConfigDialog implements Runnable
 		JPanel downloadPanel = new JPanel();
 		downloadPanel.setLayout(new BorderLayout(4, 4));
 		_downloadTilesButton = new JButton(I18nManager.getText("button.load"));
-		_downloadTilesButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				downloadRemainingTiles();
-			}
-		});
+		_downloadTilesButton.addActionListener(e -> downloadRemainingTiles());
 		_downloadTilesButton.setVisible(false);
 		downloadPanel.add(_downloadTilesButton, BorderLayout.NORTH);
 		_progressBar = new JProgressBar();
@@ -370,26 +353,10 @@ public class BaseImageConfigDialog implements Runnable
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// Check values, maybe don't want to exit
-				if (!_useImageCheckbox.isSelected()
-					|| (_mapSourceDropdown.getSelectedIndex() >= 0 && _zoomDropdown.getSelectedIndex() >= 0))
-				{
-					storeValues();
-					_dialog.dispose();
-				}
-			}
-		});
+		_okButton.addActionListener(e -> okPressed());
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		panel.add(buttonPanel, BorderLayout.SOUTH);
 
@@ -409,6 +376,20 @@ public class BaseImageConfigDialog implements Runnable
 		cancelButton.addKeyListener(closer);
 
 		return panel;
+	}
+
+	/**
+	 * React to OK button being pressed
+	 */
+	private void okPressed()
+	{
+		// Check values, maybe don't want to exit
+		if (!_useImageCheckbox.isSelected()
+			|| (_mapSourceDropdown.getSelectedIndex() >= 0 && _zoomDropdown.getSelectedIndex() >= 0))
+		{
+			storeValues();
+			_dialog.dispose();
+		}
 	}
 
 	/**
@@ -534,8 +515,7 @@ public class BaseImageConfigDialog implements Runnable
 	/**
 	 * @return the map grouter for retrieval of generated image
 	 */
-	public MapGrouter getGrouter()
-	{
+	public MapGrouter getGrouter() {
 		return _grouter;
 	}
 
@@ -545,21 +525,18 @@ public class BaseImageConfigDialog implements Runnable
 	private void downloadRemainingTiles()
 	{
 		_downloadTilesButton.setEnabled(false);
-		new Thread(new Runnable() {
-			public void run()
-			{
-				_progressBar.setVisible(true);
-				// Use a grouter to get all tiles from the TileManager, including downloading
-				MapGrouter grouter = new MapGrouter();
-				final int mapIndex = _mapSourceDropdown.getSelectedIndex();
-				if (!_useImageCheckbox.isSelected() || mapIndex < 0) {return;}
-				MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
-				grouter.createMapImage(_track, mapSource, getSelectedZoomLevel(), true);
-				_progressBar.setVisible(false);
-				// And then refresh the dialog
-				_grouter.clearMapImage();
-				updateImagePreview();
-			}
+		new Thread(() -> {
+			_progressBar.setVisible(true);
+			// Use a grouter to get all tiles from the TileManager, including downloading
+			MapGrouter grouter = new MapGrouter();
+			final int mapIndex = _mapSourceDropdown.getSelectedIndex();
+			if (!_useImageCheckbox.isSelected() || mapIndex < 0) {return;}
+			MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
+			grouter.createMapImage(_track, mapSource, getSelectedZoomLevel(), true);
+			_progressBar.setVisible(false);
+			// And then refresh the dialog
+			_grouter.clearMapImage();
+			updateImagePreview();
 		}).start();
 	}
 }

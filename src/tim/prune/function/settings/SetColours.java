@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -130,29 +128,11 @@ public class SetColours extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.LINE_AXIS));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				updateConfigColours();
-				_dialog.dispose();
-			}
-		});
+		_okButton.addActionListener(e -> updateConfigColours());
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		JButton resetButton = new JButton(I18nManager.getText("button.resettodefaults"));
-		resetButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				for (int i=0; i<8; i++) {
-					_patches[i].setColour(ColourScheme.getDefaultColour(INDICES[i]));
-				}
-			}
-		});
+		resetButton.addActionListener(e -> resetPressed());
 		buttonPanel.add(resetButton);
 		buttonPanel.add(Box.createHorizontalGlue());
 		buttonPanel.add(_okButton);
@@ -165,13 +145,23 @@ public class SetColours extends GenericFunction
 
 
 	/**
+	 * Reset colours to their defaults
+	 */
+	private void resetPressed()
+	{
+		for (int i=0; i<8; i++) {
+			_patches[i].setColour(ColourScheme.getDefaultColour(INDICES[i]));
+		}
+	}
+
+	/**
 	 * Show window
 	 */
 	public void begin()
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()));
+			_dialog = new JDialog(_parentFrame, getName());
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_colourChooser = new ColourChooser(_dialog);
 			_dialog.getContentPane().add(makeContents());
@@ -203,5 +193,6 @@ public class SetColours extends GenericFunction
 		Config.updatePointColourer(colourer);
 		_app.updatePointColourer();
 		UpdateMessageBroker.informSubscribers();
+		_dialog.dispose();
 	}
 }

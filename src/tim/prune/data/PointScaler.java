@@ -6,7 +6,7 @@ package tim.prune.data;
 public class PointScaler
 {
 	/** Original data */
-	private Track _track = null;
+	private final Track _track;
 	/** Secondary data for terrain grid */
 	private Track _terrainTrack = null;
 	// Scaled values for data track
@@ -19,9 +19,6 @@ public class PointScaler
 	private double[] _terrainAltValues = null;
 	// Altitude range
 	private double _altitudeRange = 0.0;
-	private double _minAltitudeMetres = 0.0;
-	// Horizontal distance
-	private double _horizDistanceMetres = 0.0;
 
 
 	/**
@@ -49,7 +46,8 @@ public class PointScaler
 		// Work out extents
 		TrackExtents extents = new TrackExtents(_track);
 		extents.applySquareBorder();
-		_horizDistanceMetres = Math.max(extents.getHorizontalDistanceMetres(), 1.0);
+		// Horizontal distance
+		double horizDistanceMetres = Math.max(extents.getHorizontalDistanceMetres(), 1.0);
 		final int numPoints = _track.getNumPoints();
 
 		// Find altitude range (including terrain)
@@ -57,8 +55,8 @@ public class PointScaler
 		if (_terrainTrack != null) {
 			altRangeMetres.combine(new TrackExtents(_terrainTrack).getAltitudeRange());
 		}
-		_altitudeRange = altRangeMetres.getRange() / _horizDistanceMetres;
-		_minAltitudeMetres = altRangeMetres.getMinimum();
+		_altitudeRange = altRangeMetres.getRange() / horizDistanceMetres;
+		double minAltitudeMetres = altRangeMetres.getMinimum();
 
 		// create new arrays for scaled values
 		if (_xValues == null || _xValues.length != numPoints)
@@ -86,7 +84,7 @@ public class PointScaler
 			{
 				_xValues[p] = (_track.getX(p) - midXvalue) / xyRange;
 				_yValues[p] = (midYvalue - _track.getY(p)) / xyRange; // y values have to be inverted
-				_altValues[p] = (point.getAltitude().getMetricValue() - _minAltitudeMetres) / _horizDistanceMetres;
+				_altValues[p] = (point.getAltitude().getMetricValue() - minAltitudeMetres) / horizDistanceMetres;
 			}
 		}
 		if (_terrainTrack != null)
@@ -95,7 +93,7 @@ public class PointScaler
 			{
 				_terrainxValues[p] = (_terrainTrack.getX(p) - midXvalue) / xyRange;
 				_terrainyValues[p] = (midYvalue - _terrainTrack.getY(p)) / xyRange; // y values have to be inverted
-				_terrainAltValues[p] = (_terrainTrack.getPoint(p).getAltitude().getMetricValue() - _minAltitudeMetres) / _horizDistanceMetres;
+				_terrainAltValues[p] = (_terrainTrack.getPoint(p).getAltitude().getMetricValue() - minAltitudeMetres) / horizDistanceMetres;
 			}
 		}
 	}

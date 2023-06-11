@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -48,7 +47,6 @@ import tim.prune.config.TimezoneHelper;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
-import tim.prune.data.RecentFile;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
@@ -120,7 +118,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		// Make dialog window including whether to compress to kmz (and include pictures) or not
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -171,8 +169,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_colourPatch.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				_colourChooser.showDialog(_colourPatch.getBackground());
-				Color colour = _colourChooser.getChosenColour();
-				if (colour != null) _colourPatch.setColour(colour);
+				_colourPatch.setColour(_colourChooser.getChosenColour());
 			}
 		});
 		JPanel colourPanel = new JPanel();
@@ -201,22 +198,13 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_kmzCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
 		_kmzCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		// enable image checkbox if kmz activated
-		_kmzCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				enableCheckboxes();
-			}
-		});
+		_kmzCheckbox.addActionListener(e -> enableCheckboxes());
 		mainPanel.add(_kmzCheckbox);
 		_exportImagesCheckbox = new JCheckBox(I18nManager.getText("dialog.exportkml.exportimages"));
 		_exportImagesCheckbox.setHorizontalTextPosition(SwingConstants.LEFT);
 		_exportImagesCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
 		// enable image size fields if image checkbox changes
-		_exportImagesCheckbox.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				enableImageSizeFields();
-			}
-		});
+		_exportImagesCheckbox.addActionListener(e -> enableImageSizeFields());
 		mainPanel.add(_exportImagesCheckbox);
 		// Panel for the image size
 		JPanel imageSizePanel = new JPanel();
@@ -241,22 +229,14 @@ public class KmlExporter extends GenericFunction implements Runnable
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				startExport();
-			}
-		};
+		ActionListener okListener = e -> startExport();
 		_okButton.addActionListener(okListener);
 		_descriptionField.addActionListener(okListener);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_cancelPressed = true;
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			_cancelPressed = true;
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -272,7 +252,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_pointTypeSelector.init(_trackInfo);
 		boolean hasAltitudes = _track.hasData(Field.ALTITUDE);
 		if (!hasAltitudes) {_altitudesCheckbox.setSelected(false);}
-		boolean hasPhotos = _trackInfo.getPhotoList() != null && _trackInfo.getPhotoList().getNumPhotos() > 0;
+		boolean hasPhotos = _trackInfo.getPhotoList().hasAny();
 		_exportImagesCheckbox.setSelected(hasPhotos && _kmzCheckbox.isSelected());
 		_exportImagesCheckbox.setEnabled(hasPhotos && _kmzCheckbox.isSelected());
 		enableImageSizeFields();
@@ -435,8 +415,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 			_imageDimensions = null;
 			// Store directory in config for later
 			Config.setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
-			// Add to recent file list
-			Config.getRecentFileList().addFile(new RecentFile(_exportFile, true));
+			_app.addRecentFile(_exportFile, true);
 			// show confirmation
 			UpdateMessageBroker.informSubscribers();
 			UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
@@ -607,7 +586,8 @@ public class KmlExporter extends GenericFunction implements Runnable
 		{
 			DataPoint point = _track.getPoint(i);
 			boolean writeCurrentPoint = !justSelection || (i>=inSelStart && i<=inSelEnd);
-			if (!point.isWaypoint() && writeCurrentPoint)
+			// ignore points with photos or audios here, just write the track points
+			if (!point.isWaypoint() && writeCurrentPoint && !point.hasMedia())
 			{
 				// start new track segment if necessary
 				if (point.getSegmentStart() && !firstTrackpoint) {

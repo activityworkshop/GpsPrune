@@ -7,9 +7,9 @@ package tim.prune.correlate;
 public class TimeIndexPair implements Comparable<TimeIndexPair>
 {
 	/** Time as long */
-	private long _time = 0L;
+	private final long _time;
 	/** Index as int */
-	private int _index = 0;
+	private final int _index;
 
 
 	/**

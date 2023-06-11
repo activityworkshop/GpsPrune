@@ -9,7 +9,7 @@ import java.awt.Color;
 public class ColourScheme
 {
 	// Current colours
-	private Color[] _colours = new Color[NUM_COLOURS];
+	private final Color[] _colours = new Color[NUM_COLOURS];
 
 	// Default colours
 	private static final Color[] DEFAULT_COLOURS = {Color.WHITE, Color.BLUE, Color.GREEN,
@@ -37,7 +37,7 @@ public class ColourScheme
 		if (inCodes != null && inCodes.length() > 5)
 		{
 			String[] codes = inCodes.split(",");
-			final int numCodes = (codes.length > NUM_COLOURS ? NUM_COLOURS : codes.length);
+			final int numCodes = Math.min(codes.length, NUM_COLOURS);
 			for (int i=0; i<numCodes; i++) {
 				_colours[i] = ColourUtils.colourFromHex(codes[i]);
 			}

@@ -49,7 +49,7 @@ class SiteNameUtilsTest
 	 */
 	private void testRandomPick(String inPattern, String[] inExpected)
 	{
-		HashSet<String> results = new HashSet<String>();
+		HashSet<String> results = new HashSet<>();
 		for (int i=0; i<30; i++)
 		{
 			results.add(SiteNameUtils.pickServerUrl(inPattern));
@@ -64,7 +64,7 @@ class SiteNameUtilsTest
 	@Test
 	void testDirectorySpec()
 	{
-		assertEquals(null, SiteNameUtils.convertUrlToDirectory(""));
+		assertNull(SiteNameUtils.convertUrlToDirectory(""));
 		assertEquals("acme.com/tiles/", SiteNameUtils.convertUrlToDirectory("http://www.acme.com/tiles/"));
 		assertEquals("acme.com/tiles/", SiteNameUtils.convertUrlToDirectory("https://acme.com/tiles/"));
 

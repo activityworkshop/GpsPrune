@@ -6,7 +6,7 @@ import tim.prune.data.Checker;
 import tim.prune.data.DataPoint;
 
 /**
- * Function to allow the selection of which tracks to load from the file / stream
+ * Function to select the whole segment to which the current track point belongs
  */
 public class SelectSegmentFunction extends GenericFunction
 {

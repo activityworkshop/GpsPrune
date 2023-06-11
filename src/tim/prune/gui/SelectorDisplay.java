@@ -5,8 +5,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -18,8 +16,6 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.EtchedBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
@@ -92,11 +88,7 @@ public class SelectorDisplay extends GenericDisplay
 
 		// Scroll bar
 		_scroller = new JScrollBar(JScrollBar.HORIZONTAL, 0, SCROLLBAR_INTERVAL, 0, 100);
-		_scroller.addAdjustmentListener(new AdjustmentListener() {
-			public void adjustmentValueChanged(AdjustmentEvent e) {
-				selectPoint(e.getValue());
-			}
-		});
+		_scroller.addAdjustmentListener(e -> selectPoint(e.getValue()));
 		_scroller.setEnabled(false);
 
 		// Add panel for waypoints / photos
@@ -108,10 +100,9 @@ public class SelectorDisplay extends GenericDisplay
 		_waypointListModel = new WaypointListModel(_trackInfo.getTrack());
 		_waypointList = new JList<String>(_waypointListModel);
 		_waypointList.setVisibleRowCount(NUM_LIST_ENTRIES);
-		_waypointList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e)
-			{
-				if (!e.getValueIsAdjusting()) selectWaypoint(_waypointList.getSelectedIndex());
+		_waypointList.addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				selectWaypoint(_waypointList.getSelectedIndex());
 			}
 		});
 		_waypointListPanel = makeListPanel("details.lists.waypoints", _waypointList);
@@ -120,26 +111,22 @@ public class SelectorDisplay extends GenericDisplay
 		_photoListModel = new MediaListModel(_trackInfo.getPhotoList());
 		_photoList = new JList<String>(_photoListModel);
 		_photoList.setVisibleRowCount(NUM_LIST_ENTRIES);
-		_photoList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e)
-			{
-				if (!e.getValueIsAdjusting()) {
-					selectPhoto(_photoList.getSelectedIndex());
-				}
-			}});
+		_photoList.addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				selectPhoto(_photoList.getSelectedIndex());
+			}
+		});
 		_photoListPanel = makeListPanel("details.lists.photos", _photoList);
 		// don't add photo list (because there aren't any photos yet)
 
 		// List for audio clips
 		_audioListModel = new MediaListModel(_trackInfo.getAudioList());
 		_audioList = new JList<String>(_audioListModel);
-		_audioList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e)
-			{
-				if (!e.getValueIsAdjusting()) {
-					selectAudio(_audioList.getSelectedIndex());
-				}
-			}});
+		_audioList.addListSelectionListener(e -> {
+			if (!e.getValueIsAdjusting()) {
+				selectAudio(_audioList.getSelectedIndex());
+			}
+		});
 		_audioListPanel = makeListPanel("details.lists.audio", _audioList);
 		// don't add audio list either
 		_listsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -204,7 +191,7 @@ public class SelectorDisplay extends GenericDisplay
 	/**
 	 * Notification that Track has been updated
 	 */
-	public void dataUpdated(byte inUpdateType)
+	public void dataUpdated(int inUpdateType)
 	{
 		// Update track data
 		if (_track == null || _track.getNumPoints() <= 0)
@@ -257,13 +244,13 @@ public class SelectorDisplay extends GenericDisplay
 		_ignoreScrollEvents = false;
 
 		// update waypoints and photos if necessary
-		if ((inUpdateType |
+		if ((inUpdateType &
 			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.WAYPOINTS_MODIFIED)) > 0)
 		{
 			_waypointListModel.fireChanged();
 		}
 		if ((inUpdateType &
-			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.PHOTOS_MODIFIED)) > 0)
+			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.MEDIA_MODIFIED)) > 0)
 		{
 			_photoListModel.fireChanged();
 			_audioListModel.fireChanged();

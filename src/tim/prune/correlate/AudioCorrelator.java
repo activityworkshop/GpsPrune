@@ -2,25 +2,26 @@ package tim.prune.correlate;
 
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 
 import tim.prune.App;
-import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.Command;
+import tim.prune.cmd.CorrelateMediaCmd;
+import tim.prune.cmd.MediaLinkType;
+import tim.prune.cmd.PointAndMedia;
 import tim.prune.config.TimezoneHelper;
 import tim.prune.data.AudioClip;
-import tim.prune.data.AudioList;
 import tim.prune.data.DataPoint;
-import tim.prune.data.MediaObject;
 import tim.prune.data.MediaList;
+import tim.prune.data.MediaObject;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
 import tim.prune.data.TimestampUtc;
-import tim.prune.undo.UndoCorrelateAudios;
 
 /**
  * Class to manage the automatic correlation of audio clips to points
@@ -39,9 +40,7 @@ public class AudioCorrelator extends Correlator
 		super(inApp);
 	}
 
-	/**
-	 * @return name key
-	 */
+	/** @return the name key */
 	public String getNameKey() {
 		return "function.correlateaudios";
 	}
@@ -51,8 +50,8 @@ public class AudioCorrelator extends Correlator
 		return "audio";
 	}
 
-	/** @return photo list*/
-	protected MediaList getMediaList() {
+	/** @return audio list*/
+	protected MediaList<?> getMediaList() {
 		return _app.getTrackInfo().getAudioList();
 	}
 
@@ -90,11 +89,11 @@ public class AudioCorrelator extends Correlator
 	 * @param inAudios AudioList object
 	 * @return true if there are any audio lengths available
 	 */
-	private static boolean getAudioLengthAvailability(AudioList inAudios)
+	private static boolean getAudioLengthAvailability(MediaList<AudioClip> inAudios)
 	{
-		for (int i=0; i<inAudios.getNumMedia(); i++)
+		for (int i=0; i<inAudios.getCount(); i++)
 		{
-			AudioClip a = inAudios.getAudio(i);
+			AudioClip a = inAudios.get(i);
 			if (a.getLengthInSeconds() > 0) {return true;}
 		}
 		return false;
@@ -110,12 +109,12 @@ public class AudioCorrelator extends Correlator
 		TimeDifference timeLimit = parseTimeLimit();
 		double angDistLimit = parseDistanceLimit();
 		MediaPreviewTableModel model = new MediaPreviewTableModel("dialog.correlate.select.audioname");
-		AudioList audios = _app.getTrackInfo().getAudioList();
+		MediaList<AudioClip> audios = _app.getTrackInfo().getAudioList();
 		// Loop through audios deciding whether to set correlate flag or not
-		int numAudios = audios.getNumAudios();
+		int numAudios = audios.getCount();
 		for (int i=0; i<numAudios; i++)
 		{
-			AudioClip audio = audios.getAudio(i);
+			AudioClip audio = audios.get(i);
 			PointMediaPair pair = getPointPairForMedia(_app.getTrackInfo().getTrack(), audio, inTimeDiff);
 			MediaPreviewTableRow row = new MediaPreviewTableRow(pair);
 			// Don't try to correlate audios which don't have points either side
@@ -156,7 +155,7 @@ public class AudioCorrelator extends Correlator
 		if (inShowWarning && !model.hasAnySelected())
 		{
 			JOptionPane.showMessageDialog(_dialog, I18nManager.getText("dialog.correlate.alloutsiderange"),
-				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
+				getName(), JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
@@ -191,96 +190,51 @@ public class AudioCorrelator extends Correlator
 	 */
 	protected void finishCorrelation()
 	{
-		// TODO: Probably should be able to combine this into the Correlator?
 		PointMediaPair[] pointPairs = getPointPairs();
-		if (pointPairs == null || pointPairs.length <= 0) {return;}
+		if (pointPairs == null || pointPairs.length <= 0) {
+			return;
+		}
 
-		// begin to construct undo information
-		UndoCorrelateAudios undo = new UndoCorrelateAudios(_app.getTrackInfo());
-		// loop over Audios
-		int arraySize = pointPairs.length;
-		int i = 0, numAudios = 0;
-		int numPointsToCreate = 0;
-		PointMediaPair pair = null;
-		for (i=0; i<arraySize; i++)
+		ArrayList<DataPoint> pointsToCreate = new ArrayList<>();
+		ArrayList<PointAndMedia> pointAudioPairs = new ArrayList<>();
+		for (PointMediaPair pair : pointPairs)
 		{
-			pair = pointPairs[i];
 			if (pair != null && pair.isValid())
 			{
+				AudioClip audioToLink = (AudioClip) pair.getMedia();
 				if (pair.getMinSeconds() == 0L)
 				{
 					// exact match
 					AudioClip pointAudio = pair.getPointBefore().getAudio();
 					if (pointAudio == null)
 					{
-						// photo coincides with audioless point so connect the two
-						pair.getPointBefore().setAudio((AudioClip) pair.getMedia());
-						pair.getMedia().setDataPoint(pair.getPointBefore());
+						// audio coincides with audioless point so connect the two
+						DataPoint point = pair.getPointBefore();
+						pointAudioPairs.add(new PointAndMedia(point, null, audioToLink));
 					}
 					else if (pointAudio.equals(pair.getMedia())) {
-						// photo is already connected, nothing to do
+						// audio is already connected, nothing to do
 					}
 					else {
 						// point is already connected to a different audio, so need to clone point
-						numPointsToCreate++;
+						DataPoint pointToAdd = pair.getPointBefore().clonePoint();
+						pointsToCreate.add(pointToAdd);
+						pointAudioPairs.add(new PointAndMedia(pointToAdd, null, audioToLink));
 					}
 				}
 				else
 				{
 					// audio time falls between two points, so need to interpolate new one
-					numPointsToCreate++;
-				}
-				numAudios++;
-			}
-		}
-		// Second loop, to create points if necessary
-		if (numPointsToCreate > 0)
-		{
-			// make new array for added points
-			DataPoint[] addedPoints = new DataPoint[numPointsToCreate];
-			int pointNum = 0;
-			DataPoint pointToAdd = null;
-			for (i=0; i<arraySize; i++)
-			{
-				pair = pointPairs[i];
-				if (pair != null && pair.isValid())
-				{
-					pointToAdd = null;
-					if (pair.getMinSeconds() == 0L && pair.getPointBefore().getAudio() != null
-					 && !pair.getPointBefore().getAudio().equals(pair.getMedia()))
-					{
-						// clone point
-						pointToAdd = pair.getPointBefore().clonePoint();
-					}
-					else if (pair.getMinSeconds() > 0L)
-					{
-						// interpolate point
-						pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
-					}
-					if (pointToAdd != null)
-					{
-						// link audio to point
-						pointToAdd.setAudio((AudioClip) pair.getMedia());
-						pair.getMedia().setDataPoint(pointToAdd);
-						// set to start of segment so not joined in track
-						pointToAdd.setSegmentStart(true);
-						// add to point array
-						addedPoints[pointNum] = pointToAdd;
-						pointNum++;
-					}
+					DataPoint pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
+					pointToAdd.setSegmentStart(true);
+					pointsToCreate.add(pointToAdd);
+					pointAudioPairs.add(new PointAndMedia(pointToAdd, null, audioToLink));
 				}
 			}
-			// expand track
-			_app.getTrackInfo().getTrack().appendPoints(addedPoints);
 		}
-
-		// send undo information back to controlling app
-		undo.setNumAudiosCorrelated(numAudios);
-		_app.completeFunction(undo, ("" + numAudios + " "
-			 + (numAudios==1?I18nManager.getText("confirm.correlateaudios.single"):I18nManager.getText("confirm.correlateaudios.multi"))));
-		// observers already informed by track update if new points created
-		if (numPointsToCreate == 0) {
-			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
-		}
+		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_AUDIOS, pointsToCreate, pointAudioPairs);
+		command.setDescription(makeUndoText(pointAudioPairs.size()));
+		command.setConfirmText(makeConfirmText(pointAudioPairs.size()));
+		_app.execute(command);
 	}
 }

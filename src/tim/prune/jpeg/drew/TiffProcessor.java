@@ -9,7 +9,6 @@
 package tim.prune.jpeg.drew;
 
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -30,7 +29,6 @@ public class TiffProcessor
 	 * @param tiffHeaderOffset the offset within <code>reader</code> at which the TIFF header starts
 	 * @throws ExifException if an error occurred during the processing of TIFF data that could
 	 *                       not be ignored or recovered from
-	 * @throws IOException an error occurred while accessing the required data
 	 */
 	public static void processTiff(final ByteArrayReader reader, JpegData jpegData,
 		final int tiffHeaderOffset) throws ExifException

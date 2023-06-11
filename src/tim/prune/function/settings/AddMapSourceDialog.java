@@ -149,7 +149,7 @@ public class AddMapSourceDialog
 		c.fill = GridBagConstraints.NONE;
 		gbPanel.add(new JLabel(I18nManager.getText("dialog.addmapsource.maxzoom")), c);
 		_oZoomCombo = new JComboBox<>();
-		for (int i=10; i<=20; i++) {
+		for (int i=10; i<=22; i++) {
 			_oZoomCombo.addItem(i);
 		}
 		// zoom dropdown needs listener to call enableOk()

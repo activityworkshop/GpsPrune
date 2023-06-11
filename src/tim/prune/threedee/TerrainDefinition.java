@@ -6,8 +6,8 @@ package tim.prune.threedee;
  */
 public class TerrainDefinition
 {
-	private boolean _useTerrain = false;
-	private int     _gridSize   = 0;
+	private final boolean _useTerrain;
+	private final int _gridSize;
 
 	/**
 	 * Constructor
@@ -16,15 +16,15 @@ public class TerrainDefinition
 	 */
 	public TerrainDefinition(boolean inUse, int inGridSize)
 	{
-		_useTerrain = inUse;
-		_gridSize   = inGridSize;
+		_useTerrain = inUse && inGridSize > 2;
+		_gridSize = inGridSize;
 	}
 
 	/**
 	 * @return true if terrain should be used, false otherwise
 	 */
 	public boolean getUseTerrain() {
-		return _useTerrain && _gridSize > 2;
+		return _useTerrain;
 	}
 
 	/**

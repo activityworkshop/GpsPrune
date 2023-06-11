@@ -3,8 +3,6 @@ package tim.prune.function;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -21,6 +19,7 @@ import javax.swing.SwingConstants;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.InsertPointCmd;
 import tim.prune.config.Config;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
@@ -54,8 +53,7 @@ public class ProjectPoint extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public ProjectPoint(App inApp)
-	{
+	public ProjectPoint(App inApp) {
 		super(inApp);
 	}
 
@@ -72,7 +70,7 @@ public class ProjectPoint extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -146,23 +144,14 @@ public class ProjectPoint extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				if (_okButton.isEnabled()) {finish();}
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> {
+			if (_okButton.isEnabled()) {finish();}
+		});
 		_okButton.setEnabled(false);
 
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -216,7 +205,12 @@ public class ProjectPoint extends GenericFunction
 		DataPoint point = new DataPoint(new Latitude(finalLatDeg, Coordinate.FORMAT_DEG),
 			new Longitude(finalLonDeg, Coordinate.FORMAT_DEG), null);
 		point.setFieldValue(Field.WAYPT_NAME, _nameField.getText(), false);
-		_app.createPoint(point);
+		point.setSegmentStart(true);
+
+		InsertPointCmd command = new InsertPointCmd(point, -1);
+		command.setDescription(I18nManager.getText("undo.createpoint"));
+		command.setConfirmText(I18nManager.getText("confirm.pointadded"));
+		_app.execute(command);
 
 		_dialog.dispose();
 	}

@@ -1,0 +1,19 @@
+<current>
+	<city id="7286992" name="Katolis">
+		<coord lon="8.8" lat="47.4" />
+		<country>CH</country>
+		<sun rise="2013-07-25T03:55:14" set="2013-07-25T19:07:25" />
+	</city>
+	<temperature value="17.46" min="16" max="19.44" unit="celsius" />
+	<humidity value="63" unit="%" />
+	<pressure value="1021" unit="hPa" />
+	<wind>
+		<speed value="5.65" name="Moderate breeze" />
+		<direction value="101" code="E" name="East" />
+	</wind>
+	<clouds value="20" name="few clouds" />
+	<precipitation mode="no" />
+	<weather number="741" value="Nebel" icon="50d" />
+	<lastupdate value="2013-07-25T05:22:46" />
+</current>
+

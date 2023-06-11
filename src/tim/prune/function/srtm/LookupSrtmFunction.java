@@ -8,6 +8,7 @@ import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -15,26 +16,23 @@ import java.util.zip.ZipInputStream;
 import javax.swing.JOptionPane;
 
 import tim.prune.App;
-import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
-import tim.prune.data.Altitude;
+import tim.prune.cmd.EditAltitudeCmd;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.Track;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.function.edit.PointAltitudeEdit;
 import tim.prune.gui.ProgressDialog;
 import tim.prune.tips.TipManager;
-import tim.prune.undo.UndoLookupSrtm;
 
 /**
  * Class to provide a lookup function for point altitudes using the Space
  * Shuttle's SRTM data files. HGT files are downloaded via HTTP and
  * point altitudes can then be interpolated from the grid data.
  */
-public class LookupSrtmFunction extends GenericFunction implements Runnable
+public class LookupSrtmFunction extends GenericFunction
 {
 	/** Progress dialog */
 	private ProgressDialog _progress = null;
@@ -48,6 +46,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	private int _numCached = 0;
 	/** Flag to check whether this function is currently running or not */
 	private boolean _running = false;
+	private boolean _cancelled = false;
 
 
 	/**
@@ -86,15 +85,16 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	private void begin(Track inTrack, boolean inNormalTrack)
 	{
 		_running = true;
+		_cancelled = false;
 		_hadToDownload = false;
 		if (_progress == null) {
-			_progress = new ProgressDialog(_parentFrame, getNameKey());
+			_progress = new ProgressDialog(_parentFrame, getNameKey(), null, () -> _cancelled = true);
 		}
 		_progress.show();
 		_track = inTrack;
 		_normalTrack = inNormalTrack;
 		// start new thread for time-consuming part
-		new Thread(this).start();
+		new Thread(this::run).start();
 	}
 
 	/**
@@ -121,7 +121,7 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		boolean overwriteZeros = hasZeroAltitudePoints && !hasNonZeroAltitudePoints;
 		// If non-zero values present as well, ask user whether to overwrite the zeros or not
 		if (hasNonZeroAltitudePoints && hasZeroAltitudePoints && JOptionPane.showConfirmDialog(_parentFrame,
-			I18nManager.getText("dialog.lookupsrtm.overwritezeros"), I18nManager.getText(getNameKey()),
+			I18nManager.getText("dialog.lookupsrtm.overwritezeros"), getName(),
 			JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION)
 		{
 			overwriteZeros = true;
@@ -163,8 +163,6 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	 */
 	private void lookupValues(HashSet<SrtmTile> inTileSet, boolean inOverwriteZeros)
 	{
-		UndoLookupSrtm undo = new UndoLookupSrtm(_app.getTrackInfo());
-		int numAltitudesFound = 0;
 		SrtmSource[] tileSources = new SrtmSource[] {
 			new SrtmHighResSource(),
 			new SrtmLowResSource()};
@@ -172,27 +170,26 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		final int numTiles = inTileSet.size();
 
 		// Update progress bar
-		if (_progress != null)
-		{
-			_progress.setMaximum(numTiles);
-			_progress.setValue(0);
+		if (_progress != null) {
+			_progress.showProgress(0, numTiles);
 		}
 		int currentTileIndex = 0;
 		_numCached = 0;
+		ArrayList<PointAltitudeEdit> edits = new ArrayList<PointAltitudeEdit>();
 		for (SrtmTile tile : inTileSet)
 		{
 			// Set progress
-			_progress.setValue(currentTileIndex++);
+			_progress.showProgress(currentTileIndex++, numTiles);
 			int[] heights = null;
 			for (SrtmSource tileSource : tileSources)
 			{
-				if (heights == null)
+				if (heights == null && !_cancelled)
 				{
 					try
 					{
 						heights = getHeightsForTile(tile, tileSource);
-						numAltitudesFound += applySrtmTileToWholeTrack(tile, heights, inOverwriteZeros,
-							tileSource.getTilePixels());
+						edits.addAll(applySrtmTileToWholeTrack(tile, heights, inOverwriteZeros,
+							tileSource.getTilePixels()));
 					}
 					catch (IOException ioe) {
 						errorMessage = ioe.getClass().getName() + " - " + ioe.getMessage();
@@ -203,24 +200,26 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 			}
 		}
 
-		_progress.dispose();
-		if (_progress.isCancelled()) {
+		_progress.close();
+		if (_cancelled) {
 			return;
 		}
 
 		if (errorMessage != null) {
 			_app.showErrorMessageNoLookup(getNameKey(), errorMessage);
 		}
-		if (numAltitudesFound > 0)
+		if (!edits.isEmpty())
 		{
-			// Inform app including undo information
-			_track.requestRescale();
-			UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_ADDED_OR_REMOVED);
-			// Don't update app if we're doing another track
+			EditAltitudeCmd command = new EditAltitudeCmd(edits);
+			// Apply this command according to whether it's a real track or not
 			if (_normalTrack)
 			{
-				_app.completeFunction(undo,
-					I18nManager.getTextWithNumber("confirm.lookupsrtm", numAltitudesFound));
+				command.setConfirmText(I18nManager.getTextWithNumber("confirm.lookupsrtm", edits.size()));
+				command.setDescription(getName());
+				_app.execute(command);
+			}
+			else {
+				command.executeCommand(_track);
 			}
 		}
 		else if (numTiles > 0) {
@@ -343,19 +342,20 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 	}
 
 	/**
-	 * Given the height data read in from file, apply the given tile to all points
-	 * in the track with missing altitude
+	 * Given the height data read in from file, generate the edits to modify the track
 	 * @param inTile tile being applied
 	 * @param inHeights height data read in from file
 	 * @param inOverwriteZeros true to overwrite zero altitude values
 	 * @param inTilePixelsPerSide number of pixels on side of tile
-	 * @return number of altitudes found
+	 * @return list of edits to apply
 	 */
-	private int applySrtmTileToWholeTrack(SrtmTile inTile, int[] inHeights,
+	private ArrayList<PointAltitudeEdit> applySrtmTileToWholeTrack(SrtmTile inTile, int[] inHeights,
 		boolean inOverwriteZeros, int inTilePixelsPerSide)
 	{
-		if (inHeights == null) {return 0;}
-		int numAltitudesFound = 0;
+		ArrayList<PointAltitudeEdit> edits = new ArrayList<>();
+		if (inHeights == null) {
+			return edits;
+		}
 		// Loop over all points in track, try to apply altitude from array
 		for (int p = 0; p < _track.getNumPoints(); p++)
 		{
@@ -368,21 +368,18 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 					point.getLatitude().getDouble(), inHeights, _normalTrack, inTilePixelsPerSide);
 				if (altitude != SrtmSource.VOID_VAL)
 				{
-					point.setFieldValue(Field.ALTITUDE, ""+altitude, false);
-					// depending on settings, this value may have been added as feet, we need to force metres
-					point.getAltitude().reset(new Altitude((int)altitude, UnitSetLibrary.UNITS_METRES));
-					numAltitudesFound++;
+					// Found an altitude, so create a command for it
+					edits.add(new PointAltitudeEdit(p, "" + altitude, UnitSetLibrary.UNITS_METRES));
 				}
 			}
 		}
-		return numAltitudesFound;
+		return edits;
 	}
 
 	/**
 	 * @return true if a thread is currently running
 	 */
-	public boolean isRunning()
-	{
+	public boolean isRunning() {
 		return _running;
 	}
 
@@ -391,12 +388,12 @@ public class LookupSrtmFunction extends GenericFunction implements Runnable
 		if (numDownloaded == 1)
 		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getTextWithNumber("confirm.downloadsrtm.1", numDownloaded),
-				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+				getName(), JOptionPane.INFORMATION_MESSAGE);
 		}
 		else if (numDownloaded > 1)
 		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getTextWithNumber("confirm.downloadsrtm", numDownloaded),
-				I18nManager.getText(getNameKey()), JOptionPane.INFORMATION_MESSAGE);
+				getName(), JOptionPane.INFORMATION_MESSAGE);
 		}
 	}
 }

@@ -3,8 +3,6 @@ package tim.prune.function.edit;
 import java.awt.Component;
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -19,6 +17,7 @@ import javax.swing.JTextField;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.EditPointCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 
@@ -31,6 +30,8 @@ public class PointNameEditor extends GenericFunction
 	private DataPoint _point = null;
 	private JTextField _nameField = null;
 	private JButton _okButton = null;
+
+	private enum CaseOperation {LOWER_CASE, UPPER_CASE, TITLE_CASE}
 
 
 	/**
@@ -54,7 +55,7 @@ public class PointNameEditor extends GenericFunction
 		_point = _app.getTrackInfo().getCurrentPoint();
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			// Create Gui and show it
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -80,14 +81,6 @@ public class PointNameEditor extends GenericFunction
 		centrePanel.setLayout(new BorderLayout(8, 8));
 		centrePanel.add(new JLabel(I18nManager.getText("dialog.pointnameedit.name") + ": "), BorderLayout.WEST);
 		// Make listener to react to ok being pressed
-		ActionListener okActionListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// update App with edit
-				confirmEdit();
-				_dialog.dispose();
-			}
-		};
 		_nameField = new JTextField("", 12);
 		_nameField.addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent e)
@@ -100,7 +93,7 @@ public class PointNameEditor extends GenericFunction
 				_okButton.setEnabled(hasNameChanged());
 			}
 		});
-		_nameField.addActionListener(okActionListener);
+		_nameField.addActionListener(e -> confirmEdit());
 		centrePanel.add(_nameField, BorderLayout.CENTER);
 		// holder panel to stop the text box from being stretched
 		JPanel holderPanel = new JPanel();
@@ -111,34 +104,13 @@ public class PointNameEditor extends GenericFunction
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 		JButton upperButton = new JButton(I18nManager.getText("dialog.pointnameedit.uppercase"));
-		upperButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_nameField.setText(_nameField.getText().toUpperCase());
-				_okButton.setEnabled(true);
-				_nameField.requestFocus();
-			}
-		});
+		upperButton.addActionListener(e -> changeCase(CaseOperation.UPPER_CASE));
 		rightPanel.add(upperButton);
 		JButton lowerButton = new JButton(I18nManager.getText("dialog.pointnameedit.lowercase"));
-		lowerButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_nameField.setText(_nameField.getText().toLowerCase());
-				_okButton.setEnabled(true);
-				_nameField.requestFocus();
-			}
-		});
+		lowerButton.addActionListener(e -> changeCase(CaseOperation.LOWER_CASE));
 		rightPanel.add(lowerButton);
 		JButton titleButton = new JButton(I18nManager.getText("dialog.pointnameedit.titlecase"));
-		titleButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_nameField.setText(titleCase(_nameField.getText()));
-				_okButton.setEnabled(true);
-				_nameField.requestFocus();
-			}
-		});
+		titleButton.addActionListener(e -> changeCase(CaseOperation.TITLE_CASE));
 		rightPanel.add(titleButton);
 		panel.add(rightPanel, BorderLayout.EAST);
 		// Bottom panel for OK, cancel buttons
@@ -149,12 +121,35 @@ public class PointNameEditor extends GenericFunction
 		lowerPanel.add(cancelButton);
 		_okButton = new JButton(I18nManager.getText("button.ok"));
 		_okButton.setEnabled(false);
-		_okButton.addActionListener(okActionListener);
+		_okButton.addActionListener(e -> confirmEdit());
 		lowerPanel.add(_okButton);
 		panel.add(lowerPanel, BorderLayout.SOUTH);
 		return panel;
 	}
 
+
+	/**
+	 * Change the case of the name
+	 * @param caseOp operation to perform, upper/lower/title
+	 */
+	private void changeCase(CaseOperation caseOp)
+	{
+		String name = _nameField.getText();
+		switch (caseOp) {
+			case UPPER_CASE:
+				name = name.toUpperCase();
+				break;
+			case LOWER_CASE:
+				name = name.toLowerCase();
+				break;
+			case TITLE_CASE:
+				name = titleCase(name);
+				break;
+		}
+		_nameField.setText(name);
+		_okButton.setEnabled(true);
+		_nameField.requestFocus();
+	}
 
 	/**
 	 * Reset the dialog with the given name
@@ -191,22 +186,23 @@ public class PointNameEditor extends GenericFunction
 
 
 	/**
-	 * Confirm the edit and inform the app
+	 * Confirm the edit and execute the command
 	 */
 	private void confirmEdit()
 	{
 		// Check whether name has really changed
-		if (hasNameChanged())
-		{
-			// Make lists for edit and undo, and add the changed field
-			FieldEditList editList = new FieldEditList();
-			FieldEditList undoList = new FieldEditList();
-			editList.addEdit(new FieldEdit(Field.WAYPT_NAME, _nameField.getText().trim()));
-			undoList.addEdit(new FieldEdit(Field.WAYPT_NAME, _point.getWaypointName()));
-
-			// Pass back to App to perform edit
-			_app.completePointEdit(editList, undoList);
+		if (!hasNameChanged()) {
+			return;
 		}
+		String newName = _nameField.getText().trim();
+		String displayName = (newName.isEmpty() ? _point.getWaypointName() : newName);
+		int pointIndex = _app.getTrackInfo().getSelection().getCurrentPointIndex();
+		EditPointCmd command = new EditPointCmd(pointIndex, new FieldEdit(Field.WAYPT_NAME, newName));
+		command.setDescription(I18nManager.getText("undo.editpoint.withname", displayName));
+		command.setConfirmText(I18nManager.getText("confirm.point.edit"));
+		_app.execute(command);
+
+		_dialog.dispose();
 	}
 
 	/**

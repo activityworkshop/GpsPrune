@@ -1,15 +1,25 @@
 package tim.prune.function;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.swing.JOptionPane;
 
 import tim.prune.App;
-import tim.prune.DataSubscriber;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.Command;
+import tim.prune.cmd.CompoundCommand;
+import tim.prune.cmd.ConnectMultipleMediaCmd;
+import tim.prune.cmd.MediaLinkType;
+import tim.prune.cmd.PointAndMedia;
+import tim.prune.cmd.PointFlag;
+import tim.prune.cmd.RemoveMediaCmd;
+import tim.prune.cmd.ShuffleAndCropCmd;
 import tim.prune.data.DataPoint;
-import tim.prune.data.TrackInfo;
-import tim.prune.undo.UndoDeleteRange;
+import tim.prune.data.MediaObject;
+import tim.prune.data.Track;
+import tim.prune.function.media.PopupResponse;
 
 
 /**
@@ -23,187 +33,134 @@ public abstract class DeleteBitOfTrackFunction extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public DeleteBitOfTrackFunction(App inApp)
-	{
+	protected DeleteBitOfTrackFunction(App inApp) {
 		super(inApp);
 	}
 
 	/**
-	 * @return key of undo text
+	 * Decide whether to delete the media or unlink them
+	 * @param inNumMedia number of media found
+	 * @return decision what to do with them
 	 */
-	protected abstract String getUndoNameKey();
-
-	/**
-	 * Delete a single section
-	 * @param inStart1 start index of section
-	 * @param inEnd1 end index of section
-	 */
-	protected void deleteSection(int inStart1, int inEnd1)
+	protected PopupResponse chooseMediaAction(int inNumMedia)
 	{
-		deleteTwoSections(inStart1, inEnd1, -1, -1);
-	}
-
-	/**
-	 * Delete the two specified sections
-	 * @param inStart1 start index of first section to delete
-	 * @param inEnd1 end index of first section
-	 * @param inStart2 start index of second section to delete
-	 * @param inEnd2 end index of second section
-	 */
-	protected void deleteTwoSections(int inStart1, int inEnd1, int inStart2, int inEnd2)
-	{
-		boolean[] deleteAllOrNone = {false, false};
-		// TODO: Check for range overlap?  And test!
-		if (inStart1 < 0 || inEnd1 < 0 || inEnd1 < inStart1) {
-			inStart1 = inEnd1 = -1;
+		if (inNumMedia <= 0) {
+			return PopupResponse.MEDIA_NOT_CONNECTED;
 		}
-		if (inStart2 < 0 || inEnd2 < 0 || inEnd2 < inStart2) {
-			inStart2 = inEnd2 = -1;
-		}
-		if ((inStart1 >= 0 && inEnd1 < inStart1)
-			|| (inStart2 >= 0 && (inStart2 < inEnd1 || inEnd2 <= inStart2)))
+		final String message = I18nManager.getTextWithNumber("dialog.deletepoints.deletemedia", inNumMedia);
+		int response = JOptionPane.showConfirmDialog(_app.getFrame(), message,
+			I18nManager.getText("dialog.deletepoints.title"),
+			JOptionPane.YES_NO_CANCEL_OPTION);
+		if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION)
 		{
-			System.err.println("Invalid ranges: (" + inStart1 + " - " + inEnd1 + "), (" + inStart2 + " - " + inEnd2 + ")");
-			return;
+			// cancel pressed- abort delete
+			return PopupResponse.CANCEL;
 		}
-		// First section (if any)
-		int numPoints = inEnd1 - inStart1 + 1;
-		boolean[] deleteMedia1 = new boolean[numPoints];
-		int numDeleted1 = prepareDeleteMedia(inStart1, inEnd1, deleteAllOrNone, deleteMedia1);
-		if (numDeleted1 < 0) return;
-
-		// Second section (if any)
-		numPoints = inEnd2 - inStart2 + 1;
-		boolean[] deleteMedia2 = new boolean[numPoints];
-		int numDeleted2 = prepareDeleteMedia(inStart2, inEnd2, deleteAllOrNone, deleteMedia2);
-		if (numDeleted2 < 0) return;
-		int numDeleted = numDeleted1 + numDeleted2;
-		if (numDeleted <= 0) return;
-
-		// create undo object
-		UndoDeleteRange undo = new UndoDeleteRange(_app.getTrackInfo(), getUndoNameKey(),
-			inStart1, deleteMedia1, inStart2, deleteMedia2);
-
-		// Loop through media to remove or disconnect
-		if (numDeleted1 > 0) {
-			resolveMedia(_app.getTrackInfo(), inStart1, deleteMedia1);
-		}
-		if (numDeleted2 > 0) {
-			resolveMedia(_app.getTrackInfo(), inStart2, deleteMedia2);
-		}
-
-		// Call track to delete ranges 1 and 2
-		if (numDeleted2 > 0) { // delete range2 first
-			_app.getTrackInfo().getTrack().deleteRange(inStart2, inEnd2);
-		}
-		if (numDeleted1 > 0) { // delete range1 first
-			_app.getTrackInfo().getTrack().deleteRange(inStart1, inEnd1);
-		}
-
-		// clear selection and notify
-		_app.getTrackInfo().getSelection().clearAll();
-		UpdateMessageBroker.informSubscribers(DataSubscriber.DATA_ADDED_OR_REMOVED);
-
-		// pass back to _app
-		_app.completeFunction(undo, "" + numDeleted + " "
-			+ I18nManager.getText("confirm.deletepoint.multi"));
+		return (response == JOptionPane.YES_OPTION ? PopupResponse.DELETE : PopupResponse.UNLINK);
 	}
 
 	/**
-	 * Prepare to delete the media in the given section, including prompting to delete or not
-	 * @param inStart start index of the range to delete
-	 * @param inEnd end index
-	 * @param inDeleteAllOrNone boolean flags for delete all and delete none, held in an array
-	 * @param inDeleteMedia boolean flag for each point, whether to delete media or not
-	 * @return number of points to delete
+	 * Prepare the lists of point indexes, photos and audios
+	 * @param inIndexesToKeep list of point indexes to keep
+	 * @param inIndexesToDelete list of point indexes to delete
+	 * @param inCriterion index criterion describing range to keep
+	 * @return number of media found
 	 */
-	private int prepareDeleteMedia(int inStart, int inEnd, boolean[] inDeleteAllOrNone, boolean[] inDeleteMedia)
+	protected int fillLists(List<Integer> inIndexesToKeep, List<Integer> inIndexesToDelete,
+		PointToKeepCriterion inCriterion)
 	{
-		// Check sanity of inputs
-		if (inStart < 0 || inEnd < 0 || inEnd < inStart) return 0;
-		final int numPoints = inEnd - inStart + 1;
-		if (inDeleteAllOrNone == null || inDeleteAllOrNone.length != 2
-			|| inDeleteMedia == null || inDeleteMedia.length != numPoints) {
-			return 0;
-		}
-
-		// define buttons on prompt
-		String[] questionOptions = {I18nManager.getText("button.yes"), I18nManager.getText("button.no"),
-			I18nManager.getText("button.yestoall"), I18nManager.getText("button.notoall"),
-			I18nManager.getText("button.cancel")};
-
-		// Loop over points to check for media
+		Track track = _app.getTrackInfo().getTrack();
+		int numMedia = 0;
+		int numPoints = track.getNumPoints();
 		for (int i=0; i<numPoints; i++)
 		{
-			DataPoint point = _app.getTrackInfo().getTrack().getPoint(inStart + i);
-			if (point.hasMedia())
+			if (inCriterion.keepIndex(i)) {
+				inIndexesToKeep.add(i);
+			}
+			else
 			{
-				// point has either photo or audio
-				if (inDeleteAllOrNone[0]) // delete all has already been selected
-				{
-					inDeleteMedia[i] = true;
-				}
-				else if (inDeleteAllOrNone[1]) // delete none has already been selected
-				{
-					inDeleteMedia[i] = false;
-				}
-				else
-				{
-					int response = JOptionPane.showOptionDialog(_app.getFrame(),
-						I18nManager.getText("dialog.deletepoint.deletephoto") + " " + point.getMediaName(),
-						I18nManager.getText("dialog.deletepoint.title"),
-						JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null,
-						questionOptions, questionOptions[1]);
-					// check for cancel or close
-					if (response == 4 || response == -1) {return -1;}
-					// check for yes or yes to all
-					if (response == 0 || response == 2)
-					{
-						inDeleteMedia[i] = true;
-						if (response == 2) {inDeleteAllOrNone[0] = true;}
-					}
-					// check for no to all
-					if (response == 3) {inDeleteAllOrNone[1] = true;}
+				inIndexesToDelete.add(i);
+				if (track.getPoint(i).hasMedia()) {
+					numMedia++;
 				}
 			}
 		}
-		return numPoints;
+		return numMedia;
 	}
 
 	/**
-	 * Resolve the media from the given points by either detaching or deleting
-	 * @param inTrackInfo track info object
-	 * @param inStart start index of range
-	 * @param inDeleteFlags media deletion flags
+	 * Create the compound command to do the delete
+	 * @param inIndexesToKeep list of indexes to keep, in order
+	 * @param inIndexesToDelete list of indexes to delete
+	 * @param inSegmentFlags segment flags to set, if any
+	 * @param inNumMedia number of media found to be deleted / unlinked
+	 * @return command to be executed
 	 */
-	private static void resolveMedia(TrackInfo inTrackInfo, int inStart, boolean[] inDeleteFlags)
+	protected CompoundCommand createCommand(List<Integer> inIndexesToKeep, List<Integer> inIndexesToDelete,
+		List<PointFlag> inSegmentFlags, int inNumMedia)
 	{
-		for (int i=0; i<inDeleteFlags.length; i++)
+		PopupResponse mediaAction = chooseMediaAction(inNumMedia);
+		if (mediaAction == PopupResponse.CANCEL) {
+			return null;
+		}
+		CompoundCommand command = new ShuffleAndCropCmd(inIndexesToKeep, inIndexesToDelete, inSegmentFlags);
+		switch (mediaAction)
 		{
-			DataPoint point = inTrackInfo.getTrack().getPoint(i + inStart);
-			if (point != null && point.hasMedia())
-			{
-				if (inDeleteFlags[i])
-				{
-					// delete photo and/or audio from lists
-					if (point.getPhoto() != null) {
-						inTrackInfo.getPhotoList().deletePhoto(inTrackInfo.getPhotoList().getPhotoIndex(point.getPhoto()));
-					}
-					if (point.getAudio() != null) {
-						inTrackInfo.getAudioList().deleteAudio(inTrackInfo.getAudioList().getAudioIndex(point.getAudio()));
-					}
-				}
-				else
-				{
-					// decouple photo and/or audio from point
-					if (point.getPhoto() != null) {
-						point.getPhoto().setDataPoint(null);
-					}
-					if (point.getAudio() != null) {
-						point.getAudio().setDataPoint(null);
-					}
-				}
+			case DELETE:
+				command.addCommand(makeDeleteMediaCommand(inIndexesToDelete));
+				break;
+			case UNLINK:
+				command.addCommand(makeUnlinkMediaCommand(inIndexesToDelete));
+				break;
+			case MEDIA_NOT_CONNECTED:
+			case CANCEL:
+			default:
+				break;
+		}
+		return command;
+	}
+
+	/**
+	 * @param inIndexesToDelete indexes of points which will be deleted
+	 * @return command to unlink points from their media
+	 */
+	private Command makeUnlinkMediaCommand(List<Integer> inIndexesToDelete)
+	{
+		ArrayList<PointAndMedia> points = new ArrayList<>();
+		for (int i : inIndexesToDelete)
+		{
+			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
+			if (point.hasMedia()) {
+				points.add(new PointAndMedia(point, null, null)); // disconnect
 			}
 		}
+		return new ConnectMultipleMediaCmd(MediaLinkType.LINK_BOTH, points);
+	}
+
+	/**
+	 * @param inIndexesToDelete indexes of points which will be deleted
+	 * @return command to remove the media belonging to these points
+	 */
+	private Command makeDeleteMediaCommand(List<Integer> inIndexesToDelete)
+	{
+		ArrayList<MediaObject> media = new ArrayList<>();
+		for (int i : inIndexesToDelete)
+		{
+			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
+			if (point.getPhoto() != null) {
+				media.add(point.getPhoto());
+			}
+			if (point.getAudio() != null) {
+				media.add(point.getAudio());
+			}
+		}
+		return new RemoveMediaCmd(media);
+	}
+
+	/**
+	 * Criterion for keeping a point index
+	 */
+	interface PointToKeepCriterion {
+		boolean keepIndex(int inIndex);
 	}
 }

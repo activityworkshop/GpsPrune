@@ -9,9 +9,9 @@ import java.io.File;
 public class MediaLinkInfo
 {
 	/** zip file (or kmz file) containing media files */
-	private File _zipFile = null;
+	private final File _zipFile;
 	/** array of URLs */
-	private String[] _linkArray = null;
+	private final String[] _linkArray;
 
 
 	/**

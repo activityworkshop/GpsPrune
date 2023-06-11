@@ -1,18 +1,21 @@
 package tim.prune.correlate;
 
+import java.util.ArrayList;
+
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
 
 import tim.prune.App;
-import tim.prune.DataSubscriber;
 import tim.prune.I18nManager;
-import tim.prune.UpdateMessageBroker;
+import tim.prune.cmd.Command;
+import tim.prune.cmd.CorrelateMediaCmd;
+import tim.prune.cmd.MediaLinkType;
+import tim.prune.cmd.PointAndMedia;
 import tim.prune.data.DataPoint;
 import tim.prune.data.MediaList;
 import tim.prune.data.Photo;
-import tim.prune.data.PhotoList;
 import tim.prune.data.TimeDifference;
-import tim.prune.undo.UndoCorrelatePhotos;
+
 
 /**
  * Class to manage the automatic correlation of photos to points
@@ -29,7 +32,7 @@ public class PhotoCorrelator extends Correlator
 	}
 
 
-	/** Get the name key */
+	/** @return the name key */
 	public String getNameKey() {
 		return "function.correlatephotos";
 	}
@@ -40,7 +43,7 @@ public class PhotoCorrelator extends Correlator
 	}
 
 	/** @return photo list*/
-	protected MediaList getMediaList() {
+	protected MediaList<?> getMediaList() {
 		return _app.getTrackInfo().getPhotoList();
 	}
 
@@ -54,12 +57,12 @@ public class PhotoCorrelator extends Correlator
 		TimeDifference timeLimit = parseTimeLimit();
 		double angDistLimit = parseDistanceLimit();
 		MediaPreviewTableModel model = new MediaPreviewTableModel("dialog.correlate.select.photoname");
-		PhotoList photos = _app.getTrackInfo().getPhotoList();
+		MediaList<Photo> photos = _app.getTrackInfo().getPhotoList();
 		// Loop through photos deciding whether to set correlate flag or not
-		int numPhotos = photos.getNumPhotos();
+		int numPhotos = photos.getCount();
 		for (int i=0; i<numPhotos; i++)
 		{
-			Photo photo = photos.getPhoto(i);
+			Photo photo = photos.get(i);
 			PointMediaPair pair = getPointPairForMedia(_app.getTrackInfo().getTrack(), photo, inTimeDiff);
 			MediaPreviewTableRow row = new MediaPreviewTableRow(pair);
 			// Don't try to correlate photos which don't have points either side
@@ -100,32 +103,29 @@ public class PhotoCorrelator extends Correlator
 		if (inShowWarning && !model.hasAnySelected())
 		{
 			JOptionPane.showMessageDialog(_dialog, I18nManager.getText("dialog.correlate.alloutsiderange"),
-				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
+				getName(), JOptionPane.ERROR_MESSAGE);
 		}
 	}
 
 
 	/**
-	 * Finish the correlation by modifying the track
-	 * and passing the Undo information back to the App
+	 * Finish the correlation by creating the appropriate command
+	 * and passing it back to the App
 	 */
 	protected void finishCorrelation()
 	{
 		PointMediaPair[] pointPairs = getPointPairs();
-		if (pointPairs == null || pointPairs.length <= 0) {return;}
+		if (pointPairs == null || pointPairs.length <= 0) {
+			return;
+		}
 
-		// begin to construct undo information
-		UndoCorrelatePhotos undo = new UndoCorrelatePhotos(_app.getTrackInfo());
-		// loop over Photos
-		int arraySize = pointPairs.length;
-		int i = 0, numPhotos = 0;
-		int numPointsToCreate = 0;
-		PointMediaPair pair = null;
-		for (i=0; i<arraySize; i++)
+		ArrayList<DataPoint> pointsToCreate = new ArrayList<>();
+		ArrayList<PointAndMedia> pointPhotoPairs = new ArrayList<>();
+		for (PointMediaPair pair : pointPairs)
 		{
-			pair = pointPairs[i];
 			if (pair != null && pair.isValid())
 			{
+				Photo photoToLink = (Photo) pair.getMedia();
 				if (pair.getMinSeconds() == 0L)
 				{
 					// exact match
@@ -133,73 +133,34 @@ public class PhotoCorrelator extends Correlator
 					if (pointPhoto == null)
 					{
 						// photo coincides with photoless point so connect the two
-						pair.getPointBefore().setPhoto((Photo) pair.getMedia());
-						pair.getMedia().setDataPoint(pair.getPointBefore());
+						DataPoint point = pair.getPointBefore();
+						pointPhotoPairs.add(new PointAndMedia(point, photoToLink, null));
 					}
 					else if (pointPhoto.equals(pair.getMedia())) {
 						// photo is already connected, nothing to do
 					}
-					else {
+					else
+					{
 						// point is already connected to a different photo, so need to clone point
-						numPointsToCreate++;
+						DataPoint pointToAdd = pair.getPointBefore().clonePoint();
+						pointsToCreate.add(pointToAdd);
+						pointPhotoPairs.add(new PointAndMedia(pointToAdd, photoToLink, null));
 					}
 				}
 				else
 				{
 					// photo time falls between two points, so need to interpolate new one
-					numPointsToCreate++;
-				}
-				numPhotos++;
-			}
-		}
-		// Second loop, to create points if necessary
-		if (numPointsToCreate > 0)
-		{
-			// make new array for added points
-			DataPoint[] addedPoints = new DataPoint[numPointsToCreate];
-			int pointNum = 0;
-			DataPoint pointToAdd = null;
-			for (i=0; i<arraySize; i++)
-			{
-				pair = pointPairs[i];
-				if (pair != null && pair.isValid())
-				{
-					pointToAdd = null;
-					if (pair.getMinSeconds() == 0L && pair.getPointBefore().getPhoto() != null
-					 && !pair.getPointBefore().getPhoto().equals(pair.getMedia()))
-					{
-						// clone point
-						pointToAdd = pair.getPointBefore().clonePoint();
-					}
-					else if (pair.getMinSeconds() > 0L)
-					{
-						// interpolate point
-						pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
-					}
-					if (pointToAdd != null)
-					{
-						// link photo to point
-						pointToAdd.setPhoto((Photo) pair.getMedia());
-						pair.getMedia().setDataPoint(pointToAdd);
-						// set to start of segment so not joined in track
-						pointToAdd.setSegmentStart(true);
-						// add to point array
-						addedPoints[pointNum] = pointToAdd;
-						pointNum++;
-					}
+					DataPoint pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
+					pointToAdd.setSegmentStart(true);
+					pointsToCreate.add(pointToAdd);
+					pointPhotoPairs.add(new PointAndMedia(pointToAdd, photoToLink, null));
 				}
 			}
-			// expand track
-			_app.getTrackInfo().getTrack().appendPoints(addedPoints);
 		}
 
-		// send undo information back to controlling app
-		undo.setNumPhotosCorrelated(numPhotos);
-		_app.completeFunction(undo, ("" + numPhotos + " "
-			 + (numPhotos==1?I18nManager.getText("confirm.correlatephotos.single"):I18nManager.getText("confirm.correlatephotos.multi"))));
-		// observers already informed by track update if new points created
-		if (numPointsToCreate == 0) {
-			UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
-		}
+		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, pointsToCreate, pointPhotoPairs);
+		command.setDescription(makeUndoText(pointPhotoPairs.size()));
+		command.setConfirmText(makeConfirmText(pointPhotoPairs.size()));
+		_app.execute(command);
 	}
 }

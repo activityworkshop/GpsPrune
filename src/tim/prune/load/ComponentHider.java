@@ -17,8 +17,8 @@ public class ComponentHider
 	 */
 	static class ComponentPair
 	{
-		public Component _component = null;
-		public Field     _field     = null;
+		public final Component _component;
+		public final Field _field;
 		/** Constructor */
 		public ComponentPair(Component inComponent, Field inField)
 		{
@@ -28,7 +28,7 @@ public class ComponentHider
 	}
 
 	/** list itself */
-	private ArrayList<ComponentPair> _componentList = new ArrayList<ComponentPair>(20);
+	private final ArrayList<ComponentPair> _componentList = new ArrayList<ComponentPair>(20);
 
 	/**
 	 * Add a new component to be controlled

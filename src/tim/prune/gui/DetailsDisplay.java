@@ -6,8 +6,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.TimeZone;
 
 import javax.swing.BorderFactory;
@@ -226,10 +224,10 @@ public class DetailsDisplay extends GenericDisplay
 		_audioDetailsPanel.add(_audioProgress);
 		_playAudioPanel = new JPanel();
 		_playAudioPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton playAudio = makeRotateButton(IconManager.PLAY_AUDIO, FunctionLibrary.FUNCTION_PLAY_AUDIO);
+		JButton playAudio = makeRotateButton(IconManager.CONTROL_PLAY, FunctionLibrary.FUNCTION_PLAY_AUDIO);
 		playAudio.addActionListener(new AudioListener(_audioProgress));
 		_playAudioPanel.add(playAudio);
-		JButton stopAudio = makeRotateButton(IconManager.STOP_AUDIO, FunctionLibrary.FUNCTION_STOP_AUDIO);
+		JButton stopAudio = makeRotateButton(IconManager.CONTROL_STOP, FunctionLibrary.FUNCTION_STOP_AUDIO);
 		_playAudioPanel.add(stopAudio);
 		_playAudioPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_playAudioPanel.setVisible(false);
@@ -257,12 +255,7 @@ public class DetailsDisplay extends GenericDisplay
 		String[] coordFormats = {I18nManager.getText("units.original"), I18nManager.getText("units.degminsec"),
 			I18nManager.getText("units.degmin"), I18nManager.getText("units.deg")};
 		_coordFormatDropdown = new JComboBox<String>(coordFormats);
-		_coordFormatDropdown.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				dataUpdated(DataSubscriber.UNITS_CHANGED);
-			}
-		});
+		_coordFormatDropdown.addActionListener(e -> dataUpdated(DataSubscriber.UNITS_CHANGED));
 		lowerPanel.add(_coordFormatDropdown);
 		_coordFormatDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JLabel unitsLabel = new JLabel(I18nManager.getText("details.distanceunits") + ": ");
@@ -275,12 +268,9 @@ public class DetailsDisplay extends GenericDisplay
 			_distUnitsDropdown.addItem(I18nManager.getText(UnitSetLibrary.getUnitSet(i).getDistanceUnit().getNameKey()));
 			if (UnitSetLibrary.getUnitSet(i) == currUnits) {_distUnitsDropdown.setSelectedIndex(i);}
 		}
-		_distUnitsDropdown.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				Config.selectUnitSet(_distUnitsDropdown.getSelectedIndex());
-				UpdateMessageBroker.informSubscribers(DataSubscriber.UNITS_CHANGED);
-			}
+		_distUnitsDropdown.addActionListener(e -> {
+			Config.selectUnitSet(_distUnitsDropdown.getSelectedIndex());
+			UpdateMessageBroker.informSubscribers(DataSubscriber.UNITS_CHANGED);
 		});
 		lowerPanel.add(_distUnitsDropdown);
 		_distUnitsDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -290,14 +280,16 @@ public class DetailsDisplay extends GenericDisplay
 
 	/**
 	 * Notification that Track has been updated
-	 * @param inUpdateType byte to specify what has been updated
+	 * @param inUpdateType flags to specify what has been updated
 	 */
-	public void dataUpdated(byte inUpdateType)
+	public void dataUpdated(int inUpdateType)
 	{
 		// Update current point data, if any
 		DataPoint currentPoint = _trackInfo.getCurrentPoint();
 		Selection selection = _trackInfo.getSelection();
-		if ((inUpdateType | DATA_ADDED_OR_REMOVED) > 0) selection.markInvalid();
+		if ((inUpdateType | DATA_ADDED_OR_REMOVED) > 0) {
+			selection.markInvalid();
+		}
 		int currentPointIndex = selection.getCurrentPointIndex();
 		_speedLabel.setText("");
 		UnitSet unitSet = UnitSetLibrary.getUnitSet(_distUnitsDropdown.getSelectedIndex());
@@ -410,7 +402,7 @@ public class DetailsDisplay extends GenericDisplay
 			String filename = null;
 			if (numFiles > 1)
 			{
-				final SourceInfo info = _trackInfo.getFileInfo().getSourceForPoint(currentPoint);
+				final SourceInfo info = currentPoint.getSourceInfo();
 				if (info != null) {
 					filename = info.getName();
 				}
@@ -474,8 +466,8 @@ public class DetailsDisplay extends GenericDisplay
 			}
 		}
 		// show photo details and thumbnail
-		_photoDetailsPanel.setVisible(_trackInfo.getPhotoList().getNumPhotos() > 0);
-		Photo currentPhoto = _trackInfo.getPhotoList().getPhoto(_trackInfo.getSelection().getCurrentPhotoIndex());
+		_photoDetailsPanel.setVisible(_trackInfo.getPhotoList().hasAny());
+		Photo currentPhoto = _trackInfo.getPhotoList().get(_trackInfo.getSelection().getCurrentPhotoIndex());
 		if ((currentPoint == null || currentPoint.getPhoto() == null) && currentPhoto == null)
 		{
 			// no photo, hide details
@@ -511,15 +503,15 @@ public class DetailsDisplay extends GenericDisplay
 			_photoThumbnail.setVisible(true);
 			_photoThumbnail.setPhoto(currentPhoto);
 			_rotationButtons.setVisible(true);
-			if ((inUpdateType & DataSubscriber.PHOTOS_MODIFIED) > 0) {
+			if ((inUpdateType & DataSubscriber.MEDIA_MODIFIED) > 0) {
 				_photoThumbnail.refresh();
 			}
 		}
 		_photoThumbnail.repaint();
 
 		// audio details
-		_audioDetailsPanel.setVisible(_trackInfo.getAudioList().getNumAudios() > 0);
-		AudioClip currentAudio = _trackInfo.getAudioList().getAudio(_trackInfo.getSelection().getCurrentAudioIndex());
+		_audioDetailsPanel.setVisible(_trackInfo.getAudioList().hasAny());
+		AudioClip currentAudio = _trackInfo.getAudioList().get(_trackInfo.getSelection().getCurrentAudioIndex());
 		if (currentAudio == null)
 		{
 			_audioLabel.setText(I18nManager.getText("details.noaudio"));
@@ -577,7 +569,7 @@ public class DetailsDisplay extends GenericDisplay
 	private static JButton makeRotateButton(String inIcon, GenericFunction inFunction)
 	{
 		JButton button = new JButton(IconManager.getImageIcon(inIcon));
-		button.setToolTipText(I18nManager.getText(inFunction.getNameKey()));
+		button.setToolTipText(inFunction.getName());
 		button.setMargin(new Insets(0, 2, 0, 2));
 		button.addActionListener(new FunctionLauncher(inFunction));
 		return button;

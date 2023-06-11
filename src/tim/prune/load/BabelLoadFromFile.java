@@ -3,8 +3,6 @@ package tim.prune.load;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.BorderFactory;
@@ -16,7 +14,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
-import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import tim.prune.App;
@@ -32,7 +29,7 @@ import tim.prune.load.babel.BabelFilterPanel;
  * Class to manage the loading of data from a file using GpsBabel.
  * This allows the use of Gpsbabel's importing functions to convert to gpx.
  */
-public class BabelLoadFromFile extends BabelLoader
+public class BabelLoadFromFile extends BabelLoadFunction
 {
 	// file chooser
 	private JFileChooser _fileChooser = null;
@@ -114,9 +111,10 @@ public class BabelLoadFromFile extends BabelLoader
 	}
 
 	/**
+	 * @param inOkButton ok button
 	 * @return a panel containing the main dialog components
 	 */
-	protected JPanel makeDialogComponents()
+	protected JPanel makeDialogComponents(JButton inOkButton)
 	{
 		JPanel outerPanel = new JPanel();
 		outerPanel.setLayout(new BorderLayout());
@@ -140,12 +138,7 @@ public class BabelLoadFromFile extends BabelLoader
 		mainPanel.add(gridPanel);
 
 		// checkboxes
-		ChangeListener checkboxListener = new ChangeListener() {
-			public void stateChanged(ChangeEvent e)
-			{
-				enableOkButton();
-			}
-		};
+		ChangeListener checkboxListener = e -> enableOkButton();
 		_waypointCheckbox = new JCheckBox(I18nManager.getText("dialog.gpsload.getwaypoints"), true);
 		_waypointCheckbox.addChangeListener(checkboxListener);
 		_waypointCheckbox.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -176,24 +169,11 @@ public class BabelLoadFromFile extends BabelLoader
 		// Lower panel with ok and cancel buttons
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// start thread to call gpsbabel
-				_cancelled = false;
-				new Thread(BabelLoadFromFile.this).start();
-			}
-		};
-		_okButton.addActionListener(okListener);
-		buttonPanel.add(_okButton);
+		buttonPanel.add(inOkButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_cancelled = true;
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			_cancelled = true;
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		outerPanel.add(buttonPanel, BorderLayout.SOUTH);

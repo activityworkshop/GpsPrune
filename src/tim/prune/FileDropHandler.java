@@ -4,6 +4,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.TransferHandler;
 
@@ -13,7 +14,7 @@ import javax.swing.TransferHandler;
 public class FileDropHandler extends TransferHandler
 {
 	/** App object for passing results back to */
-	private App _app = null;
+	private final App _app;
 
 	/** Fixed flavour in case the java file list flavour isn't available */
 	private static DataFlavor _uriListFlavour = null;
@@ -21,7 +22,8 @@ public class FileDropHandler extends TransferHandler
 	/** Static block to initialise the list flavour */
 	static
 	{
-		try {_uriListFlavour = new DataFlavor("text/uri-list;class=java.lang.String");
+		try {
+			_uriListFlavour = new DataFlavor("text/uri-list;class=java.lang.String");
 		} catch (ClassNotFoundException nfe) {}
 	}
 
@@ -59,14 +61,14 @@ public class FileDropHandler extends TransferHandler
 		if (!canImport(inSupport)) {return false;} // not allowed
 
 		boolean success = false;
-		ArrayList<File> dataFiles = new ArrayList<File>();
+		ArrayList<File> dataFiles = new ArrayList<>();
 
 		// Try a java file list flavour first
 		try
 		{
 			@SuppressWarnings("unchecked")
-			java.util.List<File> fileList = (java.util.List<File>)
-			inSupport.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+			List<File> fileList = (List<File>) inSupport.getTransferable().getTransferData(
+				DataFlavor.javaFileListFlavor);
 			success = true;
 
 			for (File f : fileList)

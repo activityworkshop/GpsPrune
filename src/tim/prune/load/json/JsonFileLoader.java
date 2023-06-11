@@ -1,28 +1,34 @@
 package tim.prune.load.json;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Stack;
 
+import javax.swing.JOptionPane;
+
 import tim.prune.App;
-import tim.prune.data.Field;
+import tim.prune.data.Altitude;
+import tim.prune.data.DataPoint;
+import tim.prune.data.Latitude;
+import tim.prune.data.Longitude;
 import tim.prune.data.SourceInfo;
+import tim.prune.data.UnitSetLibrary;
+import tim.prune.load.FileToBeLoaded;
+import tim.prune.load.FileTypeLoader;
 
 
 /**
  * Class to handle the loading of GeoJSON files
  */
-public class JsonFileLoader
+public class JsonFileLoader extends FileTypeLoader
 {
-	/** App for callback of file loading */
-	private App _app = null;
 	/** Stack of blocks */
-	private Stack<JsonBlock> _jsonBlocks = null;
+	private final Stack<JsonBlock> _jsonBlocks;
 	/** List of points extracted */
-	private ArrayList<JsonPoint> _jsonPoints = null;
+	private final ArrayList<JsonPoint> _jsonPoints;
 	private boolean _newSegment = true;
 
 
@@ -32,21 +38,20 @@ public class JsonFileLoader
 	 */
 	public JsonFileLoader(App inApp)
 	{
-		_app = inApp;
+		super(inApp);
 		_jsonBlocks = new Stack<JsonBlock>();
 		_jsonPoints = new ArrayList<JsonPoint>();
 	}
 
 	/**
 	 * Open the selected file
-	 * @param inFile File to open
+	 * @param inFileLock File to open
+	 * @param inAutoAppend true to automatically append
 	 */
-	public void openFile(File inFile)
+	public void openFile(FileToBeLoaded inFileLock, boolean inAutoAppend)
 	{
-		BufferedReader reader = null;
-		try
+		try (BufferedReader reader = new BufferedReader(new FileReader(inFileLock.getFile())))
 		{
-			reader = new BufferedReader(new FileReader(inFile));
 			String currLine = reader.readLine();
 			while (currLine != null)
 			{
@@ -56,22 +61,17 @@ public class JsonFileLoader
 			}
 		}
 		catch (IOException ioe) {
-			_app.showErrorMessage("error.load.dialogtitle", "error.load.noread");
+			getApp().showErrorMessage("error.load.dialogtitle", "error.load.noread");
 		}
-		finally
+
+		if (!_jsonPoints.isEmpty())
 		{
-			// close file ignoring errors
-			try {
-				if (reader != null) reader.close();
+			int appendOption = getAppendOption(inAutoAppend);
+			if (appendOption == JOptionPane.CANCEL_OPTION) {
+				return;
 			}
-			catch (Exception e) {}
-		}
-		if (_jsonPoints.size() > 0)
-		{
-			Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
-				Field.NEW_SEGMENT};
-			_app.informDataLoaded(fields, makeDataArray(),
-				null, new SourceInfo(inFile, SourceInfo.FILE_TYPE.JSON), null);
+			loadData(makePointList(), new SourceInfo(inFileLock.getFile(), SourceInfo.FILE_TYPE.JSON),
+				appendOption == JOptionPane.YES_OPTION);
 		}
 		// TODO: Show message if nothing was found?
 	}
@@ -81,7 +81,7 @@ public class JsonFileLoader
 	private void processTokensInLine(String inLine)
 	{
 		if (inLine == null) {return;}
-		String line = inLine.strip();
+		String line = inLine.trim();
 		StringBuilder currToken = new StringBuilder();
 		boolean insideQuotes = false;
 		boolean previousSlash = false;
@@ -146,8 +146,7 @@ public class JsonFileLoader
 		}
 		else if (inBlock.hasValidCoordList())
 		{
-			for (int i=0; i<inBlock.getNumPoints(); i++)
-			{
+			for (int i=0; i<inBlock.getNumPoints(); i++) {
 				_jsonPoints.add(inBlock.createPointFromList(i));
 			}
 			_newSegment = true;
@@ -155,16 +154,18 @@ public class JsonFileLoader
 	}
 
 	/**
-	 * Make an object array from the data list
-	 * @return object array for loading
+	 * @return list of points to load
 	 */
-	private Object[][] makeDataArray()
+	private List<DataPoint> makePointList()
 	{
-		Object[][] result = new Object[_jsonPoints.size()][];
-		for (int i=0; i<_jsonPoints.size(); i++) {
-			JsonPoint point = _jsonPoints.get(i);
-			result[i] = new String[] {point._latitude, point._longitude, point._altitude, point._newSegment?"1":"0"};
+		ArrayList<DataPoint> points = new ArrayList<>();
+		for (JsonPoint jsonPoint : _jsonPoints) {
+			DataPoint point = new DataPoint(new Latitude(jsonPoint._latitude),
+				new Longitude(jsonPoint._longitude),
+				new Altitude(jsonPoint._altitude, UnitSetLibrary.UNITS_METRES));
+			point.setSegmentStart(jsonPoint._newSegment);
+			points.add(point);
 		}
-		return result;
+		return points;
 	}
 }

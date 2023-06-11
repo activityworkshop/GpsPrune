@@ -2,8 +2,6 @@ package tim.prune.function;
 
 import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
@@ -25,7 +23,7 @@ import tim.prune.gui.WholeNumberField;
 public class ChooseSingleParameter extends GenericFunction
 {
 	/** Parent function which needs this parameter */
-	private SingleNumericParameterFunction _parent = null;
+	private final SingleNumericParameterFunction _parent;
 	/** dialog */
 	private JDialog _dialog = null;
 	/** label which might need to be changed */
@@ -54,7 +52,7 @@ public class ChooseSingleParameter extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(_parent.getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -92,11 +90,7 @@ public class ChooseSingleParameter extends GenericFunction
 		dialogPanel.add(centrePanel, BorderLayout.CENTER);
 
 		// Listener to enable/disable ok button
-		_numberField.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				enableOkButton();
-			}
-		});
+		_numberField.addActionListener(e -> enableOkButton());
 		_numberField.addKeyListener(new KeyAdapter() {
 			public void keyReleased(KeyEvent inE)
 			{
@@ -111,22 +105,11 @@ public class ChooseSingleParameter extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> finish());
 		_okButton.setEnabled(false);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));

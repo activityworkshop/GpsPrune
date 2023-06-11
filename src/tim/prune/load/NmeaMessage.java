@@ -7,12 +7,12 @@ import java.util.Calendar;
  */
 public class NmeaMessage
 {
-	private String _latitude = null;
-	private String _longitude = null;
-	private String _altitude = null;
-	private String _timestamp = null;
+	private final String _latitude;
+	private final String _longitude;
+	private final String _altitude;
+	private final String _timestamp;
 	private String _date = null;
-	private boolean _fix = false;
+	private final boolean _fix;
 	private boolean _segment = false;
 
 	/**
@@ -43,8 +43,7 @@ public class NmeaMessage
 	/**
 	 * @param inSegment segment flag
 	 */
-	public void setSegment(boolean inSegment)
-	{
+	public void setSegment(boolean inSegment) {
 		_segment = inSegment;
 	}
 
@@ -55,14 +54,20 @@ public class NmeaMessage
 		_date = inDate;
 	}
 
-	/**
-	 * @return String array for loading
-	 */
-	public String[] getStrings()
-	{
-		String[] results = new String[] {modify(_latitude), modify(_longitude), _altitude,
-			getTimestamp(), (_segment?"1":"")};
-		return results;
+	public String getLatitude() {
+		return modify(_latitude);
+	}
+
+	public String getLongitude() {
+		return modify(_longitude);
+	}
+
+	public String getAltitude() {
+		return _altitude;
+	}
+
+	public boolean getSegmentFlag() {
+		return _segment;
 	}
 
 	/**
@@ -86,13 +91,14 @@ public class NmeaMessage
 	 * Use time from NMEA message, and today's date (as date isn't given in GPGGA messages)
 	 * @return Timestamp in parseable format
 	 */
-	private String getTimestamp()
+	public String getTimestamp()
 	{
 		try
 		{
 			Calendar cal = Calendar.getInstance();
 			// use date if available (today if not)
-			if (_date != null && _date.length() == 6) {
+			if (_date != null && _date.length() == 6)
+			{
 				try {
 					cal.set(Calendar.DAY_OF_MONTH, Integer.parseInt(_date.substring(0, 2)));
 					cal.set(Calendar.MONTH, Integer.parseInt(_date.substring(2, 4))-1); // month starts at zero

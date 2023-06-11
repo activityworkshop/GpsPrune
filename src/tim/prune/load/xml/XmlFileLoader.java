@@ -1,6 +1,5 @@
 package tim.prune.load.xml;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,6 +18,8 @@ import org.xml.sax.helpers.XMLReaderFactory;
 import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.SourceInfo;
+import tim.prune.load.FileToBeLoaded;
+import tim.prune.load.FileTypeLoader;
 import tim.prune.load.MediaLinkInfo;
 
 /**
@@ -27,8 +28,9 @@ import tim.prune.load.MediaLinkInfo;
  */
 public class XmlFileLoader extends DefaultHandler implements Runnable
 {
-	private File _file = null;
-	private App _app = null;
+	private final App _app;
+	private FileToBeLoaded _fileLock = null;
+	private boolean _autoAppend = false;
 	private XmlHandler _handler = null;
 	private String _unknownType = null;
 
@@ -37,8 +39,7 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	 * Constructor
 	 * @param inApp Application object to inform of track load
 	 */
-	public XmlFileLoader(App inApp)
-	{
+	public XmlFileLoader(App inApp) {
 		_app = inApp;
 	}
 
@@ -53,11 +54,14 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 
 	/**
 	 * Open the selected file
-	 * @param inFile File to open
+	 * @param inFileLock File to open
+	 * @param inAutoAppend true to auto-append
 	 */
-	public void openFile(File inFile)
+	public void openFile(FileToBeLoaded inFileLock, boolean inAutoAppend)
 	{
-		_file = inFile;
+		_fileLock = inFileLock;
+		_fileLock.takeOwnership();	// we keep ownership for separate thread
+		_autoAppend = inAutoAppend;
 		reset();
 		// start new thread in case xml parsing is time-consuming
 		new Thread(this).start();
@@ -74,13 +78,15 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 		boolean success = false;
 		try
 		{
-			inStream = new FileInputStream(_file);
+			inStream = new FileInputStream(_fileLock.getFile());
 			success = parseXmlStream(inStream);
 		}
 		catch (FileNotFoundException fnfe) {}
 
 		// Clean up the stream, don't need it any more
-		try {inStream.close();} catch (IOException e2) {}
+		if (inStream != null) {
+			try {inStream.close();} catch (IOException e2) {}
+		}
 
 		if (success)
 		{
@@ -94,15 +100,15 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 			else
 			{
 				SourceInfo.FILE_TYPE sourceType = (_handler instanceof GpxHandler ? SourceInfo.FILE_TYPE.GPX : SourceInfo.FILE_TYPE.KML);
-				SourceInfo sourceInfo = new SourceInfo(_file, sourceType);
+				SourceInfo sourceInfo = new SourceInfo(_fileLock.getFile(), sourceType);
 				sourceInfo.setFileTitle(_handler.getFileTitle());
 
 				// Pass information back to app
-				_app.informDataLoaded(_handler.getFieldArray(), _handler.getDataArray(),
-					null, sourceInfo, _handler.getTrackNameList(),
+				new FileTypeLoader(_app).loadData(_handler, sourceInfo, _autoAppend,
 					new MediaLinkInfo(_handler.getLinkArray()));
 			}
 		}
+		_fileLock.release();
 	}
 
 
@@ -154,10 +160,13 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 		// Check for "kml" or "gpx" tags
 		if (_handler == null)
 		{
-			if (qName.equals("kml")) {_handler = new KmlHandler();}
-			else if (qName.equals("gpx")) {_handler = new GpxHandler();}
-			else if (_unknownType == null && !qName.equals(""))
-			{
+			if (qName.equals("kml")) {
+				_handler = new KmlHandler();
+			}
+			else if (qName.equals("gpx")) {
+				_handler = new GpxHandler();
+			}
+			else if (_unknownType == null && !qName.equals("")) {
 				_unknownType = qName;
 			}
 		}

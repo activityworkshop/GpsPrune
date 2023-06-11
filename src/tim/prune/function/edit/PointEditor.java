@@ -1,20 +1,18 @@
 package tim.prune.function.edit;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -23,31 +21,29 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.table.TableCellRenderer;
 
 import tim.prune.App;
+import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.EditPointCmd;
 import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
-import tim.prune.data.Track;
 import tim.prune.data.Unit;
+import tim.prune.function.Describer;
 
 /**
- * Class to manage the display and editing of point data
+ * Function to manage the display and editing of point data
  */
-public class PointEditor
+public class PointEditor extends GenericFunction
 {
-	private App _app = null;
-	private JFrame _parentFrame = null;
 	private JDialog _dialog = null;
 	private JTable _table = null;
 	private JLabel _fieldnameLabel = null;
 	private JTextField _valueField = null;
 	private JTextArea _valueArea = null;
 	private JScrollPane _valueAreaPane = null;
-	private Track _track = null;
 	private FieldList _fieldList = null;
 	private DataPoint _point = null;
 	private EditFieldsTableModel _model = null;
@@ -58,28 +54,27 @@ public class PointEditor
 	/**
 	 * Constructor
 	 * @param inApp application object to inform of success
-	 * @param inParentFrame parent frame
 	 */
-	public PointEditor(App inApp, JFrame inParentFrame)
-	{
-		_app = inApp;
-		_parentFrame = inParentFrame;
+	public PointEditor(App inApp) {
+		super(inApp);
 	}
 
+	@Override
+	public String getNameKey() {
+		return "menu.point.editpoint";
+	}
 
 	/**
-	 * Show the edit point dialog
-	 * @param inTrack track object
-	 * @param inPoint point to edit
+	 * Begin the function by showing the edit point dialog
 	 */
-	public void showDialog(Track inTrack, DataPoint inPoint)
+	public void begin()
 	{
-		_track = inTrack;
-		_point = inPoint;
+		_point = _app.getTrackInfo().getCurrentPoint();
 		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.pointedit.title"), true);
 		_dialog.setLocationRelativeTo(_parentFrame);
 		// Check field list
-		_fieldList = getFieldList(_track);
+		FieldList trackFieldList = _app.getTrackInfo().getTrack().getFieldList();
+		_fieldList = trackFieldList.merge(new FieldList(Field.DESCRIPTION, Field.COMMENT));
 		int numFields = _fieldList.getNumFields();
 		// Create table model for point editor
 		_model = new EditFieldsTableModel(numFields);
@@ -99,16 +94,10 @@ public class PointEditor
 				_cancelButton.requestFocus();
 			}
 		});
+		_prevRowIndex = -1;
 		_dialog.setVisible(true);
 	}
 
-	/**
-	 * @param inTrack current track
-	 * @return list of fields for the editor
-	 */
-	private static FieldList getFieldList(Track inTrack) {
-		return inTrack.getFieldList().merge(new FieldList(Field.DESCRIPTION, Field.COMMENT));
-	}
 
 	/**
 	 * Make the dialog components
@@ -119,21 +108,10 @@ public class PointEditor
 		JPanel panel = new JPanel();
 		panel.setLayout(new BorderLayout(20, 10));
 		// Create GUI layout for point editor
-		_table = new JTable(_model) {
-			// Paint the changed fields orange
-			public Component prepareRenderer(TableCellRenderer renderer, int row, int column)
-			{
-				Component comp = super.prepareRenderer(renderer, row, column);
-				boolean changed = ((EditFieldsTableModel) getModel()).getChanged(row);
-				if (row != getSelectedRow()) {
-					comp.setBackground(changed ? Color.orange : getBackground());
-				}
-				return comp;
-			}
-		};
+		_table = new EditTable(_model);
 		_table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		_table.getSelectionModel().clearSelection();
-		_table.getSelectionModel().addListSelectionListener((e) -> fieldSelected());
+		_table.getSelectionModel().addListSelectionListener(e -> fieldSelected());
 		_table.setPreferredScrollableViewportSize(new Dimension(_table.getWidth() * 2, _table.getRowHeight() * 6));
 		JScrollPane tablePane = new JScrollPane(_table);
 		tablePane.setPreferredSize(new Dimension(150, 100));
@@ -142,12 +120,6 @@ public class PointEditor
 		JLabel topLabel = new JLabel(I18nManager.getText("dialog.pointedit.intro"));
 		topLabel.setBorder(BorderFactory.createEmptyBorder(8, 6, 3, 6));
 		panel.add(topLabel, BorderLayout.NORTH);
-
-		// listener for ok event
-		ActionListener okListener = (e) -> {
-			confirmEdit();
-			_dialog.dispose();
-		};
 
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BorderLayout());
@@ -158,7 +130,7 @@ public class PointEditor
 		rightiPanel.add(_fieldnameLabel);
 		_valueField = new JTextField(11);
 		// Add listener for enter button
-		_valueField.addActionListener(okListener);
+		_valueField.addActionListener((e) -> confirmEdit());
 		rightiPanel.add(_valueField);
 		rightPanel.add(rightiPanel, BorderLayout.NORTH);
 		_valueArea = new JTextArea(5, 15);
@@ -186,7 +158,7 @@ public class PointEditor
 		});
 		lowerPanel.add(_cancelButton);
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(okListener);
+		okButton.addActionListener((e) -> confirmEdit());
 		lowerPanel.add(okButton);
 		panel.add(lowerPanel, BorderLayout.SOUTH);
 		return panel;
@@ -217,7 +189,7 @@ public class PointEditor
 		else
 		{
 			String currValue = _model.getValue(rowNum);
-			Field  field     = _fieldList.getField(rowNum);
+			Field field = _fieldList.getField(rowNum);
 			_fieldnameLabel.setText(makeFieldLabel(field, _point));
 			_fieldnameLabel.setVisible(true);
 			boolean littleField = field.isBuiltIn() && field != Field.DESCRIPTION;
@@ -269,7 +241,9 @@ public class PointEditor
 	 */
 	private static String makeUnitsLabel(Unit inUnit)
 	{
-		if (inUnit == null) return "";
+		if (inUnit == null) {
+			return "";
+		}
 		return " (" + I18nManager.getText(inUnit.getShortnameKey()) + ")";
 	}
 
@@ -288,20 +262,44 @@ public class PointEditor
 			_model.updateValue(_prevRowIndex, newValue);
 		}
 
-		// Package the modified fields into an object
+		// Package all the modified fields into an object
 		int numFields = _fieldList.getNumFields();
-		// Make lists for edit and undo, and add each changed field in turn
-		FieldEditList editList = new FieldEditList();
-		FieldEditList undoList = new FieldEditList();
+		ArrayList<FieldEdit> edits = new ArrayList<>();
 		for (int i=0; i<numFields; i++)
 		{
 			if (_model.getChanged(i))
 			{
 				Field field = _fieldList.getField(i);
-				editList.addEdit(new FieldEdit(field, _model.getValue(i)));
-				undoList.addEdit(new FieldEdit(field, _point.getFieldValue(field)));
+				edits.add(new FieldEdit(field, _model.getValue(i)));
 			}
 		}
-		_app.completePointEdit(editList, undoList);
+		if (!edits.isEmpty())
+		{
+			int pointIndex = _app.getTrackInfo().getSelection().getCurrentPointIndex();
+			EditPointCmd command = new EditPointCmd(pointIndex, edits);
+			DataPoint point = _app.getTrackInfo().getCurrentPoint();
+			String pointName = getPointName(point, edits);
+			Describer undoDescriber = new Describer("undo.editpoint", "undo.editpoint.withname");
+			command.setDescription(undoDescriber.getDescriptionWithNameOrNot(pointName));
+			command.setConfirmText(I18nManager.getText("confirm.point.edit"));
+			_app.execute(command);
+		}
+		_dialog.dispose();
+	}
+
+	/**
+	 * @return point name, either the one after the edit or the one before it
+	 */
+	private String getPointName(DataPoint inPoint, ArrayList<FieldEdit> inEdits)
+	{
+		for (FieldEdit edit : inEdits) {
+			if (edit.getField() == Field.WAYPT_NAME && !edit.getValue().trim().equals("")) {
+				return edit.getValue();
+			}
+		}
+		if (inPoint != null && inPoint.isWaypoint() && !inPoint.getWaypointName().trim().equals("")) {
+			return inPoint.getWaypointName();
+		}
+		return null;
 	}
 }

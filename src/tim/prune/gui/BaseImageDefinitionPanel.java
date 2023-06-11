@@ -1,8 +1,6 @@
 package tim.prune.gui;
 
 import java.awt.BorderLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -27,13 +25,13 @@ import tim.prune.threedee.ImageDefinition;
 public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsumer
 {
 	/** Parent object (if any) */
-	private BaseImageConsumer _parent = null;
+	private final BaseImageConsumer _parent;
 	/** Label to describe the current settings */
-	private JLabel _baseImageLabel = null;
+	private final JLabel _baseImageLabel;
 	/** Button for changing the definition */
-	private JButton _editButton = null;
+	private final JButton _editButton;
 	/** Dialog called by the "Edit" button to change the settings */
-	private BaseImageConfigDialog _baseImageConfig = null;
+	private final BaseImageConfigDialog _baseImageConfig;
 
 
 	/**
@@ -61,11 +59,7 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 		_baseImageLabel = new JLabel("Typical sourcename");
 		subPanel.add(_baseImageLabel, BorderLayout.CENTER);
 		_editButton = new JButton(I18nManager.getText("button.edit"));
-		_editButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				changeBaseImage();
-			}
-		});
+		_editButton.addActionListener(e -> changeBaseImage());
 		subPanel.add(_editButton, BorderLayout.EAST);
 		add(subPanel, BorderLayout.NORTH);
 	}

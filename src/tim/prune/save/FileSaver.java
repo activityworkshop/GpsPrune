@@ -6,11 +6,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -39,7 +38,6 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
-import tim.prune.data.RecentFile;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
 import tim.prune.data.Unit;
@@ -102,25 +100,25 @@ public class FileSaver
 			_dialog.getContentPane().add(makeDialogComponents());
 			_dialog.pack();
 		}
-		// Has the track got media?
-		final boolean hasMedia = _app.getTrackInfo().getPhotoList().hasCorrelatedPhotos()
-			|| _app.getTrackInfo().getAudioList().hasCorrelatedAudios();
+
 		// Check field list
 		Track track = _app.getTrackInfo().getTrack();
 		FieldList fieldList = track.getFieldList();
-		int numFields = fieldList.getNumFields();
-		_model = new FieldSelectionTableModel(numFields + (hasMedia ? 1 : 0));
+		final int numFields = fieldList.getNumFields();
+		ArrayList<FieldInfo> fieldInfos = new ArrayList<>();
 		for (int i=0; i<numFields; i++)
 		{
 			Field field = fieldList.getField(i);
-			FieldInfo info = new FieldInfo(field, track.hasData(field));
-			_model.addFieldInfo(info, i);
+			fieldInfos.add(new FieldInfo(field, track.hasData(field)));
 		}
-		// Add a field for photos / audio if any present
-		if (hasMedia)
-		{
-			_model.addFieldInfo(new FieldInfo(Field.MEDIA_FILENAME, true), numFields);
+		// Add fields for photos / audios if present
+		if (_app.getTrackInfo().getPhotoList().hasCorrelatedMedia()) {
+			fieldInfos.add(new FieldInfo(Field.PHOTO, true));
 		}
+		if (_app.getTrackInfo().getAudioList().hasCorrelatedMedia()) {
+			fieldInfos.add(new FieldInfo(Field.AUDIO, true));
+		}
+		_model = new FieldSelectionTableModel(fieldInfos);
 		// Initialise dialog and show it
 		initDialog(_model, inDefaultDelimiter);
 		_dialog.setVisible(true);
@@ -158,31 +156,11 @@ public class FileSaver
 		JPanel updownPanel = new JPanel();
 		updownPanel.setLayout(new BoxLayout(updownPanel, BoxLayout.Y_AXIS));
 		_moveUpButton = new JButton(I18nManager.getText("button.moveup"));
-		_moveUpButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				int row = _table.getSelectedRow();
-				if (row > 0)
-				{
-					_model.swapItems(row, row - 1);
-					_table.setRowSelectionInterval(row - 1, row - 1);
-				}
-			}
-		});
+		_moveUpButton.addActionListener(e -> onMoveUp());
 		_moveUpButton.setEnabled(false);
 		updownPanel.add(_moveUpButton);
 		_moveDownButton = new JButton(I18nManager.getText("button.movedown"));
-		_moveDownButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				int row = _table.getSelectedRow();
-				if (row > -1 && row < (_model.getRowCount() - 1))
-				{
-					_model.swapItems(row, row + 1);
-					_table.setRowSelectionInterval(row + 1, row + 1);
-				}
-			}
-		});
+		_moveDownButton.addActionListener(e -> onMoveDown());
 		_moveDownButton.setEnabled(false);
 		updownPanel.add(_moveDownButton);
 		fieldsPanel.add(updownPanel, BorderLayout.EAST);
@@ -223,9 +201,8 @@ public class FileSaver
 		otherPanel.add(_otherDelimiterText);
 		// Group radio buttons
 		ButtonGroup delimGroup = new ButtonGroup();
-		for (int i=0; i<_delimiterRadios.length; i++)
-		{
-			delimGroup.add(_delimiterRadios[i]);
+		for (JRadioButton radio : _delimiterRadios) {
+			delimGroup.add(radio);
 		}
 		delimsPanel.add(otherPanel);
 		firstCard.add(delimsPanel);
@@ -315,50 +292,61 @@ public class FileSaver
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_backButton = new JButton(I18nManager.getText("button.back"));
-		_backButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				CardLayout cl = (CardLayout) _cards.getLayout();
-				cl.previous(_cards);
-				_backButton.setEnabled(false);
-				_nextButton.setEnabled(true);
-			}
-		});
+		_backButton.addActionListener(e -> onBackPressed());
 		_backButton.setEnabled(false);
 		buttonPanel.add(_backButton);
 		_nextButton = new JButton(I18nManager.getText("button.next"));
 		_nextButton.setEnabled(true);
-		_nextButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				CardLayout cl = (CardLayout) _cards.getLayout();
-				cl.next(_cards);
-				_backButton.setEnabled(true);
-				_nextButton.setEnabled(false);
-			}
-		});
+		_nextButton.addActionListener(e -> onNextPressed());
 		buttonPanel.add(_nextButton);
 		JButton okButton = new JButton(I18nManager.getText("button.finish"));
-		okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				if (saveToFile())
-				{
-					_dialog.dispose();
-				}
-			}
-		});
+		okButton.addActionListener(e -> saveToFile());
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		panel.add(buttonPanel, BorderLayout.SOUTH);
 		return panel;
+	}
+
+	/** Move the selected row up */
+	private void onMoveUp()
+	{
+		final int row = _table.getSelectedRow();
+		if (row > 0)
+		{
+			_model.swapItems(row, row - 1);
+			_table.setRowSelectionInterval(row - 1, row - 1);
+		}
+	}
+
+	/** Move the selected row down */
+	private void onMoveDown()
+	{
+		final int row = _table.getSelectedRow();
+		if (row > -1 && row < (_model.getRowCount() - 1))
+		{
+			_model.swapItems(row, row + 1);
+			_table.setRowSelectionInterval(row + 1, row + 1);
+		}
+	}
+
+	/** Go back to previous card */
+	private void onBackPressed()
+	{
+		CardLayout cl = (CardLayout) _cards.getLayout();
+		cl.previous(_cards);
+		_backButton.setEnabled(false);
+		_nextButton.setEnabled(true);
+	}
+
+	/** Go forward to next card */
+	private void onNextPressed()
+	{
+		CardLayout cl = (CardLayout) _cards.getLayout();
+		cl.next(_cards);
+		_backButton.setEnabled(true);
+		_nextButton.setEnabled(false);
 	}
 
 	/**
@@ -393,14 +381,14 @@ public class FileSaver
 
 	/**
 	 * Start the save process by choosing the file to save to
-	 * @return true if successful or cancelled, false if failed
 	 */
-	private boolean saveToFile()
+	private void saveToFile()
 	{
-		if (!_pointTypeSelector.getAnythingSelected()) {
+		if (!_pointTypeSelector.getAnythingSelected())
+		{
 			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.save.notypesselected"),
 				I18nManager.getText("dialog.saveoptions.title"), JOptionPane.WARNING_MESSAGE);
-			return false;
+			return;
 		}
 		if (_fileChooser == null)
 		{
@@ -413,11 +401,13 @@ public class FileSaver
 			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);}
 			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
-		if (_fileChooser.showSaveDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
-		{
-			return saveToFile(_fileChooser.getSelectedFile());
+		boolean shouldClose = true;
+		if (_fileChooser.showSaveDialog(_parentFrame) == JFileChooser.APPROVE_OPTION) {
+			shouldClose = saveToFile(_fileChooser.getSelectedFile());
 		}
-		return true; // cancelled
+		if (shouldClose) {
+			_dialog.dispose();
+		}
 	}
 
 
@@ -429,14 +419,15 @@ public class FileSaver
 	private boolean saveToFile(File inSaveFile)
 	{
 		// TODO: Shorten method
-		FileWriter writer = null;
 		final String lineSeparator = System.getProperty("line.separator");
 		boolean saveOK = true;
 		// Get coordinate format and altitude format
 		int coordFormat = Coordinate.FORMAT_NONE;
-		for (int i=0; i<_coordUnitsRadios.length; i++)
-			if (_coordUnitsRadios[i].isSelected())
+		for (int i=0; i<_coordUnitsRadios.length; i++) {
+			if (_coordUnitsRadios[i].isSelected()) {
 				coordFormat = FORMAT_COORDS[i];
+			}
+		}
 		Unit altitudeUnit = null;
 		for (int i=0; i<_altitudeUnitsRadios.length; i++)
 		{
@@ -464,21 +455,18 @@ public class FileSaver
 				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
 			== JOptionPane.YES_OPTION)
 		{
-			try
+			try (FileWriter writer = new FileWriter(saveFile))
 			{
-				// Create output file
-				writer = new FileWriter(saveFile);
 				// Determine delimiter character to use
 				final char delimiter = getDelimiter();
 				FieldInfo info = null;
 
-				StringBuffer buffer = null;
 				int numFields = _model.getRowCount();
 				boolean firstField = true;
 				// Write header row if required
 				if (_headerRowCheckbox.isSelected())
 				{
-					buffer = new StringBuffer();
+					StringBuffer buffer = new StringBuffer();
 					for (int f=0; f<numFields; f++)
 					{
 						info = _model.getFieldInfo(f);
@@ -517,7 +505,7 @@ public class FileSaver
 					if (!savePoint) {continue;}
 					numSaved++;
 					firstField = true;
-					buffer = new StringBuffer();
+					StringBuffer buffer = new StringBuffer();
 					for (int f=0; f<numFields; f++)
 					{
 						info = _model.getFieldInfo(f);
@@ -538,7 +526,7 @@ public class FileSaver
 				// Store directory in config for later
 				Config.setConfigString(Config.KEY_TRACK_DIR, saveFile.getParentFile().getAbsolutePath());
 				// Add to recent file list
-				Config.getRecentFileList().addFile(new RecentFile(inSaveFile, true));
+				_app.addRecentFile(inSaveFile, true);
 				// Save successful
 				UpdateMessageBroker.informSubscribers();
 				UpdateMessageBroker.informSubscribers(I18nManager.getText("confirm.save.ok1")
@@ -551,14 +539,6 @@ public class FileSaver
 				saveOK = false;
 				_app.showErrorMessageNoLookup("error.save.dialogtitle",
 					I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
-			}
-			finally
-			{
-				// try to close file if it's open
-				try {
-					writer.close();
-				}
-				catch (Exception e) {}
 			}
 		}
 		else
@@ -593,32 +573,32 @@ public class FileSaver
 		}
 		else if (inField == Field.ALTITUDE)
 		{
-			try
-			{
+			if (inPoint.hasAltitude()) {
 				inBuffer.append(inPoint.getAltitude().getStringValue(inAltitudeUnit));
 			}
-			catch (NullPointerException npe) {}
 		}
 		else if (inField == Field.TIMESTAMP)
 		{
-			if (inPoint.hasTimestamp())
-			{
-				// format value accordingly
+			if (inPoint.hasTimestamp())	{
 				inBuffer.append(inPoint.getTimestamp().getText(inTimestampFormat, null));
 			}
 		}
-		else if (inField == Field.MEDIA_FILENAME)
+		else if (inField == Field.PHOTO)
 		{
-			if (inPoint.hasMedia())
-			{
-				inBuffer.append(inPoint.getMediaName());
+			if (inPoint.getPhoto() != null)	{
+				inBuffer.append(inPoint.getPhoto().getName());
+			}
+		}
+		else if (inField == Field.AUDIO)
+		{
+			if (inPoint.getAudio() != null) {
+				inBuffer.append(inPoint.getAudio().getName());
 			}
 		}
 		else
 		{
 			String value = inPoint.getFieldValue(inField);
-			if (value != null)
-			{
+			if (value != null) {
 				inBuffer.append(value);
 			}
 		}
@@ -634,8 +614,7 @@ public class FileSaver
 		final char[] delimiters = {',', '\t', ';', ' '};
 		for (int i=0; i<4; i++)
 		{
-			if (_delimiterRadios[i].isSelected())
-			{
+			if (_delimiterRadios[i].isSelected()) {
 				return delimiters[i];
 			}
 		}

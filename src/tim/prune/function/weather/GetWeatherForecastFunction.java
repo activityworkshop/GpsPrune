@@ -5,13 +5,9 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -28,15 +24,16 @@ import javax.swing.JTable;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellRenderer;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.xml.sax.SAXException;
+
 import tim.prune.App;
 import tim.prune.GenericFunction;
-import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
-import tim.prune.data.NumberUtils;
 import tim.prune.data.Track;
 import tim.prune.function.browser.BrowserLauncher;
 
@@ -44,7 +41,7 @@ import tim.prune.function.browser.BrowserLauncher;
  * Function to display a weather forecast for the current location
  * using the services of openweathermap.org
  */
-public class GetWeatherForecastFunction extends GenericFunction implements Runnable
+public class GetWeatherForecastFunction extends GenericFunction
 {
 	/** Dialog object */
 	private JDialog _dialog = null;
@@ -68,13 +65,10 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 	private ResultSet _resultSet = new ResultSet();
 	/** Location id obtained from current forecast */
 	private String _locationId = null;
+	/** Access to xml streams */
+	private StreamProvider _streamProvider = null;
 	/** Flag to show that forecast is currently running, don't start another */
 	private boolean _isRunning = false;
-
-	/** True to just simulate the calls and read files instead, false to call real API */
-	private static final boolean SIMULATE_WITH_FILES = false;
-	/** Unique API key for GpsPrune */
-	private static final String OPENWEATHERMAP_API_KEY = "d1c5d792362f5a5c2eacf70a3b72ecd6";
 
 
 	/**
@@ -97,6 +91,7 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 	public GetWeatherForecastFunction(App inApp)
 	{
 		super(inApp);
+		_streamProvider = new OnlineStreamProvider();
 	}
 
 	/** @return name key */
@@ -112,7 +107,7 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 		// Initialise dialog, show empty list
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -127,7 +122,7 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 		_currentForecastRadio.setSelected(true);
 
 		// Start new thread to load list asynchronously
-		new Thread(this).start();
+		new Thread(this::run).start();
 
 		_dialog.setVisible(true);
 	}
@@ -166,9 +161,9 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 		radioPanel.add(_dailyForecastRadio);
 		radioPanel.add(threeHourlyRadio);
 		_currentForecastRadio.setSelected(true);
-		ActionListener radioListener = new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				if (!_isRunning) new Thread(GetWeatherForecastFunction.this).start();
+		ActionListener radioListener = e -> {
+			if (!_isRunning) {
+				new Thread(this::run).start();
 			}
 		};
 		_currentForecastRadio.addActionListener(radioListener);
@@ -217,19 +212,13 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton launchButton = new JButton(I18nManager.getText("button.showwebpage"));
-		launchButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				BrowserLauncher.launchBrowser("http://openweathermap.org/city/" + (_locationId == null ? "" : _locationId));
-			}
+		launchButton.addActionListener(e -> {
+			BrowserLauncher.launchBrowser("http://openweathermap.org/city/" + (_locationId == null ? "" : _locationId));
 		});
 		buttonPanel.add(launchButton);
 		// close
 		JButton closeButton = new JButton(I18nManager.getText("button.close"));
-		closeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		closeButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(closeButton);
 		// Add a holder panel with a static label to credit openweathermap
 		JPanel southPanel = new JPanel();
@@ -337,11 +326,11 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 	}
 
 	/**
-	 * Get the current weather using the lat/long and populate _results
+	 * Get the current weather using the lat/long and return the results
 	 * @param inUseCelsius true for celsius, false for fahrenheit
 	 * @return weather results
 	 */
-	private WeatherResults getCurrentWeather(boolean inUseCelsius)
+	WeatherResults getCurrentWeather(boolean inUseCelsius)
 	{
 		final Track track = _app.getTrackInfo().getTrack();
 		if (track.getNumPoints() < 1) {return null;}
@@ -361,50 +350,20 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 			lon = track.getLonRange().getMidValue();
 		}
 
-		InputStream inStream = null;
-		// Build url either with coordinates or with location id if available
-		final String urlString = "http://api.openweathermap.org/data/2.5/weather?"
-			+ (_locationId == null ? ("lat=" + NumberUtils.formatNumberUk(lat, 5) + "&lon=" + NumberUtils.formatNumberUk(lon, 5))
-				: ("id=" + _locationId))
-			+ "&lang=" + I18nManager.getText("openweathermap.lang")
-			+ "&mode=xml&units=" + (inUseCelsius ? "metric" : "imperial")
-			+ "&APPID=" + OPENWEATHERMAP_API_KEY;
-		// System.out.println(urlString);
-
-		// Parse the returned XML with a special handler
+		// Create a handler to parse the returned XML
 		OWMCurrentHandler xmlHandler = new OWMCurrentHandler();
-		try
+		try (InputStream inStream = _streamProvider.getCurrentWeatherStream(lat, lon, _locationId, inUseCelsius))
 		{
-			URL url = new URL(urlString);
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			// DEBUG: Simulate the call in case of no network connection
-			if (SIMULATE_WITH_FILES)
-			{
-				inStream = new FileInputStream(new File("tim/prune/test/examplecurrentweather.xml"));
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException tie) {}
-			}
-			else
-			{
-				URLConnection conn = url.openConnection();
-				conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
-				inStream = conn.getInputStream();
-			}
-
 			saxParser.parse(inStream, xmlHandler);
 		}
-		catch (Exception e)
+		catch (IOException | SAXException | ParserConfigurationException e)
 		{
 			// Show error message but don't close dialog
 			_app.showErrorMessageNoLookup(getNameKey(), e.getClass().getName() + " - " + e.getMessage());
 			_isRunning = false;
 			return null;
 		}
-		// Close stream and ignore errors
-		try {
-			inStream.close();
-		} catch (Exception e) {}
 
 		// Save the location id
 		if (xmlHandler.getLocationId() != null) {
@@ -427,38 +386,18 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 	 * @param inCelsius true for celsius, false for fahrenheit
 	 * @return weather results
 	 */
-	private WeatherResults getWeatherForecast(boolean inDaily, boolean inCelsius)
+	WeatherResults getWeatherForecast(boolean inDaily, boolean inCelsius)
 	{
+		if (_locationId == null) {
+			return null;
+		}
 		InputStream inStream = null;
-		// Build URL
-		final String forecastCount = inDaily ? "8" : "3";
-		final String urlString = "http://api.openweathermap.org/data/2.5/forecast"
-			+ (inDaily ? "/daily" : "") + "?id=" + _locationId + "&lang=" + I18nManager.getText("openweathermap.lang")
-			+ "&mode=xml&units=" + (inCelsius ? "metric" : "imperial") + "&cnt=" + forecastCount
-			+ "&APPID=" + OPENWEATHERMAP_API_KEY;
-		// System.out.println(urlString);
-
-		// Parse the returned XML with a special handler
+		// Create a handler to parse the returned XML
 		OWMForecastHandler xmlHandler = new OWMForecastHandler();
 		try
 		{
-			URL url = new URL(urlString);
+			inStream = _streamProvider.getForecastStream(_locationId, inDaily, inCelsius);
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			// DEBUG: Simulate the call in case of no network connection
-			if (SIMULATE_WITH_FILES)
-			{
-				inStream = new FileInputStream(new File("tim/prune/test/exampleweatherforecast.xml"));
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException tie) {}
-			}
-			else
-			{
-				URLConnection conn = url.openConnection();
-				conn.setRequestProperty("User-Agent", "GpsPrune v" + GpsPrune.VERSION_NUMBER);
-				inStream = conn.getInputStream();
-			}
-
 			saxParser.parse(inStream, xmlHandler);
 		}
 		catch (Exception e)
@@ -468,10 +407,13 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 			_isRunning = false;
 			return null;
 		}
-		// Close stream and ignore errors
-		try {
-			inStream.close();
-		} catch (Exception e) {}
+		finally
+		{
+			// Close stream and ignore errors
+			try {
+				inStream.close();
+			} catch (Exception e) {}
+		}
 
 		// Get results from handler, put in model
 		WeatherResults results = new WeatherResults();
@@ -480,5 +422,10 @@ public class GetWeatherForecastFunction extends GenericFunction implements Runna
 		results.setUpdateTime(xmlHandler.getUpdateTime());
 		results.setTempsCelsius(inCelsius);
 		return results;
+	}
+
+	/** Used for testing */
+	void setStreamProvider(StreamProvider inProvider) {
+		_streamProvider = inProvider;
 	}
 }

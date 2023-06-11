@@ -1,6 +1,5 @@
 package tim.prune.data;
 
-import tim.prune.config.Config;
 
 /**
  * Represents a range of altitudes, taking units into account.
@@ -9,7 +8,9 @@ import tim.prune.config.Config;
 public class AltitudeRange
 {
 	/** Range of altitudes in metres */
-	private IntegerRange _range = new IntegerRange();
+	private final IntegerRange _range = new IntegerRange();
+	/** Tolerance value in metres */
+	private final int _wiggleLimit;
 	/** Flag for whether previous value exists or not */
 	private boolean _gotPreviousValue;
 	/** Previous metric value */
@@ -20,22 +21,17 @@ public class AltitudeRange
 	private int _descent;
 	/** Flags for whether minimum or maximum has been found */
 	private boolean _gotPreviousMinimum = false, _gotPreviousMaximum = false;
-	/** Integer values of previous minimum and maximum, if any */
-	private int     _previousExtreme = 0;
+	/** Integer value of previous minimum or maximum, if any */
+	private int _previousExtreme = 0;
 
 
 	/**
 	 * Constructor
+	 * @param toleranceMetres tolerance (wiggle limit) in metres
 	 */
-	public AltitudeRange() {
-		clear();
-	}
-
-	/**
-	 * Clear the altitude range
-	 */
-	public void clear()
+	public AltitudeRange(int toleranceMetres)
 	{
+		_wiggleLimit = toleranceMetres;
 		_range.clear();
 		_climb = _descent = 0;
 		_gotPreviousValue = false;
@@ -51,8 +47,6 @@ public class AltitudeRange
 	 */
 	public void addValue(Altitude inAltitude)
 	{
-		final int wiggleLimit = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
-
 		if (inAltitude != null && inAltitude.isValid())
 		{
 			int altValue = (int) inAltitude.getMetricValue();
@@ -66,7 +60,7 @@ public class AltitudeRange
 					final boolean locallyUp = (altValue > _previousValue);
 					final boolean overallUp = _gotPreviousMinimum && _previousValue > _previousExtreme;
 					final boolean overallDn = _gotPreviousMaximum && _previousValue < _previousExtreme;
-					final boolean moreThanWiggle = Math.abs(altValue - _previousValue) > wiggleLimit;
+					final boolean moreThanWiggle = Math.abs(altValue - _previousValue) > _wiggleLimit;
 					// Do we know whether we're going up or down yet?
 					if (!_gotPreviousMinimum && !_gotPreviousMaximum)
 					{
@@ -117,7 +111,7 @@ public class AltitudeRange
 							_gotPreviousValue = true;
 						}
 					}
-					// TODO: Behaviour when WIGGLE_LIMIT == 0 should be same as before, all differences cumulated
+					// Note: Behaviour when WIGGLE_LIMIT == 0 should be same as before, all differences cumulated
 				}
 			}
 			else

@@ -13,7 +13,7 @@ import tim.prune.gui.map.MapSourceLibrary;
 public class TileCacheModel
 {
 	/** Cache directory */
-	private File _cacheDir = null;
+	private final File _cacheDir;
 	/** Array of tilesets */
 	private ArrayList<TileSet> _tileSets = null;
 	/** Summary information */
@@ -31,6 +31,9 @@ public class TileCacheModel
 		if (inDir != null && inDir.exists() && inDir.isDirectory() && inDir.canRead()) {
 			_cacheDir = inDir;
 		}
+		else {
+			_cacheDir = null;
+		}
 		_cancelled = false;
 	}
 
@@ -43,8 +46,7 @@ public class TileCacheModel
 
 		_tileSets = new ArrayList<TileSet>();
 		// go through subdirectories, if any
-		File[] subdirs = _cacheDir.listFiles();
-		for (File subdir : subdirs)
+		for (File subdir : _cacheDir.listFiles())
 		{
 			if (subdir != null && subdir.isDirectory() && subdir.exists() && subdir.canRead()
 				&& !_cancelled)

@@ -14,7 +14,7 @@ import tim.prune.data.Photo;
 /**
  * GUI component for showing photo thumbnail
  */
-public class PhotoThumbnail extends JPanel implements Runnable
+public class PhotoThumbnail extends JPanel
 {
 	private Photo _photo = null;
 	private Image _thumbnail = null;
@@ -81,7 +81,7 @@ public class PhotoThumbnail extends JPanel implements Runnable
 			if (_thumbnail == null && !_loadingImage && !_loadFailed)
 			{
 				_loadingImage = true;
-				new Thread(this).start();
+				new Thread(this::run).start();
 			}
 			// if loading, display message
 			if (_loadingImage)
@@ -109,11 +109,9 @@ public class PhotoThumbnail extends JPanel implements Runnable
 					setSize(newsize);
 					invalidate();
 					// Schedule a relayout because the size has changed
-					SwingUtilities.invokeLater(new Runnable() {
-						public void run() {
-							try {Thread.sleep(200);} catch (InterruptedException e) {}
-							getParent().getParent().getParent().validate();
-						}
+					SwingUtilities.invokeLater(() -> {
+						try {Thread.sleep(200);} catch (InterruptedException e) {}
+						getParent().getParent().getParent().validate();
 					});
 				}
 			}
@@ -123,7 +121,6 @@ public class PhotoThumbnail extends JPanel implements Runnable
 
 	/**
 	 * Run method, for loading image in separate thread
-	 * @see java.lang.Runnable#run()
 	 */
 	public void run()
 	{
@@ -131,11 +128,11 @@ public class PhotoThumbnail extends JPanel implements Runnable
 		{
 			_thumbnail = null;
 			// try to use exif thumbnail
-			if (_photo.getExifThumbnail() != null) {
+			if (_photo.getExifThumbnail() != null)
+			{
 				// Use exif thumbnail
 				Image image = new ImageIcon(_photo.getExifThumbnail()).getImage();
 				_thumbnail = ImageUtils.createScaledImage(image, image.getWidth(null), image.getHeight(null));
-				image = null;
 			}
 			// Maybe there's no thumbnail, maybe the load of the thumbnail failed
 			if (_thumbnail == null)
@@ -153,9 +150,10 @@ public class PhotoThumbnail extends JPanel implements Runnable
 					Image image = _photo.createImageIcon().getImage();
 					// save scaled, smoothed thumbnail for reuse
 					_thumbnail = ImageUtils.createScaledImage(image, thumbSize.width, thumbSize.height);
-					image = null;
 				}
-				else _loadFailed = true;
+				else {
+					_loadFailed = true;
+				}
 			}
 		}
 		else {

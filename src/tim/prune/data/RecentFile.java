@@ -7,8 +7,8 @@ import java.io.File;
  */
 public class RecentFile
 {
-	private boolean _regularLoad = true; // false for load via gpsbabel
-	private File _file = null;
+	private final boolean _regularLoad; // false for load via gpsbabel
+	private final File _file;
 
 	/**
 	 * Constructor
@@ -31,6 +31,10 @@ public class RecentFile
 		{
 			_regularLoad = (inDesc.charAt(0) != 'g');
 			_file = new File(inDesc.substring(1));
+		}
+		else {
+			_file = null;
+			_regularLoad = true;
 		}
 	}
 

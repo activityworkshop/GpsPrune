@@ -10,9 +10,9 @@ import javax.swing.JPanel;
  */
 public class WizardLayout extends CardLayout
 {
-	private JPanel _panel = null;
-	private int    _currentCard = 0;
-	private int    _numCards = 0;
+	private final JPanel _panel;
+	private int _currentCard = 0;
+	private int _numCards = 0;
 
 	/**
 	 * Constructor

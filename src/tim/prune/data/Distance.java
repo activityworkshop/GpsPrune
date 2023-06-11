@@ -55,4 +55,16 @@ public abstract class Distance
 		// Divide by appropriate factor
 		return inDist / EARTH_RADIUS_M / inUnit.getMultFactorFromStd();
 	}
+
+	/**
+	 * Convert distance value from one unit to another
+	 * @param inDist distance value
+	 * @param inValueUnit unit in which the given value is represented
+	 * @param inTargetUnit desired unit
+	 * @return value in target units
+	 */
+	public static double convertBetweenUnits(double inDist, Unit inValueUnit, Unit inTargetUnit)
+	{
+		return inDist / inValueUnit.getMultFactorFromStd() * inTargetUnit.getMultFactorFromStd();
+	}
 }

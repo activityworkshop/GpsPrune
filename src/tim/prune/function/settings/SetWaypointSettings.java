@@ -122,7 +122,7 @@ public class SetWaypointSettings extends GenericFunction
 		JLabel headerLabel = new JLabel(I18nManager.getText("dialog.displaysettings.waypointicons"));
 		headerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		iconGrid.add(headerLabel);
-		_wpIconCombobox = new JComboBox<>(new Integer[]{0, 1, 2, 3, 4});
+		_wpIconCombobox = new JComboBox<>(new Integer[]{0, 1, 2, 3, 4, 5});
 		_wpIconCombobox.setRenderer(new IconComboRenderer());
 		iconGrid.add(_wpIconCombobox);
 		iconsPanel.add(iconPanel);
@@ -214,13 +214,15 @@ public class SetWaypointSettings extends GenericFunction
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()));
+			_dialog = new JDialog(_parentFrame, getName());
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.getContentPane().add(makeContents());
 			_dialog.pack();
 		}
 		// Set values from config
-		_wpIconCombobox.setSelectedIndex(Config.getConfigInt(Config.KEY_WAYPOINT_ICONS));
+		try {
+			_wpIconCombobox.setSelectedIndex(Config.getConfigInt(Config.KEY_WAYPOINT_ICONS));
+		} catch (IllegalArgumentException ignored) {}
 		selectIconSizeRadio(Config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE));
 		final int salt = Config.getConfigInt(Config.KEY_WPICON_SALT);
 		_coloursCheckbox.setSelected(salt >= 0);

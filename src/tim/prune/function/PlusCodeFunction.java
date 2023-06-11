@@ -3,12 +3,12 @@ package tim.prune.function;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -21,7 +21,11 @@ import javax.swing.SwingConstants;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.AppendRangeCmd;
+import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.Latitude;
+import tim.prune.data.Longitude;
 import tim.prune.function.olc.OlcArea;
 import tim.prune.function.olc.OlcDecoder;
 import tim.prune.function.olc.OlcField;
@@ -60,7 +64,7 @@ public class PlusCodeFunction extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -111,23 +115,15 @@ public class PlusCodeFunction extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				if (_okButton.isEnabled()) {finish();}
-			}
+		ActionListener okListener = e -> {
+			if (_okButton.isEnabled()) {finish();}
 		};
 		_okButton.addActionListener(okListener);
 		_okButton.setEnabled(false);
 		_codeField.addActionListener(okListener);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -155,7 +151,7 @@ public class PlusCodeFunction extends GenericFunction
 		{
 			JOptionPane.showMessageDialog(_parentFrame,
 				I18nManager.getText("dialog.pluscode.nothingfound"),
-				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
+				getName(), JOptionPane.ERROR_MESSAGE);
 		}
 		else if (loadTrack(area))
 		{
@@ -170,41 +166,40 @@ public class PlusCodeFunction extends GenericFunction
 	 */
 	private boolean loadTrack(OlcArea inArea)
 	{
-		if (inArea == null)
-		{
+		if (inArea == null) {
 			return false;
 		}
 
-		final Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.WAYPT_NAME};
-		_app.autoAppendNextFile();
-
+		ArrayList<DataPoint> points = new ArrayList<>();
 		if (inArea.minLat == inArea.maxLat && inArea.minLon == inArea.maxLon)
 		{
 			// Not actually an area, just a single point
-			String[][] pointData = new String[1][];
-			pointData[0] = new String[3]; // lat, long, name
-			pointData[0][0] = "" + inArea.minLat;
-			pointData[0][1] = "" + inArea.minLon;
-			pointData[0][2] = inArea.code;
-			_app.informDataLoaded(fields, pointData, null, null);
+			DataPoint point = new DataPoint(new Latitude("" + inArea.minLat),
+				new Longitude("" + inArea.minLon), null);
+			point.setFieldValue(Field.WAYPT_NAME, inArea.code, false);
+			points.add(point);
 		}
 		else
 		{
-			String[][] pointData = new String[6][];
 			for (int i=0; i<5; i++)
 			{
-				pointData[i] = new String[3]; // lat, long, name
-				pointData[i][0] = "" + ((i%4==0 || i==3) ? inArea.minLat : inArea.maxLat);
-				pointData[i][1] = "" + ((i%4==0 || i==1) ? inArea.minLon : inArea.maxLon);
-				pointData[i][2] = null;
+				Latitude lat = new Latitude("" + ((i%4==0 || i==3) ? inArea.minLat : inArea.maxLat));
+				Longitude lon = new Longitude("" + ((i%4==0 || i==1) ? inArea.minLon : inArea.maxLon));
+				DataPoint point = new DataPoint(lat, lon, null);
+				point.setSegmentStart(i==0);
+				points.add(point);
 			}
 			// Middle point with name
-			pointData[5] = new String[3]; // lat, long, name
-			pointData[5][0] = "" + ((inArea.minLat + inArea.maxLat) / 2.0);
-			pointData[5][1] = "" + ((inArea.minLon + inArea.maxLon) / 2.0);
-			pointData[5][2] = inArea.code;
-			_app.informDataLoaded(fields, pointData, null, null);
+			Latitude lat = new Latitude("" + ((inArea.minLat + inArea.maxLat) / 2.0));
+			Longitude lon = new Longitude("" + ((inArea.minLon + inArea.maxLon) / 2.0));
+			DataPoint point = new DataPoint(lat, lon, null);
+			point.setFieldValue(Field.WAYPT_NAME, inArea.code, false);
+			points.add(point);
 		}
-		return true;
+		// Make and execute the command
+		AppendRangeCmd command = new AppendRangeCmd(points);
+		command.setDescription(getName());
+		command.setConfirmText(I18nManager.getTextWithNumber("confirm.pointsadded", points.size()));
+		return _app.execute(command);
 	}
 }

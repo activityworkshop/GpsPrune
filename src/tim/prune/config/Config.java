@@ -2,6 +2,7 @@ package tim.prune.config;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Properties;
 
 import tim.prune.data.RecentFileList;
@@ -128,53 +129,36 @@ public abstract class Config
 
 	/**
 	 * Load the default configuration file
+	 * @return true if successful
 	 */
-	public static void loadDefaultFile()
+	public static boolean loadDefaultFile()
 	{
-		if (DEFAULT_CONFIG_FILE.exists())
-		{
-			try {
-				loadFile(DEFAULT_CONFIG_FILE);
-				return;
-			}
-			catch (ConfigException ce) {} // ignore
+		if (DEFAULT_CONFIG_FILE.exists() && loadFile(DEFAULT_CONFIG_FILE)) {
+			return true;
 		}
-		if (HOME_CONFIG_FILE.exists())
-		{
-			try {
-				loadFile(HOME_CONFIG_FILE);
-			}
-			catch (ConfigException ce) {} // ignore
-		}
+		return HOME_CONFIG_FILE.exists() && loadFile(HOME_CONFIG_FILE);
 	}
 
 
 	/**
 	 * Load configuration from file
 	 * @param inFile file to load
-	 * @throws ConfigException if specified file couldn't be read
+	 * @return true if successfully loaded
 	 */
-	public static void loadFile(File inFile) throws ConfigException
+	public static boolean loadFile(File inFile)
 	{
 		// Start with default properties
 		Properties props = getDefaultProperties();
 		// Try to load the file into a properties object
-		boolean loadFailed = false;
-		FileInputStream fis = null;
-		try
-		{
-			fis = new FileInputStream(inFile);
+		boolean success = false;
+		try (FileInputStream fis = new FileInputStream(inFile)) {
 			props.load(fis);
+			success = true;
 		}
-		catch (Exception e) {
-			loadFailed = true;
+		catch (IOException e) {
+			success = false;
 		}
-		finally {
-			if (fis != null) try {
-				fis.close();
-			}
-			catch (Exception e) {}
-		}
+
 		// Save all properties from file
 		_configValues.putAll(props);
 		_colourScheme.loadFromHex(_configValues.getProperty(KEY_COLOUR_SCHEME));
@@ -186,11 +170,12 @@ public abstract class Config
 		// Reset coord display format
 		setConfigInt(KEY_COORD_DISPLAY_FORMAT, 0);
 
-		if (loadFailed) {
-			throw new ConfigException();
+		if (success)
+		{
+			// Store location of successfully loaded config file
+			_configFile = inFile;
 		}
-		// Store location of successfully loaded config file
-		_configFile = inFile;
+		return success;
 	}
 
 	/**

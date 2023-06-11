@@ -6,8 +6,8 @@ package tim.prune.data;
  */
 public class LatLonRectangle
 {
-	private DoubleRange _latRange = null;
-	private DoubleRange _lonRange = null;
+	private final DoubleRange _latRange;
+	private final DoubleRange _lonRange;
 
 
 	/**

@@ -4,8 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 import javax.swing.BorderFactory;
@@ -26,15 +24,15 @@ import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
+import tim.prune.data.MediaList;
 import tim.prune.data.Photo;
-import tim.prune.data.PhotoList;
 
 /**
  * Class to call Exiftool to save coordinate information in jpg files
  */
 public class ExifSaver implements Runnable
 {
-	private Frame _parentFrame = null;
+	private final Frame _parentFrame;
 	private JDialog _dialog = null;
 	private JButton _okButton = null;
 	private JCheckBox _overwriteCheckbox = null;
@@ -78,7 +76,7 @@ public class ExifSaver implements Runnable
 	 * @param inPhotoList list of photos to save
 	 * @return true if saved
 	 */
-	public boolean saveExifInformation(PhotoList inPhotoList)
+	public boolean saveExifInformation(MediaList<Photo> inPhotoList)
 	{
 		// Check if external exif tool can be called
 		boolean exifToolInstalled = ExternalTools.isToolInstalled(ExternalTools.TOOL_EXIFTOOL);
@@ -94,10 +92,10 @@ public class ExifSaver implements Runnable
 			}
 		}
 		// Make model and add all photos to it
-		_photoTableModel = new PhotoTableModel(inPhotoList.getNumPhotos());
-		for (int i=0; i<inPhotoList.getNumPhotos(); i++)
+		_photoTableModel = new PhotoTableModel(inPhotoList.getCount());
+		for (int i=0; i<inPhotoList.getCount(); i++)
 		{
-			Photo photo = inPhotoList.getPhoto(i);
+			Photo photo = inPhotoList.get(i);
 			PhotoTableEntry entry = new PhotoTableEntry(photo);
 			_photoTableModel.addPhotoInfo(entry);
 		}
@@ -162,43 +160,27 @@ public class ExifSaver implements Runnable
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BoxLayout(rightPanel, BoxLayout.Y_AXIS));
 		JButton selectAllButton = new JButton(I18nManager.getText("button.selectall"));
-		selectAllButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				selectPhotos(true);
-			}
-		});
+		selectAllButton.addActionListener(e -> selectPhotos(true));
 		rightPanel.add(selectAllButton);
 		JButton selectNoneButton = new JButton(I18nManager.getText("button.selectnone"));
-		selectNoneButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				selectPhotos(false);
-			}
-		});
+		selectNoneButton.addActionListener(e -> selectPhotos(false));
 		rightPanel.add(selectNoneButton);
 		panel.add(rightPanel, BorderLayout.EAST);
 		// Lower panel with ok and cancel buttons
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				// disable ok button
-				_okButton.setEnabled(false);
-				// start new thread to do save
-				new Thread(ExifSaver.this).start();
-			}
+		_okButton.addActionListener(e -> {
+			// disable ok button
+			_okButton.setEnabled(false);
+			// start new thread to do save
+			new Thread(ExifSaver.this).start();
 		});
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_saveCancelled = true;
-				_dialog.dispose();
-			}
+		cancelButton.addActionListener(e -> {
+			_saveCancelled = true;
+			_dialog.dispose();
 		});
 		buttonPanel.add(cancelButton);
 		panel.add(buttonPanel, BorderLayout.SOUTH);
@@ -213,8 +195,7 @@ public class ExifSaver implements Runnable
 	private void selectPhotos(boolean inSelected)
 	{
 		int numPhotos = _photoTableModel.getRowCount();
-		for (int i=0; i<numPhotos; i++)
-		{
+		for (int i=0; i<numPhotos; i++) {
 			_photoTableModel.getPhotoTableEntry(i).setSaveFlag(inSelected);
 		}
 		_photoTableModel.fireTableDataChanged();
@@ -249,14 +230,12 @@ public class ExifSaver implements Runnable
 					if (savePhoto(photo, overwriteFlag, false)) {
 						numSaved++;
 					}
+					else if (_forceCheckbox.isSelected() && savePhoto(photo, overwriteFlag, true))
+					{
+						numForced++;
+					}
 					else {
-						if (_forceCheckbox.isSelected() && savePhoto(photo, overwriteFlag, true))
-						{
-							numForced++;
-						}
-						else {
-							numFailed++;
-						}
+						numFailed++;
 					}
 				}
 			}
@@ -310,8 +289,7 @@ public class ExifSaver implements Runnable
 		{
 			// eek, can't overwrite file
 			int answer = JOptionPane.showConfirmDialog(_parentFrame,
-				I18nManager.getText("error.saveexif.cannotoverwrite1") + " " + inPhoto.getFile().getAbsolutePath()
-					+ " " + I18nManager.getText("error.saveexif.cannotoverwrite2"),
+				I18nManager.getText("error.saveexif.cannotoverwrite", inPhoto.getFile().getAbsolutePath()),
 				I18nManager.getText("dialog.saveexif.title"),
 				JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
 			if (answer == JOptionPane.YES_OPTION)

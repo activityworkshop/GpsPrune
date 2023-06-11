@@ -9,61 +9,30 @@ import java.util.ArrayList;
 public class FileInfo
 {
 	/** List of sources */
-	private ArrayList<SourceInfo> _sources = new ArrayList<SourceInfo>();
-
-
-	/**
-	 * Empty constructor
-	 */
-	public FileInfo()
-	{}
+	private final ArrayList<SourceInfo> _sources = new ArrayList<>();
 
 	/**
-	 * Private constructor for creating clone
-	 * @param inList list of sources
-	 */
-	private FileInfo(ArrayList<SourceInfo> inList)
-	{
-		_sources = inList;
-	}
-
-	/**
-	 * Add a data source to the list
+	 * Add a data source to the list, if it's not already present
 	 * @param inInfo info object to add
 	 */
 	public void addSource(SourceInfo inInfo)
 	{
-		_sources.add(inInfo);
-	}
-
-	/**
-	 * Replace the list of data sources with the given source
-	 * @param inInfo new source
-	 */
-	public void replaceSource(SourceInfo inInfo)
-	{
-		_sources.clear();
-		addSource(inInfo);
-	}
-
-	/**
-	 * remove the last source added
-	 */
-	public void removeSource()
-	{
-		if (!_sources.isEmpty()) {
-			_sources.remove(_sources.size()-1);
+		if (inInfo != null) {
+			for (SourceInfo info : _sources) {
+				if (info == inInfo) {
+					return;
+				}
+			}
+			_sources.add(inInfo);
 		}
 	}
 
 	/**
 	 * @return the number of files loaded
 	 */
-	public int getNumFiles()
-	{
+	public int getNumFiles() {
 		return _sources.size();
 	}
-
 
 	/**
 	 * @return The source name, if a single file
@@ -80,72 +49,36 @@ public class FileInfo
 	 * @param inIndex index number, starting from zero
 	 * @return source info object
 	 */
-	public SourceInfo getSource(int inIndex)
-	{
+	public SourceInfo getSource(int inIndex) {
 		return _sources.get(inIndex);
 	}
 
 	/**
-	 * Get the SourceInfo object (if any) for the given point
-	 * @param inPoint point object
-	 * @return SourceInfo object if there is one, otherwise null
+	 * @return the first found source, if any
 	 */
-	public SourceInfo getSourceForPoint(DataPoint inPoint)
+	public SourceInfo getFirstSource()
 	{
-		for (SourceInfo source : _sources)
-		{
-			if (source.getIndex(inPoint) >= 0) {
-				return source;
-			}
+		if (getNumFiles() == 0) {
+			return null;
 		}
-		return null;
+		return getSource(0);
 	}
 
 	/**
-	 * @return the info about the last file loaded, if any
+	 * @return the first found title, if any
 	 */
-	public SourceInfo getLastFileInfo()
+	public String getFirstTitle()
 	{
-		if (getNumFiles() == 0)
+		for (SourceInfo info : _sources)
 		{
-			return null;
-		}
-		return getSource(getNumFiles()-1);
-	}
-
-	/**
-	 * @return the most recent file title loaded, if any
-	 */
-	public String getLastFileTitle()
-	{
-		final int numFiles = getNumFiles();
-		if (numFiles == 0)
-		{
-			return null;
-		}
-		for (int i=(numFiles-1); i>=0; i--)
-		{
-			SourceInfo info = getSource(i);
 			if (info != null)
 			{
 				String title = info.getFileTitle();
-				if (title != null && !title.equals(""))
-				{
+				if (title != null && !title.equals("")) {
 					return title;
 				}
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * Clone contents of file info
-	 */
-	@SuppressWarnings("unchecked")
-	public FileInfo clone()
-	{
-		// copy source list
-		ArrayList<SourceInfo> copy = (ArrayList<SourceInfo>) _sources.clone();
-		return new FileInfo(copy);
 	}
 }

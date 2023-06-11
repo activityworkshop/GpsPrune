@@ -4,11 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
+import java.util.ArrayList;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -23,7 +22,11 @@ import javax.swing.SwingConstants;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.EditSingleFieldCmd;
+import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.Timestamp;
+import tim.prune.function.edit.PointEdit;
 import tim.prune.gui.WholeNumberField;
 
 /**
@@ -42,8 +45,7 @@ public class AddTimeOffset extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public AddTimeOffset(App inApp)
-	{
+	public AddTimeOffset(App inApp) {
 		super(inApp);
 	}
 
@@ -67,7 +69,7 @@ public class AddTimeOffset extends GenericFunction
 		// Make dialog window
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 			_dialog.getContentPane().add(makeDialogComponents());
@@ -143,22 +145,11 @@ public class AddTimeOffset extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		ActionListener okListener = new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				finish();
-			}
-		};
-		_okButton.addActionListener(okListener);
+		_okButton.addActionListener(e -> finish());
 		_okButton.setEnabled(false);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -197,10 +188,29 @@ public class AddTimeOffset extends GenericFunction
 	{
 		// Calculate offset to add or subtract
 		long offsetSecs = getOffsetSecs();
-		if (offsetSecs != 0L)
+		if (offsetSecs == 0L) {
+			return;
+		}
+		// Make list of edits
+		ArrayList<PointEdit> edits = new ArrayList<>();
+		final int selStart = _app.getTrackInfo().getSelection().getStart();
+		final int selEnd = _app.getTrackInfo().getSelection().getEnd();
+		for (int i=selStart; i<=selEnd; i++)
 		{
-			// Pass offset back to app and close dialog
-			_app.finishAddTimeOffsetSeconds(offsetSecs);
+			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
+			if (point.hasTimestamp())
+			{
+				Timestamp stamp = point.getTimestamp().addOffsetSeconds(offsetSecs);
+				String stampText = stamp.getText(Timestamp.Format.ISO8601, null);
+				edits.add(new PointEdit(i, stampText));
+			}
+		}
+		if (!edits.isEmpty())
+		{
+			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.TIMESTAMP, edits);
+			command.setDescription(getName());
+			command.setConfirmText(I18nManager.getText("confirm.addtimeoffset"));
+			_app.execute(command);
 			_dialog.dispose();
 		}
 	}

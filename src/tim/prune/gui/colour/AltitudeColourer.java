@@ -26,7 +26,6 @@ public class AltitudeColourer extends ContinuousPointColourer
 	{
 		Track track = inTrackInfo == null ? null : inTrackInfo.getTrack();
 		final int numPoints = track == null ? 0 : track.getNumPoints();
-		DataPoint point = null;
 
 		// Figure out altitude range
 		double minAltitude = 0.0;
@@ -34,7 +33,7 @@ public class AltitudeColourer extends ContinuousPointColourer
 		boolean altFound = false;
 		for (int i=0; i<numPoints; i++)
 		{
-			point = track.getPoint(i);
+			DataPoint point = track.getPoint(i);
 			if (point != null && point.hasAltitude())
 			{
 				double altValue = point.getAltitude().getMetricValue();
@@ -56,7 +55,7 @@ public class AltitudeColourer extends ContinuousPointColourer
 			// loop over track points to calculate colours
 			for (int i=0; i<numPoints; i++)
 			{
-				point = track.getPoint(i);
+				DataPoint point = track.getPoint(i);
 				if (point != null && point.hasAltitude() && !point.isWaypoint())
 				{
 					double altValue = point.getAltitude().getMetricValue();

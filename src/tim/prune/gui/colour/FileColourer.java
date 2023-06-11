@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 
 import tim.prune.data.DataPoint;
-import tim.prune.data.FileInfo;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.TrackInfo;
 
@@ -36,14 +35,13 @@ public class FileColourer extends DiscretePointColourer
 		init(numPoints);
 
 		// loop over track points
-		FileInfo fInfo = inTrackInfo.getFileInfo();
-		ArrayList<SourceInfo> sourceList = new ArrayList<SourceInfo>();
+		ArrayList<SourceInfo> sourceList = new ArrayList<>();
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint p = inTrackInfo.getTrack().getPoint(i);
 			if (p != null && !p.isWaypoint())
 			{
-				SourceInfo sInfo = fInfo.getSourceForPoint(p);
+				SourceInfo sInfo = p.getSourceInfo();
 				// Is this info object already in the list?
 				int foundIndex = -1;
 				int sIndex = 0;

@@ -46,7 +46,7 @@ class CoordPairTest
 	}
 
 	@Test
-	void testEncode() throws ParseException
+	void testEncode()
 	{
 		assertEquals('2', CoordPair.encode(0));
 		assertEquals('2', CoordPair.encode(20));

@@ -3,8 +3,6 @@ package tim.prune.function.srtm;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Base64;
 
 import javax.swing.BorderFactory;
@@ -56,7 +54,7 @@ public class ConfigureSrtmSources extends GenericFunction
 	{
 		if (_dialog == null)
 		{
-			_dialog = new JDialog(_parentFrame, I18nManager.getText(getNameKey()), true);
+			_dialog = new JDialog(_parentFrame, getName(), true);
 			_dialog.setLocationRelativeTo(_parentFrame);
 			// Create Gui and show it
 			_dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -107,13 +105,11 @@ public class ConfigureSrtmSources extends GenericFunction
 		_oneSecondCheck = new JCheckBox(I18nManager.getText("dialog.configuresrtm.onesecond"));
 		_oneSecondCheck.setSelected(true);
 		oneSecondPanel.add(_oneSecondCheck);
-		_oneSecondCheck.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent inEvent) {
-				if (_oneSecondCheck.isSelected()) {
-					setupEarthdataAuth();
-				}
-				_okButton.setEnabled(_oneSecondCheck.isSelected() != _oneSecondOriginallyOn);
+		_oneSecondCheck.addActionListener(e -> {
+			if (_oneSecondCheck.isSelected()) {
+				setupEarthdataAuth();
 			}
+			_okButton.setEnabled(_oneSecondCheck.isSelected() != _oneSecondOriginallyOn);
 		});
 		oneSecondPanel.add(new JLabel(I18nManager.getText("dialog.configuresrtm.onesecond.desc1")));
 		oneSecondPanel.add(new JLabel(I18nManager.getText("dialog.configuresrtm.onesecond.desc2")));
@@ -126,18 +122,10 @@ public class ConfigureSrtmSources extends GenericFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				finish();
-			}
-		});
+		_okButton.addActionListener(e -> finish());
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				_dialog.dispose();
-			}
-		});
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
@@ -153,15 +141,14 @@ public class ConfigureSrtmSources extends GenericFunction
 		Object[] buttonTexts = {I18nManager.getText("button.yes"), I18nManager.getText("button.no")};
 		int showWebsiteAnswer = JOptionPane.showOptionDialog(_parentFrame,
 			I18nManager.getText("dialog.configuresrtm.showregistrationwebsite"),
-			I18nManager.getText(getNameKey()), JOptionPane.YES_NO_OPTION,
+			getName(), JOptionPane.YES_NO_OPTION,
 			JOptionPane.QUESTION_MESSAGE, null, buttonTexts, buttonTexts[1]);
 		if (showWebsiteAnswer == JOptionPane.YES_OPTION) {
 			BrowserLauncher.launchBrowser("https://urs.earthdata.nasa.gov/users/new");
 		}
 		// Now get the registered user id
 		Object userId = JOptionPane.showInputDialog(_app.getFrame(),
-			I18nManager.getText("dialog.configuresrtm.userid"),
-			I18nManager.getText(getNameKey()),
+			I18nManager.getText("dialog.configuresrtm.userid"), getName(),
 			JOptionPane.QUESTION_MESSAGE, null, null, "");
 		if (userId == null || userId.equals(""))
 		{
@@ -169,8 +156,7 @@ public class ConfigureSrtmSources extends GenericFunction
 			return;
 		}
 		Object password = JOptionPane.showInputDialog(_app.getFrame(),
-			I18nManager.getText("dialog.configuresrtm.password"),
-			I18nManager.getText(getNameKey()),
+			I18nManager.getText("dialog.configuresrtm.password"), getName(),
 			JOptionPane.QUESTION_MESSAGE, null, null, "");
 		if (password == null || password.equals(""))
 		{
@@ -184,7 +170,7 @@ public class ConfigureSrtmSources extends GenericFunction
 		else
 		{
 			JOptionPane.showMessageDialog(_dialog, I18nManager.getText("dialog.configuresrtm.loginfailed"),
-				I18nManager.getText(getNameKey()), JOptionPane.ERROR_MESSAGE);
+				getName(), JOptionPane.ERROR_MESSAGE);
 			_oneSecondCheck.setSelected(false);
 		}
 	}

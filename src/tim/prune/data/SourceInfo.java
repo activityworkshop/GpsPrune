@@ -4,28 +4,23 @@ import java.io.File;
 
 /**
  * Class to hold the source of the point data, including the original file
- * and file type, and references to each of the point objects
+ * and file type
  */
 public class SourceInfo
 {
 	/** File type of source file */
-	public enum FILE_TYPE {TEXT, GPX, KML, NMEA, GPSBABEL, GPSIES, JSON};
+	public enum FILE_TYPE {TEXT, GPX, KML, NMEA, GPSBABEL, JSON}
 
 	/** Source file */
-	private File _sourceFile = null;
+	private final File _sourceFile;
 	/** Name of source */
-	private String _sourceName = null;
+	private final String _sourceName;
 	/** File type */
-	private FILE_TYPE _fileType = null;
+	private final FILE_TYPE _fileType;
 	/** File title, if any */
 	private String _fileTitle = null;
-
-	/** Array of datapoints */
-	private DataPoint[] _points = null;
 	/** Number of points */
 	private int _numPoints = 0;
-	/** Array of point indices (if necessary) */
-	private int[] _pointIndices = null;
 
 
 	/**
@@ -55,100 +50,49 @@ public class SourceInfo
 	/**
 	 * @param inTitle title of file, eg from <name> tag in gpx
 	 */
-	public void setFileTitle(String inTitle)
-	{
+	public void setFileTitle(String inTitle) {
 		_fileTitle = inTitle;
 	}
 
 	/**
 	 * @return source file
 	 */
-	public File getFile()
-	{
+	public File getFile() {
 		return _sourceFile;
 	}
 
 	/**
 	 * @return source name
 	 */
-	public String getName()
-	{
+	public String getName() {
 		return _sourceName;
 	}
 
 	/**
 	 * @return file type of source
 	 */
-	public FILE_TYPE getFileType()
-	{
+	public FILE_TYPE getFileType() {
 		return _fileType;
 	}
 
 	/**
 	 * @return title of file
 	 */
-	public String getFileTitle()
-	{
+	public String getFileTitle() {
 		return _fileTitle;
+	}
+
+	/**
+	 * @param inNumPoints the number of points loaded from this source
+	 */
+	public void setNumPoints(int inNumPoints) {
+		_numPoints = inNumPoints;
 	}
 
 	/**
 	 * @return number of points from this source
 	 */
-	public int getNumPoints()
-	{
+	public int getNumPoints() {
 		return _numPoints;
-	}
-
-	/**
-	 * Set the indices of the points selected out of a loaded track
-	 * @param inSelectedFlags array of booleans showing whether each point in the original data was loaded or not
-	 */
-	public void setPointIndices(boolean[] inSelectedFlags)
-	{
-		_numPoints = inSelectedFlags.length;
-		_pointIndices = new int[_numPoints];
-		int p=0;
-		for (int i=0; i<_numPoints; i++) {
-			if (inSelectedFlags[i]) {_pointIndices[p++] = i;}
-		}
-		// Now the point indices array holds the index of each of the selected points
-	}
-
-	/**
-	 * Take the points from the given track and store
-	 * @param inTrack track object containing points
-	 * @param inNumPoints number of points loaded
-	 */
-	public void populatePointObjects(Track inTrack, int inNumPoints)
-	{
-		if (_numPoints == 0) {_numPoints = inNumPoints;}
-		if (inNumPoints > 0)
-		{
-			_points = new DataPoint[inNumPoints];
-			int trackLen = inTrack.getNumPoints();
-			System.arraycopy(inTrack.cloneContents(), trackLen-inNumPoints, _points, 0, inNumPoints);
-			// Note data copied twice here but still more efficient than looping
-		}
-	}
-
-	/**
-	 * Look for the given point in the array
-	 * @param inPoint point to look for
-	 * @return index, or -1 if not found
-	 */
-	public int getIndex(DataPoint inPoint)
-	{
-		int idx = -1;
-		for (int i=0; i<_points.length; i++)
-		{
-			if (_points[i] == inPoint) {
-				idx = i;
-				break;
-			}
-		}
-		if (idx == -1) {return idx;}             // point not found
-		if (_pointIndices == null) {return idx;} // All points loaded
-		return _pointIndices[idx]; // use point index mapping
 	}
 }
