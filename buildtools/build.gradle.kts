@@ -13,7 +13,7 @@ java {
         java.srcDir("src")
         resources.srcDirs("src")
         resources.include(
-                "tim/prune/gui/images/*",
+                "tim/prune/gui/images/**",
                 "tim/prune/lang/*",
                 "tim/prune/function/srtm/*.dat",
                 "tim/prune/*.txt"
