@@ -12,6 +12,10 @@ import java.util.List;
  */
 public class LoadPhotosWithPointsCmd extends CompoundCommand
 {
+	public LoadPhotosWithPointsCmd(Photo inPhoto) {
+		this(List.of(inPhoto));
+	}
+
 	public LoadPhotosWithPointsCmd(List<Photo> inPhotos)
 	{
 		ArrayList<DataPoint> points = new ArrayList<>();
