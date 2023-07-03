@@ -13,7 +13,7 @@ import java.util.TimeZone;
  */
 public class TimestampLocal extends Timestamp
 {
-	private boolean _valid = false;
+	private final boolean _valid;
 	private int _year=0, _month=0, _day=0;
 	private int _hour=0, _minute=0, _second=0;
 
@@ -48,8 +48,7 @@ public class TimestampLocal extends Timestamp
 
 
 	/** @return true if valid */
-	public boolean isValid()
-	{
+	public boolean isValid() {
 		return _valid;
 	}
 
@@ -71,8 +70,7 @@ public class TimestampLocal extends Timestamp
 	}
 
 	@Override
-	public long getMilliseconds(TimeZone inZone)
-	{
+	public long getMilliseconds(TimeZone inZone) {
 		return getCalendar(inZone).getTimeInMillis();
 	}
 
@@ -82,8 +80,7 @@ public class TimestampLocal extends Timestamp
 	}
 
 	@Override
-	protected boolean hasMilliseconds()
-	{
+	protected boolean hasMilliseconds() {
 		return false;
 	}
 
@@ -97,8 +94,7 @@ public class TimestampLocal extends Timestamp
 	protected String format(DateFormat inFormat, TimeZone inTimezone)
 	{
 		Calendar cal = getCalendar(inTimezone);
-		if (inTimezone != null)
-		{
+		if (inTimezone != null) {
 			inFormat.setTimeZone(inTimezone);
 		}
 		return inFormat.format(cal.getTime());

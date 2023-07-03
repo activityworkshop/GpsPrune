@@ -319,24 +319,21 @@ public class TimestampUtc extends Timestamp
 	/**
 	 * @return true if timestamp is valid
 	 */
-	public boolean isValid()
-	{
+	public boolean isValid() {
 		return _valid;
 	}
 
 	/**
 	 * @return true if the timestamp has non-zero milliseconds
 	 */
-	protected boolean hasMilliseconds()
-	{
+	protected boolean hasMilliseconds() {
 		return isValid() && (_milliseconds % 1000L) > 0;
 	}
 
 	/**
 	 * @return the milliseconds according to the given timezone
 	 */
-	public long getMilliseconds(TimeZone inZone)
-	{
+	public long getMilliseconds(TimeZone inZone) {
 		return _milliseconds;
 	}
 
@@ -376,6 +373,7 @@ public class TimestampUtc extends Timestamp
 	 * @param inTimezone timezone to use
 	 * @return formatted String
 	 */
+	@Override
 	protected String format(DateFormat inFormat, TimeZone inTimezone)
 	{
 		CALENDAR.setTimeZone(TimeZone.getTimeZone("GMT"));

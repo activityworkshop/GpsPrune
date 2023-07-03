@@ -4,6 +4,7 @@ package tim.prune.data;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 import java.util.TimeZone;
 
 
@@ -17,10 +18,12 @@ public abstract class Timestamp
 
 	protected static final DateFormat DEFAULT_DATETIME_FORMAT = DateFormat.getDateTimeInstance();
 
+	// These date formats use Locale.US to guarantee that Arabic numerals (0-9) will be used
+	// to format the timestamps, not whatever other numerals are configured on the default system locale.
 	protected static final DateFormat ISO_8601_FORMAT
-		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 	protected static final DateFormat ISO_8601_FORMAT_WITH_MILLIS
-		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
 
 	private static boolean _millisAddedToTimeFormat = false;
 
@@ -126,10 +129,8 @@ public abstract class Timestamp
 	/**
 	 * @return date part of timestamp in locale-specific format
 	 */
-	public String getDateText(TimeZone inTimezone)
-	{
-		if (!isValid()) return "";
-		return format(DEFAULT_DATE_FORMAT, inTimezone);
+	public String getDateText(TimeZone inTimezone) {
+		return isValid() ? format(DEFAULT_DATE_FORMAT, inTimezone) : "";
 	}
 
 	/**
@@ -165,8 +166,7 @@ public abstract class Timestamp
 	/**
 	 * @return Description of timestamp in locale-specific format
 	 */
-	public String getText(TimeZone inTimezone)
-	{
+	public String getText(TimeZone inTimezone) {
 		return getText(Format.LOCALE, inTimezone);
 	}
 
@@ -186,8 +186,8 @@ public abstract class Timestamp
 			default:
 				return format(DEFAULT_DATETIME_FORMAT, inTimezone);
 			case ISO8601:
-				return format(hasMilliseconds() ? ISO_8601_FORMAT_WITH_MILLIS : ISO_8601_FORMAT,
-					inTimezone);
+				DateFormat dateFormat = hasMilliseconds() ? ISO_8601_FORMAT_WITH_MILLIS : ISO_8601_FORMAT;
+				return format(dateFormat, inTimezone);
 		}
 	}
 
