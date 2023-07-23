@@ -10,9 +10,12 @@ import java.awt.GridBagLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.zip.GZIPInputStream;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -49,16 +52,14 @@ public class AboutScreen extends GenericFunction
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public AboutScreen(App inApp)
-	{
+	public AboutScreen(App inApp) {
 		super(inApp);
 	}
 
 	/**
 	 * Return the name key for this function
 	 */
-	public String getNameKey()
-	{
+	public String getNameKey() {
 		return "function.about";
 	}
 
@@ -216,11 +217,7 @@ public class AboutScreen extends GenericFunction
 		readmePanel.setLayout(new BorderLayout());
 		_aboutTextArea = new JTextArea(I18nManager.getText("details.photo.loading"));
 		// Set readme text in separate thread so that about screen pops up sooner
-		new Thread(new Runnable() {
-			public void run() {
-				_aboutTextArea.setText(getReadmeText());
-			}
-		}).start();
+		new Thread(() -> _aboutTextArea.setText(getReadmeText())).start();
 		_aboutTextArea.setEditable(false);
 		_aboutTextArea.setLineWrap(true); _aboutTextArea.setWrapStyleWord(true);
 		JScrollPane scrollPane = new JScrollPane(_aboutTextArea);
@@ -291,22 +288,51 @@ public class AboutScreen extends GenericFunction
 	 */
 	private String getReadmeText()
 	{
+		// First, try locally-held readme.txt if available (as it normally should be)
 		// Readme file can either be in file system or packed in the same jar as code
+		String errorMessage = null;
 		try (InputStream in = GpsPrune.class.getResourceAsStream("readme.txt");
 			BufferedReader br = new BufferedReader(new InputStreamReader(in)))
 		{
-			StringBuilder builder = new StringBuilder();
-			String strLine;
-			while ((strLine = br.readLine()) != null) {
-				builder.append(strLine).append('\n');
-			}
-			return builder.toString();
+			return readFromReader(br);
 		}
-		catch (IOException | NullPointerException e) {
-			System.err.println("Exception trying to get readme: " + e.getMessage());
+		catch (IOException e) {
+			errorMessage = e.getMessage();
+		}
+		catch (NullPointerException e) {
+			errorMessage = "Local readme file not found";
 		}
 
+		// Locally-held file failed, so try to find gz file installed on system (eg Debian)
+		File gzFile = new File("/usr/share/doc/gpsprune/readme.txt.gz");
+		if (gzFile.exists())
+		{
+			try (InputStream in = new GZIPInputStream(new FileInputStream(gzFile));
+				BufferedReader br = new BufferedReader(new InputStreamReader(in)))
+			{
+				return readFromReader(br);
+			}
+			catch (IOException e) {
+				System.err.println("Exception trying to get readme.gz : " + e.getMessage());
+			}
+		}
+
+		// Only show first error message if couldn't get readme from gz either
+		if (errorMessage != null) {
+			System.err.println("Exception trying to get readme: " + errorMessage);
+		}
 		return I18nManager.getText("error.readme.notfound");
+	}
+
+	/** Read all the lines from the given reader and return the contents as a string */
+	private String readFromReader(BufferedReader inReader) throws IOException
+	{
+		StringBuilder builder = new StringBuilder();
+		String strLine;
+		while ((strLine = inReader.readLine()) != null) {
+			builder.append(strLine).append('\n');
+		}
+		return builder.toString();
 	}
 
 	/**

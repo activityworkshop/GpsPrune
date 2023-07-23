@@ -56,14 +56,16 @@ public class SidebarController
 				}
 			}
 			// Hiding of panels has to occur in separate thread to update properly
-			if (visible) SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-					for (int i=0; i<_components.length; i++) {
+			if (visible)
+			{
+				SwingUtilities.invokeLater(() -> {
+					for (int i=0; i<_components.length; i++)
+					{
 						_splitters[i].setDividerLocation(i==0?0.0:1.0);
 						_splitters[i].invalidate();
 					}
-				}
-			});
+				});
+			}
 		}
 	}
 }

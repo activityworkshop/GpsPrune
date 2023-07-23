@@ -1,6 +1,7 @@
 package tim.prune.correlate;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.JTable;
@@ -66,27 +67,27 @@ public class PhotoCorrelator extends Correlator
 			PointMediaPair pair = getPointPairForMedia(_app.getTrackInfo().getTrack(), photo, inTimeDiff);
 			MediaPreviewTableRow row = new MediaPreviewTableRow(pair);
 			// Don't try to correlate photos which don't have points either side
-			boolean correlatePhoto = pair.isValid();
+			boolean correlate = pair.isValid();
 			// Don't select photos which already have a point
-			if (photo.getCurrentStatus() != Photo.Status.NOT_CONNECTED) {correlatePhoto = false;}
+			if (photo.getCurrentStatus() != Photo.Status.NOT_CONNECTED) {correlate = false;}
 			// Check time limits, distance limits
-			if (timeLimit != null && correlatePhoto) {
+			if (timeLimit != null && correlate) {
 				long numSecs = pair.getMinSeconds();
-				correlatePhoto = (numSecs <= timeLimit.getTotalSeconds());
+				correlate = (numSecs <= timeLimit.getTotalSeconds());
 			}
-			if (angDistLimit > 0.0 && correlatePhoto)
+			if (angDistLimit > 0.0 && correlate)
 			{
 				final double angDistPair = DataPoint.calculateRadiansBetween(pair.getPointBefore(), pair.getPointAfter());
 				double frac = pair.getFraction();
 				if (frac > 0.5) {frac = 1 - frac;}
 				final double angDistPhoto = angDistPair * frac;
-				correlatePhoto = (angDistPhoto < angDistLimit);
+				correlate = (angDistPhoto < angDistLimit);
 			}
 			// Don't select photos which are already correlated to the same point
 			if (pair.getSecondsBefore() == 0L && pair.getPointBefore().isDuplicate(photo.getDataPoint())) {
-				correlatePhoto = false;
+				correlate = false;
 			}
-			row.setCorrelateFlag(correlatePhoto);
+			row.setCorrelateFlag(correlate);
 			model.addRow(row);
 		}
 		_previewTable.setModel(model);
@@ -121,7 +122,21 @@ public class PhotoCorrelator extends Correlator
 
 		ArrayList<DataPoint> pointsToCreate = new ArrayList<>();
 		ArrayList<PointAndMedia> pointPhotoPairs = new ArrayList<>();
-		for (PointMediaPair pair : pointPairs)
+		fillListsForCommand(pointPairs, pointsToCreate, pointPhotoPairs);
+
+		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, pointsToCreate, pointPhotoPairs);
+		command.setDescription(makeUndoText(pointPhotoPairs.size()));
+		command.setConfirmText(makeConfirmText(pointPhotoPairs.size()));
+		_app.execute(command);
+	}
+
+	/**
+	 * Fill the two lists of objects required by the command.
+	 * This is static so that it can be separately tested.
+	 */
+	static void fillListsForCommand(PointMediaPair[] inPointPairs, List<DataPoint> inPointsToCreate, List<PointAndMedia> inPointPhotoPairs)
+	{
+		for (PointMediaPair pair : inPointPairs)
 		{
 			if (pair != null && pair.isValid())
 			{
@@ -129,22 +144,22 @@ public class PhotoCorrelator extends Correlator
 				if (pair.getMinSeconds() == 0L)
 				{
 					// exact match
-					Photo pointPhoto = pair.getPointBefore().getPhoto();
-					if (pointPhoto == null)
+					DataPoint point = pair.getPointBefore();
+					Photo pointPhoto = point.getPhoto();
+					if (pointPhoto == null && !pointAlreadyBeingConnected(point, inPointPhotoPairs))
 					{
 						// photo coincides with photoless point so connect the two
-						DataPoint point = pair.getPointBefore();
-						pointPhotoPairs.add(new PointAndMedia(point, photoToLink, null));
+						inPointPhotoPairs.add(new PointAndMedia(point, photoToLink, null));
 					}
-					else if (pointPhoto.equals(pair.getMedia())) {
+					else if (pointPhoto != null && pointPhoto.equals(pair.getMedia())) {
 						// photo is already connected, nothing to do
 					}
 					else
 					{
 						// point is already connected to a different photo, so need to clone point
 						DataPoint pointToAdd = pair.getPointBefore().clonePoint();
-						pointsToCreate.add(pointToAdd);
-						pointPhotoPairs.add(new PointAndMedia(pointToAdd, photoToLink, null));
+						inPointsToCreate.add(pointToAdd);
+						inPointPhotoPairs.add(new PointAndMedia(pointToAdd, photoToLink, null));
 					}
 				}
 				else
@@ -152,15 +167,10 @@ public class PhotoCorrelator extends Correlator
 					// photo time falls between two points, so need to interpolate new one
 					DataPoint pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
 					pointToAdd.setSegmentStart(true);
-					pointsToCreate.add(pointToAdd);
-					pointPhotoPairs.add(new PointAndMedia(pointToAdd, photoToLink, null));
+					inPointsToCreate.add(pointToAdd);
+					inPointPhotoPairs.add(new PointAndMedia(pointToAdd, photoToLink, null));
 				}
 			}
 		}
-
-		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, pointsToCreate, pointPhotoPairs);
-		command.setDescription(makeUndoText(pointPhotoPairs.size()));
-		command.setConfirmText(makeConfirmText(pointPhotoPairs.size()));
-		_app.execute(command);
 	}
 }

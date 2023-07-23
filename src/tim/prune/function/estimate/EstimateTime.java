@@ -175,11 +175,7 @@ public class EstimateTime extends GenericFunction
 			I18nManager.getText("dialog.estimatetime.parameters")));
 		KeyAdapter paramChangeListener = new KeyAdapter() {
 			public void keyTyped(KeyEvent inE) {
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						calculateEstimatedTime();
-					}
-				});
+				SwingUtilities.invokeLater(() -> calculateEstimatedTime());
 			}
 			public void keyPressed(KeyEvent inE) {
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
