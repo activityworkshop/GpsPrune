@@ -3,6 +3,7 @@ package tim.prune.correlate;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -118,27 +119,27 @@ public class AudioCorrelator extends Correlator
 			PointMediaPair pair = getPointPairForMedia(_app.getTrackInfo().getTrack(), audio, inTimeDiff);
 			MediaPreviewTableRow row = new MediaPreviewTableRow(pair);
 			// Don't try to correlate audios which don't have points either side
-			boolean correlateAudio = pair.isValid();
+			boolean correlate = pair.isValid();
 			// Don't select audios which already have a point
-			if (audio.getCurrentStatus() != AudioClip.Status.NOT_CONNECTED) {correlateAudio = false;}
+			if (audio.getCurrentStatus() != AudioClip.Status.NOT_CONNECTED) {correlate = false;}
 			// Check time limits, distance limits
-			if (timeLimit != null && correlateAudio) {
+			if (timeLimit != null && correlate) {
 				long numSecs = pair.getMinSeconds();
-				correlateAudio = (numSecs <= timeLimit.getTotalSeconds());
+				correlate = (numSecs <= timeLimit.getTotalSeconds());
 			}
-			if (angDistLimit > 0.0 && correlateAudio)
+			if (angDistLimit > 0.0 && correlate)
 			{
 				final double angDistPair = DataPoint.calculateRadiansBetween(pair.getPointBefore(), pair.getPointAfter());
 				double frac = pair.getFraction();
 				if (frac > 0.5) {frac = 1 - frac;}
 				final double angDistPhoto = angDistPair * frac;
-				correlateAudio = (angDistPhoto < angDistLimit);
+				correlate = (angDistPhoto < angDistLimit);
 			}
 			// Don't select audios which are already correlated to the same point
 			if (pair.getSecondsBefore() == 0L && pair.getPointBefore().isDuplicate(audio.getDataPoint())) {
-				correlateAudio = false;
+				correlate = false;
 			}
-			row.setCorrelateFlag(correlateAudio);
+			row.setCorrelateFlag(correlate);
 			model.addRow(row);
 		}
 		_previewTable.setModel(model);
@@ -185,8 +186,8 @@ public class AudioCorrelator extends Correlator
 	}
 
 	/**
-	 * Finish the correlation by modifying the track
-	 * and passing the Undo information back to the App
+	 * Finish the correlation by creating the appropriate command
+	 * and passing it back to the App
 	 */
 	protected void finishCorrelation()
 	{
@@ -197,7 +198,17 @@ public class AudioCorrelator extends Correlator
 
 		ArrayList<DataPoint> pointsToCreate = new ArrayList<>();
 		ArrayList<PointAndMedia> pointAudioPairs = new ArrayList<>();
-		for (PointMediaPair pair : pointPairs)
+		fillListsForCommand(pointPairs, pointsToCreate, pointAudioPairs);
+
+		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_AUDIOS, pointsToCreate, pointAudioPairs);
+		command.setDescription(makeUndoText(pointAudioPairs.size()));
+		command.setConfirmText(makeConfirmText(pointAudioPairs.size()));
+		_app.execute(command);
+	}
+
+	static void fillListsForCommand(PointMediaPair[] inPointPairs, List<DataPoint> inPointsToCreate, List<PointAndMedia> inPointAudioPairs)
+	{
+		for (PointMediaPair pair : inPointPairs)
 		{
 			if (pair != null && pair.isValid())
 			{
@@ -205,21 +216,22 @@ public class AudioCorrelator extends Correlator
 				if (pair.getMinSeconds() == 0L)
 				{
 					// exact match
+					DataPoint point = pair.getPointBefore();
 					AudioClip pointAudio = pair.getPointBefore().getAudio();
-					if (pointAudio == null)
+					if (pointAudio == null && !pointAlreadyBeingConnected(point, inPointAudioPairs))
 					{
 						// audio coincides with audioless point so connect the two
-						DataPoint point = pair.getPointBefore();
-						pointAudioPairs.add(new PointAndMedia(point, null, audioToLink));
+						inPointAudioPairs.add(new PointAndMedia(point, null, audioToLink));
 					}
-					else if (pointAudio.equals(pair.getMedia())) {
+					else if (pointAudio != null && pointAudio.equals(pair.getMedia())) {
 						// audio is already connected, nothing to do
 					}
-					else {
+					else
+					{
 						// point is already connected to a different audio, so need to clone point
 						DataPoint pointToAdd = pair.getPointBefore().clonePoint();
-						pointsToCreate.add(pointToAdd);
-						pointAudioPairs.add(new PointAndMedia(pointToAdd, null, audioToLink));
+						inPointsToCreate.add(pointToAdd);
+						inPointAudioPairs.add(new PointAndMedia(pointToAdd, null, audioToLink));
 					}
 				}
 				else
@@ -227,14 +239,10 @@ public class AudioCorrelator extends Correlator
 					// audio time falls between two points, so need to interpolate new one
 					DataPoint pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
 					pointToAdd.setSegmentStart(true);
-					pointsToCreate.add(pointToAdd);
-					pointAudioPairs.add(new PointAndMedia(pointToAdd, null, audioToLink));
+					inPointsToCreate.add(pointToAdd);
+					inPointAudioPairs.add(new PointAndMedia(pointToAdd, null, audioToLink));
 				}
 			}
 		}
-		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_AUDIOS, pointsToCreate, pointAudioPairs);
-		command.setDescription(makeUndoText(pointAudioPairs.size()));
-		command.setConfirmText(makeConfirmText(pointAudioPairs.size()));
-		_app.execute(command);
 	}
 }

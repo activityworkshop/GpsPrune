@@ -7,7 +7,8 @@ import javax.swing.JFileChooser;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
-import tim.prune.cmd.InsertPhotoCmd;
+import tim.prune.cmd.Command;
+import tim.prune.cmd.LoadPhotosWithPointsCmd;
 import tim.prune.config.Config;
 import tim.prune.data.Photo;
 import tim.prune.load.json.JsonFileLoader;
@@ -135,7 +136,7 @@ public class FileLoader
 		else if (fileExtension.equals(".jpg") || fileExtension.equals("jpeg"))
 		{
 			Photo photo = JpegLoader.createPhoto(inFile);
-			InsertPhotoCmd command = new InsertPhotoCmd(photo);
+			Command command = new LoadPhotosWithPointsCmd(photo);
 			command.setDescription(I18nManager.getText("undo.loadphoto", inFile.getName()));
 			command.setConfirmText(I18nManager.getText("confirm.jpegload.single"));
 			_app.execute(command);

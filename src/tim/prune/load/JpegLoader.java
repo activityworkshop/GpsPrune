@@ -155,8 +155,8 @@ public class JpegLoader
 			Describer confirmDescriber = new Describer("confirm.jpegload.single", "confirm.jpegload.multi");
 			command.setConfirmText(confirmDescriber.getDescriptionWithCount(numPhotos));
 			Describer undoDescriber = new Describer("undo.loadphoto", "undo.loadphotos");
-			String firstAudioName = _photos.get(0).getName();
-			command.setDescription(undoDescriber.getDescriptionWithNameOrCount(firstAudioName, numPhotos));
+			String firstPhotoName = _photos.get(0).getName();
+			command.setDescription(undoDescriber.getDescriptionWithNameOrCount(firstPhotoName, numPhotos));
 			_app.execute(command);
 		}
 	}
@@ -170,16 +170,16 @@ public class JpegLoader
 	 */
 	private void processFileList(File[] inFiles, boolean inFirstDir, boolean inDescend)
 	{
-		if (inFiles == null) return;
+		if (inFiles == null) {
+			return;
+		}
 		// Loop over elements in array
-		for (int i=0; i<inFiles.length && !_cancelled; i++)
+		for (File file : inFiles)
 		{
-			File file = inFiles[i];
-			if (file.exists() && file.canRead())
+			if (!_cancelled && file.exists() && file.canRead())
 			{
 				// Check whether it's a file or a directory
-				if (file.isFile())
-				{
+				if (file.isFile()) {
 					processFile(file);
 				}
 				else if (file.isDirectory() && (inFirstDir || inDescend))
@@ -293,17 +293,16 @@ public class JpegLoader
 				if (file.exists() && file.canRead())
 				{
 					// Store first directory in config for later
-					if (i == 0 && inFirstDir) {
-						File workingDir = file.isDirectory()?file:file.getParentFile();
+					if (i == 0 && inFirstDir)
+					{
+						File workingDir = file.isDirectory() ? file : file.getParentFile();
 						Config.setConfigString(Config.KEY_PHOTO_DIR, workingDir.getAbsolutePath());
 					}
 					// Check whether it's a file or a directory
-					if (file.isFile())
-					{
+					if (file.isFile()) {
 						fileCount++;
 					}
-					else if (file.isDirectory() && (inFirstDir || inDescend))
-					{
+					else if (file.isDirectory() && (inFirstDir || inDescend)) {
 						fileCount += countFileList(file.listFiles(), false, inDescend);
 					}
 				}
@@ -343,14 +342,15 @@ public class JpegLoader
 	 */
 	private static double getCoordinateDoubleValue(double[] inValues, boolean isPositive)
 	{
-		if (inValues == null || inValues.length != 3) return 0.0;
+		if (inValues == null || inValues.length != 3) {
+			return 0.0;
+		}
 		double value = inValues[0]        // degrees
 			+ inValues[1] / 60.0          // minutes
 			+ inValues[2] / 60.0 / 60.0;  // seconds
 		// make sure it's the correct sign
 		value = Math.abs(value);
-		if (!isPositive) value = -value;
-		return value;
+		return isPositive ? value : -value;
 	}
 
 

@@ -87,12 +87,10 @@ public class PointEditor extends GenericFunction
 		_dialog.getContentPane().add(makeDialogComponents());
 		_dialog.pack();
 		// Init right-hand side
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				_valueField.setVisible(false);
-				_valueAreaPane.setVisible(false);
-				_cancelButton.requestFocus();
-			}
+		SwingUtilities.invokeLater(() -> {
+			_valueField.setVisible(false);
+			_valueAreaPane.setVisible(false);
+			_cancelButton.requestFocus();
 		});
 		_prevRowIndex = -1;
 		_dialog.setVisible(true);

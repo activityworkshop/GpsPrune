@@ -6,6 +6,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.util.Iterator;
+import java.util.List;
 import java.util.TimeZone;
 import java.util.TreeSet;
 
@@ -26,6 +27,7 @@ import javax.swing.JTextField;
 import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
+import tim.prune.cmd.PointAndMedia;
 import tim.prune.config.TimezoneHelper;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
@@ -690,5 +692,18 @@ public abstract class Correlator extends GenericFunction
 		Describer confirmDescriber = new Describer("confirm.correlate" + getMediaTypeKey() + "s.single",
 				"confirm.correlate" + getMediaTypeKey() + "s.multi");
 		return confirmDescriber.getDescriptionWithCount(inNumMedia);
+	}
+
+	/** @return true if the given point is present in the list already */
+	protected static boolean pointAlreadyBeingConnected(DataPoint inPoint, List<PointAndMedia> inPairs)
+	{
+		for (PointAndMedia pair : inPairs)
+		{
+			if (pair.getPoint() == inPoint) {
+				// Point is already in the list
+				return true;
+			}
+		}
+		return false;
 	}
 }

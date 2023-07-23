@@ -256,7 +256,7 @@ public class GpxWriter
 		if (inPoint.hasTimestamp() && _settings.getExportTimestamps())
 		{
 			inWriter.write("\t\t<time>");
-			inWriter.write(inPoint.getTimestamp().getText(Timestamp.Format.ISO8601, null));
+			inWriter.write(getPointTimestamp(inPoint).getText(Timestamp.Format.ISO8601, null));
 			inWriter.write("</time>\n");
 		}
 		// write waypoint name after elevation and time
