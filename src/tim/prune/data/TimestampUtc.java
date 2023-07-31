@@ -25,7 +25,7 @@ public class TimestampUtc extends Timestamp
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
 	private static final Pattern ISO8601_FRACTIONAL_PATTERN
-		= Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:[\\.,](\\d{1,3}))?(Z|[\\+-]\\d{2}(?::?\\d{2})?)?");
+		= Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:[\\.,](\\d{1,5}))?(Z|[\\+-]\\d{2}(?::?\\d{2})?)?");
 		//                    year     month     day T  hour    minute    sec             millisec   Z or +/-  hours  :   minutes
 	private static final Pattern GENERAL_TIMESTAMP_PATTERN
 		= Pattern.compile("(\\d{4})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})");

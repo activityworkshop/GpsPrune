@@ -2,6 +2,7 @@ package tim.prune.data;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.time.Instant;
 import java.util.TimeZone;
 
 import org.junit.jupiter.api.Test;
@@ -41,5 +42,15 @@ class TimestampTest
 		assertEquals(earlier.getMillisecondsSince(later), -2000L);
 		assertFalse(earlier.isAfter(later));
 		assertTrue(earlier.isBefore(later));
+	}
+
+	@Test
+	void testMyTracksFormat() {
+		// myTracks by Dirk Stichling produces GPX files with timestamps of the form "2023-07-21T01:06:50.90200Z"
+		// http://www.mytracks4mac.info
+		TimestampUtc validDate = new TimestampUtc("2023-07-21T01:06:50.90200Z");
+		Instant instant = Instant.ofEpochMilli(1689901610000L);
+		assertTrue(validDate.isValid());
+		assertEquals(instant.toEpochMilli(), validDate.getMilliseconds(TimeZone.getTimeZone("GMT")));
 	}
 }
