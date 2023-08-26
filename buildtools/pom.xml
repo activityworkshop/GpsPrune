@@ -67,7 +67,7 @@
 			<resource>
 				<directory>${project.basedir}/src/</directory>
 				<includes>
-					<include>tim/prune/gui/images/*</include>
+					<include>tim/prune/gui/images/**</include>
 					<include>tim/prune/lang/*</include>
 					<include>tim/prune/function/srtm/srtmtiles.dat</include>
 					<include>tim/prune/*.txt</include>
