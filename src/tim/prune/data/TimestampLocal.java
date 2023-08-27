@@ -14,8 +14,8 @@ import java.util.TimeZone;
 public class TimestampLocal extends Timestamp
 {
 	private final boolean _valid;
-	private int _year=0, _month=0, _day=0;
-	private int _hour=0, _minute=0, _second=0;
+	private final int _year, _month, _day;
+	private final int _hour, _minute, _second;
 
 
 	/**
@@ -35,15 +35,12 @@ public class TimestampLocal extends Timestamp
 			&& inHour >= 0 && inHour < 24
 			&& inMinute >= 0 && inMinute < 60
 			&& inSecond >= 0 && inSecond < 60;
-		if (_valid)
-		{
-			_year = inYear;
-			_month = inMonth;
-			_day = inDay;
-			_hour = inHour;
-			_minute = inMinute;
-			_second = inSecond;
-		}
+		_year = _valid ? inYear : 0;
+		_month = _valid ? inMonth : 0;
+		_day = _valid ? inDay : 0;
+		_hour = _valid ? inHour : 0;
+		_minute = _valid ? inMinute : 0;
+		_second = _valid ? inSecond : 0;
 	}
 
 

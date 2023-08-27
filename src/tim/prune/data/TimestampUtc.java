@@ -18,14 +18,14 @@ import java.util.regex.Pattern;
 public class TimestampUtc extends Timestamp
 {
 	private final boolean _valid;
-	private long _milliseconds = 0L;
-	private String _text = null;
+	private final long _milliseconds;
+	private final String _text;
 
 	private static final DateFormat ISO_8601_FORMAT_NOZ = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	private static DateFormat[] ALL_DATE_FORMATS = null;
 	private static Calendar CALENDAR = null;
 	private static final Pattern ISO8601_FRACTIONAL_PATTERN
-		= Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:[\\.,](\\d{1,3}))?(Z|[\\+-]\\d{2}(?::?\\d{2})?)?");
+		= Pattern.compile("(\\d{4})-(\\d{2})-(\\d{2})T(\\d{2}):(\\d{2}):(\\d{2})(?:[.,](\\d{1,3}))?(Z|[+-]\\d{2}(?::?\\d{2})?)?");
 		//                    year     month     day T  hour    minute    sec             millisec   Z or +/-  hours  :   minutes
 	private static final Pattern GENERAL_TIMESTAMP_PATTERN
 		= Pattern.compile("(\\d{4})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})\\D(\\d{2})");
@@ -98,48 +98,51 @@ public class TimestampUtc extends Timestamp
 	 */
 	public TimestampUtc(String inString)
 	{
-		_text = null;
+		String text = null;
+		long millis = 0L;
 		if (inString != null && !inString.equals(""))
 		{
 			// Try each of the parse types in turn
 			for (ParseType type : ALL_PARSE_TYPES)
 			{
-				if (parseString(inString, type))
+				Long parsedMillis = parseString(inString, type);
+				if (parsedMillis != null)
 				{
 					ALL_PARSE_TYPES[0] = type;
-					_valid = true;
-					_text = inString;
-					return;
+					text = inString;
+					millis = parsedMillis;
+					break;
 				}
 			}
 		}
-		_valid = false;
+		_text = text;
+		_milliseconds = millis;
+		_valid = (_text != null);
 	}
 
 	/**
 	 * Try to parse the given string in the specified way
 	 * @param inString String to parse
 	 * @param inType parse type to use
-	 * @return true if successful
+	 * @return milliseconds if parse was successful, otherwise false
 	 */
-	private boolean parseString(String inString, ParseType inType)
+	private static Long parseString(String inString, ParseType inType)
 	{
 		if (inString == null || inString.equals("")) {
-			return false;
+			return null;
 		}
 		switch (inType)
 		{
-			case NONE: return false;
+			case NONE:
+				return null;
 			case LONG:
 				// Try to parse into a long
 				try
 				{
 					long rawValue = Long.parseLong(inString.trim());
-					_milliseconds = getMilliseconds(rawValue);
-					return true;
+					return getMilliseconds(rawValue);
 				}
-				catch (NumberFormatException nfe)
-				{}
+				catch (NumberFormatException ignored) {}
 				break;
 
 			case ISO8601_FRACTIONAL:
@@ -147,7 +150,7 @@ public class TimestampUtc extends Timestamp
 				if (fmatcher.matches())
 				{
 					try {
-						_milliseconds = getMilliseconds(Integer.parseInt(fmatcher.group(1)), // year
+						return getMilliseconds(Integer.parseInt(fmatcher.group(1)), // year
 							Integer.parseInt(fmatcher.group(2)), // month
 							Integer.parseInt(fmatcher.group(3)), // day
 							Integer.parseInt(fmatcher.group(4)), // hour
@@ -155,9 +158,8 @@ public class TimestampUtc extends Timestamp
 							Integer.parseInt(fmatcher.group(6)), // second
 							fmatcher.group(7),                   // fractional seconds
 							fmatcher.group(8));                  // timezone, if any
-						return true;
 					}
-					catch (NumberFormatException nfe) {}
+					catch (NumberFormatException ignored) {}
 				}
 				break;
 
@@ -178,21 +180,20 @@ public class TimestampUtc extends Timestamp
 					if (matcher.matches())
 					{
 						try {
-							_milliseconds = getMilliseconds(Integer.parseInt(matcher.group(1)),
+							return getMilliseconds(Integer.parseInt(matcher.group(1)),
 								Integer.parseInt(matcher.group(2)),
 								Integer.parseInt(matcher.group(3)),
 								Integer.parseInt(matcher.group(4)),
 								Integer.parseInt(matcher.group(5)),
 								Integer.parseInt(matcher.group(6)),
 								null, null); // no fractions of a second and no timezone
-							return true;
 						}
-						catch (NumberFormatException nfe2) {} // parse shouldn't fail if matcher matched
+						catch (NumberFormatException ignored) {} // parse shouldn't fail if matcher matched
 					}
 				}
-				return false;
+				break;
 		}
-		return false;
+		return null;
 	}
 
 
@@ -200,20 +201,18 @@ public class TimestampUtc extends Timestamp
 	 * Try to parse the given string with the given date format
 	 * @param inString String to parse
 	 * @param inDateFormat Date format to use
-	 * @return true if successful
+	 * @return milliseconds if successful
 	 */
-	private boolean parseString(String inString, DateFormat inDateFormat)
+	private static Long parseString(String inString, DateFormat inDateFormat)
 	{
 		ParsePosition pPos = new ParsePosition(0);
 		Date date = inDateFormat.parse(inString, pPos);
 		if (date != null && inString.length() == pPos.getIndex()) // require use of _all_ the string, not just the beginning
 		{
 			CALENDAR.setTime(date);
-			_milliseconds = CALENDAR.getTimeInMillis();
-			return true;
+			return CALENDAR.getTimeInMillis();
 		}
-
-		return false;
+		return null;
 	}
 
 
@@ -224,6 +223,7 @@ public class TimestampUtc extends Timestamp
 	public TimestampUtc(long inMillis)
 	{
 		_milliseconds = inMillis;
+		_text = null;
 		_valid = true;
 	}
 
