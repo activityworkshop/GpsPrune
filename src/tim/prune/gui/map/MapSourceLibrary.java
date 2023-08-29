@@ -38,8 +38,8 @@ public abstract class MapSourceLibrary
 	 */
 	private static void addFixedSources()
 	{
-		_sourceList.add(new OsmMapSource("Mapnik", "https://[abc].tile.openstreetmap.org/"));
-		_sourceList.add(new OsmMapSource("Cycling Trails", "https://[abc].tile.openstreetmap.org/", "png",
+		_sourceList.add(new OsmMapSource("Mapnik", "https://tile.openstreetmap.org/"));
+		_sourceList.add(new OsmMapSource("Cycling Trails", "https://tile.openstreetmap.org/", "png",
 			"https://tile.waymarkedtrails.org/cycling/", "png", 18));
 		_sourceList.add(new OsmMapSource("Reitkarte", "http://topo[234].wanderreitkarte.de/topo/"));
 		_sourceList.add(new OsmMapSource("Mapsforfree", "https://maps-for-free.com/layer/relief/z{z}/row{y}/{z}_{x}-{y}.jpg", "jpg",
