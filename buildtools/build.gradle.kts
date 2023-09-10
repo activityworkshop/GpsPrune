@@ -22,6 +22,10 @@ java {
 
     sourceSets["test"].apply {
         java.srcDir("test")
+        resources.srcDirs("test")
+        resources.include(
+            "tim/prune/function/weather/xml/*"
+        )
     }
 }
 
