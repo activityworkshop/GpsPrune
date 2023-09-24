@@ -253,11 +253,15 @@ public class GpxWriter
 			inWriter.write("</ele>\n");
 		}
 		// timestamp if available (some waypoints have timestamps, some not)
-		if (inPoint.hasTimestamp() && _settings.getExportTimestamps())
+		if (_settings.getExportTimestamps())
 		{
-			inWriter.write("\t\t<time>");
-			inWriter.write(getPointTimestamp(inPoint).getText(Timestamp.Format.ISO8601, null));
-			inWriter.write("</time>\n");
+			Timestamp waypointTimestamp = getPointTimestamp(inPoint);
+			if (waypointTimestamp != null && waypointTimestamp.isValid())
+			{
+				inWriter.write("\t\t<time>");
+				inWriter.write(getPointTimestamp(inPoint).getText(Timestamp.Format.ISO8601, null));
+				inWriter.write("</time>\n");
+			}
 		}
 		// write waypoint name after elevation and time
 		inWriter.write("\t\t<name>");
