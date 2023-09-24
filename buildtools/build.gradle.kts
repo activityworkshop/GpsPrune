@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "tim.prune"
-version = 23
+version = 23.2
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -13,7 +13,7 @@ java {
         java.srcDir("src")
         resources.srcDirs("src")
         resources.include(
-                "tim/prune/gui/images/*",
+                "tim/prune/gui/images/**",
                 "tim/prune/lang/*",
                 "tim/prune/function/srtm/*.dat",
                 "tim/prune/*.txt"

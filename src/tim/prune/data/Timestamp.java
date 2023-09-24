@@ -66,32 +66,28 @@ public abstract class Timestamp
 	/**
 	 * @return true if this timestamp is after the other one
 	 */
-	public boolean isAfter(Timestamp inOther)
-	{
-		return getMillisecondsSince(inOther) > 0;
+	public boolean isAfter(Timestamp inOther) {
+		return getMillisecondsSince(inOther) > 0L;
 	}
 
 	/**
 	 * @return true if this timestamp is before the other one
 	 */
-	public boolean isBefore(Timestamp inOther)
-	{
-		return getMillisecondsSince(inOther) < 0;
+	public boolean isBefore(Timestamp inOther) {
+		return getMillisecondsSince(inOther) < 0L;
 	}
 
 	/**
 	 * @return true if this timestamp is equal to the other one
 	 */
-	public boolean isEqual(Timestamp inOther)
-	{
-		return getMillisecondsSince(inOther) == 0;
+	public boolean isEqual(Timestamp inOther) {
+		return getMillisecondsSince(inOther) == 0L;
 	}
 
 	/**
 	 * @return the number of seconds since the other timestamp
 	 */
-	public long getSecondsSince(Timestamp inOther)
-	{
+	public long getSecondsSince(Timestamp inOther) {
 		return getMillisecondsSince(inOther) / 1000L;
 	}
 
@@ -100,16 +96,14 @@ public abstract class Timestamp
 	 * @param inOther other, earlier Timestamp
 	 * @return number of milliseconds since other timestamp
 	 */
-	public long getMillisecondsSince(Timestamp inOther)
-	{
+	public long getMillisecondsSince(Timestamp inOther) {
 		return getMilliseconds(null) - inOther.getMilliseconds(null);
 	}
 
 	/**
 	 * @return the number of seconds since the other timestamp using the given timezone
 	 */
-	public long getSecondsSince(Timestamp inOther, TimeZone inTimezone)
-	{
+	public long getSecondsSince(Timestamp inOther, TimeZone inTimezone) {
 		return (getMilliseconds(inTimezone) - inOther.getMilliseconds(inTimezone)) / 1000L;
 	}
 

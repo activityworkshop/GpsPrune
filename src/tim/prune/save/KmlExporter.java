@@ -455,7 +455,8 @@ public class KmlExporter extends GenericFunction implements Runnable
 		boolean writeAudios = _pointTypeSelector.getAudiopointsSelected();
 		boolean justSelection = _pointTypeSelector.getJustSelection();
 		// Define xml header (depending on whether extensions are used or not)
-		if (useGxExtensions()) {
+		final boolean useGxExtensions = useGxExtensions();
+		if (useGxExtensions) {
 			inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n");
 		}
 		else {
@@ -478,61 +479,62 @@ public class KmlExporter extends GenericFunction implements Runnable
 			selEnd = _trackInfo.getSelection().getEnd();
 		}
 
-		boolean absoluteAltitudes = _altitudesCheckbox.isSelected();
-		int i = 0;
-		DataPoint point = null;
+		final boolean absoluteAltitudes = _altitudesCheckbox.isSelected();
+		final int numPoints = _track.getNumPoints();
 		boolean hasTrackpoints = false;
 		boolean writtenPhotoHeader = false, writtenAudioHeader = false;
-		final int numPoints = _track.getNumPoints();
 		int numSaved = 0;
 		int photoNum = 0;
 		// Loop over waypoints
-		for (i=0; i<numPoints; i++)
+		for (int i=0; i<numPoints; i++)
 		{
-			point = _track.getPoint(i);
-			boolean writeCurrentPoint = !justSelection || (i>=selStart && i<=selEnd);
-			// Make a blob for each waypoint
-			if (point.isWaypoint())
-			{
-				if (writeWaypoints && writeCurrentPoint)
-				{
-					exportWaypoint(point, inWriter, absoluteAltitudes);
-					numSaved++;
-				}
+			if (justSelection && (i < selStart || i > selEnd)) {
+				continue;
 			}
-			else if (!point.hasMedia())
+			DataPoint point = _track.getPoint(i);
+			if (!point.hasMedia())
 			{
-				hasTrackpoints = true;
+				// Make a blob for each waypoint
+				if (point.isWaypoint())
+				{
+					if (writeWaypoints)
+					{
+						exportWaypoint(point, inWriter, useGxExtensions, absoluteAltitudes);
+						numSaved++;
+					}
+				}
+				else {
+					hasTrackpoints = true;
+				}
 			}
 			// Make a blob with description for each photo
 			// Photos have already been written so picture sizes already known
-			if (point.getPhoto() != null && point.getPhoto().isValid() && writePhotos && writeCurrentPoint)
+			if (point.getPhoto() != null && point.getPhoto().isValid() && writePhotos)
 			{
 				if (!writtenPhotoHeader)
 				{
-					inWriter.write("<Style id=\"camera_icon\"><IconStyle><Icon><href>http://maps.google.com/mapfiles/kml/pal4/icon46.png</href></Icon></IconStyle></Style>");
+					inWriter.write("\t<Style id=\"camera_icon\"><IconStyle><Icon><href>https://maps.google.com/mapfiles/kml/pal4/icon46.png</href></Icon></IconStyle></Style>\n");
 					writtenPhotoHeader = true;
 				}
 				photoNum++;
-				exportPhotoPoint(point, inWriter, inExportImages, i, photoNum, absoluteAltitudes);
+				exportPhotoPoint(point, inWriter, inExportImages, i, photoNum, useGxExtensions, absoluteAltitudes);
 				numSaved++;
 			}
 			// Make a blob with description for each audio clip
-			if (point.getAudio() != null && writeAudios && writeCurrentPoint)
+			if (point.getAudio() != null && writeAudios)
 			{
 				if (!writtenAudioHeader)
 				{
-					inWriter.write("<Style id=\"audio_icon\"><IconStyle><color>ff00ffff</color><Icon><href>http://maps.google.com/mapfiles/kml/shapes/star.png</href></Icon></IconStyle></Style>");
+					inWriter.write("\t<Style id=\"audio_icon\"><IconStyle><color>ff00ffff</color><Icon><href>https://maps.google.com/mapfiles/kml/shapes/star.png</href></Icon></IconStyle></Style>\n");
 					writtenAudioHeader = true;
 				}
-				exportAudioPoint(point, inWriter, absoluteAltitudes);
+				exportAudioPoint(point, inWriter, useGxExtensions, absoluteAltitudes);
 				numSaved++;
 			}
 		}
 		// Make a line for the track, if there is one
 		if (hasTrackpoints && writeTrack)
 		{
-			boolean useGxExtensions = _gxExtensionsRadio.isSelected();
 			if (useGxExtensions)
 			{
 				// Write track using the Google Extensions to KML including gx:Track
@@ -543,7 +545,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 				numSaved += writeStandardTrack(inWriter, absoluteAltitudes, selStart, selEnd);
 			}
 		}
-		inWriter.write("</Folder>\n</kml>\n");
+		inWriter.write("\n</Folder>\n</kml>\n");
 		return numSaved;
 	}
 
@@ -563,7 +565,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		int numSaved = 0;
 		// Set up strings for start and end of track segment
 		String trackStart = "\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
-			+ "\t\t\t\t<color>cc" + reverse(ColourUtils.makeHexCode(_colourPatch.getBackground())) + "</color>\n"
+			+ "\t\t\t\t<color>cc" + reverseRGB(ColourUtils.makeHexCode(_colourPatch.getBackground())) + "</color>\n"
 			+ "\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
 			+ "\t\t</Style>\n\t\t<LineString>\n";
 		if (inAbsoluteAltitudes) {
@@ -623,7 +625,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		int numSaved = 0;
 		// Set up strings for start and end of track segment
 		String trackStart = "\t<Placemark>\n\t\t<name>track</name>\n\t\t<Style>\n\t\t\t<LineStyle>\n"
-			+ "\t\t\t\t<color>cc" + reverse(ColourUtils.makeHexCode(_colourPatch.getBackground())) + "</color>\n"
+			+ "\t\t\t\t<color>cc" + reverseRGB(ColourUtils.makeHexCode(_colourPatch.getBackground())) + "</color>\n"
 			+ "\t\t\t\t<width>4</width>\n\t\t\t</LineStyle>\n"
 			+ "\t\t</Style>\n\t\t<gx:Track>\n";
 		if (inAbsoluteAltitudes) {
@@ -700,8 +702,11 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * @param inCode colour code rrggbb
 	 * @return kml code bbggrr
 	 */
-	private static String reverse(String inCode)
+	private static String reverseRGB(String inCode)
 	{
+		if (inCode == null || inCode.length() != 6) {
+			return inCode;
+		}
 		return inCode.substring(4, 6) + inCode.substring(2, 4) + inCode.substring(0, 2);
 	}
 
@@ -709,13 +714,14 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * Export the specified waypoint into the file
 	 * @param inPoint waypoint to export
 	 * @param inWriter writer object
+	 * @param inWithTimestamp true to include timestamp of waypoint
 	 * @param inAbsoluteAltitude true for absolute altitude
 	 * @throws IOException on write failure
 	 */
-	private void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inAbsoluteAltitude) throws IOException
+	private void exportWaypoint(DataPoint inPoint, Writer inWriter, boolean inWithTimestamp, boolean inAbsoluteAltitude) throws IOException
 	{
 		String name = inPoint.getWaypointName().trim();
-		exportNamedPoint(inPoint, inWriter, name, inPoint.getFieldValue(Field.DESCRIPTION), null, inAbsoluteAltitude);
+		exportNamedPoint(inPoint, inWriter, name, inPoint.getFieldValue(Field.DESCRIPTION), null, inWithTimestamp, inAbsoluteAltitude);
 	}
 
 
@@ -723,17 +729,19 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * Export the specified audio point into the file
 	 * @param inPoint audio point to export
 	 * @param inWriter writer object
+	 * @param inWithTimestamp true to include point/audio timestamp
 	 * @param inAbsoluteAltitude true for absolute altitude
 	 * @throws IOException on write failure
 	 */
-	private void exportAudioPoint(DataPoint inPoint, Writer inWriter, boolean inAbsoluteAltitude) throws IOException
+	private void exportAudioPoint(DataPoint inPoint, Writer inWriter, boolean inWithTimestamp, boolean inAbsoluteAltitude)
+		throws IOException
 	{
 		String name = inPoint.getAudio().getName();
 		String desc = null;
 		if (inPoint.getAudio().getFile() != null) {
 			desc = inPoint.getAudio().getFile().getAbsolutePath();
 		}
-		exportNamedPoint(inPoint, inWriter, name, desc, "audio_icon", inAbsoluteAltitude);
+		exportNamedPoint(inPoint, inWriter, name, desc, "audio_icon", inWithTimestamp, inAbsoluteAltitude);
 	}
 
 
@@ -744,14 +752,18 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * @param inImageLink flag to set whether to export image links or not
 	 * @param inPointNumber number of point for accessing dimensions
 	 * @param inImageNumber number of image for filename
+	 * @param inWithTimestamp true to include point/photo timestamp
 	 * @param inAbsoluteAltitude true for absolute altitudes
 	 * @throws IOException on write failure
 	 */
 	private void exportPhotoPoint(DataPoint inPoint, Writer inWriter, boolean inImageLink,
-		int inPointNumber, int inImageNumber, boolean inAbsoluteAltitude)
+		int inPointNumber, int inImageNumber, boolean inWithTimestamp, boolean inAbsoluteAltitude)
 	throws IOException
 	{
 		String name = inPoint.getPhoto().getName();
+		if (inPoint.isWaypoint()) {
+			name = inPoint.getWaypointName();
+		}
 		String desc = null;
 		if (inImageLink)
 		{
@@ -764,7 +776,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 				+ wrapInTableRow(getPointCaption(inPoint)) + "</table>]]>";
 		}
 		// Export point
-		exportNamedPoint(inPoint, inWriter, name, desc, "camera_icon", inAbsoluteAltitude);
+		exportNamedPoint(inPoint, inWriter, name, desc, "camera_icon", inWithTimestamp, inAbsoluteAltitude);
 	}
 
 	/**
@@ -774,11 +786,12 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * @param inName name of point
 	 * @param inDesc description of point, or null
 	 * @param inStyle style of point, or null
+	 * @param inWithTimestamp true to include timestamp
 	 * @param inAbsoluteAltitude true for absolute altitudes
 	 * @throws IOException on write failure
 	 */
 	private void exportNamedPoint(DataPoint inPoint, Writer inWriter, String inName,
-		String inDesc, String inStyle, boolean inAbsoluteAltitude)
+		String inDesc, String inStyle, boolean inWithTimestamp, boolean inAbsoluteAltitude)
 	throws IOException
 	{
 		inWriter.write("\t<Placemark>\n\t\t<name>");
@@ -793,9 +806,19 @@ public class KmlExporter extends GenericFunction implements Runnable
 		}
 		if (inStyle != null)
 		{
-			inWriter.write("<styleUrl>#");
+			inWriter.write("\t\t<styleUrl>#");
 			inWriter.write(inStyle);
 			inWriter.write("</styleUrl>\n");
+		}
+		if (inWithTimestamp)
+		{
+			Timestamp pointTimestamp = getPointTimestamp(inPoint);
+			if (pointTimestamp != null && pointTimestamp.isValid())
+			{
+				inWriter.write("\t\t<Timestamp>\n\t\t\t<when>");
+				inWriter.write(pointTimestamp.getText(Timestamp.Format.ISO8601, null));
+				inWriter.write("</when>\n\t\t</Timestamp>\n");
+			}
 		}
 		inWriter.write("\t\t<Point>\n");
 		if (inAbsoluteAltitude && inPoint.hasAltitude()) {
@@ -966,5 +989,30 @@ public class KmlExporter extends GenericFunction implements Runnable
 			return "";
 		}
 		return "<tr><td>" + fieldString + "</td></tr>";
+	}
+
+	/**
+	 * Get the timestamp from the point or its media
+	 * @param inPoint point object
+	 * @return Timestamp object if available, or null
+	 */
+	private static Timestamp getPointTimestamp(DataPoint inPoint)
+	{
+		if (inPoint.hasTimestamp()) {
+			return inPoint.getTimestamp();
+		}
+		if (inPoint.getPhoto() != null)
+		{
+			if (inPoint.getPhoto().hasTimestamp()) {
+				return inPoint.getPhoto().getTimestamp();
+			}
+		}
+		if (inPoint.getAudio() != null)
+		{
+			if (inPoint.getAudio().hasTimestamp()) {
+				return inPoint.getAudio().getTimestamp();
+			}
+		}
+		return null;
 	}
 }

@@ -151,7 +151,7 @@ public class FileTypeLoader
 
 	/**
 	 * Load the data from the xml handler
-	 * @param inHandler xml handler which read the data from GPSBabel
+	 * @param inHandler xml handler which read the data
 	 * @param inSourceInfo info about file (or not)
 	 * @param inAutoAppend true to auto-append
 	 * @param inMediaLinks media links, if any
