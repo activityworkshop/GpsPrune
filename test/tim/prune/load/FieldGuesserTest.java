@@ -74,7 +74,7 @@ class FieldGuesserTest
 			"48°24′36″N", "S006°50.10600", // unfortunately also ok
 			"N-91.5581",
 			"03°54′27″W", " E039°17.62800",
-			"J123K",
+			"J123K1",
 			"E 6d50.10600", // two letters ok
 			"1.5581", "-10.3515", "-91.5581", "110.3515"
 		};
@@ -90,7 +90,7 @@ class FieldGuesserTest
 	{
 		String[] badCoords = new String[] {
 			"S1", "", "45 71 99 22 70",
-			"45 71 63.2",
+			"45 71 63.2", "12JK1",
 			"-91.5581ab", "1  "
 		};
 		for (String coords : badCoords) {

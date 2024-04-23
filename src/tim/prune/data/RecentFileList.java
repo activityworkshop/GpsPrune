@@ -5,7 +5,7 @@ package tim.prune.data;
  */
 public class RecentFileList
 {
-	private RecentFile[] _files = null;
+	private RecentFile[] _files;
 	private static final int DEFAULT_SIZE = 6;
 	private static final int MAX_SIZE = 20;
 

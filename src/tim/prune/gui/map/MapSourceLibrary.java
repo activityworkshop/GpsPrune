@@ -11,17 +11,19 @@ import tim.prune.config.Config;
 public abstract class MapSourceLibrary
 {
 	/** list of map sources */
-	private static final ArrayList<MapSource> _sourceList;
+	private static ArrayList<MapSource> _sourceList = null;
 	/** Number of fixed sources */
-	private static final int _numFixedSources;
+	private static int _numFixedSources = 0;
 
-	// Static block to initialise source list
-	static
+	/**
+	 * @param inConfig config object
+	 */
+	public static void init(Config inConfig)
 	{
 		_sourceList = new ArrayList<>();
 		addFixedSources();
 		_numFixedSources = _sourceList.size();
-		addConfigSources();
+		addConfigSources(inConfig);
 	}
 
 	/** Private constructor to block instantiation */
@@ -51,10 +53,11 @@ public abstract class MapSourceLibrary
 
 	/**
 	 * Add custom sources from Config to the library
+	 * @param inConfig config object
 	 */
-	private static void addConfigSources()
+	private static void addConfigSources(Config inConfig)
 	{
-		String configString = Config.getConfigString(Config.KEY_MAPSOURCE_LIST);
+		String configString = inConfig.getConfigString(Config.KEY_MAPSOURCE_LIST);
 		if (configString != null && configString.length() > 10)
 		{
 			// Loop over sources in string, separated by vertical bars

@@ -109,11 +109,15 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 		_clip = null;
 		try
 		{
-			if (inClip.getFile() != null)
+			if (inClip.getFile() != null) {
 				audioInputStream = AudioSystem.getAudioInputStream(inClip.getFile());
-			else if (inClip.getByteData() != null)
+			}
+			else if (inClip.getByteData() != null) {
 				audioInputStream = AudioSystem.getAudioInputStream(new ByteArrayInputStream(inClip.getByteData()));
-			else return false;
+			}
+			else {
+				return false;
+			}
 			_clip = AudioSystem.getClip();
 			_clip.open(audioInputStream);
 			// play the clip
@@ -142,17 +146,14 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 	{
 		boolean played = false;
 		// Try the Desktop library from java 6, if available
-		if (!played)
+		try
 		{
-			try
-			{
-				Desktop.getDesktop().open(inFile);
-				played = true;
-			}
-			catch (IOException ignore) {
-				System.err.println(ignore.getClass().getName() + " - " + ignore.getMessage());
-				played = false;
-			}
+			Desktop.getDesktop().open(inFile);
+			played = true;
+		}
+		catch (IOException ignore) {
+			System.err.println(ignore.getClass().getName() + " - " + ignore.getMessage());
+			played = false;
 		}
 
 		// If the Desktop call failed, need to try backup methods
@@ -208,7 +209,7 @@ public class PlayAudioFunction extends GenericFunction implements Runnable
 	 * @param inName name of audio file
 	 * @return suffix (rest of name after the dot) - expect mp3, wav, ogg
 	 */
-	private static final String getSuffix(String inName)
+	private static String getSuffix(String inName)
 	{
 		if (inName == null || inName.equals("")) {return ".tmp";}
 		final int dotPos = inName.lastIndexOf('.');

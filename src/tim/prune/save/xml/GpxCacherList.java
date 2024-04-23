@@ -24,7 +24,7 @@ public class GpxCacherList
 		for (int i=0; i<numFiles; i++)
 		{
 			SourceInfo info = inInfo.getSource(i);
-			if (info.getFileType() == SourceInfo.FILE_TYPE.GPX) {
+			if (info.getFileType() == SourceInfo.FileType.GPX) {
 				_cacherList[i] = new GpxCacher(info);
 			}
 		}

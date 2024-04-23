@@ -46,7 +46,6 @@ public class ClosePointsAlgorithm extends SingleParameterAlgorithm
 		int numPoints = _track.getNumPoints();
 		int prevPointIndex = 0;
 		int prevTrackPointIndex = 0;
-		double pointDist = 0.0;
 		int numDeleted = 0;
 		for (int i=1; i<numPoints; i++)
 		{
@@ -62,8 +61,8 @@ public class ClosePointsAlgorithm extends SingleParameterAlgorithm
 						&& !_trackDetails.isSegmentStart(i) && !_trackDetails.isSegmentEnd(i))
 					{
 						// Check current point against prevPoint
-						pointDist = Math.abs(_track.getX(i) - _track.getX(prevPointIndex))
-						 + Math.abs(_track.getY(i) - _track.getY(prevPointIndex));
+						double pointDist = Math.abs(_track.getX(i) - _track.getX(prevPointIndex))
+							+ Math.abs(_track.getY(i) - _track.getY(prevPointIndex));
 						if (pointDist < threshold) {
 							inFlags[i] = true;
 							numDeleted++;

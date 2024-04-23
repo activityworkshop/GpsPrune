@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 import tim.prune.data.*;
 import tim.prune.function.ReverseSelectedRange;
 
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -18,13 +16,12 @@ class ReverseRangeTest
 	public void testReverseSinglePoint()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 
 		// Reverse, should be no change
-		ReverseRangeCmd command = new ReverseRangeCmd(List.of(0),
-			0, 0, null);
+		ReverseRangeCmd command = new ReverseRangeCmd(ListUtils.makeListOfInts(0), null);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		assertEquals(1, track.getNumPoints());
@@ -37,7 +34,7 @@ class ReverseRangeTest
 	{
 		Track track = new Track();
 		for (int i=0; i<3; i++) {
-			DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+			DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 					new Altitude("" + (1000 + i), UnitSetLibrary.UNITS_METRES));
 			track.appendPoint(point);
 		}
@@ -47,8 +44,8 @@ class ReverseRangeTest
 		}
 
 		// Reverse and check
-		ReverseRangeCmd command = new ReverseRangeCmd(List.of(2, 1, 0),
-				0, 0, null);
+		ReverseRangeCmd command = new ReverseRangeCmd(ListUtils.makeListOfInts(2, 1, 0),
+				null);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		for (int i=0; i<3; i++) {
@@ -66,16 +63,16 @@ class ReverseRangeTest
 	{
 		Track track = TrackHelper.makeTwelvePointTrack();
 		track.getPoint(0).setSegmentStart(true);
-		track.getPoint(5).setFieldValue(Field.WAYPT_NAME, "A", false);
-		track.getPoint(6).setFieldValue(Field.WAYPT_NAME, "B", false);
+		track.getPoint(5).setWaypointName("A");
+		track.getPoint(6).setWaypointName("B");
 		// check
 		assertEquals("S----ww-----", TrackHelper.describeSegments(track));
 		assertEquals("A", track.getPoint(5).getWaypointName());
 		assertEquals("B", track.getPoint(6).getWaypointName());
 
 		// Reverse and check
-		ReverseRangeCmd command = new ReverseRangeCmd(List.of(0, 1, 2, 3, 4, 6, 5, 7, 8, 9, 10, 11),
-				0, 0, null);
+		ReverseRangeCmd command = new ReverseRangeCmd(ListUtils.makeListOfInts(0, 1, 2, 3, 4, 6, 5, 7, 8, 9, 10, 11),
+				null);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		assertEquals("S----ww-----", TrackHelper.describeSegments(track));

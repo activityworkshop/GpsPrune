@@ -20,7 +20,6 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.AppendRangeCmd;
-import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.Latitude;
@@ -145,7 +144,7 @@ public class ProjectCircle extends GenericFunction
 	 */
 	private void setLabelText()
 	{
-		Unit distUnit = Config.getUnitSet().getDistanceUnit();
+		Unit distUnit = getConfig().getUnitSet().getDistanceUnit();
 		_distanceIsMetric = (distUnit == UnitSetLibrary.UNITS_METRES || distUnit == UnitSetLibrary.UNITS_KILOMETRES);
 		distUnit = _distanceIsMetric ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET;
 		final String unitKey = distUnit.getShortnameKey();
@@ -184,7 +183,7 @@ public class ProjectCircle extends GenericFunction
 				Math.cos(projectRads) - Math.sin(origLatRads) * Math.sin(lat2));
 
 			// Create point and append to track
-			DataPoint point = new DataPoint(new Latitude("" + Math.toDegrees(lat2)), new Longitude("" + Math.toDegrees(lon2)), null);
+			DataPoint point = new DataPoint(Latitude.make(Math.toDegrees(lat2)), Longitude.make(Math.toDegrees(lon2)));
 			point.setSegmentStart(pointNum == 0);
 			points.add(point);
 		}

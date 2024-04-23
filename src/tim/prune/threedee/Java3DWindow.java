@@ -45,6 +45,7 @@ import javax.vecmath.Vector3f;
 import tim.prune.DataStatus;
 import tim.prune.FunctionLibrary;
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
 import tim.prune.function.srtm.LookupSrtmFunction;
@@ -67,9 +68,8 @@ import com.sun.j3d.utils.universe.SimpleUniverse;
 public class Java3DWindow implements ThreeDWindow
 {
 	private Track _track = null;
-	private JFrame _parentFrame = null;
+	private final JFrame _parentFrame;
 	private JFrame _frame = null;
-	private ThreeDModel _model = null;
 	private UprightOrbiter _orbit = null;
 	private double _altFactor = -1.0;
 	private double _symbolScaleFactor = -1.0;
@@ -122,13 +122,13 @@ public class Java3DWindow implements ThreeDWindow
 	 * Set the parameters for the base image and do the grouting already
 	 * (setTrack should already be called by now)
 	 */
-	public void setBaseImageParameters(ImageDefinition inDefinition)
+	public void setBaseImageParameters(ImageDefinition inDefinition, Config inConfig)
 	{
 		_imageDefinition = inDefinition;
 		if (inDefinition != null && inDefinition.getUseImage())
 		{
 			_baseImage = new MapGrouter().createMapImage(_track, MapSourceLibrary.getSource(inDefinition.getSourceIndex()),
-				inDefinition.getZoom());
+				inDefinition.getZoom(), inConfig);
 		}
 		else {
 			_baseImage = null;
@@ -292,13 +292,11 @@ public class Java3DWindow implements ThreeDWindow
 		tg2.addChild(objTrans);
 
 		// Base plane
-		Appearance planeAppearance = null;
-		Box plane = null;
-		planeAppearance = new Appearance();
+		Appearance planeAppearance = new Appearance();
 		planeAppearance.setMaterial(new Material(new Color3f(0.1f, 0.2f, 0.2f),
 			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.3f, 0.4f, 0.4f),
 			new Color3f(0.3f, 0.3f, 0.3f), 0.0f));
-		plane = new Box(10f, 0.04f, 10f, planeAppearance);
+		Box plane = new Box(10f, 0.04f, 10f, planeAppearance);
 		objTrans.addChild(plane);
 
 		// Image on top of base plane, if specified
@@ -323,8 +321,8 @@ public class Java3DWindow implements ThreeDWindow
 		}
 
 		// Create model containing track information
-		_model = new ThreeDModel(_track);
-		_model.setAltitudeFactor(_altFactor);
+		ThreeDModel model = new ThreeDModel(_track);
+		model.setAltitudeFactor(_altFactor);
 
 		if (showTerrain)
 		{
@@ -353,16 +351,16 @@ public class Java3DWindow implements ThreeDWindow
 				TerrainCache.storeTerrainTrack(terrainTrack, _dataStatus, _terrainDefinition);
 			}
 
-			// Give the terrain definition to the _model as well
-			_model.setTerrain(terrainTrack);
-			_model.scale();
+			// Give the terrain definition to the model as well
+			model.setTerrain(terrainTrack);
+			model.scale();
 
-			objTrans.addChild(createTerrain(_model, terrainHelper, _baseImage));
+			objTrans.addChild(createTerrain(model, terrainHelper, _baseImage));
 		}
 		else
 		{
 			// No terrain, so just scale the model as it is
-			_model.scale();
+			model.scale();
 		}
 
 		// N, S, E, W
@@ -387,7 +385,7 @@ public class Java3DWindow implements ThreeDWindow
 		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"), new Point3f(11.5f, 0f, 0f), compassFont));
 
 		// Add points to model
-		objTrans.addChild(createDataPoints(_model));
+		objTrans.addChild(createDataPoints(model));
 
 		// Create lights - always add ambient light
 		BoundingSphere bounds = new BoundingSphere(new Point3d(0.0, 0.0, 0.0), 100.0);
@@ -516,8 +514,8 @@ public class Java3DWindow implements ThreeDWindow
 	private static Material getWaypointMaterial()
 	{
 		return new Material(new Color3f(0.1f, 0.1f, 0.4f),
-			 new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.0f, 0.2f, 0.7f),
-			 new Color3f(1.0f, 0.6f, 0.6f), 40.0f);
+			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.0f, 0.2f, 0.7f),
+			new Color3f(1.0f, 0.6f, 0.6f), 40.0f);
 	}
 
 

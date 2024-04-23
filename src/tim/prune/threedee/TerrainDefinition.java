@@ -40,7 +40,7 @@ public class TerrainDefinition
 	@Override
 	public boolean equals(Object obj)
 	{
-		if (obj == null || !(obj instanceof TerrainDefinition)) {
+		if (!(obj instanceof TerrainDefinition)) {
 			return false;
 		}
 		TerrainDefinition other = (TerrainDefinition) obj;

@@ -11,8 +11,8 @@ import tim.prune.data.Track;
  */
 public class WaypointListModel extends AbstractListModel<String>
 {
-	Track _track = null;
-	ArrayList<DataPoint> _waypoints = null;
+	private final Track _track;
+	private final ArrayList<DataPoint> _waypoints;
 
 	/**
 	 * Constructor giving Track object
@@ -28,8 +28,7 @@ public class WaypointListModel extends AbstractListModel<String>
 	/**
 	 * @see javax.swing.ListModel#getSize()
 	 */
-	public int getSize()
-	{
+	public int getSize() {
 		return _waypoints.size();
 	}
 
@@ -40,8 +39,9 @@ public class WaypointListModel extends AbstractListModel<String>
 	{
 		DataPoint p = null;
 		if (inIndex < 0 || inIndex >= getSize()
-			|| _waypoints == null || (p = _waypoints.get(inIndex)) == null)
+			|| _waypoints == null || (p = _waypoints.get(inIndex)) == null) {
 			return "";
+		}
 		return p.getWaypointName();
 	}
 
@@ -50,8 +50,7 @@ public class WaypointListModel extends AbstractListModel<String>
 	 * @param inIndex index number, starting at 0
 	 * @return DataPoint object
 	 */
-	public DataPoint getWaypoint(int inIndex)
-	{
+	public DataPoint getWaypoint(int inIndex) {
 		return _waypoints.get(inIndex);
 	}
 

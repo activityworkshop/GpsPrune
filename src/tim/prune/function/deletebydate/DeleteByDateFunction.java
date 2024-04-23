@@ -9,6 +9,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Date;
+import java.util.TimeZone;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -38,8 +39,6 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 	private JDialog _dialog = null;
 	/** table */
 	private JTable _infoTable = null;
-	/** Ok button */
-	private JButton _okButton = null;
 	// panel for selection buttons
 	private JPanel _selButtonPanel = null;
 	private JButton _keepSelectedButton = null;
@@ -66,7 +65,8 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 	public void begin()
 	{
 		// Select the current timezone
-		DateInfo.setTimezone(TimezoneHelper.getSelectedTimezone());
+		TimeZone selectedTimezone = TimezoneHelper.getSelectedTimezone(getConfig());
+		DateInfo.setTimezone(selectedTimezone);
 
 		// Make a list of which dates are present in the track
 		_infoList.clearAll();
@@ -77,8 +77,7 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 			if (point != null)
 			{
 				if (point.hasTimestamp()) {
-					_infoList.addPoint(point.getTimestamp()
-						.getCalendar(TimezoneHelper.getSelectedTimezone()).getTime());
+					_infoList.addPoint(point.getTimestamp().getCalendar(selectedTimezone).getTime());
 				}
 				else {
 					_infoList.addPoint(null); // no timestamp available
@@ -167,10 +166,10 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		// OK button
-		_okButton = new JButton(I18nManager.getText("button.ok"));
-		_okButton.addActionListener(e -> performDelete());
-		buttonPanel.add(_okButton);
-		_okButton.addKeyListener(escListener);
+		JButton okButton = new JButton(I18nManager.getText("button.ok"));
+		okButton.addActionListener(e -> performDelete());
+		buttonPanel.add(okButton);
+		okButton.addKeyListener(escListener);
 		// Cancel button
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(e-> _dialog.dispose());
@@ -258,7 +257,7 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 			if (point != null)
 			{
 				final Date date = (point.hasTimestamp() ?
-					point.getTimestamp().getCalendar(TimezoneHelper.getSelectedTimezone()).getTime()
+					point.getTimestamp().getCalendar(TimezoneHelper.getSelectedTimezone(getConfig())).getTime()
 					: null);
 				boolean pointMarked = false;
 				// Try to match each of the date info objects in the list

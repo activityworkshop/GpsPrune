@@ -9,7 +9,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import tim.prune.I18nManager;
-import tim.prune.config.Config;
 import tim.prune.threedee.TerrainDefinition;
 
 /**
@@ -27,8 +26,9 @@ public class TerrainDefinitionPanel extends JPanel
 
 	/**
 	 * Constructor
+	 * @param inGridSize grid size
 	 */
-	public TerrainDefinitionPanel()
+	public TerrainDefinitionPanel(int inGridSize)
 	{
 		setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		// Components
@@ -39,7 +39,7 @@ public class TerrainDefinitionPanel extends JPanel
 		JLabel label = new JLabel(I18nManager.getText("dialog.3d.terraingridsize") + ": ");
 		add(label);
 		_gridSizeField = new WholeNumberField(4);
-		_gridSizeField.setValue(Config.getConfigInt(Config.KEY_TERRAIN_GRID_SIZE)); // default grid size
+		_gridSizeField.setValue(inGridSize);
 		_gridSizeField.setMaximumSize(new Dimension(100, 50));
 		_gridSizeField.setEnabled(false);
 		add(_gridSizeField);

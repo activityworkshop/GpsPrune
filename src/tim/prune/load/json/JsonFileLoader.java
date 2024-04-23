@@ -70,7 +70,7 @@ public class JsonFileLoader extends FileTypeLoader
 			if (appendOption == JOptionPane.CANCEL_OPTION) {
 				return;
 			}
-			loadData(makePointList(), new SourceInfo(inFileLock.getFile(), SourceInfo.FILE_TYPE.JSON),
+			loadData(makePointList(), new SourceInfo(inFileLock.getFile(), SourceInfo.FileType.JSON),
 				appendOption == JOptionPane.YES_OPTION);
 		}
 		// TODO: Show message if nothing was found?
@@ -159,12 +159,16 @@ public class JsonFileLoader extends FileTypeLoader
 	private List<DataPoint> makePointList()
 	{
 		ArrayList<DataPoint> points = new ArrayList<>();
-		for (JsonPoint jsonPoint : _jsonPoints) {
-			DataPoint point = new DataPoint(new Latitude(jsonPoint._latitude),
-				new Longitude(jsonPoint._longitude),
+		for (JsonPoint jsonPoint : _jsonPoints)
+		{
+			DataPoint point = new DataPoint(Latitude.make(jsonPoint._latitude),
+				Longitude.make(jsonPoint._longitude),
 				new Altitude(jsonPoint._altitude, UnitSetLibrary.UNITS_METRES));
-			point.setSegmentStart(jsonPoint._newSegment);
-			points.add(point);
+			if (point.isValid())
+			{
+				point.setSegmentStart(jsonPoint._newSegment);
+				points.add(point);
+			}
 		}
 		return points;
 	}

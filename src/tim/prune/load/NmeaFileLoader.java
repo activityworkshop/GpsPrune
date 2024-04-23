@@ -98,7 +98,7 @@ public class NmeaFileLoader extends FileTypeLoader
 			if (appendOption == JOptionPane.CANCEL_OPTION) {
 				return;
 			}
-			loadData(makePointList(messages), new SourceInfo(inFileLock.getFile(), SourceInfo.FILE_TYPE.NMEA),
+			loadData(makePointList(messages), new SourceInfo(inFileLock.getFile(), SourceInfo.FileType.NMEA),
 				appendOption == JOptionPane.YES_OPTION);
 		}
 	}
@@ -159,8 +159,8 @@ public class NmeaFileLoader extends FileTypeLoader
 		ArrayList<DataPoint> points = new ArrayList<>();
 		for (NmeaMessage nmea : inList)
 		{
-			DataPoint point = new DataPoint(new Latitude(nmea.getLatitude()),
-				new Longitude(nmea.getLongitude()),
+			DataPoint point = new DataPoint(Latitude.make(nmea.getLatitude()),
+				Longitude.make(nmea.getLongitude()),
 				new Altitude(nmea.getAltitude(), UnitSetLibrary.UNITS_METRES));
 			point.setSegmentStart(nmea.getSegmentFlag());
 			points.add(point);

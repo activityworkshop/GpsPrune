@@ -17,7 +17,6 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.ColourScheme;
-import tim.prune.config.Config;
 import tim.prune.gui.colour.ColourChooser;
 import tim.prune.gui.colour.ColourPatch;
 import tim.prune.gui.colour.ColourerSelectorPanel;
@@ -53,16 +52,14 @@ public class SetColours extends GenericFunction
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public SetColours(App inApp)
-	{
+	public SetColours(App inApp) {
 		super(inApp);
 	}
 
 	/**
 	 * Return the name key for this function
 	 */
-	public String getNameKey()
-	{
+	public String getNameKey() {
 		return "function.setcolours";
 	}
 
@@ -87,7 +84,7 @@ public class SetColours extends GenericFunction
 		patchPanel.setLayout(new GridLayout());
 		_patches = new ColourPatch[8];
 
-		ColourScheme scheme = Config.getColourScheme();
+		ColourScheme scheme = getConfig().getColourScheme();
 		ColourPatch patch = null;
 		// Loop over four columns of patches
 		for (int i=0; i<4; i++)
@@ -168,11 +165,11 @@ public class SetColours extends GenericFunction
 			_dialog.pack();
 		}
 		// Reset colours to current ones
-		ColourScheme scheme = Config.getColourScheme();
+		ColourScheme scheme = getConfig().getColourScheme();
 		for (int i=0; i<8; i++) {
 			_patches[i].setColour(scheme.getColour(INDICES[i]));
 		}
-		PointColourer colourer = Config.getPointColourer();
+		PointColourer colourer = getConfig().getPointColourer();
 		_colourerSelector.init(colourer, scheme.getColour(ColourScheme.IDX_POINT));
 		_dialog.setVisible(true);
 		_okButton.requestFocus();
@@ -183,14 +180,13 @@ public class SetColours extends GenericFunction
 	 */
 	private void updateConfigColours()
 	{
-		ColourScheme scheme = Config.getColourScheme();
-		for (int i=0; i<_patches.length; i++)
-		{
+		ColourScheme scheme = getConfig().getColourScheme();
+		for (int i=0; i<_patches.length; i++) {
 			scheme.setColour(INDICES[i], _patches[i].getBackground());
 		}
-		Config.updateColourScheme();
+		getConfig().updateColourScheme();
 		PointColourer colourer = _colourerSelector.getSelectedColourer();
-		Config.updatePointColourer(colourer);
+		getConfig().updatePointColourer(colourer);
 		_app.updatePointColourer();
 		UpdateMessageBroker.informSubscribers();
 		_dialog.dispose();

@@ -132,9 +132,11 @@ public class MapTileManager implements TileManager
 	 * @param inX x index of tile
 	 * @param inY y index of tile
 	 * @param inDownloadIfNecessary true to download the file if it's not available
+	 * @param inConfig config object
 	 * @return selected tile if already loaded, or null otherwise
 	 */
-	public Image getTile(int inLayer, int inX, int inY, boolean inDownloadIfNecessary)
+	public Image getTile(int inLayer, int inX, int inY,
+		boolean inDownloadIfNecessary, Config inConfig)
 	{
 		if (inY < 0 || inY >= _numTileIndices) {return null;}
 		if (inLayer < 0 || inLayer >= _mapSource.getNumLayers()) {return null;}
@@ -150,7 +152,7 @@ public class MapTileManager implements TileManager
 
 		TileDef tileDef = new TileDef(_mapSource, inLayer, inX, inY, _zoom);
 		// Tile wasn't in memory, but maybe it's in disk cache (if there is one)
-		final String diskCachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
+		final String diskCachePath = inConfig.getConfigString(Config.KEY_DISK_CACHE);
 		_diskCache.setBasePath(diskCachePath);
 		MapTile mapTile = _diskCache.getTile(tileDef);
 		if (mapTile != null && mapTile.getImage() != null)
@@ -166,7 +168,7 @@ public class MapTileManager implements TileManager
 		// Maybe we've got an image now, maybe it's expired
 		final boolean shouldDownload = (tileImage == null || mapTile.isExpired());
 		// If we're online then try to download the tile
-		final boolean onlineMode = Config.getConfigBoolean(Config.KEY_ONLINE_MODE);
+		final boolean onlineMode = inConfig.getConfigBoolean(Config.KEY_ONLINE_MODE);
 		if (onlineMode && _downloadTiles && inDownloadIfNecessary && shouldDownload)
 		{
 			// Use coordinator to trigger an asynchronous download

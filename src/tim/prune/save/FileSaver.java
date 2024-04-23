@@ -51,15 +51,14 @@ import tim.prune.load.OneCharDocument;
  */
 public class FileSaver
 {
-	private App _app = null;
-	private JFrame _parentFrame = null;
+	private final App _app;
+	private final JFrame _parentFrame;
 	private JDialog _dialog = null;
 	private JFileChooser _fileChooser = null;
 	private JPanel _cards = null;
 	private JButton _nextButton = null, _backButton = null;
 	private JTable _table = null;
 	private FieldSelectionTableModel _model = null;
-	private JButton _moveUpButton = null, _moveDownButton = null;
 	private UpDownToggler _toggler = null;
 	private JRadioButton[] _delimiterRadios = null;
 	private JTextField _otherDelimiterText = null;
@@ -69,8 +68,8 @@ public class FileSaver
 	private JRadioButton[] _altitudeUnitsRadios = null;
 	private JRadioButton[] _timestampUnitsRadios = null;
 
-	private static final int[] FORMAT_COORDS = {Coordinate.FORMAT_NONE, Coordinate.FORMAT_DEG_MIN_SEC,
-		Coordinate.FORMAT_DEG_MIN, Coordinate.FORMAT_DEG};
+	private static final Coordinate.Format[] FORMAT_COORDS = {Coordinate.Format.NONE, Coordinate.Format.DEG_MIN_SEC,
+		Coordinate.Format.DEG_MIN, Coordinate.Format.DEG};
 	private static final Unit[] UNIT_ALTS = {null, UnitSetLibrary.UNITS_METRES, UnitSetLibrary.UNITS_FEET};
 	private static final Timestamp.Format[] FORMAT_TIMES = {Timestamp.Format.ORIGINAL, Timestamp.Format.LOCALE, Timestamp.Format.ISO8601};
 
@@ -155,17 +154,17 @@ public class FileSaver
 		fieldsPanel.add(tablePanel, BorderLayout.CENTER);
 		JPanel updownPanel = new JPanel();
 		updownPanel.setLayout(new BoxLayout(updownPanel, BoxLayout.Y_AXIS));
-		_moveUpButton = new JButton(I18nManager.getText("button.moveup"));
-		_moveUpButton.addActionListener(e -> onMoveUp());
-		_moveUpButton.setEnabled(false);
-		updownPanel.add(_moveUpButton);
-		_moveDownButton = new JButton(I18nManager.getText("button.movedown"));
-		_moveDownButton.addActionListener(e -> onMoveDown());
-		_moveDownButton.setEnabled(false);
-		updownPanel.add(_moveDownButton);
+		JButton moveUpButton = new JButton(I18nManager.getText("button.moveup"));
+		moveUpButton.addActionListener(e -> onMoveUp());
+		moveUpButton.setEnabled(false);
+		updownPanel.add(moveUpButton);
+		JButton moveDownButton = new JButton(I18nManager.getText("button.movedown"));
+		moveDownButton.addActionListener(e -> onMoveDown());
+		moveDownButton.setEnabled(false);
+		updownPanel.add(moveDownButton);
 		fieldsPanel.add(updownPanel, BorderLayout.EAST);
 		// enable/disable buttons based on table row selection
-		_toggler = new UpDownToggler(_moveUpButton, _moveDownButton);
+		_toggler = new UpDownToggler(moveUpButton, moveDownButton);
 		_table.getSelectionModel().addListSelectionListener(_toggler);
 
 		// Add fields panel and the delimiter panel to first card in pack
@@ -397,9 +396,12 @@ public class FileSaver
 			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.txt", new String[] {"txt", "text"}));
 			_fileChooser.setAcceptAllFileFilterUsed(true);
 			// start from directory in config which should be set
-			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
-			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);}
-			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
+			Config config = _app.getConfig();
+			String configDir = config.getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir == null) {configDir = config.getConfigString(Config.KEY_PHOTO_DIR);}
+			if (configDir != null) {
+				_fileChooser.setCurrentDirectory(new File(configDir));
+			}
 		}
 		boolean shouldClose = true;
 		if (_fileChooser.showSaveDialog(_parentFrame) == JFileChooser.APPROVE_OPTION) {
@@ -422,7 +424,7 @@ public class FileSaver
 		final String lineSeparator = System.getProperty("line.separator");
 		boolean saveOK = true;
 		// Get coordinate format and altitude format
-		int coordFormat = Coordinate.FORMAT_NONE;
+		Coordinate.Format coordFormat = Coordinate.Format.NONE;
 		for (int i=0; i<_coordUnitsRadios.length; i++) {
 			if (_coordUnitsRadios[i].isSelected()) {
 				coordFormat = FORMAT_COORDS[i];
@@ -466,7 +468,7 @@ public class FileSaver
 				// Write header row if required
 				if (_headerRowCheckbox.isSelected())
 				{
-					StringBuffer buffer = new StringBuffer();
+					StringBuilder buffer = new StringBuilder();
 					for (int f=0; f<numFields; f++)
 					{
 						info = _model.getFieldInfo(f);
@@ -524,7 +526,7 @@ public class FileSaver
 					writer.write(lineSeparator);
 				}
 				// Store directory in config for later
-				Config.setConfigString(Config.KEY_TRACK_DIR, saveFile.getParentFile().getAbsolutePath());
+				_app.getConfig().setConfigString(Config.KEY_TRACK_DIR, saveFile.getParentFile().getAbsolutePath());
 				// Add to recent file list
 				_app.addRecentFile(inSaveFile, true);
 				// Save successful
@@ -560,7 +562,7 @@ public class FileSaver
 	 * @param inTimestampFormat timestamp format
 	 */
 	private void saveField(StringBuffer inBuffer, DataPoint inPoint, Field inField,
-		int inCoordFormat, Unit inAltitudeUnit, Timestamp.Format inTimestampFormat)
+		Coordinate.Format inCoordFormat, Unit inAltitudeUnit, Timestamp.Format inTimestampFormat)
 	{
 		// Output field according to type
 		if (inField == Field.LATITUDE)

@@ -84,7 +84,7 @@ public class ShowThreeDFunction extends GenericFunction
 				_dialog.getContentPane().add(makeDialogComponents());
 				_dialog.pack();
 			}
-			final int exaggFactor = Config.getConfigInt(Config.KEY_HEIGHT_EXAGGERATION);
+			final int exaggFactor = getConfig().getConfigInt(Config.KEY_HEIGHT_EXAGGERATION);
 			if (exaggFactor > 0) {
 				_exaggField.setValue(exaggFactor / 100.0);
 			}
@@ -128,13 +128,14 @@ public class ShowThreeDFunction extends GenericFunction
 		innerPanel.add(Box.createVerticalStrut(4));
 
 		// Panel for terrain
-		_terrainPanel = new TerrainDefinitionPanel();
+		int gridSize = getConfig().getConfigInt(Config.KEY_TERRAIN_GRID_SIZE);
+		_terrainPanel = new TerrainDefinitionPanel(gridSize);
 		innerPanel.add(_terrainPanel);
 		mainPanel.add(innerPanel, BorderLayout.NORTH);
 		innerPanel.add(Box.createVerticalStrut(4));
 
 		// Panel for base image (null because we don't need callback)
-		_baseImagePanel = new BaseImageDefinitionPanel(null, _dialog, _app.getTrackInfo().getTrack());
+		_baseImagePanel = new BaseImageDefinitionPanel(null, _dialog, _app.getTrackInfo().getTrack(), getConfig());
 		innerPanel.add(_baseImagePanel);
 
 		// OK, Cancel buttons
@@ -143,7 +144,7 @@ public class ShowThreeDFunction extends GenericFunction
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
 		okButton.addActionListener((e) -> {
 			_dialog.dispose();
-			new Thread(() -> {finish();}).start();
+			new Thread(this::finish).start();
 		});
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
@@ -160,10 +161,10 @@ public class ShowThreeDFunction extends GenericFunction
 	private void finish()
 	{
 		// Store exaggeration factor and grid size in config
-		Config.setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_exaggField.getValue() * 100));
+		getConfig().setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_exaggField.getValue() * 100));
 		int terrainGridSize = _terrainPanel.getGridSize();
 		if (terrainGridSize < 20) {terrainGridSize = 20;}
-		Config.setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, terrainGridSize);
+		getConfig().setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, terrainGridSize);
 
 		ThreeDWindow window = WindowFactory.getWindow(_parentFrame);
 		if (window != null)
@@ -180,7 +181,7 @@ public class ShowThreeDFunction extends GenericFunction
 				window.setSymbolScalingFactor(symbolScaleFactor);
 				_symbolScaleField.setValue(symbolScaleFactor);
 				// Also pass the base image parameters from input dialog
-				window.setBaseImageParameters(_baseImagePanel.getImageDefinition());
+				window.setBaseImageParameters(_baseImagePanel.getImageDefinition(), getConfig());
 				window.setTerrainParameters(new TerrainDefinition(_terrainPanel.getUseTerrain(), _terrainPanel.getGridSize()));
 				window.setDataStatus(_app.getCurrentDataStatus());
 				window.show();

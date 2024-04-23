@@ -97,7 +97,7 @@ public class WeatherTableModel extends AbstractTableModel
 	/**
 	 * Build a html string from the given title and value
 	 */
-	private static final String buildDisplayString(String inTitle, String inValue)
+	private static String buildDisplayString(String inTitle, String inValue)
 	{
 		if (inValue == null) {return null;}
 		return "<html>" + (inTitle == null ? "" : (inTitle + ":&nbsp;"))

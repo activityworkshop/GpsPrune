@@ -1,6 +1,5 @@
 package tim.prune.function.olc;
 
-import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
@@ -149,26 +148,27 @@ public class OlcDecoder
 		int lonIndex1 = (int) Math.floor(lonIndex);
 		int lonIndex2 = (int) Math.floor((lonIndex - lonIndex1) * 20.0);
 		// Now we have 9 possible squares to look through:
-		DataPoint guidePoint = new DataPoint(new Latitude(inGuideLatitude, Coordinate.FORMAT_DEG),
-			new Longitude(inGuideLongitude, Coordinate.FORMAT_DEG), null);
+		DataPoint guidePoint = new DataPoint(Latitude.make(inGuideLatitude),
+			Longitude.make(inGuideLongitude));
 		OlcArea bestAnswer = null;
 		double lowestDistance = 0.0;
 		for (int dy=-1; dy<=1; dy++)
 		{
 			for (int dx=-1; dx<=1; dx++)
 			{
-				StringBuilder longCode = new StringBuilder();
-				longCode.append(CoordPair.encode(latIndex1 + getDelta(latIndex2, dy)));
-				longCode.append(CoordPair.encode(lonIndex1 + getDelta(lonIndex2, dx)));
-				longCode.append(CoordPair.encode(latIndex2 + dy));
-				longCode.append(CoordPair.encode(lonIndex2 + dx));
-				longCode.append(inCode);
-				OlcArea probeArea = decode(longCode.toString());
-				double distance = calcDistance(probeArea, guidePoint);
-				if (bestAnswer == null || distance < lowestDistance)
+				String longCode = String.valueOf(CoordPair.encode(latIndex1 + getDelta(latIndex2, dy)))
+						+ CoordPair.encode(lonIndex1 + getDelta(lonIndex2, dx))
+						+ CoordPair.encode(latIndex2 + dy)
+						+ CoordPair.encode(lonIndex2 + dx)
+						+ inCode;
+				OlcArea probeArea = decode(longCode);
+				if (probeArea != null)
 				{
-					bestAnswer = probeArea;
-					lowestDistance = distance;
+					double distance = calcDistance(probeArea, guidePoint);
+					if (bestAnswer == null || distance < lowestDistance) {
+						bestAnswer = probeArea;
+						lowestDistance = distance;
+					}
 				}
 			}
 		}
@@ -194,8 +194,8 @@ public class OlcDecoder
 	 */
 	private static double calcDistance(OlcArea probeArea, DataPoint inGuidePoint)
 	{
-		DataPoint probePoint = new DataPoint(new Latitude(probeArea.middleLat(), Coordinate.FORMAT_DEG),
-			new Longitude(probeArea.middleLon(), Coordinate.FORMAT_DEG), null);
+		DataPoint probePoint = new DataPoint(Latitude.make(probeArea.middleLat()),
+			Longitude.make(probeArea.middleLon()));
 		return DataPoint.calculateRadiansBetween(probePoint, inGuidePoint);
 	}
 }

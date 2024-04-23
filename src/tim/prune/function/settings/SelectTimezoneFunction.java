@@ -120,7 +120,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		_systemRadio.setText(I18nManager.getText("dialog.settimezone.system") + " ("
 			+ TimeZone.getDefault().getID() + ")");
 		// Set up dialog according to current config
-		String selectedTimezone = Config.getConfigString(Config.KEY_TIMEZONE_ID);
+		String selectedTimezone = getConfig().getConfigString(Config.KEY_TIMEZONE_ID);
 		if (selectedTimezone == null || selectedTimezone.equals(""))
 		{
 			_systemRadio.setSelected(true);
@@ -277,7 +277,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		{
 			populateTimezoneRegions();
 			populateTimezoneOffsets(null);
-			preselectTimezone(Config.getConfigString(Config.KEY_TIMEZONE_ID));
+			preselectTimezone(getConfig().getConfigString(Config.KEY_TIMEZONE_ID));
 		}
 		showTimezoneDetails();
 	}
@@ -472,13 +472,12 @@ public class SelectTimezoneFunction extends GenericFunction
 	 */
 	private static int convertToMinutes(String inOffsetInHours)
 	{
-		int offsetMins = -1;
 		try {
-			offsetMins = (int) (60 * Double.parseDouble(inOffsetInHours));
+			return (int) (60 * Double.parseDouble(inOffsetInHours));
 		}
-		catch (NumberFormatException nfe) {} // offset stays -1
-		catch (NullPointerException npe) {} // offset stays -1
-		return offsetMins;
+		catch (NumberFormatException | NullPointerException nfe) {
+			return -1;
+		}
 	}
 
 	/**
@@ -487,8 +486,7 @@ public class SelectTimezoneFunction extends GenericFunction
 	private static String getNameWithoutRegion(String inId)
 	{
 		final int slashPos = (inId == null ? -1 : inId.indexOf('/'));
-		if (slashPos > 0)
-		{
+		if (slashPos > 0) {
 			return inId.substring(slashPos + 1);
 		}
 		return null;
@@ -499,8 +497,7 @@ public class SelectTimezoneFunction extends GenericFunction
 	 */
 	private TimeZone getSelectedTimezone()
 	{
-		if (_systemRadio.isSelected())
-		{
+		if (_systemRadio.isSelected()) {
 			return TimeZone.getDefault();
 		}
 
@@ -563,8 +560,7 @@ public class SelectTimezoneFunction extends GenericFunction
 	 */
 	private static String getOffsetDescription(TimeZone inTimezone)
 	{
-		if (inTimezone == null)
-		{
+		if (inTimezone == null) {
 			return "";
 		}
 		TreeSet<Integer> offsetsinMinutes = new TreeSet<Integer>();
@@ -613,12 +609,12 @@ public class SelectTimezoneFunction extends GenericFunction
 		if (_systemRadio.isSelected() || selectedTimezone == null)
 		{
 			// Clear config, use default system timezone instead
-			Config.setConfigString(Config.KEY_TIMEZONE_ID, null);
+			getConfig().setConfigString(Config.KEY_TIMEZONE_ID, null);
 		}
 		else
 		{
 			// Get selected timezone, set in config
-			Config.setConfigString(Config.KEY_TIMEZONE_ID, selectedTimezone.getID());
+			getConfig().setConfigString(Config.KEY_TIMEZONE_ID, selectedTimezone.getID());
 		}
 		_dialog.dispose();
 		// Make sure listeners know to update themselves

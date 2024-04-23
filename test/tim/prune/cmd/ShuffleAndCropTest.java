@@ -17,24 +17,24 @@ class ShuffleAndCropTest
 	public void testDeleteRangeInMiddle()
 	{
 		// Delete points 2 and 3
-		List<Integer> indexesToKeep = List.of(0, 1, 4, 5);
-		testReduceSixPointTrack(indexesToKeep, List.of(2, 3));
+		List<Integer> indexesToKeep = ListUtils.makeListOfInts(0, 1, 4, 5);
+		testReduceSixPointTrack(indexesToKeep, ListUtils.makeListOfInts(2, 3));
 	}
 
 	@Test
 	public void testCropToSelection()
 	{
 		// Just keep 3 and 4
-		List<Integer> indexesToKeep = List.of(3, 4);
-		testReduceSixPointTrack(indexesToKeep, List.of(0, 1, 2, 5));
+		List<Integer> indexesToKeep = ListUtils.makeListOfInts(3, 4);
+		testReduceSixPointTrack(indexesToKeep, ListUtils.makeListOfInts(0, 1, 2, 5));
 	}
 
 	@Test
 	public void testCompress()
 	{
 		// Delete 0 and 4
-		List<Integer> indexesToKeep = List.of(1, 2, 3, 5);
-		testReduceSixPointTrack(indexesToKeep, List.of(0, 4));
+		List<Integer> indexesToKeep = ListUtils.makeListOfInts(1, 2, 3, 5);
+		testReduceSixPointTrack(indexesToKeep, ListUtils.makeListOfInts(0, 4));
 	}
 
 	private void testReduceSixPointTrack(List<Integer> inIndexesToKeep,
@@ -65,8 +65,8 @@ class ShuffleAndCropTest
 		Track track = new Track();
 		for (int i=0; i<6; i++)
 		{
-			DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null);
-			point.setFieldValue(Field.WAYPT_NAME, "Point" + i, false);
+			DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"));
+			point.setWaypointName("Point" + i);
 			track.appendPoint(point);
 		}
 		return new TrackInfo(track);

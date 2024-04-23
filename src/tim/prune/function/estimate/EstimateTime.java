@@ -28,6 +28,8 @@ import tim.prune.data.Field;
 import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Selection;
 import tim.prune.data.Unit;
+import tim.prune.data.UnitSet;
+import tim.prune.data.UnitSetLibrary;
 import tim.prune.function.edit.PointEdit;
 import tim.prune.gui.DecimalNumberField;
 import tim.prune.gui.DisplayUtils;
@@ -82,11 +84,11 @@ public class EstimateTime extends GenericFunction
 	{
 		// Get the stats on the selection before launching the dialog
 		Selection selection = _app.getTrackInfo().getSelection();
-		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		final int altitudeTolerance = getConfig().getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
 		_stats = new RangeStatsWithGradients(_app.getTrackInfo().getTrack(),
 			selection.getStart(), selection.getEnd(), altitudeTolerance);
 
-		if (_stats.getMovingDistance() < 0.01)
+		if (_stats.getMovingDistance(UnitSetLibrary.UNITS_METRES) < 0.01)
 		{
 			_app.showErrorMessage(getNameKey(), "dialog.estimatetime.error.nodistance");
 			return;
@@ -287,13 +289,13 @@ public class EstimateTime extends GenericFunction
 		}
 
 		// Distance in current units
-		final Unit distUnit = Config.getUnitSet().getDistanceUnit();
+		final Unit distUnit = getConfig().getUnitSet().getDistanceUnit();
 		final String distUnitsStr = I18nManager.getText(distUnit.getShortnameKey());
-		final double movingDist = _stats.getMovingDistance();
+		final double movingDist = _stats.getMovingDistance(distUnit);
 		_distanceLabel.setText(DisplayUtils.roundedNumber(movingDist) + " " + distUnitsStr);
 
 		// Climb and descent values
-		final Unit altUnit = Config.getUnitSet().getAltitudeUnit();
+		final Unit altUnit = getConfig().getUnitSet().getAltitudeUnit();
 		final String altUnitsStr = " " + I18nManager.getText(altUnit.getShortnameKey());
 		_gentleClimbLabel.setText(_stats.getGentleAltitudeRange().getClimb(altUnit) + altUnitsStr);
 		_steepClimbLabel.setText(_stats.getSteepAltitudeRange().getClimb(altUnit) + altUnitsStr);
@@ -302,23 +304,23 @@ public class EstimateTime extends GenericFunction
 
 		// Try to get parameters from config
 		EstimationParameters estParams = EstimationParameters.fromConfigString(
-			Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
+			getConfig().getConfigString(Config.KEY_ESTIMATION_PARAMS));
 		if (estParams == null) {
 			estParams = EstimationParameters.DEFAULT_PARAMS;
 		}
 
 		// Flat time is either for 5 km, 3 miles or 3 nautical miles
 		_flatSpeedLabel.setText(I18nManager.getText("dialog.estimatetime.parameters.timefor") +
-			" " + EstimationParameters.getStandardDistance() + ": ");
-		_flatSpeedField.setValue(estParams.getFlatMinutesLocal());
+			" " + EstimationParameters.getStandardDistance(distUnit) + ": ");
+		_flatSpeedField.setValue(estParams.getFlatMinutesLocal(distUnit));
 
-		final String heightString = " " + EstimationParameters.getStandardClimb() + ": ";
+		final String heightString = " " + EstimationParameters.getStandardClimb(altUnit) + ": ";
 		_climbParamLabel.setText(I18nManager.getText("dialog.estimatetime.climb") + heightString);
-		_gentleClimbField.setValue(estParams.getGentleClimbMinutesLocal());
-		_steepClimbField.setValue(estParams.getSteepClimbMinutesLocal());
+		_gentleClimbField.setValue(estParams.getGentleClimbMinutesLocal(altUnit));
+		_steepClimbField.setValue(estParams.getSteepClimbMinutesLocal(altUnit));
 		_descentParamLabel.setText(I18nManager.getText("dialog.estimatetime.descent") + heightString);
-		_gentleDescentField.setValue(estParams.getGentleDescentMinutesLocal());
-		_steepDescentField.setValue(estParams.getSteepDescentMinutesLocal());
+		_gentleDescentField.setValue(estParams.getGentleDescentMinutesLocal(altUnit));
+		_steepDescentField.setValue(estParams.getSteepDescentMinutesLocal(altUnit));
 
 		// Use the entered parameters to estimate the time
 		calculateEstimatedTime();
@@ -342,7 +344,8 @@ public class EstimateTime extends GenericFunction
 	private void calculateEstimatedTime()
 	{
 		// Populate an EstimationParameters object from the four strings
-		EstimationParameters params = EstimationParameters.fromLocalUnits(_flatSpeedField.getValue(),
+		EstimationParameters params = EstimationParameters.fromLocalUnits(getConfig().getUnitSet(),
+			_flatSpeedField.getValue(),
 			_gentleClimbField.getValue(), _steepClimbField.getValue(),
 			_gentleDescentField.getValue(), _steepDescentField.getValue());
 		final long numSeconds = (long) (params.applyToStats(_stats) * 60.0);
@@ -358,11 +361,12 @@ public class EstimateTime extends GenericFunction
 	private void finishDialog()
 	{
 		// Make estimation parameters from entered values, if valid save to config
-		EstimationParameters params = EstimationParameters.fromLocalUnits(_flatSpeedField.getValue(),
+		EstimationParameters params = EstimationParameters.fromLocalUnits(getConfig().getUnitSet(),
+			_flatSpeedField.getValue(),
 			_gentleClimbField.getValue(), _steepClimbField.getValue(),
 			_gentleDescentField.getValue(), _steepDescentField.getValue());
 		if (params != null) {
-			Config.setConfigString(Config.KEY_ESTIMATION_PARAMS, params.toConfigString());
+			getConfig().setConfigString(Config.KEY_ESTIMATION_PARAMS, params.toConfigString());
 		}
 		_dialog.dispose();
 	}
@@ -373,7 +377,7 @@ public class EstimateTime extends GenericFunction
 	private void showTip()
 	{
 		EstimationParameters currParams = EstimationParameters.fromConfigString(
-			Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
+			getConfig().getConfigString(Config.KEY_ESTIMATION_PARAMS));
 		if (currParams == null || currParams.sameAsDefaults()) {
 			_app.showTip(TipManager.Tip_LearnTimeParams);
 		}
@@ -386,14 +390,15 @@ public class EstimateTime extends GenericFunction
 	private void applyTimestampsToRange()
 	{
 		// Populate an EstimationParameters object from the five values
-		EstimationParameters params = EstimationParameters.fromLocalUnits(
+		UnitSet unitSet = getConfig().getUnitSet();
+		EstimationParameters params = EstimationParameters.fromLocalUnits(unitSet,
 			_flatSpeedField.getValue(), _gentleClimbField.getValue(),
 			_steepClimbField.getValue(), _gentleDescentField.getValue(), _steepDescentField.getValue());
 
 		// Make list of modified timestamps
 		ArrayList<PointEdit> edits = new ArrayList<>();
 		long startMillis = getTimeAtMidnight();
-		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		final int altitudeTolerance = getConfig().getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
 		RangeStatsWithGradients stats = new RangeStatsWithGradients(altitudeTolerance);
 		Selection selection = _app.getTrackInfo().getSelection();
 		for (int pointIdx=selection.getStart(); pointIdx <= selection.getEnd(); pointIdx++)
@@ -409,7 +414,7 @@ public class EstimateTime extends GenericFunction
 		}
 		if (!edits.isEmpty())
 		{
-			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.TIMESTAMP, edits);
+			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.TIMESTAMP, edits, null);
 			command.setDescription(I18nManager.getText("undo.applytimestamps"));
 			command.setConfirmText(I18nManager.getText("confirm.applytimestamps"));
 			_app.execute(command);

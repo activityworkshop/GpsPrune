@@ -88,8 +88,9 @@ public class ProfileChart extends GenericDisplay
 	/** Inner class to remember previous chart parameters */
 	private static class ChartParameters
 	{
-		public PointIndex selectedPoint = new PointIndex();
-		public PointIndex rangeStart = new PointIndex(), rangeEnd = new PointIndex();
+		public final PointIndex selectedPoint = new PointIndex();
+		public final PointIndex rangeStart = new PointIndex();
+		public final PointIndex rangeEnd = new PointIndex();
 		public void clear()
 		{
 			selectedPoint.hasValue = false;
@@ -134,10 +135,12 @@ public class ProfileChart extends GenericDisplay
 		}
 	}
 
+	/** Config object for asking about units, draw options */
+	private final Config _config;
 	/** Current scale factor in x direction*/
 	private double _xScaleFactor = 0.0;
 	/** Data to show on chart */
-	private ProfileData _data = null;
+	private ProfileData _data;
 	/** Label for chart type, units */
 	private final JLabel _label;
 	/** Right-click popup menu */
@@ -157,9 +160,10 @@ public class ProfileChart extends GenericDisplay
 	 * Constructor
 	 * @param inTrackInfo Track info object
 	 */
-	public ProfileChart(TrackInfo inTrackInfo)
+	public ProfileChart(TrackInfo inTrackInfo, Config inConfig)
 	{
 		super(inTrackInfo);
+		_config = inConfig;
 		_data = new AltitudeData(inTrackInfo.getTrack());
 		addMouseListener(new MouseAdapter() {
 			@Override
@@ -189,11 +193,13 @@ public class ProfileChart extends GenericDisplay
 	{
 		super.paint(g);
 		// Set antialiasing depending on Config
-		if (g instanceof Graphics2D) {
-			((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-				Config.getConfigBoolean(Config.KEY_ANTIALIAS) ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+		if (g instanceof Graphics2D)
+		{
+			boolean antialias = _config.getConfigBoolean(Config.KEY_ANTIALIAS);
+			Object renderHint = antialias ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF;
+			((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, renderHint);
 		}
-		ColourScheme colourScheme = Config.getColourScheme();
+		ColourScheme colourScheme = _config.getColourScheme();
 		paintBackground(g, colourScheme);
 
 		if (_track == null || _track.getNumPoints() <= 0) {
@@ -404,6 +410,9 @@ public class ProfileChart extends GenericDisplay
 		JMenuItem vertSpeedItem = new JMenuItem(I18nManager.getText("fieldname.verticalspeed"));
 		vertSpeedItem.addActionListener(e -> changeView(Field.VERTICAL_SPEED));
 		_popup.add(vertSpeedItem);
+		JMenuItem gradientItem = new JMenuItem(I18nManager.getText("fieldname.gradient"));
+		gradientItem.addActionListener(e -> changeView(Field.GRADIENT));
+		_popup.add(gradientItem);
 		// Go through track's master field list, see if any other fields to list
 		boolean addSeparator = true;
 		FieldList fields = _track.getFieldList();
@@ -430,7 +439,7 @@ public class ProfileChart extends GenericDisplay
 		if (inUpdateType == SELECTION_CHANGED && !_data._hasData) {return;}
 		if (inUpdateType != SELECTION_CHANGED)
 		{
-			_data.init(Config.getUnitSet());
+			_data.init(_config.getUnitSet());
 			_previousParameters.clear();
 		}
 		// Update the menu if necessary
@@ -531,13 +540,19 @@ public class ProfileChart extends GenericDisplay
 				_data = new VerticalSpeedData(_track);
 			}
 		}
+		else if (inField == Field.GRADIENT)
+		{
+			if (!(_data instanceof GradientData)) {
+				_data = new GradientData(_track);
+			}
+		}
 		else
 		{
 			if (!(_data instanceof ArbitraryData) || ((ArbitraryData)_data).getField() != inField) {
 				_data = new ArbitraryData(_track, inField);
 			}
 		}
-		_data.init(Config.getUnitSet());
+		_data.init(_config.getUnitSet());
 		repaint();
 	}
 }

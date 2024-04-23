@@ -9,7 +9,6 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.cmd.ShuffleAndCropCmd;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.ListUtils;
 import tim.prune.data.Track;
 import tim.prune.function.compress.WaypointComparer;
@@ -90,7 +89,7 @@ public class DedupeWaypointsFunction extends GenericFunction
 	static List<Integer> reduceWaypoints(List<Integer> inFoundPoints, Track inTrack, int inCurrIndex)
 	{
 		if (inFoundPoints == null || inFoundPoints.isEmpty()) {
-			return ListUtils.makeListOfInteger(inCurrIndex);
+			return ListUtils.makeListOfInts(inCurrIndex);
 		}
 		DataPoint nextPoint = inTrack.getPoint(inCurrIndex);
 		ArrayList<CompareResult> compareResults = new ArrayList<>();
@@ -138,7 +137,7 @@ public class DedupeWaypointsFunction extends GenericFunction
 	 */
 	private static String getWaypointKey(DataPoint inPoint)
 	{
-		return inPoint.getFieldValue(Field.LATITUDE) + "*" + inPoint.getFieldValue(Field.LONGITUDE)
+		return inPoint.getLatitude().toString() + "*" + inPoint.getLongitude().toString()
 		 + "*" + inPoint.getWaypointName();
 	}
 }

@@ -23,14 +23,17 @@ public abstract class ProfileDataColourer extends ContinuousPointColourer
 
 	/**
 	 * Calculate the colours according to the track and the profile data
+	 * @param inTrack track object
+	 * @param inConfig config object to get the unit set
+	 * @param inData data object to populate
 	 */
-	public void calculateColours(Track inTrack, ProfileData inData)
+	public void calculateColours(Track inTrack, Config inConfig, ProfileData inData)
 	{
 		final int numPoints = inTrack == null ? 0 : inTrack.getNumPoints();
 
 		// Calculate values for each point
-		inData.init(Config.getUnitSet());
-		// Figure out speed range
+		inData.init(inConfig.getUnitSet());
+		// Figure out range of data
 		double minValue = inData.getMinValue();
 		double maxValue = inData.getMaxValue();
 		if (!inData.hasData() || (maxValue - minValue) < 0.1)

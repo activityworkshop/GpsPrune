@@ -12,11 +12,11 @@ import javax.swing.SwingUtilities;
 public class SidebarController
 {
 	/** array of hideable components */
-	private Component[] _components = null;
+	private final Component[] _components;
 	/** array of splitter panes */
-	private JSplitPane[] _splitters = null;
+	private final JSplitPane[] _splitters;
 	/** array of splitter positions */
-	private int[] _positions = null;
+	private final int[] _positions;
 
 
 	/**
@@ -49,9 +49,10 @@ public class SidebarController
 			for (Component component : _components) {
 				component.setVisible(!visible);
 			}
-			// Restore divider locations
-			for (int i=0; i<_components.length; i++) {
-				if (!visible) {
+			if (!visible)
+			{
+				// Restore divider locations
+				for (int i=0; i<_components.length; i++) {
 					_splitters[i].setDividerLocation(_positions[i]);
 				}
 			}
@@ -61,7 +62,7 @@ public class SidebarController
 				SwingUtilities.invokeLater(() -> {
 					for (int i=0; i<_components.length; i++)
 					{
-						_splitters[i].setDividerLocation(i==0?0.0:1.0);
+						_splitters[i].setDividerLocation(i == 0 ? 0.0 : 1.0);
 						_splitters[i].invalidate();
 					}
 				});

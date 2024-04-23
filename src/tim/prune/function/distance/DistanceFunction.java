@@ -75,7 +75,7 @@ public class DistanceFunction extends GenericFunction
 		_distModel.init(pointList);
 		final int pointIndex = getPointIndex(pointList, _app.getTrackInfo());
 		_pointTable.getSelectionModel().setSelectionInterval(pointIndex, pointIndex);
-		_distModel.recalculate(pointIndex);
+		_distModel.recalculate(pointIndex, getConfig());
 		_dialog.setVisible(true);
 	}
 
@@ -99,7 +99,7 @@ public class DistanceFunction extends GenericFunction
 		_pointTable = new JTable(_fromModel);
 		_pointTable.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
-				_distModel.recalculate(_pointTable.getSelectedRow());
+				_distModel.recalculate(_pointTable.getSelectedRow(), getConfig());
 			}
 		});
 		JScrollPane scrollPane = new JScrollPane(_pointTable);

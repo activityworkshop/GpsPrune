@@ -15,7 +15,6 @@ import tim.prune.cmd.Command;
 import tim.prune.cmd.CorrelateMediaCmd;
 import tim.prune.cmd.MediaLinkType;
 import tim.prune.cmd.PointAndMedia;
-import tim.prune.config.TimezoneHelper;
 import tim.prune.data.AudioClip;
 import tim.prune.data.DataPoint;
 import tim.prune.data.MediaList;
@@ -109,7 +108,7 @@ public class AudioCorrelator extends Correlator
 	{
 		TimeDifference timeLimit = parseTimeLimit();
 		double angDistLimit = parseDistanceLimit();
-		MediaPreviewTableModel model = new MediaPreviewTableModel("dialog.correlate.select.audioname");
+		MediaPreviewTableModel model = new MediaPreviewTableModel("dialog.correlate.select.audioname", getTimezone());
 		MediaList<AudioClip> audios = _app.getTrackInfo().getAudioList();
 		// Loop through audios deciding whether to set correlate flag or not
 		int numAudios = audios.getCount();
@@ -166,7 +165,7 @@ public class AudioCorrelator extends Correlator
 	protected Timestamp getMediaTimestamp(MediaObject inMedia)
 	{
 		Timestamp tstamp = super.getMediaTimestamp(inMedia);
-		long mediaMillis = tstamp.getMilliseconds(TimezoneHelper.getSelectedTimezone());
+		long mediaMillis = tstamp.getMilliseconds(getTimezone());
 		try {
 			AudioClip audio = (AudioClip) inMedia;
 			int audioLength = audio.getLengthInSeconds();

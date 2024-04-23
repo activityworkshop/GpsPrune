@@ -8,10 +8,10 @@ import tim.prune.I18nManager;
  */
 public class TimeDifference
 {
-	private long _totalSeconds = 0L;
-	private int _seconds = 0;
-	private int _minutes = 0;
-	private int _hours = 0;
+	private final long _totalSeconds;
+	private final int _seconds;
+	private final int _minutes;
+	private final int _hours;
 	private String _description = null;
 
 
@@ -42,8 +42,8 @@ public class TimeDifference
 		_hours = inHours;
 		_minutes = inMinutes;
 		_seconds = inSeconds;
-		_totalSeconds = inHours * 3600L + inMinutes * 60L + inSeconds;
-		if (!inPositive) {_totalSeconds = -_totalSeconds;}
+		long totalSeconds = inHours * 3600L + inMinutes * 60L + inSeconds;
+		_totalSeconds = inPositive ? totalSeconds : -totalSeconds;
 	}
 
 

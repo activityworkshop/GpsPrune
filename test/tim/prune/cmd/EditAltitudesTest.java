@@ -18,14 +18,14 @@ class EditAltitudesTest
 	public void testEditSinglePoint()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 		assertEquals(515.0, point.getAltitude().getMetricValue());
 
 		// Set
 		PointAltitudeEdit altitudeEdit = new PointAltitudeEdit(0, "3210", UnitSetLibrary.UNITS_METRES);
-		EditAltitudeCmd command = new EditAltitudeCmd(List.of(altitudeEdit));
+		EditAltitudeCmd command = new EditAltitudeCmd(makeListOf(altitudeEdit));
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		assertEquals(1, track.getNumPoints());
@@ -40,7 +40,7 @@ class EditAltitudesTest
 	{
 		Track track = TrackHelper.makeTwelvePointTrack();
 		for (int i=0; i<track.getNumPoints(); i++) {
-			track.getPoint(i).setFieldValue(Field.ALTITUDE, "" + i*5, false);
+			track.getPoint(i).setFieldValue(Field.ALTITUDE, "" + i*5, UnitSetLibrary.getMetricUnitSet(), false);
 		}
 		// Check
 		for (int i=0; i<track.getNumPoints(); i++) {
@@ -74,7 +74,7 @@ class EditAltitudesTest
 		// A point originally has an altitude in units of feet, then it is given a new altitude
 		// in metres (for example, from SRTM).  The undo should replace the original value and units.
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("3155", UnitSetLibrary.UNITS_FEET));
 		track.appendPoint(point);
 		assertEquals(3155, point.getAltitude().getValue(UnitSetLibrary.UNITS_FEET));
@@ -83,7 +83,7 @@ class EditAltitudesTest
 
 		// Set using metres
 		PointAltitudeEdit altitudeEdit = new PointAltitudeEdit(0, "876", UnitSetLibrary.UNITS_METRES);
-		EditAltitudeCmd command = new EditAltitudeCmd(List.of(altitudeEdit));
+		EditAltitudeCmd command = new EditAltitudeCmd(makeListOf(altitudeEdit));
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		assertEquals(1, track.getNumPoints());
@@ -95,5 +95,11 @@ class EditAltitudesTest
 		assertEquals(3155, point.getAltitude().getValue(UnitSetLibrary.UNITS_FEET));
 		assertEquals(961, point.getAltitude().getValue(UnitSetLibrary.UNITS_METRES));
 		assertEquals(UnitSetLibrary.UNITS_FEET, point.getAltitude().getUnit());
+	}
+
+	private static List<PointAltitudeEdit> makeListOf(PointAltitudeEdit inEdit) {
+		ArrayList<PointAltitudeEdit> edits = new ArrayList<>();
+		edits.add(inEdit);
+		return edits;
 	}
 }

@@ -60,10 +60,9 @@ public class RemoveAudioFunction extends GenericFunction
 						.addCommand(new ConnectMediaCmd(point, point.getPhoto(), null));
 				break;
 			case DELETE:
-				String pointName = (point == null ? null : point.getWaypointName());
 				command = new CompoundCommand()
 						.addCommand(deleteCommand)
-						.addCommand(new DeletePointCmd(_app.getTrackInfo().getSelection().getCurrentPointIndex(), pointName))
+						.addCommand(new DeletePointCmd(_app.getTrackInfo().getSelection().getCurrentPointIndex()))
 						.addCommand(point == null || point.getPhoto() == null ? null :
 							new RemovePhotoCmd(_app.getTrackInfo().getSelection().getCurrentPhotoIndex()));
 				break;

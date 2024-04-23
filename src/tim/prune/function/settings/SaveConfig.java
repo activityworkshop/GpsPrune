@@ -11,6 +11,7 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
+import tim.prune.config.ConfigPaths;
 import tim.prune.data.DoubleRange;
 import tim.prune.data.Track;
 import tim.prune.tips.TipManager;
@@ -24,8 +25,7 @@ public class SaveConfig extends GenericFunction
 	 * Constructor
 	 * @param inApp application object for callback
 	 */
-	public SaveConfig(App inApp)
-	{
+	public SaveConfig(App inApp) {
 		super(inApp);
 	}
 
@@ -39,16 +39,18 @@ public class SaveConfig extends GenericFunction
 	 */
 	public void begin()
 	{
-		File configFile = Config.getConfigFile();
-		if (configFile == null) {configFile = Config.HOME_CONFIG_FILE;}
+		File configFile = getConfig().getConfigFile();
+		if (configFile == null) {
+			configFile = ConfigPaths.getSuggestedConfigFile();
+		}
 		JFileChooser chooser = new JFileChooser(configFile.getAbsoluteFile().getParent());
 		chooser.setSelectedFile(configFile);
 		int response = chooser.showSaveDialog(_parentFrame);
 		if (response == JFileChooser.APPROVE_OPTION)
 		{
 			File saveFile = chooser.getSelectedFile();
-			saveConfig(saveFile);
-			if (!saveFile.getName().equals(Config.DEFAULT_CONFIG_FILE.getName()))
+			saveConfig(getConfig(), saveFile);
+			if (!saveFile.getName().equals(ConfigPaths.getDefaultFilename()))
 			{
 				// User chose a name which isn't the default, so show a tip
 				_app.showTip(TipManager.Tip_NonStandardConfigFile);
@@ -58,10 +60,10 @@ public class SaveConfig extends GenericFunction
 
 	/**
 	 * Autosave the settings file without any prompts
+	 * @return true if save was successful
 	 */
-	public void silentSave()
-	{
-		saveConfig(Config.getConfigFile());
+	public boolean silentSave() {
+		return saveConfig(getConfig(), getConfig().getConfigFile());
 	}
 
 	/**
@@ -70,9 +72,8 @@ public class SaveConfig extends GenericFunction
 	 */
 	public void autosaveSwitched(boolean inSaveOn)
 	{
-		File configFile = Config.getConfigFile();
-		if (inSaveOn && configFile == null)
-		{
+		File configFile = getConfig().getConfigFile();
+		if (inSaveOn && configFile == null) {
 			begin();
 		}
 		else if (!inSaveOn && configFile != null) {
@@ -82,38 +83,36 @@ public class SaveConfig extends GenericFunction
 
 	/**
 	 * Actually save the config file
-	 * @param inSaveFile file to save to
+	 * @param inConfig config to save
+	 * @param inSaveFile file to save
+	 * @return true if save was successful
 	 */
-	private void saveConfig(File inSaveFile)
+	private boolean saveConfig(Config inConfig, File inSaveFile)
 	{
 		// Set current window position in config
 		Rectangle currBounds = _app.getFrame().getBounds();
 		String windowBounds = "" + currBounds.x + "x" + currBounds.y + "x"
 			+ currBounds.width + "x" + currBounds.height;
-		Config.setConfigString(Config.KEY_WINDOW_BOUNDS, windowBounds);
+		inConfig.setConfigString(Config.KEY_WINDOW_BOUNDS, windowBounds);
 
 		final String latlonString = createLatLonStringForConfig();
-		if (latlonString != null)
-		{
-			Config.setConfigString(Config.KEY_LATLON_RANGE, latlonString);
+		if (latlonString != null) {
+			inConfig.setConfigString(Config.KEY_LATLON_RANGE, latlonString);
 		}
 
-		FileOutputStream outStream = null;
-		try
+		boolean saved = false;
+		try (FileOutputStream outStream = new FileOutputStream(inSaveFile))
 		{
-			outStream = new FileOutputStream(inSaveFile);
-			Config.getAllConfig().store(outStream, "GpsPrune config file");
-		}
-		catch (IOException ioe) {
+			inConfig.getAllConfig().store(outStream, "GpsPrune config file");
+			saved = true;
+		} catch (IOException ioe) {
 			_app.showErrorMessageNoLookup(getNameKey(),
 				I18nManager.getText("error.save.failed") + " : " + ioe.getMessage());
-		}
-		catch (NullPointerException npe) {} // no config file given
-		finally {
-			try {outStream.close();} catch (Exception e) {}
+		} catch (NullPointerException npe) {
 		}
 		// Remember where it was saved to
-		Config.setConfigFile(inSaveFile);
+		inConfig.setConfigFile(inSaveFile);
+		return saved;
 	}
 
 	/**
@@ -128,10 +127,10 @@ public class SaveConfig extends GenericFunction
 			final DoubleRange lonRange = track.getLonRange();
 			if (latRange.getRange() > 0.0 && lonRange.getRange() > 0.0)
 			{
-				return Double.toString(latRange.getMinimum()) + ";"
-					+ Double.toString(latRange.getMaximum()) + ";"
-					+ Double.toString(lonRange.getMinimum()) + ";"
-					+ Double.toString(lonRange.getMaximum());
+				return latRange.getMinimum() + ";"
+					+ latRange.getMaximum() + ";"
+					+ lonRange.getMinimum() + ";"
+					+ lonRange.getMaximum();
 			}
 		}
 		return null;

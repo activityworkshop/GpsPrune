@@ -64,7 +64,7 @@ public abstract class UrlGenerator
 			return null;
 		}
 		// Build basic url with centre position and span
-		String url = "http://" + I18nManager.getText("url.googlemaps")
+		String url = "https://" + I18nManager.getText("url.googlemaps")
 			+ "/?ll=" + coords.getLatitude() + "," + coords.getLongitude()
 			+ "&spn=" + coords.getLatSpan() + "," + coords.getLonSpan();
 		DataPoint currPoint = inTrackInfo.getCurrentPoint();
@@ -90,8 +90,8 @@ public abstract class UrlGenerator
 		if (coords == null) {
 			return null;
 		}
-		return "http://atlas.mapquest.com/maps/map.adp?latlongtype=decimal&latitude="
-			+ coords.getLatitude() + "&longitude=" + coords.getLongitude();
+		return "https://www.mapquest.com/latlng/"
+			+ coords.getLatitude() + "," + coords.getLongitude();
 	}
 
 	/**
@@ -105,7 +105,7 @@ public abstract class UrlGenerator
 		if (coords == null) {
 			return null;
 		}
-		return "http://bing.com/maps/default.aspx?cp=" + coords.getLatitude() + "~" + coords.getLongitude()
+		return "https://www.bing.com/maps?cp=" + coords.getLatitude() + "~" + coords.getLongitude()
 			+ "&where1=" + coords.getLatitude() + "%2C%20" + coords.getLongitude();
 	}
 
@@ -169,7 +169,7 @@ public abstract class UrlGenerator
 		if (minCoords == null || maxCoords == null) {
 			return null;
 		}
-		String url = "http://openstreetmap.org/?minlat=" + minCoords.getLatitude()
+		String url = "https://www.openstreetmap.org/?minlat=" + minCoords.getLatitude()
 			+ "&maxlat=" + maxCoords.getLatitude()
 			+ "&minlon=" + minCoords.getLongitude() + "&maxlon=" + maxCoords.getLongitude();
 		MapCoords pointCoords = MapCoords.from(inTrackInfo.getCurrentPoint());

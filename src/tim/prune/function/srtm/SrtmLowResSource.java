@@ -24,6 +24,12 @@ public class SrtmLowResSource extends SrtmSource
 	private static final String[] CONTINENTS = {"", "Eurasia", "North_America", "Australia",
 		"Islands", "South_America", "Africa"};
 
+
+	/** Constructor */
+	SrtmLowResSource(String inDiskPath) {
+		super(inDiskPath);
+	}
+
 	@Override
 	public int getTilePixels() {
 		return 1201;
@@ -78,11 +84,10 @@ public class SrtmLowResSource extends SrtmSource
 	 */
 	private static byte[] readDatFile()
 	{
-		InputStream in = null;
-		try
+		String filename = "/tim/prune/function/srtm/srtmtiles.dat";
+		try (InputStream in = SrtmLowResSource.class.getResourceAsStream(filename))
 		{
 			// Need absolute path to dat file
-			in = SrtmLowResSource.class.getResourceAsStream("/tim/prune/function/srtm/srtmtiles.dat");
 			if (in != null)
 			{
 				byte[] buffer = new byte[in.available()];
@@ -90,16 +95,8 @@ public class SrtmLowResSource extends SrtmSource
 				in.close();
 				return buffer;
 			}
-		}
-		catch (java.io.IOException e) {
+		} catch (IOException e) {
 			System.err.println("Exception trying to read srtmtiles.dat : " + e.getMessage());
-		}
-		finally
-		{
-			try {
-				in.close();
-			}
-			catch (Exception e) {} // ignore
 		}
 		return null;
 	}

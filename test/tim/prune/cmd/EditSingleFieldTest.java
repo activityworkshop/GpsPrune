@@ -5,7 +5,6 @@ import tim.prune.data.*;
 import tim.prune.function.edit.PointEdit;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,13 +17,13 @@ class EditSingleFieldTest
 	public void testEditSinglePoint()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 
 		// Set
 		PointEdit descEdit = new PointEdit(0, "Description");
-		EditSingleFieldCmd command = new EditSingleFieldCmd(Field.DESCRIPTION, List.of(descEdit));
+		EditSingleFieldCmd command = new EditSingleFieldCmd(Field.DESCRIPTION, ListUtils.makeList(descEdit), null);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		assertEquals(1, track.getNumPoints());
@@ -38,7 +37,7 @@ class EditSingleFieldTest
 	public void testEditSeveralPoints()
 	{
 		Track track = TrackHelper.makeTwelvePointTrack();
-		track.getPoint(6).setFieldValue(Field.WAYPT_NAME, "waypoint", false);
+		track.getPoint(6).setWaypointName("waypoint");
 		for (int i=0; i<track.getNumPoints(); i++) {
 			String expectedName = (i==6 ? "waypoint" : null);
 			assertEquals(expectedName, track.getPoint(i).getWaypointName());
@@ -48,7 +47,7 @@ class EditSingleFieldTest
 		for (int i=4; i<10; i++) {
 			descEdits.add(new PointEdit(i, "Point " + i));
 		}
-		EditSingleFieldCmd command = new EditSingleFieldCmd(Field.WAYPT_NAME, descEdits);
+		EditSingleFieldCmd command = new EditSingleFieldCmd(Field.WAYPT_NAME, descEdits, null);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		assertEquals(12, track.getNumPoints());

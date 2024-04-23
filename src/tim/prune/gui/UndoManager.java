@@ -55,12 +55,12 @@ public class UndoManager
 
 		String[] undoActions = new String[undoStack.size()];
 		for (int i=0; i<undoStack.size(); i++) {
-			undoActions[i] = undoStack.getOperationAt(undoStack.size()-1-i).getDescription();
+			undoActions[i] = undoStack.getCommandAt(undoStack.size()-1-i).getDescription();
 		}
 		_actionList = new JList<String>(undoActions);
 		_actionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		_actionList.setSelectedIndex(0);
-		_actionList.addListSelectionListener((e) -> {
+		_actionList.addListSelectionListener(e -> {
 			if (_actionList.getMinSelectionIndex() > 0) {
 				_actionList.setSelectionInterval(0, _actionList.getMaxSelectionIndex());
 			}
@@ -80,13 +80,13 @@ public class UndoManager
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener((e) -> {
+		okButton.addActionListener(e -> {
 			_app.undoActions(_actionList.getMaxSelectionIndex() + 1);
 			_dialog.dispose();
 		});
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener((e) -> _dialog.dispose());
+		cancelButton.addActionListener(e -> _dialog.dispose());
 		buttonPanel.add(cancelButton);
 		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 		_dialog.getContentPane().add(mainPanel);

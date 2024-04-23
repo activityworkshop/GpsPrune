@@ -34,8 +34,7 @@ public class Rational
 	/**
 	 * Returns the value of the specified number as an <code>int</code>.
 	 */
-	public final int intValue()
-	{
+	public final int intValue() {
 		return (int) longValue();
 	}
 
@@ -51,14 +50,12 @@ public class Rational
 	}
 
 	/** Returns the denominator */
-	public final long getDenominator()
-	{
+	public final long getDenominator() {
 		return _denominator;
 	}
 
 	/** Returns the numerator */
-	public final long getNumerator()
-	{
+	public final long getNumerator() {
 		return _numerator;
 	}
 
@@ -89,8 +86,7 @@ public class Rational
 	 * Returns a string representation of the object of form <code>numerator/denominator</code>.
 	 */
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		return "" + _numerator + "/" + _denominator;
 	}
 
@@ -105,8 +101,9 @@ public class Rational
 	@Override
 	public boolean equals( Object obj)
 	{
-		if (obj==null || !(obj instanceof Rational))
+		if (!(obj instanceof Rational)) {
 			return false;
+		}
 		Rational that = (Rational) obj;
 		return this.doubleValue() == that.doubleValue();
 	}

@@ -3,6 +3,7 @@ package tim.prune.function.settings;
 import tim.prune.*;
 import tim.prune.config.Config;
 import tim.prune.gui.GuiGridLayout;
+import tim.prune.gui.IconManager;
 import tim.prune.gui.colour.WaypointColours;
 import tim.prune.gui.map.WpIconLibrary;
 
@@ -29,10 +30,12 @@ public class SetWaypointSettings extends GenericFunction
 	{
 		/** Cached icons for each waypoint type */
 		private final ImageIcon[] _icons = new ImageIcon[WpIconLibrary.WAYPT_NUMBER_OF_ICONS];
+		private final IconManager _iconManager;
 
 		/** Constructor */
-		IconComboRenderer() {
+		IconComboRenderer(IconManager inIconManager) {
 			setOpaque(true);
+			_iconManager = inIconManager;
 		}
 
 		/** Get the label text at the given index */
@@ -44,7 +47,7 @@ public class SetWaypointSettings extends GenericFunction
 		private ImageIcon getIcon(int inIndex)
 		{
 			if (_icons[inIndex] == null) {
-				_icons[inIndex] = WpIconLibrary.getIconDefinition(inIndex, 1).getImageIcon();
+				_icons[inIndex] = WpIconLibrary.getFixedIconDefinition(inIndex, _iconManager).getImageIcon();
 			}
 			return _icons[inIndex];
 		}
@@ -81,6 +84,7 @@ public class SetWaypointSettings extends GenericFunction
 	/** Type information */
 	private final WaypointTypeList _typeList = new WaypointTypeList();
 	private JList<String> _typeListBox = null;
+	private JScrollPane _listScroller = null;
 
 
 	/**
@@ -123,7 +127,7 @@ public class SetWaypointSettings extends GenericFunction
 		headerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		iconGrid.add(headerLabel);
 		_wpIconCombobox = new JComboBox<>(new Integer[]{0, 1, 2, 3, 4, 5});
-		_wpIconCombobox.setRenderer(new IconComboRenderer());
+		_wpIconCombobox.setRenderer(new IconComboRenderer(getIconManager()));
 		iconGrid.add(_wpIconCombobox);
 		iconsPanel.add(iconPanel);
 		// Select size of waypoints
@@ -172,8 +176,8 @@ public class SetWaypointSettings extends GenericFunction
 				return this;
 			}
 		});
-		JScrollPane listScroller = new JScrollPane(_typeListBox);
-		coloursPanel.add(listScroller);
+		_listScroller = new JScrollPane(_typeListBox);
+		coloursPanel.add(_listScroller);
 		midPanel.add(coloursPanel);
 		// attach signals
 		_saltSlider.addChangeListener(changeEvent -> showPreview(_saltSlider.getValue()));
@@ -220,11 +224,12 @@ public class SetWaypointSettings extends GenericFunction
 			_dialog.pack();
 		}
 		// Set values from config
+		Config config = getConfig();
 		try {
-			_wpIconCombobox.setSelectedIndex(Config.getConfigInt(Config.KEY_WAYPOINT_ICONS));
+			_wpIconCombobox.setSelectedIndex(config.getConfigInt(Config.KEY_WAYPOINT_ICONS));
 		} catch (IllegalArgumentException ignored) {}
-		selectIconSizeRadio(Config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE));
-		final int salt = Config.getConfigInt(Config.KEY_WPICON_SALT);
+		selectIconSizeRadio(config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE));
+		final int salt = config.getConfigInt(Config.KEY_WPICON_SALT);
 		_coloursCheckbox.setSelected(salt >= 0);
 		_saltSlider.setValue(Math.max(salt, 0));
 		_saltSlider.setEnabled(salt >= 0);
@@ -242,6 +247,7 @@ public class SetWaypointSettings extends GenericFunction
 		_saltLabel.setText(label);
 		_noTypesLabel.setVisible(_typeList.getSize() == 0);
 		_typeListBox.repaint();
+		_listScroller.setVisible(_typeList.getSize() > 0);
 	}
 
 	/**
@@ -303,10 +309,11 @@ public class SetWaypointSettings extends GenericFunction
 	public void finish()
 	{
 		// update config
-		Config.setConfigInt(Config.KEY_WAYPOINT_ICONS, _wpIconCombobox.getSelectedIndex());
-		Config.setConfigInt(Config.KEY_WAYPOINT_ICON_SIZE, getSelectedIconSize());
+		Config config = getConfig();
+		config.setConfigInt(Config.KEY_WAYPOINT_ICONS, _wpIconCombobox.getSelectedIndex());
+		config.setConfigInt(Config.KEY_WAYPOINT_ICON_SIZE, getSelectedIconSize());
 		final int saltValue = _coloursCheckbox.isSelected() ? _saltSlider.getValue() : -1;
-		Config.setConfigInt(Config.KEY_WPICON_SALT, saltValue);
+		config.setConfigInt(Config.KEY_WPICON_SALT, saltValue);
 		// refresh display
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 		_dialog.dispose();

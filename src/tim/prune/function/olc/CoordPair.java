@@ -21,7 +21,7 @@ class CoordPair
 	}
 
 	/** Constant pair to represent padding */
-	public static CoordPair PADDING = new CoordPair(-1.0, -1.0);
+	public static final CoordPair PADDING = new CoordPair(-1.0, -1.0);
 
 	/**
 	 * Try to parse the given pair of characters into a CoordPair

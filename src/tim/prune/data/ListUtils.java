@@ -9,11 +9,13 @@ import tim.prune.function.edit.FieldEdit;
 /** Provide java8 compatibility */
 public abstract class ListUtils
 {
-	/** Equivalent of List.of for a single integer value */
-	public static List<Integer> makeListOfInteger(int inValue)
+	/** Equivalent of List.of for one or more integer values */
+	public static List<Integer> makeListOfInts(int ... inValues)
 	{
 		ArrayList<Integer> result = new ArrayList<>();
-		result.add(inValue);
+		for (int value : inValues) {
+			result.add(value);
+		}
 		return result;
 	}
 
@@ -33,11 +35,13 @@ public abstract class ListUtils
 		return flags;
 	}
 
-	/** Equivalent of List.of for a single MediaObject */
-	public static List<MediaObject> makeListOfMedia(MediaObject inObject)
+	@SafeVarargs
+	public static <T> List<T> makeList(T ... inObjects)
 	{
-		ArrayList<MediaObject> media = new ArrayList<>();
-		media.add(inObject);
-		return media;
+		ArrayList<T> result = new ArrayList<>();
+		for (T object : inObjects) {
+			result.add(object);
+		}
+		return result;
 	}
 }

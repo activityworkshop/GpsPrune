@@ -32,24 +32,21 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 	/**
 	 * @param inOther other end of the segment
 	 */
-	public void setOtherEnd(SegmentEnd inOther)
-	{
+	public void setOtherEnd(SegmentEnd inOther) {
 		_otherEnd = inOther;
 	}
 
 	/**
 	 * @return other end
 	 */
-	public SegmentEnd getOtherEnd()
-	{
+	public SegmentEnd getOtherEnd() {
 		return _otherEnd;
 	}
 
 	/**
 	 * @return true if this is the start of the segment
 	 */
-	public boolean isStart()
-	{
+	public boolean isStart() {
 		return _otherEnd == null || _otherEnd._pointIndex > _pointIndex;
 	}
 
@@ -59,8 +56,7 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 	}
 
 	/** @return point index of other end */
-	public int getOtherPointIndex()
-	{
+	public int getOtherPointIndex() {
 		return _otherEnd == null ? _pointIndex : _otherEnd._pointIndex;
 	}
 
@@ -122,25 +118,40 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 	 */
 	public boolean atSamePointAs(SegmentEnd inOther)
 	{
-		return inOther != null && _latitude.equals(inOther._latitude) && _longitude.equals(inOther._longitude);
+		return inOther != null && _latitude.equals(inOther._latitude)
+				&& _longitude.equals(inOther._longitude);
 	}
 
 	/**
 	 * Compare two objects for sorting
 	 */
-	public int compareTo(SegmentEnd o)
+	public int compareTo(SegmentEnd inOther)
 	{
-		if (o == null) return -1;
+		if (inOther == null) {
+			return -1;
+		}
 		// First, sort by latitude
-		if (!_latitude.equals(o._latitude)) {
-			return (_latitude.getDouble() < o._latitude.getDouble() ? -1 : 1);
+		if (!_latitude.equals(inOther._latitude)) {
+			return (_latitude.getDouble() < inOther._latitude.getDouble() ? -1 : 1);
 		}
 		// Latitudes same, so sort by longitude
-		if (!_longitude.equals(o._longitude)) {
-			return (_longitude.getDouble() < o._longitude.getDouble() ? -1 : 1);
+		if (!_longitude.equals(inOther._longitude)) {
+			return (_longitude.getDouble() < inOther._longitude.getDouble() ? -1 : 1);
 		}
 		// Points are identical so just sort by index
-		return _pointIndex - o._pointIndex;
+		return _pointIndex - inOther._pointIndex;
+	}
+
+	/** Compare two objects for equality */
+	public boolean equals(Object inOther)
+	{
+		if (!(inOther instanceof SegmentEnd)) {
+			return false;
+		}
+		SegmentEnd otherEnd = (SegmentEnd) inOther;
+		return _latitude.equals(otherEnd._latitude)
+				&& _longitude.equals(otherEnd._longitude)
+				&& _pointIndex == otherEnd._pointIndex;
 	}
 
 	/**

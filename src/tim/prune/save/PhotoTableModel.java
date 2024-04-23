@@ -74,7 +74,7 @@ public class PhotoTableModel extends AbstractTableModel
 		else if (inColumnIndex == 1) {
 			return _photos[inRowIndex].getStatus();
 		}
-		return Boolean.valueOf(_photos[inRowIndex].getSaveFlag());
+		return _photos[inRowIndex].getSaveFlag();
 	}
 
 

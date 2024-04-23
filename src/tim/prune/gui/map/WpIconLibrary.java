@@ -19,24 +19,27 @@ public abstract class WpIconLibrary
 	public static final int WAYPT_NUMBER_OF_ICONS = WAYPT_FLAG + 1;
 
 	/** Sizes of icon */
-	public static final int SIZE_SMALL = 0;
-	public static final int SIZE_MEDIUM = 1;
-	public static final int SIZE_LARGE = 2;
-
-	/** Array of x and y offsets for the icons */
-	private static int[] _PIXEL_OFFSETS = null;
-
-	/** Static block to initialise offsets */
-	static
+	private enum Size
 	{
-		_PIXEL_OFFSETS = new int[] {0, 0, 0, 0, 0, 0, // default
-			8,  15, 11, 21, 14, 27, // ringpt
-			9,  17, 12, 23, 14, 28, // plectrum
-			8,  8,  12, 12, 15, 15, // ring
-			3,  16, 4,  22, 4,  28, // pin
-			2,  17, 3,  22, 4,  28  // flag
-		};
+		SMALL("_s"), MEDIUM("_m"), LARGE("_l"), FIXED("_f");
+		final String _suffix;
+		Size(String inSuffix) {
+			_suffix = inSuffix;
+		}
+		String getSuffix() {
+			return _suffix;
+		}
+		static Size fromInt(int inIndex)
+		{
+			switch (inIndex) {
+				case 0: return SMALL;
+				default:
+				case 1: return MEDIUM;
+				case 2: return LARGE;
+			}
+		}
 	}
+
 
 	/** @return array of Integers representing waypoint types */
 	public static Integer[] getWaypointTypes()
@@ -66,31 +69,33 @@ public abstract class WpIconLibrary
 	/**
 	 * @param inType icon type
 	 * @param inSize icon size (small/medium/large)
+	 * @param inIconManager icon manager to use
 	 * @return icon definition for the specified icon
 	 */
-	public static WpIconDefinition getIconDefinition(int inType, int inSize)
+	public static WpIconDefinition getIconDefinition(int inType, int inSize, IconManager inIconManager) {
+		return getIconDefinition(inType, Size.fromInt(inSize), inIconManager);
+	}
+
+	/**
+	 * @param inType icon type
+	 * @param inIconManager icon manager to use
+	 * @return icon definition for the specified fixed icon
+	 */
+	public static WpIconDefinition getFixedIconDefinition(int inType, IconManager inIconManager) {
+		return getIconDefinition(inType, Size.FIXED, inIconManager);
+	}
+
+	/**
+	 * @param inType icon type
+	 * @param inSize icon size (small/medium/large)
+	 * @param inIconManager icon manager to use
+	 * @return icon definition for the specified icon
+	 */
+	private static WpIconDefinition getIconDefinition(int inType, Size inSize, IconManager inIconManager)
 	{
-		String iconName = getIconName(inType);
-		String sizeSuffix = null;
-		switch (inSize)
-		{
-			case SIZE_SMALL:  sizeSuffix = "_s"; break;
-			case SIZE_MEDIUM: sizeSuffix = "_m"; break;
-			case SIZE_LARGE:  sizeSuffix = "_l"; break;
-			default:          sizeSuffix = "_m"; inSize = SIZE_MEDIUM; break;
-		}
-		// Look up offsets in the static array
-		int xOffset = 0, yOffset = 0;
-		try {
-			xOffset = _PIXEL_OFFSETS[inType * 6 + inSize * 2];
-			yOffset = _PIXEL_OFFSETS[inType * 6 + inSize * 2 + 1];
-		}
-		catch (ArrayIndexOutOfBoundsException obe) {} // ignore, leave offsets at 0
-		WpIconDefinition iconDef = new WpIconDefinition(iconName, xOffset, yOffset);
-		// Get icon
-		ImageIcon icon = IconManager.getImageIcon(IconManager.WAYPOINT_ICON_PREFIX
-			+ iconDef.getName() + sizeSuffix);
-		iconDef.setIcon(icon);
-		return iconDef;
+		final String iconName = getIconName(inType);
+		ImageIcon icon = inIconManager.getImageIcon(IconManager.WAYPOINT_ICON_PREFIX
+			+ iconName + inSize.getSuffix());
+		return new WpIconDefinition(iconName, icon);
 	}
 }

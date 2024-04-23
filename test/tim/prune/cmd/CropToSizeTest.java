@@ -15,7 +15,7 @@ class CropToSizeTest
 	{
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
-		track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
+		track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
 		assertEquals(1, track.getNumPoints());
 		// try to delete -1 points, should fail
 		DeleteFinalRangeCmd command = new DeleteFinalRangeCmd(-1);
@@ -32,7 +32,7 @@ class CropToSizeTest
 	{
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
-		track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
+		track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
 		assertEquals(1, track.getNumPoints());
 		// delete
 		DeleteFinalRangeCmd command = new DeleteFinalRangeCmd(1);
@@ -49,7 +49,7 @@ class CropToSizeTest
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
 		for (int i=0; i<3; i++) {
-			track.appendPoint(new DataPoint(new Latitude(i + ".23"), new Longitude("1" + i + ".34"), null));
+			track.appendPoint(new DataPoint(Latitude.make(i + ".23"), Longitude.make("1" + i + ".34")));
 		}
 		assertEquals(3, track.getNumPoints());
 		// delete

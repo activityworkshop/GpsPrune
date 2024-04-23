@@ -94,7 +94,6 @@ public class TruncatePointCoords extends GenericFunction
 		KeyAdapter keyListener = new KeyAdapter() {
 			/** Key released */
 			public void keyReleased(KeyEvent inE) {
-				// enableOK();
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {
 					_dialog.dispose();
 				}
@@ -154,8 +153,9 @@ public class TruncatePointCoords extends GenericFunction
 	 */
 	private String[] getTruncatedCoords()
 	{
-		int[] formatIds = new int[] {Coordinate.FORMAT_DEG_MIN_SEC, Coordinate.FORMAT_DEG_MIN, Coordinate.FORMAT_DECIMAL_FORCE_POINT};
-		final int selectedFormat = formatIds[_coordFormatDropdown.getSelectedIndex()];
+		Coordinate.Format[] formatIds = {Coordinate.Format.DEG_MIN_SEC,
+			Coordinate.Format.DEG_MIN, Coordinate.Format.DECIMAL_FORCE_POINT};
+		final Coordinate.Format selectedFormat = formatIds[_coordFormatDropdown.getSelectedIndex()];
 		final int numDigits = ((SpinnerNumberModel) _numDigitsField.getModel()).getNumber().intValue();
 		return new String[] {_point.getLatitude().output(selectedFormat, numDigits),
 			_point.getLongitude().output(selectedFormat, numDigits)};

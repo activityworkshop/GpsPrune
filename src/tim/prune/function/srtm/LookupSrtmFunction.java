@@ -20,6 +20,7 @@ import tim.prune.GenericFunction;
 import tim.prune.GpsPrune;
 import tim.prune.I18nManager;
 import tim.prune.cmd.EditAltitudeCmd;
+import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
 import tim.prune.data.UnitSetLibrary;
@@ -163,9 +164,10 @@ public class LookupSrtmFunction extends GenericFunction
 	 */
 	private void lookupValues(HashSet<SrtmTile> inTileSet, boolean inOverwriteZeros)
 	{
+		final String diskCachePath = getConfig().getConfigString(Config.KEY_DISK_CACHE);
 		SrtmSource[] tileSources = new SrtmSource[] {
-			new SrtmHighResSource(),
-			new SrtmLowResSource()};
+			new SrtmHighResSource(diskCachePath, getConfig().getConfigString(Config.KEY_EARTHDATA_AUTH)),
+			new SrtmLowResSource(diskCachePath)};
 		String errorMessage = null;
 		final int numTiles = inTileSet.size();
 
@@ -369,7 +371,7 @@ public class LookupSrtmFunction extends GenericFunction
 				if (altitude != SrtmSource.VOID_VAL)
 				{
 					// Found an altitude, so create a command for it
-					edits.add(new PointAltitudeEdit(p, "" + altitude, UnitSetLibrary.UNITS_METRES));
+					edits.add(new PointAltitudeEdit(p, String.format("%.3f", altitude), UnitSetLibrary.UNITS_METRES));
 				}
 			}
 		}

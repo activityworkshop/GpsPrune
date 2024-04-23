@@ -174,10 +174,10 @@ public class PointNameEditor extends GenericFunction
 		}
 		StringBuilder buffer = new StringBuilder();
 		// loop through characters
-		char lastChar = ' ', currChar = ' ';
+		char lastChar = ' ';
 		for (int i=0; i<inString.length(); i++)
 		{
-			currChar = inString.charAt(i);
+			char currChar = inString.charAt(i);
 			buffer.append(lastChar == ' ' ? Character.toUpperCase(currChar) : Character.toLowerCase(currChar));
 			lastChar = currChar;
 		}

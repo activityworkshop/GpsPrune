@@ -13,10 +13,14 @@ import java.util.Locale;
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
 import tim.prune.config.Config;
+import tim.prune.config.ConfigPaths;
+import tim.prune.fileutils.FileDropHandler;
+import tim.prune.function.settings.MigrateConfig;
 import tim.prune.gui.DetailsDisplay;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.MenuManager;
@@ -30,17 +34,16 @@ import tim.prune.gui.profile.ProfileChart;
 /**
  * GpsPrune is a tool to visualize, edit, convert and prune GPS data
  * Please see the included readme.txt or https://activityworkshop.net
- * This software is copyright activityworkshop.net 2006-2023 and made available through the Gnu GPL version 2.
+ * This software is copyright activityworkshop.net 2006-2024 and made available through the Gnu GPL version 2.
  * For license details please see the included license.txt.
  * GpsPrune is the main entry point to the application, including initialisation and launch
  */
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "23.2";
+	public static final String VERSION_NUMBER = "24";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "409";
-
+	public static final String BUILD_NUMBER = "412";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -107,26 +110,26 @@ public class GpsPrune
 				+ "\n   --lang=<code>       used to specify language code such as DE"
 				+ "\n   --langfile=<file>   used to specify an alternative language file\n");
 		}
+		Config config = new Config();
 		// Initialise configuration if selected
 		boolean loadedConfig = false;
 		if (configFilename != null)
 		{
-			loadedConfig = Config.loadFile(new File(configFilename));
+			loadedConfig = config.loadFile(new File(configFilename));
 			if (!loadedConfig) {
 				System.err.println("Failed to load config file: " + configFilename);
 			}
 		}
-		if (!loadedConfig) {
-			Config.loadDefaultFile();
-		}
+		// load the config from the default location, and remember whether an alternative path was recommended
+		final File migratedConfigFile = loadedConfig ? null : ConfigPaths.loadConfig(config);
 		boolean overrideLang = (locale != null);
 		if (overrideLang) {
 			// Make sure Config holds chosen language
-			Config.setConfigString(Config.KEY_LANGUAGE_CODE, localeCode);
+			config.setConfigString(Config.KEY_LANGUAGE_CODE, localeCode);
 		}
 		else {
 			// Set locale according to Config's language property
-			String configLang = Config.getConfigString(Config.KEY_LANGUAGE_CODE);
+			String configLang = config.getConfigString(Config.KEY_LANGUAGE_CODE);
 			if (configLang != null) {
 				Locale configLocale = getLanguage(configLang);
 				if (configLocale != null) {locale = configLocale;}
@@ -136,29 +139,33 @@ public class GpsPrune
 		// Load the external language file, either from config file or from command line params
 		if (langFilename == null && !overrideLang) {
 			// If langfilename is blank on command line parameters then don't use setting from config
-			langFilename = Config.getConfigString(Config.KEY_LANGUAGE_FILE);
+			langFilename = config.getConfigString(Config.KEY_LANGUAGE_FILE);
 		}
 		if (langFilename != null)
 		{
 			try {
 				I18nManager.addLanguageFile(langFilename);
-				Config.setConfigString(Config.KEY_LANGUAGE_FILE, langFilename);
+				config.setConfigString(Config.KEY_LANGUAGE_FILE, langFilename);
 			}
 			catch (FileNotFoundException fnfe) {
 				System.err.println("Failed to load language file: " + langFilename);
-				Config.setConfigString(Config.KEY_LANGUAGE_FILE, "");
+				config.setConfigString(Config.KEY_LANGUAGE_FILE, "");
 			}
 		}
 
 		// Set look-and-feel
 		try {
-			String windowStyle = Config.getConfigString(Config.KEY_WINDOW_STYLE);
+			String windowStyle = config.getConfigString(Config.KEY_WINDOW_STYLE);
 			UIManager.setLookAndFeel(windowStyle);
 		}
 		catch (Exception e) {}
 
 		// Set up the window and go
-		launch(dataFiles);
+		launch(config, dataFiles);
+
+		if (migratedConfigFile != null) {
+			SwingUtilities.invokeLater(() -> new MigrateConfig(APP, migratedConfigFile).begin());
+		}
 	}
 
 
@@ -169,12 +176,10 @@ public class GpsPrune
 	 */
 	private static Locale getLanguage(String inString)
 	{
-		if (inString.length() == 2)
-		{
+		if (inString.length() == 2) {
 			return new Locale(inString);
 		}
-		else if (inString.length() == 5 && inString.charAt(2) == '_')
-		{
+		else if (inString.length() == 5 && inString.charAt(2) == '_') {
 			return new Locale(inString.substring(0, 2), inString.substring(3));
 		}
 		System.out.println("Unrecognised locale '" + inString
@@ -185,13 +190,14 @@ public class GpsPrune
 
 	/**
 	 * Launch the main application
+	 * @param inConfig loaded Config object
 	 * @param inDataFiles list of data files to load on startup
 	 */
-	private static void launch(ArrayList<File> inDataFiles)
+	private static void launch(Config inConfig, ArrayList<File> inDataFiles)
 	{
 		// Initialise Frame
 		JFrame frame = new JFrame(PROGRAM_NAME);
-		APP = new App(frame);
+		APP = new App(frame, inConfig);
 
 		// make menu
 		MenuManager menuManager = new MenuManager(APP, APP.getTrackInfo());
@@ -203,13 +209,13 @@ public class GpsPrune
 		// Make main GUI components and add as listeners
 		SelectorDisplay leftPanel = new SelectorDisplay(APP.getTrackInfo());
 		UpdateMessageBroker.addSubscriber(leftPanel);
-		DetailsDisplay rightPanel = new DetailsDisplay(APP.getTrackInfo());
+		DetailsDisplay rightPanel = new DetailsDisplay(APP);
 		UpdateMessageBroker.addSubscriber(rightPanel);
 		MapCanvas mapDisp = new MapCanvas(APP);
 		UpdateMessageBroker.addSubscriber(mapDisp);
 		Viewport viewport = new Viewport(mapDisp);
 		APP.setViewport(viewport);
-		ProfileChart profileDisp = new ProfileChart(APP.getTrackInfo());
+		ProfileChart profileDisp = new ProfileChart(APP.getTrackInfo(), inConfig);
 		UpdateMessageBroker.addSubscriber(profileDisp);
 		StatusBar statusBar = new StatusBar();
 		UpdateMessageBroker.addSubscriber(statusBar);
@@ -242,7 +248,7 @@ public class GpsPrune
 			ArrayList<Image> icons = new ArrayList<>();
 			String[] resolutions = {"_16", "_20", "_22", "_24", "_32", "_36", "_48", "_64", "_72", "_96", "_128"};
 			for (String res : resolutions) {
-				icons.add(IconManager.getImageIcon(IconManager.WINDOW_ICON + res).getImage());
+				icons.add(IconManager.getImageIconWithoutSize(IconManager.WINDOW_ICON + res).getImage());
 			}
 			frame.setIconImages(icons);
 		}
@@ -250,7 +256,7 @@ public class GpsPrune
 		{
 			// setting a list of icon images didn't work, so try with just one image instead
 			try {
-				frame.setIconImage(IconManager.getImageIcon(IconManager.WINDOW_ICON + "_16").getImage());
+				frame.setIconImage(IconManager.getImageIconWithoutSize(IconManager.WINDOW_ICON + "_16").getImage());
 			}
 			catch (Exception e2) {}
 		}
@@ -260,8 +266,7 @@ public class GpsPrune
 
 		// finish off and display frame
 		frame.pack();
-		if (!setFrameBoundsFromConfig(frame))
-		{
+		if (!setFrameBoundsFromConfig(frame, inConfig)) {
 			frame.setSize(650, 450);
 		}
 		frame.setVisible(true);
@@ -282,12 +287,13 @@ public class GpsPrune
 	/**
 	 * Set the frame bounds using the saved config setting
 	 * @param inFrame frame to set the bounds of
+	 * @param inConfig config object
 	 * @return true on success
 	 */
-	private static boolean setFrameBoundsFromConfig(JFrame inFrame)
+	private static boolean setFrameBoundsFromConfig(JFrame inFrame, Config inConfig)
 	{
 		// Try to get bounds from config
-		String bounds = Config.getConfigString(Config.KEY_WINDOW_BOUNDS);
+		String bounds = inConfig.getConfigString(Config.KEY_WINDOW_BOUNDS);
 		try
 		{
 			String[] boundValues = bounds.split("x");
@@ -320,8 +326,12 @@ public class GpsPrune
 		File file = new File(inParam);
 		if (file.exists())
 		{
-			if (file.isDirectory()) return "'" + inParam + "' is a directory";
-			if (!file.canRead())    return "Cannot read file '" + inParam + "'";
+			if (file.isDirectory()) {
+				return "'" + inParam + "' is a directory";
+			}
+			if (!file.canRead()) {
+				return "Cannot read file '" + inParam + "'";
+			}
 			return "Something wrong with file '" + inParam + "'";
 		}
 		do

@@ -3,6 +3,7 @@ package tim.prune.gui.colour;
 import java.awt.Color;
 import java.util.ArrayList;
 
+import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.TrackInfo;
@@ -26,9 +27,10 @@ public class FileColourer extends DiscretePointColourer
 	/**
 	 * Calculate the colours for each of the points in the given track
 	 * @param inTrackInfo track info object
+	 * @param inConfig config object (not needed here)
 	 */
 	@Override
-	public void calculateColours(TrackInfo inTrackInfo)
+	public void calculateColours(TrackInfo inTrackInfo, Config inConfig)
 	{
 		// initialise the array to the right size
 		final int numPoints = inTrackInfo.getTrack().getNumPoints();

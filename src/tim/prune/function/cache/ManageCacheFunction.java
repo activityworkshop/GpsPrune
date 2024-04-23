@@ -28,6 +28,7 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
+import tim.prune.fileutils.FileList;
 import tim.prune.gui.WholeNumberField;
 
 /**
@@ -38,7 +39,6 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 	private JDialog _dialog = null;
 	private CardLayout _cards = null;
 	private JPanel _cardPanel = null;
-	private JProgressBar _progressBar = null;
 	private File _cacheDir = null;
 	private TileCacheModel _model = null;
 	private JTable _setsTable = null;
@@ -73,7 +73,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 	{
 		// First check if directory even exists
 		_cacheDir = null;
-		String path = Config.getConfigString(Config.KEY_DISK_CACHE);
+		String path = getConfig().getConfigString(Config.KEY_DISK_CACHE);
 		if (path != null && !path.equals("")) {
 			_cacheDir = new File(path);
 		}
@@ -117,9 +117,9 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		progPanel.setLayout(new BoxLayout(progPanel, BoxLayout.Y_AXIS));
 		progPanel.add(Box.createVerticalGlue());
 		progPanel.add(new JLabel(I18nManager.getText("confirm.running")));
-		_progressBar = new JProgressBar(0, 10);
-		_progressBar.setIndeterminate(true);
-		progPanel.add(_progressBar);
+		JProgressBar progressBar = new JProgressBar(0, 10);
+		progressBar.setIndeterminate(true);
+		progPanel.add(progressBar);
 		progPanel.add(Box.createVerticalGlue());
 		firstCard.add(progPanel, BorderLayout.CENTER);
 		// Cancel button at bottom
@@ -363,7 +363,7 @@ public class ManageCacheFunction extends GenericFunction implements Runnable
 		long now = System.currentTimeMillis();
 		if (inDir.exists() && inDir.isDirectory())
 		{
-			for (File subdir : inDir.listFiles())
+			for (File subdir : FileList.filesIn(inDir))
 			{
 				if (subdir.isDirectory()) {
 					numDeleted += deleteFilesFrom(subdir, inMaxDays);

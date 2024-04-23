@@ -2,6 +2,9 @@ package tim.prune;
 
 import javax.swing.JFrame;
 
+import tim.prune.config.Config;
+import tim.prune.gui.IconManager;
+
 /**
  * Generic function class for launching from the app
  */
@@ -39,4 +42,18 @@ public abstract class GenericFunction
 	 * @return the key for the function name
 	 */
 	public abstract String getNameKey();
+
+	/**
+	 * @return config object
+	 */
+	protected Config getConfig() {
+		return _app.getConfig();
+	}
+
+	/**
+	 * @return icon manager
+	 */
+	protected IconManager getIconManager() {
+		return _app.getIconManager();
+	}
 }

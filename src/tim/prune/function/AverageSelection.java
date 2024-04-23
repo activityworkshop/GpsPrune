@@ -5,7 +5,6 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.InsertPointCmd;
 import tim.prune.data.Altitude;
-import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
@@ -87,8 +86,8 @@ public class AverageSelection extends GenericFunction
 			meanAltitude = new Altitude((int) (totalAltitude / numAltitudes), altUnit);
 		}
 
-		DataPoint averagePoint = new DataPoint(new Latitude(meanLatitude, Coordinate.FORMAT_DECIMAL_FORCE_POINT),
-			new Longitude(meanLongitude, Coordinate.FORMAT_DECIMAL_FORCE_POINT), meanAltitude);
+		DataPoint averagePoint = new DataPoint(Latitude.make(meanLatitude),
+			Longitude.make(meanLongitude), meanAltitude);
 		averagePoint.setSegmentStart(true);
 		return averagePoint;
 	}

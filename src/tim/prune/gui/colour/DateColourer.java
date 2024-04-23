@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.TimeZone;
 
 import tim.prune.config.Config;
+import tim.prune.config.TimezoneHelper;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
@@ -38,23 +39,16 @@ public class DateColourer extends DiscretePointColourer
 	/**
 	 * Calculate the colours for each of the points in the given track
 	 * @param inTrackInfo track info object
+	 * @param inConfig config object, used to get timezone
 	 */
 	@Override
-	public synchronized void calculateColours(TrackInfo inTrackInfo)
+	public synchronized void calculateColours(TrackInfo inTrackInfo, Config inConfig)
 	{
 		// Note, this method needs to be synchronized because otherwise the
 		// Calendar objects in the different threads get confused and the
 		// wrong colours are generated.
 
-		// TODO: Move this timezone-selection into a helper for use by others?
-		// Select the current timezone
-		final String zoneId = Config.getConfigString(Config.KEY_TIMEZONE_ID);
-		if (zoneId == null || zoneId.equals("")) {
-			_selectedTimezone = TimeZone.getDefault();
-		}
-		else {
-			_selectedTimezone = TimeZone.getTimeZone(zoneId);
-		}
+		_selectedTimezone = TimezoneHelper.getSelectedTimezone(inConfig);
 		// initialise the array to the right size
 		Track track = inTrackInfo == null ? null : inTrackInfo.getTrack();
 		final int numPoints = track == null ? 0 : track.getNumPoints();

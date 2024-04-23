@@ -11,10 +11,10 @@ import tim.prune.data.Track;
  */
 public class ThreeDModel
 {
-	private Track _track = null;
+	private final Track _track;
 	private Track _terrainTrack = null;
 	private PointScaler _scaler = null;
-	private double _scaleFactor = 1.0;
+	private final double _scaleFactor = 1.0;
 	private double _altFactor = 1.0;
 	private double _externalScaleFactor = 1.0;
 	// MAYBE: How to store rods (lifts) in data?

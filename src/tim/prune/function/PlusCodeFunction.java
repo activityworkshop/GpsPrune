@@ -22,8 +22,8 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.AppendRangeCmd;
+import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.function.olc.OlcArea;
@@ -174,26 +174,25 @@ public class PlusCodeFunction extends GenericFunction
 		if (inArea.minLat == inArea.maxLat && inArea.minLon == inArea.maxLon)
 		{
 			// Not actually an area, just a single point
-			DataPoint point = new DataPoint(new Latitude("" + inArea.minLat),
-				new Longitude("" + inArea.minLon), null);
-			point.setFieldValue(Field.WAYPT_NAME, inArea.code, false);
+			DataPoint point = new DataPoint(Latitude.make(inArea.minLat), Longitude.make(inArea.minLon));
+			point.setWaypointName(inArea.code);
 			points.add(point);
 		}
 		else
 		{
 			for (int i=0; i<5; i++)
 			{
-				Latitude lat = new Latitude("" + ((i%4==0 || i==3) ? inArea.minLat : inArea.maxLat));
-				Longitude lon = new Longitude("" + ((i%4==0 || i==1) ? inArea.minLon : inArea.maxLon));
-				DataPoint point = new DataPoint(lat, lon, null);
+				Coordinate lat = Latitude.make((i%4==0 || i==3) ? inArea.minLat : inArea.maxLat);
+				Coordinate lon = Longitude.make((i%4==0 || i==1) ? inArea.minLon : inArea.maxLon);
+				DataPoint point = new DataPoint(lat, lon);
 				point.setSegmentStart(i==0);
 				points.add(point);
 			}
 			// Middle point with name
-			Latitude lat = new Latitude("" + ((inArea.minLat + inArea.maxLat) / 2.0));
-			Longitude lon = new Longitude("" + ((inArea.minLon + inArea.maxLon) / 2.0));
-			DataPoint point = new DataPoint(lat, lon, null);
-			point.setFieldValue(Field.WAYPT_NAME, inArea.code, false);
+			Coordinate lat = Latitude.make((inArea.minLat + inArea.maxLat) / 2.0);
+			Coordinate lon = Longitude.make((inArea.minLon + inArea.maxLon) / 2.0);
+			DataPoint point = new DataPoint(lat, lon);
+			point.setWaypointName(inArea.code);
 			points.add(point);
 		}
 		// Make and execute the command

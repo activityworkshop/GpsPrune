@@ -6,9 +6,9 @@ package tim.prune.function.charts;
 public class ChartSeries
 {
 	/** Array of booleans, true for data existing, false otherwise */
-	private boolean[] _hasData = null;
+	private final boolean[] _hasData;
 	/** Array of data */
-	private double[] _data = null;
+	private final double[] _data;
 
 	/**
 	 * Constructor

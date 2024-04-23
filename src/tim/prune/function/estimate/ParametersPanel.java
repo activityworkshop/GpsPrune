@@ -10,6 +10,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
+import tim.prune.data.Unit;
 import tim.prune.gui.DisplayUtils;
 
 /**
@@ -18,6 +20,7 @@ import tim.prune.gui.DisplayUtils;
  */
 public class ParametersPanel extends JPanel
 {
+	private final Config _config;
 	/** Flag for whether average error should be shown */
 	private final boolean _showAverageError;
 	/** Labels for calculated parameters */
@@ -32,19 +35,22 @@ public class ParametersPanel extends JPanel
 	/**
 	 * Constructor
 	 * @param inTitleKey key to use for title of panel
+	 * @param inConfig config object
 	 */
-	public ParametersPanel(String inTitleKey) {
-		this(inTitleKey, false);
+	public ParametersPanel(String inTitleKey, Config inConfig) {
+		this(inTitleKey, false, inConfig);
 	}
 
 	/**
 	 * Constructor
 	 * @param inTitleKey key to use for title of panel
 	 * @param inShowAvgError true to show average error line
+	 * @param inConfig config object
 	 */
-	public ParametersPanel(String inTitleKey, boolean inShowAvgError)
+	public ParametersPanel(String inTitleKey, boolean inShowAvgError, Config inConfig)
 	{
 		super();
+		_config = inConfig;
 		_numberFormatter = NumberFormat.getNumberInstance();
 		if (_numberFormatter instanceof DecimalFormat) {
 			((DecimalFormat) _numberFormatter).applyPattern("0.00");
@@ -116,17 +122,19 @@ public class ParametersPanel extends JPanel
 		}
 		else
 		{
+			final Unit distUnit = _config.getUnitSet().getDistanceUnit();
 			final String minsText = " " + I18nManager.getText("units.minutes");
 			_fsUnitsLabel.setText(I18nManager.getText("dialog.estimatetime.parameters.timefor") +
-				" " + EstimationParameters.getStandardDistance() + ": ");
-			_flatSpeedLabel.setText(formatMinutes(inParams.getFlatMinutesLocal()) + minsText);
-			final String heightString = " " + EstimationParameters.getStandardClimb() + ": ";
+				" " + EstimationParameters.getStandardDistance(distUnit) + ": ");
+			_flatSpeedLabel.setText(formatMinutes(inParams.getFlatMinutesLocal(distUnit)) + minsText);
+			final Unit altUnit = _config.getUnitSet().getAltitudeUnit();
+			final String heightString = " " + EstimationParameters.getStandardClimb(altUnit) + ": ";
 			_climbUnitsLabel.setText(I18nManager.getText("dialog.estimatetime.climb") + heightString);
-			_gentleClimbLabel.setText(formatMinutes(inParams.getGentleClimbMinutesLocal()) + minsText);
-			_steepClimbLabel.setText(formatMinutes(inParams.getSteepClimbMinutesLocal()) + minsText);
+			_gentleClimbLabel.setText(formatMinutes(inParams.getGentleClimbMinutesLocal(altUnit)) + minsText);
+			_steepClimbLabel.setText(formatMinutes(inParams.getSteepClimbMinutesLocal(altUnit)) + minsText);
 			_descentUnitsLabel.setText(I18nManager.getText("dialog.estimatetime.descent") + heightString);
-			_gentleDescentLabel.setText(formatMinutes(inParams.getGentleDescentMinutesLocal()) + minsText);
-			_steepDescentLabel.setText(formatMinutes(inParams.getSteepDescentMinutesLocal()) + minsText);
+			_gentleDescentLabel.setText(formatMinutes(inParams.getGentleDescentMinutesLocal(altUnit)) + minsText);
+			_steepDescentLabel.setText(formatMinutes(inParams.getSteepDescentMinutesLocal(altUnit)) + minsText);
 		}
 		// Average error
 		if (_averageErrorLabel != null)

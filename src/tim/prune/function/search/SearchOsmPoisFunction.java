@@ -1,19 +1,22 @@
 package tim.prune.function.search;
 
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.xml.sax.SAXException;
 import tim.prune.App;
 import tim.prune.I18nManager;
-import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
+import tim.prune.data.Unit;
 
 /**
  * Function to load nearby point information from OSM
@@ -97,33 +100,29 @@ public class SearchOsmPoisFunction extends GenericDownloaderFunction
 		//System.out.println(urlString);
 		// Parse the returned XML with a special handler
 		SearchOsmPoisXmlHandler xmlHandler = new SearchOsmPoisXmlHandler();
-		InputStream inStream = null;
 
 		try
 		{
 			URL url = new URL(urlString);
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			inStream = url.openStream();
-			saxParser.parse(inStream, xmlHandler);
+			try (InputStream inStream = url.openStream()) {
+				saxParser.parse(inStream, xmlHandler);
+			} catch (Exception e) {
+				_errorMessage = e.getClass().getName() + " - " + e.getMessage();
+			}
+		} catch (MalformedURLException | SAXException | ParserConfigurationException ignored) {
 		}
-		catch (Exception e) {
-			_errorMessage = e.getClass().getName() + " - " + e.getMessage();
-		}
-		// Close stream and ignore errors
-		try {
-			inStream.close();
-		} catch (Exception e) {}
 
 		// Calculate distances for each returned point
-		DataPoint searchPoint = new DataPoint(new Latitude(_searchLatitude, Coordinate.FORMAT_DECIMAL_FORCE_POINT),
-			new Longitude(_searchLongitude, Coordinate.FORMAT_DECIMAL_FORCE_POINT), null);
+		DataPoint searchPoint = new DataPoint(Latitude.make(_searchLatitude),
+			Longitude.make(_searchLongitude));
+		Unit distUnit = getConfig().getUnitSet().getDistanceUnit();
 		for (SearchResult result : xmlHandler.getPointList())
 		{
-			Latitude pointLat = new Latitude(result.getLatitude());
-			Longitude pointLon = new Longitude(result.getLongitude());
-			DataPoint foundPoint = new DataPoint(pointLat, pointLon, null);
+			DataPoint foundPoint = new DataPoint(Latitude.make(result.getLatitude()),
+				Longitude.make(result.getLongitude()));
 			double dist = DataPoint.calculateRadiansBetween(searchPoint, foundPoint);
-			result.setLength(Distance.convertRadiansToDistance(dist));
+			result.setLength(Distance.convertRadiansToDistance(dist, distUnit));
 		}
 
 		// TODO: maybe limit number of results using MAX_RESULTS
@@ -131,16 +130,5 @@ public class SearchOsmPoisFunction extends GenericDownloaderFunction
 		ArrayList<SearchResult> pointList = xmlHandler.getPointList();
 		_trackListModel.addTracks(pointList, true);
 		_trackListModel.setShowPointTypes(true);
-
-		// Show error message if any
-		if (_trackListModel.isEmpty())
-		{
-			String error = xmlHandler.getErrorMessage();
-			if (error != null && !error.equals(""))
-			{
-				_app.showErrorMessageNoLookup(getNameKey(), error);
-				_errorMessage = error;
-			}
-		}
 	}
 }

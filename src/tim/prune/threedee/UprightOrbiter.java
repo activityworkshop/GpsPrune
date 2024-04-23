@@ -87,24 +87,24 @@ import com.sun.j3d.utils.universe.ViewingPlatform;
  */
 public class UprightOrbiter extends ViewPlatformAWTBehavior
 {
-	private Transform3D _longitudeTransform = new Transform3D();
-	private Transform3D _latitudeTransform = new Transform3D();
-	private Transform3D _rotateTransform = new Transform3D();
+	private final Transform3D _longitudeTransform = new Transform3D();
+	private final Transform3D _latitudeTransform = new Transform3D();
+	private final Transform3D _rotateTransform = new Transform3D();
 
 	// needed for integrateTransforms but don't want to new every time
-	private Transform3D _temp1 = new Transform3D();
-	private Transform3D _temp2 = new Transform3D();
-	private Transform3D _translation = new Transform3D();
-	private Vector3d _transVector = new Vector3d();
-	private Vector3d _distanceVector = new Vector3d();
-	private Vector3d _centerVector = new Vector3d();
-	private Vector3d _invertCenterVector = new Vector3d();
+	private final Transform3D _temp1 = new Transform3D();
+	private final Transform3D _temp2 = new Transform3D();
+	private final Transform3D _translation = new Transform3D();
+	private final Vector3d _transVector = new Vector3d();
+	private final Vector3d _distanceVector = new Vector3d();
+	private final Vector3d _centerVector = new Vector3d();
+	private final Vector3d _invertCenterVector = new Vector3d();
 
 	private double _deltaYaw = 0.0, _deltaPitch = 0.0;
 	private double _startDistanceFromCenter = 20.0;
 	private double _distanceFromCenter = 20.0;
-	private Point3d _rotationCenter = new Point3d();
-	private Matrix3d _rotMatrix = new Matrix3d();
+	private final Point3d _rotationCenter = new Point3d();
+	private final Matrix3d _rotMatrix = new Matrix3d();
 
 	private int _mouseX = 0, _mouseY = 0;
 
@@ -120,7 +120,7 @@ public class UprightOrbiter extends ViewPlatformAWTBehavior
 	private static final double NOMINAL_ROT_FACTOR = .008;
 	private static final double NOMINAL_TRANS_FACTOR = .003;
 
-	private double _pitchAngle = 0.0;
+	private double _pitchAngle;
 
 
 	/**

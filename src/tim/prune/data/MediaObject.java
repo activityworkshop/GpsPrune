@@ -127,7 +127,7 @@ public abstract class MediaObject
 	 * @return true if file has timestamp
 	 */
 	public boolean hasTimestamp() {
-		 return _timestamp != null && _timestamp.isValid();
+		return _timestamp != null && _timestamp.isValid();
 	}
 
 	/**
@@ -146,6 +146,13 @@ public abstract class MediaObject
 		// compare data arrays
 		return (inOther != null && _name != null && inOther._name != null && _name.equals(inOther._name)
 			&& _data != null && inOther._data != null && _data.length == inOther._data.length);
+	}
+
+	/** For completeness, also compare with an Object */
+	public boolean equals(Object inOther)
+	{
+		MediaObject other = (inOther instanceof MediaObject ? (MediaObject) inOther : null);
+		return equals(other);
 	}
 
 	/**

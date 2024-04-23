@@ -32,7 +32,7 @@ import tim.prune.config.Config;
 /**
  * Class to manage the loading of GPS data using GpsBabel
  */
-public class GpsSaver extends GenericFunction implements Runnable
+public class GpsSaver extends GenericFunction
 {
 	private boolean _gpsBabelChecked = false;
 	private JDialog _dialog = null;
@@ -65,7 +65,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 	public void begin()
 	{
 		// Check if gpsbabel looks like it's installed
-		if (_gpsBabelChecked || ExternalTools.isToolInstalled(ExternalTools.TOOL_GPSBABEL)
+		if (_gpsBabelChecked || ExternalTools.isToolInstalled(getConfig(), ExternalTools.TOOL_GPSBABEL)
 			|| JOptionPane.showConfirmDialog(_dialog,
 				I18nManager.getText("dialog.gpsload.nogpsbabel"), getName(),
 				JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)
@@ -107,12 +107,12 @@ public class GpsSaver extends GenericFunction implements Runnable
 		JLabel deviceLabel = new JLabel(I18nManager.getText("dialog.gpsload.device"));
 		deviceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(deviceLabel);
-		_deviceField = new JTextField(Config.getConfigString(Config.KEY_GPS_DEVICE), 12);
+		_deviceField = new JTextField(getConfig().getConfigString(Config.KEY_GPS_DEVICE), 12);
 		gridPanel.add(_deviceField);
 		JLabel formatLabel = new JLabel(I18nManager.getText("dialog.gpsload.format"));
 		formatLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(formatLabel);
-		_formatField = new JTextField(Config.getConfigString(Config.KEY_GPS_FORMAT), 12);
+		_formatField = new JTextField(getConfig().getConfigString(Config.KEY_GPS_FORMAT), 12);
 		gridPanel.add(_formatField);
 		JLabel nameLabel = new JLabel(I18nManager.getText("dialog.gpssend.trackname"));
 		nameLabel.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -159,7 +159,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 		_okButton.addActionListener(e -> {
 			// start thread to call gpsbabel
 			_cancelled = false;
-			new Thread(() -> run()).start();
+			new Thread(this::run).start();
 		});
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
@@ -267,7 +267,7 @@ public class GpsSaver extends GenericFunction implements Runnable
 	private void callGpsBabel() throws Exception
 	{
 		// Set up command to call gpsbabel
-		final String command = Config.getConfigString(Config.KEY_GPSBABEL_PATH);
+		final String command = getConfig().getConfigString(Config.KEY_GPSBABEL_PATH);
 		String[] commands = null;
 		final String device = _deviceField.getText().trim();
 		final String format = _formatField.getText().trim();
@@ -286,8 +286,8 @@ public class GpsSaver extends GenericFunction implements Runnable
 			}
 		}
 		// Save GPS settings in config
-		Config.setConfigString(Config.KEY_GPS_DEVICE, device);
-		Config.setConfigString(Config.KEY_GPS_FORMAT, format);
+		getConfig().setConfigString(Config.KEY_GPS_DEVICE, device);
+		getConfig().setConfigString(Config.KEY_GPS_FORMAT, format);
 
 		String errorMessage = "";
 		Process process = Runtime.getRuntime().exec(commands);

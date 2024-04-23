@@ -134,48 +134,48 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 	 * @param inSearchTerm entered search term
 	 * @return modified search term to give to geonames
 	 */
-	private static final String encodeSearchTerm(String inSearchTerm)
+	static String encodeSearchTerm(String inSearchTerm)
 	{
-		if (inSearchTerm != null && inSearchTerm.length() > 0)
-		{
-			// Replace umlauts oe, ue, ae, OE, UE, AE, szlig
-			StringBuilder sb = new StringBuilder();
-			final int numChars = inSearchTerm.length();
-			for (int i=0; i<numChars; i++)
-			{
-				char c = inSearchTerm.charAt(i);
-				switch (c)
-				{
-					// German umlauted vowels, add an "e"
-					case '\u00fc' : sb.append("ue"); break;
-					case '\u00e4' : sb.append("ae"); break;
-					case '\u00f6' : sb.append("oe"); break;
-					// German doppel s
-					case '\u00df' : sb.append("ss"); break;
-					// accented vowels
-					case '\u00e8' : case '\u00e9' :
-					case '\u00ea' : case '\u00eb' : sb.append('e'); break;
-					case '\u00e0' : case '\u00e1' :
-					case '\u00e2' : sb.append('a'); break;
-					case '\u00f2' : case '\u00f3' :
-					case '\u00f4' : sb.append('o'); break;
-					case '\u00ec' : case '\u00ed' :
-					case '\u00ee' : case '\u00ef' : sb.append('i'); break;
-					// cedillas, ny, l bar
-					case '\u00e7' : sb.append('c'); break;
-					case '\u015f' : sb.append('s'); break;
-					case '\u00f1' : sb.append('n'); break;
-					case '\u0142' : sb.append('l'); break;
-					// everything else
-					default  : sb.append(c);
-				}
-			}
-			String searchTerm = inSearchTerm;
-			try {
-				searchTerm = URLEncoder.encode(sb.toString(), "UTF-8");
-			} catch (UnsupportedEncodingException e1) {}
-			return searchTerm;
+		String searchTerm = (inSearchTerm == null ? "" : inSearchTerm.trim());
+		if (searchTerm.isEmpty()) {
+			return "";
 		}
-		return "";
+		// Replace umlauts oe, ue, ae, OE, UE, AE, szlig
+		StringBuilder sb = new StringBuilder();
+		final int numChars = searchTerm.length();
+		for (int i=0; i<numChars; i++)
+		{
+			char c = searchTerm.charAt(i);
+			switch (c)
+			{
+				// German umlauted vowels, add an "e"
+				case '\u00fc' : sb.append("ue"); break;
+				case '\u00e4' : sb.append("ae"); break;
+				case '\u00f6' : sb.append("oe"); break;
+				// German doppel s
+				case '\u00df' : sb.append("ss"); break;
+				// accented vowels
+				case '\u00e8' : case '\u00e9' :
+				case '\u00ea' : case '\u00eb' : sb.append('e'); break;
+				case '\u00e0' : case '\u00e1' :
+				case '\u00e2' : sb.append('a'); break;
+				case '\u00f2' : case '\u00f3' :
+				case '\u00f4' : sb.append('o'); break;
+				case '\u00ec' : case '\u00ed' :
+				case '\u00ee' : case '\u00ef' : sb.append('i'); break;
+				// cedillas, ny, l bar
+				case '\u00e7' : sb.append('c'); break;
+				case '\u015f' : sb.append('s'); break;
+				case '\u00f1' : sb.append('n'); break;
+				case '\u0142' : sb.append('l'); break;
+				// everything else
+				default  : sb.append(c);
+			}
+		}
+
+		try {
+			searchTerm = URLEncoder.encode(sb.toString(), "UTF-8");
+		} catch (UnsupportedEncodingException e1) {}
+		return searchTerm;
 	}
 }

@@ -1,78 +1,39 @@
 package tim.prune.data;
 
 /**
- * Class to represent a Latitude Coordinate
+ * Class to make it easier to create Coordinate objects for Latitudes
  */
-public class Latitude extends Coordinate
+public abstract class Latitude
 {
-	/**
-	 * Constructor
-	 * @param inString string value from file
-	 */
-	public Latitude(String inString)
+	public static Coordinate make(double inValue)
 	{
-		super(inString);
-	}
-
-
-	/**
-	 * Constructor
-	 * @param inValue value of coordinate
-	 * @param inFormat format to use
-	 */
-	public Latitude(double inValue, int inFormat)
-	{
-		super(inValue, inFormat, inValue < 0.0 ? SOUTH : NORTH);
-	}
-
-
-	/**
-	 * Turn the given character into a cardinal
-	 * @see tim.prune.data.Coordinate#getCardinal(char)
-	 */
-	protected int getCardinal(char inChar)
-	{
-		// Latitude recognises N, S and -
-		// default is No cardinal
-		int cardinal = NO_CARDINAL;
-		switch (inChar)
-		{
-			case 'N':
-			case 'n':
-				cardinal = NORTH; break;
-			case 'S':
-			case 's':
-			case '-':
-				cardinal = SOUTH; break;
-			default:
-				// no character given
+		if (Math.abs(inValue) >= 90.0) {
+			return null;
 		}
-		return cardinal;
+		return new Coordinate(inValue, inValue >= 0.0 ? Coordinate.Cardinal.NORTH : Coordinate.Cardinal.SOUTH);
 	}
 
-	/**
-	 * @return default cardinal (North)
-	 * @see tim.prune.data.Coordinate#getDefaultCardinal()
-	 */
-	protected int getDefaultCardinal()
+	public static Coordinate make(String inString)
 	{
-		return NORTH;
+		Coordinate coordinate = Coordinate.parse(inString, Coordinate.Cardinal.NORTH, Coordinate.Cardinal.SOUTH);
+		if (coordinate == null || Math.abs(coordinate.getDouble()) >= 90.0) {
+			return null;
+		}
+		return coordinate;
 	}
 
-	/**
-	 * Make a new Latitude object
-	 * @see tim.prune.data.Coordinate#makeNew(double, int)
-	 */
-	protected Coordinate makeNew(double inValue, int inFormat)
-	{
-		return new Latitude(inValue, inFormat);
+	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd, double inFraction) {
+		return Coordinate.interpolate(inStart, inEnd, inFraction, Coordinate.Cardinal.NORTH, Coordinate.Cardinal.SOUTH);
 	}
 
-	/**
-	 * @return the maximum degree range for this coordinate
-	 */
-	protected int getMaxDegrees()
+	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd, int inIndex, int inNumPoints) {
+		return interpolate(inStart, inEnd, 1.0 * (inIndex+1) / (inNumPoints + 1));
+	}
+
+	public static boolean hasCardinal(String inSource)
 	{
-		return 90;
+		Coordinate.Cardinal cardinal = Coordinate.getCardinal(inSource,
+			Coordinate.Cardinal.NORTH, Coordinate.Cardinal.SOUTH);
+		return cardinal != Coordinate.Cardinal.NO_CARDINAL;
 	}
 }

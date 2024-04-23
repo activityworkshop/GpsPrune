@@ -14,7 +14,6 @@ public class OpenCachingDeXmlHandler extends DefaultHandler
 	private String _value = null;
 	private ArrayList<SearchResult> _trackList = null;
 	private SearchResult _track = null;
-	private String _errorMessage = null;
 
 
 	/**
@@ -26,14 +25,12 @@ public class OpenCachingDeXmlHandler extends DefaultHandler
 		if (inTagName.equals("result")) {
 			_trackList = new ArrayList<SearchResult>();
 		}
-		else if (inTagName.equals("cache"))
-		{
+		else if (inTagName.equals("cache")) {
 			_track = new SearchResult();
 		}
-//		else if (inTagName.equals("status")) {
-//			_errorMessage = inAttributes.getValue("message");
-//		}
-		else _value = null;
+		else {
+			_value = null;
+		}
 		super.startElement(inUri, inLocalName, inTagName, inAttributes);
 	}
 
@@ -64,7 +61,7 @@ public class OpenCachingDeXmlHandler extends DefaultHandler
 			try {
 				_track.setLength(Double.parseDouble(_value) * 1000.0); // convert from km to m
 			}
-			catch (NumberFormatException nfe) {}
+			catch (NumberFormatException ignored) {}
 		}
 		else if (inTagName.equals("link")) {
 			_track.setWebUrl(_value);
@@ -86,15 +83,7 @@ public class OpenCachingDeXmlHandler extends DefaultHandler
 	/**
 	 * @return the list of tracks
 	 */
-	public ArrayList<SearchResult> getTrackList()
-	{
+	public ArrayList<SearchResult> getTrackList() {
 		return _trackList;
-	}
-
-	/**
-	 * @return error message, if any
-	 */
-	public String getErrorMessage() {
-		return _errorMessage;
 	}
 }

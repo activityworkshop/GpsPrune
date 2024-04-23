@@ -9,7 +9,7 @@ import tim.prune.I18nManager;
 public class DeletionTableModel extends AbstractTableModel
 {
 	/** info list, one for each row of table */
-	private DateInfoList _infoList = null;
+	private final DateInfoList _infoList;
 
 	/** Column heading for date */
 	private static final String COLUMN_HEADING_DATE = I18nManager.getText("fieldname.date");

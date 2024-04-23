@@ -22,7 +22,7 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.SourceInfo;
-import tim.prune.data.SourceInfo.FILE_TYPE;
+import tim.prune.data.SourceInfo.FileType;
 import tim.prune.load.babel.BabelFilterPanel;
 
 /**
@@ -54,7 +54,7 @@ public class BabelLoadFromGps extends BabelLoadFunction
 
 	/** @return Source info */
 	protected SourceInfo getSourceInfo() {
-		return new SourceInfo(_deviceField.getText(), FILE_TYPE.GPSBABEL);
+		return new SourceInfo(_deviceField.getText(), FileType.GPSBABEL);
 	}
 
 	/** @return input format */
@@ -85,7 +85,7 @@ public class BabelLoadFromGps extends BabelLoadFunction
 		JLabel deviceLabel = new JLabel(I18nManager.getText("dialog.gpsload.device"));
 		deviceLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(deviceLabel);
-		_deviceField = new JTextField(Config.getConfigString(Config.KEY_GPS_DEVICE), 12);
+		_deviceField = new JTextField(getConfig().getConfigString(Config.KEY_GPS_DEVICE), 12);
 		KeyAdapter escapeListener = new KeyAdapter() {
 			public void keyReleased(KeyEvent e)
 			{
@@ -100,7 +100,7 @@ public class BabelLoadFromGps extends BabelLoadFunction
 		JLabel formatLabel = new JLabel(I18nManager.getText("dialog.gpsload.format"));
 		formatLabel.setHorizontalAlignment(SwingConstants.RIGHT);
 		gridPanel.add(formatLabel);
-		_formatField = new JTextField(Config.getConfigString(Config.KEY_GPS_FORMAT), 12);
+		_formatField = new JTextField(getConfig().getConfigString(Config.KEY_GPS_FORMAT), 12);
 		_formatField.addKeyListener(escapeListener);
 		gridPanel.add(_formatField);
 		gridPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -123,9 +123,9 @@ public class BabelLoadFromGps extends BabelLoadFunction
 		mainPanel.add(_saveCheckbox);
 
 		// Filter panel
-		_filterPanel = new BabelFilterPanel(_parentFrame);
+		_filterPanel = new BabelFilterPanel(_parentFrame, getIconManager());
 		// Give filter panel the contents of the config
-		String filter = Config.getConfigString(Config.KEY_GPSBABEL_FILTER);
+		String filter = getConfig().getConfigString(Config.KEY_GPSBABEL_FILTER);
 		if (filter != null) {
 			_filterPanel.setFilterString(filter);
 		}
@@ -160,8 +160,8 @@ public class BabelLoadFromGps extends BabelLoadFunction
 		final String device = _deviceField.getText().trim();
 		final String format = _formatField.getText().trim();
 		final String filter = _filterPanel.getFilterString();
-		Config.setConfigString(Config.KEY_GPS_DEVICE, device);
-		Config.setConfigString(Config.KEY_GPS_FORMAT, format);
-		Config.setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
+		getConfig().setConfigString(Config.KEY_GPS_DEVICE, device);
+		getConfig().setConfigString(Config.KEY_GPS_FORMAT, format);
+		getConfig().setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
 	}
 }

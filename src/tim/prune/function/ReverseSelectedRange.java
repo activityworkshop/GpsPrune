@@ -77,7 +77,7 @@ public class ReverseSelectedRange extends TimeSensitiveFunction
 				}
 			}
 		}
-		return new ReverseRangeCmd(pointIndexes, inStartIndex, inEndIndex, pointFlags);
+		return new ReverseRangeCmd(pointIndexes, pointFlags);
 	}
 
 	/**

@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 import tim.prune.data.*;
 
 import java.io.File;
-import java.util.List;
+import java.util.ArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -19,10 +19,10 @@ class CorrelatePhotosTest
 		Track track = TrackHelper.makeTwelvePointTrack();
 		assertEquals(12, track.getNumPoints());
 		// Correlate by adding a new point and its photo
-		DataPoint extraPoint = new DataPoint(new Latitude("8.01"), new Longitude("0.5"), null);
+		DataPoint extraPoint = new DataPoint(Latitude.make("8.01"), Longitude.make("0.5"));
 		Photo photo = new Photo(new File("p12345.jpg"));
-		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, List.of(extraPoint),
-			List.of(new PointAndMedia(extraPoint, photo, null)));
+		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, ListUtils.makeList(extraPoint),
+			ListUtils.makeList(new PointAndMedia(extraPoint, photo, null)));
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		// check
@@ -45,8 +45,8 @@ class CorrelatePhotosTest
 		// Correlate by attaching a photo to an existing point
 		Photo photo = new Photo(new File("p12345.jpg"));
 		DataPoint pointToLink = track.getPoint(3);
-		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, List.of(),
-			List.of(new PointAndMedia(pointToLink, photo, null)));
+		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, new ArrayList<DataPoint>(),
+			ListUtils.makeList(new PointAndMedia(pointToLink, photo, null)));
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		// check
@@ -71,8 +71,8 @@ class CorrelatePhotosTest
 		pointToLink.setPhoto(photo);
 		photo.setDataPoint(pointToLink);
 		AudioClip audio = new AudioClip(new File("audio1.mp3"));
-		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_AUDIOS, List.of(),
-			List.of(new PointAndMedia(pointToLink, null, audio)));
+		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_AUDIOS, new ArrayList<DataPoint>(),
+			ListUtils.makeList(new PointAndMedia(pointToLink, null, audio)));
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		// check

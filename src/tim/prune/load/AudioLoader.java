@@ -2,7 +2,6 @@ package tim.prune.load;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import javax.swing.JFileChooser;
 
@@ -20,7 +19,7 @@ import tim.prune.function.Describer;
 public class AudioLoader extends GenericFunction
 {
 	private JFileChooser _fileChooser = null;
-	private GenericFileFilter _fileFilter = null;
+	private final GenericFileFilter _fileFilter;
 	private ArrayList<MediaObject> _audioList = null;
 
 
@@ -53,9 +52,11 @@ public class AudioLoader extends GenericFunction
 			_fileChooser.setFileFilter(_fileFilter);
 			_fileChooser.setDialogTitle(getName());
 			// start from directory in config if already set by other operations
-			String configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);
-			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_TRACK_DIR);}
-			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
+			String configDir = getConfig().getConfigString(Config.KEY_PHOTO_DIR);
+			if (configDir == null) {configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);}
+			if (configDir != null) {
+				_fileChooser.setCurrentDirectory(new File(configDir));
+			}
 		}
 		// Show file dialog to choose file / directory(ies)
 		if (_fileChooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
@@ -67,7 +68,7 @@ public class AudioLoader extends GenericFunction
 			}
 			else
 			{
-				Collections.sort(_audioList, new MediaSorter());
+				_audioList.sort(new MediaSorter());
 				AppendMediaCmd command = new AppendMediaCmd(_audioList);
 				Describer confirmDescriber = new Describer("confirm.audiosloaded.single", "confirm.audiosloaded");
 				command.setConfirmText(confirmDescriber.getDescriptionWithCount(_audioList.size()));

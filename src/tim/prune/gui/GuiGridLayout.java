@@ -1,10 +1,12 @@
 package tim.prune.gui;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 /**
@@ -13,10 +15,10 @@ import javax.swing.JPanel;
  */
 public class GuiGridLayout
 {
-	private GridBagLayout _layout = null;
-	private GridBagConstraints _constraints = null;
-	private JPanel _panel = null;
-	private int _numColumns = 0;
+	private final GridBagLayout _layout;
+	private final GridBagConstraints _constraints;
+	private final JPanel _panel;
+	private final int _numColumns;
 	private double[] _colWeights = null;
 	private boolean[] _rightAligns = null;
 	private int _x = 0;
@@ -72,18 +74,39 @@ public class GuiGridLayout
 	 * Add the given component to the grid
 	 * @param inComponent component to add
 	 */
-	public void add(JComponent inComponent)
+	public void add(JComponent inComponent) {
+		add(inComponent, 1, false);
+	}
+
+	/**
+	 * Add the given component to the grid
+	 * @param inComponent component to add
+	 * @param inFillWidth true to fill width of column, default false
+	 */
+	public void add(JComponent inComponent, boolean inFillWidth) {
+		add(inComponent, 1, inFillWidth);
+	}
+
+	/**
+	 * Add the given component to the grid
+	 * @param inComponent component to add
+	 * @param inColspan number of columns to span (normally 1)
+	 * @param inFillWidth true to fill width of column, default false
+	 */
+	public void add(JComponent inComponent, int inColspan, boolean inFillWidth)
 	{
 		_constraints.gridx = _x;
 		_constraints.gridy = _y;
 		_constraints.weightx = _colWeights[_x];
+		_constraints.gridwidth = inColspan;
 		// set anchor
 		_constraints.anchor = (_rightAligns[_x]?GridBagConstraints.LINE_END:GridBagConstraints.LINE_START);
+		_constraints.fill = (inFillWidth ? GridBagConstraints.HORIZONTAL: GridBagConstraints.NONE);
 		_layout.setConstraints(inComponent, _constraints);
 		// add to panel
 		_panel.add(inComponent);
 		// work out next position
-		_x++;
+		_x += inColspan;
 		if (_x >= _numColumns) {
 			nextRow();
 		}
@@ -96,5 +119,13 @@ public class GuiGridLayout
 	{
 		_x = 0;
 		_y++;
+	}
+
+	public void addVerticalGap(int inPixels)
+	{
+		JLabel invisibleLabel = new JLabel();
+		invisibleLabel.setPreferredSize(new Dimension(10, inPixels));
+		add(invisibleLabel);
+		nextRow();
 	}
 }

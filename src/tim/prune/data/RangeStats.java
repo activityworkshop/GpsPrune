@@ -44,8 +44,7 @@ public class RangeStats
 	 */
 	protected void populateFromTrack(Track inTrack, int inStartIndex, int inEndIndex)
 	{
-		for (int i=inStartIndex; i<=inEndIndex; i++)
-		{
+		for (int i=inStartIndex; i<=inEndIndex; i++) {
 			addPoint(inTrack.getPoint(i));
 		}
 	}
@@ -55,8 +54,7 @@ public class RangeStats
 	 */
 	public void addPoint(DataPoint inPoint)
 	{
-		if (inPoint == null)
-		{
+		if (inPoint == null) {
 			return;
 		}
 		_numPoints++;
@@ -181,8 +179,7 @@ public class RangeStats
 	}
 
 	/** @return number of seconds within the segments of the range */
-	public long getMovingDurationInSeconds()
-	{
+	public long getMovingDurationInSeconds() {
 		return _movingMilliseconds / 1000;
 	}
 
@@ -196,14 +193,14 @@ public class RangeStats
 		return _timesOutOfSequence;
 	}
 
-	/** @return total distance in the current distance units (km or mi) */
-	public double getTotalDistance() {
-		return Distance.convertRadiansToDistance(_totalDistanceRads);
+	/** @return total distance in the given distance units (km or mi) */
+	public double getTotalDistance(Unit inUnit) {
+		return Distance.convertRadiansToDistance(_totalDistanceRads, inUnit);
 	}
 
-	/** @return moving distance in the current distance units (km or mi) */
-	public double getMovingDistance() {
-		return Distance.convertRadiansToDistance(_movingDistanceRads);
+	/** @return moving distance in the given distance units (km or mi) */
+	public double getMovingDistance(Unit inUnit) {
+		return Distance.convertRadiansToDistance(_movingDistanceRads, inUnit);
 	}
 
 	/** @return moving distance in km */

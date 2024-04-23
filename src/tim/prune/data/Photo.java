@@ -44,7 +44,7 @@ public class Photo extends MediaObject
 	 */
 	private void calculateSize()
 	{
-		ImageIcon icon = null;
+		final ImageIcon icon;
 		if (_file != null) {
 			icon = new ImageIcon(_file.getAbsolutePath());
 		}

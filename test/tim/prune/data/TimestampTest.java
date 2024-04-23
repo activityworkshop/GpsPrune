@@ -11,6 +11,37 @@ import org.junit.jupiter.api.Test;
  */
 class TimestampTest
 {
+	@Test
+	void testPlusMinusZoneParsing()
+	{
+		final String stampString = "2018-03-03T10:22:33";
+		Timestamp baseStamp = new TimestampUtc(stampString);
+		Timestamp withZ = new TimestampUtc(stampString + "Z");
+		assertTrue(withZ.isValid());
+		assertEquals(0, withZ.getMillisecondsSince(baseStamp));
+		// One timezone east
+		Timestamp plusOne = new TimestampUtc(stampString + "+01");
+		assertTrue(plusOne.isValid());
+		// Note: offset is negative, because the timezone is one hour ahead
+		assertEquals(-60 * 60 * 1000L, plusOne.getMillisecondsSince(baseStamp));
+		// One timezone west
+		Timestamp minusOne = new TimestampUtc(stampString + "-01");
+		assertTrue(minusOne.isValid());
+		assertEquals(60 * 60 * 1000L, minusOne.getMillisecondsSince(baseStamp));
+	}
+
+	@Test
+	void testMillisecondParsing()
+	{
+		final String stampString = "2018-03-03T10:22:33";
+		Timestamp baseStamp = new TimestampUtc(stampString);
+		Timestamp withCentis = new TimestampUtc(stampString + ".24");
+		assertTrue(withCentis.isValid());
+		assertEquals(240, withCentis.getMillisecondsSince(baseStamp));
+		Timestamp withMillis = new TimestampUtc(stampString + ".941");
+		assertTrue(withMillis.isValid());
+		assertEquals(941, withMillis.getMillisecondsSince(baseStamp));
+	}
 
 	@Test
 	void testLondonMoscow()

@@ -4,16 +4,16 @@ import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 
 /**
- * Little status icon for green tick (valid) or red cross (not valid)
+ * Little status icon for either tick (valid) or cross (not valid)
  */
 public class StatusIcon extends JLabel
 {
 	/** Current status */
 	private Status _currStatus = Status.BLANK;
 
-	private static final ImageIcon _blankIcon = IconManager.getImageIcon(IconManager.ENTRY_NONE);
-	private static final ImageIcon _validIcon = IconManager.getImageIcon(IconManager.ENTRY_VALID);
-	private static final ImageIcon _invalidIcon = IconManager.getImageIcon(IconManager.ENTRY_INVALID);
+	private final ImageIcon _blankIcon;
+	private final ImageIcon _validIcon;
+	private final ImageIcon _invalidIcon;
 
 	/**
 	 * Three possible states for icon
@@ -26,11 +26,15 @@ public class StatusIcon extends JLabel
 
 	/**
 	 * Constructor
+	 * @param inIconManager icon manager to provide icons
 	 */
-	public StatusIcon()
+	public StatusIcon(IconManager inIconManager)
 	{
-		super(_blankIcon);
+		super(inIconManager.getImageIcon(IconManager.ENTRY_NONE));
 		_currStatus = Status.BLANK;
+		_blankIcon = inIconManager.getImageIcon(IconManager.ENTRY_NONE);
+		_validIcon = inIconManager.getImageIcon(IconManager.ENTRY_VALID);
+		_invalidIcon = inIconManager.getImageIcon(IconManager.ENTRY_INVALID);
 	}
 
 	/**

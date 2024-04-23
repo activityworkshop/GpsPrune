@@ -1,6 +1,7 @@
 package tim.prune.threedee;
 
 import tim.prune.DataStatus;
+import tim.prune.config.Config;
 import tim.prune.data.Track;
 
 /**
@@ -27,8 +28,9 @@ public interface ThreeDWindow
 
 	/**
 	 * @param inDefinition image definition (image or not, source, zoom)
+	 * @param inConfig config object for image generation
 	 */
-	public void setBaseImageParameters(ImageDefinition inDefinition);
+	public void setBaseImageParameters(ImageDefinition inDefinition, Config inConfig);
 
 	/**
 	 * @param inDefinition terrain definition (terrain or not, resolution)

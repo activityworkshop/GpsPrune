@@ -20,6 +20,7 @@ import javax.swing.JProgressBar;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.Track;
+import tim.prune.fileutils.FileList;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.threedee.ImageDefinition;
@@ -36,6 +37,8 @@ public class BaseImageConfigDialog implements Runnable
 	private final JDialog _parentDialog;
 	/** Track to use for preview image */
 	private final Track _track;
+	/** Config object */
+	private final Config _config;
 	/** Dialog to show */
 	private final JDialog _dialog;
 	/** Checkbox for using an image or not */
@@ -57,7 +60,7 @@ public class BaseImageConfigDialog implements Runnable
 	/** Image preview panel */
 	private ImagePreviewPanel _previewPanel = null;
 	/** Grouter, used to avoid regenerating images */
-	private MapGrouter _grouter = new MapGrouter();
+	private final MapGrouter _grouter = new MapGrouter();
 	/** OK button, needs to be enabled/disabled */
 	private JButton _okButton = null;
 	/** Flag for rebuilding dialog, don't bother refreshing and recalculating */
@@ -71,8 +74,10 @@ public class BaseImageConfigDialog implements Runnable
 	 * @param inParent parent object to notify on completion of dialog
 	 * @param inParentDialog parent dialog
 	 * @param inTrack track object
+	 * @param inConfig config object
 	 */
-	public BaseImageConfigDialog(BaseImageConsumer inParent, JDialog inParentDialog, Track inTrack)
+	public BaseImageConfigDialog(BaseImageConsumer inParent, JDialog inParentDialog,
+		Track inTrack, Config inConfig)
 	{
 		_parent = inParent;
 		_parentDialog = inParentDialog;
@@ -81,6 +86,7 @@ public class BaseImageConfigDialog implements Runnable
 		_dialog.getContentPane().add(makeDialogComponents());
 		_dialog.pack();
 		_track = inTrack;
+		_config = inConfig;
 	}
 
 	/**
@@ -97,21 +103,22 @@ public class BaseImageConfigDialog implements Runnable
 	/**
 	 * Begin the function
 	 */
-	public void begin()
-	{
-		initDialog();
-		_dialog.setLocationRelativeTo(_parentDialog);
-		_dialog.setVisible(true);
+	public void begin() {
+		begin(false);
 	}
 
 	/**
-	 * Begin the function with a default of using an image
+	 * Begin the function specifying a default image yes/no value
 	 */
-	public void beginWithImageYes()
+	public void begin(boolean inImageYes)
 	{
 		initDialog();
-		_useImageCheckbox.setSelected(true);
-		refreshDialog();
+		_dialog.setLocationRelativeTo(_parentDialog);
+		if (inImageYes)
+		{
+			_useImageCheckbox.setSelected(true);
+			refreshDialog();
+		}
 		_dialog.setVisible(true);
 	}
 
@@ -148,7 +155,7 @@ public class BaseImageConfigDialog implements Runnable
 						break;
 					}
 				}
-				catch (NumberFormatException nfe) {}
+				catch (NumberFormatException ignored) {}
 			}
 		}
 		_rebuilding = false;
@@ -208,16 +215,16 @@ public class BaseImageConfigDialog implements Runnable
 	/**
 	 * @return true if it should be possible to use an image, false if no disk cache or cache empty
 	 */
-	public static boolean isImagePossible()
+	public boolean isImagePossible()
 	{
-		String path = Config.getConfigString(Config.KEY_DISK_CACHE);
+		String path = _config.getConfigString(Config.KEY_DISK_CACHE);
 		if (path != null && !path.equals(""))
 		{
 			File cacheDir = new File(path);
 			if (cacheDir.exists() && cacheDir.isDirectory())
 			{
 				// Check if there are any directories in the cache
-				for (File subdir : cacheDir.listFiles())
+				for (File subdir : FileList.filesIn(cacheDir))
 				{
 					if (subdir.exists() && subdir.isDirectory()) {
 						return true;
@@ -234,10 +241,10 @@ public class BaseImageConfigDialog implements Runnable
 	 * @param inSource selected map source
 	 * @return true if there is a zoom directory for each of the source's layers
 	 */
-	private static boolean isZoomAvailable(int inZoom, MapSource inSource)
+	private boolean isZoomAvailable(int inZoom, MapSource inSource)
 	{
 		if (inSource == null) {return false;}
-		String path = Config.getConfigString(Config.KEY_DISK_CACHE);
+		String path = _config.getConfigString(Config.KEY_DISK_CACHE);
 		if (path == null || path.equals("")) {
 			return false;
 		}
@@ -254,9 +261,7 @@ public class BaseImageConfigDialog implements Runnable
 		if (inSource.getNumLayers() > 1)
 		{
 			File layer1 = new File(cacheDir, inSource.getSiteName(1) + inZoom);
-			if (!layer1.exists() || !layer1.isDirectory() || !layer1.canRead()) {
-				return false;
-			}
+			return layer1.exists() && layer1.isDirectory() && layer1.canRead();
 		}
 		// must be ok
 		return true;
@@ -294,7 +299,7 @@ public class BaseImageConfigDialog implements Runnable
 		JLabel sourceLabel = new JLabel(I18nManager.getText("dialog.baseimage.mapsource") + ": ");
 		sourceLabel.setHorizontalAlignment(JLabel.RIGHT);
 		controlsPanel.add(sourceLabel);
-		_mapSourceDropdown = new JComboBox<String>();
+		_mapSourceDropdown = new JComboBox<>();
 		_mapSourceDropdown.addItem("name of map source");
 		// Add listener to dropdown to change zoom levels
 		_mapSourceDropdown.addActionListener(e -> refreshDialog());
@@ -303,7 +308,7 @@ public class BaseImageConfigDialog implements Runnable
 		JLabel zoomLabel = new JLabel(I18nManager.getText("dialog.baseimage.zoom") + ": ");
 		zoomLabel.setHorizontalAlignment(JLabel.RIGHT);
 		controlsPanel.add(zoomLabel);
-		_zoomDropdown = new JComboBox<String>();
+		_zoomDropdown = new JComboBox<>();
 		// Add action listener to enable ok button when zoom changed
 		_zoomDropdown.addActionListener(e -> {
 			if (_zoomDropdown.getSelectedIndex() >= 0) {
@@ -442,7 +447,7 @@ public class BaseImageConfigDialog implements Runnable
 		MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
 
 		// Use the Grouter to create an image (slow, blocks thread)
-		GroutedImage groutedImage = _grouter.createMapImage(_track, mapSource, getSelectedZoomLevel());
+		GroutedImage groutedImage = _grouter.createMapImage(_track, mapSource, getSelectedZoomLevel(), _config);
 
 		// If the dialog hasn't changed, pass the generated image to the preview panel
 		if (_useImageCheckbox.isSelected()
@@ -452,7 +457,8 @@ public class BaseImageConfigDialog implements Runnable
 		{
 			_previewPanel.setImage(groutedImage);
 			final int numTilesRemaining = groutedImage.getNumTilesTotal() - groutedImage.getNumTilesUsed();
-			final boolean offerDownload = numTilesRemaining > 0 && numTilesRemaining < 50 && Config.getConfigBoolean(Config.KEY_ONLINE_MODE);
+			final boolean offerDownload = numTilesRemaining > 0 && numTilesRemaining < 50
+				&& _config.getConfigBoolean(Config.KEY_ONLINE_MODE);
 			// Set values of labels
 			_downloadTilesButton.setVisible(offerDownload);
 			_downloadTilesButton.setEnabled(offerDownload);
@@ -483,7 +489,7 @@ public class BaseImageConfigDialog implements Runnable
 		try {
 			zoomLevel = Integer.parseInt(_zoomDropdown.getSelectedItem().toString());
 		}
-		catch (NullPointerException npe) {}
+		catch (NullPointerException ignored) {}
 		catch (Exception e) {
 			System.err.println("Exception: " + e.getClass().getName() + " : " + e.getMessage());
 		}
@@ -532,7 +538,7 @@ public class BaseImageConfigDialog implements Runnable
 			final int mapIndex = _mapSourceDropdown.getSelectedIndex();
 			if (!_useImageCheckbox.isSelected() || mapIndex < 0) {return;}
 			MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
-			grouter.createMapImage(_track, mapSource, getSelectedZoomLevel(), true);
+			grouter.createMapImage(_track, mapSource, getSelectedZoomLevel(), true, _config);
 			_progressBar.setVisible(false);
 			// And then refresh the dialog
 			_grouter.clearMapImage();

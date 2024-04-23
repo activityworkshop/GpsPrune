@@ -2,18 +2,20 @@ package tim.prune.undo;
 
 import java.util.Stack;
 
+import tim.prune.cmd.Command;
+
 /**
- * Class to hold an undo operation together with a counter
+ * Class to hold a command together with a counter
  */
-class UndoOpWithState
+class CommandWithState
 {
-	public final UndoOperation _undoOperation;
+	public final Command _command;
 	public final int _undoCounter;
 
 	/** Constructor */
-	public UndoOpWithState(UndoOperation inOp, int inCounter)
+	public CommandWithState(Command inCommand, int inCounter)
 	{
-		_undoOperation = inOp;
+		_command = inCommand;
 		_undoCounter = inCounter;
 	}
 }
@@ -23,7 +25,7 @@ class UndoOpWithState
  * Stack of undo operations
  * which also remembers how many undos have been performed
  */
-public class UndoStack extends Stack<UndoOpWithState>
+public class UndoStack extends Stack<CommandWithState>
 {
 	/** Number of undos (and clears) already performed */
 	private int _numUndos = 0;
@@ -35,23 +37,21 @@ public class UndoStack extends Stack<UndoOpWithState>
 		super.clear();
 	}
 
-	/** Add an undo operation to the stack */
-	public synchronized boolean add(UndoOperation inOp)
-	{
-		return super.add(new UndoOpWithState(inOp, _numUndos));
+	/** Add a command to the stack */
+	public synchronized boolean add(Command inCommand) {
+		return super.add(new CommandWithState(inCommand, _numUndos));
 	}
 
-	/** Pop the latest operation from the stack */
-	public synchronized UndoOperation popOperation()
+	/** Pop the latest command from the stack */
+	public synchronized Command popCommand()
 	{
 		_numUndos++;
-		return super.pop()._undoOperation;
+		return super.pop()._command;
 	}
 
-	/** Get the operation at the given index */
-	public UndoOperation getOperationAt(int inIndex)
-	{
-		return super.elementAt(inIndex)._undoOperation;
+	/** Get the command at the given index */
+	public Command getCommandAt(int inIndex) {
+		return super.elementAt(inIndex)._command;
 	}
 
 	/** @return number of undos */

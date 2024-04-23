@@ -2,6 +2,7 @@ package tim.prune.gui.colour;
 
 import java.awt.Color;
 
+import tim.prune.config.Config;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.profile.GradientData;
@@ -22,11 +23,11 @@ public class GradientColourer extends ProfileDataColourer
 	}
 
 	@Override
-	public void calculateColours(TrackInfo inTrackInfo)
+	public void calculateColours(TrackInfo inTrackInfo, Config inConfig)
 	{
 		Track track = inTrackInfo == null ? null : inTrackInfo.getTrack();
 		// Calculate gradient value for each point
 		GradientData data = new GradientData(track);
-		calculateColours(track, data);
+		calculateColours(track, inConfig, data);
 	}
 }

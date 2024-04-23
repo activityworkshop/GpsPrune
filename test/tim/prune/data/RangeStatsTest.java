@@ -2,6 +2,7 @@ package tim.prune.data;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ class RangeStatsTest
 	void movingTime()
 	{
 		Track track = new Track();
-		List<DataPoint> points = List.of(
+		List<DataPoint> points = createListOf(
 			createDataPoint("01-Jan-2020 00:00:00"),
 			createDataPoint("01-Jan-2020 00:00:05"),
 			createDataPoint("01-Jan-2020 00:00:07")
@@ -35,7 +36,7 @@ class RangeStatsTest
 	void movingTimeWithGap()
 	{
 		Track track = new Track();
-		List<DataPoint> points = List.of(
+		List<DataPoint> points = createListOf(
 			createDataPoint("01-Jan-2020 00:00:00"),
 			createDataPoint(""),
 			createDataPoint("01-Jan-2020 00:00:05"),
@@ -54,7 +55,7 @@ class RangeStatsTest
 	void movingTimeSeveralSegments()
 	{
 		Track track = new Track();
-		List<DataPoint> points = List.of(
+		List<DataPoint> points = createListOf(
 			createDataPoint("01-Jan-2020 00:01:00"),
 			createDataPoint(""),
 			createDataPoint("01-Jan-2020 00:01:05"),
@@ -81,7 +82,7 @@ class RangeStatsTest
 	void movingTimeMissingFirstTimestamp()
 	{
 		Track track = new Track();
-		List<DataPoint> points = List.of(
+		List<DataPoint> points = createListOf(
 			createDataPoint(""),
 			createDataPoint("01-Jan-2020 00:00:00"),
 			createDataPoint("01-Jan-2020 00:00:05")
@@ -99,10 +100,20 @@ class RangeStatsTest
 		return createDataPoint(timestamp, false);
 	}
 
-	private DataPoint createDataPoint(String timestamp, boolean newSegment) {
-		return new DataPoint(
-			new String[] {timestamp, newSegment ? "1" : "0"},
-			new FieldList(Field.TIMESTAMP, Field.NEW_SEGMENT),
-			null);
+	private DataPoint createDataPoint(String timestamp, boolean newSegment)
+	{
+		DataPoint point = new DataPoint(Latitude.make(0.0), Longitude.make(0.0));
+		point.setFieldValue(Field.TIMESTAMP, timestamp, false);
+		point.setSegmentStart(newSegment);
+		return point;
+	}
+
+	private List<DataPoint> createListOf(DataPoint ...dataPoints)
+	{
+		ArrayList<DataPoint> result = new ArrayList<>();
+		for (DataPoint point : dataPoints) {
+			result.add(point);
+		}
+		return result;
 	}
 }

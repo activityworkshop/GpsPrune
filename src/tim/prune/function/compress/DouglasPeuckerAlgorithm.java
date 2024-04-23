@@ -91,8 +91,11 @@ public class DouglasPeuckerAlgorithm extends SingleParameterAlgorithm
 	private static int countFlags(boolean[] inFlags)
 	{
 		int numDeleted = 0;
-		for (int i=0; i<inFlags.length; i++) {
-			if (inFlags[i]) numDeleted++;
+		for (boolean inFlag : inFlags)
+		{
+			if (inFlag) {
+				numDeleted++;
+			}
 		}
 		return numDeleted;
 	}
@@ -130,7 +133,7 @@ public class DouglasPeuckerAlgorithm extends SingleParameterAlgorithm
 			return;
 		}
 
-		double maxDist = -1.0, dist = -1.0;
+		double maxDist = -1.0;
 		int furthestIndex = -1;
 		for (int i=inSegStart+1; i<inSegEnd; i++)
 		{
@@ -140,6 +143,7 @@ public class DouglasPeuckerAlgorithm extends SingleParameterAlgorithm
 				XYpoint ac = startxy.vectorTo(currPoint);
 				double distAP = ab.dot(ac) / dist2AB;
 				// calc distance from point to line depending on distAP
+				final double dist;
 				if (distAP < 0.0) {
 					dist = ac.len(); // outside line segment AB on the A side
 				}

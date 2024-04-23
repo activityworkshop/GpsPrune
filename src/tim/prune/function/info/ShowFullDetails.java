@@ -161,7 +161,7 @@ public class ShowFullDetails extends GenericFunction
 		Selection selection = _app.getTrackInfo().getSelection();
 		if (selection.hasRangeSelected())
 		{
-			final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+			final int altitudeTolerance = getConfig().getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
 			RangeStatsWithGradients stats = new RangeStatsWithGradients(_app.getTrackInfo().getTrack(),
 				selection.getStart(), selection.getEnd(), altitudeTolerance);
 			SpeedValue maxSpeed = calculateMaxSpeed(_app.getTrackInfo().getTrack(),
@@ -181,13 +181,13 @@ public class ShowFullDetails extends GenericFunction
 	 * @param inEndIndex end of selection
 	 * @return max speed, if any
 	 */
-	private static SpeedValue calculateMaxSpeed(Track inTrack, int inStartIndex, int inEndIndex)
+	private SpeedValue calculateMaxSpeed(Track inTrack, int inStartIndex, int inEndIndex)
 	{
 		SpeedValue maxSpeed = new SpeedValue();
 		SpeedValue currSpeed = new SpeedValue();
 		for (int i=inStartIndex; i<=inEndIndex; i++)
 		{
-			SpeedCalculator.calculateSpeed(inTrack, i, currSpeed);
+			SpeedCalculator.calculateSpeed(inTrack, i, getConfig().getUnitSet(), currSpeed);
 			if (currSpeed.isValid() && (!maxSpeed.isValid() || currSpeed.getValue() > maxSpeed.getValue()))
 			{
 				maxSpeed.setValue(currSpeed.getValue());
@@ -201,16 +201,15 @@ public class ShowFullDetails extends GenericFunction
 	 * @param inPointIndex current point index
 	 * @return string describing point details
 	 */
-	private static String makePointDescription(Track inTrack, int inPointIndex)
+	private String makePointDescription(Track inTrack, int inPointIndex)
 	{
 		DataPoint point = inTrack.getPoint(inPointIndex);
-		if (point == null)
-		{
+		if (point == null) {
 			return "";
 		}
 
-		final int coordDisplayFormat = Coordinate.getCoordinateFormatForDisplay(
-			Config.getConfigInt(Config.KEY_COORD_DISPLAY_FORMAT));
+		final Coordinate.Format coordDisplayFormat = Coordinate.getCoordinateFormatForDisplay(
+			getConfig().getConfigString(Config.KEY_COORD_DISPLAY_FORMAT));
 		StringBuffer result = new StringBuffer();
 		final String latStr = CoordDisplay.makeCoordinateLabel(point.getLatitude(), coordDisplayFormat);
 		final String lonStr = CoordDisplay.makeCoordinateLabel(point.getLongitude(), coordDisplayFormat);
@@ -218,15 +217,16 @@ public class ShowFullDetails extends GenericFunction
 		addTextPair(result, "fieldname.longitude", lonStr);
 		addTextPair(result, "fieldname.coordinates", latStr + ", " + lonStr);
 
+		UnitSet unitSet = getConfig().getUnitSet();
 		if (point.hasAltitude())
 		{
-			final Unit altUnit = Config.getUnitSet().getAltitudeUnit();
+			final Unit altUnit = unitSet.getAltitudeUnit();
 			addTextPair(result, "fieldname.altitude", "" + point.getAltitude().getValue(altUnit),
 				I18nManager.getText(altUnit.getShortnameKey()));
 		}
 		if (point.hasTimestamp())
 		{
-			TimeZone timezone = TimezoneHelper.getSelectedTimezone();
+			TimeZone timezone = TimezoneHelper.getSelectedTimezone(getConfig());
 			addTextPair(result, "fieldname.date", point.getTimestamp().getDateText(timezone));
 			addTextPair(result, "fieldname.timestamp", point.getTimestamp().getTimeText(timezone));
 		}
@@ -242,8 +242,7 @@ public class ShowFullDetails extends GenericFunction
 
 		// Speed can come from either timestamps and distances, or speed values in data
 		SpeedValue speedValue = new SpeedValue();
-		SpeedCalculator.calculateSpeed(inTrack, inPointIndex, speedValue);
-		UnitSet unitSet = Config.getUnitSet();
+		SpeedCalculator.calculateSpeed(inTrack, inPointIndex, unitSet, speedValue);
 		if (speedValue.isValid())
 		{
 			final String speedUnitsStr = I18nManager.getText(unitSet.getSpeedUnit().getShortnameKey());
@@ -252,7 +251,7 @@ public class ShowFullDetails extends GenericFunction
 		}
 
 		// Now do the vertical speed in the same way
-		SpeedCalculator.calculateVerticalSpeed(inTrack, inPointIndex, speedValue);
+		SpeedCalculator.calculateVerticalSpeed(inTrack, inPointIndex, unitSet, speedValue);
 		if (speedValue.isValid())
 		{
 			final String vSpeedUnitsStr = I18nManager.getText(unitSet.getVerticalSpeedUnit().getShortnameKey());
@@ -283,14 +282,14 @@ public class ShowFullDetails extends GenericFunction
 	 * @param inMaxSpeed maximum speed info
 	 * @return string describing range
 	 */
-	private static String makeRangeDescription(RangeStatsWithGradients inStats, SpeedValue inMaxSpeed)
+	private String makeRangeDescription(RangeStatsWithGradients inStats, SpeedValue inMaxSpeed)
 	{
 		StringBuffer result = new StringBuffer();
 		addTextPair(result, "details.track.points", "" + inStats.getNumPoints());
 		addTextPair(result, "details.range.numsegments", "" + inStats.getNumSegments());
 		final boolean hasMultipleSegments = (inStats.getNumSegments() > 1);
 
-		UnitSet unitSet = Config.getUnitSet();
+		UnitSet unitSet = getConfig().getUnitSet();
 		final String speedUnitsStr = I18nManager.getText(unitSet.getSpeedUnit().getShortnameKey());
 		if (inMaxSpeed.isValid())
 		{
@@ -299,9 +298,9 @@ public class ShowFullDetails extends GenericFunction
 		}
 
 		addHeading(result, "dialog.fullrangedetails.colsegments");
-		final Unit distUnit = Config.getUnitSet().getDistanceUnit();
+		final Unit distUnit = unitSet.getDistanceUnit();
 		final String distUnitsStr = I18nManager.getText(distUnit.getShortnameKey());
-		final double movingDist = inStats.getMovingDistance();
+		final double movingDist = inStats.getMovingDistance(distUnit);
 		addTextPair(result, "fieldname.distance", DisplayUtils.roundedNumber(movingDist),
 			distUnitsStr);
 		long numSecs = inStats.getMovingDurationInSeconds();
@@ -336,7 +335,7 @@ public class ShowFullDetails extends GenericFunction
 		if (hasMultipleSegments)
 		{
 			addHeading(result, "dialog.fullrangedetails.coltotal");
-			final double totalDist = inStats.getTotalDistance();
+			final double totalDist = inStats.getTotalDistance(distUnit);
 			addTextPair(result, "fieldname.distance", DisplayUtils.roundedNumber(totalDist), distUnitsStr);
 			long totalSecs = inStats.getTotalDurationInSeconds();
 			addTextPair(result, "fieldname.duration", DisplayUtils.buildDurationString(totalSecs));
@@ -407,8 +406,7 @@ public class ShowFullDetails extends GenericFunction
 	{
 		final String heading = I18nManager.getText(inLabelKey);
 		inBuffer.append('\n').append(heading).append('\n');
-		for (int i=0; i<heading.length(); i++)
-		{
+		for (int i=0; i<heading.length(); i++) {
 			inBuffer.append('=');
 		}
 		inBuffer.append('\n');

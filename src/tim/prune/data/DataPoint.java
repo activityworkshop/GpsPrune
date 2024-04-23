@@ -1,7 +1,5 @@
 package tim.prune.data;
 
-import tim.prune.config.Config;
-
 /**
  * Class to represent a single data point in the series
  * including all its fields
@@ -10,7 +8,7 @@ import tim.prune.config.Config;
 public class DataPoint
 {
 	/** Array of Strings holding raw values */
-	private String[] _fieldValues = null;
+	private String[] _fieldValues;
 	/** list of field definitions */
 	private final FieldList _fieldList;
 	/** Special fields for coordinates */
@@ -58,29 +56,48 @@ public class DataPoint
 	{
 		if (inOptions == null) inOptions = new PointCreateOptions();
 		if (inField == null || inField == Field.LATITUDE) {
-			_latitude = new Latitude(getFieldValue(Field.LATITUDE));
+			_latitude = Latitude.make(getFieldValue(Field.LATITUDE));
 		}
 		if (inField == null || inField == Field.LONGITUDE) {
-			_longitude = new Longitude(getFieldValue(Field.LONGITUDE));
+			_longitude = Longitude.make(getFieldValue(Field.LONGITUDE));
 		}
 		if (inField == null || inField == Field.ALTITUDE)
 		{
-			Unit altUnit = inOptions.getAltitudeUnits();
+			final Unit altUnit;
 			if (_altitude != null && _altitude.getUnit() != null) {
 				altUnit = _altitude.getUnit();
 			}
-			setAltitudeUnit(altUnit);
+			else {
+				altUnit = inOptions.getAltitudeUnits();
+			}
+			_altitude = new Altitude(getFieldValue(Field.ALTITUDE), altUnit);
 		}
 		if (inField == null || inField == Field.SPEED)
 		{
-			_hSpeed = new Speed(getFieldValue(Field.SPEED), inOptions.getSpeedUnits());
+			final Unit speedUnit;
+			if (_hSpeed != null && _hSpeed.getUnit() != null) {
+				speedUnit = _hSpeed.getUnit();
+			}
+			else {
+				speedUnit = inOptions.getSpeedUnits();
+			}
+			_hSpeed = new Speed(getFieldValue(Field.SPEED), speedUnit);
 		}
 		if (inField == null || inField == Field.VERTICAL_SPEED)
 		{
-			_vSpeed = new Speed(getFieldValue(Field.VERTICAL_SPEED), inOptions.getVerticalSpeedUnits());
-			if (!inOptions.getVerticalSpeedsUpwards()) {
-				_vSpeed.invert();
+			final Unit vspeedUnit;
+			final boolean isInverted;
+			if (_vSpeed != null && _vSpeed.getUnit() != null)
+			{
+				vspeedUnit = _vSpeed.getUnit();
+				isInverted = _vSpeed.isInverted();
 			}
+			else
+			{
+				vspeedUnit = inOptions.getVerticalSpeedUnits();
+				isInverted = !inOptions.getVerticalSpeedsUpwards();
+			}
+			_vSpeed = new Speed(getFieldValue(Field.VERTICAL_SPEED), vspeedUnit, isInverted);
 		}
 		if (inField == null || inField == Field.TIMESTAMP) {
 			_timestamp = new TimestampUtc(getFieldValue(Field.TIMESTAMP));
@@ -97,10 +114,12 @@ public class DataPoint
 	}
 
 	/**
-	 * @param inUnit unit to use for altitude, either metres or feet
+	 * Constructor for additional points without altitude
+	 * @param inLatitude latitude
+	 * @param inLongitude longitude
 	 */
-	public void setAltitudeUnit(Unit inUnit) {
-		_altitude = new Altitude(getFieldValue(Field.ALTITUDE), inUnit);
+	public DataPoint(Coordinate inLatitude, Coordinate inLongitude) {
+		this(inLatitude, inLongitude, null);
 	}
 
 	/**
@@ -115,10 +134,11 @@ public class DataPoint
 		_fieldValues = new String[3];
 		Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE};
 		_fieldList = new FieldList(fields);
+		// TODO: Check if either latitude or longitude is null - in which case do what?
 		_latitude = inLatitude;
-		_fieldValues[0] = inLatitude.output(Coordinate.FORMAT_NONE);
+		_fieldValues[0] = inLatitude.toString();
 		_longitude = inLongitude;
-		_fieldValues[1] = inLongitude.output(Coordinate.FORMAT_NONE);
+		_fieldValues[1] = inLongitude.toString();
 		if (inAltitude == null) {
 			_altitude = Altitude.NONE;
 		}
@@ -128,7 +148,6 @@ public class DataPoint
 		}
 		_timestamp = new TimestampUtc(null);
 	}
-
 
 	/**
 	 * Get the value for the given field
@@ -153,13 +172,71 @@ public class DataPoint
 	}
 
 	/**
-	 * Set (or edit) the specified field value
+	 * Set (or edit) the waypoint name field
+	 * @param inValue name to set
+	 */
+	public void setWaypointName(String inValue)
+	{
+		setRawFieldValue(Field.WAYPT_NAME, inValue);
+		setModified(false);
+		_waypointName = inValue;
+	}
+
+	/**
+	 * Set (or edit) the specified field value, without specifying a unit set
 	 * @param inField Field to set
 	 * @param inValue value to set
 	 * @param inUndo true if undo operation, false otherwise
 	 */
-	public void setFieldValue(Field inField, String inValue, boolean inUndo)
+	public void setFieldValue(Field inField, String inValue, boolean inUndo) {
+		setFieldValue(inField, inValue, null, inUndo);
+	}
+
+	/**
+	 * Set (or edit) the specified field value
+	 * @param inField Field to set
+	 * @param inValue value to set
+	 * @param inUnitSet unit set to use
+	 * @param inUndo true if undo operation, false otherwise
+	 */
+	public void setFieldValue(Field inField, String inValue, UnitSet inUnitSet, boolean inUndo)
 	{
+		setRawFieldValue(inField, inValue);
+		// Increment edit count on all field edits except segment
+		if (inField != Field.NEW_SEGMENT) {
+			setModified(inUndo);
+		}
+
+		final boolean needUnits;
+		if (inField == Field.ALTITUDE) {
+			needUnits = _altitude == null || _altitude.getUnit() == null;
+		}
+		else if (inField == Field.SPEED) {
+			needUnits = _hSpeed == null || _hSpeed.getUnit() == null;
+		}
+		else if (inField == Field.VERTICAL_SPEED) {
+			needUnits = _vSpeed == null || _vSpeed.getUnit() == null;
+		}
+		else {
+			needUnits = false;
+		}
+		if (needUnits && inUnitSet == null && inValue != null && !inValue.equals("")) {
+			throw new IllegalArgumentException("Units required to set field " + inField.getName());
+		}
+
+		parseFields(inField, inUnitSet == null ? null : inUnitSet.getDefaultOptions());
+	}
+
+	/**
+	 * Extend the field list if necessary and set the raw field value
+	 * @param inField field to set
+	 * @param inValue value to set
+	 */
+	private void setRawFieldValue(Field inField, String inValue)
+	{
+		if (inField == null) {
+			return;
+		}
 		// See if this data point already has this field
 		int fieldIndex = _fieldList.getFieldIndex(inField);
 		// Add to field list if necessary
@@ -170,7 +247,7 @@ public class DataPoint
 				return;
 			}
 			// value isn't empty so extend field list
-			fieldIndex = _fieldList.extendList(inField);
+			fieldIndex = _fieldList.addField(inField);
 		}
 		// Extend array of field values if necessary
 		if (fieldIndex >= _fieldValues.length) {
@@ -178,19 +255,6 @@ public class DataPoint
 		}
 		// Set field value in array
 		_fieldValues[fieldIndex] = inValue;
-		// Increment edit count on all field edits except segment
-		if (inField != Field.NEW_SEGMENT) {
-			setModified(inUndo);
-		}
-		// Change Coordinate, Altitude, Name or Timestamp fields after edit
-		if (_altitude != null && _altitude.getUnit() != null) {
-			// Altitude already present so reuse format
-			parseFields(inField, null); // current units will be used
-		}
-		else {
-			// use default altitude format from config
-			parseFields(inField, Config.getUnitSet().getDefaultOptions());
-		}
 	}
 
 	/**
@@ -383,7 +447,7 @@ public class DataPoint
 	 * @return true if the point is valid
 	 */
 	public boolean isValid() {
-		return _latitude.isValid() && _longitude.isValid();
+		return _latitude != null && _longitude != null;
 	}
 
 	/**
@@ -399,7 +463,9 @@ public class DataPoint
 	public String getMediaName()
 	{
 		String mediaName = null;
-		if (_photo != null) mediaName = _photo.getName();
+		if (_photo != null) {
+			mediaName = _photo.getName();
+		}
 		if (_audio != null)
 		{
 			if (mediaName == null) {
@@ -421,8 +487,8 @@ public class DataPoint
 	 */
 	public DataPoint interpolate(DataPoint inEndPoint, int inIndex, int inNumPoints)
 	{
-		Coordinate latitude = Coordinate.interpolate(_latitude, inEndPoint.getLatitude(), inIndex, inNumPoints);
-		Coordinate longitude = Coordinate.interpolate(_longitude, inEndPoint.getLongitude(), inIndex, inNumPoints);
+		Coordinate latitude = Latitude.interpolate(_latitude, inEndPoint.getLatitude(), inIndex, inNumPoints);
+		Coordinate longitude = Longitude.interpolate(_longitude, inEndPoint.getLongitude(), inIndex, inNumPoints);
 		Altitude altitude = Altitude.interpolate(_altitude, inEndPoint.getAltitude(), inIndex, inNumPoints);
 		return new DataPoint(latitude, longitude, altitude);
 	}
@@ -436,10 +502,12 @@ public class DataPoint
 	 */
 	public static DataPoint interpolate(DataPoint inStartPoint, DataPoint inEndPoint, double inFrac)
 	{
-		if (inStartPoint == null || inEndPoint == null) {return null;}
+		if (inStartPoint == null || inEndPoint == null) {
+			return null;
+		}
 		return new DataPoint(
-			Coordinate.interpolate(inStartPoint.getLatitude(), inEndPoint.getLatitude(), inFrac),
-			Coordinate.interpolate(inStartPoint.getLongitude(), inEndPoint.getLongitude(), inFrac),
+			Latitude.interpolate(inStartPoint.getLatitude(), inEndPoint.getLatitude(), inFrac),
+			Longitude.interpolate(inStartPoint.getLongitude(), inEndPoint.getLongitude(), inFrac),
 			Altitude.interpolate(inStartPoint.getAltitude(), inEndPoint.getAltitude(), inFrac)
 		);
 	}
@@ -452,22 +520,15 @@ public class DataPoint
 	 */
 	public static double calculateRadiansBetween(DataPoint inPoint1, DataPoint inPoint2)
 	{
-		if (inPoint1 == null || inPoint2 == null)
+		if (inPoint1 == null || inPoint2 == null) {
 			return 0.0;
-		final double TO_RADIANS = Math.PI / 180.0;
-		// Get lat and long from points
-		double lat1 = inPoint1.getLatitude().getDouble() * TO_RADIANS;
-		double lat2 = inPoint2.getLatitude().getDouble() * TO_RADIANS;
-		double lon1 = inPoint1.getLongitude().getDouble() * TO_RADIANS;
-		double lon2 = inPoint2.getLongitude().getDouble() * TO_RADIANS;
-		// Formula given by Wikipedia:Great-circle_distance as follows:
-		// angle = 2 arcsin( sqrt( (sin ((lat2-lat1)/2))^^2 + cos(lat1)cos(lat2)(sin((lon2-lon1)/2))^^2))
-		double firstSine = Math.sin((lat2-lat1) / 2.0);
-		double secondSine = Math.sin((lon2-lon1) / 2.0);
-		double term2 = Math.cos(lat1) * Math.cos(lat2) * secondSine * secondSine;
-		double answer = 2 * Math.asin(Math.sqrt(firstSine*firstSine + term2));
-		// phew
-		return answer;
+		}
+		// Get lat and long from points, in degrees
+		double lat1 = inPoint1.getLatitude().getDouble();
+		double lat2 = inPoint2.getLatitude().getDouble();
+		double lon1 = inPoint1.getLongitude().getDouble();
+		double lon2 = inPoint2.getLongitude().getDouble();
+		return Distance.calculateRadiansBetween(lat1, lon1, lat2, lon2);
 	}
 
 
@@ -492,7 +553,7 @@ public class DataPoint
 	 */
 	public DataPoint clonePoint()
 	{
-		// Copy all values (note that photo not copied)
+		// Copy all values (note that photo is not copied)
 		String[] valuesCopy = new String[_fieldValues.length];
 		System.arraycopy(_fieldValues, 0, valuesCopy, 0, _fieldValues.length);
 
@@ -534,10 +595,11 @@ public class DataPoint
 	 */
 	private static void removeQuotes(String[] inValues)
 	{
-		if (inValues == null) {return;}
-		for (int i=0; i<inValues.length; i++)
+		if (inValues != null)
 		{
-			inValues[i] = removeQuotes(inValues[i]);
+			for (int i=0; i<inValues.length; i++) {
+				inValues[i] = removeQuotes(inValues[i]);
+			}
 		}
 	}
 
@@ -548,7 +610,9 @@ public class DataPoint
 	 */
 	private static String removeQuotes(String inValue)
 	{
-		if (inValue == null) {return null;}
+		if (inValue == null) {
+			return null;
+		}
 		final int len = inValue.length();
 		if (len <= 1) {return inValue;}
 		// get the first and last characters
@@ -565,10 +629,8 @@ public class DataPoint
 
 	/**
 	 * Get string for debug
-	 * @see java.lang.Object#toString()
 	 */
-	public String toString()
-	{
+	public String toString() {
 		return "[Lat=" + getLatitude().toString() + ", Lon=" + getLongitude().toString() + "]";
 	}
 }

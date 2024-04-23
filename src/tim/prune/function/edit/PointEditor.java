@@ -26,7 +26,6 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.EditPointCmd;
-import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
@@ -74,7 +73,7 @@ public class PointEditor extends GenericFunction
 		_dialog.setLocationRelativeTo(_parentFrame);
 		// Check field list
 		FieldList trackFieldList = _app.getTrackInfo().getTrack().getFieldList();
-		_fieldList = trackFieldList.merge(new FieldList(Field.DESCRIPTION, Field.COMMENT));
+		_fieldList = makeFieldList(trackFieldList, _point);
 		int numFields = _fieldList.getNumFields();
 		// Create table model for point editor
 		_model = new EditFieldsTableModel(numFields);
@@ -96,6 +95,32 @@ public class PointEditor extends GenericFunction
 		_dialog.setVisible(true);
 	}
 
+
+	private FieldList makeFieldList(FieldList inFieldList, DataPoint inPoint)
+	{
+		FieldList result = new FieldList();
+		ArrayList<Field> blankFields = new ArrayList<>();
+		// Add the fields which the point has values for
+		for (int i=0; i<inFieldList.getNumFields(); i++)
+		{
+			Field field = inFieldList.getField(i);
+			String value = inPoint.getFieldValue(field);
+			if (value == null || value.isEmpty()) {
+				blankFields.add(field);
+			}
+			else {
+				result.addField(field);
+			}
+		}
+		// Now add the fields which are blank
+		for (Field field : blankFields) {
+			result.addField(field);
+		}
+		// Now add additional ones which may not be in the master field list
+		result.addFields(Field.COMMENT, Field.DESCRIPTION, Field.TIMESTAMP,
+			Field.WAYPT_NAME, Field.WAYPT_TYPE, Field.SYMBOL);
+		return result;
+	}
 
 	/**
 	 * Make the dialog components
@@ -121,6 +146,7 @@ public class PointEditor extends GenericFunction
 
 		JPanel rightPanel = new JPanel();
 		rightPanel.setLayout(new BorderLayout());
+		rightPanel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		JPanel rightiPanel = new JPanel();
 		rightiPanel.setLayout(new BoxLayout(rightiPanel, BoxLayout.Y_AXIS));
 		// Add GUI elements to rhs
@@ -180,8 +206,7 @@ public class PointEditor extends GenericFunction
 			_model.updateValue(_prevRowIndex, newValue);
 		}
 
-		if (rowNum < 0)
-		{
+		if (rowNum < 0) {
 			_fieldnameLabel.setText("");
 		}
 		else
@@ -214,21 +239,18 @@ public class PointEditor extends GenericFunction
 	 * @param inPoint current point
 	 * @return label string for above the entry field / area
 	 */
-	private static String makeFieldLabel(Field inField, DataPoint inPoint)
+	private String makeFieldLabel(Field inField, DataPoint inPoint)
 	{
 		String label = I18nManager.getText("dialog.pointedit.table.field") + ": " + inField.getName();
 		// Add units if the field is altitude / speed / vspeed
-		if (inField == Field.ALTITUDE)
-		{
-			label += makeUnitsLabel(inPoint.hasAltitude() ? inPoint.getAltitude().getUnit() : Config.getUnitSet().getAltitudeUnit());
+		if (inField == Field.ALTITUDE) {
+			label += makeUnitsLabel(inPoint.hasAltitude() ? inPoint.getAltitude().getUnit() : getConfig().getUnitSet().getAltitudeUnit());
 		}
-		else if (inField == Field.SPEED)
-		{
-			label += makeUnitsLabel(inPoint.hasHSpeed() ? inPoint.getHSpeed().getUnit() : Config.getUnitSet().getSpeedUnit());
+		else if (inField == Field.SPEED) {
+			label += makeUnitsLabel(inPoint.hasHSpeed() ? inPoint.getHSpeed().getUnit() : getConfig().getUnitSet().getSpeedUnit());
 		}
-		else if (inField == Field.VERTICAL_SPEED)
-		{
-			label += makeUnitsLabel(inPoint.hasVSpeed() ? inPoint.getVSpeed().getUnit() : Config.getUnitSet().getVerticalSpeedUnit());
+		else if (inField == Field.VERTICAL_SPEED) {
+			label += makeUnitsLabel(inPoint.hasVSpeed() ? inPoint.getVSpeed().getUnit() : getConfig().getUnitSet().getVerticalSpeedUnit());
 		}
 		return label;
 	}
@@ -274,7 +296,7 @@ public class PointEditor extends GenericFunction
 		if (!edits.isEmpty())
 		{
 			int pointIndex = _app.getTrackInfo().getSelection().getCurrentPointIndex();
-			EditPointCmd command = new EditPointCmd(pointIndex, edits);
+			EditPointCmd command = new EditPointCmd(pointIndex, edits, getConfig().getUnitSet());
 			DataPoint point = _app.getTrackInfo().getCurrentPoint();
 			String pointName = getPointName(point, edits);
 			Describer undoDescriber = new Describer("undo.editpoint", "undo.editpoint.withname");
@@ -290,7 +312,8 @@ public class PointEditor extends GenericFunction
 	 */
 	private String getPointName(DataPoint inPoint, ArrayList<FieldEdit> inEdits)
 	{
-		for (FieldEdit edit : inEdits) {
+		for (FieldEdit edit : inEdits)
+		{
 			if (edit.getField() == Field.WAYPT_NAME && !edit.getValue().trim().equals("")) {
 				return edit.getValue();
 			}

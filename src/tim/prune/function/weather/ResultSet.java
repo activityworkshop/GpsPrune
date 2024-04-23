@@ -7,7 +7,7 @@ package tim.prune.function.weather;
 public class ResultSet
 {
 	/** Array of six results */
-	private WeatherResults[] _results = new WeatherResults[6];
+	private final WeatherResults[] _results = new WeatherResults[6];
 	/** Location id for which these results apply */
 	private String _locationId = null;
 
@@ -34,7 +34,7 @@ public class ResultSet
 		boolean inCurrent, boolean inDaily, boolean inHourly, boolean inCelsius)
 	{
 		// Check location
-		if (inLocationId == null || _locationId == null || !inLocationId.equals(_locationId)) {
+		if (inLocationId == null || !inLocationId.equals(_locationId)) {
 			return null;
 		}
 		// check forecast type
@@ -64,7 +64,7 @@ public class ResultSet
 		if (inLocationId == null || inLocationId.equals("")) {
 			return;
 		}
-		if (_locationId == null || !inLocationId.equals(_locationId))
+		if (!inLocationId.equals(_locationId))
 		{
 			// coordinates have changed
 			clear();

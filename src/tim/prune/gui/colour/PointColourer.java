@@ -2,6 +2,7 @@ package tim.prune.gui.colour;
 
 import java.awt.Color;
 
+import tim.prune.config.Config;
 import tim.prune.data.TrackInfo;
 
 /**
@@ -14,9 +15,10 @@ public abstract class PointColourer
 	/** default colour */
 	private Color _defaultColour = Color.BLUE;
 	/** start and end colours */
-	private Color _startColour = null, _endColour = null;
+	private final Color _startColour;
+	private final Color _endColour;
 	/** max number of unique colours before wrapping */
-	private int _maxColours = 1;
+	private final int _maxColours;
 
 
 	/**
@@ -37,16 +39,16 @@ public abstract class PointColourer
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
 	 */
-	public PointColourer(Color inStartColour, Color inEndColour)
-	{
+	public PointColourer(Color inStartColour, Color inEndColour) {
 		this(inStartColour, inEndColour, -1);
 	}
 
 	/**
 	 * Calculate the colours for each of the points in the given track
 	 * @param inTrackInfo track info object
+	 * @param inConfig config object for units and dates
 	 */
-	public abstract void calculateColours(TrackInfo inTrackInfo);
+	public abstract void calculateColours(TrackInfo inTrackInfo, Config inConfig);
 
 	/**
 	 * Get the colour for the given point index

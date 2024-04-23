@@ -33,7 +33,7 @@ public class VerticalSpeedData extends ProfileData
 		{
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
-				SpeedCalculator.calculateVerticalSpeed(_track, i, speed);
+				SpeedCalculator.calculateVerticalSpeed(_track, i, inUnitSet, speed);
 				// Check whether we got a value from either method
 				if (speed.isValid())
 				{

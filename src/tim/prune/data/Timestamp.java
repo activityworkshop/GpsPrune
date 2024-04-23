@@ -1,6 +1,5 @@
 package tim.prune.data;
 
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -24,6 +23,9 @@ public abstract class Timestamp
 		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
 	protected static final DateFormat ISO_8601_FORMAT_WITH_MILLIS
 		= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+	// This one doesn't need US because it's just for display on screen
+	protected static final DateFormat ISO_8601_FORMAT_JUST_DATE
+		= new SimpleDateFormat("yyyy-MM-dd");
 
 	private static boolean _millisAddedToTimeFormat = false;
 
@@ -162,6 +164,13 @@ public abstract class Timestamp
 	 */
 	public String getText(TimeZone inTimezone) {
 		return getText(Format.LOCALE, inTimezone);
+	}
+
+	/**
+	 * @return date string in iso format (yyyy-mm-dd)
+	 */
+	public String getIsoDateString(TimeZone inTimezone) {
+		return format(ISO_8601_FORMAT_JUST_DATE, inTimezone);
 	}
 
 	/**

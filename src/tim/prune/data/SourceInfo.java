@@ -9,16 +9,18 @@ import java.io.File;
 public class SourceInfo
 {
 	/** File type of source file */
-	public enum FILE_TYPE {TEXT, GPX, KML, NMEA, GPSBABEL, JSON}
+	public enum FileType {TEXT, GPX, KML, NMEA, GPSBABEL, JSON}
 
 	/** Source file */
 	private final File _sourceFile;
 	/** Name of source */
 	private final String _sourceName;
 	/** File type */
-	private final FILE_TYPE _fileType;
+	private final FileType _fileType;
 	/** File title, if any */
 	private String _fileTitle = null;
+	/** File description, if any */
+	private String _fileDescription = null;
 	/** Number of points */
 	private int _numPoints = 0;
 
@@ -28,7 +30,7 @@ public class SourceInfo
 	 * @param inFile source file
 	 * @param inType type of file
 	 */
-	public SourceInfo(File inFile, FILE_TYPE inType)
+	public SourceInfo(File inFile, FileType inType)
 	{
 		_sourceFile = inFile;
 		_sourceName = inFile.getName();
@@ -40,7 +42,7 @@ public class SourceInfo
 	 * @param inName name of source (without file)
 	 * @param inType type of file
 	 */
-	public SourceInfo(String inName, FILE_TYPE inType)
+	public SourceInfo(String inName, FileType inType)
 	{
 		_sourceFile = null;
 		_sourceName = inName;
@@ -52,6 +54,13 @@ public class SourceInfo
 	 */
 	public void setFileTitle(String inTitle) {
 		_fileTitle = inTitle;
+	}
+
+	/**
+	 * @param inDesc description of file, eg from <desc> tag in gpx
+	 */
+	public void setFileDescription(String inDesc) {
+		_fileDescription = inDesc;
 	}
 
 	/**
@@ -71,7 +80,7 @@ public class SourceInfo
 	/**
 	 * @return file type of source
 	 */
-	public FILE_TYPE getFileType() {
+	public FileType getFileType() {
 		return _fileType;
 	}
 
@@ -80,6 +89,13 @@ public class SourceInfo
 	 */
 	public String getFileTitle() {
 		return _fileTitle;
+	}
+
+	/**
+	 * @return description of file
+	 */
+	public String getFileDescription() {
+		return _fileDescription;
 	}
 
 	/**

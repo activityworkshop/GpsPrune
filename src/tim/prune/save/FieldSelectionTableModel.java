@@ -46,9 +46,9 @@ public class FieldSelectionTableModel extends AbstractTableModel
 			return field.getField().getName();
 		}
 		else if (inColumnIndex == 1) {
-			return Boolean.valueOf(field.hasData());
+			return field.hasData();
 		}
-		return Boolean.valueOf(field.isSelected());
+		return field.isSelected();
 	}
 
 	/**

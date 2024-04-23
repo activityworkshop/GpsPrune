@@ -56,7 +56,7 @@ public class AppendMediaCmd extends Command
 			if (media instanceof Photo)
 			{
 				Photo photo = (Photo) media;
-				if (photo != null && !photoList.contains(photo))
+				if (!photoList.contains(photo))
 				{
 					photoList.add(photo);
 					numAdded++;
@@ -65,7 +65,7 @@ public class AppendMediaCmd extends Command
 			else if (media instanceof AudioClip)
 			{
 				AudioClip audio = (AudioClip) media;
-				if (audio != null && !audioList.contains(audio))
+				if (!audioList.contains(audio))
 				{
 					audioList.add(audio);
 					numAdded++;

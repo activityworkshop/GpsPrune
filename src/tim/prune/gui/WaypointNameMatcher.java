@@ -53,8 +53,7 @@ public class WaypointNameMatcher extends AbstractListModel<String>
 		// Loop through waypoint names
 		for (int i=0; i<_numPoints; i++)
 		{
-			if (search == null || _waypointNames[i].indexOf(search) >= 0)
-			{
+			if (search == null || _waypointNames[i].contains(search)) {
 				_matches.add(_waypoints.get(i));
 			}
 		}

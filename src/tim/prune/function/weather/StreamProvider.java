@@ -14,5 +14,5 @@ public interface StreamProvider
 
 	/** @return a stream to the xml for the weather forecast */
 	public InputStream getForecastStream(String inLocationId, boolean inDaily, boolean inCelsius)
-		 throws IOException;
+		throws IOException;
 }

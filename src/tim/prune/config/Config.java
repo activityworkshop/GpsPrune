@@ -14,27 +14,23 @@ import tim.prune.gui.map.MapSourceLibrary;
 
 
 /**
- * Abstract class to hold application-wide configuration
+ * Class to hold application-wide configuration
  */
-public abstract class Config
+public class Config
 {
 	/** File from which Config was loaded */
-	private static File _configFile = null;
+	private File _configFile = null;
 
 	/** key/value pairs containing all config values */
-	private static Properties _configValues = null;
+	private Properties _configValues = null;
 	/** Colour scheme object is also part of config */
-	private static ColourScheme _colourScheme = new ColourScheme();
+	private final ColourScheme _colourScheme = new ColourScheme();
 	/** Point colourer object, if any */
-	private static PointColourer _pointColourer = null;
+	private PointColourer _pointColourer = null;
 	/** Recently-used file list */
-	private static RecentFileList _recentFiles = new RecentFileList();
+	private RecentFileList _recentFiles = new RecentFileList();
 	/** Current unit set */
-	private static UnitSet _unitSet = UnitSetLibrary.getUnitSet(null);
-
-	/** Default config file */
-	public static final File DEFAULT_CONFIG_FILE = new File(".pruneconfig");
-	public static final File HOME_CONFIG_FILE = new File(System.getProperty("user.home"), ".pruneconfig");
+	private UnitSet _unitSet = UnitSetLibrary.getUnitSet(null);
 
 	/** Key for track directory */
 	public static final String KEY_TRACK_DIR = "prune.trackdirectory";
@@ -120,32 +116,23 @@ public abstract class Config
 	public static final String KEY_EARTHDATA_AUTH = "prune.earthdataauth";
 	/** Settings for track compression */
 	public static final String KEY_COMPRESSION_SETTINGS = "prune.compression";
+	/** true for double-sized icons */
+	public static final String KEY_ICONS_DOUBLE_SIZE = "prune.iconsdoublesize";
+	/** true if user has already been asked about config migration */
+	public static final String KEY_ASKED_ABOUT_CONFIG_MIGRATION = "prune.configmigrationasked";
+
 
 	/** Initialise the default properties */
-	static
-	{
+	public Config()	{
 		_configValues = getDefaultProperties();
 	}
-
-	/**
-	 * Load the default configuration file
-	 * @return true if successful
-	 */
-	public static boolean loadDefaultFile()
-	{
-		if (DEFAULT_CONFIG_FILE.exists() && loadFile(DEFAULT_CONFIG_FILE)) {
-			return true;
-		}
-		return HOME_CONFIG_FILE.exists() && loadFile(HOME_CONFIG_FILE);
-	}
-
 
 	/**
 	 * Load configuration from file
 	 * @param inFile file to load
 	 * @return true if successfully loaded
 	 */
-	public static boolean loadFile(File inFile)
+	public boolean loadFile(File inFile)
 	{
 		// Start with default properties
 		Properties props = getDefaultProperties();
@@ -168,7 +155,7 @@ public abstract class Config
 		// Adjust map source index if necessary
 		adjustSelectedMap();
 		// Reset coord display format
-		setConfigInt(KEY_COORD_DISPLAY_FORMAT, 0);
+		setConfigString(KEY_COORD_DISPLAY_FORMAT, "NONE");
 
 		if (success)
 		{
@@ -198,12 +185,14 @@ public abstract class Config
 		props.put(KEY_OSSCALING, "0"); // OS shouldn't scale maps
 		props.put(KEY_AUTOSAVE_SETTINGS, "1"); // autosave by default
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
-		props.put(KEY_COORD_DISPLAY_FORMAT, "0"); // original
+		props.put(KEY_COORD_DISPLAY_FORMAT, "NONE"); // original
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
 		props.put(KEY_TERRAIN_GRID_SIZE, "50");
 		props.put(KEY_ALTITUDE_TOLERANCE, "0"); // 0, all exact as before
 		props.put(KEY_WAYPOINT_ICON_SIZE, "1"); // medium size
 		props.put(KEY_WPICON_SALT, "-1"); // no waypoint colouring by default
+		props.put(KEY_ICONS_DOUBLE_SIZE, "0"); // regular size by default
+		props.put(KEY_ASKED_ABOUT_CONFIG_MIGRATION, "0"); // not asked
 		return props;
 	}
 
@@ -211,7 +200,7 @@ public abstract class Config
 	 * Adjust the index of the selected map
 	 * (only required if config was loaded from a previous version of GpsPrune)
 	 */
-	private static void adjustSelectedMap()
+	private void adjustSelectedMap()
 	{
 		int sourceNum = getConfigInt(Config.KEY_MAPSOURCE_INDEX);
 		int prevNumFixed = getConfigInt(Config.KEY_NUM_FIXED_MAPS);
@@ -244,23 +233,21 @@ public abstract class Config
 	/**
 	 * @return File from which config was loaded (or null)
 	 */
-	public static File getConfigFile()
-	{
+	public File getConfigFile() {
 		return _configFile;
 	}
 
 	/**
 	 * Set the file to which config was saved
 	 */
-	public static void setConfigFile(File inFile)
-	{
+	public void setConfigFile(File inFile) {
 		_configFile = inFile;
 	}
 
 	/**
 	 * @return config Properties object to allow all config values to be saved
 	 */
-	public static Properties getAllConfig()
+	public Properties getAllConfig()
 	{
 		// Update recently-used files
 		_configValues.setProperty(KEY_RECENT_FILES, _recentFiles.getConfigString());
@@ -270,24 +257,21 @@ public abstract class Config
 	/**
 	 * @return the current colour scheme
 	 */
-	public static ColourScheme getColourScheme()
-	{
+	public ColourScheme getColourScheme() {
 		return _colourScheme;
 	}
 
 	/**
 	 * @return the current point colourer, if any
 	 */
-	public static PointColourer getPointColourer()
-	{
+	public PointColourer getPointColourer() {
 		return _pointColourer;
 	}
 
 	/**
 	 * @return list of recently used files
 	 */
-	public static RecentFileList getRecentFileList()
-	{
+	public RecentFileList getRecentFileList() {
 		return _recentFiles;
 	}
 
@@ -296,7 +280,7 @@ public abstract class Config
 	 * @param inKey key (from constants)
 	 * @param inValue value as string
 	 */
-	public static void setConfigString(String inKey, String inValue)
+	public void setConfigString(String inKey, String inValue)
 	{
 		if (inValue == null || inValue.equals("")) {
 			_configValues.remove(inKey);
@@ -311,11 +295,10 @@ public abstract class Config
 	 * @param inKey key (from constants)
 	 * @param inValue value as boolean
 	 */
-	public static void setConfigBoolean(String inKey, boolean inValue)
+	public void setConfigBoolean(String inKey, boolean inValue)
 	{
-		if (inKey != null && !inKey.equals(""))
-		{
-			_configValues.put(inKey, (inValue?"1":"0"));
+		if (inKey != null && !inKey.equals("")) {
+			_configValues.put(inKey, (inValue ? "1" : "0"));
 		}
 	}
 
@@ -324,10 +307,9 @@ public abstract class Config
 	 * @param inKey key (from constants)
 	 * @param inValue value as int
 	 */
-	public static void setConfigInt(String inKey, int inValue)
+	public void setConfigInt(String inKey, int inValue)
 	{
-		if (inKey != null && !inKey.equals(""))
-		{
+		if (inKey != null && !inKey.equals("")) {
 			_configValues.put(inKey, "" + inValue);
 		}
 	}
@@ -337,8 +319,7 @@ public abstract class Config
 	 * @param inKey key
 	 * @return configuration setting as a String
 	 */
-	public static String getConfigString(String inKey)
-	{
+	public String getConfigString(String inKey) {
 		return _configValues.getProperty(inKey);
 	}
 
@@ -347,7 +328,7 @@ public abstract class Config
 	 * @param inKey key
 	 * @return configuration setting as a boolean (default to true)
 	 */
-	public static boolean getConfigBoolean(String inKey)
+	public boolean getConfigBoolean(String inKey)
 	{
 		String val = _configValues.getProperty(inKey);
 		return (val == null || val.equals("1"));
@@ -358,28 +339,14 @@ public abstract class Config
 	 * @param inKey key
 	 * @return configuration setting as an int
 	 */
-	public static int getConfigInt(String inKey)
-	{
+	public int getConfigInt(String inKey) {
 		return parseInt(_configValues.getProperty(inKey));
-	}
-
-	/**
-	 * Check whether the given key corresponds to a boolean property
-	 * @param inKey key to check
-	 * @return true if corresponding property is boolean
-	 */
-	public static boolean isKeyBoolean(String inKey)
-	{
-		return inKey != null && (
-			inKey.equals(KEY_SHOW_MAP) || inKey.equals(KEY_AUTOSAVE_SETTINGS) || inKey.equals(KEY_ONLINE_MODE)
-			|| inKey.equals(KEY_ANTIALIAS) || inKey.equals(KEY_OSSCALING));
 	}
 
 	/**
 	 * Update the colour scheme property from the current settings
 	 */
-	public static void updateColourScheme()
-	{
+	public void updateColourScheme() {
 		setConfigString(KEY_COLOUR_SCHEME, _colourScheme.toString());
 	}
 
@@ -387,7 +354,7 @@ public abstract class Config
 	 * Update the point colourer from the given colourer
 	 * @param inColourer point colourer object, or null
 	 */
-	public static void updatePointColourer(PointColourer inColourer)
+	public void updatePointColourer(PointColourer inColourer)
 	{
 		_pointColourer = inColourer;
 		setConfigString(KEY_POINT_COLOURER, ColourerFactory.pointColourerToString(_pointColourer));
@@ -396,14 +363,14 @@ public abstract class Config
 	/**
 	 * @return the current unit set
 	 */
-	public static UnitSet getUnitSet() {
+	public UnitSet getUnitSet() {
 		return _unitSet;
 	}
 
 	/**
 	 * @param inIndex index of unit set to select
 	 */
-	public static void selectUnitSet(int inIndex)
+	public void selectUnitSet(int inIndex)
 	{
 		_unitSet = UnitSetLibrary.getUnitSet(inIndex);
 		// Set name of set in config
@@ -414,7 +381,7 @@ public abstract class Config
 	 * @param inKey config key
 	 * @return true if there's a non-blank value stored
 	 */
-	private static boolean hasString(String inKey)
+	private boolean hasString(String inKey)
 	{
 		final String value = getConfigString(inKey);
 		return value != null && !value.isEmpty();
@@ -423,7 +390,7 @@ public abstract class Config
 	/**
 	 * @return true if the config hasn't been saved but some things have been set
 	 */
-	public static boolean hasUnsavedChanges()
+	public boolean hasUnsavedChanges()
 	{
 		return _configFile == null						// hasn't been saved
 			&& getConfigBoolean(KEY_AUTOSAVE_SETTINGS)  // and user expects it to be saved

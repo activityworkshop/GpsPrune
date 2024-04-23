@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
 
 import tim.prune.I18nManager;
+import tim.prune.config.Config;
 import tim.prune.data.Track;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
@@ -32,6 +33,8 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 	private final JButton _editButton;
 	/** Dialog called by the "Edit" button to change the settings */
 	private final BaseImageConfigDialog _baseImageConfig;
+	/** True if image is on by default */
+	private boolean _imageDefaultYes = false;
 
 
 	/**
@@ -39,12 +42,13 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 	 * @param inParent parent object to inform about changes
 	 * @param inParentDialog parent dialog
 	 * @param inTrack track object
+	 * @param inConfig config object
 	 */
 	public BaseImageDefinitionPanel(BaseImageConsumer inParent, JDialog inParentDialog,
-		Track inTrack)
+		Track inTrack, Config inConfig)
 	{
 		_parent = inParent;
-		_baseImageConfig = new BaseImageConfigDialog(this, inParentDialog, inTrack);
+		_baseImageConfig = new BaseImageConfigDialog(this, inParentDialog, inTrack, inConfig);
 
 		// Etched border
 		setBorder(BorderFactory.createCompoundBorder(
@@ -64,6 +68,11 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 		add(subPanel, BorderLayout.NORTH);
 	}
 
+	/** Image is yes by default */
+	public void setImageDefaultYes() {
+		_imageDefaultYes = true;
+	}
+
 	/**
 	 * @param inDefinition image definition from interactive step
 	 */
@@ -78,15 +87,11 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 	private void changeBaseImage()
 	{
 		// Check if there is a cache to use
-		if (BaseImageConfigDialog.isImagePossible())
+		if (_baseImageConfig.isImagePossible())
 		{
 			// Show new dialog to choose image details
-			_baseImageConfig.begin();
+			_baseImageConfig.begin(_imageDefaultYes);
 		}
-		// TODO: What if it isn't possible?  Should the caller show the error message?
-		//else {
-		//	_app.showErrorMessage(getNameKey(), "dialog.exportimage.noimagepossible");
-		//}
 	}
 
 	/**
@@ -98,6 +103,11 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 		if (_parent != null) {
 			_parent.baseImageChanged();
 		}
+	}
+
+	/** @return true if image is possible, based on config */
+	public boolean isImagePossible() {
+		return _baseImageConfig.isImagePossible();
 	}
 
 	/**
@@ -115,8 +125,7 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 		if (imageDef.getUseImage())
 		{
 			MapSource source = MapSourceLibrary.getSource(imageDef.getSourceIndex());
-			if (source != null)
-			{
+			if (source != null) {
 				desc = source.getName() + " (" + imageDef.getZoom() + ")";
 			}
 		}
@@ -124,7 +133,7 @@ public class BaseImageDefinitionPanel extends JPanel implements BaseImageConsume
 			desc = I18nManager.getText("dialog.about.no");
 		}
 		_baseImageLabel.setText(desc);
-		_editButton.setEnabled(BaseImageConfigDialog.isImagePossible());
+		_editButton.setEnabled(_baseImageConfig.isImagePossible());
 	}
 
 	/**

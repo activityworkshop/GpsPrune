@@ -25,7 +25,7 @@ public class ColourerSelectorPanel extends JPanel
 	/** Combo box for selecting the type of colourer */
 	private JComboBox<String> _typeCombo = null;
 	/** Array of type ids as stored in combo box */
-	private ColourerId[] _typeIds = null;
+	private final ColourerId[] _typeIds;
 	/** Panel object holding the colour patches */
 	private JPanel _patchPanel = null;
 	/** Array of colour patches for start and end */
@@ -78,7 +78,7 @@ public class ColourerSelectorPanel extends JPanel
 			colourerTypes[i] = I18nManager.getText(keyPrefix +
 				ColourerFactory.getDescriptionKey(_typeIds[i]));
 		}
-		_typeCombo = new JComboBox<String>(colourerTypes);
+		_typeCombo = new JComboBox<>(colourerTypes);
 		_typeCombo.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_typeCombo.addActionListener(e -> onColourerTypeChanged());
 		// Add to the panel
@@ -131,7 +131,7 @@ public class ColourerSelectorPanel extends JPanel
 		grid = new GuiGridLayout(_maxColoursPanel);
 		grid.add(new JLabel(I18nManager.getText("dialog.colourer.maxcolours")));
 		String[] colourOptions = new String[] {"2", "3", "5", "10", "15"};
-		_maxColoursCombo = new JComboBox<String>(colourOptions);
+		_maxColoursCombo = new JComboBox<>(colourOptions);
 		grid.add(_maxColoursCombo);
 		_maxColoursPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		add(_maxColoursPanel);

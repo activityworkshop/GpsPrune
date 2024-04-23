@@ -11,7 +11,7 @@ import tim.prune.data.Track;
 public class SummaryLabel extends JLabel
 {
 	/** Track object */
-	private Track _track = null;
+	private final Track _track;
 
 
 	/**

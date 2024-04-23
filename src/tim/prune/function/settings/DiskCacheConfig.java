@@ -173,7 +173,7 @@ public class DiskCacheConfig extends GenericFunction
 			_dialog.pack();
 		}
 		// Set controls according to current config
-		final String currPath = Config.getConfigString(Config.KEY_DISK_CACHE);
+		final String currPath = getConfig().getConfigString(Config.KEY_DISK_CACHE);
 		_cacheCheckbox.setSelected(currPath != null);
 		_cacheDirBox.setText(currPath==null?"":currPath);
 		_initialCacheDir = currPath;
@@ -226,7 +226,7 @@ public class DiskCacheConfig extends GenericFunction
 					getName(), JOptionPane.WARNING_MESSAGE);
 			}
 		}
-		Config.setConfigString(Config.KEY_DISK_CACHE, cachePath);
+		getConfig().setConfigString(Config.KEY_DISK_CACHE, cachePath);
 		// inform subscribers so that tiles are wiped from memory and refetched
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 	}

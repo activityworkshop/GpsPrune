@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "tim.prune"
-version = 23.2
+version = 24
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -22,6 +22,10 @@ java {
 
     sourceSets["test"].apply {
         java.srcDir("test")
+        resources.srcDirs("test")
+        resources.include(
+            "tim/prune/function/weather/xml/*"
+        )
     }
 }
 

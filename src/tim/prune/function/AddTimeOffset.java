@@ -161,7 +161,7 @@ public class AddTimeOffset extends GenericFunction
 	 * @param inKey text key
 	 * @return right-aligned label
 	 */
-	private static final JLabel makeRightLabel(String inKey)
+	private static JLabel makeRightLabel(String inKey)
 	{
 		JLabel label = new JLabel(I18nManager.getText(inKey) + " : ");
 		label.setHorizontalAlignment(SwingConstants.RIGHT);
@@ -207,7 +207,7 @@ public class AddTimeOffset extends GenericFunction
 		}
 		if (!edits.isEmpty())
 		{
-			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.TIMESTAMP, edits);
+			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.TIMESTAMP, edits, null);
 			command.setDescription(getName());
 			command.setConfirmText(I18nManager.getText("confirm.addtimeoffset"));
 			_app.execute(command);

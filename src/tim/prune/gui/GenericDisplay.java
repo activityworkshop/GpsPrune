@@ -11,8 +11,8 @@ import tim.prune.data.TrackInfo;
  */
 public abstract class GenericDisplay extends JPanel implements DataSubscriber
 {
-	protected TrackInfo _trackInfo = null;
-	protected Track _track = null;
+	protected final TrackInfo _trackInfo;
+	protected final Track _track;
 
 	/**
 	 * Constructor
@@ -27,7 +27,6 @@ public abstract class GenericDisplay extends JPanel implements DataSubscriber
 	/**
 	 * Ignore action completed signals
 	 */
-	public void actionCompleted(String inMessage)
-	{
+	public void actionCompleted(String inMessage) {
 	}
 }

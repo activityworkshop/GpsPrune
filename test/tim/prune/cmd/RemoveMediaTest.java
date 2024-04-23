@@ -5,7 +5,6 @@ import tim.prune.data.*;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -25,7 +24,7 @@ class RemoveMediaTest
 		assertNull(photo.getDataPoint());
 
 		// Remove this photo
-		Command command = new RemoveMediaCmd(List.of(photo));
+		Command command = new RemoveMediaCmd(ListUtils.makeList(photo));
 		assertTrue(command.execute(info));
 		assertEquals(0, info.getPhotoList().getCount());
 		assertNull(photo.getDataPoint());
@@ -49,7 +48,7 @@ class RemoveMediaTest
 		}
 		assertEquals(4, info.getAudioList().getCount());
 		// remove 0 and 2
-		RemoveMediaCmd command = new RemoveMediaCmd(List.of(audios.get(0), audios.get(2)));
+		RemoveMediaCmd command = new RemoveMediaCmd(ListUtils.makeList(audios.get(0), audios.get(2)));
 		assertTrue(command.execute(info));
 		assertEquals(2, info.getAudioList().getCount());
 		assertEquals("audio1.mp3", info.getAudioList().get(0).getName());

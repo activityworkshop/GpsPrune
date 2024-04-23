@@ -24,7 +24,7 @@ public class PhotoCorrelatorTest
     @Test
     public void testSingleConnectNoCreate()
     {
-        DataPoint point = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
+        DataPoint point = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
         Photo photo = new Photo(new File("abc.jpg"));
         PointMediaPair pair = new PointMediaPair(photo);
         pair.addPoint(point, 0L);
@@ -44,8 +44,8 @@ public class PhotoCorrelatorTest
     @Test
     public void testSingleInterpolate()
     {
-        DataPoint point1 = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
-        DataPoint point2 = new DataPoint(new Latitude("1.822"), new Longitude("5.432"), null);
+        DataPoint point1 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
+        DataPoint point2 = new DataPoint(Latitude.make("1.822"), Longitude.make("5.432"));
         Photo photo = new Photo(new File("abc.jpg"));
         PointMediaPair pair = new PointMediaPair(photo);
         pair.addPoint(point1, -10L);
@@ -70,7 +70,7 @@ public class PhotoCorrelatorTest
     public void testSingleConnectWithCreate()
     {
         // Make point already connected to photo1
-        DataPoint point = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
+        DataPoint point = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
         Photo photo1 = new Photo(new File("abc.jpg"));
         point.setPhoto(photo1);
         photo1.setDataPoint(point);
@@ -88,8 +88,8 @@ public class PhotoCorrelatorTest
         Assertions.assertEquals(1, pointsToCreate.size());
         final DataPoint newPoint = pointsToCreate.get(0);
         Assertions.assertNotSame(point, newPoint);
-        Assertions.assertEquals(point.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC), newPoint.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC));
-        Assertions.assertEquals(point.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC), newPoint.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC));
+        Assertions.assertEquals(point.getLatitude().output(Coordinate.Format.DEG_MIN_SEC), newPoint.getLatitude().output(Coordinate.Format.DEG_MIN_SEC));
+        Assertions.assertEquals(point.getLongitude().output(Coordinate.Format.DEG_MIN_SEC), newPoint.getLongitude().output(Coordinate.Format.DEG_MIN_SEC));
         Assertions.assertEquals(1, pointPhotoPairs.size());
         Assertions.assertEquals(newPoint, pointPhotoPairs.get(0).getPoint());
         Assertions.assertEquals(photo2, pointPhotoPairs.get(0).getPhoto());
@@ -98,7 +98,7 @@ public class PhotoCorrelatorTest
     @Test
     public void testDoubleConnectToSamePoint()
     {
-        DataPoint point = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
+        DataPoint point = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
         Photo photo1 = new Photo(new File("abc.jpg"));
         Photo photo2 = new Photo(new File("def.jpg"));
         PointMediaPair pair1 = new PointMediaPair(photo1);
@@ -115,8 +115,8 @@ public class PhotoCorrelatorTest
         Assertions.assertEquals(1, pointsToCreate.size());
         final DataPoint newPoint = pointsToCreate.get(0);
         Assertions.assertNotSame(point, newPoint);
-        Assertions.assertEquals(point.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC), newPoint.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC));
-        Assertions.assertEquals(point.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC), newPoint.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC));
+        Assertions.assertEquals(point.getLatitude().output(Coordinate.Format.DEG_MIN_SEC), newPoint.getLatitude().output(Coordinate.Format.DEG_MIN_SEC));
+        Assertions.assertEquals(point.getLongitude().output(Coordinate.Format.DEG_MIN_SEC), newPoint.getLongitude().output(Coordinate.Format.DEG_MIN_SEC));
         // Two photos to be connected
         Assertions.assertEquals(2, pointPhotoPairs.size());
         Assertions.assertEquals(point, pointPhotoPairs.get(0).getPoint());

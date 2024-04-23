@@ -4,6 +4,7 @@ import tim.prune.DataSubscriber;
 import tim.prune.data.Field;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.data.UnitSet;
 import tim.prune.function.edit.PointEdit;
 
 import java.util.ArrayList;
@@ -16,16 +17,20 @@ public class EditSingleFieldCmd extends Command
 {
 	private final Field _field;
 	private final List<PointEdit> _editList;
+	private final UnitSet _unitSet;
 
-	public EditSingleFieldCmd(Field inField, List<PointEdit> inEditList) {
-		this(null, inField, inEditList);
+
+	public EditSingleFieldCmd(Field inField, List<PointEdit> inEditList, UnitSet inUnitSet) {
+		this(null, inField, inEditList, inUnitSet);
 	}
 
-	protected EditSingleFieldCmd(EditSingleFieldCmd inParent, Field inField, List<PointEdit> inEditList)
+	protected EditSingleFieldCmd(EditSingleFieldCmd inParent, Field inField,
+			List<PointEdit> inEditList, UnitSet inUnitSet)
 	{
 		super(inParent);
 		_field = inField;
 		_editList = inEditList;
+		_unitSet = inUnitSet;
 	}
 
 	@Override
@@ -39,22 +44,23 @@ public class EditSingleFieldCmd extends Command
 		if (_field == null) {
 			return false;
 		}
-		inInfo.getTrack().getFieldList().extendList(_field);
+		inInfo.getTrack().getFieldList().addField(_field);
 		for (PointEdit edit : _editList) {
-			inInfo.getTrack().getPoint(edit.getPointIndex()).setFieldValue(_field, edit.getValue(), isUndo());
+			inInfo.getTrack().getPoint(edit.getPointIndex()).setFieldValue(_field, edit.getValue(), _unitSet, isUndo());
 		}
 		return true;
 	}
 
 	@Override
 	protected Command makeInverse(TrackInfo inInfo) {
-		return new EditSingleFieldCmd(this, _field, makeOppositeEdits(inInfo.getTrack()));
+		return new EditSingleFieldCmd(this, _field, makeOppositeEdits(inInfo.getTrack()), _unitSet);
 	}
 
 	private List<PointEdit> makeOppositeEdits(Track inTrack)
 	{
 		List<PointEdit> opposite = new ArrayList<>();
-		for (PointEdit edit : _editList) {
+		for (PointEdit edit : _editList)
+		{
 			final String currValue = inTrack.getPoint(edit.getPointIndex()).getFieldValue(_field);
 			opposite.add(new PointEdit(edit.getPointIndex(), currValue));
 		}

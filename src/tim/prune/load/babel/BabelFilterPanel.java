@@ -15,6 +15,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
 import tim.prune.I18nManager;
+import tim.prune.gui.IconManager;
 import tim.prune.gui.StatusIcon;
 
 /**
@@ -29,6 +30,8 @@ public class BabelFilterPanel extends JPanel
 	private StatusIcon _validIcon = null;
 	/** Dialog for adding a new filter */
 	private AddFilterDialog _addDialog = null;
+	/** Icon manager for validation label */
+	private IconManager _iconManager = null;
 
 	/** Regular expression for detecting valid filter strings */
 	private static final Pattern FILTER_PATTERN
@@ -37,9 +40,11 @@ public class BabelFilterPanel extends JPanel
 	/**
 	 * Constructor
 	 * @param inParentFrame parent frame for launching popup dialog
+	 * @param inIconManager icon manager for labels
 	 */
-	public BabelFilterPanel(JFrame inParentFrame)
+	public BabelFilterPanel(JFrame inParentFrame, IconManager inIconManager)
 	{
+		_iconManager = inIconManager;
 		setBorder(BorderFactory.createCompoundBorder(
 			BorderFactory.createTitledBorder(I18nManager.getText("dialog.gpsbabel.filters")),
 			BorderFactory.createEmptyBorder(2, 2, 2, 2)));
@@ -65,7 +70,7 @@ public class BabelFilterPanel extends JPanel
 		JPanel filterIconPanel = new JPanel();
 		filterIconPanel.setLayout(new BorderLayout(3, 3));
 		filterIconPanel.add(_filterField, BorderLayout.CENTER);
-		_validIcon = new StatusIcon();
+		_validIcon = new StatusIcon(_iconManager);
 		filterIconPanel.add(_validIcon, BorderLayout.EAST);
 		filterFieldPanel.add(filterIconPanel, BorderLayout.NORTH);
 		add(filterFieldPanel, BorderLayout.CENTER);

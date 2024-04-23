@@ -20,7 +20,7 @@ import tim.prune.gui.WholeNumberField;
 /**
  * Discard filter for GPSBabel
  */
-public class DiscardFilter extends FilterDefinition
+public final class DiscardFilter extends FilterDefinition
 {
 	/** Constructor */
 	public DiscardFilter(AddFilterDialog inFilterDialog)

@@ -170,7 +170,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 		mainPanel.add(introLabel);
 
 		// Panel for the calculated results
-		_calculatedParamPanel = new ParametersPanel("dialog.estimatetime.results", true);
+		_calculatedParamPanel = new ParametersPanel("dialog.estimatetime.results", true, getConfig());
 		_calculatedParamPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		mainPanel.add(_calculatedParamPanel);
 		mainPanel.add(Box.createVerticalStrut(14));
@@ -190,7 +190,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 		mainPanel.add(Box.createVerticalStrut(12));
 
 		// Results panel
-		_combinedParamPanel = new ParametersPanel("dialog.learnestimationparams.combinedresults");
+		_combinedParamPanel = new ParametersPanel("dialog.learnestimationparams.combinedresults", getConfig());
 		_combinedParamPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		mainPanel.add(_combinedParamPanel);
 
@@ -281,7 +281,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 		// Check moving distance
 		if (movingRads >= minimumRads)
 		{
-			final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+			final int altitudeTolerance = getConfig().getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
 			return new RangeStatsWithGradients(inTrack, start, endIndex, altitudeTolerance);
 		}
 		return null;
@@ -337,11 +337,11 @@ public class LearnParameters extends GenericFunction implements Runnable
 			return -1;
 		}
 		int index = 0;
-		double currValue = 0.0, maxValue = 0.0;
+		double maxValue = 0.0;
 		// Loop over the first column looking for the maximum absolute value
 		for (int i=0; i<inMatrix.getNumRows(); i++)
 		{
-			currValue = Math.abs(inMatrix.get(i, 0));
+			final double currValue = Math.abs(inMatrix.get(i, 0));
 			if (currValue > maxValue)
 			{
 				maxValue = currValue;
@@ -464,7 +464,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 	private EstimationParameters calculateCombinedParameters()
 	{
 		final double fraction1 = 1 - 0.1 * _weightSlider.getValue(); // slider left = value 0 = fraction 1 = keep current
-		EstimationParameters oldParams = EstimationParameters.fromConfigString(Config.getConfigString(Config.KEY_ESTIMATION_PARAMS));
+		EstimationParameters oldParams = EstimationParameters.fromConfigString(getConfig().getConfigString(Config.KEY_ESTIMATION_PARAMS));
 		if (oldParams == null) {
 			return _calculatedParams;
 		}
@@ -505,7 +505,7 @@ public class LearnParameters extends GenericFunction implements Runnable
 		if (params == null) {
 			params = EstimationParameters.DEFAULT_PARAMS;
 		}
-		Config.setConfigString(Config.KEY_ESTIMATION_PARAMS, params.toConfigString());
+		getConfig().setConfigString(Config.KEY_ESTIMATION_PARAMS, params.toConfigString());
 		_dialog.dispose();
 	}
 }

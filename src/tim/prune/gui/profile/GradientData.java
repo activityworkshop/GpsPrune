@@ -38,7 +38,7 @@ public class GradientData extends ProfileData
 				GradientCalculator.calculateGradient(_track, i, speed);
 				if (speed.isValid())
 				{
-					double speedValue = speed.getValue();
+					double speedValue = speed.getValue() * 100.0; // convert to %
 					_pointValues[i] = speedValue;
 					if (speedValue < _minValue || !_hasData) {_minValue = speedValue;}
 					if (speedValue > _maxValue || !_hasData) {_maxValue = speedValue;}
@@ -52,8 +52,7 @@ public class GradientData extends ProfileData
 	/**
 	 * @return text description
 	 */
-	public String getLabel()
-	{
+	public String getLabel() {
 		return I18nManager.getText("fieldname.gradient");
 	}
 

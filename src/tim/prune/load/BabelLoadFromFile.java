@@ -20,7 +20,7 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
 import tim.prune.data.SourceInfo;
-import tim.prune.data.SourceInfo.FILE_TYPE;
+import tim.prune.data.SourceInfo.FileType;
 import tim.prune.gui.GuiGridLayout;
 import tim.prune.load.babel.BabelFilterPanel;
 
@@ -62,7 +62,7 @@ public class BabelLoadFromFile extends BabelLoadFunction
 
 	/** @return Source info */
 	protected SourceInfo getSourceInfo() {
-		return new SourceInfo(_inputFile, FILE_TYPE.GPSBABEL);
+		return new SourceInfo(_inputFile, FileType.GPSBABEL);
 	}
 
 	/** @return input format */
@@ -85,9 +85,11 @@ public class BabelLoadFromFile extends BabelLoadFunction
 		{
 			_fileChooser = new JFileChooser();
 			// start from directory in config if already set
-			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
-			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);}
-			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
+			String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir == null) {configDir = getConfig().getConfigString(Config.KEY_PHOTO_DIR);}
+			if (configDir != null) {
+				_fileChooser.setCurrentDirectory(new File(configDir));
+			}
 			_fileChooser.setMultiSelectionEnabled(false); // Single files only
 		}
 		// Show the open dialog
@@ -153,9 +155,9 @@ public class BabelLoadFromFile extends BabelLoadFunction
 		mainPanel.add(_saveCheckbox);
 
 		// Filter panel
-		_filterPanel = new BabelFilterPanel(_parentFrame);
+		_filterPanel = new BabelFilterPanel(_parentFrame, getIconManager());
 		// Give filter panel the contents of the config
-		String filter = Config.getConfigString(Config.KEY_GPSBABEL_FILTER);
+		String filter = getConfig().getConfigString(Config.KEY_GPSBABEL_FILTER);
 		if (filter != null) {
 			_filterPanel.setFilterString(filter);
 		}
@@ -199,14 +201,14 @@ public class BabelLoadFromFile extends BabelLoadFunction
 		_inputFileLabel.setText(_inputFile.getName());
 		// Get suffix of filename and compare with previous one
 		String suffix = getSelectedSuffix();
-		if (_lastSuffix == null || !suffix.equalsIgnoreCase(_lastSuffix))
+		if (!suffix.equalsIgnoreCase(_lastSuffix))
 		{
 			// New suffix has been chosen, so select first appropriate format (if any)
 			int selIndex = BabelFileFormats.getIndexForFileSuffix(suffix);
 			if (selIndex < 0)
 			{
 				// Use the previous one from the Config (if any)
-				selIndex = Config.getConfigInt(Config.KEY_IMPORT_FILE_FORMAT);
+				selIndex = getConfig().getConfigInt(Config.KEY_IMPORT_FILE_FORMAT);
 			}
 			if (selIndex >= 0) {
 				_formatDropdown.setSelectedIndex(selIndex);
@@ -222,13 +224,13 @@ public class BabelLoadFromFile extends BabelLoadFunction
 	{
 		// Save the filter string, clear it if it's now blank
 		final String filter = _filterPanel.getFilterString();
-		Config.setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
+		getConfig().setConfigString(Config.KEY_GPSBABEL_FILTER, filter);
 
 		// Check if there is a standard file type for the selected suffix
 		int selIndex = BabelFileFormats.getIndexForFileSuffix(getSelectedSuffix());
 		// If there is none, then get the index which the user chose and set in the Config
 		if (selIndex < 0) {
-			Config.setConfigInt(Config.KEY_IMPORT_FILE_FORMAT, _formatDropdown.getSelectedIndex());
+			getConfig().setConfigInt(Config.KEY_IMPORT_FILE_FORMAT, _formatDropdown.getSelectedIndex());
 		}
 	}
 }

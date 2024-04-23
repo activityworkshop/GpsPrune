@@ -72,7 +72,7 @@ public class LinkedMediaLoader
 		inMedia.setCurrentStatus(currMediaStatus);
 		// Now create the command
 		CompoundCommand command = new CompoundCommand()
-				.addCommand(new AppendMediaCmd(ListUtils.makeListOfMedia(inMedia)))
+				.addCommand(new AppendMediaCmd(ListUtils.makeList(inMedia)))
 				.addCommand(new ConnectMediaCmd(inPoint, inMedia));
 		command.setDescription(I18nManager.getText("undo.loadmedia", inMedia.getName()));
 		command.setConfirmText(I18nManager.getText("confirm.loadedmedia"));

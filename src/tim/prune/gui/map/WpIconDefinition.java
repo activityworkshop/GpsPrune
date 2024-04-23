@@ -14,20 +14,20 @@ public class WpIconDefinition
 	/** Y offset of marker point in image */
 	private final int    _yOffset;
 	/** icon */
-	private ImageIcon _icon = null;
+	private final ImageIcon _icon;
 
 
 	/**
 	 * Constructor
 	 * @param inName name of icon
-	 * @param inX x offset
-	 * @param inY y offset
+	 * @param inIcon icon to set
 	 */
-	public WpIconDefinition(String inName, int inX, int inY)
+	public WpIconDefinition(String inName, ImageIcon inIcon)
 	{
 		_name = inName;
-		_xOffset = inX;
-		_yOffset = inY;
+		_icon = inIcon;
+		_xOffset = inIcon.getIconWidth() / 2;
+		_yOffset = inIcon.getIconHeight() / 2;
 	}
 
 	/** @return name of icon */
@@ -37,12 +37,8 @@ public class WpIconDefinition
 	/** @return y offset */
 	public int getYOffset() {return _yOffset;}
 
-	/** @param inIcon icon to set */
-	public void setIcon(ImageIcon inIcon) {_icon = inIcon;}
-
 	/** @return image icon to display */
-	public ImageIcon getImageIcon()
-	{
+	public ImageIcon getImageIcon() {
 		return _icon;
 	}
 }

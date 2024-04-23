@@ -24,8 +24,7 @@ public abstract class FilterDefinition extends JPanel
 	public FilterDefinition(AddFilterDialog inFilterDialog)
 	{
 		_parentDialog = inFilterDialog;
-		_paramChangeListener = new KeyAdapter()
-		{
+		_paramChangeListener = new KeyAdapter() {
 			public void keyTyped(KeyEvent arg0) {
 				SwingUtilities.invokeLater(() -> _parentDialog.filterParamsChanged());
 			}

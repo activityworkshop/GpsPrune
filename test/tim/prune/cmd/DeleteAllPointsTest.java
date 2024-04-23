@@ -15,8 +15,8 @@ class DeleteAllPointsTest
 	{
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
-		track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
-		track.appendPoint(new DataPoint(new Latitude("11.23"), new Longitude("12.34"), null));
+		track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
+		track.appendPoint(new DataPoint(Latitude.make("11.23"), Longitude.make("12.34")));
 		assertEquals(2, track.getNumPoints());
 		// delete all
 		DeleteAllPointsCmd command = new DeleteAllPointsCmd();

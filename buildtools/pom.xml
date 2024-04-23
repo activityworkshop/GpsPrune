@@ -7,7 +7,7 @@
 
 	<groupId>tim.prune</groupId>
 	<artifactId>gpsprune</artifactId>
-	<version>23.2</version>
+	<version>24</version>
 	<packaging>jar</packaging>
 
 	<name>tim.prune.gpsprune</name>
@@ -74,6 +74,14 @@
 				</includes>
 			</resource>
 		</resources>
+		<testResources>
+			<testResource>
+				<directory>${project.basedir}/test</directory>
+				<includes>
+					<include>tim/prune/function/weather/xml/*</include>
+				</includes>
+			</testResource>
+		</testResources>
 
 		<pluginManagement>
 			<!-- lock down plugins versions to avoid using Maven defaults -->

@@ -22,9 +22,9 @@ public class WaypointComparerTest
 	@Test
 	void testNonWaypoints()
 	{
-		DataPoint trackPoint = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		DataPoint waypoint = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint.setFieldValue(Field.WAYPT_NAME, "POINT", false);
+		DataPoint trackPoint = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		DataPoint waypoint = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint.setWaypointName("POINT");
 
 		assertFalse(trackPoint.isWaypoint());
 		assertTrue(waypoint.isWaypoint());
@@ -37,11 +37,11 @@ public class WaypointComparerTest
 	@Test
 	void testIdenticalWaypoints()
 	{
-		DataPoint waypoint1 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint1.setFieldValue(Field.WAYPT_NAME, "POINT", false);
+		DataPoint waypoint1 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint1.setWaypointName("POINT");
 
-		DataPoint waypoint2 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint2.setFieldValue(Field.WAYPT_NAME, "POINT", false);
+		DataPoint waypoint2 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint2.setWaypointName("POINT");
 
 		assertEquals(CompareResult.IDENTICAL, WaypointComparer.compare(waypoint1, waypoint2));
 		assertEquals(CompareResult.IDENTICAL, WaypointComparer.compare(waypoint2, waypoint2));
@@ -51,12 +51,12 @@ public class WaypointComparerTest
 	@Test
 	void testComplementaryWaypoints()
 	{
-		DataPoint waypoint1 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint1.setFieldValue(Field.WAYPT_NAME, "POINT", false);
+		DataPoint waypoint1 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint1.setWaypointName("POINT");
 		waypoint1.setFieldValue(Field.COMMENT, "A comment", false);
 
-		DataPoint waypoint2 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint2.setFieldValue(Field.WAYPT_NAME, "POINT", false);
+		DataPoint waypoint2 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint2.setWaypointName("POINT");
 		waypoint2.setFieldValue(Field.DESCRIPTION, "A description", false);
 
 		// first has comment, second has description so neither is better
@@ -66,19 +66,19 @@ public class WaypointComparerTest
 	@Test
 	void testDifferentWaypoints()
 	{
-		DataPoint waypoint1 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint1.setFieldValue(Field.WAYPT_NAME, "POINT1", false);
+		DataPoint waypoint1 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint1.setWaypointName("POINT1");
 		waypoint1.setFieldValue(Field.COMMENT, "A comment", false);
 
-		DataPoint waypoint2 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint2.setFieldValue(Field.WAYPT_NAME, "POINT2", false);
+		DataPoint waypoint2 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint2.setWaypointName("POINT2");
 		waypoint2.setFieldValue(Field.COMMENT, "A comment", false);
 
 		// name is different
 		assertEquals(CompareResult.DIFFERENT, WaypointComparer.compare(waypoint1, waypoint2));
 
-		DataPoint waypoint3 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint1.setFieldValue(Field.WAYPT_NAME, "POINT1", false);
+		DataPoint waypoint3 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint1.setWaypointName("POINT1");
 		waypoint1.setFieldValue(Field.COMMENT, "Comment", false);
 
 		// first has same name as third but different comment; second has different name
@@ -89,12 +89,12 @@ public class WaypointComparerTest
 	@Test
 	void testBetterWaypoints()
 	{
-		DataPoint waypoint1 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), new Altitude(1010, UnitSetLibrary.UNITS_METRES));
-		waypoint1.setFieldValue(Field.WAYPT_NAME, "POINT", false);
+		DataPoint waypoint1 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"), new Altitude(1010, UnitSetLibrary.UNITS_METRES));
+		waypoint1.setWaypointName("POINT");
 		waypoint1.setFieldValue(Field.COMMENT, "A comment", false);
 
-		DataPoint waypoint2 = new DataPoint(new Latitude("12.34"), new Longitude("1.23"), null);
-		waypoint2.setFieldValue(Field.WAYPT_NAME, "POINT", false);
+		DataPoint waypoint2 = new DataPoint(Latitude.make("12.34"), Longitude.make("1.23"));
+		waypoint2.setWaypointName("POINT");
 		waypoint2.setFieldValue(Field.COMMENT, "A comment", false);
 
 		// first has altitude as well so is better than second - order of parameters determines return value

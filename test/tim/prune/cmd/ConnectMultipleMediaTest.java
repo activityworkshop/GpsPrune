@@ -21,7 +21,7 @@ class ConnectMultipleMediaTest
 		assertFalse(point.hasMedia());
 
 		// Connect a photo
-		List<PointAndMedia> connections = List.of(new PointAndMedia(point, new Photo(new File("abc.jpg")), null));
+		List<PointAndMedia> connections = ListUtils.makeList(new PointAndMedia(point, new Photo(new File("abc.jpg")), null));
 		Command command = new ConnectMultipleMediaCmd(MediaLinkType.LINK_PHOTOS, connections);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
@@ -43,7 +43,7 @@ class ConnectMultipleMediaTest
 		assertEquals("audio1.mp3", point.getAudio().getName());
 
 		// Connect a photo
-		List<PointAndMedia> connections = List.of(new PointAndMedia(point, new Photo(new File("abc.jpg")), null));
+		List<PointAndMedia> connections = ListUtils.makeList(new PointAndMedia(point, new Photo(new File("abc.jpg")), null));
 		Command command = new ConnectMultipleMediaCmd(MediaLinkType.LINK_PHOTOS, connections);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
@@ -71,7 +71,7 @@ class ConnectMultipleMediaTest
 		assertNotNull(audio.getDataPoint());
 
 		// Disconnect the photo
-		List<PointAndMedia> connections = List.of(new PointAndMedia(point, null, null));
+		List<PointAndMedia> connections = ListUtils.makeList(new PointAndMedia(point, null, null));
 		Command command = new ConnectMultipleMediaCmd(MediaLinkType.LINK_PHOTOS, connections);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
@@ -101,7 +101,7 @@ class ConnectMultipleMediaTest
 		assertNotNull(audio.getDataPoint());
 
 		// Disconnect both media
-		List<PointAndMedia> connections = List.of(new PointAndMedia(point, null, null));
+		List<PointAndMedia> connections = ListUtils.makeList(new PointAndMedia(point, null, null));
 		Command command = new ConnectMultipleMediaCmd(MediaLinkType.LINK_BOTH, connections);
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
@@ -120,7 +120,7 @@ class ConnectMultipleMediaTest
 	private Track makeTrackWithMedia(Photo inPhoto, AudioClip inAudio)
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 		if (inPhoto != null) {

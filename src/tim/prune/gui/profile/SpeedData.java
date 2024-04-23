@@ -21,6 +21,7 @@ public class SpeedData extends ProfileData
 
 	/**
 	 * Get the data and populate the instance arrays
+	 * @param inUnitSet unit set to use
 	 */
 	public void init(UnitSet inUnitSet)
 	{
@@ -34,7 +35,7 @@ public class SpeedData extends ProfileData
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
 				// Get the speed either from the speed value or from the distances and timestamps
-				SpeedCalculator.calculateSpeed(_track, i, speed);
+				SpeedCalculator.calculateSpeed(_track, i, inUnitSet, speed);
 				if (speed.isValid())
 				{
 					double speedValue = speed.getValue();

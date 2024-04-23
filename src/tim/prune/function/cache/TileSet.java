@@ -2,6 +2,8 @@ package tim.prune.function.cache;
 
 import java.io.File;
 
+import tim.prune.fileutils.FileList;
+
 
 /**
  * Class to hold information about a single tile set
@@ -30,7 +32,7 @@ public class TileSet
 		// Go through zoom directories and construct row info objects
 		if (inDir != null && inDir.exists() && inDir.isDirectory() && inDir.canRead())
 		{
-			for (File subdir : inDir.listFiles())
+			for (File subdir : FileList.filesIn(inDir))
 			{
 				if (subdir != null && subdir.exists() && subdir.isDirectory()
 					&& subdir.canRead() && isNumeric(subdir.getName()))
@@ -49,11 +51,15 @@ public class TileSet
 	 */
 	public static boolean isNumeric(String inName)
 	{
-		if (inName == null || inName.equals("")) return false;
+		if (inName == null || inName.equals("")) {
+			return false;
+		}
 		for (int i=0; i<inName.length(); i++)
 		{
 			char a = inName.charAt(i);
-			if (a < '0' || a > '9') return false;
+			if (a < '0' || a > '9') {
+				return false;
+			}
 		}
 		return true;
 	}
@@ -92,13 +98,13 @@ public class TileSet
 	private static RowInfo makeRowInfo(File inDir)
 	{
 		RowInfo row = new RowInfo();
-		for (File subdir : inDir.listFiles())
+		for (File subdir : FileList.filesIn(inDir))
 		{
 			if (subdir != null && subdir.exists() && subdir.isDirectory()
 				&& subdir.canRead() && isNumeric(subdir.getName()))
 			{
 				// Found a directory of images (finally!)
-				for (File f : subdir.listFiles())
+				for (File f : FileList.filesIn(subdir))
 				{
 					if (f != null && f.exists() && f.isFile() && f.canRead())
 					{

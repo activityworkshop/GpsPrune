@@ -42,7 +42,7 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 	/** Radio button for splitting by fraction (such as half-distance) */
 	private JRadioButton _halvesRadio = null;
 	/** Flag for whether to offer halves or not */
-	private boolean _showHalves = false;
+	private final boolean _showHalves;
 	/** Dropdown for selecting distance units */
 	private JComboBox<String> _distUnitsDropdown = null;
 	/** Text field for entering distance */
@@ -51,7 +51,6 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 	private WholeNumberField _limitHourField = null, _limitMinField = null;
 	/** Ok and cancel buttons */
 	private JButton _okButton = null;
-	private JButton _cancelButton = null;
 
 
 	/**
@@ -184,14 +183,14 @@ public abstract class DistanceTimeLimitFunction extends GenericFunction
 		_okButton.addActionListener(e -> performFunction());
 		buttonPanel.add(_okButton);
 		// Cancel button
-		_cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		_cancelButton.addActionListener(e -> _dialog.dispose());
-		_cancelButton.addKeyListener(new KeyAdapter() {
+		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
+		cancelButton.addActionListener(e -> _dialog.dispose());
+		cancelButton.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent inE) {
 				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
 			}
 		});
-		buttonPanel.add(_cancelButton);
+		buttonPanel.add(cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
 	}

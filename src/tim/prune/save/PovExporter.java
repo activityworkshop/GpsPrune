@@ -124,7 +124,7 @@ public class PovExporter extends Export3dFunction
 			_dialog.getContentPane().add(makeDialogComponents());
 		}
 		// Get exaggeration factor from config
-		final int exaggFactor = Config.getConfigInt(Config.KEY_HEIGHT_EXAGGERATION);
+		final int exaggFactor = getConfig().getConfigInt(Config.KEY_HEIGHT_EXAGGERATION);
 		if (exaggFactor > 0) {
 			_altFactor = exaggFactor / 100.0;
 		}
@@ -181,7 +181,7 @@ public class PovExporter extends Export3dFunction
 		JLabel fontLabel = new JLabel(I18nManager.getText("dialog.exportpov.font"));
 		fontLabel.setHorizontalAlignment(SwingConstants.TRAILING);
 		centralPanel.add(fontLabel);
-		String defaultFont = Config.getConfigString(Config.KEY_POVRAY_FONT);
+		String defaultFont = getConfig().getConfigString(Config.KEY_POVRAY_FONT);
 		if (defaultFont == null || defaultFont.equals("")) {
 			defaultFont = DEFAULT_FONT_FILE;
 		}
@@ -239,9 +239,10 @@ public class PovExporter extends Export3dFunction
 		stylePanel.add(radioPanel);
 
 		// Panel for the base image (parent is null because we don't need callback)
-		_baseImagePanel = new BaseImageDefinitionPanel(null, _dialog, _track);
+		_baseImagePanel = new BaseImageDefinitionPanel(null, _dialog, _track, getConfig());
 		// Panel for the terrain definition
-		_terrainPanel = new TerrainDefinitionPanel();
+		int gridSize = getConfig().getConfigInt(Config.KEY_TERRAIN_GRID_SIZE);
+		_terrainPanel = new TerrainDefinitionPanel(gridSize);
 
 		// add these panels to the holder panel
 		JPanel holderPanel = new JPanel();
@@ -291,8 +292,10 @@ public class PovExporter extends Export3dFunction
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.pov", new String[] {"pov"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
-			final String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
-			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
+			final String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir != null) {
+				_fileChooser.setCurrentDirectory(new File(configDir));
+			}
 		}
 
 		// Allow choose again if an existing file is selected
@@ -327,11 +330,11 @@ public class PovExporter extends Export3dFunction
 					if (exportFiles(povFile, imageFile, terrainFile))
 					{
 						// file saved - store directory in config for later
-						Config.setConfigString(Config.KEY_TRACK_DIR, povFile.getParentFile().getAbsolutePath());
+						getConfig().setConfigString(Config.KEY_TRACK_DIR, povFile.getParentFile().getAbsolutePath());
 						// also store exaggeration and grid size
-						Config.setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_altFactor * 100));
+						getConfig().setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_altFactor * 100));
 						if (_terrainPanel.getUseTerrain() && _terrainPanel.getGridSize() > 20) {
-							Config.setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, _terrainPanel.getGridSize());
+							getConfig().setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, _terrainPanel.getGridSize());
 						}
 					}
 					else
@@ -388,7 +391,7 @@ public class PovExporter extends Export3dFunction
 				// Get base image from grouter
 				MapSource mapSource = MapSourceLibrary.getSource(imageDef.getSourceIndex());
 				MapGrouter grouter = _baseImagePanel.getGrouter();
-				GroutedImage baseImage = grouter.getMapImage(_track, mapSource, imageDef.getZoom());
+				GroutedImage baseImage = grouter.getMapImage(_track, mapSource, imageDef.getZoom(), getConfig());
 				try
 				{
 					useImage = ImageIO.write(baseImage.getImage(), "png", inImageFile);
@@ -501,7 +504,7 @@ public class PovExporter extends Export3dFunction
 			fontPath = DEFAULT_FONT_FILE;
 		}
 		else {
-			Config.setConfigString(Config.KEY_POVRAY_FONT, fontPath);
+			getConfig().setConfigString(Config.KEY_POVRAY_FONT, fontPath);
 		}
 
 		// Make the definition of the base plane depending on whether there's an image or not

@@ -60,31 +60,15 @@ public class GetWeatherForecastFunction extends GenericFunction
 	/** Table to hold the forecasts */
 	private JTable _forecastsTable = null;
 	/** Table model */
-	private WeatherTableModel _tableModel = new WeatherTableModel();
+	private final WeatherTableModel _tableModel = new WeatherTableModel();
 	/** Set of previously obtained results, to avoid repeating calls */
-	private ResultSet _resultSet = new ResultSet();
+	private final ResultSet _resultSet = new ResultSet();
 	/** Location id obtained from current forecast */
 	private String _locationId = null;
 	/** Access to xml streams */
-	private StreamProvider _streamProvider = null;
+	private StreamProvider _streamProvider;
 	/** Flag to show that forecast is currently running, don't start another */
 	private boolean _isRunning = false;
-
-
-	/**
-	 * Inner class to pass results asynchronously to the table model
-	 */
-	private class ResultUpdater implements Runnable
-	{
-		private WeatherResults _results;
-		public ResultUpdater(WeatherResults inResults) {
-			_results = inResults;
-		}
-		public void run() {
-			_tableModel.setResults(_results);
-			adjustTable();
-		}
-	}
 
 
 	/** Constructor */
@@ -174,7 +158,7 @@ public class GetWeatherForecastFunction extends GenericFunction
 
 		// Dropdown for temperature units
 		radioPanel.add(new JLabel(I18nManager.getText("dialog.weather.temperatureunits") + ": "));
-		_tempUnitsDropdown = new JComboBox<String>(new String[] {
+		_tempUnitsDropdown = new JComboBox<>(new String[] {
 			I18nManager.getText("units.degreescelsius"), I18nManager.getText("units.degreesfahrenheit")
 		});
 		_tempUnitsDropdown.setMaximumSize(_tempUnitsDropdown.getPreferredSize());
@@ -184,7 +168,7 @@ public class GetWeatherForecastFunction extends GenericFunction
 		topPanel.add(radioPanel);
 		dialogPanel.add(topPanel, BorderLayout.NORTH);
 
-		final IconRenderer iconRenderer = new IconRenderer();
+		final IconRenderer iconRenderer = new IconRenderer(getIconManager());
 		_forecastsTable = new JTable(_tableModel)
 		{
 			public TableCellRenderer getCellRenderer(int row, int column) {
@@ -272,7 +256,11 @@ public class GetWeatherForecastFunction extends GenericFunction
 		// update table contents and labels
 		if (results != null)
 		{
-			SwingUtilities.invokeLater(new ResultUpdater(results));
+			final WeatherResults finalResults = results;
+			SwingUtilities.invokeLater(() -> {
+				_tableModel.setResults(finalResults);
+				adjustTable();
+			});
 			_locationLabel.setText(I18nManager.getText("dialog.weather.location") + ": " + results.getLocationName());
 			final String ut = results.getUpdateTime();
 			_updateTimeLabel.setText(I18nManager.getText("dialog.weather.update") + ": " + (ut == null ? "" : ut));
@@ -335,7 +323,7 @@ public class GetWeatherForecastFunction extends GenericFunction
 		final Track track = _app.getTrackInfo().getTrack();
 		if (track.getNumPoints() < 1) {return null;}
 		// Get coordinates to lookup
-		double lat = 0.0, lon = 0.0;
+		final double lat, lon;
 		// See if a point is selected, if so use that
 		DataPoint currPoint = _app.getTrackInfo().getCurrentPoint();
 		if (currPoint != null)
@@ -391,12 +379,11 @@ public class GetWeatherForecastFunction extends GenericFunction
 		if (_locationId == null) {
 			return null;
 		}
-		InputStream inStream = null;
+
 		// Create a handler to parse the returned XML
 		OWMForecastHandler xmlHandler = new OWMForecastHandler();
-		try
+		try (InputStream inStream = _streamProvider.getForecastStream(_locationId, inDaily, inCelsius))
 		{
-			inStream = _streamProvider.getForecastStream(_locationId, inDaily, inCelsius);
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			saxParser.parse(inStream, xmlHandler);
 		}
@@ -406,13 +393,6 @@ public class GetWeatherForecastFunction extends GenericFunction
 			_app.showErrorMessageNoLookup(getNameKey(), e.getClass().getName() + " - " + e.getMessage());
 			_isRunning = false;
 			return null;
-		}
-		finally
-		{
-			// Close stream and ignore errors
-			try {
-				inStream.close();
-			} catch (Exception e) {}
 		}
 
 		// Get results from handler, put in model
