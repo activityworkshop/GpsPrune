@@ -82,7 +82,7 @@ public class PointInfo implements Comparable<PointInfo>
 	@Override
 	public boolean equals(Object inOther)
 	{
-		if (inOther == null || !(inOther instanceof PointInfo)) {
+		if (!(inOther instanceof PointInfo)) {
 			return false;
 		}
 

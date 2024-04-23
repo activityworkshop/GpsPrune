@@ -59,7 +59,7 @@ public abstract class BabelLoadFunction extends GenericFunction
 	public void begin()
 	{
 		// Check if gpsbabel looks like it's installed
-		if (_gpsBabelChecked || ExternalTools.isToolInstalled(ExternalTools.TOOL_GPSBABEL)
+		if (_gpsBabelChecked || ExternalTools.isToolInstalled(getConfig(), ExternalTools.TOOL_GPSBABEL)
 			|| JOptionPane.showConfirmDialog(_dialog,
 				I18nManager.getText("dialog.gpsload.nogpsbabel"), getName(),
 				JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)
@@ -104,7 +104,7 @@ public abstract class BabelLoadFunction extends GenericFunction
 	protected void initDialog()
 	{
 		// GPSBabel filter, if any
-		_filterPanel.setFilterString(Config.getConfigString(Config.KEY_GPSBABEL_FILTER));
+		_filterPanel.setFilterString(getConfig().getConfigString(Config.KEY_GPSBABEL_FILTER));
 	}
 
 	/**
@@ -255,7 +255,7 @@ public abstract class BabelLoadFunction extends GenericFunction
 	{
 		ArrayList<String> commandList = new ArrayList<String>();
 		// Firstly the command for gpsbabel itself
-		final String command = Config.getConfigString(Config.KEY_GPSBABEL_PATH);
+		final String command = getConfig().getConfigString(Config.KEY_GPSBABEL_PATH);
 		commandList.add(command);
 		// Then whether to load waypoints or track points
 		final boolean loadWaypoints = _waypointCheckbox.isSelected();
@@ -293,7 +293,8 @@ public abstract class BabelLoadFunction extends GenericFunction
 		if (_saveCheckbox.isSelected())
 		{
 			// Select file to save to
-			_saveFile = GpxExporter.chooseGpxFile(_parentFrame, "");
+			String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
+			_saveFile = GpxExporter.chooseGpxFile(_parentFrame, "", configDir);
 			if (_saveFile != null) {
 				whereTo = _saveFile.getAbsolutePath();
 			}

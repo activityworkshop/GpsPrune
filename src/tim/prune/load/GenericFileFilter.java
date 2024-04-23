@@ -11,7 +11,7 @@ import tim.prune.I18nManager;
 public class GenericFileFilter extends FileFilter
 {
 	/** Filter description for display */
-	private String _filterDesc = null;
+	private final String _filterDesc;
 	/** Array of allowed three-character suffixes */
 	private String[] _threeCharSuffixes = null;
 	/** Array of allowed four-character suffixes */
@@ -99,7 +99,7 @@ public class GenericFileFilter extends FileFilter
 			// Loop over allowed suffixes
 			for (String allowed : inAllowedSuffixes)
 			{
-				if (allowed != null && inSuffixToCheck.equals(allowed)) {
+				if (inSuffixToCheck.equals(allowed)) {
 					return true;
 				}
 			}

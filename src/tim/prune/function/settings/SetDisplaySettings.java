@@ -3,6 +3,7 @@ package tim.prune.function.settings;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -12,6 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.EtchedBorder;
@@ -32,12 +34,15 @@ import tim.prune.gui.WholeNumberField;
  */
 public class SetDisplaySettings extends GenericFunction
 {
-	// Members of SetDisplaySettings
 	private JDialog _dialog = null;
 	private WholeNumberField _lineWidthField = null;
 	private JCheckBox _antialiasCheckbox = null;
 	private JCheckBox _osScalingCheckbox = null;
+	private JCheckBox _doubledIconsCheckbox = null;
 	private JRadioButton[] _windowStyleRadios = null;
+	// settings when entering dialog in order to detect changes
+	private String _previousStyle = null;
+	private boolean _previousDoubleIcons = false;
 
 	private static final String STYLEKEY_NIMBUS = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
 	private static final String STYLEKEY_GTK = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
@@ -47,16 +52,14 @@ public class SetDisplaySettings extends GenericFunction
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public SetDisplaySettings(App inApp)
-	{
+	public SetDisplaySettings(App inApp) {
 		super(inApp);
 	}
 
 	/**
 	 * Return the name key for this function
 	 */
-	public String getNameKey()
-	{
+	public String getNameKey() {
 		return "function.setdisplaysettings";
 	}
 
@@ -90,6 +93,10 @@ public class SetDisplaySettings extends GenericFunction
 		// OS scaling
 		_osScalingCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.allowosscaling"), false);
 		grid.add(_osScalingCheckbox);
+		grid.add(new JLabel(""));
+		// Icon size
+		_doubledIconsCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.doublesizedicons"), false);
+		grid.add(_doubledIconsCheckbox);
 		grid.add(new JLabel(""));
 
 		linesPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -162,12 +169,17 @@ public class SetDisplaySettings extends GenericFunction
 			_dialog.pack();
 		}
 		// Set values from config
-		int lineWidth = Config.getConfigInt(Config.KEY_LINE_WIDTH);
+		Config config = getConfig();
+		int lineWidth = config.getConfigInt(Config.KEY_LINE_WIDTH);
 		if (lineWidth < 1 || lineWidth > 4) {lineWidth = 2;}
 		_lineWidthField.setValue(lineWidth);
-		_antialiasCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_ANTIALIAS));
-		_osScalingCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_OSSCALING));
-		selectWindowStyleRadio(Config.getConfigString(Config.KEY_WINDOW_STYLE));
+		_antialiasCheckbox.setSelected(config.getConfigBoolean(Config.KEY_ANTIALIAS));
+		_osScalingCheckbox.setSelected(config.getConfigBoolean(Config.KEY_OSSCALING));
+		_doubledIconsCheckbox.setSelected(config.getConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE));
+		selectWindowStyleRadio(config.getConfigString(Config.KEY_WINDOW_STYLE));
+		// Remember what the current settings are
+		_previousStyle = getSelectedStyleString();
+		_previousDoubleIcons = _doubledIconsCheckbox.isSelected();
 		_dialog.setVisible(true);
 	}
 
@@ -211,12 +223,26 @@ public class SetDisplaySettings extends GenericFunction
 		// update config
 		int lineWidth = _lineWidthField.getValue();
 		if (lineWidth < 1 || lineWidth > 4) {lineWidth = 2;}
-		Config.setConfigInt(Config.KEY_LINE_WIDTH, lineWidth);
-		Config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
-		Config.setConfigBoolean(Config.KEY_OSSCALING, _osScalingCheckbox.isSelected());
-		Config.setConfigString(Config.KEY_WINDOW_STYLE, getSelectedStyleString());
+		Config config = getConfig();
+		config.setConfigInt(Config.KEY_LINE_WIDTH, lineWidth);
+		config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
+		config.setConfigBoolean(Config.KEY_OSSCALING, _osScalingCheckbox.isSelected());
+		config.setConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE, _doubledIconsCheckbox.isSelected());
+		config.setConfigString(Config.KEY_WINDOW_STYLE, getSelectedStyleString());
+		if (needsRestart())
+		{
+			JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText("dialog.displaysettings.restart"),
+				getName(), JOptionPane.INFORMATION_MESSAGE);
+		}
 		// refresh display
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 		_dialog.dispose();
+	}
+
+	/** @return true if either the double-icons or window style settings have changed */
+	private boolean needsRestart()
+	{
+		return _doubledIconsCheckbox.isSelected() != _previousDoubleIcons
+			|| !Objects.equals(_previousStyle, getSelectedStyleString());
 	}
 }

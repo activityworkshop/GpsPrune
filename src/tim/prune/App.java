@@ -15,11 +15,13 @@ import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
 import tim.prune.function.media.LinkedMediaLoader;
 import tim.prune.function.settings.SaveConfig;
+import tim.prune.gui.IconManager;
 import tim.prune.gui.SidebarController;
 import tim.prune.gui.UndoManager;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.colour.ColourerCaretaker;
 import tim.prune.gui.colour.PointColourer;
+import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.load.FileLoader;
 import tim.prune.load.ItemToLoad;
 import tim.prune.load.JpegLoader;
@@ -27,7 +29,6 @@ import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
 import tim.prune.tips.TipManager;
 import tim.prune.undo.UndoStack;
-import tim.prune.undo.UndoWrapper;
 
 
 /**
@@ -37,6 +38,8 @@ public class App
 {
 	// Instance variables
 	private final JFrame _frame;
+	private final Config _config;
+	private final IconManager _iconManager;
 	private final Track _track;
 	private final TrackInfo _trackInfo;
 	private int _lastSavePosition = 0;
@@ -58,17 +61,21 @@ public class App
 	/**
 	 * Constructor
 	 * @param inFrame frame object for application
+	 * @param inConfig config object
 	 */
-	public App(JFrame inFrame)
+	public App(JFrame inFrame, Config inConfig)
 	{
 		_frame = inFrame;
+		_config = inConfig == null ? new Config() : inConfig;
+		_iconManager = new IconManager(_config.getConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE));
 		_undoStack = new UndoStack();
 		_track = new Track();
 		_trackInfo = new TrackInfo(_track);
 		FunctionLibrary.initialise(this);
 		_colCaretaker = new ColourerCaretaker(this);
 		UpdateMessageBroker.addSubscriber(_colCaretaker);
-		_colCaretaker.setColourer(Config.getPointColourer());
+		_colCaretaker.setColourer(_config.getPointColourer());
+		MapSourceLibrary.init(_config);
 	}
 
 
@@ -109,7 +116,7 @@ public class App
 	public void updatePointColourer()
 	{
 		if (_colCaretaker != null) {
-			_colCaretaker.setColourer(Config.getPointColourer());
+			_colCaretaker.setColourer(_config.getPointColourer());
 		}
 	}
 
@@ -167,7 +174,7 @@ public class App
 	{
 		if (inCommand.execute(_trackInfo))
 		{
-			_undoStack.add(new UndoWrapper(inCommand));
+			_undoStack.add(inCommand);
 			UpdateMessageBroker.informSubscribers(inCommand.getConfirmText());
 			UpdateMessageBroker.informSubscribers(inCommand.getUpdateFlags());
 			return true;
@@ -241,7 +248,7 @@ public class App
 		}
 
 		// Has the user got unsaved settings?
-		if (Config.hasUnsavedChanges()
+		if (_config.hasUnsavedChanges()
 			&& JOptionPane.showOptionDialog(_frame, I18nManager.getText("dialog.exit.unsavedsettings.text"),
 				I18nManager.getText("dialog.exit.confirm.title"), JOptionPane.YES_NO_OPTION,
 				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
@@ -252,7 +259,7 @@ public class App
 		}
 
 		// Checks passed, let's save settings and exit
-		if (Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS)) {
+		if (_config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS)) {
 			new SaveConfig(this).silentSave();
 		}
 		System.exit(0);
@@ -276,7 +283,7 @@ public class App
 	 */
 	public void addRecentFile(File inFile, boolean inIsRegularLoad)
 	{
-		Config.getRecentFileList().addFile(new RecentFile(inFile, inIsRegularLoad));
+		_config.getRecentFileList().addFile(new RecentFile(inFile, inIsRegularLoad));
 		UpdateMessageBroker.informSubscribers(DataSubscriber.FILE_LOADED);
 		if (inIsRegularLoad && getTrackInfo().getTrack().hasSingleSourceFile()) {
 			informDataSaved(); // allow exit without saving, because we've only just loaded
@@ -333,7 +340,7 @@ public class App
 	 */
 	public void saveExif()
 	{
-		ExifSaver saver = new ExifSaver(_frame);
+		ExifSaver saver = new ExifSaver(_frame, _config.getConfigString(Config.KEY_EXIFTOOL_PATH));
 		saver.saveExifInformation(_trackInfo.getPhotoList());
 	}
 
@@ -382,10 +389,7 @@ public class App
 		if (answer == JOptionPane.YES_OPTION)
 		{
 			_undoStack.clear();
-			_lastSavePosition = 0;
-			if (unsaved) {
-				_lastSavePosition = -1;
-			}
+			_lastSavePosition = unsaved ? -1 : 0;
 			UpdateMessageBroker.informSubscribers();
 		}
 	}
@@ -400,14 +404,13 @@ public class App
 		try
 		{
 			for (int i=0; i<inNumUndos; i++) {
-				_undoStack.popOperation().performUndo(_trackInfo);
+				_undoStack.popCommand().getInverse().execute(_trackInfo);
 			}
 			String message = "" + inNumUndos + " "
-				 + (inNumUndos==1?I18nManager.getText("confirm.undo.single"):I18nManager.getText("confirm.undo.multi"));
+				 + (inNumUndos == 1 ? I18nManager.getText("confirm.undo.single") : I18nManager.getText("confirm.undo.multi"));
 			UpdateMessageBroker.informSubscribers(message);
 		}
 		catch (EmptyStackException empty) {}
-		// showErrorMessageNoLookup("error.undofailed.title", I18nManager.getText("error.undofailed.text") + " : " + ue.getMessage());
 
 		UpdateMessageBroker.informSubscribers();
 	}
@@ -482,5 +485,15 @@ public class App
 	/** @param inMode the current app mode */
 	public void setCurrentMode(AppMode inMode) {
 		_appMode = inMode;
+	}
+
+	/** @return config object */
+	public Config getConfig() {
+		return _config;
+	}
+
+	/** @return icon manager */
+	public IconManager getIconManager() {
+		return _iconManager;
 	}
 }

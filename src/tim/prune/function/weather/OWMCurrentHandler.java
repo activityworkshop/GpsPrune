@@ -20,7 +20,7 @@ public class OWMCurrentHandler extends DefaultHandler
 	/** Sunrise and sunset times */
 	private String _sunriseTime = null, _sunsetTime = null;
 	/** The currently open forecast */
-	private SingleForecast _forecast = new SingleForecast();
+	private final SingleForecast _forecast = new SingleForecast();
 
 
 	/**

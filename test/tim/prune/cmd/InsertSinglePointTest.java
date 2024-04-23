@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Track;
@@ -23,7 +22,7 @@ class InsertSinglePointTest
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
 
-		DataPoint point = new DataPoint(new Latitude("1.234"), new Longitude("2.345"), null);
+		DataPoint point = new DataPoint(Latitude.make("1.234"), Longitude.make("2.345"));
 		Command command = new InsertPointCmd(point, -1);
 		assertTrue(command.execute(info));
 		assertEquals(1, track.getNumPoints());
@@ -40,8 +39,8 @@ class InsertSinglePointTest
 		final int numPoints = 5;
 		for (int i=1; i<=numPoints; i++)
 		{
-			DataPoint point = new DataPoint(new Latitude(i + ".234"), new Longitude(i + ".345"), null);
-			point.setFieldValue(Field.WAYPT_NAME, "Point" + i, false);
+			DataPoint point = new DataPoint(Latitude.make(i + ".234"), Longitude.make(i + ".345"));
+			point.setWaypointName("Point" + i);
 			Command appendCommand = new InsertPointCmd(point, -1);
 			assertTrue(appendCommand.execute(info));
 		}
@@ -60,12 +59,12 @@ class InsertSinglePointTest
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
 		for (int i=0; i<10; i++) {
-			track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
+			track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
 		}
 		// Now use a command to insert at position 4
 		final int insertPosition = 4;
-		DataPoint point = new DataPoint(new Latitude("5.234"), new Longitude("6.345"), null);
-		point.setFieldValue(Field.WAYPT_NAME, "waypoint", false);
+		DataPoint point = new DataPoint(Latitude.make("5.234"), Longitude.make("6.345"));
+		point.setWaypointName("waypoint");
 		Command command = new InsertPointCmd(point, insertPosition);
 		assertTrue(command.execute(info));
 		assertEquals(11, track.getNumPoints());
@@ -89,12 +88,12 @@ class InsertSinglePointTest
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
 		for (int i=0; i<10; i++) {
-			track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
+			track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
 		}
 		for (int insertPos = 0; insertPos < 9; insertPos++)
 		{
 			info.getSelection().selectRange(3,  5);
-			DataPoint point = new DataPoint(new Latitude("5.234"), new Longitude("6.345"), null);
+			DataPoint point = new DataPoint(Latitude.make("5.234"), Longitude.make("6.345"));
 			Command command = new InsertPointCmd(point, insertPos);
 			assertTrue(command.execute(info));
 			assertEquals(11, track.getNumPoints());

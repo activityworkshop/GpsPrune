@@ -47,7 +47,7 @@ public class ColourerCaretaker implements DataSubscriber
 			(DataSubscriber.DATA_ADDED_OR_REMOVED | DataSubscriber.DATA_EDITED | DataSubscriber.UNITS_CHANGED)) > 0
 			&& _colourer != null)
 		{
-			_colourer.calculateColours(_app.getTrackInfo());
+			_colourer.calculateColours(_app.getTrackInfo(), _app.getConfig());
 		}
 	}
 

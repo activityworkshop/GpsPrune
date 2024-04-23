@@ -6,6 +6,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.RangeStats;
 import tim.prune.data.Track;
+import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
 
 /**
@@ -95,12 +96,10 @@ public class MarkLiftsFunction extends MarkAndDeleteFunction
 		// Inform subscribers to update display
 		UpdateMessageBroker.informSubscribers();
 		// Confirm message showing how many marked
-		if (numMarked > 0)
-		{
+		if (numMarked > 0) {
 			optionallyDeleteMarkedPoints(numMarked);
 		}
-		else
-		{
+		else {
 			// TODO: Show message that no lifts were found
 		}
 	}
@@ -118,24 +117,22 @@ public class MarkLiftsFunction extends MarkAndDeleteFunction
 	private boolean looksLikeLiftRange(Track inTrack, int inStartIndex, int inEndIndex)
 	{
 		RangeStats stats = new RangeStats(inTrack, inStartIndex, inEndIndex, 0);
-		int descent = stats.getTotalAltitudeRange().getDescent(UnitSetLibrary.UNITS_METRES);
+		Unit unitMetres = UnitSetLibrary.UNITS_METRES;
+		int descent = stats.getTotalAltitudeRange().getDescent(unitMetres);
 		if (descent < 20)
 		{
-			int ascent = stats.getTotalAltitudeRange().getClimb(UnitSetLibrary.UNITS_METRES);
+			int ascent = stats.getTotalAltitudeRange().getClimb(unitMetres);
 			if (ascent > (descent * 10))
 			{
 				// Now check distance and compare to distance between start and end
 				final DataPoint startPoint = inTrack.getPoint(inStartIndex);
 				final DataPoint endPoint   = inTrack.getPoint(inEndIndex);
 
-				final double trackDist = stats.getTotalDistance();
+				final double trackDist = stats.getTotalDistance(unitMetres);
 				final double endToEndDist = Distance.convertRadiansToDistance(
-					DataPoint.calculateRadiansBetween(startPoint, endPoint));
-				if ((trackDist / endToEndDist) < 1.02)  // Straight(ish) line
-				{
-					return true;
-				}
-				//else System.out.println("Not straight enough: " + (trackDist / endToEndDist));
+					DataPoint.calculateRadiansBetween(startPoint, endPoint), unitMetres);
+				// Check for straight(ish) line
+				return (trackDist / endToEndDist) < 1.02;
 			}
 		}
 		return false;

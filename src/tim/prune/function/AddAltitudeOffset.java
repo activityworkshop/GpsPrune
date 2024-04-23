@@ -19,7 +19,6 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.EditSingleFieldCmd;
-import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.Field;
@@ -148,7 +147,7 @@ public class AddAltitudeOffset extends GenericFunction
 	private void setLabelText()
 	{
 		_altUnit = UnitSetLibrary.UNITS_FEET;
-		if (Config.getUnitSet().getAltitudeUnit().isStandard()) {
+		if (getConfig().getUnitSet().getAltitudeUnit().isStandard()) {
 			_altUnit = UnitSetLibrary.UNITS_METRES;
 		}
 		final String unitKey = _altUnit.getShortnameKey();
@@ -180,7 +179,7 @@ public class AddAltitudeOffset extends GenericFunction
 		}
 		if (!edits.isEmpty())
 		{
-			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.ALTITUDE, edits);
+			EditSingleFieldCmd command = new EditSingleFieldCmd(Field.ALTITUDE, edits, getConfig().getUnitSet());
 			command.setDescription(getName());
 			command.setConfirmText(I18nManager.getText("confirm.addaltitudeoffset"));
 			_app.execute(command);

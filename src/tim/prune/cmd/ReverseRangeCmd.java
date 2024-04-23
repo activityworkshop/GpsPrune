@@ -7,8 +7,7 @@ import java.util.List;
  */
 public class ReverseRangeCmd extends CompoundCommand
 {
-	public ReverseRangeCmd(List<Integer> inPointIndexes, int inStartIndex, int inEndIndex,
-	                    List<PointFlag> inSegmentPoints)
+	public ReverseRangeCmd(List<Integer> inPointIndexes, List<PointFlag> inSegmentPoints)
 	{
 		addCommand(new RearrangePointsCmd(inPointIndexes));
 		if (inSegmentPoints != null)

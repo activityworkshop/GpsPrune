@@ -122,13 +122,13 @@ public class AutoplayFunction extends GenericFunction
 		// Button panel
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
-		buttonPanel.add(_rewindButton = new JButton(IconManager.getImageIcon(IconManager.CONTROL_REWIND)));
+		buttonPanel.add(_rewindButton = new JButton(getIconManager().getImageIcon(IconManager.CONTROL_REWIND)));
 		_rewindButton.setToolTipText(I18nManager.getText("dialog.autoplay.rewind"));
 		_rewindButton.addActionListener(e -> onRewindPressed());
-		buttonPanel.add(_pauseButton = new JButton(IconManager.getImageIcon(IconManager.CONTROL_PAUSE)));
+		buttonPanel.add(_pauseButton = new JButton(getIconManager().getImageIcon(IconManager.CONTROL_PAUSE)));
 		_pauseButton.setToolTipText(I18nManager.getText("dialog.autoplay.pause"));
 		_pauseButton.addActionListener(e -> onPausePressed());
-		buttonPanel.add(_playButton = new JButton(IconManager.getImageIcon(IconManager.CONTROL_PLAY)));
+		buttonPanel.add(_playButton = new JButton(getIconManager().getImageIcon(IconManager.CONTROL_PLAY)));
 		_playButton.setToolTipText(I18nManager.getText("dialog.autoplay.play"));
 		_playButton.addActionListener(e -> onPlayPressed());
 		buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);

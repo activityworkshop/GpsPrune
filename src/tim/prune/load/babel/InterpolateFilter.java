@@ -18,7 +18,7 @@ import tim.prune.gui.WholeNumberField;
  * Interpolate filter for GPSBabel (adding extra points, does that make it still a filter?)
  * Very similar to the distance filter in terms of gui
  */
-public class InterpolateFilter extends FilterDefinition
+public final class InterpolateFilter extends FilterDefinition
 {
 	/** Constructor */
 	public InterpolateFilter(AddFilterDialog inFilterDialog)

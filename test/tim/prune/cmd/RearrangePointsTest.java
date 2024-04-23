@@ -36,8 +36,8 @@ class RearrangePointsTest
 		Track track = new Track();
 		for (int i=0; i<6; i++)
 		{
-			DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null);
-			point.setFieldValue(Field.WAYPT_NAME, "Point" + i, false);
+			DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"));
+			point.setWaypointName("Point" + i);
 			track.appendPoint(point);
 		}
 		return new TrackInfo(track);

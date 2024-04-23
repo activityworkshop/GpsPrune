@@ -7,47 +7,50 @@ import java.util.Collections;
 import javax.swing.table.AbstractTableModel;
 
 import tim.prune.I18nManager;
-import tim.prune.config.Config;
 import tim.prune.data.Unit;
+
 
 /**
  * Model for list of tracks from a search result (eg geonames, overpass)
  */
 public class TrackListModel extends AbstractTableModel
 {
+	/** Unit to use for distances */
+	private final Unit _distanceUnit;
 	/** List of tracks */
 	private ArrayList<SearchResult> _trackList = null;
 	/** Column heading for track name */
-	private String _nameColLabel = null;
+	private final String _nameColLabel;
 	/** Column heading for length */
 	private String _lengthColLabel = null;
 	/** Number of columns */
-	private int _numColumns = 2;
+	private final int _numColumns;
 	/** Normally this model shows distances / lengths, except when this flag is true */
 	private boolean _showPointTypes = false;
 	/** Formatter for distances */
-	private NumberFormat _distanceFormatter = NumberFormat.getInstance();
+	private final NumberFormat _distanceFormatter = NumberFormat.getInstance();
 
 	/**
 	 * Constructor
 	 * @param inColumn1Key key for first column
 	 * @param inColumn2Key key for second column
+	 * @param inDistanceUnit unit to use for distances
 	 */
-	public TrackListModel(String inColumn1Key, String inColumn2Key)
+	public TrackListModel(String inColumn1Key, String inColumn2Key, Unit inDistanceUnit)
 	{
+		_distanceUnit = inDistanceUnit;
 		_nameColLabel = I18nManager.getText(inColumn1Key);
 		if (inColumn2Key != null) {
 			_lengthColLabel = I18nManager.getText(inColumn2Key);
 		}
-		_numColumns = (_lengthColLabel != null?2:1);
+		_numColumns = (_lengthColLabel != null ? 2 : 1);
 		_distanceFormatter.setMaximumFractionDigits(1);
 	}
 
 	/**
 	 * @return column count
 	 */
-	public int getColumnCount()
-	{
+	public int getColumnCount() {
 		return _numColumns;
 	}
 
@@ -61,8 +64,7 @@ public class TrackListModel extends AbstractTableModel
 	}
 
 	/** @return true if there are no rows */
-	public boolean isEmpty()
-	{
+	public boolean isEmpty() {
 		return getRowCount() == 0;
 	}
 
@@ -79,8 +81,7 @@ public class TrackListModel extends AbstractTableModel
 	/**
 	 * @param inShowTypes true to show point types, false for distances
 	 */
-	public void setShowPointTypes(boolean inShowTypes)
-	{
+	public void setShowPointTypes(boolean inShowTypes) {
 		_showPointTypes = inShowTypes;
 	}
 
@@ -95,24 +96,21 @@ public class TrackListModel extends AbstractTableModel
 		if (inColNum == 0) {
 			return track.getTrackName();
 		}
-		if (_showPointTypes)
-		{
+		if (_showPointTypes) {
 			return track.getPointType();
 		}
 		double lengthM = track.getLength();
 		// convert to current distance units
-		Unit distUnit = Config.getUnitSet().getDistanceUnit();
-		double length = lengthM * distUnit.getMultFactorFromStd();
+		double length = lengthM * _distanceUnit.getMultFactorFromStd();
 		// Make text
-		return _distanceFormatter.format(length) + " " + I18nManager.getText(distUnit.getShortnameKey());
+		return _distanceFormatter.format(length) + " " + I18nManager.getText(_distanceUnit.getShortnameKey());
 	}
 
 	/**
 	 * Add a list of tracks to this model
 	 * @param inList list of tracks to add
 	 */
-	public void addTracks(ArrayList<SearchResult> inList)
-	{
+	public void addTracks(ArrayList<SearchResult> inList) {
 		addTracks(inList, false);
 	}
 
@@ -123,7 +121,7 @@ public class TrackListModel extends AbstractTableModel
 	 */
 	public void addTracks(ArrayList<SearchResult> inList, boolean inSort)
 	{
-		if (_trackList == null) {_trackList = new ArrayList<SearchResult>();}
+		if (_trackList == null) {_trackList = new ArrayList<>();}
 		final int prevCount = _trackList.size();
 		if (inList != null && inList.size() > 0)
 		{
@@ -133,26 +131,26 @@ public class TrackListModel extends AbstractTableModel
 			}
 		}
 		final int updatedCount = _trackList.size();
-		if (prevCount <= 0)
+		if (prevCount <= 0) {
 			fireTableDataChanged();
-		else
+		}
+		else {
 			fireTableRowsInserted(prevCount, updatedCount-1);
+		}
 	}
 
 	/**
 	 * @param inRowNum row number from 0
 	 * @return track object for this row
 	 */
-	public SearchResult getTrack(int inRowNum)
-	{
+	public SearchResult getTrack(int inRowNum) {
 		return _trackList.get(inRowNum);
 	}
 
 	/**
 	 * Clear the list of tracks
 	 */
-	public void clear()
-	{
+	public void clear() {
 		_trackList = null;
 	}
 }

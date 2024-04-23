@@ -51,11 +51,8 @@ public abstract class MediaHelper
 	{
 		if (inPath == null || inPath.length() < 5) return null;
 		byte[] data = null;
-		// See if file is inside a zip file
-		boolean isZip = inZipFile != null && inZipFile.exists() && inZipFile.canRead()
-			&& !inZipFile.getName().toLowerCase().endsWith(".gpx")
-			&& !inZipFile.getName().toLowerCase().endsWith(".kml");
-		if (isZip)
+		// See if file is in the zip file
+		if (inZipFile != null && inZipFile.exists() && inZipFile.canRead())
 		{
 			try (ZipFile zf = new ZipFile(inZipFile))
 			{
@@ -67,12 +64,12 @@ public abstract class MediaHelper
 			catch (IOException ioe) {
 				System.err.println("Got ioe from zip file: " + ioe.getMessage());
 			}
+		}
 
-			if (data != null)
-			{
-				final String filename = new File(inPath).getName();
-				return createMediaObject(data, filename, null);
-			}
+		if (data != null)
+		{
+			final String filename = new File(inPath).getName();
+			return createMediaObject(data, filename, null);
 		}
 
 		// If we haven't got a result by now, try to load plain file

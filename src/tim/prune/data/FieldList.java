@@ -111,7 +111,7 @@ public class FieldList
 	 * @param inField Field to add
 	 * @return new index of added Field
 	 */
-	public int extendList(Field inField)
+	public int addField(Field inField)
 	{
 		// See if field is already in list
 		int currIndex = getFieldIndex(inField);
@@ -123,6 +123,16 @@ public class FieldList
 		return getNumFields() - 1;
 	}
 
+	/**
+	 * Extend the field list to include the specified fields
+	 * @param inFields Field objects to add
+	 */
+	public void addFields(Field ... inFields)
+	{
+		for (Field field : inFields) {
+			addField(field);
+		}
+	}
 
 	/**
 	 * Convert to String for debug

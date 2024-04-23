@@ -75,23 +75,32 @@ public class MidpointData
 	 */
 	public int getNearestPointIndex(double inX, double inY, double inMaxDist)
 	{
-		if (_track == null) return -1;
-		if (_needRefresh) updateData();
+		if (_track == null) {
+			return -1;
+		}
+		if (_needRefresh) {
+			updateData();
+		}
 		final int numPoints = _track.getNumPoints();
 		int nearestPoint = -1;
 		double nearestDist = -1.0;
 		double currDist;
-		for (int i=1; i < numPoints; i++)
-		{
-			if (_valids[i])
+		try {
+			for (int i=1; i < numPoints; i++)
 			{
-				currDist = Math.abs(_xValues[i] - inX) + Math.abs(_yValues[i] - inY);
-				if (currDist < nearestDist || nearestDist < 0.0)
+				if (_valids[i])
 				{
-					nearestPoint = i;
-					nearestDist = currDist;
+					currDist = Math.abs(_xValues[i] - inX) + Math.abs(_yValues[i] - inY);
+					if (currDist < nearestDist || nearestDist < 0.0)
+					{
+						nearestPoint = i;
+						nearestDist = currDist;
+					}
 				}
 			}
+		}
+		catch (ArrayIndexOutOfBoundsException outOfSync) {
+			return -1;
 		}
 		// Check whether it's within required distance
 		if (nearestDist > inMaxDist && inMaxDist > 0.0) {

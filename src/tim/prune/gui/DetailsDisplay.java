@@ -18,6 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.border.EtchedBorder;
 
+import tim.prune.App;
 import tim.prune.DataSubscriber;
 import tim.prune.FunctionLibrary;
 import tim.prune.GenericFunction;
@@ -31,11 +32,11 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Photo;
+import tim.prune.data.RangeStats;
 import tim.prune.data.Selection;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.SpeedCalculator;
 import tim.prune.data.SpeedValue;
-import tim.prune.data.TrackInfo;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSet;
 import tim.prune.data.UnitSetLibrary;
@@ -46,6 +47,7 @@ import tim.prune.data.UnitSetLibrary;
  */
 public class DetailsDisplay extends GenericDisplay
 {
+	private final Config _config;
 	// Point details
 	private JLabel _indexLabel = null;
 	private JLabel _latLabel = null, _longLabel = null;
@@ -80,7 +82,6 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _audioConnectedLabel = null;
 	private JLabel _audioTimestampLabel = null;
 	private JLabel _audioLengthLabel = null;
-	private JProgressBar _audioProgress = null;
 	private JPanel _playAudioPanel = null;
 
 	// Units
@@ -99,6 +100,7 @@ public class DetailsDisplay extends GenericDisplay
 	private static final String LABEL_POINT_WAYPOINTNAME = I18nManager.getText("fieldname.waypointname") + ": ";
 	private static final String LABEL_POINT_WAYPOINTTYPE = I18nManager.getText("fieldname.waypointtype") + ": ";
 	private static final String LABEL_POINT_DESCRIPTION  = I18nManager.getText("fieldname.description") + ": ";
+	private static final String LABEL_POINT_COMMENT = I18nManager.getText("fieldname.comment") + ": ";
 	private static final String LABEL_POINT_SPEED        = I18nManager.getText("fieldname.speed") + ": ";
 	private static final String LABEL_POINT_VERTSPEED    = I18nManager.getText("fieldname.verticalspeed") + ": ";
 	private static final String LABEL_POINT_FILENAME     = I18nManager.getText("details.track.file") + ": ";
@@ -114,11 +116,12 @@ public class DetailsDisplay extends GenericDisplay
 
 	/**
 	 * Constructor
-	 * @param inTrackInfo Track info object
+	 * @param inApp App object
 	 */
-	public DetailsDisplay(TrackInfo inTrackInfo)
+	public DetailsDisplay(App inApp)
 	{
-		super(inTrackInfo);
+		super(inApp.getTrackInfo());
+		_config = inApp.getConfig();
 		setLayout(new BorderLayout());
 
 		JPanel mainPanel = new JPanel();
@@ -191,9 +194,10 @@ public class DetailsDisplay extends GenericDisplay
 		_photoThumbnail.setPreferredSize(new Dimension(100, 100));
 		_photoDetailsPanel.add(_photoThumbnail);
 		// Rotate buttons
-		JButton rotLeft = makeRotateButton(IconManager.ROTATE_LEFT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_LEFT);
-		JButton rotRight = makeRotateButton(IconManager.ROTATE_RIGHT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_RIGHT);
-		JButton popup = makeRotateButton(IconManager.SHOW_DETAILS, FunctionLibrary.FUNCTION_PHOTO_POPUP);
+		IconManager iconManager = inApp.getIconManager();
+		JButton rotLeft = makeRotateButton(iconManager, IconManager.ROTATE_LEFT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_LEFT);
+		JButton rotRight = makeRotateButton(iconManager, IconManager.ROTATE_RIGHT, FunctionLibrary.FUNCTION_ROTATE_PHOTO_RIGHT);
+		JButton popup = makeRotateButton(iconManager, IconManager.SHOW_DETAILS, FunctionLibrary.FUNCTION_PHOTO_POPUP);
 		_rotationButtons = new JPanel();
 		_rotationButtons.add(rotLeft);
 		_rotationButtons.add(rotRight);
@@ -217,17 +221,17 @@ public class DetailsDisplay extends GenericDisplay
 		_audioDetailsPanel.add(_audioLengthLabel);
 		_audioConnectedLabel = new JLabel("");
 		_audioDetailsPanel.add(_audioConnectedLabel);
-		_audioProgress = new JProgressBar(0, 100);
-		_audioProgress.setString(I18nManager.getText("details.audio.playing"));
-		_audioProgress.setStringPainted(true);
-		_audioProgress.setVisible(false);
-		_audioDetailsPanel.add(_audioProgress);
+		JProgressBar audioProgress = new JProgressBar(0, 100);
+		audioProgress.setString(I18nManager.getText("details.audio.playing"));
+		audioProgress.setStringPainted(true);
+		audioProgress.setVisible(false);
+		_audioDetailsPanel.add(audioProgress);
 		_playAudioPanel = new JPanel();
 		_playAudioPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton playAudio = makeRotateButton(IconManager.CONTROL_PLAY, FunctionLibrary.FUNCTION_PLAY_AUDIO);
-		playAudio.addActionListener(new AudioListener(_audioProgress));
+		JButton playAudio = makeRotateButton(iconManager, IconManager.CONTROL_PLAY, FunctionLibrary.FUNCTION_PLAY_AUDIO);
+		playAudio.addActionListener(new AudioListener(audioProgress));
 		_playAudioPanel.add(playAudio);
-		JButton stopAudio = makeRotateButton(IconManager.CONTROL_STOP, FunctionLibrary.FUNCTION_STOP_AUDIO);
+		JButton stopAudio = makeRotateButton(iconManager, IconManager.CONTROL_STOP, FunctionLibrary.FUNCTION_STOP_AUDIO);
 		_playAudioPanel.add(stopAudio);
 		_playAudioPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_playAudioPanel.setVisible(false);
@@ -263,13 +267,15 @@ public class DetailsDisplay extends GenericDisplay
 		lowerPanel.add(unitsLabel);
 		// Make dropdown for distance units
 		_distUnitsDropdown = new JComboBox<String>();
-		final UnitSet currUnits = Config.getUnitSet();
+		final UnitSet currUnits = _config.getUnitSet();
 		for (int i=0; i<UnitSetLibrary.getNumUnitSets(); i++) {
 			_distUnitsDropdown.addItem(I18nManager.getText(UnitSetLibrary.getUnitSet(i).getDistanceUnit().getNameKey()));
-			if (UnitSetLibrary.getUnitSet(i) == currUnits) {_distUnitsDropdown.setSelectedIndex(i);}
+			if (UnitSetLibrary.getUnitSet(i) == currUnits) {
+				_distUnitsDropdown.setSelectedIndex(i);
+			}
 		}
 		_distUnitsDropdown.addActionListener(e -> {
-			Config.selectUnitSet(_distUnitsDropdown.getSelectedIndex());
+			_config.selectUnitSet(_distUnitsDropdown.getSelectedIndex());
 			UpdateMessageBroker.informSubscribers(DataSubscriber.UNITS_CHANGED);
 		});
 		lowerPanel.add(_distUnitsDropdown);
@@ -288,18 +294,19 @@ public class DetailsDisplay extends GenericDisplay
 		DataPoint currentPoint = _trackInfo.getCurrentPoint();
 		Selection selection = _trackInfo.getSelection();
 		if ((inUpdateType | DATA_ADDED_OR_REMOVED) > 0) {
-			selection.markInvalid();
+			// TODO: clear stats?
 		}
 		int currentPointIndex = selection.getCurrentPointIndex();
 		_speedLabel.setText("");
 		UnitSet unitSet = UnitSetLibrary.getUnitSet(_distUnitsDropdown.getSelectedIndex());
-		String distUnitsStr = I18nManager.getText(unitSet.getDistanceUnit().getShortnameKey());
+		Unit distUnit = unitSet.getDistanceUnit();
+		String distUnitsStr = I18nManager.getText(distUnit.getShortnameKey());
 		String speedUnitsStr = I18nManager.getText(unitSet.getSpeedUnit().getShortnameKey());
 		if (_timezone == null || (inUpdateType | UNITS_CHANGED) > 0) {
-			_timezone = TimezoneHelper.getSelectedTimezone();
+			_timezone = TimezoneHelper.getSelectedTimezone(_config);
 		}
 		if ((inUpdateType | UNITS_CHANGED) > 0) {
-			Config.setConfigString(Config.KEY_COORD_DISPLAY_FORMAT, "" + getSelectedCoordFormat());
+			_config.setConfigString(Config.KEY_COORD_DISPLAY_FORMAT, getSelectedCoordFormat().toString());
 		}
 
 		if (_track == null || currentPoint == null)
@@ -326,7 +333,7 @@ public class DetailsDisplay extends GenericDisplay
 				+ CoordDisplay.makeCoordinateLabel(currentPoint.getLatitude(), getSelectedCoordFormat()));
 			_longLabel.setText(LABEL_POINT_LONGITUDE
 				+ CoordDisplay.makeCoordinateLabel(currentPoint.getLongitude(), getSelectedCoordFormat()));
-			Unit altUnit = Config.getUnitSet().getAltitudeUnit();
+			Unit altUnit = _config.getUnitSet().getAltitudeUnit();
 			_altLabel.setText(currentPoint.hasAltitude()?
 				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getValue(altUnit) + " " +
 				I18nManager.getText(altUnit.getShortnameKey()))
@@ -342,26 +349,11 @@ public class DetailsDisplay extends GenericDisplay
 				_ptTimeLabel.setText("");
 			}
 			// Maybe the point has a description?
-			String pointDesc = currentPoint.getFieldValue(Field.DESCRIPTION);
-			if (pointDesc == null || pointDesc.equals("") || currentPoint.hasMedia())
-			{
-				_descLabel.setText("");
-				_descLabel.setToolTipText("");
-			}
-			else
-			{
-				if (pointDesc.length() < 5) {
-					_descLabel.setText(LABEL_POINT_DESCRIPTION + pointDesc);
-				}
-				else {
-					_descLabel.setText(shortenString(pointDesc));
-				}
-				_descLabel.setToolTipText(pointDesc);
-			}
+			showDescriptionOrComment(currentPoint);
 
 			// Speed can come from either timestamps and distances, or speed values in data
 			SpeedValue speedValue = new SpeedValue();
-			SpeedCalculator.calculateSpeed(_track, currentPointIndex, speedValue);
+			SpeedCalculator.calculateSpeed(_track, currentPointIndex, _config.getUnitSet(), speedValue);
 			if (speedValue.isValid())
 			{
 				String speed = DisplayUtils.roundedNumber(speedValue.getValue()) + " " + speedUnitsStr;
@@ -372,7 +364,7 @@ public class DetailsDisplay extends GenericDisplay
 			}
 
 			// Now do the vertical speed in the same way
-			SpeedCalculator.calculateVerticalSpeed(_track, currentPointIndex, speedValue);
+			SpeedCalculator.calculateVerticalSpeed(_track, currentPointIndex, _config.getUnitSet(), speedValue);
 			if (speedValue.isValid())
 			{
 				String vSpeedUnitsStr = I18nManager.getText(unitSet.getVerticalSpeedUnit().getShortnameKey());
@@ -431,24 +423,27 @@ public class DetailsDisplay extends GenericDisplay
 		}
 		else
 		{
+			RangeStats rangeStats = selection.getRangeStats(_config);
 			_rangeLabel.setText(LABEL_RANGE_SELECTED
 				+ (selection.getStart()+1) + " " + I18nManager.getText("details.range.to")
 				+ " " + (selection.getEnd()+1));
-			_distanceLabel.setText(LABEL_RANGE_DISTANCE + DisplayUtils.roundedNumber(selection.getMovingDistance()) + " " + distUnitsStr);
-			final long numMovingSeconds = selection.getMovingSeconds();
+			_distanceLabel.setText(LABEL_RANGE_DISTANCE + DisplayUtils.roundedNumber(rangeStats.getMovingDistance(distUnit))
+				+ " " + distUnitsStr);
+			final long numMovingSeconds = rangeStats.getMovingDurationInSeconds();
 			if (numMovingSeconds > 0L)
 			{
 				_durationLabel.setText(LABEL_RANGE_DURATION + DisplayUtils.buildDurationString(numMovingSeconds));
 				_aveSpeedLabel.setText(I18nManager.getText("details.range.avespeed") + ": "
-					+ DisplayUtils.roundedNumber(selection.getMovingDistance()/numMovingSeconds*3600.0) + " " + speedUnitsStr);
+					+ DisplayUtils.roundedNumber(rangeStats.getMovingDistance(distUnit) / numMovingSeconds * 3600.0)
+					+ " " + speedUnitsStr);
 			}
 			else
 			{
 				_durationLabel.setText("");
 				_aveSpeedLabel.setText("");
 			}
-			AltitudeRange altRange = selection.getAltitudeRange();
-			Unit altUnit = Config.getUnitSet().getAltitudeUnit();
+			AltitudeRange altRange = rangeStats.getMovingAltitudeRange();
+			Unit altUnit = _config.getUnitSet().getAltitudeUnit();
 			String altUnitsLabel = I18nManager.getText(altUnit.getShortnameKey());
 			if (altRange.hasRange())
 			{
@@ -540,6 +535,42 @@ public class DetailsDisplay extends GenericDisplay
 		_playAudioPanel.setVisible(currentAudio != null);
 	}
 
+	/** Set either the description or comment from the current point */
+	private void showDescriptionOrComment(DataPoint inPoint)
+	{
+		String desc = inPoint.getFieldValue(Field.DESCRIPTION);
+		if (desc != null && !desc.isEmpty()) {
+			showDescriptionOrComment(LABEL_POINT_DESCRIPTION, desc);
+			return;
+		}
+		String comment = inPoint.getFieldValue(Field.COMMENT);
+		if (comment != null && !comment.isEmpty()) {
+			showDescriptionOrComment(LABEL_POINT_COMMENT, comment);
+			return;
+		}
+		showDescriptionOrComment("", "");
+	}
+
+	/** Set the description label and its tooltip */
+	private void showDescriptionOrComment(String inPrefix, String inValue)
+	{
+		if (inPrefix.isEmpty() || inValue.isEmpty())
+		{
+			_descLabel.setText("");
+			_descLabel.setToolTipText("");
+		}
+		else
+		{
+			if (inValue.length() < 10) {
+				_descLabel.setText(inPrefix + inValue);
+			}
+			else {
+				_descLabel.setText(shortenString(inValue));
+			}
+			_descLabel.setToolTipText(inPrefix + inValue);
+		}
+	}
+
 
 	/**
 	 * Make a details subpanel
@@ -562,13 +593,14 @@ public class DetailsDisplay extends GenericDisplay
 
 	/**
 	 * Create a little button for rotating the current photo
+	 * @param inIconManager icon manager
 	 * @param inIcon icon to use (from IconManager)
 	 * @param inFunction function to call (from FunctionLibrary)
 	 * @return button object
 	 */
-	private static JButton makeRotateButton(String inIcon, GenericFunction inFunction)
+	private static JButton makeRotateButton(IconManager inIconManager, String inIcon, GenericFunction inFunction)
 	{
-		JButton button = new JButton(IconManager.getImageIcon(inIcon));
+		JButton button = new JButton(inIconManager.getImageIcon(inIcon));
 		button.setToolTipText(inFunction.getName());
 		button.setMargin(new Insets(0, 2, 0, 2));
 		button.addActionListener(new FunctionLauncher(inFunction));
@@ -597,28 +629,28 @@ public class DetailsDisplay extends GenericDisplay
 	private static String shortenString(String inString)
 	{
 		// Limit is hardcoded here, maybe it should depend on parent component width and font size etc?
-		if (inString == null || inString.length() < 21) {
+		if (inString == null || inString.length() < 26) {
 			return inString;
 		}
 		// string is too long
-		return inString.substring(0, 20) + "...";
+		return inString.substring(0, 25) + "...";
 	}
 
 	/**
 	 * @return the currently selected coordinate display format
 	 */
-	private int getSelectedCoordFormat()
+	private Coordinate.Format getSelectedCoordFormat()
 	{
 		switch (_coordFormatDropdown.getSelectedIndex())
 		{
 			case 1: // degminsec
-				return Coordinate.FORMAT_DEG_MIN_SEC;
+				return Coordinate.Format.DEG_MIN_SEC;
 			case 2: // degmin
-				return Coordinate.FORMAT_DEG_MIN;
+				return Coordinate.Format.DEG_MIN;
 			case 3: // degrees
-				return Coordinate.FORMAT_DEG;
+				return Coordinate.Format.DEG;
 			default: // just as it was
-				return Coordinate.FORMAT_NONE;
+				return Coordinate.Format.NONE;
 		}
 	}
 }

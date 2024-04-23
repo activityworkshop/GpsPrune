@@ -33,7 +33,6 @@ public class DoubleRange
 		_empty = true;
 	}
 
-
 	/**
 	 * Add a value to the range
 	 * @param inValue value to add
@@ -65,38 +64,36 @@ public class DoubleRange
 		return !_empty;
 	}
 
-
 	/**
 	 * @return minimum value, or 0.0 if none found
 	 */
-	public double getMinimum()
-	{
+	public double getMinimum() {
 		return _min;
 	}
-
 
 	/**
 	 * @return maximum value, or 0.0 if none found
 	 */
-	public double getMaximum()
-	{
+	public double getMaximum() {
 		return _max;
 	}
 
 	/**
 	 * @return range, as maximum - minimum
 	 */
-	public double getRange()
-	{
+	public double getRange() {
 		return _max - _min;
 	}
 
 	/**
 	 * @return mid value, halfway between min and max
 	 */
-	public double getMidValue()
-	{
+	public double getMidValue() {
 		return (_max + _min) / 2.0;
+	}
+
+	public boolean includes(double inValue) {
+		return hasData() && inValue >= _min && inValue <= _max;
 	}
 
 	/**
@@ -105,7 +102,9 @@ public class DoubleRange
 	 */
 	public DoubleRange copy()
 	{
-		if (_empty) return new DoubleRange();
+		if (_empty) {
+			return new DoubleRange();
+		}
 		return new DoubleRange(_min, _max);
 	}
 }

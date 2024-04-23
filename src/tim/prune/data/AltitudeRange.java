@@ -20,9 +20,9 @@ public class AltitudeRange
 	/** Total descent in metres */
 	private int _descent;
 	/** Flags for whether minimum or maximum has been found */
-	private boolean _gotPreviousMinimum = false, _gotPreviousMaximum = false;
+	private boolean _gotPreviousMinimum, _gotPreviousMaximum;
 	/** Integer value of previous minimum or maximum, if any */
-	private int _previousExtreme = 0;
+	private int _previousExtreme;
 
 
 	/**

@@ -26,11 +26,11 @@ public class DedupeWaypointsTest
 	{
 		// Make track with two identical waypoints
 		Track track = new Track();
-		DataPoint point1 = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
-		point1.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point1 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
+		point1.setWaypointName("abc");
 		track.appendPoint(point1);
-		DataPoint point2 = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
-		point2.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point2 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
+		point2.setWaypointName("abc");
 		track.appendPoint(point2);
 
 		// Shouldn't ignore first waypoint
@@ -51,11 +51,11 @@ public class DedupeWaypointsTest
 	{
 		// Make track with two different waypoints
 		Track track = new Track();
-		DataPoint point1 = new DataPoint(new Latitude("0.81"), new Longitude("5.964"), null);
-		point1.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point1 = new DataPoint(Latitude.make("0.81"), Longitude.make("5.964"));
+		point1.setWaypointName("abc");
 		track.appendPoint(point1);
-		DataPoint point2 = new DataPoint(new Latitude("111.1"), new Longitude("-5.44"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
-		point2.setFieldValue(Field.WAYPT_NAME, "another", true);
+		DataPoint point2 = new DataPoint(Latitude.make("81.1"), Longitude.make("-5.44"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
+		point2.setWaypointName("another");
 		track.appendPoint(point2);
 
 		// Shouldn't ignore first waypoint
@@ -77,11 +77,11 @@ public class DedupeWaypointsTest
 	{
 		// Make track with two different waypoints
 		Track track = new Track();
-		DataPoint point1 = new DataPoint(new Latitude("22.33"), new Longitude("10.98"), null);
-		point1.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point1 = new DataPoint(Latitude.make("22.33"), Longitude.make("10.98"));
+		point1.setWaypointName("abc");
 		track.appendPoint(point1);
-		DataPoint point2 = new DataPoint(new Latitude("22.33"), new Longitude("10.98"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
-		point2.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point2 = new DataPoint(Latitude.make("22.33"), Longitude.make("10.98"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
+		point2.setWaypointName("abc");
 		point2.setFieldValue(Field.DESCRIPTION, "some description", false);
 		track.appendPoint(point2);
 
@@ -105,11 +105,11 @@ public class DedupeWaypointsTest
 	{
 		// Make track with two identical waypoints
 		Track track = new Track();
-		DataPoint point1 = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
-		point1.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point1 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
+		point1.setWaypointName("abc");
 		track.appendPoint(point1);
-		DataPoint point2 = new DataPoint(new Latitude("1.81"), new Longitude("5.44"), null);
-		point2.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point2 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
+		point2.setWaypointName("abc");
 		track.appendPoint(point2);
 
 		// add first one
@@ -132,15 +132,15 @@ public class DedupeWaypointsTest
 	{
 		// Make track with three waypoints
 		Track track = new Track();
-		DataPoint point1 = new DataPoint(new Latitude("22.33"), new Longitude("10.98"), null);
-		point1.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point1 = new DataPoint(Latitude.make("22.33"), Longitude.make("10.98"));
+		point1.setWaypointName("abc");
 		point1.setFieldValue(Field.DESCRIPTION, "some description", false);
 		track.appendPoint(point1);
-		DataPoint point2 = new DataPoint(new Latitude("22.33"), new Longitude("10.98"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
-		point2.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point2 = new DataPoint(Latitude.make("22.33"), Longitude.make("10.98"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
+		point2.setWaypointName("abc");
 		track.appendPoint(point2);
-		DataPoint point3 = new DataPoint(new Latitude("22.33"), new Longitude("10.98"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
-		point3.setFieldValue(Field.WAYPT_NAME, "abc", true);
+		DataPoint point3 = new DataPoint(Latitude.make("22.33"), Longitude.make("10.98"), new Altitude(123, UnitSetLibrary.UNITS_FEET));
+		point3.setWaypointName("abc");
 		point3.setFieldValue(Field.DESCRIPTION, "some description", false);
 		track.appendPoint(point3);
 

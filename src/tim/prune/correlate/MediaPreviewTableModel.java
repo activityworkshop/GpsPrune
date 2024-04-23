@@ -6,7 +6,6 @@ import java.util.TimeZone;
 import javax.swing.table.AbstractTableModel;
 
 import tim.prune.I18nManager;
-import tim.prune.config.TimezoneHelper;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.DisplayUtils;
@@ -29,11 +28,12 @@ public class MediaPreviewTableModel extends AbstractTableModel
 	/**
 	 * Constructor
 	 * @param inFirstColumnKey key for first column heading
+	 * @param inTimezone timezone to use
 	 */
-	public MediaPreviewTableModel(String inFirstColumnKey)
+	public MediaPreviewTableModel(String inFirstColumnKey, TimeZone inTimezone)
 	{
 		_firstColumnHeading = I18nManager.getText(inFirstColumnKey);
-		_timezone = TimezoneHelper.getSelectedTimezone();
+		_timezone = inTimezone;
 	}
 
 	/**

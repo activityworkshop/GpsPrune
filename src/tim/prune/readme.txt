@@ -1,11 +1,11 @@
-GpsPrune version 23.2
-=====================
+GpsPrune version 24
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
 Full details can be found at https://gpsprune.activityworkshop.net/
 
-GpsPrune is copyright 2006-2023 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2024 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_23.2.jar
+   java -jar gpsprune_24.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,23 +25,20 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_23.2.jar --lang=DE
+   java -jar gpsprune_24.jar --lang=DE
 
 
-New with version 23.2
-=====================
-The following fixes were made since version 23.1:
-  - Bugfix for exporting timestamps of waypoints to gpx and kml/kmz
-  - Update to openstreetmap tile URLs (Issue #86)
-
-New with version 23.1
-=====================
-The following fixes were made since version 23:
-  - Bugfix for correlating multiple photos to the same point (Issue #80)
-  - Bugfix for exporting waypoint's timestamp from its photo
-  - Bugfix for writing ISO8601 timestamps using US Locale, not current system locale (Issue #79)
-  - Bugfix for loading photo from command line, if it has coordinates
-  - Bugfix for reading readme.txt.gz file on Debian systems
+New with version 24
+===================
+The following fixes and additions were made since version 23:
+  - Searching for track files according to names, dates or locations (File -> Find track files)
+  - Choice between single-sized and double-sized icons (Settings -> Set display options)
+  - Moving of settings file from ".pruneconfig" to "gpsprune.config"
+  - Allow adding new fields to a point from the edit point dialog
+  - Copy descriptions of waypoints into comment field of gpx file (new checkbox)
+  - Easier selection of previous track names, descriptions when re-exporting to gpx/kml
+  - Pasting coordinates now also accepts semicolon as a separator
+  - Ctrl-I shortcut to view point/range information
 
 New with version 23
 ===================

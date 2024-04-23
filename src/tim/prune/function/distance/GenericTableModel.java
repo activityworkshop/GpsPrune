@@ -15,7 +15,7 @@ public abstract class GenericTableModel extends AbstractTableModel
 	/** list of points */
 	protected ArrayList<DataPoint> _pointList = null;
 	/** Column heading */
-	private static String _currPointLabel = I18nManager.getText("dialog.distances.currentpoint");
+	private static final String _currPointLabel = I18nManager.getText("dialog.distances.currentpoint");
 
 	/**
 	 * Initialize the table model with the point list

@@ -183,11 +183,11 @@ public class ConfigureSrtmSources extends GenericFunction
 		if (_oneSecondCheck.isSelected())
 		{
 			if (_authString != null) {
-				Config.setConfigString(Config.KEY_EARTHDATA_AUTH, _authString);
+				getConfig().setConfigString(Config.KEY_EARTHDATA_AUTH, _authString);
 			}
 		}
 		else {
-			Config.setConfigString(Config.KEY_EARTHDATA_AUTH, null);
+			getConfig().setConfigString(Config.KEY_EARTHDATA_AUTH, null);
 		}
 		_dialog.dispose();
 	}
@@ -197,7 +197,8 @@ public class ConfigureSrtmSources extends GenericFunction
 	 */
 	private void prefillCurrentAuth()
 	{
-		_oneSecondCheck.setSelected(isAuthValid(Config.getConfigString(Config.KEY_EARTHDATA_AUTH)));
+		String authString = getConfig().getConfigString(Config.KEY_EARTHDATA_AUTH);
+		_oneSecondCheck.setSelected(isAuthValid(authString));
 		_authString = null;
 		_oneSecondOriginallyOn = _oneSecondCheck.isSelected();
 		_okButton.setEnabled(false);

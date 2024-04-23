@@ -30,7 +30,8 @@ public class NmeaMessage
 		_longitude = inLongitude;
 		_altitude = inAltitude;
 		_timestamp = inTimestamp;
-		_fix = (inFix != null && !inFix.equals("0"));
+		_fix = inFix != null && !inFix.isEmpty()
+			&& !inFix.equals("0");
 	}
 
 	/**
@@ -80,7 +81,10 @@ public class NmeaMessage
 		if (inCoordinate != null && inCoordinate.length() > 6)
 		{
 			int dotPos = inCoordinate.indexOf('.');
-			if (dotPos > 0) {
+			if (dotPos == 2) {
+				return "0d" + inCoordinate;
+			}
+			else if (dotPos > 2) {
 				return inCoordinate.substring(0, dotPos-2) + "d" + inCoordinate.substring(dotPos-2);
 			}
 		}
@@ -106,7 +110,7 @@ public class NmeaMessage
 					if (year < 80) {year += 2000;} else {year += 1900;} // two-digit year hack
 					cal.set(Calendar.YEAR, year);
 				}
-				catch (Exception e) {} // ignore exceptions for date, still take time
+				catch (Exception ignored) {} // ignore exceptions for date, still take time
 			}
 			cal.set(Calendar.HOUR_OF_DAY, Integer.parseInt(_timestamp.substring(0, 2)));
 			cal.set(Calendar.MINUTE, Integer.parseInt(_timestamp.substring(2, 4)));
@@ -115,7 +119,7 @@ public class NmeaMessage
 			// Return time as number of milliseconds
 			return "" + cal.getTimeInMillis();
 		}
-		catch (Exception e) {}  // ignore parsing errors, just have no timestamp
+		catch (Exception ignored) {}  // ignore parsing errors, just have no timestamp
 		return null;
 	}
 }

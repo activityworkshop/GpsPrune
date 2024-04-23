@@ -20,11 +20,8 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.InsertPointCmd;
-import tim.prune.config.Config;
-import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
-import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Unit;
@@ -163,7 +160,7 @@ public class ProjectPoint extends GenericFunction
 	 */
 	private void setLabelText()
 	{
-		Unit distUnit = Config.getUnitSet().getDistanceUnit();
+		Unit distUnit = getConfig().getUnitSet().getDistanceUnit();
 		_distanceIsMetric = (distUnit == UnitSetLibrary.UNITS_METRES || distUnit == UnitSetLibrary.UNITS_KILOMETRES);
 		distUnit = _distanceIsMetric ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET;
 		final String unitKey = distUnit.getShortnameKey();
@@ -202,9 +199,8 @@ public class ProjectPoint extends GenericFunction
 		double finalLonDeg = Math.toDegrees(lon2);
 
 		// Create point and append to track
-		DataPoint point = new DataPoint(new Latitude(finalLatDeg, Coordinate.FORMAT_DEG),
-			new Longitude(finalLonDeg, Coordinate.FORMAT_DEG), null);
-		point.setFieldValue(Field.WAYPT_NAME, _nameField.getText(), false);
+		DataPoint point = new DataPoint(Latitude.make(finalLatDeg), Longitude.make(finalLonDeg));
+		point.setWaypointName(_nameField.getText());
 		point.setSegmentStart(true);
 
 		InsertPointCmd command = new InsertPointCmd(point, -1);

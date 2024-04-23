@@ -42,6 +42,7 @@ import tim.prune.function.SelectExtremePoint;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.browser.WebMapFunction;
 import tim.prune.function.edit.PointEditor;
+import tim.prune.function.filesleuth.StartFindFilesFunction;
 import tim.prune.function.search.SearchOpenCachingDeFunction;
 import tim.prune.function.segments.MergeSegmentsFunction;
 import tim.prune.function.settings.SaveConfig;
@@ -179,6 +180,9 @@ public class MenuManager implements DataSubscriber
 		_threeDAvailable = WindowFactory.isJava3dEnabled();
 	}
 
+	private Config getConfig() {
+		return _app.getConfig();
+	}
 
 	/**
 	 * @return a JMenuBar containing all menu items
@@ -203,6 +207,9 @@ public class MenuManager implements DataSubscriber
 		// Add audio clips
 		JMenuItem addAudioMenuItem = makeMenuItem(FunctionLibrary.FUNCTION_LOAD_AUDIO);
 		fileMenu.add(addAudioMenuItem);
+		// Find files
+		JMenuItem findFileItem = makeMenuItem(new StartFindFilesFunction(_app));
+		fileMenu.add(findFileItem);
 		// recent files
 		_recentFileMenu = new JMenu(I18nManager.getText("menu.file.recentfiles"));
 		_recentFileMenu.setEnabled(false);
@@ -440,7 +447,7 @@ public class MenuManager implements DataSubscriber
 		_mapCheckbox = new JCheckBoxMenuItem(
 			I18nManager.getText("menu.map.showmap"), false);
 		_mapCheckbox.addActionListener(e -> {
-			Config.setConfigBoolean(Config.KEY_SHOW_MAP, _mapCheckbox.isSelected());
+			getConfig().setConfigBoolean(Config.KEY_SHOW_MAP, _mapCheckbox.isSelected());
 			UpdateMessageBroker.informSubscribers(MAPSERVER_CHANGED);
 		});
 		viewMenu.add(_mapCheckbox);
@@ -462,6 +469,7 @@ public class MenuManager implements DataSubscriber
 		viewMenu.add(_distanceItem);
 		// full range details
 		_viewFullDetailsItem = makeMenuItem(FunctionLibrary.FUNCTION_FULL_DETAILS, false);
+		setShortcut(_viewFullDetailsItem, "shortcut.menu.view.details");
 		viewMenu.add(_viewFullDetailsItem);
 		// estimate time
 		_estimateTimeItem = makeMenuItem(FunctionLibrary.FUNCTION_ESTIMATE_TIME, false);
@@ -546,10 +554,10 @@ public class MenuManager implements DataSubscriber
 		JMenuItem mapBgItem = makeMenuItem(FunctionLibrary.FUNCTION_SET_MAP_BG);
 		settingsMenu.add(mapBgItem);
 		_onlineCheckbox = new JCheckBoxMenuItem(I18nManager.getText("menu.settings.onlinemode"));
-		_onlineCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_ONLINE_MODE));
+		_onlineCheckbox.setSelected(getConfig().getConfigBoolean(Config.KEY_ONLINE_MODE));
 		_onlineCheckbox.addActionListener(e -> {
 			boolean isOnline = _onlineCheckbox.isSelected();
-			Config.setConfigBoolean(Config.KEY_ONLINE_MODE, isOnline);
+			getConfig().setConfigBoolean(Config.KEY_ONLINE_MODE, isOnline);
 			if (isOnline) {UpdateMessageBroker.informSubscribers();}
 		});
 		settingsMenu.add(_onlineCheckbox);
@@ -573,10 +581,10 @@ public class MenuManager implements DataSubscriber
 		settingsMenu.add(makeMenuItem(FunctionLibrary.FUNCTION_SAVECONFIG));
 		_autosaveSettingsCheckbox = new JCheckBoxMenuItem(
 			I18nManager.getText("menu.settings.autosave"), false);
-		_autosaveSettingsCheckbox.setSelected(Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS));
+		_autosaveSettingsCheckbox.setSelected(getConfig().getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS));
 		_autosaveSettingsCheckbox.addActionListener(e -> {
 			final boolean autosaveOn = _autosaveSettingsCheckbox.isSelected();
-			Config.setConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS, autosaveOn);
+			getConfig().setConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS, autosaveOn);
 			// Maybe want to save config?
 			new SaveConfig(_app).autosaveSwitched(autosaveOn);
 		});
@@ -658,7 +666,7 @@ public class MenuManager implements DataSubscriber
 			{
 				// Found a valid code between A and Z
 				inMenuItem.setAccelerator(KeyStroke.getKeyStroke(KEY_EVENTS[code],
-					Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+					Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 				// use platform-specific key mask so Ctrl on Linux/Win, Clover on Mac
 			}
 		}
@@ -733,7 +741,7 @@ public class MenuManager implements DataSubscriber
 	 */
 	private JButton makeToolbarButton(String inIconName, String inTooltipKey, ActionListener inListener)
 	{
-		JButton button = new JButton(IconManager.getImageIcon(inIconName));
+		JButton button = new JButton(_app.getIconManager().getImageIcon(inIconName));
 		button.setEnabled(false);
 		button.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
 		button.setBorder(BorderFactory.createEmptyBorder(3, 8, 3, 8));
@@ -872,12 +880,12 @@ public class MenuManager implements DataSubscriber
 		final boolean isTrackLengthTwo = hasData && _track.getNumPoints() == 2;
 		_routingGraphHopperItem.setEnabled(isTrackLengthTwo || (hasData && hasRange));
 		// Has the map been switched on/off?
-		boolean mapsOn = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		boolean mapsOn = getConfig().getConfigBoolean(Config.KEY_SHOW_MAP);
 		if (_mapCheckbox.isSelected() != mapsOn) {
 			_mapCheckbox.setSelected(mapsOn);
 		}
 		// Are there any recently-used files?
-		RecentFileList rfl = Config.getRecentFileList();
+		RecentFileList rfl = getConfig().getRecentFileList();
 		final int numRecentFiles = rfl.getNumEntries();
 		final boolean hasRecentFiles = numRecentFiles > 0;
 		_recentFileMenu.setEnabled(hasRecentFiles);

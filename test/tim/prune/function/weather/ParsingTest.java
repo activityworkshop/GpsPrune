@@ -19,7 +19,7 @@ public class ParsingTest
 	@Test
 	public void testEmptyTrack()
 	{
-		App app = new App(null);
+		App app = new App(null, null);
 		GetWeatherForecastFunction function = new GetWeatherForecastFunction(app);
 		function.setStreamProvider(new FileStreamProvider());
 		WeatherResults weather = function.getCurrentWeather(true);
@@ -31,8 +31,8 @@ public class ParsingTest
 	@Test
 	public void testCurrentWeather()
 	{
-		App app = new App(null);
-		DataPoint point = new DataPoint(new Latitude("1.234"), new Longitude("-5.0"), null);
+		App app = new App(null, null);
+		DataPoint point = new DataPoint(Latitude.make("1.234"), Longitude.make("-5.0"));
 		app.getTrackInfo().getTrack().appendPoint(point);
 		GetWeatherForecastFunction function = new GetWeatherForecastFunction(app);
 		function.setStreamProvider(new FileStreamProvider());
@@ -49,8 +49,8 @@ public class ParsingTest
 	@Test
 	public void testForecast()
 	{
-		App app = new App(null);
-		DataPoint point = new DataPoint(new Latitude("1.234"), new Longitude("-5.0"), null);
+		App app = new App(null, null);
+		DataPoint point = new DataPoint(Latitude.make("1.234"), Longitude.make("-5.0"));
 		app.getTrackInfo().getTrack().appendPoint(point);
 		GetWeatherForecastFunction function = new GetWeatherForecastFunction(app);
 		function.setStreamProvider(new FileStreamProvider());

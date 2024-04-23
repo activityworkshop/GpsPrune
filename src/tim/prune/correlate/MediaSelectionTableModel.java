@@ -5,7 +5,6 @@ import java.util.TimeZone;
 
 import javax.swing.table.AbstractTableModel;
 import tim.prune.I18nManager;
-import tim.prune.config.TimezoneHelper;
 import tim.prune.data.MediaObject;
 
 
@@ -29,12 +28,13 @@ public class MediaSelectionTableModel extends AbstractTableModel
 	 * Constructor
 	 * @param inFirstColumnKey key for first column heading
 	 * @param inLastColumnKey key for last column heading
+	 * @param inTimezone timezone to use
 	 */
-	public MediaSelectionTableModel(String inFirstColumnKey, String inLastColumnKey)
+	public MediaSelectionTableModel(String inFirstColumnKey, String inLastColumnKey, TimeZone inTimezone)
 	{
 		_firstColumnHeading = I18nManager.getText(inFirstColumnKey);
 		_lastColumnHeading = I18nManager.getText(inLastColumnKey);
-		_timezone = TimezoneHelper.getSelectedTimezone();
+		_timezone = inTimezone;
 	}
 
 	/**

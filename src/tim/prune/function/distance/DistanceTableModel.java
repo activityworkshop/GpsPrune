@@ -37,7 +37,7 @@ public class DistanceTableModel extends GenericTableModel
 	{
 		if (inColumnIndex == 0) {return getPointName(inRowIndex);}
 		if (_distances == null) {return 0.0;}
-		return Double.valueOf(_distances[inRowIndex]);
+		return _distances[inRowIndex];
 	}
 
 	/**
@@ -64,11 +64,12 @@ public class DistanceTableModel extends GenericTableModel
 	/**
 	 * Recalculate the distances
 	 * @param inIndex index of selected 'from' point
+	 * @param inConfig config object, used to get units
 	 */
-	public void recalculate(int inIndex)
+	public void recalculate(int inIndex, Config inConfig)
 	{
 		// Which units to use?
-		Unit distUnit = Config.getUnitSet().getDistanceUnit();
+		Unit distUnit = inConfig.getUnitSet().getDistanceUnit();
 		_distanceLabel = I18nManager.getText("fieldname.distance") + " (" +
 			I18nManager.getText(distUnit.getShortnameKey()) + ")";
 		final boolean distUnitsChanged = (distUnit != _previousDistUnit);
@@ -80,13 +81,14 @@ public class DistanceTableModel extends GenericTableModel
 			_distances = new double[numRows];
 		}
 		DataPoint fromPoint = _pointList.get(inIndex);
-		for (int i=0; i<numRows; i++) {
+		for (int i=0; i<numRows; i++)
+		{
 			if (i == inIndex) {
 				_distances[i] = 0.0;
 			}
 			else {
 				double rads = DataPoint.calculateRadiansBetween(fromPoint, _pointList.get(i));
-				_distances[i] = Distance.convertRadiansToDistance(rads);
+				_distances[i] = Distance.convertRadiansToDistance(rads, distUnit);
 			}
 		}
 		// Let table know that it has to refresh data, and maybe the whole table too

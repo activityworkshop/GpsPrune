@@ -31,7 +31,7 @@ public class Interpolator
 	 * @param inAltitudes array of altitudes with one or more voids
 	 * @return average of non-void altitudes
 	 */
-	public static final double averageNonVoid(int[] inAltitudes)
+	static double averageNonVoid(int[] inAltitudes)
 	{
 		double totalAltitude = 0.0;
 		int numAlts = 0;

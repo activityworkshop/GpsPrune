@@ -120,7 +120,7 @@ class ConnectMultipleMediaTest
 	private Track makeTrackWithMedia(Photo inPhoto, AudioClip inAudio)
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 		if (inPhoto != null) {

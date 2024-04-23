@@ -241,9 +241,9 @@ public class GpxWriter
 		throws IOException
 	{
 		inWriter.write("\t<wpt lat=\"");
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		inWriter.write("\" lon=\"");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		inWriter.write("\">\n");
 		// altitude if available
 		if (inPoint.hasAltitude() || _settings.getExportMissingAltitudesAsZero())
@@ -276,7 +276,10 @@ public class GpxWriter
 			inWriter.write("</desc>\n");
 		}
 		// comment, if any
-		final String comment = XmlUtils.fixCdata(inPoint.getFieldValue(Field.COMMENT));
+		String comment = XmlUtils.fixCdata(inPoint.getFieldValue(Field.COMMENT));
+		if (comment == null || comment.equals("") && _settings.getCopyDescriptionsToComments()) {
+			comment = desc;
+		}
 		if (comment != null && !comment.equals(""))
 		{
 			inWriter.write("\t\t<cmt>");
@@ -327,19 +330,22 @@ public class GpxWriter
 	 */
 	private static String getPointSource(GpxCacherList inCachers, DataPoint inPoint)
 	{
-		if (inCachers == null || inPoint == null) {return null;}
+		if (inCachers == null || inPoint == null) {
+			return null;
+		}
 		String source = inCachers.getSourceString(inPoint);
-		if (source == null || !inPoint.isModified()) {return source;}
+		if (source == null || !inPoint.isModified()) {
+			return source;
+		}
 		// Point has been modified - maybe it's possible to modify the source
-		source = replaceGpxTags(source, "lat=\"", "\"", inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
-		source = replaceGpxTags(source, "lon=\"", "\"", inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		source = replaceGpxTags(source, "lat=\"", "\"", inPoint.getLatitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
+		source = replaceGpxTags(source, "lon=\"", "\"", inPoint.getLongitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		source = replaceGpxTags(source, "<ele>", "</ele>", inPoint.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 		source = replaceGpxTags(source, "<time>", "</time>", inPoint.getTimestamp().getText(Timestamp.Format.ISO8601, null));
 		if (inPoint.isWaypoint())
 		{
 			source = replaceGpxTags(source, "<name>", "</name>", XmlUtils.fixCdata(inPoint.getWaypointName()));
-			if (source != null)
-			{
+			if (source != null) {
 				source = source.replaceAll("<description>", "<desc>").replaceAll("</description>", "</desc>");
 			}
 			source = replaceGpxTags(source, "<desc>", "</desc>",
@@ -443,14 +449,16 @@ public class GpxWriter
 	 */
 	private static String replaceGpxTags(String inSource, String inStartTag, String inEndTag, String inValue)
 	{
-		if (inSource == null) {return null;}
+		if (inSource == null) {
+			return null;
+		}
 		// Look for start and end tags within source
 		final int startPos = inSource.indexOf(inStartTag);
 		final int endPos = inSource.indexOf(inEndTag, startPos+inStartTag.length());
 		if (startPos > 0 && endPos > 0)
 		{
 			String origValue = inSource.substring(startPos + inStartTag.length(), endPos);
-			if (inValue != null && origValue.equals(inValue)) {
+			if (origValue.equals(inValue)) {
 				// Value unchanged
 				return inSource;
 			}
@@ -492,7 +500,7 @@ public class GpxWriter
 		if (startPos > 0 && endPos > 0)
 		{
 			String origValue = inSource.substring(startPos, endPos + ENDTEXT.length());
-			if (inValue != null && origValue.equals(inValue)) {
+			if (origValue.equals(inValue)) {
 				// Value unchanged
 				return inSource;
 			}
@@ -522,9 +530,9 @@ public class GpxWriter
 		throws IOException
 	{
 		inWriter.write("\t\t\t<trkpt lat=\"");
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		inWriter.write("\" lon=\"");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		inWriter.write("\">\n");
 		// altitude
 		if (inPoint.hasAltitude() || _settings.getExportMissingAltitudesAsZero())
@@ -561,8 +569,7 @@ public class GpxWriter
 	 * @param inPointSource point source to copy
 	 * @return point source with timestamp removed
 	 */
-	private static String stripTime(String inPointSource)
-	{
+	private static String stripTime(String inPointSource) {
 		return inPointSource.replaceAll("[ \t]*<time>.*?</time>", "");
 	}
 

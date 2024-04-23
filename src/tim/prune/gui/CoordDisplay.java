@@ -14,7 +14,7 @@ public abstract class CoordDisplay
 	 * @param inFormat selected display format
 	 * @return language-sensitive string
 	 */
-	public static String makeCoordinateLabel(Coordinate inCoordinate, int inFormat)
+	public static String makeCoordinateLabel(Coordinate inCoordinate, Coordinate.Format inFormat)
 	{
 		String coord = inCoordinate.output(inFormat);
 		// Fix broken degree signs (due to unicode mangling)

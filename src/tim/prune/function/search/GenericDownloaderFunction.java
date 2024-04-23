@@ -23,9 +23,9 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.AppendRangeCmd;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
+import tim.prune.data.Unit;
 import tim.prune.function.browser.BrowserLauncher;
 
 /**
@@ -110,7 +110,8 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		_statusLabel = new JLabel(I18nManager.getText("confirm.running"));
 		dialogPanel.add(_statusLabel, BorderLayout.NORTH);
 		// Main panel with track list
-		_trackListModel = new TrackListModel(getColumnKey(0), getColumnKey(1));
+		Unit distUnit = getConfig().getUnitSet().getDistanceUnit();
+		_trackListModel = new TrackListModel(getColumnKey(0), getColumnKey(1), distUnit);
 		_trackTable = new JTable(_trackListModel);
 		_trackTable.getSelectionModel().addListSelectionListener(e -> {
 			if (!e.getValueIsAdjusting()) {
@@ -203,7 +204,7 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 	/**
 	 * Load the selected point(s)
 	 */
-	private final void loadSelected()
+	private void loadSelected()
 	{
 		// Find the rows selected in the table and get the corresponding coords
 		int numSelected = _trackTable.getSelectedRowCount();
@@ -219,8 +220,8 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 				String lon = _trackListModel.getTrack(rowNum).getLongitude();
 				if (lat != null && lon != null)
 				{
-					DataPoint point = new DataPoint(new Latitude(lat), new Longitude(lon), null);
-					point.setFieldValue(Field.WAYPT_NAME, _trackListModel.getTrack(rowNum).getTrackName(), false);
+					DataPoint point = new DataPoint(Latitude.make(lat), Longitude.make(lon));
+					point.setWaypointName(_trackListModel.getTrack(rowNum).getTrackName());
 					points.add(point);
 				}
 			}

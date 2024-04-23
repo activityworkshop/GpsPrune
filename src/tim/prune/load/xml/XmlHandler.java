@@ -35,4 +35,12 @@ public abstract class XmlHandler extends DefaultHandler
 	public String getFileTitle() {
 		return null;
 	}
+
+	/**
+	 * Can be overridden (eg by gpx handler) to provide the description of the file
+	 * @return file description, or null
+	 */
+	public String getFileDescription() {
+		return null;
+	}
 }

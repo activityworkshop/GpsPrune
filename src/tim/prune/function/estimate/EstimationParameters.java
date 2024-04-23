@@ -4,9 +4,9 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 import tim.prune.I18nManager;
-import tim.prune.config.Config;
 import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Unit;
+import tim.prune.data.UnitSet;
 import tim.prune.data.UnitSetLibrary;
 
 /**
@@ -88,11 +88,11 @@ public class EstimationParameters
 	 * @param inGDescent minutes for gentle descent
 	 * @param inSDescent minutes for steep descent
 	 */
-	public static EstimationParameters fromLocalUnits(double inFlat,
+	public static EstimationParameters fromLocalUnits(UnitSet inUnitSet, double inFlat,
 		double inGClimb, double inSClimb, double inGDescent, double inSDescent)
 	{
-		Unit distUnit = Config.getUnitSet().getDistanceUnit();
-		Unit altUnit  = Config.getUnitSet().getAltitudeUnit();
+		Unit distUnit = inUnitSet.getDistanceUnit();
+		Unit altUnit  = inUnitSet.getAltitudeUnit();
 		final double distFactor = (distUnit == KILOMETRES ? 1.0 : (5000/3.0 * distUnit.getMultFactorFromStd()));
 		final double altFactor  = (altUnit.isStandard()  ? 1.0 : (1.0/3.0 * altUnit.getMultFactorFromStd()));
 
@@ -128,60 +128,58 @@ public class EstimationParameters
 
 
 	/** @return number of minutes for flat travel, local distance units */
-	public double getFlatMinutesLocal() {
-		return convertDistanceToLocal(_flatMins);
+	public double getFlatMinutesLocal(Unit inDistUnit) {
+		return convertDistanceToLocal(_flatMins, inDistUnit);
 	}
 
-	/** @return the given number of minutes converted to local distance units */
-	private static double convertDistanceToLocal(double minutes) {
-		Unit distUnit = Config.getUnitSet().getDistanceUnit();
-		double distFactor = (distUnit == KILOMETRES ? 1.0 : (5000/3.0 * distUnit.getMultFactorFromStd()));
+	/** @return the given number of minutes converted to the given distance units */
+	private static double convertDistanceToLocal(double minutes, Unit inDistUnit)
+	{
+		double distFactor = (inDistUnit == KILOMETRES ? 1.0 : (5000/3.0 * inDistUnit.getMultFactorFromStd()));
 		return minutes / distFactor;
 	}
 
 	/** @return number of minutes for gentle climb, local distance units */
-	public double getGentleClimbMinutesLocal() {
-		return convertAltitudeToLocal(_gentleClimbMins);
+	public double getGentleClimbMinutesLocal(Unit inAltUnit) {
+		return convertAltitudeToLocal(_gentleClimbMins, inAltUnit);
 	}
 
 	/** @return number of minutes for steep climb, local distance units */
-	public double getSteepClimbMinutesLocal() {
-		return convertAltitudeToLocal(_steepClimbMins);
+	public double getSteepClimbMinutesLocal(Unit inAltUnit) {
+		return convertAltitudeToLocal(_steepClimbMins, inAltUnit);
 	}
 
 	/** @return number of minutes for gentle descent, local distance units */
-	public double getGentleDescentMinutesLocal() {
-		return convertAltitudeToLocal(_gentleDescentMins);
+	public double getGentleDescentMinutesLocal(Unit inAltUnit) {
+		return convertAltitudeToLocal(_gentleDescentMins, inAltUnit);
 	}
 
 	/** @return number of minutes for steep descent, local distance units */
-	public double getSteepDescentMinutesLocal() {
-		return convertAltitudeToLocal(_steepDescentMins);
+	public double getSteepDescentMinutesLocal(Unit inAltUnit) {
+		return convertAltitudeToLocal(_steepDescentMins, inAltUnit);
 	}
 
 	/** @return the given number of minutes converted to local altitude units */
-	private static double convertAltitudeToLocal(double minutes) {
-		Unit altUnit  = Config.getUnitSet().getAltitudeUnit();
-		double altFactor  = (altUnit.isStandard() ? 1.0 : (1.0/3.0 * altUnit.getMultFactorFromStd()));
+	private static double convertAltitudeToLocal(double minutes, Unit inAltUnit)
+	{
+		double altFactor  = (inAltUnit.isStandard() ? 1.0 : (1.0/3.0 * inAltUnit.getMultFactorFromStd()));
 		return minutes / altFactor;
 	}
 
 	/**
 	 * @return unit-specific string describing the distance for the flat time (5km/3mi/3NM)
 	 */
-	public static String getStandardDistance()
+	public static String getStandardDistance(Unit inDistUnit)
 	{
-		Unit distUnit = Config.getUnitSet().getDistanceUnit();
-		return (distUnit == KILOMETRES ? "5 " : "3 ") + I18nManager.getText(distUnit.getShortnameKey());
+		return (inDistUnit == KILOMETRES ? "5 " : "3 ") + I18nManager.getText(inDistUnit.getShortnameKey());
 	}
 
 	/**
 	 * @return unit-specific string describing the height difference for the climbs/descents (100m/300ft)
 	 */
-	public static String getStandardClimb()
+	public static String getStandardClimb(Unit inAltUnit)
 	{
-		Unit altUnit  = Config.getUnitSet().getAltitudeUnit();
-		return (altUnit.isStandard() ? "100 " : "300 ") + I18nManager.getText(altUnit.getShortnameKey());
+		return (inAltUnit.isStandard() ? "100 " : "300 ") + I18nManager.getText(inAltUnit.getShortnameKey());
 	}
 
 	/**

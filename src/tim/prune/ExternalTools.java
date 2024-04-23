@@ -26,16 +26,17 @@ public abstract class ExternalTools
 
 	/**
 	 * Check if the selected tool is installed
+	 * @param inConfig config object containing paths
 	 * @param inToolNum number of tool, from constants
 	 * @return true if selected tool is installed
 	 */
-	public static boolean isToolInstalled(int inToolNum)
+	public static boolean isToolInstalled(Config inConfig, int inToolNum)
 	{
 		switch (inToolNum) {
 			case TOOL_EXIFTOOL:
 			case TOOL_GPSBABEL:
 			case TOOL_GNUPLOT:
-				String toolPath = Config.getConfigString(CONFIG_KEYS[inToolNum]);
+				String toolPath = inConfig.getConfigString(CONFIG_KEYS[inToolNum]);
 				if (toolPath != null && toolPath.length() > 0) {
 					return check(toolPath + " " + VERIFY_FLAGS[inToolNum]);
 				}

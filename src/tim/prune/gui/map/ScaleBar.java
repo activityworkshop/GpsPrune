@@ -16,6 +16,8 @@ import tim.prune.data.Unit;
  */
 public class ScaleBar extends JPanel
 {
+	/** Config object, for units and colours */
+	private final Config _config;
 	/** zoom level */
 	private int _zoomLevel = -1;
 	/** y position */
@@ -29,10 +31,11 @@ public class ScaleBar extends JPanel
 
 	/**
 	 * Constructor
+	 * @param inConfig config object
 	 */
-	public ScaleBar()
+	public ScaleBar(Config inConfig)
 	{
-		super();
+		_config = inConfig;
 		setOpaque(false);
 		setPreferredSize(new Dimension(100, 20));
 	}
@@ -46,7 +49,8 @@ public class ScaleBar extends JPanel
 		super.paint(inG);
 		if (_zoomLevel < 2) {return;}
 
-		final double distScaleFactor = getPixelsPerDist();
+		Unit distUnit = _config.getUnitSet().getDistanceUnit();
+		final double distScaleFactor = getPixelsPerDist(distUnit);
 		final int scale = getScaleToUse(distScaleFactor);
 		if (scale != INVALID_SCALE)
 		{
@@ -56,14 +60,15 @@ public class ScaleBar extends JPanel
 	}
 
 	/**
+	 * @param inUnit distance unit
 	 * @return scale factor in pixels per unit distance
 	 */
-	private double getPixelsPerDist()
+	private double getPixelsPerDist(Unit inUnit)
 	{
 		// work out cos(latitude) from y position
 		final double angle = Math.PI * (1 - 2*_yPos);
 		final double lat = Math.atan(Math.sinh(angle));
-		final double distAroundEarth = Distance.convertRadiansToDistance(2 * Math.PI) * Math.cos(lat);
+		final double distAroundEarth = Distance.convertRadiansToDistance(2 * Math.PI, inUnit) * Math.cos(lat);
 		// pixels at this zoom level
 		return (256 << _zoomLevel) / distAroundEarth / _displayScaling;
 	}
@@ -117,7 +122,7 @@ public class ScaleBar extends JPanel
 		final int MARGIN_WIDTH = 8;
 
 		// Determine colours to use
-		Color barColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
+		Color barColour = _config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
 		Color blankColour = new Color(255-barColour.getRed(), 255-barColour.getGreen(), 255-barColour.getBlue());
 		final int rightSide = LEFT_OFFSET + inWidth;
 
@@ -140,7 +145,7 @@ public class ScaleBar extends JPanel
 		inG.drawLine(rightSide, Y_OFFSET+1, rightSide, Y_OFFSET-TICK_HEIGHT);
 		inG.drawLine(rightSide+1, Y_OFFSET+1, rightSide+1, Y_OFFSET-TICK_HEIGHT);
 		// text
-		final String text = getScaleText(inScale, Config.getUnitSet().getDistanceUnit());
+		final String text = getScaleText(inScale, _config.getUnitSet().getDistanceUnit());
 		inG.setColor(blankColour);
 		inG.drawString(text, rightSide+MARGIN_WIDTH-1, Y_OFFSET);
 		inG.drawString(text, rightSide+MARGIN_WIDTH+1, Y_OFFSET);

@@ -16,10 +16,11 @@ import tim.prune.data.Track;
  */
 public abstract class CompressionAlgorithm
 {
-	protected final JCheckBox _activateCheckBox;
 	protected SummaryLabel _summaryLabel = null;
 	protected final Track _track;
 	protected final TrackDetails _trackDetails;
+	private final ActionListener _listener;
+	protected JCheckBox _activateCheckBox = null;
 
 
 	/**
@@ -33,9 +34,7 @@ public abstract class CompressionAlgorithm
 	{
 		_track = inTrack;
 		_trackDetails = inDetails;
-		_activateCheckBox = new JCheckBox(I18nManager.getText(getTitleTextKey()));
-		_activateCheckBox.setSelected(false);
-		_activateCheckBox.addActionListener(inListener);
+		_listener = inListener;
 	}
 
 
@@ -44,7 +43,8 @@ public abstract class CompressionAlgorithm
 	 */
 	public boolean isActivated()
 	{
-		return _activateCheckBox.isSelected();
+		return _activateCheckBox != null
+			&& _activateCheckBox.isSelected();
 	}
 
 
@@ -53,6 +53,10 @@ public abstract class CompressionAlgorithm
 	 */
 	public JPanel getGuiComponents()
 	{
+		_activateCheckBox = new JCheckBox(I18nManager.getText(getTitleTextKey()));
+		_activateCheckBox.setSelected(false);
+		_activateCheckBox.addActionListener(_listener);
+
 		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createTitledBorder(""));
 		panel.setLayout(new BorderLayout());

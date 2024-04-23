@@ -6,8 +6,11 @@ import javax.swing.ImageIcon;
  * Class to manage the loading of icons
  * for toolbars and map buttons
  */
-public abstract class IconManager
+public class IconManager
 {
+	/** true for double resolution icons, false for normal (default) */
+	private final boolean _doubleResolution;
+
 	/** Icon for window */
 	public static final String WINDOW_ICON = "window_icon";
 
@@ -66,12 +69,38 @@ public abstract class IconManager
 	public static final String WAYPOINT_ICON_PREFIX = "waypoints/wpicon_";
 
 
+	/** @param inDoubleResolution true for double resolution */
+	public IconManager(boolean inDoubleResolution) {
+		_doubleResolution = inDoubleResolution;
+	}
+
 	/**
 	 * Get the specified image
 	 * @param inFilename filename of image (using constants)
 	 * @return ImageIcon object containing image
 	 */
-	public static ImageIcon getImageIcon(String inFilename) {
-		return new ImageIcon(IconManager.class.getResource("images/" + inFilename + ".png"));
+	public ImageIcon getImageIcon(String inFilename)
+	{
+		final String sizePrefix = _doubleResolution ? "2x/" : "1x/";
+		return getImageIcon(sizePrefix, inFilename);
+	}
+
+	/**
+	 * Get the specified image
+	 * @param inSizePrefix size prefix according to single/double resolution
+	 * @param inFilename filename of image (using constants)
+	 * @return ImageIcon object containing image
+	 */
+	private static ImageIcon getImageIcon(String inSizePrefix, String inFilename) {
+		return new ImageIcon(IconManager.class.getResource("images/" + inSizePrefix + inFilename + ".png"));
+	}
+
+	/**
+	 * Get the specified image
+	 * @param inFilename filename of image (using constants)
+	 * @return ImageIcon object containing image
+	 */
+	public static ImageIcon getImageIconWithoutSize(String inFilename) {
+		return getImageIcon("", inFilename);
 	}
 }

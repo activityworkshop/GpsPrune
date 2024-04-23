@@ -38,7 +38,7 @@ public class TextFileLoader extends FileTypeLoader
 {
 	private FileToBeLoaded _fileLock = null;
 	private boolean _autoAppend = false;
-	private JFrame _parentFrame = null;
+	private final JFrame _parentFrame;
 	private JDialog _dialog = null;
 	private WizardLayout _wizard = null;
 	private JButton _backButton = null, _nextButton = null;
@@ -192,32 +192,30 @@ public class TextFileLoader extends FileTypeLoader
 			_delimiterInfos[i] = new DelimiterInfo(DELIMITERS[i]);
 		}
 
-		String currLine = null;
 		String[] splitFields = null;
-		int commaFields = 0, semicolonFields = 0, tabFields = 0, spaceFields = 0;
 		for (int lineNum=0; lineNum<contents.length && fileOK; lineNum++)
 		{
-			currLine = contents[lineNum];
+			final String currLine = contents[lineNum];
 			// check for invalid characters
 			if (currLine.indexOf('\0') >= 0) {fileOK = false;}
 			// check for commas
 			splitFields = currLine.split(",");
-			commaFields = splitFields.length;
+			final int commaFields = splitFields.length;
 			if (commaFields > 1) _delimiterInfos[0].incrementNumRecords();
 			_delimiterInfos[0].updateMaxFields(commaFields);
 			// check for tabs
 			splitFields = currLine.split("\t");
-			tabFields = splitFields.length;
+			final int tabFields = splitFields.length;
 			if (tabFields > 1) _delimiterInfos[1].incrementNumRecords();
 			_delimiterInfos[1].updateMaxFields(tabFields);
 			// check for semicolons
 			splitFields = currLine.split(";");
-			semicolonFields = splitFields.length;
+			final int semicolonFields = splitFields.length;
 			if (semicolonFields > 1) _delimiterInfos[2].incrementNumRecords();
 			_delimiterInfos[2].updateMaxFields(semicolonFields);
 			// check for spaces
 			splitFields = currLine.split(" ");
-			spaceFields = splitFields.length;
+			final int spaceFields = splitFields.length;
 			if (spaceFields > 1) _delimiterInfos[3].incrementNumRecords();
 			_delimiterInfos[3].updateMaxFields(spaceFields);
 			// increment counters
@@ -652,9 +650,9 @@ public class TextFileLoader extends FileTypeLoader
 	{
 		if (inFields != null)
 		{
-			for (int i=0; i<inFields.length; i++)
+			for (Field inField : inFields)
 			{
-				if (inFields[i] == inCheck) { // == check ok here because it only checks for built-in fields
+				if (inField == inCheck) { // == check ok here because it only checks for built-in fields
 					return true;
 				}
 			}
@@ -672,7 +670,7 @@ public class TextFileLoader extends FileTypeLoader
 		_lastSelectedFields = _fieldTableModel.getFieldArray();
 		// TODO: Remember all the units selections for next load?
 		File file = _fileLock.getFile();
-		SourceInfo sourceInfo = (file == null ? null : new SourceInfo(file, SourceInfo.FILE_TYPE.TEXT));
+		SourceInfo sourceInfo = (file == null ? null : new SourceInfo(file, SourceInfo.FileType.TEXT));
 		PointCreateOptions options = new PointCreateOptions();
 		// Get the selected units for altitudes and speeds
 		options.setAltitudeUnits(_altitudeUnitsDropdown.getSelectedIndex() == 0 ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);

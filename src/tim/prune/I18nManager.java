@@ -126,11 +126,29 @@ public abstract class I18nManager
 	 * @param inPlaceholderValue value to substitute into the %s
 	 * @return associated text, or the key if not found
 	 */
-	public static String getText(String inKey, String inPlaceholderValue )
+	public static String getText(String inKey, String inPlaceholderValue)
 	{
 		String localText = getText(inKey);
 		try {
 			localText = String.format(localText, inPlaceholderValue);
+		}
+		catch (IllegalFormatException e)
+		{} // printf formatting didn't work, maybe the placeholders are wrong?
+		return localText;
+	}
+
+	/**
+	 * Lookup the given key and return the associated text, formatting with the number
+	 * @param inKey key to lookup (text should contain two elements with %s)
+	 * @param inValue1 value to substitute into the first %s
+	 * @param inValue2 value to substitute into the second %s
+	 * @return associated text, or the key if not found
+	 */
+	public static String getText(String inKey, String inValue1, String inValue2)
+	{
+		String localText = getText(inKey);
+		try {
+			localText = String.format(localText, inValue1, inValue2);
 		}
 		catch (IllegalFormatException e)
 		{} // printf formatting didn't work, maybe the placeholders are wrong?

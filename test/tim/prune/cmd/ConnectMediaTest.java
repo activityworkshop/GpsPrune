@@ -16,7 +16,7 @@ class ConnectMediaTest
 	public void testConnectNothing()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 			new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 
@@ -32,7 +32,7 @@ class ConnectMediaTest
 	public void testConnectPhoto()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 		assertFalse(point.hasMedia());
@@ -52,7 +52,7 @@ class ConnectMediaTest
 	public void testDisconnectPhoto()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		Photo photo = new Photo(new File("abc.jpg"));
 		point.setPhoto(photo);
@@ -80,7 +80,7 @@ class ConnectMediaTest
 	public void testConnectAudio()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("2515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 		assertFalse(point.hasMedia());
@@ -104,7 +104,7 @@ class ConnectMediaTest
 	{
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("2515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 		AudioClip audio = new AudioClip(new File("audio1.mp3"));

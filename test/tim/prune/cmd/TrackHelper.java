@@ -30,7 +30,7 @@ public class TrackHelper
 	{
 		Track track = new Track();
 		for (int i=0; i<12; i++) {
-			track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
+			track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
 		}
 		return track;
 	}

@@ -8,7 +8,7 @@ public class DeletePointCmd extends Command
 {
 	private final int _pointIndex;
 
-	public DeletePointCmd(int inPointIndex, String inName) {
+	public DeletePointCmd(int inPointIndex) {
 		this(null, inPointIndex);
 	}
 

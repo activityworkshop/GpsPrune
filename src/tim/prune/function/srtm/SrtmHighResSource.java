@@ -5,7 +5,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import tim.prune.config.Config;
 
 /**
  * High-resolution Srtm source, using 1-arcsecond data
@@ -16,6 +15,8 @@ public class SrtmHighResSource extends SrtmSource
 {
 	/** Flag set to false if auth fails */
 	private boolean _enabled = true;
+	/** Auth string */
+	private final String _authString;
 
 	/** URL prefix for all tiles */
 	private static final String URL_PREFIX = "https://e4ftl01.cr.usgs.gov/MEASURES/SRTMGL1.003/2000.02.11/";
@@ -26,6 +27,16 @@ public class SrtmHighResSource extends SrtmSource
 	private static final int HTTP_CODE_REDIRECT = 302;
 	private static final int HTTP_CODE_NOTFOUND = 404;
 
+
+	/**
+	 * @param inDiskPath disk path, if any
+	 * @param inAuthString authentication string
+	 */
+	SrtmHighResSource(String inDiskPath, String inAuthString)
+	{
+		super(inDiskPath);
+		_authString = inAuthString;
+	}
 
 	@Override
 	public int getTilePixels() {
@@ -77,14 +88,12 @@ public class SrtmHighResSource extends SrtmSource
 	/**
 	 * @return auth string, if possible
 	 */
-	private static String getAuthString()
+	private String getAuthString()
 	{
-		String authString = Config.getConfigString(Config.KEY_EARTHDATA_AUTH);
-		if (authString == null)
-		{
+		if (_authString == null) {
 			return null;
 		}
-		return "Basic " + authString;
+		return "Basic " + _authString;
 	}
 
 	/**

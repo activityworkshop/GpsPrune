@@ -21,7 +21,7 @@ public class OWMForecastHandler extends DefaultHandler
 	/** The currently open forecast */
 	private SingleForecast _forecast = null;
 	/** List of all the forecasts found so far */
-	private ArrayList<SingleForecast> _forecastList = new ArrayList<SingleForecast>();
+	private final ArrayList<SingleForecast> _forecastList = new ArrayList<>();
 
 
 	/**

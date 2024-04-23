@@ -8,9 +8,9 @@ import tim.prune.data.Unit;
  */
 public class MediaPreviewTableRow extends MediaSelectionTableRow
 {
-	private PointMediaPair _pointPair = null;
-	private double _distance = 0.0;
-	private boolean _correlate = false;
+	private final PointMediaPair _pointPair;
+	private final double _distance;
+	private boolean _correlate;
 
 
 	/**
@@ -45,9 +45,8 @@ public class MediaPreviewTableRow extends MediaSelectionTableRow
 	/**
 	 * @return flag to set whether to correlate or not
 	 */
-	public Boolean getCorrelateFlag()
-	{
-		return Boolean.valueOf(_correlate);
+	public boolean getCorrelateFlag() {
+		return _correlate;
 	}
 
 	/**

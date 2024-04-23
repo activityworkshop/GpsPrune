@@ -21,7 +21,7 @@ import tim.prune.data.FieldList;
 import tim.prune.data.PointCreateOptions;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.Checker.DoubleStatus;
-import tim.prune.data.SourceInfo.FILE_TYPE;
+import tim.prune.data.SourceInfo.FileType;
 import tim.prune.load.xml.XmlHandler;
 
 /**
@@ -100,7 +100,7 @@ public class FileTypeLoader
 			// Also manage recent files
 			if (inSourceInfo != null)
 			{
-				boolean isRegularLoad = (inSourceInfo.getFileType() != FILE_TYPE.GPSBABEL);
+				boolean isRegularLoad = (inSourceInfo.getFileType() != FileType.GPSBABEL);
 				_app.addRecentFile(inSourceInfo.getFile(), isRegularLoad);
 			}
 		}
@@ -151,7 +151,7 @@ public class FileTypeLoader
 
 	/**
 	 * Load the data from the xml handler
-	 * @param inHandler xml handler which read the data
+	 * @param inHandler xml handler which read the data from GPSBabel
 	 * @param inSourceInfo info about file (or not)
 	 * @param inAutoAppend true to auto-append
 	 * @param inMediaLinks media links, if any

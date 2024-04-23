@@ -144,7 +144,7 @@ public class SetMapBgFunction extends GenericFunction
 	{
 		updateList();
 		// Get selected value from config
-		int currSource = Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX);
+		int currSource = getConfig().getConfigInt(Config.KEY_MAPSOURCE_INDEX);
 		if (currSource < 0 || currSource >= _listModel.getSize()) {
 			currSource = 0;
 		}
@@ -226,7 +226,7 @@ public class SetMapBgFunction extends GenericFunction
 	public void updateList()
 	{
 		_sourcesEdited = true;
-		Config.setConfigString(Config.KEY_MAPSOURCE_LIST, MapSourceLibrary.getConfigString());
+		getConfig().setConfigString(Config.KEY_MAPSOURCE_LIST, MapSourceLibrary.getConfigString());
 		enableButtons();
 		if (_sourceAdded) {
 			// Select the last one in the list (the one just added)
@@ -243,7 +243,7 @@ public class SetMapBgFunction extends GenericFunction
 	{
 		int serverNum = getSelectedServer();
 		if (serverNum < 0) {serverNum = 0;}
-		Config.setConfigInt(Config.KEY_MAPSOURCE_INDEX, serverNum);
+		getConfig().setConfigInt(Config.KEY_MAPSOURCE_INDEX, serverNum);
 		UpdateMessageBroker.informSubscribers(DataSubscriber.MAPSERVER_CHANGED);
 		_dialog.dispose();
 	}

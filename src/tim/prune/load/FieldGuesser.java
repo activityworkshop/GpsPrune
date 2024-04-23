@@ -76,43 +76,36 @@ public abstract class FieldGuesser
 				if (!checkArrayHasField(fields, Field.LATITUDE) && fieldLooksLikeLatitude(value, isHeader))
 				{
 					fields[f] = Field.LATITUDE;
-					continue;
 				}
 				// check for longitude
-				if (!checkArrayHasField(fields, Field.LONGITUDE) && fieldLooksLikeLongitude(value, isHeader))
+				else if (!checkArrayHasField(fields, Field.LONGITUDE) && fieldLooksLikeLongitude(value, isHeader))
 				{
 					fields[f] = Field.LONGITUDE;
-					continue;
 				}
 				// check for altitude
-				if (!checkArrayHasField(fields, Field.ALTITUDE) && fieldLooksLikeAltitude(value, isHeader))
+				else if (!checkArrayHasField(fields, Field.ALTITUDE) && fieldLooksLikeAltitude(value, isHeader))
 				{
 					fields[f] = Field.ALTITUDE;
-					continue;
 				}
 				// check for waypoint name
-				if (!checkArrayHasField(fields, Field.WAYPT_NAME) && fieldLooksLikeName(value, isHeader))
+				else if (!checkArrayHasField(fields, Field.WAYPT_NAME) && fieldLooksLikeName(value, isHeader))
 				{
 					fields[f] = Field.WAYPT_NAME;
-					continue;
 				}
 				// check for timestamp
-				if (!checkArrayHasField(fields, Field.TIMESTAMP) && fieldLooksLikeTimestamp(value, isHeader))
+				else if (!checkArrayHasField(fields, Field.TIMESTAMP) && fieldLooksLikeTimestamp(value, isHeader))
 				{
 					fields[f] = Field.TIMESTAMP;
-					continue;
 				}
 				// check for tracksegment
-				if (!checkArrayHasField(fields, Field.NEW_SEGMENT) && fieldLooksLikeSegment(value, isHeader))
+				else if (!checkArrayHasField(fields, Field.NEW_SEGMENT) && fieldLooksLikeSegment(value, isHeader))
 				{
 					fields[f] = Field.NEW_SEGMENT;
-					continue;
 				}
 				// check for waypoint type
-				if (!checkArrayHasField(fields, Field.WAYPT_TYPE) && fieldLooksLikeWaypointType(value, isHeader))
+				else if (!checkArrayHasField(fields, Field.WAYPT_TYPE) && fieldLooksLikeWaypointType(value, isHeader))
 				{
 					fields[f] = Field.WAYPT_TYPE;
-					continue;
 				}
 			}
 		}
@@ -165,8 +158,8 @@ public abstract class FieldGuesser
 
 	/**
 	 * Check whether the given field array has the specified field
-	 * @param inFields
-	 * @param inCheckField
+	 * @param inFields field array to look through
+	 * @param inCheckField field to look for
 	 * @return true if Field is contained within the array
 	 */
 	private static boolean checkArrayHasField(Field[] inFields, Field inCheckField)
@@ -200,9 +193,8 @@ public abstract class FieldGuesser
 		}
 		else
 		{
-			// Note this will also catch longitudes too
-			Latitude lat = new Latitude(inValue);
-			return couldBeCoordinateString(inValue) && lat.isValid();
+			// Note this will also catch longitudes too if they're within range
+			return couldBeCoordinateString(inValue) && Latitude.make(inValue) != null;
 		}
 	}
 
@@ -225,8 +217,7 @@ public abstract class FieldGuesser
 		else
 		{
 			// Note this will also catch latitudes too
-			Longitude lon = new Longitude(inValue);
-			return couldBeCoordinateString(inValue) && lon.isValid();
+			return couldBeCoordinateString(inValue) && Longitude.make(inValue) != null;
 		}
 	}
 

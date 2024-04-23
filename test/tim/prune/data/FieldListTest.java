@@ -23,11 +23,12 @@ class FieldListTest
 	}
 
 	@Test
-	void testExtendSingleField()
+	void testAddSingleField()
 	{
 		FieldList fields = new FieldList();
 		assertEquals(0, fields.getNumFields());
-		fields.extendList(Field.LATITUDE);
+		assertEquals("()", fields.toString());
+		fields.addField(Field.LATITUDE);
 
 		assertEquals(1, fields.getNumFields());
 		assertEquals(-1, fields.getFieldIndex(null));
@@ -38,6 +39,42 @@ class FieldListTest
 		assertNull(fields.getField(-1));
 		assertEquals(Field.LATITUDE, fields.getField(0));
 		assertNull(fields.getField(1));
+		assertNotEquals("()", fields.toString());
+	}
+
+	@Test
+	void testAddSingleField_alreadyPresent()
+	{
+		FieldList fields = new FieldList();
+		assertEquals(0, fields.getNumFields());
+		fields.addField(Field.LATITUDE);
+		fields.addField(Field.LATITUDE);
+		fields.addField(Field.LATITUDE);
+
+		assertEquals(1, fields.getNumFields());
+		assertEquals(0, fields.getFieldIndex(Field.LATITUDE));
+		assertEquals(-1, fields.getFieldIndex(Field.LONGITUDE));
+		assertTrue(fields.contains(Field.LATITUDE));
+		assertFalse(fields.contains(Field.LONGITUDE));
+		assertEquals(Field.LATITUDE, fields.getField(0));
+		assertNull(fields.getField(1));
+		assertNotEquals("()", fields.toString());
+	}
+
+	@Test
+	void testAddMultipleFields()
+	{
+		FieldList fields = new FieldList();
+		assertEquals(0, fields.getNumFields());
+		fields.addFields(Field.LATITUDE, Field.LONGITUDE, Field.LATITUDE);
+
+		assertEquals(2, fields.getNumFields());
+		assertEquals(0, fields.getFieldIndex(Field.LATITUDE));
+		assertEquals(1, fields.getFieldIndex(Field.LONGITUDE));
+		assertTrue(fields.contains(Field.LATITUDE));
+		assertTrue(fields.contains(Field.LONGITUDE));
+		assertEquals(Field.LATITUDE, fields.getField(0));
+		assertEquals(Field.LONGITUDE, fields.getField(1));
 		assertNotEquals("()", fields.toString());
 	}
 

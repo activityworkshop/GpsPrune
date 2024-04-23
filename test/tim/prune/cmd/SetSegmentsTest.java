@@ -15,7 +15,7 @@ class SetSegmentsTest
 	public void testSetRange()
 	{
 		Track track = TrackHelper.makeTwelvePointTrack();
-		track.getPoint(6).setFieldValue(Field.WAYPT_NAME, "waypoint", false);
+		track.getPoint(6).setWaypointName("waypoint");
 		int[] segmentStarts = new int[] {0, 1, 4, 8};
 		for (int s : segmentStarts) {
 			track.getPoint(s).setSegmentStart(true);

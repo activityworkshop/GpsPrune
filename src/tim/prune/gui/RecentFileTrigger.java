@@ -7,7 +7,6 @@ import java.util.ArrayList;
 
 import tim.prune.App;
 import tim.prune.UpdateMessageBroker;
-import tim.prune.config.Config;
 import tim.prune.data.RecentFile;
 import tim.prune.load.BabelLoadFromFile;
 
@@ -36,7 +35,7 @@ public class RecentFileTrigger implements ActionListener
 	 */
 	public void actionPerformed(ActionEvent arg0)
 	{
-		RecentFile rf = Config.getRecentFileList().getFile(_index);
+		RecentFile rf = _app.getConfig().getRecentFileList().getFile(_index);
 		if (rf != null && rf.isValid())
 		{
 			if (rf.isRegularLoad())
@@ -55,7 +54,7 @@ public class RecentFileTrigger implements ActionListener
 		else
 		{
 			_app.showErrorMessage("function.open", "error.load.noread");
-			Config.getRecentFileList().verifyAll(); // Called on a file which no longer exists
+			_app.getConfig().getRecentFileList().verifyAll(); // Called on a file which no longer exists
 			UpdateMessageBroker.informSubscribers();
 		}
 	}

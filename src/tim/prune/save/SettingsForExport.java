@@ -13,6 +13,7 @@ public class SettingsForExport
 	private boolean _exportMissingAltitudes = false;
 	private boolean _exportPhotoPoints = true;
 	private boolean _exportAudioPoints = true;
+	private boolean _copyDescriptionsToComments = false;
 
 	/** Set to export track points or not */
 	public void setExportTrackPoints(boolean inExport) {
@@ -49,6 +50,11 @@ public class SettingsForExport
 		_exportAudioPoints = inExport;
 	}
 
+	/** Set to copy descriptions to comments */
+	public void setCopyDescriptionsToComments(boolean inCopy) {
+		_copyDescriptionsToComments = inCopy;
+	}
+
 	/** @return true to export track points */
 	public boolean getExportTrackPoints() {return _exportTrackPoints;}
 	/** @return true to export waypoints */
@@ -63,4 +69,6 @@ public class SettingsForExport
 	public boolean getExportPhotoPoints() {return _exportPhotoPoints;}
 	/** @return true to export audio points */
 	public boolean getExportAudioPoints() {return _exportAudioPoints;}
+	/** @return true to copy descriptions to comments */
+	public boolean getCopyDescriptionsToComments() {return _copyDescriptionsToComments;}
 }

@@ -23,13 +23,13 @@ import tim.prune.load.xml.ZipFileLoader;
  */
 public class FileLoader
 {
-	private App _app;
+	private final App _app;
 	private JFileChooser _fileChooser = null;
-	private TextFileLoader _textFileLoader = null;
-	private NmeaFileLoader _nmeaFileLoader = null;
-	private XmlFileLoader _xmlFileLoader = null;
-	private ZipFileLoader _zipFileLoader = null;
-	private GzipFileLoader _gzipFileLoader = null;
+	private final TextFileLoader _textFileLoader;
+	private final NmeaFileLoader _nmeaFileLoader;
+	private final XmlFileLoader _xmlFileLoader;
+	private final ZipFileLoader _zipFileLoader;
+	private final GzipFileLoader _gzipFileLoader;
 
 
 	/**
@@ -64,9 +64,12 @@ public class FileLoader
 			_fileChooser.setAcceptAllFileFilterUsed(true);
 			_fileChooser.setFileFilter(_fileChooser.getAcceptAllFileFilter()); // For some reason seems necessary
 			// start from directory in config if already set (by load jpegs)
-			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
-			if (configDir == null) {configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);}
-			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
+			Config config = _app.getConfig();
+			String configDir = config.getConfigString(Config.KEY_TRACK_DIR);
+			if (configDir == null) {configDir = config.getConfigString(Config.KEY_PHOTO_DIR);}
+			if (configDir != null) {
+				_fileChooser.setCurrentDirectory(new File(configDir));
+			}
 			_fileChooser.setMultiSelectionEnabled(true); // Allow multiple selections
 		}
 		// Show the open dialog
@@ -74,7 +77,7 @@ public class FileLoader
 		{
 			File[] files = _fileChooser.getSelectedFiles();
 			// Loop through files looking for files which exist and are readable
-			ArrayList<File> dataFiles = new ArrayList<File>();
+			ArrayList<File> dataFiles = new ArrayList<>();
 			if (files != null)
 			{
 				for (File file : files)
@@ -105,9 +108,9 @@ public class FileLoader
 		// Store directory in config for later
 		File parentDir = inFile.getParentFile();
 		if (parentDir != null) {
-			Config.setConfigString(Config.KEY_TRACK_DIR, parentDir.getAbsolutePath());
+			_app.getConfig().setConfigString(Config.KEY_TRACK_DIR, parentDir.getAbsolutePath());
 		}
-		FileToBeLoaded fileLock = new FileToBeLoaded(inFile, () -> _app.informDataLoadComplete());
+		FileToBeLoaded fileLock = new FileToBeLoaded(inFile, _app::informDataLoadComplete);
 		// Check file type to see if it's xml or just normal text
 		String fileExtension = inFile.getName().toLowerCase();
 		if (fileExtension.length() > 4) {

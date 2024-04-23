@@ -17,7 +17,7 @@ import tim.prune.gui.WholeNumberField;
 /**
  * Distance filter for GPSBabel (compress by distance, or nearby points)
  */
-public class DistanceFilter extends FilterDefinition
+public final class DistanceFilter extends FilterDefinition
 {
 	/** Constructor */
 	public DistanceFilter(AddFilterDialog inFilterDialog)

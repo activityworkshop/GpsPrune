@@ -155,10 +155,11 @@ public class SetLanguage extends GenericFunction
 			_dialog.pack();
 		}
 		// Try to use code from config
-		String code = Config.getConfigString(Config.KEY_LANGUAGE_CODE);
+		String code = getConfig().getConfigString(Config.KEY_LANGUAGE_CODE);
 		int index = getLanguageIndex(code);
 		// If it's not present, then use system locale settings
-		if (index < 0) {
+		if (index < 0)
+		{
 			Locale locale = Locale.getDefault();
 			index = getLanguageIndex(locale.getLanguage() + "_" + locale.getCountry());
 			if (index < 0) {
@@ -171,8 +172,8 @@ public class SetLanguage extends GenericFunction
 		}
 		_startIndex = _languageDropDown.getSelectedIndex();
 		// Get language file from config
-		String langfile = Config.getConfigString(Config.KEY_LANGUAGE_FILE);
-		_langFileBox.setText(langfile==null?"":langfile);
+		String langfile = getConfig().getConfigString(Config.KEY_LANGUAGE_FILE);
+		_langFileBox.setText(langfile == null ? "" : langfile);
 		_dialog.setVisible(true);
 	}
 
@@ -184,7 +185,8 @@ public class SetLanguage extends GenericFunction
 	private static int getLanguageIndex(String inCode)
 	{
 		int idx = -1;
-		if (inCode != null && !inCode.equals("")) {
+		if (inCode != null && !inCode.equals(""))
+		{
 			for (int i=0; i<LANGUAGE_CODES.length; i++) {
 				if (LANGUAGE_CODES[i].equalsIgnoreCase(inCode)) {
 					idx = i;
@@ -205,8 +207,8 @@ public class SetLanguage extends GenericFunction
 		{
 			String code = LANGUAGE_CODES[index];
 			// Set code and langfile in config
-			Config.setConfigString(Config.KEY_LANGUAGE_CODE, code);
-			Config.setConfigString(Config.KEY_LANGUAGE_FILE, null);
+			getConfig().setConfigString(Config.KEY_LANGUAGE_CODE, code);
+			getConfig().setConfigString(Config.KEY_LANGUAGE_FILE, null);
 			_dialog.dispose();
 			showEndMessage();
 		}
@@ -217,7 +219,7 @@ public class SetLanguage extends GenericFunction
 	 */
 	private void selectLanguageFile()
 	{
-		final String oldPath = Config.getConfigString(Config.KEY_LANGUAGE_FILE);
+		final String oldPath = getConfig().getConfigString(Config.KEY_LANGUAGE_FILE);
 		String filename = _langFileBox.getText();
 		// Check there is an entry in the box
 		if (filename != null && !filename.equals(""))
@@ -235,16 +237,17 @@ public class SetLanguage extends GenericFunction
 			else if (oldPath == null || !textsFile.getAbsolutePath().equalsIgnoreCase(oldPath))
 			{
 				// Set in Config
-				Config.setConfigString(Config.KEY_LANGUAGE_FILE, textsFile.getAbsolutePath());
+				getConfig().setConfigString(Config.KEY_LANGUAGE_FILE, textsFile.getAbsolutePath());
 				_dialog.dispose();
 				showEndMessage();
 			}
 		}
-		else {
+		else
+		{
 			// if file was previously selected, and now it's blank, then reset Config
 			if (oldPath != null && oldPath.length() > 0)
 			{
-				Config.setConfigString(Config.KEY_LANGUAGE_FILE, null);
+				getConfig().setConfigString(Config.KEY_LANGUAGE_FILE, null);
 				_dialog.dispose();
 				showEndMessage();
 			}
@@ -305,7 +308,8 @@ public class SetLanguage extends GenericFunction
 	 */
 	private void showEndMessage()
 	{
-		final String messageKey = Config.getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS) ?
+		final boolean autoSave = getConfig().getConfigBoolean(Config.KEY_AUTOSAVE_SETTINGS);
+		final String messageKey = autoSave ?
 			"dialog.setlanguage.endmessagewithautosave" : "dialog.setlanguage.endmessage";
 		JOptionPane.showMessageDialog(_parentFrame, I18nManager.getText(messageKey),
 			getName(), JOptionPane.INFORMATION_MESSAGE);

@@ -1,80 +1,51 @@
 package tim.prune.data;
 
 /**
- * Class to represent a Longitude Coordinate
+ * Class to make it easier to create Coordinate objects for Longitudes
  */
-public class Longitude extends Coordinate
+public abstract class Longitude
 {
-	/**
-	 * Constructor
-	 * @param inString string value from file
-	 */
-	public Longitude(String inString)
+	public static Coordinate make(double inValue)
 	{
-		super(inString);
-	}
-
-
-	/**
-	 * Constructor
-	 * @param inValue value of coordinate
-	 * @param inFormat format to use
-	 */
-	public Longitude(double inValue, int inFormat)
-	{
-		super(inValue, inFormat, inValue < 0.0 ? WEST : EAST);
-	}
-
-
-	/**
-	 * Turn the given character into a cardinal
-	 * @see tim.prune.data.Coordinate#getCardinal(char)
-	 */
-	protected int getCardinal(char inChar)
-	{
-		// Longitude recognises E, W and -
-		// default is no cardinal
-		int cardinal = NO_CARDINAL;
-		switch (inChar)
-		{
-			case 'E':
-			case 'e':
-				cardinal = EAST; break;
-			case 'W':
-			case 'w':
-			case '-':
-				cardinal = WEST; break;
-			default:
-				// no character given
+		if (Math.abs(inValue) > 180.0) {
+			return make(wrapTo180(inValue));
 		}
-		return cardinal;
+		return new Coordinate(inValue, inValue >= 0.0 ? Coordinate.Cardinal.EAST : Coordinate.Cardinal.WEST);
 	}
 
-
-	/**
-	 * @return default cardinal (East)
-	 * @see tim.prune.data.Coordinate#getDefaultCardinal()
-	 */
-	protected int getDefaultCardinal()
+	/** @return given value wrapped to between -180 and +180 */
+	static double wrapTo180(double inValue)
 	{
-		return EAST;
+		double value = inValue + 180.0;
+		while (value < 0.0) {
+			value += 360;
+		}
+		return (value % 360.0) - 180.0;
 	}
 
-
-	/**
-	 * Make a new Longitude object
-	 * @see tim.prune.data.Coordinate#makeNew(double, int)
-	 */
-	protected Coordinate makeNew(double inValue, int inFormat)
+	public static Coordinate make(String inString)
 	{
-		return new Longitude(inValue, inFormat);
+		Coordinate coordinate = Coordinate.parse(inString, Coordinate.Cardinal.EAST, Coordinate.Cardinal.WEST);
+		if (coordinate != null && Math.abs(coordinate.getDouble()) > 180.0)
+		{
+			// Wrap coordinates to within the correct range, modifying cardinal and all values
+			return coordinate.wrapTo180Degrees();
+		}
+		return coordinate;
 	}
 
-	/**
-	 * @return the maximum degree range for this coordinate
-	 */
-	protected int getMaxDegrees()
+	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd, double inFraction) {
+		return Coordinate.interpolate(inStart, inEnd, inFraction, Coordinate.Cardinal.EAST, Coordinate.Cardinal.WEST);
+	}
+
+	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd, int inIndex, int inNumPoints) {
+		return interpolate(inStart, inEnd, 1.0 * (inIndex+1) / (inNumPoints + 1));
+	}
+
+	public static boolean hasCardinal(String inSource)
 	{
-		return 180;
+		Coordinate.Cardinal cardinal = Coordinate.getCardinal(inSource,
+			Coordinate.Cardinal.EAST, Coordinate.Cardinal.WEST);
+		return cardinal != Coordinate.Cardinal.NO_CARDINAL;
 	}
 }

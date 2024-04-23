@@ -8,9 +8,9 @@ package tim.prune.tips;
 class TipDefinition
 {
 	/** Key of message to show when fired */
-	private String _messageKey = null;
+	private final String _messageKey;
 	/** Threshold of calls before tip is shown */
-	private int _threshold = 0;
+	private final int _threshold;
 	/** Number of times this tip has been hit */
 	private int _hitCount = 0;
 	/** Flag whether tip is active or has already been shown */

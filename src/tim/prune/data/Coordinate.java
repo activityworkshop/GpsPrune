@@ -1,269 +1,299 @@
 package tim.prune.data;
 
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
+
 
 /**
  * Class to represent a lat/long coordinate
  * and provide conversion functions
  */
-public abstract class Coordinate
+public class Coordinate
 {
-	public static final int NO_CARDINAL = -1;
-	public static final int NORTH = 0;
-	public static final int EAST = 1;
-	public static final int SOUTH = 2;
-	public static final int WEST = 3;
-	private static final char[] PRINTABLE_CARDINALS = {'N', 'E', 'S', 'W'};
-	public static final int FORMAT_DEG_MIN_SEC = 10;
-	public static final int FORMAT_DEG_MIN = 11;
-	public static final int FORMAT_DEG = 12;
-	public static final int FORMAT_DEG_WITHOUT_CARDINAL = 13;
-	public static final int FORMAT_DEG_WHOLE_MIN = 14;
-	public static final int FORMAT_DEG_MIN_SEC_WITH_SPACES = 15;
-	public static final int FORMAT_CARDINAL = 16;
-	public static final int FORMAT_DECIMAL_FORCE_POINT = 17;
-	public static final int FORMAT_NONE = 19;
-
 	private static final int NUMDIGITS_DEFAULT = -1;
+	private static final CoordFormatters _coordFormatters = new CoordFormatters();
+
+	public enum Format {DEG_MIN_SEC, DEG_MIN, DEG, DEG_WITHOUT_CARDINAL, DEG_MIN_SEC_WITH_SPACES, JUST_CARDINAL, DECIMAL_FORCE_POINT, NONE}
+
+	public enum Cardinal
+	{
+		NORTH("N"), EAST("E"), SOUTH("S"), WEST("W"), NO_CARDINAL("");
+		public final String printable;
+		Cardinal(String inChar) {
+			printable = inChar;
+		}
+		public Cardinal getOpposite()
+		{
+			switch (this)
+			{
+				case NORTH: return SOUTH;
+				case SOUTH: return NORTH;
+				case EAST: return WEST;
+				case WEST: return EAST;
+				case NO_CARDINAL:
+				default:
+					throw new IllegalArgumentException("Cannot find opposite cardinal of " + this);
+			}
+		}
+	}
 
 	// Instance variables
-	private boolean _valid = false;
-	private boolean _cardinalGuessed = false;
-	protected int _cardinal = NORTH;
-	private int _degrees = 0;
-	private int _minutes = 0;
-	private int _seconds = 0;
-	private int _fracs = 0;
-	private int _fracDenom = 0;
-	private String _originalString = null;
-	private int _originalFormat = FORMAT_NONE;
-	private double _asDouble = 0.0;
+	private final Cardinal _cardinal;
+	private final FractionalSeconds _value;
+	private final String _originalString;
+	private final Format _originalFormat;
+	private final double _asDouble;
 
+	private static char _localDecimalChar = 0;
+
+
+	/** Private constructor */
+	private Coordinate(Cardinal inCardinal, String inString, Format inFormat, double inDouble, FractionalSeconds inValue)
+	{
+		_cardinal = inCardinal;
+		_originalString = inString;
+		_originalFormat = inFormat;
+		_asDouble = inDouble;
+		_value = inValue;
+	}
 
 	/**
 	 * Constructor given String
 	 * @param inString string to parse
+	 * @param inPositiveCardinal default cardinal to use if value is positive
+	 * @param inNegativeCardinal default cardinal to use if value is negative
 	 */
-	public Coordinate(String inString)
+	public static Coordinate parse(String inString, Cardinal inPositiveCardinal, Cardinal inNegativeCardinal)
 	{
-		_originalString = inString;
-		int strLen = 0;
-		if (inString != null)
-		{
-			inString = inString.trim();
-			strLen = inString.length();
+		final String source = (inString == null ? "" : inString.trim());
+		final int strLen = source.length();
+		if (strLen == 0) {
+			return null;
 		}
-		if (strLen > 0)
-		{
-			// Check for cardinal character either at beginning or end
-			boolean hasCardinal = true;
-			_cardinal = getCardinal(inString.charAt(0), inString.charAt(strLen-1));
-			if (_cardinal == NO_CARDINAL) {
-				hasCardinal = false;
-				// use default from concrete subclass
-				_cardinal = getDefaultCardinal();
-				_cardinalGuessed = true;
-			}
-			else if (isJustNumber(inString)) {
-				// it's just a number
-				hasCardinal = false;
-				_cardinalGuessed = true;
-			}
+		// Check for cardinal character either at beginning or end
+		Cardinal cardinal = getCardinal(source, inPositiveCardinal, inNegativeCardinal);
+		final boolean cardinalSpecified = (cardinal != Cardinal.NO_CARDINAL);
 
-			// count numeric fields - 1=d, 2=dm, 3=dm.m/dms, 4=dms.s
-			int numFields = 0;
-			boolean isNumeric = false;
-			char currChar;
-			long[] fields = new long[4]; // needs to be long for lengthy decimals
-			long[] denoms = new long[4];
-			boolean[] otherDelims = new boolean[5]; // remember whether delimiters have non-decimal chars
-			try
+		// count numeric fields - 1=d, 2=dm, 3=dm.m/dms, 4=dms.s
+		long[] fields = new long[4]; // needs to be long for lengthy decimals
+		int[] lengths = new int[4];
+		boolean[] otherDelims = new boolean[5]; // remember whether delimiters have non-decimal chars
+		ParseResult result = parseString(source, fields, lengths, otherDelims);
+		final int numFields = result.numFields;
+		final boolean isNegative = result.isNegative && cardinal == Cardinal.NO_CARDINAL;
+		if (!cardinalSpecified) {
+			cardinal = isNegative ? inNegativeCardinal : inPositiveCardinal;
+		}
+
+		// parse fields according to number found
+		final FractionalSeconds seconds;
+		final Format originalFormat;
+		if (numFields == 2)
+		{
+			if (!otherDelims[1])
 			{
-				// Loop over characters in input string, populating fields array
-				for (int i=0; i<strLen; i++)
+				// String is just decimal degrees
+				originalFormat = cardinalSpecified ? Format.DEG : Format.DEG_WITHOUT_CARDINAL;
+				seconds = new FractionalSeconds(fields[0], fields[1], lengths[1]);
+			}
+			else
+			{
+				// String is degrees and minutes (due to non-decimal separator)
+				originalFormat = Format.DEG_MIN;
+				if (fields[1] >= 60) {
+					return null;
+				}
+				seconds = new FractionalSeconds(fields[0], fields[1], 0L, 0);
+			}
+		}
+		// Check for exponential degrees like 1.3E-6
+		else if (numFields == 3 && !otherDelims[1] && otherDelims[2] && isJustNumber(source))
+		{
+			double asDouble = Math.abs(Double.parseDouble(source)); // must succeed if isJustNumber has given true
+			// Don't need to modify sign of double, because it will be done by the parseDouble
+			return new Coordinate(cardinal, source, Format.DEG, asDouble, null);
+		}
+		// Differentiate between d-m.f and d-m-s using . or ,
+		else if (numFields == 3 && !otherDelims[2])
+		{
+			// String is degrees-minutes.fractions
+			if (fields[1] >= 60) {
+				return null;
+			}
+			originalFormat = Format.DEG_MIN;
+			seconds = new FractionalSeconds(fields[0], fields[1], fields[2], lengths[2]);
+		}
+		else if (numFields == 4 || numFields == 3)
+		{
+			// String is degrees-minutes-seconds.fractions
+			if (fields[1] >= 60 || fields[2] >= 60) {
+				return null;
+			}
+			originalFormat = Format.DEG_MIN_SEC;
+			seconds = new FractionalSeconds(fields[0], fields[1], fields[2], fields[3], lengths[3]);
+		}
+		else {
+			// Number of fields is wrong
+			return null;
+		}
+		double asDouble = seconds.getDouble();
+		if (cardinal == inNegativeCardinal) {
+			asDouble = -asDouble;
+		}
+		return new Coordinate(cardinal, source, originalFormat, asDouble, seconds);
+	}
+
+	/**
+	 * @return a new Coordinate object wrapped to the given range (but still with the original string)
+	 */
+	public Coordinate wrapTo180Degrees()
+	{
+		if (_value == null)
+		{
+			if (_asDouble >= -180.0 && _asDouble <= 180.0) {
+				return this;
+			}
+			double wrappedDouble = (_asDouble + 180.0) % 360.0 - 180.0;
+			final boolean startPositive = (_asDouble > 0.0);
+			final boolean endPositive = (wrappedDouble > 0.0);
+			Cardinal wrappedCardinal = (startPositive == endPositive ? _cardinal : _cardinal.getOpposite());
+			return new Coordinate(wrappedDouble, wrappedCardinal);
+		}
+		if (_value.isWithinOneEightyDegrees()) {
+			return this;
+		}
+		FractionalSeconds wrappedValue = _value.wrapToThreeSixtyDegrees();
+		if (wrappedValue.isWithinOneEightyDegrees()) {
+			return new Coordinate(_cardinal, _originalString, _originalFormat, wrappedValue.getDouble(), wrappedValue);
+		}
+		// we need to flip to the opposite cardinal
+		boolean isPositive = (_asDouble > 0.0);
+		wrappedValue = wrappedValue.invert();
+		double doubleValue = isPositive ? -wrappedValue.getDouble() : wrappedValue.getDouble();
+		return new Coordinate(_cardinal.getOpposite(), _originalString, _originalFormat, doubleValue, wrappedValue);
+	}
+
+	/** Class to hold the results of the string parsing */
+	private static class ParseResult
+	{
+		public final int numFields;
+		public final boolean isNegative;
+		ParseResult(int inNumFields, boolean inNegative)
+		{
+			numFields = inNumFields;
+			isNegative = inNegative;
+		}
+	}
+
+	/**
+	 * @param inSource source string to parse
+	 * @param inFields array of field values to populate
+	 * @param inLengths array of field lengths to populate
+	 * @param inOtherDelims array of flags to populate
+	 */
+	private static ParseResult parseString(String inSource, long[] inFields, int[] inLengths, boolean[] inOtherDelims)
+	{
+		int numFields = 0;
+		boolean isNegative = false;
+		try
+		{
+			final int strLen = inSource.length();
+			boolean isNumeric = false;
+			// Loop over characters in input string, populating fields array
+			for (int i=0; i<strLen; i++)
+			{
+				char currChar = inSource.charAt(i);
+				if (currChar >= '0' && currChar <= '9')
 				{
-					currChar = inString.charAt(i);
-					if (currChar >= '0' && currChar <= '9')
+					if (!isNumeric)
 					{
-						if (!isNumeric)
-						{
-							isNumeric = true;
-							numFields++;
-							denoms[numFields-1] = 1;
-						}
-						if (denoms[numFields-1] < 1E18) // ignore trailing characters if too big for long
-						{
-							fields[numFields-1] = fields[numFields-1] * 10 + (currChar - '0');
-							denoms[numFields-1] *= 10;
-						}
+						isNumeric = true;
+						numFields++;
+						inLengths[numFields-1] = 0;
 					}
-					else
+					if (inLengths[numFields-1] < 18) // ignore trailing characters if too big for long
 					{
-						isNumeric = false;
-						// Remember delimiters
-						if (currChar != ',' && currChar != '.') {otherDelims[numFields] = true;}
+						inFields[numFields-1] = inFields[numFields-1] * 10 + (currChar - '0');
+						inLengths[numFields-1] += 1;
 					}
 				}
-				_valid = (numFields > 0);
-			}
-			catch (ArrayIndexOutOfBoundsException obe)
-			{
-				// more than four fields found - unable to parse
-				_valid = false;
-			}
-			// parse fields according to number found
-			_degrees = (int) fields[0];
-			_asDouble = _degrees;
-			_originalFormat = hasCardinal ? FORMAT_DEG : FORMAT_DEG_WITHOUT_CARDINAL;
-			_fracDenom = 10;
-			if (numFields == 2)
-			{
-				if (!otherDelims[1])
+				else if (currChar == '-' && numFields == 0 && !isNumeric)
 				{
-					// String is just decimal degrees
-					double numMins = fields[1] * 60.0 / denoms[1];
-					_minutes = (int) numMins;
-					double numSecs = (numMins - _minutes) * 60.0;
-					_seconds = (int) numSecs;
-					_fracs = (int) ((numSecs - _seconds) * 10);
-					_asDouble = _degrees + 1.0 * fields[1] / denoms[1];
+					// Found a minus sign before any of the numbers
+					isNegative = true;
 				}
 				else
 				{
-					// String is degrees and minutes (due to non-decimal separator)
-					_originalFormat = FORMAT_DEG_MIN;
-					_minutes = (int) fields[1];
-					_seconds = 0;
-					_fracs = 0;
-					_asDouble = 1.0 * _degrees + (_minutes / 60.0);
+					isNumeric = false;
+					// Remember delimiters
+					if (currChar != ',' && currChar != '.') {
+						inOtherDelims[numFields] = true;
+					}
 				}
 			}
-			// Check for exponential degrees like 1.3E-6
-			else if (numFields == 3 && !otherDelims[1] && otherDelims[2] && isJustNumber(inString))
-			{
-				_originalFormat = FORMAT_DEG;
-				_asDouble = Math.abs(Double.parseDouble(inString)); // must succeed if isJustNumber has given true
-				// now we can ignore the fields and just use this double
-				_degrees = (int) _asDouble;
-				double numMins = (_asDouble - _degrees) * 60.0;
-				_minutes = (int) numMins;
-				double numSecs = (numMins - _minutes) * 60.0;
-				_seconds = (int) numSecs;
-				_fracs = (int) ((numSecs - _seconds) * 10);
-			}
-			// Differentiate between d-m.f and d-m-s using . or ,
-			else if (numFields == 3 && !otherDelims[2])
-			{
-				// String is degrees-minutes.fractions
-				_originalFormat = FORMAT_DEG_MIN;
-				_minutes = (int) fields[1];
-				double numSecs = fields[2] * 60.0 / denoms[2];
-				_seconds = (int) numSecs;
-				_fracs = (int) ((numSecs - _seconds) * 10);
-				_asDouble = 1.0 * _degrees + (_minutes / 60.0) + (numSecs / 3600.0);
-			}
-			else if (numFields == 4 || numFields == 3)
-			{
-				// String is degrees-minutes-seconds.fractions
-				_originalFormat = FORMAT_DEG_MIN_SEC;
-				_minutes = (int) fields[1];
-				_seconds = (int) fields[2];
-				_fracs = (int) fields[3];
-				_fracDenom = (int) denoms[3];
-				if (_fracDenom < 1) {_fracDenom = 1;}
-				_asDouble = 1.0 * _degrees + (_minutes / 60.0) + (_seconds / 3600.0) + (_fracs / 3600.0 / _fracDenom);
-			}
-			if (_cardinal == WEST || _cardinal == SOUTH || inString.charAt(0) == '-')
-				_asDouble = -_asDouble;
-			// validate fields
-			_valid = _valid && (_degrees <= getMaxDegrees() && _minutes < 60 && _seconds < 60 && _fracs < _fracDenom)
-				&& Math.abs(_asDouble) <= getMaxDegrees();
 		}
-		else _valid = false;
+		catch (ArrayIndexOutOfBoundsException ignored) {}
+		return new ParseResult(numFields, isNegative);
 	}
-
 
 	/**
 	 * Get the cardinal from the given character
-	 * @param inFirstChar first character from string
-	 * @param inLastChar last character from string
+	 * @param inSource source string
 	 */
-	private int getCardinal(char inFirstChar, char inLastChar)
+	static Cardinal getCardinal(String inSource, Cardinal inPositiveCardinal, Cardinal inNegativeCardinal)
 	{
+		String source = inSource == null ? "" : inSource.trim();
+		if (source.equals("")) {
+			return Cardinal.NO_CARDINAL;
+		}
+		final char firstChar = source.charAt(0);
+		final char lastChar = source.charAt(source.length() - 1);
 		// Try leading character first
-		int cardinal = getCardinal(inFirstChar);
+		Cardinal cardinal = getCardinal(firstChar, inPositiveCardinal, inNegativeCardinal);
 		// if not there, try trailing character
-		if (cardinal == NO_CARDINAL) {
-			cardinal = getCardinal(inLastChar);
+		if (cardinal == Cardinal.NO_CARDINAL) {
+			cardinal = getCardinal(lastChar, inPositiveCardinal, inNegativeCardinal);
 		}
 		return cardinal;
-	}
-
-	/**
-	 * @return true if cardinal was guessed, false if parsed
-	 */
-	public boolean getCardinalGuessed() {
-		return _cardinalGuessed;
 	}
 
 	/**
 	 * Get the cardinal from the given character
 	 * @param inChar character from file
 	 */
-	protected abstract int getCardinal(char inChar);
-
-	/**
-	 * @return the default cardinal for the subclass
-	 */
-	protected abstract int getDefaultCardinal();
-
-	/**
-	 * @return the maximum degree range for this coordinate
-	 */
-	protected abstract int getMaxDegrees();
-
-
-	/**
-	 * Constructor
-	 * @param inValue value of coordinate
-	 * @param inFormat format to use
-	 * @param inCardinal cardinal
-	 */
-	protected Coordinate(double inValue, int inFormat, int inCardinal)
+	static Cardinal getCardinal(char inChar, Cardinal inPositiveCardinal, Cardinal inNegativeCardinal)
 	{
-		_asDouble = inValue;
-		// Calculate degrees, minutes, seconds
-		_degrees = (int) Math.abs(inValue);
-		double numMins = (Math.abs(_asDouble)-_degrees) * 60.0;
-		_minutes = (int) numMins;
-		double numSecs = (numMins - _minutes) * 60.0;
-		_seconds = (int) numSecs;
-		_fracs = (int) Math.round((numSecs - _seconds) * 10.);
-		_fracDenom = 10; // fixed for now
-		// Make a string to display on screen
-		_cardinal = inCardinal;
-		_originalFormat = FORMAT_NONE;
-		if (inFormat == FORMAT_NONE) inFormat = FORMAT_DEG_WITHOUT_CARDINAL;
-		_originalString = output(inFormat);
-		_originalFormat = inFormat;
-		_valid = true;
+		String givenCardinal = "" + Character.toUpperCase(inChar);
+		if (givenCardinal.equals(inPositiveCardinal.printable)) {
+			return inPositiveCardinal;
+		}
+		if (givenCardinal.equals(inNegativeCardinal.printable)) {
+			return inNegativeCardinal;
+		}
+		return Cardinal.NO_CARDINAL;
 	}
 
+
+	/**
+	 * Constructor using numeric value
+	 * @param inValue value of coordinate
+	 * @param inCardinal cardinal
+	 */
+    Coordinate(double inValue, Cardinal inCardinal)
+	{
+		_asDouble = inValue;
+		_value = null;
+		_cardinal = inCardinal;
+		NumberFormat degFormatter = _coordFormatters.getLocalFormatter(6);
+		_originalString = degFormatter.format(_asDouble);
+		_originalFormat = Format.DEG_WITHOUT_CARDINAL;
+	}
 
 	/**
 	 * @return coordinate as a double
 	 */
-	public double getDouble()
-	{
+	public double getDouble() {
 		return _asDouble;
-	}
-
-	/**
-	 * @return true if Coordinate is valid
-	 */
-	public boolean isValid()
-	{
-		return _valid;
 	}
 
 	/**
@@ -271,19 +301,18 @@ public abstract class Coordinate
 	 * @param inOther other Coordinate object with which to compare
 	 * @return true if the two objects are equal
 	 */
-	public boolean equals(Coordinate inOther)
+	public boolean equals(Object inOther)
 	{
-		return (_asDouble == inOther._asDouble);
+		return inOther instanceof Coordinate
+				&& _asDouble == ((Coordinate) inOther)._asDouble;
 	}
-
 
 	/**
 	 * Output the Coordinate in the given format
 	 * @param inFormat format to use, eg FORMAT_DEG_MIN_SEC
 	 * @return String for output
 	 */
-	public String output(int inFormat)
-	{
+	public String output(Format inFormat) {
 		return output(inFormat, NUMDIGITS_DEFAULT);
 	}
 
@@ -293,107 +322,102 @@ public abstract class Coordinate
 	 * @param inNumDigits number of digits, or -1 for default
 	 * @return String for output
 	 */
-	public String output(int inFormat, int inNumDigits)
+	public String output(Format inFormat, int inNumDigits)
 	{
-		String answer = _originalString;
-		if (inFormat != FORMAT_NONE && inFormat != _originalFormat)
+		if (inFormat == Format.NONE) {
+			return _originalString;
+		}
+		if (inFormat == _originalFormat && inNumDigits == NUMDIGITS_DEFAULT) {
+			return _originalString;
+		}
+		int numDigits = (inNumDigits == NUMDIGITS_DEFAULT ? getNumDigits(inFormat) : inNumDigits);
+
+		FractionalSeconds value = (_value != null ? _value : FractionalSeconds.fromDouble(_asDouble, numDigits));
+
+		// format as specified
+		switch (inFormat)
 		{
-			// format as specified
-			switch (inFormat)
-			{
-				case FORMAT_DEG_MIN_SEC:
-				{
-					StringBuilder builder = new StringBuilder();
-					builder.append(PRINTABLE_CARDINALS[_cardinal])
-						.append(threeDigitString(_degrees)).append('\u00B0')
-						.append(twoDigitString(_minutes)).append('\'');
-					if (inNumDigits == NUMDIGITS_DEFAULT || inNumDigits == 1)
-					{
-						builder.append(twoDigitString(_seconds)).append('.')
-							.append(formatFraction(_fracs, _fracDenom))
-							.append('"');
-					}
-					else
-					{
-						NumberFormat secFormatter = CoordFormatters.getFormatter(inNumDigits);
-						final double numSecs = ((Math.abs(_asDouble) - _degrees) * 60.0 - _minutes) * 60.0;
-						builder.append(secFormatter.format(numSecs)).append('"');
-					}
-					answer = builder.toString();
-					break;
+			case DEG_MIN_SEC:
+				value = value.roundToSeconds(numDigits);
+				return _cardinal.printable
+						+ threeDigitString(value.getWholeDegrees()) + '\u00B0'
+						+ twoDigitString(value.getWholeMinutes()) + '\''
+						+ twoDigitString(value.getWholeSeconds()) + getLocalDecimalChar()
+						+ value.getFractionSeconds() + '"';
+
+			case DEG_MIN:
+				value = value.roundToMinutes(numDigits);
+				return _cardinal.printable
+						+ threeDigitString(value.getWholeDegrees()) + '\u00B0'
+						+ twoDigitString(value.getWholeMinutes()) + getLocalDecimalChar()
+						+ value.getFractionMinutes() + '\'';
+
+			case DEG:
+			case DEG_WITHOUT_CARDINAL:
+			case DECIMAL_FORCE_POINT:
+				// value = value.roundToDegrees(numDigits);
+				NumberFormat degFormatter = (inFormat == Format.DECIMAL_FORCE_POINT ?
+						_coordFormatters.getUkFormatter(numDigits) :
+						_coordFormatters.getLocalFormatter(numDigits));
+				if (inFormat == Format.DEG) {
+					return _cardinal.printable + ' ' + degFormatter.format(Math.abs(_asDouble));
 				}
-				case FORMAT_DEG_MIN:
-				{
-					final int numMinuteDigits = (inNumDigits == NUMDIGITS_DEFAULT ? 5 : inNumDigits);
-					NumberFormat minFormatter = CoordFormatters.getFormatter(numMinuteDigits);
-					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(_degrees) + "\u00B0"
-						+ minFormatter.format((Math.abs(_asDouble) - _degrees) * 60.0) + "'";
-					break;
+				else {
+					return degFormatter.format(_asDouble);
 				}
-				case FORMAT_DEG_WHOLE_MIN:
-				{
-					int deg = _degrees;
-					int min = (int) Math.floor(_minutes + _seconds / 60.0 + _fracs / 60.0 / _fracDenom + 0.5);
-					if (min == 60) {
-						min = 0; deg++;
-					}
-					answer = "" + PRINTABLE_CARDINALS[_cardinal] + threeDigitString(deg) + "\u00B0" + min + "'";
-					break;
-				}
-				case FORMAT_DEG:
-				case FORMAT_DEG_WITHOUT_CARDINAL:
-				{
-					if (_originalFormat != FORMAT_DEG_WITHOUT_CARDINAL)
-					{
-						answer = (_asDouble<0.0?"-":"")
-							+ (_degrees + _minutes / 60.0 + _seconds / 3600.0 + _fracs / 3600.0 / _fracDenom);
-					}
-					break;
-				}
-				case FORMAT_DECIMAL_FORCE_POINT:
-				{
-					// Forcing a decimal point instead of system-dependent commas etc
-					if (_originalFormat == FORMAT_DEG_WITHOUT_CARDINAL && answer.indexOf('.') >= 0 && inNumDigits == NUMDIGITS_DEFAULT)
-					{
-						break;
-					}
-					final int numDegDigits = (inNumDigits == NUMDIGITS_DEFAULT ? 8 : inNumDigits);
-					NumberFormat degFormatter = CoordFormatters.getFormatter(numDegDigits);
-					answer = degFormatter.format(_asDouble);
-					break;
-				}
-				case FORMAT_DEG_MIN_SEC_WITH_SPACES:
-				{
-					// Note: cardinal not needed as this format is only for exif, which has cardinal separately
-					answer = "" + _degrees + " " + _minutes + " " + _seconds + "." + formatFraction(_fracs, _fracDenom);
-					break;
-				}
-				case FORMAT_CARDINAL:
-				{
-					answer = "" + PRINTABLE_CARDINALS[_cardinal];
-					break;
-				}
+
+			case DEG_MIN_SEC_WITH_SPACES:
+				// Note: cardinal not needed as this format is only for exif, which has cardinal separately
+				value = value.roundToSeconds(numDigits);
+				return "" + value.getWholeDegrees() + " "
+					+ value.getWholeMinutes() + " "
+					+ value.getWholeSeconds() + getLocalDecimalChar()
+					+ value.getFractionSeconds();
+
+			case JUST_CARDINAL:
+				return _cardinal.printable;
+
+			case NONE:
+			default:
+				return _originalString;
+		}
+	}
+
+	/** @return decimal character used by local number formatter */
+	private static char getLocalDecimalChar()
+	{
+		if (_localDecimalChar == 0) {
+			NumberFormat format = _coordFormatters.getLocalFormatter(3);
+			if (format instanceof DecimalFormat) {
+				_localDecimalChar = ((DecimalFormat) format).getDecimalFormatSymbols().getDecimalSeparator();
+			}
+			else {
+				_localDecimalChar = '.';
 			}
 		}
-		return answer;
+		return _localDecimalChar;
 	}
 
-	/**
-	 * Format the fraction part of seconds value
-	 * @param inFrac fractional part eg 123
-	 * @param inDenom denominator of fraction eg 10000
-	 * @return String describing fraction, in this case 0123
-	 */
-	private static final String formatFraction(int inFrac, int inDenom)
+	/** @return default number of decimal digits to use, depending on format */
+	private static int getNumDigits(Format inFormat)
 	{
-		if (inDenom <= 1 || inFrac == 0) {return "" + inFrac;}
-		String denomString = "" + inDenom;
-		int reqdLen = denomString.length() - 1;
-		String result = denomString + inFrac;
-		int resultLen = result.length();
-		return result.substring(resultLen - reqdLen);
+		switch (inFormat)
+		{
+			case DEG_MIN_SEC:
+			case DEG_MIN_SEC_WITH_SPACES:
+				return 3;
+			case DEG_MIN:
+				return 6;
+			case DEG:
+			case DEG_WITHOUT_CARDINAL:
+			case DECIMAL_FORCE_POINT:
+			case NONE:
+			default:
+				return 8;
+			case JUST_CARDINAL:
+				return 0;
+		}
 	}
-
 
 	/**
 	 * Format an integer to a two-digit String
@@ -408,7 +432,6 @@ public abstract class Coordinate
 		return "" + (inNumber % 100);
 	}
 
-
 	/**
 	 * Format an integer to a three-digit String for degrees
 	 * @param inNumber number to format
@@ -422,46 +445,23 @@ public abstract class Coordinate
 		return "" + (inNumber % 1000);
 	}
 
-
-	/**
-	 * Create a new Coordinate between two others
-	 * @param inStart start coordinate
-	 * @param inEnd end coordinate
-	 * @param inIndex index of point
-	 * @param inNumPoints number of points to interpolate
-	 * @return new Coordinate object
-	 */
-	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd,
-		int inIndex, int inNumPoints)
-	{
-		return interpolate(inStart, inEnd, 1.0 * (inIndex+1) / (inNumPoints + 1));
-	}
-
-
 	/**
 	 * Create a new Coordinate between two others
 	 * @param inStart start coordinate
 	 * @param inEnd end coordinate
 	 * @param inFraction fraction from start to end
+	 * @param inPositiveCardinal cardinal to use if value is positive
+	 * @param inNegativeCardinal cardinal to use if value is negative
 	 * @return new Coordinate object
 	 */
-	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd,
-		double inFraction)
+	public static Coordinate interpolate(Coordinate inStart, Coordinate inEnd, double inFraction,
+										 Cardinal inPositiveCardinal, Cardinal inNegativeCardinal)
 	{
 		double startValue = inStart.getDouble();
 		double endValue = inEnd.getDouble();
 		double newValue = startValue + (endValue - startValue) * inFraction;
-		return inStart.makeNew(newValue, Coordinate.FORMAT_DECIMAL_FORCE_POINT);
+		return new Coordinate(newValue, newValue >= 0.0 ? inPositiveCardinal : inNegativeCardinal);
 	}
-
-
-	/**
-	 * Make a new Coordinate according to subclass
-	 * @param inValue double value
-	 * @param inFormat format to use
-	 * @return object of Coordinate subclass
-	 */
-	protected abstract Coordinate makeNew(double inValue, int inFormat);
 
 	/**
 	 * Try to parse the given string
@@ -475,7 +475,7 @@ public abstract class Coordinate
 			double x = Double.parseDouble(inString);
 			justNum = (x >= -180.0 && x <= 360.0);
 		}
-		catch (NumberFormatException nfe) {} // flag remains false
+		catch (NumberFormatException ignored) {} // flag remains false
 		return justNum;
 	}
 
@@ -483,27 +483,26 @@ public abstract class Coordinate
 	 * Create a String representation for debug
 	 * @return String describing coordinate value
 	 */
-	public String toString()
-	{
-		return "Coord: " + _cardinal + " (" + _degrees + ") (" + _minutes + ") (" + _seconds + "."
-			+ formatFraction(_fracs, _fracDenom) + ") = " + _asDouble;
+	public String toString() {
+		return _originalString;
 	}
 
 	/**
 	 * From a saved coordinate format display value, get the corresponding value to use
 	 * @param inValue value from config
-	 * @return coordinate format as int
+	 * @return coordinate format
 	 */
-	public static int getCoordinateFormatForDisplay(int inValue)
+	public static Format getCoordinateFormatForDisplay(String inValue)
 	{
-		switch(inValue)
-		{
-			case FORMAT_DEG:
-			case FORMAT_DEG_MIN:
-			case FORMAT_DEG_MIN_SEC:
-				return inValue;
-			default:
-				return FORMAT_NONE;
+		if (Format.DEG.toString().equals(inValue)) {
+			return Format.DEG;
 		}
+		if (Format.DEG_MIN.toString().equals(inValue)) {
+			return Format.DEG_MIN;
+		}
+		if (Format.DEG_MIN_SEC.toString().equals(inValue)) {
+			return Format.DEG_MIN_SEC;
+		}
+		return Format.NONE;
 	}
 }

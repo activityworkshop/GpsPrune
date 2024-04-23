@@ -10,7 +10,7 @@ import tim.prune.data.Track;
 public class TrackDetails
 {
 	/** Track object */
-	private Track _track = null;
+	private final Track _track;
 	/** Range span */
 	private double _trackSpan = -1.0;
 	/** Markers for start of segment */
@@ -38,7 +38,7 @@ public class TrackDetails
 		// calculate track span
 		double xRange = _track.getXRange().getRange();
 		double yRange = _track.getYRange().getRange();
-		_trackSpan = (xRange > yRange ? xRange : yRange);
+		_trackSpan = Math.max(xRange, yRange);
 
 		// Calculate segment starts / ends
 		int numPoints = _track.getNumPoints();

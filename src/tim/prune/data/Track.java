@@ -73,28 +73,6 @@ public class Track
 
 
 	/**
-	 * Combine this Track with new data
-	 * @param inOtherTrack other track to combine
-	 */
-	public void combine(Track inOtherTrack)
-	{
-		// merge field list
-		_masterFieldList = _masterFieldList.merge(inOtherTrack._masterFieldList);
-		// expand data array and add other track's data points
-		int totalPoints = getNumPoints() + inOtherTrack.getNumPoints();
-		DataPoint[] mergedPoints = new DataPoint[totalPoints];
-		System.arraycopy(_dataPoints, 0, mergedPoints, 0, getNumPoints());
-		System.arraycopy(inOtherTrack._dataPoints, 0, mergedPoints, getNumPoints(), inOtherTrack.getNumPoints());
-		_dataPoints = mergedPoints;
-		// combine point count
-		_numPoints = totalPoints;
-		// needs to be scaled again
-		_scaled = false;
-		// inform listeners
-		UpdateMessageBroker.informSubscribers();
-	}
-
-	/**
 	 * Crop the track to the given size - subsequent points are not (yet) deleted
 	 * @param inNewSize new number of points in track
 	 */

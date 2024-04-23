@@ -373,14 +373,16 @@ public class TimestampUtc extends Timestamp
 	 * @param inTimezone timezone to use
 	 * @return formatted String
 	 */
-	@Override
 	protected String format(DateFormat inFormat, TimeZone inTimezone)
 	{
-		CALENDAR.setTimeZone(TimeZone.getTimeZone("GMT"));
-		inFormat.setTimeZone(inTimezone == null ? TimeZone.getTimeZone("GMT") : inTimezone);
+		synchronized(CALENDAR)
+		{
+			CALENDAR.setTimeZone(TimeZone.getTimeZone("GMT"));
+			inFormat.setTimeZone(inTimezone == null ? TimeZone.getTimeZone("GMT") : inTimezone);
 
-		CALENDAR.setTimeInMillis(_milliseconds);
-		return inFormat.format(CALENDAR.getTime());
+			CALENDAR.setTimeInMillis(_milliseconds);
+			return inFormat.format(CALENDAR.getTime());
+		}
 	}
 
 	/**

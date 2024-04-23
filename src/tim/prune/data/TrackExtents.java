@@ -84,17 +84,17 @@ public class TrackExtents
 		DoubleRange latRange = _track.getLatRange();
 
 		// Find horizontal and vertical extents of enclosing rectangle
-		DataPoint southPoint = new DataPoint(new Latitude(latRange.getMinimum(), Coordinate.FORMAT_DEG),
-			new Longitude(lonRange.getMidValue(), Coordinate.FORMAT_DEG), null);
-		DataPoint northPoint = new DataPoint(new Latitude(latRange.getMaximum(), Coordinate.FORMAT_DEG),
-			new Longitude(lonRange.getMidValue(), Coordinate.FORMAT_DEG), null);
+		DataPoint southPoint = new DataPoint(Latitude.make(latRange.getMinimum()),
+			Longitude.make(lonRange.getMidValue()));
+		DataPoint northPoint = new DataPoint(Latitude.make(latRange.getMaximum()),
+			Longitude.make(lonRange.getMidValue()));
 		double nsDist = Distance.convertRadiansToDistance(
 			DataPoint.calculateRadiansBetween(northPoint, southPoint), UnitSetLibrary.UNITS_METRES); // both in m
 		// Same again for bottom and top, take maximum
-		DataPoint westPoint = new DataPoint(new Latitude(latRange.getMidValue(), Coordinate.FORMAT_DEG),
-			new Longitude(lonRange.getMinimum(), Coordinate.FORMAT_DEG), null);
-		DataPoint eastPoint = new DataPoint(new Latitude(latRange.getMidValue(), Coordinate.FORMAT_DEG),
-			new Longitude(lonRange.getMaximum(), Coordinate.FORMAT_DEG), null);
+		DataPoint westPoint = new DataPoint(Latitude.make(latRange.getMidValue()),
+			Longitude.make(lonRange.getMinimum()));
+		DataPoint eastPoint = new DataPoint(Latitude.make(latRange.getMidValue()),
+			Longitude.make(lonRange.getMaximum()));
 		double ewDist = Distance.convertRadiansToDistance(
 			DataPoint.calculateRadiansBetween(westPoint, eastPoint), UnitSetLibrary.UNITS_METRES); // both in m
 		final double horizDistance = Math.max(nsDist, ewDist) * BORDER_MULTIPLIER;

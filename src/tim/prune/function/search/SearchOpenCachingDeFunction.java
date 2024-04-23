@@ -1,12 +1,15 @@
 package tim.prune.function.search;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.xml.sax.SAXException;
 import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
@@ -55,8 +58,7 @@ public class SearchOpenCachingDeFunction extends GenericDownloaderFunction
 		_statusLabel.setText(I18nManager.getText("confirm.running"));
 		// Get coordinates from current point
 		DataPoint point = _app.getTrackInfo().getCurrentPoint();
-		if (point == null)
-		{
+		if (point == null) {
 			return;
 		}
 
@@ -84,35 +86,19 @@ public class SearchOpenCachingDeFunction extends GenericDownloaderFunction
 			+ "&lon=" + inLon + "&distance=" + MAX_DISTANCE + "&unit=km";
 		// Parse the returned XML with a special handler
 		OpenCachingDeXmlHandler xmlHandler = new OpenCachingDeXmlHandler();
-		InputStream inStream = null;
 
 		try
 		{
 			URL url = new URL(urlString);
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
-			inStream = url.openStream();
-			saxParser.parse(inStream, xmlHandler);
+			try (InputStream inStream = url.openStream()) {
+				saxParser.parse(inStream, xmlHandler);
+			}
+		} catch (SAXException | IOException | ParserConfigurationException ignored) {
 		}
-		catch (Exception e) {
-			_errorMessage = e.getClass().getName() + " - " + e.getMessage();
-		}
-		// Close stream and ignore errors
-		try {
-			inStream.close();
-		} catch (Exception e) {}
+
 		// Add track list to model
 		ArrayList<SearchResult> trackList = xmlHandler.getTrackList();
 		_trackListModel.addTracks(trackList);
-
-		// Show error message if any
-		if (_trackListModel.isEmpty())
-		{
-			String error = xmlHandler.getErrorMessage();
-			if (error != null && !error.equals(""))
-			{
-				_app.showErrorMessageNoLookup(getNameKey(), error);
-				_errorMessage = error;
-			}
-		}
 	}
 }

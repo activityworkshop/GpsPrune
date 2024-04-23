@@ -35,7 +35,7 @@ public abstract class UnitSetLibrary
 		new UnitSet("unitset.nautical", UNITS_NAUTICAL_MILES, UNITS_FEET, SPEED_UNITS_KNOTS, SPEED_UNITS_FEETPERSEC)
 	};
 	/** Index for the metric unit set (km, m, km/h, m/sec) */
-	public static final int UNITSET_METRIC = 0;
+	private static final int UNITSET_METRIC = 0;
 
 	/**
 	 * @return number of available unit sets
@@ -73,5 +73,10 @@ public abstract class UnitSetLibrary
 		}
 		// Not found in list, so just return the first one
 		return getUnitSet(0);
+	}
+
+	/** @return the default metric unit set */
+	public static UnitSet getMetricUnitSet() {
+		return getUnitSet(UNITSET_METRIC);
 	}
 }

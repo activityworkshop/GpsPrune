@@ -23,10 +23,9 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.cmd.InsertPointCmd;
-import tim.prune.config.Config;
 import tim.prune.data.Altitude;
+import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.Unit;
@@ -76,7 +75,7 @@ public class PasteCoordinates extends GenericFunction
 		// MAYBE: Paste clipboard into the edit field
 		_coordField.setText("");
 		_nameField.setText("");
-		boolean useMetres = (Config.getUnitSet().getAltitudeUnit() == UnitSetLibrary.UNITS_METRES);
+		boolean useMetres = (getConfig().getUnitSet().getAltitudeUnit() == UnitSetLibrary.UNITS_METRES);
 		_altUnitsDropDown.setSelectedIndex(useMetres?0:1);
 		enableOK();
 		_dialog.setVisible(true);
@@ -165,39 +164,9 @@ public class PasteCoordinates extends GenericFunction
 	 */
 	private void finish()
 	{
-		DataPoint point = null;
-		// Try to split using commas
-		String[] items = _coordField.getText().split(",");
-		if (items.length == 2) {
-			point = parseValues(items[0].trim(), items[1].trim(), null);
-		}
-		else if (items.length == 3) {
-			point = parseValues(items[0].trim(), items[1].trim(), items[2].trim());
-		}
-		else
-		{
-			// Splitting with commas didn't work, so try spaces
-			items = _coordField.getText().split(" ");
-			if (items.length == 2) {
-				point = parseValues(items[0], items[1], null);
-			}
-			else if (items.length == 3 && items[1].length() == 1) {
-				point = parseValues(items[0], items[2], null);
-			}
-			else if (items.length == 4) {
-				point = parseValues(items[0] + " " + items[1],
-					items[2] + " " + items[3], null);
-			}
-			else if (items.length == 6) {
-				point = parseValues(items[0] + " " + items[1] + " " + items[2],
-					items[3] + " " + items[4] + " " + items[5], null);
-			}
-			else if (items.length == 8) {
-				point = parseValues(items[0] + " " + items[1] + " " + items[2] + " " + items[3],
-					items[4] + " " + items[5] + " " + items[6] + " " + items[7], null);
-			}
-		}
-
+		final Unit altUnits = (_altUnitsDropDown.getSelectedIndex()==0 ?
+			UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);
+		final DataPoint point = makePoint(_coordField.getText().trim(), altUnits);
 		if (point == null) {
 			JOptionPane.showMessageDialog(_parentFrame,
 				I18nManager.getText("dialog.pastecoordinates.nothingfound"),
@@ -208,7 +177,7 @@ public class PasteCoordinates extends GenericFunction
 			// See if name was entered
 			String name = _nameField.getText();
 			if (name != null && name.length() > 0) {
-				point.setFieldValue(Field.WAYPT_NAME, name, false);
+				point.setWaypointName(name);
 			}
 			else {
 				point.setSegmentStart(true);
@@ -222,49 +191,105 @@ public class PasteCoordinates extends GenericFunction
 		}
 	}
 
+	/**
+	 * @param inString the entered coordinates
+	 * @param inAltitudeUnits altitude units selected from the dropdown
+	 * @return new point, or null if contents couldn't be parsed
+	 */
+	private static DataPoint makePoint(String inString, Unit inAltitudeUnits)
+	{
+		if (inString.length() < 3) {
+			return null;
+		}
+		// Try to split using commas
+		String[] items = inString.split(",");
+		switch (items.length)
+		{
+			case 2:
+				return parseValues(items[0].trim(), items[1].trim(), null, inAltitudeUnits);
+			case 3:
+				return parseValues(items[0].trim(), items[1].trim(), items[2].trim(), inAltitudeUnits);
+		}
+
+		// Try again using semicolons
+		items = inString.split(";");
+		switch (items.length)
+		{
+			case 2:
+				return parseValues(items[0].trim(), items[1].trim(), null, inAltitudeUnits);
+			case 3:
+				return parseValues(items[0].trim(), items[1].trim(), items[2].trim(), inAltitudeUnits);
+		}
+
+		// Finally, try spaces
+		items = inString.split(" ");
+		switch (items.length)
+		{
+			case 2:
+				return parseValues(items[0], items[1], null, inAltitudeUnits);
+			case 3:
+				if (items[1].length() == 1) {
+					return parseValues(items[0], items[2], null, inAltitudeUnits);
+				}
+				break;
+			case 4:
+				return parseValues(items[0] + " " + items[1],
+					items[2] + " " + items[3], null, inAltitudeUnits);
+			case 6:
+				return parseValues(items[0] + " " + items[1] + " " + items[2],
+					items[3] + " " + items[4] + " " + items[5], null, inAltitudeUnits);
+			case 8:
+				// eight elements, so try four and four
+				String firstFour = items[0] + " " + items[1] + " " + items[2] + " " + items[3];
+				String secondFour = items[4] + " " + items[5] + " " + items[6] + " " + items[7];
+				return parseValues(firstFour, secondFour, null, inAltitudeUnits);
+		}
+		// Nothing found
+		return null;
+	}
 
 	/**
 	 * Try to parse the three given Strings into lat, lon and alt
 	 * @param inValue1 first value (either lat/lon)
 	 * @param inValue2 second value (either lon/lat)
 	 * @param inValue3 altitude value or null if absent
+	 * @param inAltitudeUnits selected altitude units
 	 * @return DataPoint object or null if failed
 	 */
-	private DataPoint parseValues(String inValue1, String inValue2, String inValue3)
+	private static DataPoint parseValues(String inValue1, String inValue2,
+		String inValue3, Unit inAltitudeUnits)
 	{
 		// Check for parseable altitude
 		Altitude alt = null;
 		if (inValue3 != null)
 		{
-			// Look at altitude units dropdown
-			final Unit altUnit = (_altUnitsDropDown.getSelectedIndex()==0?
-				UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);
-			alt = new Altitude(inValue3, altUnit);
+			// Use selected altitude units
+			alt = new Altitude(inValue3, inAltitudeUnits);
 			if (!alt.isValid()) {alt = null;}
 		}
 		// See if value1 can be lat and value2 lon:
-		Latitude coord1 = new Latitude(inValue1);
-		Longitude coord2 = new Longitude(inValue2);
-		if (coord1.isValid() && !coord1.getCardinalGuessed()
-			&& coord2.isValid() && !coord2.getCardinalGuessed())
+		Coordinate coord1 = Latitude.make(inValue1);
+		Coordinate coord2 = Longitude.make(inValue2);
+		if (coord1 != null && Latitude.hasCardinal(inValue1)
+			&& coord2 != null && Longitude.hasCardinal(inValue2))
 		{
 			return new DataPoint(coord1, coord2, alt);
 		}
 		// Now see if lat/lon are reversed
-		Longitude coord3 = new Longitude(inValue1);
-		Latitude coord4 = new Latitude(inValue2);
-		if (coord3.isValid() && !coord3.getCardinalGuessed()
-			&& coord4.isValid() && !coord4.getCardinalGuessed())
+		Coordinate coord3 = Longitude.make(inValue1);
+		Coordinate coord4 = Latitude.make(inValue2);
+		if (coord3 != null && Longitude.hasCardinal(inValue1)
+			&& coord4 != null && Latitude.hasCardinal(inValue2))
 		{
 			// reversed order
 			return new DataPoint(coord4, coord3, alt);
 		}
 		// Didn't work without guessing cardinals, so accept latitude, longitude order (if valid)
-		if (coord1.isValid() && coord2.isValid()) {
+		if (coord1 != null && coord2 != null) {
 			return new DataPoint(coord1, coord2, alt);
 		}
 		// Or accept other order (if valid)
-		if (coord3.isValid() && coord4.isValid()) {
+		if (coord3 != null && coord4 != null) {
 			// reversed order
 			return new DataPoint(coord4, coord3, alt);
 		}

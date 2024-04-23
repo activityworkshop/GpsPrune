@@ -57,7 +57,7 @@ public class PhotoCorrelator extends Correlator
 	{
 		TimeDifference timeLimit = parseTimeLimit();
 		double angDistLimit = parseDistanceLimit();
-		MediaPreviewTableModel model = new MediaPreviewTableModel("dialog.correlate.select.photoname");
+		MediaPreviewTableModel model = new MediaPreviewTableModel("dialog.correlate.select.photoname", getTimezone());
 		MediaList<Photo> photos = _app.getTrackInfo().getPhotoList();
 		// Loop through photos deciding whether to set correlate flag or not
 		int numPhotos = photos.getCount();

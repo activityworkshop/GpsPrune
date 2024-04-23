@@ -17,7 +17,7 @@ class EditPointTest
 	public void testEditFields()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 			new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		track.appendPoint(point);
 
@@ -33,13 +33,13 @@ class EditPointTest
 		assertEquals("some name", point.getWaypointName());
 		assertEquals("description", point.getFieldValue(Field.DESCRIPTION));
 		assertEquals(1001, point.getAltitude().getValue());
-		assertEquals("W002°22'51.5\"", point.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC));
+		assertEquals("W002°22'51.600\"", point.getLongitude().output(Coordinate.Format.DEG_MIN_SEC));
 		// undo
 		command.getInverse().executeCommand(info);
 		assertEquals(1, track.getNumPoints());
 		assertNull(point.getWaypointName());
 		assertNull(point.getFieldValue(Field.DESCRIPTION));
 		assertEquals(515, point.getAltitude().getValue());
-		assertEquals("E002°20'23.9\"", point.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC));
+		assertEquals("E002°20'24.000\"", point.getLongitude().output(Coordinate.Format.DEG_MIN_SEC));
 	}
 }

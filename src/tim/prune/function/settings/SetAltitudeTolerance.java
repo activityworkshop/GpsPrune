@@ -32,7 +32,7 @@ public class SetAltitudeTolerance extends SingleNumericParameterFunction
 	public String getDescriptionKey()
 	{
 		// Two different keys for feet and metres
-		final boolean isMetres = Config.getUnitSet().getAltitudeUnit().isStandard();
+		final boolean isMetres = getConfig().getUnitSet().getAltitudeUnit().isStandard();
 		return "dialog.setaltitudetolerance.text." + (isMetres ? "metres" : "feet");
 	}
 
@@ -41,9 +41,9 @@ public class SetAltitudeTolerance extends SingleNumericParameterFunction
 	 */
 	public int getCurrentParamValue()
 	{
-		int configVal = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE);
+		int configVal = getConfig().getConfigInt(Config.KEY_ALTITUDE_TOLERANCE);
 		// Convert this to feet if necessary
-		Unit altUnit = Config.getUnitSet().getAltitudeUnit();
+		Unit altUnit = getConfig().getUnitSet().getAltitudeUnit();
 		if (altUnit.isStandard()) {
 			return configVal / 100;
 		}
@@ -56,12 +56,12 @@ public class SetAltitudeTolerance extends SingleNumericParameterFunction
 	public void completeFunction(int inTolerance)
 	{
 		// Convert back from feet into metres again
-		Unit altUnit = Config.getUnitSet().getAltitudeUnit();
+		Unit altUnit = getConfig().getUnitSet().getAltitudeUnit();
 		int configVal = inTolerance * 100;
 		if (!altUnit.isStandard()) {
 			configVal = (int) (inTolerance * 100.0 / altUnit.getMultFactorFromStd());
 		}
-		Config.setConfigInt(Config.KEY_ALTITUDE_TOLERANCE, configVal);
+		getConfig().setConfigInt(Config.KEY_ALTITUDE_TOLERANCE, configVal);
 		UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 	}
 }

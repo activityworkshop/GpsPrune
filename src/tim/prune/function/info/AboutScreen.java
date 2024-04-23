@@ -363,7 +363,7 @@ public class AboutScreen extends GenericFunction
 		final int[] tools = {ExternalTools.TOOL_EXIFTOOL, ExternalTools.TOOL_GPSBABEL,
 		                     ExternalTools.TOOL_GNUPLOT, ExternalTools.TOOL_XERCES};
 		for (int i=0; i<tools.length; i++) {
-			_installedLabels[i+1].setText(ExternalTools.isToolInstalled(tools[i]) ? yesText : noText);
+			_installedLabels[i+1].setText(ExternalTools.isToolInstalled(getConfig(), tools[i]) ? yesText : noText);
 		}
 	}
 }

@@ -151,7 +151,6 @@ public class DeleteFieldValues extends GenericFunction
 		final int selStart = _app.getTrackInfo().getSelection().getStart();
 		final int selEnd = _app.getTrackInfo().getSelection().getEnd();
 		_dialog.dispose();
-		_app.getTrackInfo().getSelection().markInvalid();
 		Command command = makeCommand(field, selStart, selEnd);
 		command.setDescription(I18nManager.getText("undo.deletefieldvalues", field.getName()));
 		command.setConfirmText(I18nManager.getText("confirm.deletefieldvalues"));
@@ -179,6 +178,6 @@ public class DeleteFieldValues extends GenericFunction
 		for (int i=selStart; i<= selEnd; i++) {
 			edits.add(new PointEdit(i, null));
 		}
-		return new EditSingleFieldCmd(field, edits);
+		return new EditSingleFieldCmd(field, edits, getConfig().getUnitSet());
 	}
 }

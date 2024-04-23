@@ -99,10 +99,11 @@ class RangeStatsTest
 		return createDataPoint(timestamp, false);
 	}
 
-	private DataPoint createDataPoint(String timestamp, boolean newSegment) {
-		return new DataPoint(
-			new String[] {timestamp, newSegment ? "1" : "0"},
-			new FieldList(Field.TIMESTAMP, Field.NEW_SEGMENT),
-			null);
+	private DataPoint createDataPoint(String timestamp, boolean newSegment)
+	{
+		DataPoint point = new DataPoint(Latitude.make(0.0), Longitude.make(0.0));
+		point.setFieldValue(Field.TIMESTAMP, timestamp, false);
+		point.setSegmentStart(newSegment);
+		return point;
 	}
 }

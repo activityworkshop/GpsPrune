@@ -41,11 +41,10 @@ public class SelectExtremePoint extends GenericFunction
 		for (int i=0; i<_app.getTrackInfo().getTrack().getNumPoints(); i++)
 		{
 			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
-			double currValue = 0.0;
-			if (!point.hasAltitude()) {
+			if (point == null || !point.hasAltitude()) {
 				continue;
 			}
-			currValue = point.getAltitude().getMetricValue();
+			double currValue = point.getAltitude().getMetricValue();
 			if (_extreme == Extreme.LOWEST) {
 				currValue = -currValue;
 			}
@@ -63,12 +62,12 @@ public class SelectExtremePoint extends GenericFunction
 	public void selectFastest()
 	{
 		SpeedData speeds = new SpeedData(_app.getTrackInfo().getTrack());
-		speeds.init(UnitSetLibrary.getUnitSet(UnitSetLibrary.UNITSET_METRIC));
+		speeds.init(UnitSetLibrary.getMetricUnitSet());
 		int bestPointIndex = -1;
 		double maxSpeed = 0.0;
 		for (int i=0; i<_app.getTrackInfo().getTrack().getNumPoints(); i++)
 		{
-			double speed = 0.0;
+			final double speed;
 			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
 			if (point.hasHSpeed()) {
 				speed = point.getHSpeed().getValueInMetresPerSec();

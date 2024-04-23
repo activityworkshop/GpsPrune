@@ -19,9 +19,9 @@ import tim.prune.data.Track;
 public abstract class SingleParameterAlgorithm extends CompressionAlgorithm
 {
 	/** Text field for entering parameter */
-	private JTextField _parameterField = null;
+	private final JTextField _parameterField;
 	/** Listener from parent dialog */
-	private ActionListener _listener = null;
+	private final ActionListener _listener;
 
 
 	/**

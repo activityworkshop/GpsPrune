@@ -9,7 +9,6 @@ import javax.vecmath.Point3d;
 import javax.vecmath.TexCoord2f;
 
 import tim.prune.data.Altitude;
-import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.DoubleRange;
 import tim.prune.data.Field;
@@ -149,11 +148,8 @@ public class TerrainHelper
 				// Create a new point with the appropriate lat and long, with no altitude
 				double pX = xRange.getMinimum() + j * xStep;
 				DataPoint point = new DataPoint(
-					new Latitude(MapUtils.getLatitudeFromY(pY), Coordinate.FORMAT_DECIMAL_FORCE_POINT),
-					new Longitude(MapUtils.getLongitudeFromX(pX), Coordinate.FORMAT_DECIMAL_FORCE_POINT),
-					null);
-				//System.out.println("Created point at " + point.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC)
-				//	+ ", " + point.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC));
+					Latitude.make(MapUtils.getLatitudeFromY(pY)),
+					Longitude.make(MapUtils.getLongitudeFromX(pX)));
 				points[i * _gridSize + j] = point;
 			}
 		}
@@ -294,9 +290,7 @@ public class TerrainHelper
 								+ pu.getAltitude().getMetricValue()) / 4.0;
 						}
 						// Set this altitude in the point
-						p.setFieldValue(Field.ALTITUDE, "" + altitude, false);
-						// force value to metres
-						p.getAltitude().set(String.valueOf(altitude), UnitSetLibrary.UNITS_METRES);
+						p.setFieldValue(Field.ALTITUDE, "" + altitude, UnitSetLibrary.getMetricUnitSet(), false);
 					}
 				}
 			}

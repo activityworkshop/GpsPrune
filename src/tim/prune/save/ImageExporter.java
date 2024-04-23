@@ -61,8 +61,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 	 * Constructor
 	 * @param inApp App object
 	 */
-	public ImageExporter(App inApp)
-	{
+	public ImageExporter(App inApp) {
 		super(inApp);
 	}
 
@@ -87,7 +86,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		}
 
 		// Check if there is a cache to use
-		if (!BaseImageConfigDialog.isImagePossible())
+		if (!_baseImagePanel.isImagePossible())
 		{
 			_app.showErrorMessage(getNameKey(), "dialog.exportimage.noimagepossible");
 			return;
@@ -156,7 +155,8 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		_drawDataCheckbox.addKeyListener(closer);
 
 		// Panel for the base image
-		_baseImagePanel = new BaseImageDefinitionPanel(this, _dialog, _app.getTrackInfo().getTrack());
+		_baseImagePanel = new BaseImageDefinitionPanel(this, _dialog, _app.getTrackInfo().getTrack(), getConfig());
+		_baseImagePanel.setImageDefaultYes();
 
 		// Panel for the checkboxes at the top
 		JPanel checkPanel = new JPanel();
@@ -191,7 +191,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.png", new String[] {"png"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
-			final String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			final String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
 			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 
@@ -244,7 +244,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		MapSource source = MapSourceLibrary.getSource(imageDef.getSourceIndex());
 		MapGrouter grouter = _baseImagePanel.getGrouter();
 		GroutedImage baseImage = grouter.getMapImage(_app.getTrackInfo().getTrack(), source,
-			imageDef.getZoom());
+			imageDef.getZoom(), getConfig());
 		if (baseImage == null || !baseImage.isValid())
 		{
 			_app.showErrorMessage(getNameKey(), "dialog.exportpov.cannotmakebaseimage");
@@ -282,7 +282,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		Graphics g = inImage.getImage().getGraphics();
 		// TODO: Set line width, style etc
 		final PointColourer pointColourer = _app.getPointColourer();
-		final Color defaultPointColour = Config.getColourScheme().getColour(ColourScheme.IDX_POINT);
+		final Color defaultPointColour = getConfig().getColourScheme().getColour(ColourScheme.IDX_POINT);
 		g.setColor(defaultPointColour);
 
 		// Loop to draw all track points
@@ -322,13 +322,12 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		}
 
 		// Now the waypoints
-		final Color textColour = Config.getColourScheme().getColour(ColourScheme.IDX_TEXT);
+		final Color textColour = getConfig().getColourScheme().getColour(ColourScheme.IDX_TEXT);
 		g.setColor(textColour);
 		WpIconDefinition wpIconDefinition = null;
-		final int wpType = Config.getConfigInt(Config.KEY_WAYPOINT_ICONS);
-		if (wpType != WpIconLibrary.WAYPT_DEFAULT)
-		{
-			wpIconDefinition = WpIconLibrary.getIconDefinition(wpType, WpIconLibrary.SIZE_MEDIUM);
+		final int wpType = getConfig().getConfigInt(Config.KEY_WAYPOINT_ICONS);
+		if (wpType != WpIconLibrary.WAYPT_DEFAULT) {
+			wpIconDefinition = WpIconLibrary.getFixedIconDefinition(wpType, getIconManager());
 		}
 		// Loop again to draw waypoints
 		for (int i=0; i<numPoints; i++)
@@ -365,7 +364,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		final int imageSize = inImage.getImageSize();
 
 		// Loop over points again, draw photo points
-		final Color photoColour = Config.getColourScheme().getColour(ColourScheme.IDX_SECONDARY);
+		final Color photoColour = getConfig().getColourScheme().getColour(ColourScheme.IDX_SECONDARY);
 		g.setColor(photoColour);
 		for (int i=0; i<numPoints; i++)
 		{

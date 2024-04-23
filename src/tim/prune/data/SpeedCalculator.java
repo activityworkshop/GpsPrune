@@ -1,6 +1,5 @@
 package tim.prune.data;
 
-import tim.prune.config.Config;
 
 /**
  * Abstract class to hold static calculation functions
@@ -12,9 +11,11 @@ public abstract class SpeedCalculator
 	 * Calculate the horizontal speed value of the track at the specified index
 	 * @param inTrack track object
 	 * @param inIndex index of point to calculate speed for
+	 * @param inUnitSet unit set to use for calculations
 	 * @param inValue object in which to place result of calculation
 	 */
-	public static void calculateSpeed(Track inTrack, int inIndex, SpeedValue inValue)
+	public static void calculateSpeed(Track inTrack, int inIndex,
+		UnitSet inUnitSet, SpeedValue inValue)
 	{
 		if (inValue != null)
 		{
@@ -33,7 +34,7 @@ public abstract class SpeedCalculator
 
 		// First, see if point has a speed value already
 		if (point.hasHSpeed()) {
-			speedValue = point.getHSpeed().getValue(Config.getUnitSet().getSpeedUnit());
+			speedValue = point.getHSpeed().getValue(inUnitSet.getSpeedUnit());
 			pointHasSpeed = true;
 		}
 
@@ -93,7 +94,7 @@ public abstract class SpeedCalculator
 			long milliseconds = lateStamp.getMillisecondsSince(earlyStamp);
 			if (milliseconds >= 1000L)
 			{
-				double dist = Distance.convertRadiansToDistance(totalRadians);
+				double dist = Distance.convertRadiansToDistance(totalRadians, inUnitSet.getDistanceUnit());
 				speedValue = dist / milliseconds * 1000.0 * 60.0 * 60.0; // convert from per millisec to per hour
 				pointHasSpeed = true;
 			}
@@ -111,9 +112,11 @@ public abstract class SpeedCalculator
 	 * Calculate the vertical speed value of the track at the specified index
 	 * @param inTrack track object
 	 * @param inIndex index of point to calculate speed for
+	 * @param inUnitSet unit set to use for calculations
 	 * @param inValue object in which to place the result of calculation
 	 */
-	public static void calculateVerticalSpeed(Track inTrack, int inIndex, SpeedValue inValue)
+	public static void calculateVerticalSpeed(Track inTrack, int inIndex,
+		UnitSet inUnitSet, SpeedValue inValue)
 	{
 		if (inTrack == null || inIndex < 0 || inValue == null) {
 			System.err.println("Cannot calculate vert speed for index " + inIndex);
@@ -128,7 +131,7 @@ public abstract class SpeedCalculator
 		// First, see if point has a speed value already
 		if (point != null && point.hasVSpeed())
 		{
-			speedValue = point.getVSpeed().getValue(Config.getUnitSet().getVerticalSpeedUnit());
+			speedValue = point.getVSpeed().getValue(inUnitSet.getVerticalSpeedUnit());
 			pointHasSpeed = true;
 		}
 		// otherwise, see if we can calculate it from the heights and timestamps
@@ -183,7 +186,7 @@ public abstract class SpeedCalculator
 			if (milliseconds >= 1000L)
 			{
 				double altDiff = (lastAlt.getMetricValue() - firstAlt.getMetricValue())
-				 * Config.getUnitSet().getVerticalSpeedUnit().getMultFactorFromStd();
+				 * inUnitSet.getVerticalSpeedUnit().getMultFactorFromStd();
 				speedValue = altDiff / milliseconds * 1000.0; // units are feet/sec or metres/sec
 				pointHasSpeed = true;
 			}

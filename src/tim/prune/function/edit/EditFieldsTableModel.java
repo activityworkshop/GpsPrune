@@ -9,10 +9,10 @@ import tim.prune.I18nManager;
  */
 public class EditFieldsTableModel extends AbstractTableModel
 {
-	private String[] _fieldNames = null;
-	private String[] _originalValues = null;
-	private String[] _fieldValues = null;
-	private boolean[] _valueChanged = null;
+	private final String[] _fieldNames;
+	private final String[] _originalValues;
+	private final String[] _fieldValues;
+	private final boolean[] _valueChanged;
 
 
 	/**
@@ -26,7 +26,6 @@ public class EditFieldsTableModel extends AbstractTableModel
 		_fieldValues    = new String[inSize];
 		_valueChanged   = new boolean[inSize];
 	}
-
 
 	/**
 	 * Set the given data in the array
@@ -42,77 +41,57 @@ public class EditFieldsTableModel extends AbstractTableModel
 		_valueChanged[inIndex] = false;
 	}
 
-
-	/**
-	 * @see javax.swing.table.TableModel#getColumnCount()
-	 */
-	public int getColumnCount()
-	{
+	public int getColumnCount() {
 		return 2;
 	}
 
-
-	/**
-	 * @see javax.swing.table.TableModel#getRowCount()
-	 */
-	public int getRowCount()
-	{
+	public int getRowCount() {
 		return _fieldNames.length;
 	}
 
-
-	/**
-	 * @see javax.swing.table.TableModel#getValueAt(int, int)
-	 */
 	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
-		if (inColumnIndex == 0)
-		{
+		if (inColumnIndex == 0) {
 			return _fieldNames[inRowIndex];
 		}
 		return _fieldValues[inRowIndex];
 	}
 
-
 	/**
 	 * @return true if cell is editable
 	 */
-	public boolean isCellEditable(int inRowIndex, int inColumnIndex)
-	{
-		// no
+	public boolean isCellEditable(int inRowIndex, int inColumnIndex) {
 		return false;
 	}
 
-
 	/**
 	 * Set the given cell value
-	 * @see javax.swing.table.TableModel#setValueAt(java.lang.Object, int, int)
 	 */
-	public void setValueAt(Object inValue, int inRowIndex, int inColumnIndex)
-	{
+	public void setValueAt(Object inValue, int inRowIndex, int inColumnIndex) {
 		// ignore edits
 	}
-
 
 	/**
 	 * @return Class of cell data
 	 */
 	public Class<?> getColumnClass(int inColumnIndex)
 	{
-		if (inColumnIndex <= 1) return String.class;
+		if (inColumnIndex <= 1) {
+			return String.class;
+		}
 		return Boolean.class;
 	}
-
 
 	/**
 	 * Get the name of the column
 	 */
 	public String getColumnName(int inColNum)
 	{
-		if (inColNum == 0) return I18nManager.getText("dialog.pointedit.table.field");
+		if (inColNum == 0) {
+			return I18nManager.getText("dialog.pointedit.table.field");
+		}
 		return I18nManager.getText("dialog.pointedit.table.value");
 	}
-
 
 	/**
 	 * Update the value of the given row
@@ -142,11 +121,12 @@ public class EditFieldsTableModel extends AbstractTableModel
 	private static boolean areStringsDifferent(String inString1, String inString2)
 	{
 		// if both empty then same
-		if ((inString1 == null || inString1.equals("")) && (inString2 == null || inString2.equals("")))
+		if ((inString1 == null || inString1.equals(""))
+			&& (inString2 == null || inString2.equals("")))
 		{
 			return false;
 		}
-		return (inString1 == null || inString2 == null || !inString1.equals(inString2));
+		return (inString1 == null || !inString1.equals(inString2));
 	}
 
 	/**
@@ -154,8 +134,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 	 * @param inIndex index of field, starting at 0
 	 * @return string value
 	 */
-	public String getValue(int inIndex)
-	{
+	public String getValue(int inIndex) {
 		return _fieldValues[inIndex];
 	}
 
@@ -164,8 +143,7 @@ public class EditFieldsTableModel extends AbstractTableModel
 	 * @param inIndex index of field, starting at 0
 	 * @return true if field changed
 	 */
-	public boolean getChanged(int inIndex)
-	{
+	public boolean getChanged(int inIndex) {
 		return _valueChanged[inIndex];
 	}
 }

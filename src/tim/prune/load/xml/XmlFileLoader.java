@@ -9,11 +9,8 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
@@ -99,9 +96,10 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 			}
 			else
 			{
-				SourceInfo.FILE_TYPE sourceType = (_handler instanceof GpxHandler ? SourceInfo.FILE_TYPE.GPX : SourceInfo.FILE_TYPE.KML);
+				SourceInfo.FileType sourceType = (_handler instanceof GpxHandler ? SourceInfo.FileType.GPX : SourceInfo.FileType.KML);
 				SourceInfo sourceInfo = new SourceInfo(_fileLock.getFile(), sourceType);
 				sourceInfo.setFileTitle(_handler.getFileTitle());
+				sourceInfo.setFileDescription(_handler.getFileDescription());
 
 				// Pass information back to app
 				new FileTypeLoader(_app).loadData(_handler, sourceInfo, _autoAppend,
@@ -123,12 +121,11 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 		// Firstly, try to use xerces to parse the xml (will throw an exception if not available)
 		try
 		{
-			XMLReader xmlReader = XMLReaderFactory.createXMLReader("org.apache.xerces.parsers.SAXParser");
-			xmlReader.setContentHandler(this);
-			xmlReader.parse(new InputSource(inStream));
+			SAXParser saxParser = SAXParserFactory.newInstance("org.apache.xerces.parsers.SAXParser", null).newSAXParser();
+			saxParser.parse(inStream, this);
 			success = true; // worked
 		}
-		catch (Exception e) {} // don't care too much if it didn't work, there's a backup
+		catch (Throwable e) {} // don't care too much if it didn't work, there's a backup
 
 		// If that didn't work, try the built-in classes (which work for xml1.0 but handling for 1.1 contains bugs)
 		if (!success)

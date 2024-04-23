@@ -117,7 +117,7 @@ public abstract class Correlator extends GenericFunction
 		}
 		_okButton.setEnabled(false);
 		// Init timezone to the currently selected one
-		_timezone = TimezoneHelper.getSelectedTimezone();
+		_timezone = TimezoneHelper.getSelectedTimezone(getConfig());
 		// Go to first available card
 		int card = 0;
 		_cardEnabled = null;
@@ -188,7 +188,8 @@ public abstract class Correlator extends GenericFunction
 		MediaList<?> mediaList = getMediaList();
 		MediaSelectionTableModel model = new MediaSelectionTableModel(
 			"dialog.correlate.select." + getMediaTypeKey() + "name",
-			"dialog.correlate.select." + getMediaTypeKey() + "later");
+			"dialog.correlate.select." + getMediaTypeKey() + "later",
+			getTimezone());
 		int numMedia = mediaList.getCount();
 		for (int i=0; i<numMedia; i++)
 		{
@@ -243,7 +244,7 @@ public abstract class Correlator extends GenericFunction
 	protected static int getMedianIndex(MediaSelectionTableModel inModel)
 	{
 		// make sortable list
-		TreeSet<TimeIndexPair> set = new TreeSet<TimeIndexPair>();
+		TreeSet<TimeIndexPair> set = new TreeSet<>();
 		// loop through rows of table adding to list
 		int numRows = inModel.getRowCount();
 		for (int i=0; i<numRows; i++)
@@ -254,8 +255,7 @@ public abstract class Correlator extends GenericFunction
 		// pull out middle entry and return index
 		TimeIndexPair pair = null;
 		Iterator<TimeIndexPair> iterator = set.iterator();
-		for (int i=0; i<(numRows+1)/2; i++)
-		{
+		for (int i=0; i<(numRows+1)/2; i++) {
 			pair = iterator.next();
 		}
 		return pair.getIndex();
@@ -397,7 +397,7 @@ public abstract class Correlator extends GenericFunction
 		distLimitPanel.add(_limitDistBox);
 		String[] distUnitsOptions = {I18nManager.getText("units.kilometres"), I18nManager.getText("units.metres"),
 			I18nManager.getText("units.miles")};
-		_distUnitsDropdown = new JComboBox<String>(distUnitsOptions);
+		_distUnitsDropdown = new JComboBox<>(distUnitsOptions);
 		_distUnitsDropdown.addItemListener(optionsChangedListener);
 		distLimitPanel.add(_distUnitsDropdown);
 		limitsPanel.add(distLimitPanel);
@@ -410,13 +410,17 @@ public abstract class Correlator extends GenericFunction
 		card2Top.add(previewButton);
 		card2.add(card2Top, BorderLayout.NORTH);
 		// preview
-		_previewTable = new JTable(new MediaPreviewTableModel("dialog.correlate.select." + getMediaTypeKey() + "name"));
+		_previewTable = new JTable(new MediaPreviewTableModel("dialog.correlate.select." + getMediaTypeKey() + "name", getTimezone()));
 		JScrollPane previewScrollPane = new JScrollPane(_previewTable);
 		previewScrollPane.setPreferredSize(new Dimension(300, 100));
 		card2.add(previewScrollPane, BorderLayout.CENTER);
 		return card2;
 	}
 
+	/** @return the selected timezone */
+	protected TimeZone getTimezone() {
+		return TimezoneHelper.getSelectedTimezone(getConfig());
+	}
 
 	/**
 	 * Go to the next or previous card in the stack
@@ -667,7 +671,7 @@ public abstract class Correlator extends GenericFunction
 		{
 			MediaPreviewTableRow row = model.getRow(i);
 			// add all selected pairs to array (other elements remain null)
-			if (row.getCorrelateFlag().booleanValue()) {
+			if (row.getCorrelateFlag()) {
 				pairs[i] = row.getPointPair();
 			}
 		}

@@ -70,7 +70,7 @@ public abstract class XmlUtils
 	public static boolean isSystemUtf8()
 	{
 		String systemEncoding = getSystemEncoding();
-		return (systemEncoding != null && systemEncoding.toUpperCase().equals("UTF-8"));
+		return (systemEncoding != null && systemEncoding.equalsIgnoreCase("UTF-8"));
 	}
 
 	/**

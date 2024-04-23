@@ -3,6 +3,7 @@ package tim.prune.function.cache;
 import java.io.File;
 import java.util.ArrayList;
 
+import tim.prune.fileutils.FileList;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 
@@ -34,7 +35,6 @@ public class TileCacheModel
 		else {
 			_cacheDir = null;
 		}
-		_cancelled = false;
 	}
 
 	/**
@@ -44,9 +44,9 @@ public class TileCacheModel
 	{
 		if (_cacheDir == null) return;
 
-		_tileSets = new ArrayList<TileSet>();
+		_tileSets = new ArrayList<>();
 		// go through subdirectories, if any
-		for (File subdir : _cacheDir.listFiles())
+		for (File subdir : FileList.filesIn(_cacheDir))
 		{
 			if (subdir != null && subdir.isDirectory() && subdir.exists() && subdir.canRead()
 				&& !_cancelled)
@@ -56,8 +56,7 @@ public class TileCacheModel
 		}
 		// Loop over found tile sets and create summary rowinfo
 		_summaryRow = new RowInfo();
-		for (TileSet ts : _tileSets)
-		{
+		for (TileSet ts : _tileSets) {
 			_summaryRow.addRow(ts.getRowInfo());
 		}
 	}
@@ -88,15 +87,12 @@ public class TileCacheModel
 		if (!tsFound)
 		{
 			// Go through subdirectories and look at each of them too
-			File[] subdirs = inDir.listFiles();
-			if (subdirs != null) {
-				for (File subdir : subdirs)
+			for (File subdir : FileList.filesIn(inDir))
+			{
+				if (subdir != null && subdir.exists() && subdir.isDirectory()
+					&& subdir.canRead())
 				{
-					if (subdir != null && subdir.exists() && subdir.isDirectory()
-						&& subdir.canRead())
-					{
-						getTileSets(subdir, wholePath, inTsList);
-					}
+					getTileSets(subdir, wholePath, inTsList);
 				}
 			}
 		}
@@ -109,9 +105,10 @@ public class TileCacheModel
 	 */
 	private static String matchConfig(String inName)
 	{
-		if (inName == null || inName.equals(""))
+		if (inName == null || inName.equals("")) {
 			return null;
-		String usedBy = null;
+		}
+		StringBuilder usedBy = new StringBuilder();
 		for (int i=0; i<MapSourceLibrary.getNumSources(); i++)
 		{
 			MapSource ms = MapSourceLibrary.getSource(i);
@@ -120,14 +117,14 @@ public class TileCacheModel
 				String msdir = ms.getSiteName(l);
 				if (msdir != null && msdir.equals(inName))
 				{
-					if (usedBy == null)
-						usedBy = ms.getName();
-					else
-						usedBy = usedBy + ", " + ms.getName();
+					if (usedBy.length() > 0) {
+						usedBy.append(", ");
+					}
+					usedBy.append(ms.getName());
 				}
 			}
 		}
-		return usedBy;
+		return usedBy.toString();
 	}
 
 	/**
@@ -140,7 +137,7 @@ public class TileCacheModel
 		boolean numFound = false;
 		if (inDir != null && inDir.exists() && inDir.isDirectory() && inDir.canRead())
 		{
-			for (File subdir : inDir.listFiles())
+			for (File subdir : FileList.filesIn(inDir))
 			{
 				// Only consider readable things which exist
 				if (subdir != null && subdir.exists() && subdir.canRead())
@@ -180,14 +177,6 @@ public class TileCacheModel
 	public int getTotalTiles()
 	{
 		return _summaryRow.getNumTiles();
-	}
-
-	/**
-	 * @return the total number of bytes taken up with tile images
-	 */
-	public long getTotalBytes()
-	{
-		return _summaryRow.getTotalSize();
 	}
 
 	/**

@@ -15,12 +15,19 @@ import tim.prune.gui.IconManager;
  */
 public class IconRenderer extends JLabel implements TableCellRenderer
 {
+	private final IconManager _iconManager;
+
+	/** @param inIconManager icon manager for weather symbols */
+	public IconRenderer(IconManager inIconManager) {
+		_iconManager = inIconManager;
+	}
+
 	/** Get the renderer component for the given row, column and value */
 	public Component getTableCellRendererComponent(JTable inTable, Object inValue, boolean inIsSelected,
 		boolean inHasFocus, int inRow, int inColumn)
 	{
 		if (inValue != null) {
-			setIcon(IconManager.getImageIcon("weather/" + inValue.toString()));
+			setIcon(_iconManager.getImageIcon("weather/" + inValue.toString()));
 			setHorizontalAlignment(SwingConstants.CENTER);
 		}
 		else {

@@ -8,7 +8,7 @@ import tim.prune.I18nManager;
 public class Field
 {
 	private final String _labelKey;
-	private String _customLabel = null;
+	private String _customLabel;
 	private final boolean _builtin;
 
 	public static final Field LATITUDE = new Field("fieldname.latitude", true);
@@ -24,6 +24,7 @@ public class Field
 
 	public static final Field SPEED          = new Field("fieldname.speed", true);
 	public static final Field VERTICAL_SPEED = new Field("fieldname.verticalspeed", true);
+	public static final Field GRADIENT = new Field("fieldname.gradient", true);
 
 	public static final Field PHOTO = new Field("fieldname.photo", true);
 	public static final Field AUDIO = new Field("fieldname.audio", true);
@@ -33,7 +34,7 @@ public class Field
 	/** List of all the available fields */
 	private static final Field[] ALL_AVAILABLE_FIELDS = {
 		LATITUDE, LONGITUDE, ALTITUDE, TIMESTAMP, WAYPT_NAME, WAYPT_TYPE, DESCRIPTION, NEW_SEGMENT,
-		SPEED, VERTICAL_SPEED,
+		SPEED, VERTICAL_SPEED, GRADIENT,
 		new Field(I18nManager.getText("fieldname.custom"))
 	};
 
@@ -60,8 +61,7 @@ public class Field
 	 * Public constructor for custom fields
 	 * @param inLabel label to use for display
 	 */
-	public Field(String inLabel)
-	{
+	public Field(String inLabel) {
 		this(inLabel, false);
 	}
 
@@ -82,14 +82,15 @@ public class Field
 	 */
 	public void setName(String inName)
 	{
-		if (!isBuiltIn()) _customLabel = inName;
+		if (!isBuiltIn()) {
+			_customLabel = inName;
+		}
 	}
 
 	/**
 	 * @return true if this is a built-in field
 	 */
-	public boolean isBuiltIn()
-	{
+	public boolean isBuiltIn() {
 		return _builtin;
 	}
 
@@ -98,11 +99,14 @@ public class Field
 	 * @param inOther other Field object
 	 * @return true if Fields identical
 	 */
-	public boolean equals(Field inOther)
+	public boolean equals(Object inOther)
 	{
-		return inOther != null
-				&& isBuiltIn() == inOther.isBuiltIn()
-				&& getName().equals(inOther.getName());
+		if (!(inOther instanceof Field)) {
+			return false;
+		}
+		Field otherField = (Field) inOther;
+		return isBuiltIn() == otherField.isBuiltIn()
+				&& getName().equals(otherField.getName());
 	}
 
 	/**

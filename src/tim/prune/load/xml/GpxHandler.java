@@ -17,24 +17,24 @@ public class GpxHandler extends XmlHandler
 	private boolean _insideWaypoint = false;
 	private boolean _startSegment = true;
 	private int _trackNum = -1;
-	private GpxTag _fileTitle = new GpxTag();
-	private GpxTag _pointName = new GpxTag(), _trackName = new GpxTag();
+	private final GpxTag _fileTitle = new GpxTag(), _fileDescription = new GpxTag();
+	private final GpxTag _pointName = new GpxTag(), _trackName = new GpxTag();
 	private String _latitude = null, _longitude = null;
-	private GpxTag _elevation = new GpxTag(), _time = new GpxTag();
-	private GpxTag _type = new GpxTag(), _description = new GpxTag();
-	private GpxTag _link = new GpxTag(), _comment = new GpxTag();
-	private GpxTag _sym = new GpxTag();
+	private final GpxTag _elevation = new GpxTag(), _time = new GpxTag();
+	private final GpxTag _type = new GpxTag(), _description = new GpxTag();
+	private final GpxTag _link = new GpxTag(), _comment = new GpxTag();
+	private final GpxTag _sym = new GpxTag();
 	private GpxTag _currentTag = null;
-	private ArrayList<String[]> _pointList = new ArrayList<String[]>();
-	private ArrayList<String> _linkList = new ArrayList<String>();
+	private final ArrayList<String[]> _pointList = new ArrayList<>();
+	private final ArrayList<String> _linkList = new ArrayList<>();
 
 
 	/**
 	 * Receive the start of a tag
 	 * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
-	public void startElement(String uri, String localName, String qName,
-		Attributes attributes) throws SAXException
+	public void startElement(String uri, String localName, String qName, Attributes attributes)
+		throws SAXException
 	{
 		// Read the parameters for waypoints and track points
 		String tag = qName.toLowerCase();
@@ -66,8 +66,7 @@ public class GpxHandler extends XmlHandler
 			if (_insidePoint) {
 				_currentTag = _pointName;
 			}
-			else if (_trackNum < 0)
-			{
+			else if (_trackNum < 0) {
 				_currentTag = _fileTitle;
 			}
 			else {
@@ -81,7 +80,12 @@ public class GpxHandler extends XmlHandler
 			_currentTag = _type;
 		}
 		else if (tag.equals("description") || tag.equals("desc")) {
-			_currentTag = _description;
+			if (_insidePoint) {
+				_currentTag = _description;
+			}
+			else {
+				_currentTag = _fileDescription;
+			}
 		}
 		else if (tag.equals("cmt")) {
 			_currentTag = _comment;
@@ -181,12 +185,10 @@ public class GpxHandler extends XmlHandler
 	/**
 	 * @see tim.prune.load.xml.XmlHandler#getFieldArray()
 	 */
-	public Field[] getFieldArray()
-	{
-		final Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
+	public Field[] getFieldArray() {
+		return new Field[] {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
 			Field.WAYPT_NAME, Field.TIMESTAMP, Field.NEW_SEGMENT,
 			Field.WAYPT_TYPE, Field.DESCRIPTION, Field.COMMENT, Field.SYMBOL};
-		return fields;
 	}
 
 
@@ -199,8 +201,7 @@ public class GpxHandler extends XmlHandler
 		int numPoints = _pointList.size();
 		// construct data array
 		String[][] result = new String[numPoints][];
-		for (int i=0; i<numPoints; i++)
-		{
+		for (int i=0; i<numPoints; i++) {
 			result[i] = _pointList.get(i);
 		}
 		return result;
@@ -228,5 +229,12 @@ public class GpxHandler extends XmlHandler
 	 */
 	public String getFileTitle() {
 		return _fileTitle.getValue();
+	}
+
+	/**
+	 * @return file description
+	 */
+	public String getFileDescription() {
+		return _fileDescription.getValue();
 	}
 }

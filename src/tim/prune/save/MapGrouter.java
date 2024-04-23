@@ -1,5 +1,6 @@
 package tim.prune.save;
 
+import tim.prune.config.Config;
 import tim.prune.data.DoubleRange;
 import tim.prune.data.Track;
 import tim.prune.data.TrackExtents;
@@ -25,7 +26,7 @@ public class MapGrouter implements TileConsumer
 	/**
 	 * Clear the last image, it's not needed any more
 	 */
-	public void clearMapImage() {
+	public synchronized void clearMapImage() {
 		_lastGroutedImage = null;
 	}
 
@@ -34,11 +35,13 @@ public class MapGrouter implements TileConsumer
 	 * @param inTrack track object
 	 * @param inMapSource map source to use (may have one or two layers)
 	 * @param inZoom selected zoom level
+	 * @param inConfig config object
 	 * @return grouted image, or null if no image could be created
 	 */
-	public GroutedImage createMapImage(Track inTrack, MapSource inMapSource, int inZoom)
+	public GroutedImage createMapImage(Track inTrack, MapSource inMapSource,
+		int inZoom, Config inConfig)
 	{
-		return createMapImage(inTrack, inMapSource, inZoom, false);
+		return createMapImage(inTrack, inMapSource, inZoom, false, inConfig);
 	}
 
 	/**
@@ -47,9 +50,11 @@ public class MapGrouter implements TileConsumer
 	 * @param inMapSource map source to use (may have one or two layers)
 	 * @param inZoom selected zoom level
 	 * @param inDownload true to download tiles, false (by default) to just pull from disk
+	 * @param inConfig config object
 	 * @return grouted image, or null if no image could be created
 	 */
-	public GroutedImage createMapImage(Track inTrack, MapSource inMapSource, int inZoom, boolean inDownload)
+	public GroutedImage createMapImage(Track inTrack, MapSource inMapSource, int inZoom,
+		boolean inDownload, Config inConfig)
 	{
 		// Get the extents of the track including a standard (10%) border around the data
 		TrackExtents extents = new TrackExtents(inTrack);
@@ -91,14 +96,14 @@ public class MapGrouter implements TileConsumer
 			{
 				for (int layer=0; layer < inMapSource.getNumLayers(); layer++)
 				{
-					Image tile = tileManager.getTile(layer, x, y, true);
+					Image tile = tileManager.getTile(layer, x, y, true, inConfig);
 					// If we're downloading tiles, wait until the tile isn't null
 					int waitCount = 0;
 					while (tile == null && inDownload && waitCount < 3)
 					{
 						// System.out.println("wait " + waitCount + " for tile to be not null");
 						try {Thread.sleep(250);} catch (InterruptedException e) {}
-						tile = tileManager.getTile(layer, x, y, false); // don't request another download
+						tile = tileManager.getTile(layer, x, y, false, inConfig); // don't request another download
 						waitCount++;
 					}
 					// See if there's a tile or not
@@ -141,12 +146,14 @@ public class MapGrouter implements TileConsumer
 	 * @param inTrack track object
 	 * @param inMapSource map source to use (may have one or two layers)
 	 * @param inZoom selected zoom level
+	 * @param inConfig config object
 	 * @return grouted image, or null if no image could be created
 	 */
-	public synchronized GroutedImage getMapImage(Track inTrack, MapSource inMapSource, int inZoom)
+	public synchronized GroutedImage getMapImage(Track inTrack, MapSource inMapSource,
+		int inZoom, Config inConfig)
 	{
 		if (_lastGroutedImage == null) {
-			_lastGroutedImage = createMapImage(inTrack, inMapSource, inZoom);
+			_lastGroutedImage = createMapImage(inTrack, inMapSource, inZoom, inConfig);
 		}
 		return _lastGroutedImage;
 	}

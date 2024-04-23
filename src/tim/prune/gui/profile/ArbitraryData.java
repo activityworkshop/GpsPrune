@@ -11,7 +11,7 @@ import tim.prune.data.UnitSet;
 public class ArbitraryData extends ProfileData
 {
 	/** Field to use */
-	private Field _field = null;
+	private final Field _field;
 
 	/**
 	 * Constructor
@@ -58,8 +58,7 @@ public class ArbitraryData extends ProfileData
 	/**
 	 * @return name of field
 	 */
-	public String getLabel()
-	{
+	public String getLabel() {
 		return _field.getName();
 	}
 

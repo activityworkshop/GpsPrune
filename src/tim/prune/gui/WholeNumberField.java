@@ -24,8 +24,7 @@ public class WholeNumberField extends JTextField
 		 * Constructor
 		 * @param inMaxDigits max digits to allow
 		 */
-		public WholeNumberDocument(int inMaxDigits)
-		{
+		public WholeNumberDocument(int inMaxDigits) {
 			_maxDigits = inMaxDigits;
 		}
 
@@ -44,9 +43,11 @@ public class WholeNumberField extends JTextField
 			char[] source = str.toCharArray();
 			char[] result = new char[source.length];
 			int j = 0;
-			for (int i = 0; i < result.length && j < _maxDigits; i++) {
-				if (Character.isDigit(source[i]))
+			for (int i = 0; i < result.length && j < _maxDigits; i++)
+			{
+				if (Character.isDigit(source[i])) {
 					result[j++] = source[i];
+				}
 			}
 			super.insertString(offs, new String(result, 0, j), a);
 		}
@@ -78,16 +79,14 @@ public class WholeNumberField extends JTextField
 	/**
 	 * @return integer value
 	 */
-	public int getValue()
-	{
+	public int getValue() {
 		return parseValue(getText());
 	}
 
 	/**
 	 * @param inValue value to set
 	 */
-	public void setValue(int inValue)
-	{
+	public void setValue(int inValue) {
 		setText("" + inValue);
 	}
 

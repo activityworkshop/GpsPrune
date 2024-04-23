@@ -16,7 +16,7 @@ class RemoveConnectedMediaTest
 	public void testRemoveOnlyPhoto()
 	{
 		Track track = new Track();
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 				new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		Photo photo = new Photo(new File("abc.jpg"));
 		TrackInfo info = new TrackInfo(track);
@@ -74,7 +74,7 @@ class RemoveConnectedMediaTest
 			info.getPhotoList().add(new Photo(new File("photo" + i + ".jpg")));
 		}
 		assertEquals(3, info.getPhotoList().getCount());
-		DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"),
+		DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"),
 			new Altitude("515", UnitSetLibrary.UNITS_METRES));
 		point.setPhoto(info.getPhotoList().get(1));
 		info.getPhotoList().get(1).setDataPoint(point);

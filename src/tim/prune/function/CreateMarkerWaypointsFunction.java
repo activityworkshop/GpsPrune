@@ -7,7 +7,6 @@ import tim.prune.I18nManager;
 import tim.prune.cmd.AppendRangeCmd;
 import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.RangeStats;
 import tim.prune.data.UnitSetLibrary;
 
@@ -104,7 +103,7 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 		// Make new waypoints, looping through the points in the track
 		DataPoint prevPoint = null;
 		double currValue = 0.0, prevValue = 0.0;
-		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		final int altitudeTolerance = getConfig().getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
 		RangeStats rangeStats = new RangeStats(altitudeTolerance);
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
 		for (int i=0; i<numPoints; i++)
@@ -152,7 +151,7 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 			final double valueAfterBreak = inCurrValue - (m * inLimit);
 			final double fractionFromPrev = valueBeforeBreak / (valueBeforeBreak + valueAfterBreak);
 			DataPoint marker = DataPoint.interpolate(inPrevPoint, inCurrPoint, fractionFromPrev);
-			marker.setFieldValue(Field.WAYPT_NAME, createLimitDescription(m), false);
+			marker.setWaypointName(createLimitDescription(m));
 			_pointsToAdd.add(marker);
 		}
 		_previousMultiple = currMultiple;
@@ -165,7 +164,7 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 	{
 		// Calculate the details of the whole track so we can see what to halve
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
-		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		final int altitudeTolerance = getConfig().getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
 		RangeStats totalStats = new RangeStats(altitudeTolerance);
 		for (int i=0; i<numPoints; i++)
 		{
@@ -242,7 +241,7 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 			final double valueAfterBreak = inCurrValue - inTargetValue;
 			final double fractionFromPrev = valueBeforeBreak / (valueBeforeBreak + valueAfterBreak);
 			DataPoint marker = DataPoint.interpolate(inPrevPoint, inCurrPoint, fractionFromPrev);
-			marker.setFieldValue(Field.WAYPT_NAME, createHalfwayName(inType), false);
+			marker.setWaypointName(createHalfwayName(inType));
 			_pointsToAdd.add(marker);
 			return true;
 		}

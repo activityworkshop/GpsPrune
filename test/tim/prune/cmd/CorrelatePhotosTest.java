@@ -19,7 +19,7 @@ class CorrelatePhotosTest
 		Track track = TrackHelper.makeTwelvePointTrack();
 		assertEquals(12, track.getNumPoints());
 		// Correlate by adding a new point and its photo
-		DataPoint extraPoint = new DataPoint(new Latitude("8.01"), new Longitude("0.5"), null);
+		DataPoint extraPoint = new DataPoint(Latitude.make("8.01"), Longitude.make("0.5"));
 		Photo photo = new Photo(new File("p12345.jpg"));
 		Command command = new CorrelateMediaCmd(MediaLinkType.LINK_PHOTOS, List.of(extraPoint),
 			List.of(new PointAndMedia(extraPoint, photo, null)));

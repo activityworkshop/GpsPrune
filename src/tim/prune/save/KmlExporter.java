@@ -27,6 +27,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
@@ -34,7 +35,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JRadioButton;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
 import tim.prune.App;
@@ -68,7 +68,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	private final TrackInfo _trackInfo;
 	private final Track _track;
 	private JDialog _dialog = null;
-	private JTextField _descriptionField = null;
+	private JComboBox<String> _titleField = null;
 	private PointTypeSelector _pointTypeSelector = null;
 	private JRadioButton _gxExtensionsRadio = null;
 	private JCheckBox _altitudesCheckbox = null;
@@ -126,9 +126,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 			_colourChooser = new ColourChooser(_dialog);
 		}
 		// Fill in image size from config
-		_imageSizeField.setValue(Config.getConfigInt(Config.KEY_KMZ_IMAGE_SIZE));
+		_imageSizeField.setValue(getConfig().getConfigInt(Config.KEY_KMZ_IMAGE_SIZE));
 		enableCheckboxes();
-		_descriptionField.setEnabled(true);
+		populateTitles();
 		_okButton.setEnabled(true);
 		_progressLabel.setText("");
 		_progressBar.setVisible(false);
@@ -146,13 +146,16 @@ public class KmlExporter extends GenericFunction implements Runnable
 		dialogPanel.setLayout(new BorderLayout(0, 5));
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-		// Make a central panel with the text box and checkboxes
+		// Make a central panel with the title field and checkboxes
 		JPanel descPanel = new JPanel();
 		descPanel.setLayout(new FlowLayout());
-		descPanel.add(new JLabel(I18nManager.getText("dialog.exportkml.text")));
-		_descriptionField = new JTextField(20);
-		_descriptionField.addKeyListener(new DialogCloser(_dialog));
-		descPanel.add(_descriptionField);
+		// Track title
+		descPanel.add(new JLabel(I18nManager.getText("dialog.exportkml.title")));
+		_titleField = new JComboBox<>();
+		_titleField.setPrototypeDisplayValue("Long enough for a reasonable description");
+		_titleField.setEditable(true);
+		_titleField.addKeyListener(new DialogCloser(_dialog));
+		descPanel.add(_titleField);
 		descPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(descPanel);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
@@ -161,7 +164,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_pointTypeSelector.setAlignmentX(Component.CENTER_ALIGNMENT);
 		mainPanel.add(_pointTypeSelector);
 		// Colour definition
-		Color trackColour = ColourUtils.colourFromHex(Config.getConfigString(Config.KEY_KML_TRACK_COLOUR));
+		Color trackColour = ColourUtils.colourFromHex(getConfig().getConfigString(Config.KEY_KML_TRACK_COLOUR));
 		if (trackColour == null) {
 			trackColour = DEFAULT_TRACK_COLOUR;
 		}
@@ -231,7 +234,6 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_okButton = new JButton(I18nManager.getText("button.ok"));
 		ActionListener okListener = e -> startExport();
 		_okButton.addActionListener(okListener);
-		_descriptionField.addActionListener(okListener);
 		buttonPanel.add(_okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(e -> {
@@ -242,7 +244,6 @@ public class KmlExporter extends GenericFunction implements Runnable
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return dialogPanel;
 	}
-
 
 	/**
 	 * Enable the checkboxes according to data
@@ -259,6 +260,24 @@ public class KmlExporter extends GenericFunction implements Runnable
 	}
 
 	/**
+	 * Populate the titles in the combobox
+	 */
+	private void populateTitles()
+	{
+		final String initialTitle = getEnteredTitle();
+		_titleField.removeAllItems();
+		for (String value : _app.getTrackInfo().getFileInfo().getAllTitles()) {
+			_titleField.addItem(value);
+		}
+		if (initialTitle.isEmpty() && _titleField.getItemCount() > 0) {
+			_titleField.setSelectedIndex(0);
+		}
+		else {
+			_titleField.setSelectedItem(initialTitle);
+		}
+	}
+
+	/**
 	 * Enable and disable the image size fields according to the checkboxes
 	 */
 	private void enableImageSizeFields()
@@ -268,13 +287,13 @@ public class KmlExporter extends GenericFunction implements Runnable
 		_imageSizeLabel.setEnabled(exportImages);
 	}
 
-
 	/**
 	 * @return true if using gx extensions for kml export
 	 */
 	private boolean useGxExtensions() {
 		return _gxExtensionsRadio.isSelected();
 	}
+
 	/**
 	 * Start the export process based on the input parameters
 	 */
@@ -293,10 +312,10 @@ public class KmlExporter extends GenericFunction implements Runnable
 			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.kmlkmz", new String[] {"kml", "kmz"}));
 			// start from directory in config which should be set
-			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
 			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
-		String requiredExtension = null, otherExtension = null;
+		final String requiredExtension, otherExtension;
 		if (_kmzCheckbox.isSelected()) {
 			requiredExtension = ".kmz"; otherExtension = ".kml";
 		}
@@ -351,7 +370,6 @@ public class KmlExporter extends GenericFunction implements Runnable
 	{
 		// Disable ok button to stop second go
 		_okButton.setEnabled(false);
-		_descriptionField.setEnabled(false);
 		// Initialise progress indicators
 		_progressLabel.setText(I18nManager.getText("confirm.running"));
 		_progressBar.setVisible(true);
@@ -383,7 +401,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 					// Get entered value for image size, store in config
 					int thumbSize = _imageSizeField.getValue();
 					if (thumbSize < DEFAULT_THUMBNAIL_WIDTH) {thumbSize = DEFAULT_THUMBNAIL_WIDTH;}
-					Config.setConfigInt(Config.KEY_KMZ_IMAGE_SIZE, thumbSize);
+					getConfig().setConfigInt(Config.KEY_KMZ_IMAGE_SIZE, thumbSize);
 
 					// Create thumbnails of each photo in turn and add to zip as images/image<n>.jpg
 					// This is done first so that photo sizes are known for later
@@ -397,7 +415,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 			// write file
 			final int numPoints = exportData(writer, exportImages);
 			// update config with selected track colour
-			Config.setConfigString(Config.KEY_KML_TRACK_COLOUR, ColourUtils.makeHexCode(_colourPatch.getBackground()));
+			getConfig().setConfigString(Config.KEY_KML_TRACK_COLOUR, ColourUtils.makeHexCode(_colourPatch.getBackground()));
 			// update progress bar
 			_progressBar.setValue(1);
 
@@ -414,7 +432,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 			writer.close();
 			_imageDimensions = null;
 			// Store directory in config for later
-			Config.setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
+			getConfig().setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
 			_app.addRecentFile(_exportFile, true);
 			// show confirmation
 			UpdateMessageBroker.informSubscribers();
@@ -463,9 +481,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 			inWriter.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<kml xmlns=\"http://earth.google.com/kml/2.1\">\n");
 		}
 		inWriter.write("<Folder>\n\t<name>");
-		if (_descriptionField != null && _descriptionField.getText() != null && !_descriptionField.getText().equals(""))
-		{
-			inWriter.write(XmlUtils.fixCdata(_descriptionField.getText()));
+		String title = getEnteredTitle();
+		if (title != null && !title.equals("")) {
+			inWriter.write(XmlUtils.fixCdata(title));
 		}
 		else {
 			inWriter.write("Export from GpsPrune");
@@ -549,6 +567,12 @@ public class KmlExporter extends GenericFunction implements Runnable
 		return numSaved;
 	}
 
+	/** @return the string entered in the combo box for the track title */
+	private String getEnteredTitle()
+	{
+		Object item = (_titleField == null ? null : _titleField.getSelectedItem());
+		return (item == null ? "" : item.toString());
+	}
 
 	/**
 	 * Write out the track using standard KML LineString tag
@@ -673,8 +697,8 @@ public class KmlExporter extends GenericFunction implements Runnable
 					whenList.append("</when>\n");
 					// Add coordinates to the list
 					coordList.append("<gx:coord>");
-					coordList.append(point.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT)).append(' ');
-					coordList.append(point.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT)).append(' ');
+					coordList.append(point.getLongitude().output(Coordinate.Format.DECIMAL_FORCE_POINT)).append(' ');
+					coordList.append(point.getLatitude().output(Coordinate.Format.DECIMAL_FORCE_POINT)).append(' ');
 					if (point.hasAltitude()) {
 						coordList.append(point.getAltitude().getStringValue(UnitSetLibrary.UNITS_METRES));
 					}
@@ -828,9 +852,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 			inWriter.write("\t\t\t<altitudeMode>clampToGround</altitudeMode>\n");
 		}
 		inWriter.write("\t\t\t<coordinates>");
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		inWriter.write(',');
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		inWriter.write(',');
 		// Altitude if point has one
 		if (inPoint.hasAltitude()) {
@@ -850,9 +874,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private void exportTrackpoint(DataPoint inPoint, Writer inWriter) throws IOException
 	{
-		inWriter.write(inPoint.getLongitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLongitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		inWriter.write(',');
-		inWriter.write(inPoint.getLatitude().output(Coordinate.FORMAT_DECIMAL_FORCE_POINT));
+		inWriter.write(inPoint.getLatitude().output(Coordinate.Format.DECIMAL_FORCE_POINT));
 		// Altitude if point has one
 		inWriter.write(',');
 		if (inPoint.hasAltitude()) {
@@ -875,8 +899,7 @@ public class KmlExporter extends GenericFunction implements Runnable
 	{
 		// set up image writer
 		Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
-		if (writers == null || !writers.hasNext())
-		{
+		if (writers == null || !writers.hasNext()) {
 			throw new IOException("no JPEG writer found");
 		}
 		ImageWriter imageWriter = writers.next();
@@ -890,12 +913,11 @@ public class KmlExporter extends GenericFunction implements Runnable
 		}
 
 		final int numPoints = _track.getNumPoints();
-		DataPoint point = null;
 		int photoNum = 0;
 		// Loop over all points in track
 		for (int i=0; i<numPoints && !_cancelPressed; i++)
 		{
-			point = _track.getPoint(i);
+			DataPoint point = _track.getPoint(i);
 			if (point.getPhoto() != null && point.getPhoto().isValid() && (!justSelection || (i>=selStart && i<=selEnd)))
 			{
 				photoNum++;
@@ -927,13 +949,12 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 */
 	private int getNumPhotosToExport()
 	{
-		int numPoints = _track.getNumPoints();
+		final int numPoints = _track.getNumPoints();
 		int numPhotos = 0;
-		DataPoint point = null;
 		// Loop over all points in track
 		for (int i=0; i<numPoints; i++)
 		{
-			point = _track.getPoint(i);
+			DataPoint point = _track.getPoint(i);
 			if (point.getPhoto() != null) {
 				numPhotos++;
 			}
@@ -945,9 +966,9 @@ public class KmlExporter extends GenericFunction implements Runnable
 	 * @param inPoint photo point
 	 * @return either point timestamp or photo timestamp, as string
 	 */
-	private static String getPhotoTimeString(DataPoint inPoint)
+	private String getPhotoTimeString(DataPoint inPoint)
 	{
-		TimeZone timezone = TimezoneHelper.getSelectedTimezone();
+		TimeZone timezone = TimezoneHelper.getSelectedTimezone(getConfig());
 		if (inPoint.hasTimestamp()) {
 			return inPoint.getTimestamp().getTimeText(timezone);
 		}

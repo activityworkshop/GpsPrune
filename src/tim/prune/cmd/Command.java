@@ -62,12 +62,4 @@ public abstract class Command
 	}
 
 	public abstract int getUpdateFlags();
-
-	protected static String bracketedSuffix(String inText)
-	{
-		if (inText == null || inText.isBlank()) {
-			return "";
-		}
-		return " (" + inText.trim() + ")";
-	}
 }

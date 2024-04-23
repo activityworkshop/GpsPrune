@@ -20,7 +20,7 @@ import tim.prune.data.TrackInfo;
 public class PointTypeSelector extends JPanel
 {
 	/** Array of checkboxes */
-	private JCheckBox[] _checkboxes = new JCheckBox[5];
+	private final JCheckBox[] _checkboxes = new JCheckBox[5];
 	/** Grid panel for top row */
 	private JPanel _gridPanel = null;
 
@@ -96,40 +96,35 @@ public class PointTypeSelector extends JPanel
 	/**
 	 * @return true if trackpoints selected
 	 */
-	public boolean getTrackpointsSelected()
-	{
+	public boolean getTrackpointsSelected() {
 		return _checkboxes[0].isSelected();
 	}
 
 	/**
 	 * @return true if waypoints selected
 	 */
-	public boolean getWaypointsSelected()
-	{
+	public boolean getWaypointsSelected() {
 		return _checkboxes[1].isSelected();
 	}
 
 	/**
 	 * @return true if photo points selected
 	 */
-	public boolean getPhotopointsSelected()
-	{
+	public boolean getPhotopointsSelected() {
 		return _checkboxes[2].isSelected();
 	}
 
 	/**
 	 * @return true if audio points selected
 	 */
-	public boolean getAudiopointsSelected()
-	{
+	public boolean getAudiopointsSelected() {
 		return _checkboxes[3].isSelected();
 	}
 
 	/**
 	 * @return true if only the current selection should be saved
 	 */
-	public boolean getJustSelection()
-	{
+	public boolean getJustSelection() {
 		return _checkboxes[4].isSelected();
 	}
 

@@ -27,7 +27,6 @@ public class WizardLayout extends CardLayout
 
 	/**
 	 * Add a card to this layout
-	 * @param inCard
 	 */
 	public void addCard(Component inCard)
 	{

@@ -47,7 +47,7 @@ public abstract class BrowserLauncher
 		{
 			// no which command (or none of the browsers found), so check if os name looks like a mac
 			String osName = System.getProperty("os.name").toLowerCase();
-			boolean isMacOsx = osName.indexOf("mac os") >= 0 || osName.indexOf("darwin") >= 0;
+			boolean isMacOsx = osName.contains("mac os") || osName.contains("darwin");
 			if (isMacOsx) {
 				// for Mac Osx just use "open" command
 				_browserCommand = new String[] {"open", null};

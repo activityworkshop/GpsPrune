@@ -2,6 +2,7 @@ package tim.prune.gui.colour;
 
 import java.awt.Color;
 
+import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
@@ -22,7 +23,7 @@ public class AltitudeColourer extends ContinuousPointColourer
 	}
 
 	@Override
-	public void calculateColours(TrackInfo inTrackInfo)
+	public void calculateColours(TrackInfo inTrackInfo, Config inConfig)
 	{
 		Track track = inTrackInfo == null ? null : inTrackInfo.getTrack();
 		final int numPoints = track == null ? 0 : track.getNumPoints();

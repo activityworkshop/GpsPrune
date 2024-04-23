@@ -2,7 +2,6 @@ package tim.prune.load;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import javax.swing.BoxLayout;
 import javax.swing.JCheckBox;
@@ -16,6 +15,7 @@ import tim.prune.I18nManager;
 import tim.prune.cmd.LoadPhotosWithPointsCmd;
 import tim.prune.config.Config;
 import tim.prune.data.Altitude;
+import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.LatLonRectangle;
 import tim.prune.data.Latitude;
@@ -79,7 +79,7 @@ public class JpegLoader
 			_fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 			_fileChooser.setFileFilter(_fileFilter);
 			_fileChooser.setDialogTitle(getName());
-			_subdirCheckbox = new JCheckBox(I18nManager.getText("dialog.jpegload.subdirectories"));
+			_subdirCheckbox = new JCheckBox(I18nManager.getText("dialog.open.includesubdirectories"));
 			_subdirCheckbox.setSelected(true);
 			_noExifCheckbox = new JCheckBox(I18nManager.getText("dialog.jpegload.loadjpegswithoutcoords"));
 			_noExifCheckbox.setSelected(true);
@@ -92,9 +92,9 @@ public class JpegLoader
 			panel.add(_outsideAreaCheckbox);
 			_fileChooser.setAccessory(panel);
 			// start from directory in config if already set by other operations
-			String configDir = Config.getConfigString(Config.KEY_PHOTO_DIR);
+			String configDir = _app.getConfig().getConfigString(Config.KEY_PHOTO_DIR);
 			if (configDir == null) {
-				configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+				configDir = _app.getConfig().getConfigString(Config.KEY_TRACK_DIR);
 			}
 			if (configDir != null) {
 				_fileChooser.setCurrentDirectory(new File(configDir));
@@ -149,7 +149,7 @@ public class JpegLoader
 		else
 		{
 			// Found some photos to load - pass information back to app
-			Collections.sort(_photos, new MediaSorter());
+			_photos.sort(new MediaSorter());
 			LoadPhotosWithPointsCmd command = new LoadPhotosWithPointsCmd(_photos);
 			final int numPhotos = _photos.size();
 			Describer confirmDescriber = new Describer("confirm.jpegload.single", "confirm.jpegload.multi");
@@ -296,7 +296,7 @@ public class JpegLoader
 					if (i == 0 && inFirstDir)
 					{
 						File workingDir = file.isDirectory() ? file : file.getParentFile();
-						Config.setConfigString(Config.KEY_PHOTO_DIR, workingDir.getAbsolutePath());
+						_app.getConfig().setConfigString(Config.KEY_PHOTO_DIR, workingDir.getAbsolutePath());
 					}
 					// Check whether it's a file or a directory
 					if (file.isFile()) {
@@ -322,10 +322,10 @@ public class JpegLoader
 		// Create model objects from jpeg data
 		double latval = getCoordinateDoubleValue(inData.getLatitude(),
 			inData.getLatitudeRef() == 'N' || inData.getLatitudeRef() == 'n');
-		Latitude latitude = new Latitude(latval, Latitude.FORMAT_DEG_MIN_SEC);
+		Coordinate latitude = Latitude.make(latval);
 		double lonval = getCoordinateDoubleValue(inData.getLongitude(),
 			inData.getLongitudeRef() == 'E' || inData.getLongitudeRef() == 'e');
-		Longitude longitude = new Longitude(lonval, Longitude.FORMAT_DEG_MIN_SEC);
+		Coordinate longitude = Longitude.make(lonval);
 		Altitude altitude = null;
 		if (inData.hasAltitude()) {
 			altitude = new Altitude(inData.getAltitude(), UnitSetLibrary.UNITS_METRES);

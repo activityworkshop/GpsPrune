@@ -1,6 +1,8 @@
 package tim.prune.data;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Class to hold the information about the file(s)
@@ -17,8 +19,10 @@ public class FileInfo
 	 */
 	public void addSource(SourceInfo inInfo)
 	{
-		if (inInfo != null) {
-			for (SourceInfo info : _sources) {
+		if (inInfo != null)
+		{
+			for (SourceInfo info : _sources)
+			{
 				if (info == inInfo) {
 					return;
 				}
@@ -53,32 +57,40 @@ public class FileInfo
 		return _sources.get(inIndex);
 	}
 
-	/**
-	 * @return the first found source, if any
-	 */
-	public SourceInfo getFirstSource()
-	{
-		if (getNumFiles() == 0) {
-			return null;
-		}
-		return getSource(0);
+	/** @return a list of all the unique titles in the order they appear */
+	public List<String> getAllTitles() {
+		return getAllValues(i -> i.getFileTitle());
 	}
 
-	/**
-	 * @return the first found title, if any
-	 */
-	public String getFirstTitle()
+	/** @return a list of all the unique descriptions in the order they appear */
+	public List<String> getAllDescriptions() {
+		return getAllValues(i -> i.getFileDescription());
+	}
+
+	/** Functional interface for getting either title or description out of the SourceInfo */
+	private interface ValueTaker {
+		String takeValue(SourceInfo inInfo);
+	}
+
+	/** @return a list of all the unique values from the SourceInfo in the order they appear */
+	public List<String> getAllValues(ValueTaker inTaker)
 	{
-		for (SourceInfo info : _sources)
+		ArrayList<String> values = new ArrayList<>();
+		HashSet<String> valueSet = new HashSet<>();
+		SourceInfo previousSource = null;
+		for (SourceInfo source : _sources)
 		{
-			if (info != null)
+			if (source == previousSource) {
+				continue;
+			}
+			previousSource = source;
+			final String value = inTaker.takeValue(source);
+			if (value != null && !value.isEmpty() && !valueSet.contains(value))
 			{
-				String title = info.getFileTitle();
-				if (title != null && !title.equals("")) {
-					return title;
-				}
+				values.add(value);
+				valueSet.add(value);
 			}
 		}
-		return null;
+		return values;
 	}
 }

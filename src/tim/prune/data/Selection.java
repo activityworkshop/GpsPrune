@@ -5,8 +5,7 @@ import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
 
 /**
- * Class to represent a selected portion of a Track
- * and its properties
+ * Class to represent a selected portion of a Track and its properties
  */
 public class Selection
 {
@@ -16,33 +15,21 @@ public class Selection
 	private int _startIndex = -1, _endIndex = -1;
 	private int _currentPhotoIndex = -1;
 	private int _currentAudioIndex = -1;
-	private RangeStats _rangeStats = null;
 
 
 	/**
 	 * Constructor
 	 * @param inTrack track object
 	 */
-	public Selection(Track inTrack)
-	{
+	public Selection(Track inTrack) {
 		_track = inTrack;
-	}
-
-
-	/**
-	 * Mark selection invalid so it will be recalculated
-	 */
-	public void markInvalid()
-	{
-		_rangeStats = null;
 	}
 
 
 	/**
 	 * @return the current point index
 	 */
-	public int getCurrentPointIndex()
-	{
+	public int getCurrentPointIndex() {
 		return _currentPoint;
 	}
 
@@ -50,8 +37,7 @@ public class Selection
 	/**
 	 * @return true if range is selected
 	 */
-	public boolean hasRangeSelected()
-	{
+	public boolean hasRangeSelected() {
 		return _startIndex >= 0 && _endIndex > _startIndex;
 	}
 
@@ -61,9 +47,6 @@ public class Selection
 	 */
 	private void recalculate()
 	{
-		if (_rangeStats != null) {
-			return;
-		}
 		final int numPoints = _track.getNumPoints();
 		// Recheck if the number of points has changed
 		if (numPoints != _prevNumPoints)
@@ -71,12 +54,20 @@ public class Selection
 			_prevNumPoints = numPoints;
 			check();
 		}
-		final int altitudeTolerance = Config.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
-		if (numPoints > 0 && hasRangeSelected()) {
-			_rangeStats = new RangeStats(_track, _startIndex, _endIndex, altitudeTolerance);
+	}
+
+	/**
+	 * @param inConfig Config object for altitude tolerance
+	 * @return stats about current range
+	 */
+	public RangeStats getRangeStats(Config inConfig)
+	{
+		final int altitudeTolerance = inConfig.getConfigInt(Config.KEY_ALTITUDE_TOLERANCE) / 100;
+		if (_track.getNumPoints() > 0 && hasRangeSelected()) {
+			return new RangeStats(_track, _startIndex, _endIndex, altitudeTolerance);
 		}
 		else {
-			_rangeStats = new RangeStats(altitudeTolerance);
+			return new RangeStats(altitudeTolerance);
 		}
 	}
 
@@ -101,33 +92,6 @@ public class Selection
 	}
 
 	/**
-	 * @return altitude range
-	 */
-	public AltitudeRange getAltitudeRange()
-	{
-		recalculate();
-		return _rangeStats.getTotalAltitudeRange();
-	}
-
-
-	/**
-	 * @return number of seconds spanned by segments within selection
-	 */
-	public long getMovingSeconds()
-	{
-		recalculate();
-		return _rangeStats.getMovingDurationInSeconds();
-	}
-
-	/**
-	 * @return moving distance of Selection in current units
-	 */
-	public double getMovingDistance()
-	{
-		return _rangeStats.getMovingDistance();
-	}
-
-	/**
 	 * Clear selected point, range, photo and audio
 	 */
 	public void clearAll()
@@ -136,7 +100,6 @@ public class Selection
 		selectRange(-1, -1);
 		_currentPhotoIndex = -1;
 		_currentAudioIndex = -1;
-		markInvalid();
 		check();
 	}
 
@@ -150,7 +113,6 @@ public class Selection
 	{
 		_startIndex = inStartIndex;
 		_endIndex = inEndIndex;
-		markInvalid();
 		check();
 	}
 
@@ -158,8 +120,7 @@ public class Selection
 	/**
 	 * Select the range from the current point
 	 */
-	public void selectRangeStart()
-	{
+	public void selectRangeStart() {
 		selectRangeStart(_currentPoint);
 	}
 
@@ -170,20 +131,17 @@ public class Selection
 	 */
 	private void selectRangeStart(int inStartIndex)
 	{
-		if (inStartIndex < 0)
-		{
+		if (inStartIndex < 0) {
 			_startIndex = _endIndex = -1;
 		}
 		else
 		{
 			_startIndex = inStartIndex;
 			// Move end of selection to max if necessary
-			if (_endIndex <= _startIndex)
-			{
+			if (_endIndex <= _startIndex) {
 				_endIndex = _track.getNumPoints() - 1;
 			}
 		}
-		markInvalid();
 		UpdateMessageBroker.informSubscribers();
 	}
 
@@ -191,8 +149,7 @@ public class Selection
 	/**
 	 * Select the range up to the current point
 	 */
-	public void selectRangeEnd()
-	{
+	public void selectRangeEnd() {
 		selectRangeEnd(_currentPoint);
 	}
 
@@ -203,8 +160,7 @@ public class Selection
 	 */
 	public void selectRangeEnd(int inEndIndex)
 	{
-		if (inEndIndex < 0)
-		{
+		if (inEndIndex < 0) {
 			_startIndex = _endIndex = -1;
 		}
 		else
@@ -215,7 +171,6 @@ public class Selection
 				_startIndex = 0;
 			}
 		}
-		markInvalid();
 		UpdateMessageBroker.informSubscribers();
 	}
 
@@ -233,7 +188,6 @@ public class Selection
 			if (inPointIndex < _startIndex) {
 				_startIndex--;
 			}
-			markInvalid();
 		}
 		check();
 	}
@@ -250,7 +204,6 @@ public class Selection
 			if (inPointIndex <= _startIndex) {
 				_startIndex++;
 			}
-			markInvalid();
 			check();
 		}
 	}
@@ -273,16 +226,14 @@ public class Selection
 	/**
 	 * @return currently selected photo index
 	 */
-	public int getCurrentPhotoIndex()
-	{
+	public int getCurrentPhotoIndex() {
 		return _currentPhotoIndex;
 	}
 
 	/**
 	 * @return currently selected audio index
 	 */
-	public int getCurrentAudioIndex()
-	{
+	public int getCurrentAudioIndex() {
 		return _currentAudioIndex;
 	}
 
@@ -295,16 +246,13 @@ public class Selection
 		if (_track != null && _track.getNumPoints() > 0)
 		{
 			int maxIndex = _track.getNumPoints() - 1;
-			if (_currentPoint > maxIndex)
-			{
+			if (_currentPoint > maxIndex) {
 				_currentPoint = maxIndex;
 			}
-			if (_endIndex > maxIndex)
-			{
+			if (_endIndex > maxIndex) {
 				_endIndex = maxIndex;
 			}
-			if (_startIndex > maxIndex)
-			{
+			if (_startIndex > maxIndex) {
 				_startIndex = maxIndex;
 			}
 		}
@@ -312,7 +260,6 @@ public class Selection
 		{
 			// track is empty, clear selections
 			_currentPoint = _startIndex = _endIndex = -1;
-			markInvalid();
 		}
 		UpdateMessageBroker.informSubscribers(DataSubscriber.SELECTION_CHANGED);
 	}

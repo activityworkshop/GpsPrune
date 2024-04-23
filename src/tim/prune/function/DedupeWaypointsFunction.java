@@ -9,7 +9,6 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.cmd.ShuffleAndCropCmd;
 import tim.prune.data.DataPoint;
-import tim.prune.data.Field;
 import tim.prune.data.Track;
 import tim.prune.function.compress.WaypointComparer;
 import tim.prune.function.compress.WaypointComparer.CompareResult;
@@ -137,7 +136,7 @@ public class DedupeWaypointsFunction extends GenericFunction
 	 */
 	private static String getWaypointKey(DataPoint inPoint)
 	{
-		return inPoint.getFieldValue(Field.LATITUDE) + "*" + inPoint.getFieldValue(Field.LONGITUDE)
+		return inPoint.getLatitude().toString() + "*" + inPoint.getLongitude().toString()
 		 + "*" + inPoint.getWaypointName();
 	}
 }

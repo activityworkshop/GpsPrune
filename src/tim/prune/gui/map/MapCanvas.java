@@ -147,7 +147,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		ItemListener mapCheckListener = e -> {
 			_tileManager.clearMemoryCaches();
 			_recalculate = true;
-			Config.setConfigBoolean(Config.KEY_SHOW_MAP, e.getStateChange() == ItemEvent.SELECTED);
+			_app.getConfig().setConfigBoolean(Config.KEY_SHOW_MAP, e.getStateChange() == ItemEvent.SELECTED);
 			UpdateMessageBroker.informSubscribers(); // to let menu know
 			// If the track is only partially visible and you turn the map off, make the track fully visible again
 			if (e.getStateChange() == ItemEvent.DESELECTED && _transparencySlider.getValue() < 0) {
@@ -174,25 +174,26 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		});
 		_transparencySlider.setFocusable(false); // stop slider from stealing keyboard focus
 		_topPanel.add(_transparencySlider);
+		IconManager iconManager = _app.getIconManager();
 		// Add checkbox button for enabling scale bar
-		_scaleCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.SCALEBAR_BUTTON), true);
-		_scaleCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.SCALEBAR_BUTTON_ON));
+		_scaleCheckBox = new JCheckBox(iconManager.getImageIcon(IconManager.SCALEBAR_BUTTON), true);
+		_scaleCheckBox.setSelectedIcon(iconManager.getImageIcon(IconManager.SCALEBAR_BUTTON_ON));
 		_scaleCheckBox.setOpaque(false);
 		_scaleCheckBox.setToolTipText(I18nManager.getText("menu.map.showscalebar"));
 		_scaleCheckBox.addItemListener(e -> _scaleBar.setVisible(_scaleCheckBox.isSelected()));
 		_scaleCheckBox.setFocusable(false); // stop button from stealing keyboard focus
 		_topPanel.add(_scaleCheckBox);
 		// Add checkbox button for enabling maps or not
-		_mapCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.MAP_BUTTON), false);
-		_mapCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.MAP_BUTTON_ON));
+		_mapCheckBox = new JCheckBox(iconManager.getImageIcon(IconManager.MAP_BUTTON), false);
+		_mapCheckBox.setSelectedIcon(iconManager.getImageIcon(IconManager.MAP_BUTTON_ON));
 		_mapCheckBox.setOpaque(false);
 		_mapCheckBox.setToolTipText(I18nManager.getText("menu.map.showmap"));
 		_mapCheckBox.addItemListener(mapCheckListener);
 		_mapCheckBox.setFocusable(false); // stop button from stealing keyboard focus
 		_topPanel.add(_mapCheckBox);
 		// Add checkbox button for enabling autopan or not
-		_autopanCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.AUTOPAN_BUTTON), true);
-		_autopanCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.AUTOPAN_BUTTON_ON));
+		_autopanCheckBox = new JCheckBox(iconManager.getImageIcon(IconManager.AUTOPAN_BUTTON), true);
+		_autopanCheckBox.setSelectedIcon(iconManager.getImageIcon(IconManager.AUTOPAN_BUTTON_ON));
 		_autopanCheckBox.setOpaque(false);
 		_autopanCheckBox.setToolTipText(I18nManager.getText("menu.map.autopan"));
 		_autopanCheckBox.addItemListener(itemListener);
@@ -200,10 +201,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_topPanel.add(_autopanCheckBox);
 		// Add checkbox button for connecting points or not
 		_connectCheckBox = new MultiStateCheckBox(4);
-		_connectCheckBox.setIcon(0, IconManager.getImageIcon(IconManager.POINTS_WITH_ARROWS_BUTTON));
-		_connectCheckBox.setIcon(1, IconManager.getImageIcon(IconManager.POINTS_HIDDEN_BUTTON));
-		_connectCheckBox.setIcon(2, IconManager.getImageIcon(IconManager.POINTS_CONNECTED_BUTTON));
-		_connectCheckBox.setIcon(3, IconManager.getImageIcon(IconManager.POINTS_DISCONNECTED_BUTTON));
+		_connectCheckBox.setIcon(0, iconManager.getImageIcon(IconManager.POINTS_WITH_ARROWS_BUTTON));
+		_connectCheckBox.setIcon(1, iconManager.getImageIcon(IconManager.POINTS_HIDDEN_BUTTON));
+		_connectCheckBox.setIcon(2, iconManager.getImageIcon(IconManager.POINTS_CONNECTED_BUTTON));
+		_connectCheckBox.setIcon(3, iconManager.getImageIcon(IconManager.POINTS_DISCONNECTED_BUTTON));
 		_connectCheckBox.setCurrentState(0);
 		_connectCheckBox.setOpaque(false);
 		_connectCheckBox.setToolTipText(I18nManager.getText("menu.map.connect"));
@@ -212,8 +213,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_topPanel.add(_connectCheckBox);
 
 		// Add checkbox button for edit mode or not
-		_editmodeCheckBox = new JCheckBox(IconManager.getImageIcon(IconManager.EDIT_MODE_BUTTON), false);
-		_editmodeCheckBox.setSelectedIcon(IconManager.getImageIcon(IconManager.EDIT_MODE_BUTTON_ON));
+		_editmodeCheckBox = new JCheckBox(iconManager.getImageIcon(IconManager.EDIT_MODE_BUTTON), false);
+		_editmodeCheckBox.setSelectedIcon(iconManager.getImageIcon(IconManager.EDIT_MODE_BUTTON_ON));
 		_editmodeCheckBox.setOpaque(false);
 		_editmodeCheckBox.setToolTipText(I18nManager.getText("menu.map.editmode"));
 		_editmodeCheckBox.addItemListener(itemListener);
@@ -223,14 +224,14 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// Add zoom in, zoom out buttons
 		_sidePanel = new OverlayPanel();
 		_sidePanel.setLayout(new BoxLayout(_sidePanel, BoxLayout.Y_AXIS));
-		JButton zoomInButton = new JButton(IconManager.getImageIcon(IconManager.ZOOM_IN_BUTTON));
+		JButton zoomInButton = new JButton(iconManager.getImageIcon(IconManager.ZOOM_IN_BUTTON));
 		zoomInButton.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		zoomInButton.setContentAreaFilled(false);
 		zoomInButton.setToolTipText(I18nManager.getText("menu.map.zoomin"));
 		zoomInButton.addActionListener(e -> zoomIn());
 		zoomInButton.setFocusable(false); // stop button from stealing keyboard focus
 		_sidePanel.add(zoomInButton);
-		JButton zoomOutButton = new JButton(IconManager.getImageIcon(IconManager.ZOOM_OUT_BUTTON));
+		JButton zoomOutButton = new JButton(iconManager.getImageIcon(IconManager.ZOOM_OUT_BUTTON));
 		zoomOutButton.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		zoomOutButton.setContentAreaFilled(false);
 		zoomOutButton.setToolTipText(I18nManager.getText("menu.map.zoomout"));
@@ -239,7 +240,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		_sidePanel.add(zoomOutButton);
 
 		// Bottom panel for scale bar
-		_scaleBar = new ScaleBar();
+		_scaleBar = new ScaleBar(_app.getConfig());
 
 		// add control panels to this one
 		setLayout(new BorderLayout());
@@ -251,7 +252,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// Make popup menu
 		makePopup();
 		// Get currently selected map from Config, pass to MapTileManager
-		_tileManager.setMapSource(Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX));
+		_tileManager.setMapSource(_app.getConfig().getConfigInt(Config.KEY_MAPSOURCE_INDEX));
 		// Update display settings
 		dataUpdated(MAPSERVER_CHANGED);
 	}
@@ -327,7 +328,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	private void setDefaultLatLonRange()
 	{
-		String storedRange = Config.getConfigString(Config.KEY_LATLON_RANGE);
+		String storedRange = _app.getConfig().getConfigString(Config.KEY_LATLON_RANGE);
 		// Parse it into four latlon values
 		try
 		{
@@ -364,7 +365,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		if (_mapImage != null && (_mapImage.getWidth() != getScaledWidth() || _mapImage.getHeight() != getScaledHeight())) {
 			_mapImage = null;
 		}
-		final boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		final boolean showMap = _app.getConfig().getConfigBoolean(Config.KEY_SHOW_MAP);
 		final boolean showSomething = _track.getNumPoints() > 0 || showMap;
 		if (showSomething)
 		{
@@ -397,7 +398,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if (_mapImage != null)
 			{
 				Graphics2D g2 = (Graphics2D) (inG.create());
-				final boolean allowScaling = Config.getConfigBoolean(Config.KEY_OSSCALING);
+				final boolean allowScaling = _app.getConfig().getConfigBoolean(Config.KEY_OSSCALING);
 				final double preScale = allowScaling ? 1.0 : g2.getTransform().getScaleX();
 				if (preScale != _lastScale)
 				{
@@ -455,7 +456,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					if (prevIndex >= 0)
 					{
 						// draw line to mouse position to show drawing mode
-						inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
+						inG.setColor(_app.getConfig().getColourScheme().getColour(ColourScheme.IDX_POINT));
 						int px = getWidth() / 2 + (int) (_mapPosition.getXFromCentre(_track.getX(prevIndex)) / _lastScale);
 						int py = getHeight() / 2 + (int) (_mapPosition.getYFromCentre(_track.getY(prevIndex)) / _lastScale);
 						inG.drawLine(px, py, _dragToX, _dragToY);
@@ -465,9 +466,10 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		}
 		else
 		{
-			inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND));
+			final ColourScheme colourScheme = _app.getConfig().getColourScheme();
+			inG.setColor(colourScheme.getColour(ColourScheme.IDX_BACKGROUND));
 			inG.fillRect(0, 0, getScaledWidth(), getScaledHeight());
-			inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_TEXT));
+			inG.setColor(colourScheme.getColour(ColourScheme.IDX_TEXT));
 			inG.drawString(I18nManager.getText("display.nodata"), 50, getScaledHeight()/2);
 			_scaleBar.updateScale(-1, 0);
 		}
@@ -530,19 +532,21 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 
 		Graphics g = _mapImage.getGraphics();
 		// Set antialiasing according to config
+		final Config config = _app.getConfig();
+		final ColourScheme colourScheme = config.getColourScheme();
 		((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-			Config.getConfigBoolean(Config.KEY_ANTIALIAS) ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
+			config.getConfigBoolean(Config.KEY_ANTIALIAS) ? RenderingHints.VALUE_ANTIALIAS_ON : RenderingHints.VALUE_ANTIALIAS_OFF);
 		// Clear to background
-		g.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND));
+		g.setColor(colourScheme.getColour(ColourScheme.IDX_BACKGROUND));
 		g.fillRect(0, 0, getScaledWidth(), getScaledHeight());
 
 		// Check whether maps are on or not
-		final boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		final boolean showMap = config.getConfigBoolean(Config.KEY_SHOW_MAP);
 		_mapCheckBox.setSelected(showMap);
 		// Check whether disk cache is on or not
-		final boolean usingDiskCache = Config.getConfigString(Config.KEY_DISK_CACHE) != null;
+		final boolean usingDiskCache = config.getConfigString(Config.KEY_DISK_CACHE) != null;
 		// Show tip to recommend setting up a cache
-		if (showMap && !usingDiskCache && Config.getConfigBoolean(Config.KEY_ONLINE_MODE))
+		if (showMap && !usingDiskCache && config.getConfigBoolean(Config.KEY_ONLINE_MODE))
 		{
 			SwingUtilities.invokeLater(() -> _app.showTip(TipManager.Tip_UseAMapCache));
 		}
@@ -559,7 +563,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			if (_tileManager.isOverzoomed())
 			{
 				// display overzoom message
-				g.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_TEXT));
+				g.setColor(colourScheme.getColour(ColourScheme.IDX_TEXT));
 				g.drawString(I18nManager.getText("map.overzoom"), 50, getScaledHeight()/2);
 			}
 			else
@@ -577,7 +581,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 						// Loop over layers
 						for (int l=0; l<numLayers; l++)
 						{
-							Image image = _tileManager.getTile(l, tileX, tileY, true);
+							Image image = _tileManager.getTile(l, tileX, tileY, true, _app.getConfig());
 							if (image != null) {
 								g.drawImage(image, x, y, 256, 256, (img, flags, px, py, width, height) -> checkPaintedTile(flags));
 							}
@@ -590,7 +594,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 				if (brightnessIndex > 0)
 				{
 					final int[] alphas = {0, 40, 80, 120, 160, 210};
-					Color bgColor = Config.getColourScheme().getColour(ColourScheme.IDX_BACKGROUND);
+					Color bgColor = colourScheme.getColour(ColourScheme.IDX_BACKGROUND);
 					bgColor = new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), alphas[brightnessIndex]);
 					g.setColor(bgColor);
 					g.fillRect(0, 0, getScaledWidth(), getScaledHeight());
@@ -674,7 +678,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	private boolean paintPoints(Graphics inG)
 	{
 		// Set up colours
-		final ColourScheme cs = Config.getColourScheme();
+		final ColourScheme cs = _app.getConfig().getColourScheme();
 		final Color pointColour  = cs.getColour(ColourScheme.IDX_POINT);
 		final Color rangeColour  = cs.getColour(ColourScheme.IDX_SELECTION);
 		final Color currentColour = cs.getColour(ColourScheme.IDX_PRIMARY);
@@ -698,7 +702,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		// try to set line width for painting
 		if (inG instanceof Graphics2D)
 		{
-			int lineWidth = Config.getConfigInt(Config.KEY_LINE_WIDTH);
+			int lineWidth = _app.getConfig().getConfigInt(Config.KEY_LINE_WIDTH);
 			if (lineWidth < 1 || lineWidth > 4) {lineWidth = 2;}
 			((Graphics2D) inG).setStroke(new BasicStroke(lineWidth));
 		}
@@ -809,7 +813,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			// TODO: Expand font size of inG using _lastScale
 			FontMetrics fm = inG.getFontMetrics();
 			final int nameHeight = fm.getHeight();
-			_waypointColours.setSalt(Config.getConfigInt(Config.KEY_WPICON_SALT));
+			_waypointColours.setSalt(_app.getConfig().getConfigInt(Config.KEY_WPICON_SALT));
 			int numWaypoints = 0;
 			for (int i=0; i<_track.getNumPoints(); i++)
 			{
@@ -973,7 +977,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	private void drawDragLines(Graphics inG, int inPrevIndex, int inNextIndex)
 	{
-		inG.setColor(Config.getColourScheme().getColour(ColourScheme.IDX_POINT));
+		inG.setColor(_app.getConfig().getColourScheme().getColour(ColourScheme.IDX_POINT));
 		// line from prev point to cursor
 		if ((inPrevIndex == inNextIndex) || (inPrevIndex > -1 && !_track.getPoint(inPrevIndex+1).getSegmentStart()))
 		{
@@ -1005,7 +1009,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	public void reportCacheFailure()
 	{
 		// Cache can't be used, so disable it - user will be reminded to set it up by the tips
-		Config.setConfigString(Config.KEY_DISK_CACHE, null);
+		_app.getConfig().setConfigString(Config.KEY_DISK_CACHE, null);
 	}
 
 	/**
@@ -1056,8 +1060,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	{
 		double lat = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(inY, getHeight()));
 		double lon = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(inX, getWidth()));
-		DataPoint point = new DataPoint(new Latitude(lat, Coordinate.FORMAT_NONE),
-			new Longitude(lon, Coordinate.FORMAT_NONE), null);
+		DataPoint point = new DataPoint(Latitude.make(lat), Longitude.make(lon));
 		point.setSegmentStart(inNewSegment);
 		return point;
 	}
@@ -1081,8 +1084,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 			return;
 		}
 
-		final String latitude = Double.toString(point.getLatitude().getDouble() + lat_delta);
-		final String longitude = Double.toString(point.getLongitude().getDouble() + lon_delta);
+		final String latitude = String.format("%.12f", point.getLatitude().getDouble() + lat_delta);
+		final String longitude = String.format("%.12f", point.getLongitude().getDouble() + lon_delta);
 		List<FieldEdit> edits = List.of(new FieldEdit(Field.LATITUDE, latitude),
 			new FieldEdit(Field.LONGITUDE, longitude));
 		int pointIndex = _app.getTrackInfo().getSelection().getCurrentPointIndex();
@@ -1115,7 +1118,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	public void mouseClicked(MouseEvent inE)
 	{
-		final boolean showMap = Config.getConfigBoolean(Config.KEY_SHOW_MAP);
+		final boolean showMap = _app.getConfig().getConfigBoolean(Config.KEY_SHOW_MAP);
 		final boolean hasPoints = _track != null && _track.getNumPoints() > 0;
 		if (showMap || hasPoints)
 		{
@@ -1451,16 +1454,17 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 		if ((inUpdateType & DataSubscriber.MAPSERVER_CHANGED) > 0)
 		{
 			// Get the selected map source index and pass to tile manager
-			_tileManager.setMapSource(Config.getConfigInt(Config.KEY_MAPSOURCE_INDEX));
-			final int wpType = Config.getConfigInt(Config.KEY_WAYPOINT_ICONS);
+			Config config = _app.getConfig();
+			_tileManager.setMapSource(config.getConfigInt(Config.KEY_MAPSOURCE_INDEX));
+			final int wpType = config.getConfigInt(Config.KEY_WAYPOINT_ICONS);
 			if (wpType == WpIconLibrary.WAYPT_DEFAULT)
 			{
 				_waypointIconDefinition = null;
 			}
 			else
 			{
-				final int wpSize = Config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE);
-				_waypointIconDefinition = WpIconLibrary.getIconDefinition(wpType, wpSize);
+				final int wpSize = config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE);
+				_waypointIconDefinition = WpIconLibrary.getIconDefinition(wpType, wpSize, _app.getIconManager());
 			}
 		}
 		if ((inUpdateType & (DataSubscriber.DATA_ADDED_OR_REMOVED + DataSubscriber.DATA_EDITED)) > 0) {

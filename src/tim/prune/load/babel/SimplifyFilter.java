@@ -20,7 +20,7 @@ import tim.prune.gui.WholeNumberField;
 /**
  * Simplify filter for GPSBabel
  */
-public class SimplifyFilter extends FilterDefinition
+public final class SimplifyFilter extends FilterDefinition
 {
 	/** Constructor */
 	public SimplifyFilter(AddFilterDialog inFilterDialog)

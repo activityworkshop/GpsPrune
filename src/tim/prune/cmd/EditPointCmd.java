@@ -5,6 +5,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Photo;
 import tim.prune.data.TrackInfo;
+import tim.prune.data.UnitSet;
 import tim.prune.function.edit.FieldEdit;
 
 import java.util.ArrayList;
@@ -17,20 +18,27 @@ public class EditPointCmd extends Command
 {
 	private final int _pointIndex;
 	private final List<FieldEdit> _editList;
+	private final UnitSet _unitSet;
+
 
 	public EditPointCmd(int inPointIndex, List<FieldEdit> inEditList) {
-		this(null, inPointIndex, inEditList);
+		this(inPointIndex, inEditList, null);
 	}
 
 	public EditPointCmd(int inPointIndex, FieldEdit inEdit) {
-		this(null, inPointIndex, List.of(inEdit));
+		this(inPointIndex, List.of(inEdit), null);
 	}
 
-	protected EditPointCmd(EditPointCmd inParent, int inPointIndex, List<FieldEdit> inEditList)
+	public EditPointCmd(int inPointIndex, List<FieldEdit> inEditList, UnitSet inUnitSet) {
+		this(null, inPointIndex, inEditList, inUnitSet);
+	}
+
+	protected EditPointCmd(EditPointCmd inParent, int inPointIndex, List<FieldEdit> inEditList, UnitSet inUnitSet)
 	{
 		super(inParent);
 		_pointIndex = inPointIndex;
 		_editList = inEditList;
+		_unitSet = inUnitSet;
 	}
 
 	@Override
@@ -49,8 +57,8 @@ public class EditPointCmd extends Command
 		for (FieldEdit edit : _editList)
 		{
 			Field field = edit.getField();
-			point.setFieldValue(field, edit.getValue(), isUndo());
-			inInfo.getTrack().getFieldList().extendList(field);
+			point.setFieldValue(field, edit.getValue(), _unitSet, isUndo());
+			inInfo.getTrack().getFieldList().addField(field);
 			coordsChanged |= (field.equals(Field.LATITUDE)
 				|| field.equals(Field.LONGITUDE) || field.equals(Field.ALTITUDE));
 		}
@@ -69,7 +77,7 @@ public class EditPointCmd extends Command
 	protected Command makeInverse(TrackInfo inInfo)
 	{
 		DataPoint pointToEdit = inInfo.getTrack().getPoint(_pointIndex);
-		return new EditPointCmd(this, _pointIndex, makeOppositeEdits(pointToEdit));
+		return new EditPointCmd(this, _pointIndex, makeOppositeEdits(pointToEdit), _unitSet);
 	}
 
 	private List<FieldEdit> makeOppositeEdits(DataPoint pointToEdit)

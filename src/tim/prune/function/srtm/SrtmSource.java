@@ -6,15 +6,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 
-import tim.prune.config.Config;
-
 
 /**
- * Superclass of each of the two available
- * sources of SRTM data
+ * Superclass of each of the two available sources of SRTM data
  */
 public abstract class SrtmSource
 {
+	/** Path to disk cache, or null if none */
+	private final String _diskPath;
+
 	/** Possible results of the download */
 	public enum Result {DOWNLOADED, NOTHING_TO_DO, DOWNLOAD_FAILED,
 		CACHE_FAILED, NOT_ENABLED};
@@ -22,6 +22,10 @@ public abstract class SrtmSource
 	/** Altitude below which is considered void */
 	public static final int VOID_VAL = -32768;
 
+	/** @param inDiskPath disk path */
+	SrtmSource(String inDiskPath) {
+		_diskPath = inDiskPath;
+	}
 
 	/**
 	 * Get the Url for the given tile
@@ -57,10 +61,11 @@ public abstract class SrtmSource
 	 */
 	public File getCacheDir()
 	{
-		String diskCachePath = Config.getConfigString(Config.KEY_DISK_CACHE);
-		if (diskCachePath == null) {return null;}
+		if (_diskPath == null) {
+			return null;
+		}
 
-		return new File(diskCachePath, "srtm");
+		return new File(_diskPath, "srtm");
 	}
 
 	/**

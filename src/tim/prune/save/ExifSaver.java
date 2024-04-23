@@ -21,7 +21,6 @@ import javax.swing.JTable;
 import tim.prune.ExternalTools;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
-import tim.prune.config.Config;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.MediaList;
@@ -33,6 +32,7 @@ import tim.prune.data.Photo;
 public class ExifSaver implements Runnable
 {
 	private final Frame _parentFrame;
+	private final String _exiftoolCommand;
 	private JDialog _dialog = null;
 	private JButton _okButton = null;
 	private JCheckBox _overwriteCheckbox = null;
@@ -63,10 +63,12 @@ public class ExifSaver implements Runnable
 	/**
 	 * Constructor
 	 * @param inParentFrame parent frame
+	 * @param inCommand exiftool command including path
 	 */
-	public ExifSaver(Frame inParentFrame)
+	public ExifSaver(Frame inParentFrame, String inCommand)
 	{
 		_parentFrame = inParentFrame;
+		_exiftoolCommand = inCommand;
 	}
 
 
@@ -79,7 +81,7 @@ public class ExifSaver implements Runnable
 	public boolean saveExifInformation(MediaList<Photo> inPhotoList)
 	{
 		// Check if external exif tool can be called
-		boolean exifToolInstalled = ExternalTools.isToolInstalled(ExternalTools.TOOL_EXIFTOOL);
+		boolean exifToolInstalled = ExternalTools.isToolInstalled(ExternalTools.TOOL_EXIFTOOL, _exiftoolCommand);
 		if (!exifToolInstalled)
 		{
 			// show warning
@@ -342,11 +344,11 @@ public class ExifSaver implements Runnable
 	 * @param inOverwrite true to overwrite file, false to create copy
 	 * @return external command to delete gps tags
 	 */
-	private static String[] getDeleteGpsExifTagsCommand(File inFile, boolean inOverwrite)
+	private String[] getDeleteGpsExifTagsCommand(File inFile, boolean inOverwrite)
 	{
 		// Make a string array to construct the command and its parameters
-		String[] result = new String[inOverwrite?5:4];
-		result[0] = Config.getConfigString(Config.KEY_EXIFTOOL_PATH);
+		String[] result = new String[inOverwrite ? 5 : 4];
+		result[0] = _exiftoolCommand;
 		result[1] = "-P";
 		if (inOverwrite) {result[2] = " -overwrite_original_in_place";}
 		// remove all gps tags
@@ -365,12 +367,12 @@ public class ExifSaver implements Runnable
 	 * @param inForce true to force write, ignoring minor errors
 	 * @return external command to write gps tags
 	 */
-	private static String[] getWriteGpsExifTagsCommand(File inFile, DataPoint inPoint,
+	private String[] getWriteGpsExifTagsCommand(File inFile, DataPoint inPoint,
 		boolean inOverwrite, boolean inForce)
 	{
 		// Make a string array to construct the command and its parameters
 		String[] result = new String[(inOverwrite?10:9) + (inForce?1:0)];
-		result[0] = Config.getConfigString(Config.KEY_EXIFTOOL_PATH);
+		result[0] = _exiftoolCommand;
 		result[1] = "-P";
 		if (inOverwrite) {result[2] = "-overwrite_original_in_place";}
 		int paramOffset = inOverwrite?3:2;
@@ -380,13 +382,13 @@ public class ExifSaver implements Runnable
 		}
 		// To set latitude : -GPSLatitude='12 34 56.78' -GPSLatitudeRef='N'
 		// (latitude as space-separated deg min sec, reference as either N or S)
-		result[paramOffset] = "-GPSLatitude='" + inPoint.getLatitude().output(Coordinate.FORMAT_DEG_MIN_SEC_WITH_SPACES)
+		result[paramOffset] = "-GPSLatitude='" + inPoint.getLatitude().output(Coordinate.Format.DEG_MIN_SEC_WITH_SPACES)
 		 + "'";
-		result[paramOffset + 1] = "-GPSLatitudeRef=" + inPoint.getLatitude().output(Coordinate.FORMAT_CARDINAL);
+		result[paramOffset + 1] = "-GPSLatitudeRef=" + inPoint.getLatitude().output(Coordinate.Format.JUST_CARDINAL);
 		// same for longitude with space-separated deg min sec, reference as either E or W
-		result[paramOffset + 2] = "-GPSLongitude='" + inPoint.getLongitude().output(Coordinate.FORMAT_DEG_MIN_SEC_WITH_SPACES)
+		result[paramOffset + 2] = "-GPSLongitude='" + inPoint.getLongitude().output(Coordinate.Format.DEG_MIN_SEC_WITH_SPACES)
 		 + "'";
-		result[paramOffset + 3] = "-GPSLongitudeRef=" + inPoint.getLongitude().output(Coordinate.FORMAT_CARDINAL);
+		result[paramOffset + 3] = "-GPSLongitudeRef=" + inPoint.getLongitude().output(Coordinate.Format.JUST_CARDINAL);
 		// add altitude if it has it
 		result[paramOffset + 4] = "-GPSAltitude="
 		 + (inPoint.hasAltitude()?inPoint.getAltitude().getMetricValue():0);

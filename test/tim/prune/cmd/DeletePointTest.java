@@ -15,10 +15,10 @@ class DeletePointTest
 	{
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
-		track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
+		track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
 		assertEquals(1, track.getNumPoints());
 		// delete
-		DeletePointCmd command = new DeletePointCmd(0, null);
+		DeletePointCmd command = new DeletePointCmd(0);
 		assertTrue(command.execute(info));
 		assertEquals(0, track.getNumPoints());
 		// undo
@@ -34,13 +34,13 @@ class DeletePointTest
 		final int indexToDelete = 1;
 		for (int i=0; i<10; i++)
 		{
-			DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null);
+			DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"));
 			point.setSegmentStart(i == 0 || i == 7);
-			point.setFieldValue(Field.WAYPT_NAME, i == indexToDelete ? "removeme" : null, false);
+			point.setWaypointName(i == indexToDelete ? "removeme" : null);
 			track.appendPoint(point);
 		}
 
-		Command command = new DeletePointCmd(indexToDelete, null);
+		Command command = new DeletePointCmd(indexToDelete);
 		assertTrue(command.execute(info));
 		assertEquals(9, track.getNumPoints());
 		// Only the single waypoint should be deleted, so all the other points should be nameless
@@ -64,14 +64,14 @@ class DeletePointTest
 		final int indexToDelete = 7;
 		for (int i=0; i<10; i++)
 		{
-			DataPoint point = new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null);
+			DataPoint point = new DataPoint(Latitude.make("1.23"), Longitude.make("2.34"));
 			point.setSegmentStart(i == 0 || i == indexToDelete);
 			track.appendPoint(point);
 		}
 		assertEquals("S------S--", TrackHelper.describeSegments(track));
 
 		// Delete the first point of the second segment
-		Command command = new DeletePointCmd(indexToDelete, null);
+		Command command = new DeletePointCmd(indexToDelete);
 		assertTrue(command.execute(info));
 		assertEquals(9, track.getNumPoints());
 		assertEquals("S------S-", TrackHelper.describeSegments(track));
@@ -88,12 +88,12 @@ class DeletePointTest
 		Track track = new Track();
 		TrackInfo info = new TrackInfo(track);
 		for (int i=0; i<10; i++) {
-			track.appendPoint(new DataPoint(new Latitude("1.23"), new Longitude("2.34"), null));
+			track.appendPoint(new DataPoint(Latitude.make("1.23"), Longitude.make("2.34")));
 		}
 		for (int delPos = 0; delPos < 9; delPos++)
 		{
 			info.getSelection().selectRange(3,  5);
-			Command command = new DeletePointCmd(delPos, null);
+			Command command = new DeletePointCmd(delPos);
 			assertTrue(command.execute(info));
 			assertEquals(9, track.getNumPoints());
 			final int expectedStartPos = (delPos < 3 ? 2 : 3);

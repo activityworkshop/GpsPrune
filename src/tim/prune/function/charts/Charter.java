@@ -33,6 +33,8 @@ import tim.prune.data.Distance;
 import tim.prune.data.Field;
 import tim.prune.data.Timestamp;
 import tim.prune.data.Track;
+import tim.prune.data.Unit;
+import tim.prune.data.UnitSet;
 import tim.prune.gui.profile.SpeedData;
 import tim.prune.gui.profile.VerticalSpeedData;
 import tim.prune.load.GenericFileFilter;
@@ -87,7 +89,7 @@ public class Charter extends GenericFunction
 	public void begin()
 	{
 		// First check if gnuplot is available
-		if (!ExternalTools.isToolInstalled(ExternalTools.TOOL_GNUPLOT))
+		if (!ExternalTools.isToolInstalled(getConfig(), ExternalTools.TOOL_GNUPLOT))
 		{
 			_app.showErrorMessage(getNameKey(), "dialog.charts.gnuplotnotfound");
 			return;
@@ -232,7 +234,7 @@ public class Charter extends GenericFunction
 	{
 		_yAxesBoxes[inIndex].setEnabled(inFlag);
 		if (!inFlag) {
-			_yAxesBoxes[inIndex].setSelected(inFlag);
+			_yAxesBoxes[inIndex].setSelected(false);
 		}
 	}
 
@@ -243,8 +245,8 @@ public class Charter extends GenericFunction
 	private void showChart(Track inTrack)
 	{
 		int numCharts = 0;
-		for (int i=0; i<_yAxesBoxes.length; i++) {
-			if (_yAxesBoxes[i].isSelected()) {
+		for (JCheckBox yAxesBox : _yAxesBoxes) {
+			if (yAxesBox.isSelected()) {
 				numCharts++;
 			}
 		}
@@ -264,7 +266,7 @@ public class Charter extends GenericFunction
 		OutputStreamWriter writer = null;
 		try
 		{
-			final String gnuplotPath = Config.getConfigString(Config.KEY_GNUPLOT_PATH);
+			final String gnuplotPath = getConfig().getConfigString(Config.KEY_GNUPLOT_PATH);
 			Process process = Runtime.getRuntime().exec(gnuplotPath + " -persist");
 			writer = new OutputStreamWriter(process.getOutputStream());
 			if (showSvg)
@@ -337,12 +339,12 @@ public class Charter extends GenericFunction
 	 * @param inYaxis index of y axis
 	 * @throws IOException if writing error occurred
 	 */
-	private static void writeChart(OutputStreamWriter inWriter, Track inTrack, boolean inDistance, int inYaxis)
+	private void writeChart(OutputStreamWriter inWriter, Track inTrack, boolean inDistance, int inYaxis)
 	throws IOException
 	{
-		ChartSeries xValues = null, yValues = null;
 		ChartSeries distValues = getDistanceValues(inTrack);
 		// Choose x values according to axis
+		final ChartSeries xValues;
 		if (inDistance) {
 			xValues = distValues;
 		}
@@ -350,50 +352,44 @@ public class Charter extends GenericFunction
 			xValues = getTimeValues(inTrack);
 		}
 		// Choose y values according to axis
+		final ChartSeries yValues;
 		switch (inYaxis)
 		{
-		case 0: // y axis is distance
-			yValues = distValues;
-			break;
-		case 1: // y axis is altitude
-			yValues = getAltitudeValues(inTrack);
-			break;
-		case 2: // y axis is speed
-			yValues = getSpeedValues(inTrack);
-			break;
-		case 3: // y axis is vertical speed
-			yValues = getVertSpeedValues(inTrack);
-			break;
+			case 0: // y axis is distance
+				yValues = distValues;
+				break;
+			case 1: // y axis is altitude
+				yValues = getAltitudeValues(inTrack);
+				break;
+			case 2: // y axis is speed
+				yValues = getSpeedValues(inTrack);
+				break;
+			case 3: // y axis is vertical speed
+				yValues = getVertSpeedValues(inTrack);
+				break;
+			default:
+				throw new IllegalArgumentException("y axis must be 0, 1, 2 or 3");
 		}
 		// Make a temporary data file for the output (one per subchart)
 		File tempFile = File.createTempFile("gpsprunedata", null);
 		tempFile.deleteOnExit();
 		// write out values for x and y to temporary file
-		FileWriter tempFileWriter = null;
-		try {
-			tempFileWriter = new FileWriter(tempFile);
+		try (FileWriter tempFileWriter = new FileWriter(tempFile))
+		{
 			tempFileWriter.write("# Temporary data file for GpsPrune charts\n\n");
-			for (int i=0; i<inTrack.getNumPoints(); i++) {
+			for (int i = 0; i < inTrack.getNumPoints(); i++) {
 				if (xValues.hasData(i) && yValues.hasData(i)) {
 					tempFileWriter.write("" + xValues.getData(i) + ", " + yValues.getData(i) + "\n");
 				}
 			}
 		}
-		catch (IOException ioe) { // rethrow
-			throw ioe;
-		}
-		finally {
-			try {
-				tempFileWriter.close();
-			}
-			catch (Exception e) {}
-		}
 
 		// Sort out units to use
-		final String distLabel = I18nManager.getText(Config.getUnitSet().getDistanceUnit().getShortnameKey());
-		final String altLabel  = I18nManager.getText(Config.getUnitSet().getAltitudeUnit().getShortnameKey());
-		final String speedLabel = I18nManager.getText(Config.getUnitSet().getSpeedUnit().getShortnameKey());
-		final String vertSpeedLabel = I18nManager.getText(Config.getUnitSet().getVerticalSpeedUnit().getShortnameKey());
+		UnitSet unitSet = getConfig().getUnitSet();
+		final String distLabel = I18nManager.getText(unitSet.getDistanceUnit().getShortnameKey());
+		final String altLabel  = I18nManager.getText(unitSet.getAltitudeUnit().getShortnameKey());
+		final String speedLabel = I18nManager.getText(unitSet.getSpeedUnit().getShortnameKey());
+		final String vertSpeedLabel = I18nManager.getText(unitSet.getVerticalSpeedUnit().getShortnameKey());
 
 		// Set x axis label
 		if (inDistance) {
@@ -434,12 +430,13 @@ public class Charter extends GenericFunction
 	 * @param inTrack track object
 	 * @return distance values in a ChartSeries object
 	 */
-	private static ChartSeries getDistanceValues(Track inTrack)
+	private ChartSeries getDistanceValues(Track inTrack)
 	{
 		// Calculate distances and fill in in values array
 		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
 		double totalRads = 0;
 		DataPoint prevPoint = null, currPoint = null;
+		Unit distUnit = getConfig().getUnitSet().getDistanceUnit();
 		for (int i=0; i<inTrack.getNumPoints(); i++)
 		{
 			currPoint = inTrack.getPoint(i);
@@ -449,7 +446,7 @@ public class Charter extends GenericFunction
 			}
 
 			// distance values use currently configured units
-			values.setData(i, Distance.convertRadiansToDistance(totalRads));
+			values.setData(i, Distance.convertRadiansToDistance(totalRads, distUnit));
 
 			prevPoint = currPoint;
 		}
@@ -467,10 +464,9 @@ public class Charter extends GenericFunction
 		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
 		double seconds = 0.0;
 		Timestamp prevTimestamp = null;
-		DataPoint currPoint = null;
 		for (int i=0; i<inTrack.getNumPoints(); i++)
 		{
-			currPoint = inTrack.getPoint(i);
+			DataPoint currPoint = inTrack.getPoint(i);
 			if (currPoint.hasTimestamp())
 			{
 				if (!currPoint.getSegmentStart() && prevTimestamp != null) {
@@ -488,10 +484,10 @@ public class Charter extends GenericFunction
 	 * @param inTrack track object
 	 * @return altitude values in a ChartSeries object
 	 */
-	private static ChartSeries getAltitudeValues(Track inTrack)
+	private ChartSeries getAltitudeValues(Track inTrack)
 	{
 		ChartSeries values = new ChartSeries(inTrack.getNumPoints());
-		final double multFactor = Config.getUnitSet().getAltitudeUnit().getMultFactorFromStd();
+		final double multFactor = getConfig().getUnitSet().getAltitudeUnit().getMultFactorFromStd();
 		for (int i=0; i<inTrack.getNumPoints(); i++) {
 			if (inTrack.getPoint(i).hasAltitude()) {
 				values.setData(i, inTrack.getPoint(i).getAltitude().getMetricValue() * multFactor);
@@ -505,11 +501,11 @@ public class Charter extends GenericFunction
 	 * @param inTrack track object
 	 * @return speed values in a ChartSeries object
 	 */
-	private static ChartSeries getSpeedValues(Track inTrack)
+	private ChartSeries getSpeedValues(Track inTrack)
 	{
 		// Calculate speeds using the same formula as the profile chart
 		SpeedData speeds = new SpeedData(inTrack);
-		speeds.init(Config.getUnitSet());
+		speeds.init(getConfig().getUnitSet());
 
 		final int numPoints = inTrack.getNumPoints();
 		ChartSeries values = new ChartSeries(numPoints);
@@ -528,11 +524,11 @@ public class Charter extends GenericFunction
 	 * @param inTrack track object
 	 * @return vertical speed values in a ChartSeries object
 	 */
-	private static ChartSeries getVertSpeedValues(Track inTrack)
+	private ChartSeries getVertSpeedValues(Track inTrack)
 	{
 		// Calculate speeds using the same formula as the profile chart
 		VerticalSpeedData speeds = new VerticalSpeedData(inTrack);
-		speeds.init(Config.getUnitSet());
+		speeds.init(getConfig().getUnitSet());
 
 		final int numPoints = inTrack.getNumPoints();
 		ChartSeries values = new ChartSeries(numPoints);
@@ -561,7 +557,7 @@ public class Charter extends GenericFunction
 			_fileChooser.setFileFilter(new GenericFileFilter("filetype.svg", new String[] {"svg"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
-			String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
+			String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
 			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
 		}
 		boolean chooseAgain = true;

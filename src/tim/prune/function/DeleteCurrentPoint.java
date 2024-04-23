@@ -45,12 +45,12 @@ public class DeleteCurrentPoint extends GenericFunction
 		// make command
 		final Command command;
 		if (mediaAction == PopupResponse.MEDIA_NOT_CONNECTED) {
-			command = new DeletePointCmd(_app.getTrackInfo().getSelection().getCurrentPointIndex(), currentPoint.getWaypointName());
+			command = new DeletePointCmd(_app.getTrackInfo().getSelection().getCurrentPointIndex());
 		}
 		else
 		{
 			CompoundCommand cmd = new CompoundCommand(DataSubscriber.ALL_DATA);
-			cmd.addCommand(new DeletePointCmd(_app.getTrackInfo().getSelection().getCurrentPointIndex(), currentPoint.getWaypointName()));
+			cmd.addCommand(new DeletePointCmd(_app.getTrackInfo().getSelection().getCurrentPointIndex()));
 			Photo photo = currentPoint.getPhoto();
 			AudioClip audio = currentPoint.getAudio();
 			if (mediaAction == PopupResponse.DELETE)

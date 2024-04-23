@@ -3,12 +3,13 @@ package tim.prune.save;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -16,6 +17,7 @@ import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -23,7 +25,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 
 import tim.prune.App;
@@ -31,9 +32,9 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
-import tim.prune.data.SourceInfo;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.DialogCloser;
+import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.ProgressDialog;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.save.xml.GpxCacherList;
@@ -48,18 +49,17 @@ public class GpxExporter extends GenericFunction
 {
 	private final TrackInfo _trackInfo;
 	private JDialog _dialog = null;
-	private JTextField _nameField = null;
-	private JTextField _descriptionField = null;
+	private JComboBox<String> _titleField = null;
+	private JComboBox<String> _descriptionField = null;
 	private PointTypeSelector _pointTypeSelector = null;
 	private JCheckBox _timestampsCheckbox = null;
 	private JCheckBox _copySourceCheckbox = null;
+	private JCheckBox _descsToCommentsCheckbox = null;
 	private JPanel _encodingsPanel = null;
 	private JRadioButton _useSystemRadio = null, _forceUtf8Radio = null;
 	private File _exportFile = null;
 	private boolean _cancelled = false;
 	private ProgressDialog _progress = null;
-	/** Remember the previous sourceInfo object to tell whether it has changed */
-	private SourceInfo _previousSourceInfo = null;
 
 
 	/**
@@ -99,7 +99,7 @@ public class GpxExporter extends GenericFunction
 			_useSystemRadio.setText(I18nManager.getText("dialog.exportgpx.encoding.system")
 				+ " (" + (systemEncoding == null ? "unknown" : systemEncoding) + ")");
 		}
-		setFileTitle();
+		populateComboboxes();
 		_dialog.setVisible(true);
 	}
 
@@ -116,13 +116,19 @@ public class GpxExporter extends GenericFunction
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 		// Make a panel for the name/desc text boxes
 		JPanel descPanel = new JPanel();
-		descPanel.setLayout(new GridLayout(2, 2));
-		descPanel.add(new JLabel(I18nManager.getText("dialog.exportgpx.name")));
-		_nameField = new JTextField(10);
-		descPanel.add(_nameField);
-		descPanel.add(new JLabel(I18nManager.getText("dialog.exportgpx.desc")));
-		_descriptionField = new JTextField(10);
-		descPanel.add(_descriptionField);
+		double[] weights = new double[] {0.2, 0.8};
+		boolean[] aligns = new boolean[] {true, false};
+		GuiGridLayout comboGrid = new GuiGridLayout(descPanel, weights, aligns);
+		comboGrid.add(new JLabel(I18nManager.getText("dialog.exportgpx.name")));
+		_titleField = new JComboBox<>();
+		_titleField.setPrototypeDisplayValue("Long enough for a reasonable description");
+		_titleField.setEditable(true);
+		comboGrid.add(_titleField);
+		comboGrid.add(new JLabel(I18nManager.getText("dialog.exportgpx.desc")));
+		_descriptionField = new JComboBox<>();
+		_descriptionField.setPrototypeDisplayValue("Long enough for a reasonable description");
+		_descriptionField.setEditable(true);
+		comboGrid.add(_descriptionField);
 		mainPanel.add(descPanel);
 		mainPanel.add(Box.createVerticalStrut(5));
 		// point type selection (track points, waypoints, photo points)
@@ -130,12 +136,17 @@ public class GpxExporter extends GenericFunction
 		mainPanel.add(_pointTypeSelector);
 		// checkboxes for timestamps and copying
 		JPanel checkPanel = new JPanel();
+		weights = new double[] {0.5, 0.5};
+		aligns = new boolean[] {false, false};
+		GuiGridLayout checkGrid = new GuiGridLayout(checkPanel, weights, aligns);
 		_timestampsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.includetimestamps"));
 		_timestampsCheckbox.setSelected(true);
-		checkPanel.add(_timestampsCheckbox);
+		checkGrid.add(_timestampsCheckbox);
 		_copySourceCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.copysource"));
 		_copySourceCheckbox.setSelected(true);
-		checkPanel.add(_copySourceCheckbox);
+		checkGrid.add(_copySourceCheckbox);
+		_descsToCommentsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.descriptionstocomments"));
+		checkGrid.add(_descsToCommentsCheckbox, 2, true);
 		mainPanel.add(checkPanel);
 		// panel for selecting character encoding
 		_encodingsPanel = new JPanel();
@@ -162,14 +173,13 @@ public class GpxExporter extends GenericFunction
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
 
 		// close dialog if escape pressed
-		_nameField.addKeyListener(new DialogCloser(_dialog));
+		_titleField.addKeyListener(new DialogCloser(_dialog));
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
 		ActionListener okListener = e -> startExport();
 		okButton.addActionListener(okListener);
-		_descriptionField.addActionListener(okListener);
 		buttonPanel.add(okButton);
 		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
 		cancelButton.addActionListener(e -> _dialog.dispose());
@@ -180,32 +190,28 @@ public class GpxExporter extends GenericFunction
 	}
 
 	/**
-	 * Set the suggestions for the name and title with which to export
+	 * Set the suggestions for the title and description with which to export
 	 */
-	private void setFileTitle()
+	private void populateComboboxes()
 	{
-		// Get the most recent file info
-		SourceInfo currentSource = _app.getTrackInfo().getFileInfo().getFirstSource();
-		if (currentSource != null && currentSource != _previousSourceInfo)
-		{
-			String lastTitle = currentSource.getFileTitle();
-			if (lastTitle != null && !lastTitle.equals(""))
-			{
-				// Take the title of the last file loaded
-				_nameField.setText(lastTitle);
-			}
+		populateCombobox(_titleField, _app.getTrackInfo().getFileInfo().getAllTitles());
+		populateCombobox(_descriptionField, _app.getTrackInfo().getFileInfo().getAllDescriptions());
+	}
+
+	/** Add the specified values to the combobox */
+	private static void populateCombobox(JComboBox<String> inCombobox, List<String> inValues)
+	{
+		final String initialValue = getEnteredText(inCombobox);
+		inCombobox.removeAllItems();
+		for (String value : inValues) {
+			inCombobox.addItem(value);
 		}
-		if (_nameField.getText().equals(""))
-		{
-			// no name given in the field already, so try to overwrite it
-			String lastTitle = _app.getTrackInfo().getFileInfo().getFirstTitle();
-			if (lastTitle != null && !lastTitle.equals(""))
-			{
-				_nameField.setText(lastTitle);
-			}
+		if (initialValue.isEmpty() && inCombobox.getItemCount() > 0) {
+			inCombobox.setSelectedIndex(0);
 		}
-		// Remember this source info so we don't use it again
-		_previousSourceInfo = currentSource;
+		else {
+			inCombobox.setSelectedItem(initialValue);
+		}
 	}
 
 	/**
@@ -221,7 +227,8 @@ public class GpxExporter extends GenericFunction
 			return;
 		}
 		// Choose output file
-		File saveFile = chooseGpxFile(_parentFrame, _nameField.getText());
+		String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
+		File saveFile = chooseGpxFile(_parentFrame, getEnteredName(), configDir);
 		if (saveFile != null)
 		{
 			// New file or overwrite confirmed, so initiate export in separate thread
@@ -239,9 +246,10 @@ public class GpxExporter extends GenericFunction
 	 * Select a GPX file to save to
 	 * @param inParentFrame parent frame for file chooser dialog
 	 * @param inTrackName track name entered earlier
+	 * @param inDirectory directory to save to, or null if unknown
 	 * @return selected File, or null if selection cancelled
 	 */
-	public static File chooseGpxFile(JFrame inParentFrame, String inTrackName)
+	public static File chooseGpxFile(JFrame inParentFrame, String inTrackName, String inDirectory)
 	{
 		File saveFile = null;
 		JFileChooser fileChooser = new JFileChooser();
@@ -249,9 +257,8 @@ public class GpxExporter extends GenericFunction
 		fileChooser.setFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
 		fileChooser.setAcceptAllFileFilterUsed(false);
 		// start from directory in config which should be set
-		String configDir = Config.getConfigString(Config.KEY_TRACK_DIR);
-		if (configDir != null) {
-			fileChooser.setCurrentDirectory(new File(configDir));
+		if (inDirectory != null) {
+			fileChooser.setCurrentDirectory(new File(inDirectory));
 		}
 		// Make suggestion of filename based on already selected track name
 		final String suggestedFilename = makeFilenameFromTrackName(inTrackName);
@@ -326,11 +333,12 @@ public class GpxExporter extends GenericFunction
 			gpxCachers = new GpxCacherList(_trackInfo.getFileInfo());
 		}
 		OutputStreamWriter writer = null;
+		// TODO: Try with resources
 		try
 		{
 			// normal writing to file - firstly specify UTF8 encoding if requested
 			if (_forceUtf8Radio != null && _forceUtf8Radio.isSelected()) {
-				writer = new OutputStreamWriter(new FileOutputStream(_exportFile), "UTF-8");
+				writer = new OutputStreamWriter(new FileOutputStream(_exportFile), StandardCharsets.UTF_8);
 			}
 			else {
 				writer = new OutputStreamWriter(new FileOutputStream(_exportFile));
@@ -342,9 +350,12 @@ public class GpxExporter extends GenericFunction
 			settings.setExportAudiopoints(_pointTypeSelector.getAudiopointsSelected());
 			settings.setExportJustSelection(_pointTypeSelector.getJustSelection());
 			settings.setExportTimestamps(_timestampsCheckbox.isSelected());
+			settings.setCopyDescriptionsToComments(_descsToCommentsCheckbox.isSelected());
 			// write file
-			final int numPoints = new GpxWriter(_progress, settings).exportData(writer, _trackInfo, _nameField.getText(),
-				_descriptionField.getText(), gpxCachers);
+			final String name = getEnteredName();
+			final String description = getEnteredDescription();
+			final int numPoints = new GpxWriter(_progress, settings).exportData(writer, _trackInfo, name,
+					description, gpxCachers);
 
 			// close file
 			writer.close();
@@ -354,7 +365,7 @@ public class GpxExporter extends GenericFunction
 				return;
 			}
 			// Store directory in config for later
-			Config.setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
+			getConfig().setConfigString(Config.KEY_TRACK_DIR, _exportFile.getParentFile().getAbsolutePath());
 			// Add to recent file list
 			_app.addRecentFile(_exportFile, true);
 			// Show confirmation
@@ -368,7 +379,6 @@ public class GpxExporter extends GenericFunction
 		}
 		catch (IOException ioe)
 		{
-			// System.out.println("Exception: " + ioe.getClass().getName() + " - " + ioe.getMessage());
 			try {
 				if (writer != null) writer.close();
 			}
@@ -379,5 +389,19 @@ public class GpxExporter extends GenericFunction
 		}
 		// if not returned already, export failed so need to recall the file selection
 		startExport();
+	}
+
+	private String getEnteredName() {
+		return getEnteredText(_titleField);
+	}
+
+	private String getEnteredDescription() {
+		return getEnteredText(_descriptionField);
+	}
+
+	private static String getEnteredText(JComboBox<String> inCombo)
+	{
+		Object item = inCombo.getSelectedItem();
+		return item == null ? "" : item.toString();
 	}
 }

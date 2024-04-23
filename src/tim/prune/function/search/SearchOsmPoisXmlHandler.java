@@ -14,7 +14,6 @@ public class SearchOsmPoisXmlHandler extends DefaultHandler
 {
 	private ArrayList<SearchResult> _pointList = null;
 	private SearchResult _currPoint = null;
-	private String _errorMessage = null;
 
 
 	/**
@@ -24,7 +23,7 @@ public class SearchOsmPoisXmlHandler extends DefaultHandler
 		Attributes inAttributes) throws SAXException
 	{
 		if (inTagName.equals("osm")) {
-			_pointList = new ArrayList<SearchResult>();
+			_pointList = new ArrayList<>();
 		}
 		else if (inTagName.equals("node"))
 		{
@@ -47,12 +46,10 @@ public class SearchOsmPoisXmlHandler extends DefaultHandler
 		if (key != null)
 		{
 			String value = inAttributes.getValue("v");
-			if (key.equals("name"))
-			{
+			if (key.equals("name")) {
 				_currPoint.setTrackName(value);
 			}
-			else if (key.equals("amenity") || key.equals("highway") || key.equals("railway"))
-			{
+			else if (key.equals("amenity") || key.equals("highway") || key.equals("railway")) {
 				_currPoint.setPointType(value);
 			}
 		}
@@ -79,12 +76,5 @@ public class SearchOsmPoisXmlHandler extends DefaultHandler
 	public ArrayList<SearchResult> getPointList()
 	{
 		return _pointList;
-	}
-
-	/**
-	 * @return error message, if any
-	 */
-	public String getErrorMessage() {
-		return _errorMessage;
 	}
 }

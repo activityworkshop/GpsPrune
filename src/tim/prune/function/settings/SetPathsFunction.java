@@ -96,7 +96,7 @@ public class SetPathsFunction extends GenericFunction
 			JLabel label = new JLabel(I18nManager.getText("dialog.paths.prune." + LABEL_KEYS[i] + "path"));
 			label.setHorizontalAlignment(SwingConstants.RIGHT);
 			mainPanel.add(label);
-			String configVal = Config.getConfigString(CONFIG_KEYS[i]);
+			String configVal = getConfig().getConfigString(CONFIG_KEYS[i]);
 			if (configVal == null) {configVal = "";}
 			_editFields[i] = new JTextField(configVal);
 			mainPanel.add(_editFields[i]);
@@ -145,7 +145,7 @@ public class SetPathsFunction extends GenericFunction
 		{
 			String val = _editFields[i].getText();
 			// TODO: Check path values?
-			Config.setConfigString(CONFIG_KEYS[i], val);
+			getConfig().setConfigString(CONFIG_KEYS[i], val);
 		}
 		_dialog.dispose();
 	}
