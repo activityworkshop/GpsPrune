@@ -334,8 +334,8 @@ public class DetailsDisplay extends GenericDisplay
 			_longLabel.setText(LABEL_POINT_LONGITUDE
 				+ CoordDisplay.makeCoordinateLabel(currentPoint.getLongitude(), getSelectedCoordFormat()));
 			Unit altUnit = _config.getUnitSet().getAltitudeUnit();
-			_altLabel.setText(currentPoint.hasAltitude()?
-				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getValue(altUnit) + " " +
+			_altLabel.setText(currentPoint.hasAltitude() ?
+				(LABEL_POINT_ALTITUDE + currentPoint.getAltitude().getIntValue(altUnit) + " " +
 				I18nManager.getText(altUnit.getShortnameKey()))
 				: "");
 			if (currentPoint.hasTimestamp())
@@ -387,7 +387,9 @@ public class DetailsDisplay extends GenericDisplay
 			if (type != null && !type.equals("")) {
 				_typeLabel.setText(LABEL_POINT_WAYPOINTTYPE + type);
 			}
-			else _typeLabel.setText("");
+			else {
+				_typeLabel.setText("");
+			}
 
 			// File to which point belongs
 			final int numFiles = _trackInfo.getFileInfo().getNumFiles();

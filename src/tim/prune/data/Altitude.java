@@ -6,7 +6,7 @@ package tim.prune.data;
 public class Altitude
 {
 	private boolean _valid = false;
-	private int _value = 0;
+	private double _value = 0.0;
 	private Unit _unit = null;
 	private String _stringValue = null;
 
@@ -24,11 +24,11 @@ public class Altitude
 
 
 	/**
-	 * Constructor with int value
-	 * @param inValue int value of altitude
+	 * Constructor with double value
+	 * @param inValue double value of altitude
 	 * @param inUnit unit of altitude, either metres or feet
 	 */
-	public Altitude(int inValue, Unit inUnit)
+	public Altitude(double inValue, Unit inUnit)
 	{
 		_value = inValue;
 		_unit = inUnit;
@@ -52,12 +52,8 @@ public class Altitude
 		{
 			try
 			{
-				double value = Double.parseDouble(inValue.trim());
-				if (value < Integer.MAX_VALUE)
-				{
-					_value = (int) value;
-					_valid = true;
-				}
+				_value = Double.parseDouble(inValue.trim());
+				_valid = true;
 			}
 			catch (NumberFormatException nfe) {
 				_valid = false;
@@ -72,24 +68,31 @@ public class Altitude
 		return _valid;
 	}
 
-
 	/**
-	 * @return raw value as int
+	 * @return raw value as double
 	 */
-	public int getValue() {
+	public double getValue() {
 		return _value;
 	}
 
 	/**
 	 * @param inAltUnit altitude units to use
-	 * @return rounded value in specified units
+	 * @return value in specified units (unrounded)
 	 */
-	public int getValue(Unit inAltUnit)
+	public double getValue(Unit inAltUnit)
 	{
 		if (inAltUnit == null) {
 			return getValue();
 		}
-		return (int) (getMetricValue() * inAltUnit.getMultFactorFromStd());
+		return getMetricValue() * inAltUnit.getMultFactorFromStd();
+	}
+
+	/**
+	 * @param inAltUnit altitude units to use
+	 * @return value in specified units (rounded to the nearest int)
+	 */
+	public int getIntValue(Unit inAltUnit) {
+		return (int) Math.round(getValue(inAltUnit));
 	}
 
 	/**
@@ -122,7 +125,7 @@ public class Altitude
 		}
 		// Return string value if the same format or "no format" was requested
 		if ((inUnit == _unit || inUnit == null)
-		 && _stringValue != null && !_stringValue.equals(""))
+			&& _stringValue != null && !_stringValue.equals(""))
 		{
 			return _stringValue;
 		}
@@ -159,10 +162,10 @@ public class Altitude
 		}
 		// Use altitude format of first point
 		Unit altUnit = inStart.getUnit();
-		int startValue = inStart.getValue();
-		int endValue = inEnd.getValue(altUnit);
+		double startValue = inStart.getValue();
+		double endValue = inEnd.getValue(altUnit);
 		// interpolate between start and end
-		int newValue = startValue + (int) ((endValue - startValue) * inFrac);
+		double newValue = startValue + (endValue - startValue) * inFrac;
 		return new Altitude(newValue, altUnit);
 	}
 }

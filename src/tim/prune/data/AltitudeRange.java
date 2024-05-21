@@ -8,21 +8,21 @@ package tim.prune.data;
 public class AltitudeRange
 {
 	/** Range of altitudes in metres */
-	private final IntegerRange _range = new IntegerRange();
+	private final DoubleRange _range = new DoubleRange();
 	/** Tolerance value in metres */
 	private final int _wiggleLimit;
 	/** Flag for whether previous value exists or not */
 	private boolean _gotPreviousValue;
 	/** Previous metric value */
-	private int _previousValue;
+	private double _previousValue;
 	/** Total climb in metres */
 	private int _climb;
 	/** Total descent in metres */
 	private int _descent;
 	/** Flags for whether minimum or maximum has been found */
 	private boolean _gotPreviousMinimum, _gotPreviousMaximum;
-	/** Integer value of previous minimum or maximum, if any */
-	private int _previousExtreme;
+	/** Value of previous minimum or maximum, if any */
+	private double _previousExtreme;
 
 
 	/**
@@ -152,11 +152,9 @@ public class AltitudeRange
 	/**
 	 * @return true if altitude range found
 	 */
-	public boolean hasRange()
-	{
-		return _range.hasValues();
+	public boolean hasRange() {
+		return _range.hasData();
 	}
-
 
 	/**
 	 * @param inUnit altitude units to use
@@ -183,7 +181,7 @@ public class AltitudeRange
 	public int getClimb(Unit inUnit)
 	{
 		// May need to add climb from last segment
-		int lastSegmentClimb = 0;
+		double lastSegmentClimb = 0.0;
 		if (_gotPreviousValue && _gotPreviousMinimum && _previousValue > _previousExtreme) {
 			lastSegmentClimb = _previousValue - _previousExtreme;
 		}
@@ -197,7 +195,7 @@ public class AltitudeRange
 	public int getDescent(Unit inUnit)
 	{
 		// May need to add descent from last segment
-		int lastSegmentDescent = 0;
+		double lastSegmentDescent = 0.0;
 		if (_gotPreviousValue && _gotPreviousMaximum && _previousValue < _previousExtreme) {
 			lastSegmentDescent = _previousExtreme - _previousValue;
 		}

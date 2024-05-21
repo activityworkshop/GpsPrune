@@ -28,8 +28,7 @@ public abstract class ProfileData
 	 * Constructor giving track object
 	 * @param inTrack track object
 	 */
-	public ProfileData(Track inTrack)
-	{
+	public ProfileData(Track inTrack) {
 		_track = inTrack;
 	}
 
