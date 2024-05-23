@@ -132,6 +132,18 @@ public class Altitude
 		return "" + getValue(inUnit);
 	}
 
+	/**
+	 * Get a locally-formatted string version of the value
+	 * @param inUnit specified unit
+	 * @return string value using the local formatting
+	 */
+	public String getLocalStringValue(Unit inUnit)
+	{
+		if (!_valid) {
+			return "";
+		}
+		return NumberUtils.formatNumberLocalToMatch(getValue(inUnit), _stringValue);
+	}
 
 	/**
 	 * Interpolate a new Altitude object between the given ones

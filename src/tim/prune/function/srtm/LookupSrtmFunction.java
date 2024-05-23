@@ -22,6 +22,7 @@ import tim.prune.I18nManager;
 import tim.prune.cmd.EditAltitudeCmd;
 import tim.prune.config.Config;
 import tim.prune.data.DataPoint;
+import tim.prune.data.NumberUtils;
 import tim.prune.data.Track;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.function.edit.PointAltitudeEdit;
@@ -371,7 +372,10 @@ public class LookupSrtmFunction extends GenericFunction
 				if (altitude != SrtmSource.VOID_VAL)
 				{
 					// Found an altitude, so create a command for it
-					edits.add(new PointAltitudeEdit(p, String.format("%.3f", altitude), UnitSetLibrary.UNITS_METRES));
+					// (use UK Locale to force a decimal point when rounding the decimal value
+					// instead of using the locale-specific character like comma)
+					String roundedValue = NumberUtils.formatNumberUk(altitude, 3);
+					edits.add(new PointAltitudeEdit(p, roundedValue, UnitSetLibrary.UNITS_METRES));
 				}
 			}
 		}
