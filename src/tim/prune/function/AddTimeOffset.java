@@ -38,6 +38,7 @@ public class AddTimeOffset extends GenericFunction
 	private JRadioButton _addRadio = null, _subtractRadio = null;
 	private WholeNumberField _weekField = null, _dayField = null;
 	private WholeNumberField _hourField = null, _minuteField = null;
+	private WholeNumberField _secondsField = null;
 	private JButton _okButton = null;
 
 
@@ -117,6 +118,9 @@ public class AddTimeOffset extends GenericFunction
 		descPanel.add(makeRightLabel("dialog.addtimeoffset.minutes"));
 		_minuteField = new WholeNumberField(3);
 		descPanel.add(_minuteField);
+		descPanel.add(makeRightLabel("dialog.addtimeoffset.seconds"));
+		_secondsField = new WholeNumberField(3);
+		descPanel.add(_secondsField);
 		mainPanel.add(descPanel);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
 
@@ -126,6 +130,9 @@ public class AddTimeOffset extends GenericFunction
 			public void keyTyped(KeyEvent event) {
 				final boolean isNumber = "1234567890".indexOf(event.getKeyChar()) >= 0;
 				_okButton.setEnabled(isNumber || getOffsetSecs() != 0L);
+				if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
 			}
 		};
 		MouseAdapter mouseListener = new MouseAdapter() {
@@ -137,9 +144,11 @@ public class AddTimeOffset extends GenericFunction
 		_dayField.addKeyListener(keyListener);
 		_hourField.addKeyListener(keyListener);
 		_minuteField.addKeyListener(keyListener);
+		_secondsField.addKeyListener(keyListener);
 		_dayField.addMouseListener(mouseListener);
 		_hourField.addMouseListener(mouseListener);
 		_minuteField.addMouseListener(mouseListener);
+		_secondsField.addMouseListener(mouseListener);
 
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
@@ -173,11 +182,14 @@ public class AddTimeOffset extends GenericFunction
 	 */
 	private long getOffsetSecs()
 	{
-		long offsetSecs = _minuteField.getValue() * 60L
+		long offsetSecs = _secondsField.getValue()
+		  + _minuteField.getValue() * 60L
 		  + _hourField.getValue() * 60L * 60L
 		  + _dayField.getValue() * 60L * 60L * 24L
 		  + _weekField.getValue() * 7L * 60L * 60L * 24L;
-		if (_subtractRadio.isSelected()) {offsetSecs = -offsetSecs;}
+		if (_subtractRadio.isSelected()) {
+			offsetSecs = -offsetSecs;
+		}
 		return offsetSecs;
 	}
 
