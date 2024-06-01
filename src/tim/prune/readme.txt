@@ -1,5 +1,5 @@
-GpsPrune version 24
-===================
+GpsPrune version 24.1
+=====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_24.jar
+   java -jar gpsprune_24.1.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,15 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_24.jar --lang=DE
+   java -jar gpsprune_24.1.jar --lang=DE
 
+
+New with version 24.1
+=====================
+The following fixes were made since version 24:
+  - Allow applying a time offset in seconds, not just minutes, hours, days, weeks (Range -> Add time offset)
+  - Fix SRTM lookup bug when the system locale uses a decimal comma
+  - Treat all altitudes as floating point values, avoid rounding to integer except in details panel
 
 New with version 24
 ===================
