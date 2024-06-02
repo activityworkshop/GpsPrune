@@ -82,6 +82,7 @@ public class SearchOsmPoisFunction extends GenericDownloaderFunction
 			_errorMessage = I18nManager.getText("dialog.osmpois.nonefound");
 		}
 		_statusLabel.setText(_errorMessage == null ? "" : _errorMessage);
+		finishedSearch();
 	}
 
 	/**

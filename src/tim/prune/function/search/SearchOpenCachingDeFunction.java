@@ -71,6 +71,7 @@ public class SearchOpenCachingDeFunction extends GenericDownloaderFunction
 			_errorMessage = I18nManager.getText("dialog.geocaching.nonefound");
 		}
 		_statusLabel.setText(_errorMessage == null ? "" : _errorMessage);
+		finishedSearch();
 	}
 
 	/**

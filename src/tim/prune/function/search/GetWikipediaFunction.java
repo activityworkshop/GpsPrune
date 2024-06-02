@@ -135,5 +135,6 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 				_errorMessage = error;
 			}
 		}
+		finishedSearch();
 	}
 }

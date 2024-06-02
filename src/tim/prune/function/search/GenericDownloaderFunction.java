@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
@@ -52,6 +55,8 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 	private JButton _loadButton = null;
 	/** Show button */
 	private JButton _showButton = null;
+	/** Cancel button */
+	private JButton _cancelButton = null;
 
 
 	/**
@@ -94,6 +99,7 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 
 		// Show dialog
 		_dialog.setVisible(true);
+		_cancelButton.requestFocus();
 	}
 
 
@@ -152,12 +158,14 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		_showButton.setEnabled(false);
 		_showButton.addActionListener(e -> showSelectedWebpage());
 		buttonPanel.add(_showButton);
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(e -> {
-			_cancelled = true;
-			_dialog.dispose();
+		_cancelButton = new JButton(I18nManager.getText("button.cancel"));
+		_cancelButton.addActionListener(e -> cancel());
+		_cancelButton.addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent inE) {
+				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {cancel();}
+			}
 		});
-		buttonPanel.add(cancelButton);
+		buttonPanel.add(_cancelButton);
 		dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 		return dialogPanel;
@@ -200,6 +208,12 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 		_descriptionBox.setText(text);
 	}
 
+	/** Cancel and close the dialog */
+	private void cancel()
+	{
+		_cancelled = true;
+		_dialog.dispose();
+	}
 
 	/**
 	 * Load the selected point(s)
@@ -252,5 +266,10 @@ public abstract class GenericDownloaderFunction extends GenericFunction implemen
 			BrowserLauncher.launchBrowser(url);
 		}
 		// Don't close the dialog
+	}
+
+	/** Respond to the completion of the search from a subclass's separate thread */
+	protected void finishedSearch() {
+		SwingUtilities.invokeLater(() -> _cancelButton.requestFocus());
 	}
 }
