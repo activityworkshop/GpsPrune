@@ -94,6 +94,7 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 			_errorMessage = I18nManager.getText("dialog.wikipedia.nonefound");
 		}
 		_statusLabel.setText(_errorMessage == null ? "" : _errorMessage);
+		finishedSearch();
 	}
 
 	/**

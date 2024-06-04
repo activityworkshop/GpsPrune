@@ -221,7 +221,7 @@ public class ShowFullDetails extends GenericFunction
 		if (point.hasAltitude())
 		{
 			final Unit altUnit = unitSet.getAltitudeUnit();
-			addTextPair(result, "fieldname.altitude", "" + point.getAltitude().getValue(altUnit),
+			addTextPair(result, "fieldname.altitude", point.getAltitude().getLocalStringValue(altUnit),
 				I18nManager.getText(altUnit.getShortnameKey()));
 		}
 		if (point.hasTimestamp())

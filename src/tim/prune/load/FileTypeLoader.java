@@ -104,6 +104,11 @@ public class FileTypeLoader
 				_app.addRecentFile(inSourceInfo.getFile(), isRegularLoad);
 			}
 		}
+		else if (inPointList.isEmpty())
+		{
+			JOptionPane.showMessageDialog(_app.getFrame(), I18nManager.getText("error.load.nopoints"),
+				I18nManager.getText("function.open"), JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
 	/**

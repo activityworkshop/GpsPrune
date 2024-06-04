@@ -46,10 +46,14 @@ public class MapCoords
 			return null;
 		}
 		final Track track = inTrackInfo.getTrack();
-		double centreLat = getMedianValue(track.getLatRange());
-		double centreLon = getMedianValue(track.getLonRange());
+		final double centreLat;
+		final double centreLon;
 		DataPoint selectedPoint = inTrackInfo.getCurrentPoint();
-		if (selectedPoint != null) {
+		if (selectedPoint == null) {
+			centreLat = getMedianValue(track.getLatRange());
+			centreLon = getMedianValue(track.getLonRange());
+		}
+		else {
 			centreLat = selectedPoint.getLatitude().getDouble();
 			centreLon = selectedPoint.getLongitude().getDouble();
 		}

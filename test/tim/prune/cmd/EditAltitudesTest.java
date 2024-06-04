@@ -78,7 +78,7 @@ class EditAltitudesTest
 				new Altitude("3155", UnitSetLibrary.UNITS_FEET));
 		track.appendPoint(point);
 		assertEquals(3155, point.getAltitude().getValue(UnitSetLibrary.UNITS_FEET));
-		assertEquals(961, point.getAltitude().getValue(UnitSetLibrary.UNITS_METRES));
+		assertEquals(962, point.getAltitude().getIntValue(UnitSetLibrary.UNITS_METRES));
 		assertEquals(UnitSetLibrary.UNITS_FEET, point.getAltitude().getUnit());
 
 		// Set using metres
@@ -87,13 +87,13 @@ class EditAltitudesTest
 		TrackInfo info = new TrackInfo(track);
 		assertTrue(command.execute(info));
 		assertEquals(1, track.getNumPoints());
-		assertEquals(2873, point.getAltitude().getValue(UnitSetLibrary.UNITS_FEET));
+		assertEquals(2874, point.getAltitude().getIntValue(UnitSetLibrary.UNITS_FEET));
 		assertEquals(876, point.getAltitude().getValue(UnitSetLibrary.UNITS_METRES));
 		assertEquals(UnitSetLibrary.UNITS_METRES, point.getAltitude().getUnit());
 		// undo
 		assertTrue(command.getInverse().execute(info));
 		assertEquals(3155, point.getAltitude().getValue(UnitSetLibrary.UNITS_FEET));
-		assertEquals(961, point.getAltitude().getValue(UnitSetLibrary.UNITS_METRES));
+		assertEquals(962, point.getAltitude().getIntValue(UnitSetLibrary.UNITS_METRES));
 		assertEquals(UnitSetLibrary.UNITS_FEET, point.getAltitude().getUnit());
 	}
 

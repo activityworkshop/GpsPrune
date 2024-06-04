@@ -46,17 +46,14 @@ public class IntegerRange
 	/**
 	 * @return minimum value, or -1 if none found
 	 */
-	public int getMinimum()
-	{
+	public int getMinimum() {
 		return _min;
 	}
-
 
 	/**
 	 * @return maximum value, or -1 if none found
 	 */
-	public int getMaximum()
-	{
+	public int getMaximum() {
 		return _max;
 	}
 }

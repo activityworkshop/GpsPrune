@@ -73,8 +73,9 @@ public class AverageSelection extends GenericFunction
 			{
 				totalAltitude += currPoint.getAltitude().getValue(altUnit);
 				// Use altitude format of first valid altitude
-				if (altUnit == null)
+				if (altUnit == null) {
 					altUnit = currPoint.getAltitude().getUnit();
+				}
 				numAltitudes++;
 			}
 		}
@@ -83,7 +84,7 @@ public class AverageSelection extends GenericFunction
 		double meanLongitude = firstLongitude + (longitudeDiff / numPoints);
 		Altitude meanAltitude = null;
 		if (numAltitudes > 0) {
-			meanAltitude = new Altitude((int) (totalAltitude / numAltitudes), altUnit);
+			meanAltitude = new Altitude(totalAltitude / numAltitudes, altUnit);
 		}
 
 		DataPoint averagePoint = new DataPoint(Latitude.make(meanLatitude),
