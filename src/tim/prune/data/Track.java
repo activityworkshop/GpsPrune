@@ -511,6 +511,16 @@ public class Track
 	}
 
 	/**
+	 * Get the next track point starting from the given index
+	 * @param inStartIndex index to start looking from
+	 * @param inEndIndex index to stop looking (inclusive)
+	 * @return next track point, or null if end of data reached
+	 */
+	public DataPoint getFirstTrackPointBetween(int inStartIndex, int inEndIndex) {
+		return getNextTrackPoint(inStartIndex, inEndIndex, true);
+	}
+
+	/**
 	 * Get the previous track point starting from the given index
 	 * @param inStartIndex index to start looking from
 	 * @return next track point, or null if end of data reached
