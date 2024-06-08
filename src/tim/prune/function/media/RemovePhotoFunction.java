@@ -41,6 +41,7 @@ public class RemovePhotoFunction extends GenericFunction
 		final Command command;
 		// Photo is selected, see if it has a point or not
 		DataPoint point = currentPhoto.getDataPoint();
+		boolean disconnected = false;
 		switch (shouldDeletePoint(currentPhoto))
 		{
 			default:
@@ -53,6 +54,7 @@ public class RemovePhotoFunction extends GenericFunction
 				command = new CompoundCommand()
 						.addCommand(deleteCommand)
 						.addCommand(new ConnectMediaCmd(point, null, point.getAudio()));
+				disconnected = true;
 				break;
 			case DELETE:
 				command = new CompoundCommand()
@@ -65,6 +67,10 @@ public class RemovePhotoFunction extends GenericFunction
 		command.setDescription(I18nManager.getText("undo.removephoto", currentPhoto.getName()));
 		command.setConfirmText(I18nManager.getText("confirm.media.removed", currentPhoto.getName()));
 		_app.execute(command);
+		// If a photo was removed but not the point, then deselect the photo
+		if (disconnected) {
+			_app.getTrackInfo().selectPhoto(-1);
+		}
 	}
 
 	/**
