@@ -159,8 +159,8 @@ public class ColourerSelectorPanel extends JPanel
 		}
 		if (startColour == null) {startColour = inDefaultColour;}
 		if (endColour   == null) {endColour = makeDefaultEndColour(inDefaultColour);}
-		if (startColour != null) {_startEndPatches[0].setBackground(startColour);}
-		if (endColour != null)   {_startEndPatches[1].setBackground(endColour);}
+		if (startColour != null) {_startEndPatches[0].setColour(startColour);}
+		if (endColour != null)   {_startEndPatches[1].setColour(endColour);}
 		onColourerTypeChanged(); // make sure gui is updated
 	}
 
