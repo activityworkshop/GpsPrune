@@ -253,7 +253,7 @@ public class AboutScreen extends GenericFunction
 			+ "<p>" + I18nManager.getText("dialog.about.summarytext3") + "</p>"
 			+ "<p>" + I18nManager.getText("dialog.about.languages") + " : "
 				+ "afrikaans, catal\u00e0, \u010de\u0161tina, deutsch, english, espa\u00F1ol, fran\u00E7ais,<br>" +
-				" italiano, magyar, nederlands, polski, portugu\u00EAs, rom\u00E2n\u0103, suomi, svenska,<br>" +
+				" italiano, magyar, nederlands, norsk, polski, portugu\u00EAs, rom\u00E2n\u0103, suomi, svenska,<br>" +
 				" \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean),<br>" +
 				" schwiizerd\u00FC\u00FCtsch</p>"
 			+ "<p>" + I18nManager.getText("dialog.about.translatedby") + "</p>";
