@@ -1055,15 +1055,21 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 * @param inX x coordinate of click
 	 * @param inY y coordinate of click
 	 * @param inNewSegment true to start a new segment, false to continue
-	 * @return DataPoint with given coordinates and no altitude
+	 * @return DataPoint with given coordinates and no altitude, or null if values are invalid
 	 */
 	private DataPoint createPointFromClick(int inX, int inY, boolean inNewSegment)
 	{
 		double lat = MapUtils.getLatitudeFromY(_mapPosition.getYFromPixels(inY, getHeight()));
 		double lon = MapUtils.getLongitudeFromX(_mapPosition.getXFromPixels(inX, getWidth()));
-		DataPoint point = new DataPoint(Latitude.make(lat), Longitude.make(lon));
-		point.setSegmentStart(inNewSegment);
-		return point;
+		Coordinate latitude = Latitude.make(lat);
+		Coordinate longitude = Longitude.make(lon);
+		if (latitude != null && longitude != null)
+		{
+			DataPoint point = new DataPoint(Latitude.make(lat), Longitude.make(lon));
+			point.setSegmentStart(inNewSegment);
+			return point;
+		}
+		return null;
 	}
 
 	/**
@@ -1195,7 +1201,7 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 	 */
 	private void insertPoint(DataPoint inPoint, int inInsertIndex)
 	{
-		if (inInsertIndex < -1) {
+		if (inInsertIndex < -1 || inPoint == null) {
 			return;
 		}
 		InsertPointCmd command = new InsertPointCmd(inPoint, inInsertIndex);

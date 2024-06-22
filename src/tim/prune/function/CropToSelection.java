@@ -1,9 +1,13 @@
 package tim.prune.function;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import tim.prune.App;
 import tim.prune.cmd.Command;
+import tim.prune.cmd.PointFlag;
+import tim.prune.data.DataPoint;
+import tim.prune.data.ListUtils;
 import tim.prune.data.Track;
 
 /**
@@ -49,7 +53,13 @@ public class CropToSelection extends DeleteBitOfTrackFunction
 		ArrayList<Integer> indexesToKeep = new ArrayList<>();
 		ArrayList<Integer> indexesToDelete = new ArrayList<>();
 		int numMedia = fillLists(indexesToKeep, indexesToDelete, (i) -> i>=selStart && i<=selEnd);
-		Command command = createCommand(indexesToKeep, indexesToDelete, null, numMedia);
+		List<PointFlag> breakList = null;
+		// Add segment break to the first track point within the selected range
+		DataPoint firstPoint = track.getFirstTrackPointBetween(selStart, selEnd);
+		if (firstPoint != null) {
+			breakList = ListUtils.makeList(new PointFlag(firstPoint, true));
+		}
+		Command command = createCommand(indexesToKeep, indexesToDelete, breakList, numMedia);
 		if (command != null)
 		{
 			Describer undoDescriber = new Describer("undo.deletepoint", "undo.deletepoints");

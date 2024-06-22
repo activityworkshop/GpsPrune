@@ -371,7 +371,7 @@ public class Coordinate
 				value = value.roundToSeconds(numDigits);
 				return "" + value.getWholeDegrees() + " "
 					+ value.getWholeMinutes() + " "
-					+ value.getWholeSeconds() + getLocalDecimalChar()
+					+ value.getWholeSeconds() + '.' // force decimal dot always, don't use local char
 					+ value.getFractionSeconds();
 
 			case JUST_CARDINAL:
@@ -386,7 +386,8 @@ public class Coordinate
 	/** @return decimal character used by local number formatter */
 	private static char getLocalDecimalChar()
 	{
-		if (_localDecimalChar == 0) {
+		if (_localDecimalChar == 0)
+		{
 			NumberFormat format = _coordFormatters.getLocalFormatter(3);
 			if (format instanceof DecimalFormat) {
 				_localDecimalChar = ((DecimalFormat) format).getDecimalFormatSymbols().getDecimalSeparator();

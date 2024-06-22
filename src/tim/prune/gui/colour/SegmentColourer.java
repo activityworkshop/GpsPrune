@@ -42,7 +42,7 @@ public class SegmentColourer extends DiscretePointColourer
 			DataPoint p = track.getPoint(i);
 			if (p != null && !p.isWaypoint())
 			{
-				if (p.getSegmentStart()) {
+				if (p.getSegmentStart() || c < 0) {
 					c++;
 				}
 				setColour(i, c);
