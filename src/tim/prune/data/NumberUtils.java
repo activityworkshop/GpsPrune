@@ -3,6 +3,7 @@ package tim.prune.data;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Locale;
 
 /**
@@ -79,8 +80,74 @@ public abstract class NumberUtils
 	 * @param inNumber double number to format
 	 * @param inPattern example string showing decimals
 	 */
-	public static String formatNumberLocalToMatch(double inNumber, String inPattern)
-	{
+	public static String formatNumberLocalToMatch(double inNumber, String inPattern) {
 		return formatNumberLocal(inNumber, numberOfDecimalPlaces(inPattern));
+	}
+
+	/**
+	 * @param inValue string value, can be null or empty
+	 * @return value extracted using either java formatting or locale formatting
+	 */
+	static Double parseDoubleUsingLocale(String inValue)
+	{
+		final String trimmedValue = (inValue == null ? "" : inValue.trim());
+		if (trimmedValue.isEmpty()) {
+			return null;
+		}
+		// We have some contents, so try parsing using the regular java formatting (decimal dot)
+		try {
+			return Double.parseDouble(trimmedValue);
+		}
+		catch (NumberFormatException ignored) {
+		}
+
+		// That threw an exception, so try with the system's locale instead (for example, using decimal comma)
+		if (isLocalDecimal(inValue))
+		{
+			try
+			{
+				NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+				return nf.parse(trimmedValue).doubleValue();
+			}
+			catch (ParseException ignored) {
+			}
+		}
+		// Neither worked
+		return null;
+	}
+
+	/** @return true if the given string looks like a local decimal value */
+	private static boolean isLocalDecimal(String inValue)
+	{
+		if (inValue == null || inValue.isEmpty()) {
+			return false;
+		}
+		String allowedChars = "-0123456789";
+		NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+		if (nf instanceof DecimalFormat) {
+			allowedChars += ((DecimalFormat) nf).getDecimalFormatSymbols().getDecimalSeparator();
+		}
+		for (int i=0; i<inValue.length(); i++)
+		{
+			if (allowedChars.indexOf(inValue.charAt(i)) < 0) {
+				return false; // another character found
+			}
+		}
+		// only contains allowed characters
+		return true;
+	}
+
+	/** @return String to use between numbers, depending on the decimal character */
+	public static String getValueSeparator()
+	{
+		NumberFormat nf = NumberFormat.getInstance(Locale.getDefault());
+		if (nf instanceof DecimalFormat)
+		{
+			char decimalChar = ((DecimalFormat) nf).getDecimalFormatSymbols().getDecimalSeparator();
+			if (decimalChar == ',') {
+				return "; ";
+			}
+		}
+		return ", ";
 	}
 }

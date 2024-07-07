@@ -1,5 +1,7 @@
 package tim.prune.data;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -48,5 +50,37 @@ public class NumberUtilsTest
 		Assertions.assertEquals("103", NumberUtils.formatNumberLocalToMatch(102.51, "5"));
 		// Depends on local formatting
 		Assertions.assertEquals("123.4", NumberUtils.formatNumberLocalToMatch(123.425, "-18.1"));
+	}
+
+	@Test
+	public void testParsingNonsense()
+	{
+		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale(null));
+		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale(""));
+		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("    "));
+		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("abcde"));
+	}
+
+	@Test
+	public void testParsingNormal()
+	{
+		Assertions.assertEquals(11.0, NumberUtils.parseDoubleUsingLocale("11"));
+		Assertions.assertEquals(-211.0, NumberUtils.parseDoubleUsingLocale("-211"));
+		Assertions.assertEquals(11.5, NumberUtils.parseDoubleUsingLocale("11.5"));
+	}
+
+	@Test
+	public void testParsingLocal()
+	{
+		// Using an english Locale, the comma isn't recognised because the decimal character is dot
+		Locale.setDefault(Locale.ENGLISH);
+		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("11,5"));
+
+		// With a german locale, both the dot and the comma are recognised
+		Locale.setDefault(Locale.GERMAN);
+		Assertions.assertEquals(11.5, NumberUtils.parseDoubleUsingLocale("11.5"));
+		Assertions.assertEquals(-71.25, NumberUtils.parseDoubleUsingLocale("-71,25"));
+		// Not allowed because of the extra apostrophe
+		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("4'111,5"));
 	}
 }
