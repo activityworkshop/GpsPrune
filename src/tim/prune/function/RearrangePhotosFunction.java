@@ -77,7 +77,7 @@ public class RearrangePhotosFunction extends RearrangeFunction
 				.addCommand(RearrangePointsCmd.from(result))
 				.addCommand(segmentCommand);
 			command.setDescription(getName());
-			command.setConfirmText("confirm.rearrangephotos");
+			command.setConfirmText(I18nManager.getText("confirm.rearrangephotos"));
 			_app.execute(command);
 		}
 	}

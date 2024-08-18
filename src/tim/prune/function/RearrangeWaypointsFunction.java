@@ -78,7 +78,7 @@ public class RearrangeWaypointsFunction extends RearrangeFunction
 		{
 			RearrangePointsCmd command = RearrangePointsCmd.from(result);
 			command.setDescription(getName());
-			command.setConfirmText("confirm.rearrangewaypoints");
+			command.setConfirmText(I18nManager.getText("confirm.rearrangewaypoints"));
 			_app.execute(command);
 		}
 	}
