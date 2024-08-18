@@ -490,7 +490,12 @@ public class DataPoint
 		Coordinate latitude = Latitude.interpolate(_latitude, inEndPoint.getLatitude(), inIndex, inNumPoints);
 		Coordinate longitude = Longitude.interpolate(_longitude, inEndPoint.getLongitude(), inIndex, inNumPoints);
 		Altitude altitude = Altitude.interpolate(_altitude, inEndPoint.getAltitude(), inIndex, inNumPoints);
-		return new DataPoint(latitude, longitude, altitude);
+		DataPoint point = new DataPoint(latitude, longitude, altitude);
+		if (hasTimestamp() && inEndPoint.hasTimestamp()) {
+			String value = TimestampUtc.interpolate(getTimestamp(), inEndPoint.getTimestamp(), inIndex, inNumPoints);
+			point.setFieldValue(Field.TIMESTAMP, value, false);
+		}
+		return point;
 	}
 
 	/**

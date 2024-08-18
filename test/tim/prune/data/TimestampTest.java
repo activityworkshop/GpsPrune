@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.TimeZone;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -72,5 +73,30 @@ class TimestampTest
 		assertEquals(earlier.getMillisecondsSince(later), -2000L);
 		assertFalse(earlier.isAfter(later));
 		assertTrue(earlier.isBefore(later));
+	}
+
+	@Test
+	void testInterpolateTimestamps_notvalid()
+	{
+		Timestamp first = new TimestampUtc(1611800L);
+		Timestamp second = new TimestampUtc("");
+		Assertions.assertEquals("", TimestampUtc.interpolate(first, second, 0, 1));
+		Assertions.assertEquals("", TimestampUtc.interpolate(first, null, 0, 1));
+		// Also fails if second timestamp is before the first
+		second = new TimestampUtc(1611700L);
+		Assertions.assertEquals("", TimestampUtc.interpolate(first, second, 0, 1));
+	}
+
+	@Test
+	void testInterpolateTimestamps_halfway()
+	{
+		Timestamp first = new TimestampUtc(1611800L);
+		Timestamp second = new TimestampUtc(1611800L);
+		// Equal timestamps are allowed, then halfway is the same too
+		Assertions.assertEquals("1611800", TimestampUtc.interpolate(first, second, 0, 1));
+
+		// Halfway between the two timestamps
+		second = new TimestampUtc(1612800L);
+		Assertions.assertEquals("1612300", TimestampUtc.interpolate(first, second, 0, 1));
 	}
 }

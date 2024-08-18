@@ -25,6 +25,7 @@ import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.NumberUtils;
 import tim.prune.data.Photo;
 import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Selection;
@@ -215,7 +216,7 @@ public class ShowFullDetails extends GenericFunction
 		final String lonStr = CoordDisplay.makeCoordinateLabel(point.getLongitude(), coordDisplayFormat);
 		addTextPair(result, "fieldname.latitude", latStr);
 		addTextPair(result, "fieldname.longitude", lonStr);
-		addTextPair(result, "fieldname.coordinates", latStr + ", " + lonStr);
+		addTextPair(result, "fieldname.coordinates", latStr + NumberUtils.getValueSeparator() + lonStr);
 
 		UnitSet unitSet = getConfig().getUnitSet();
 		if (point.hasAltitude())

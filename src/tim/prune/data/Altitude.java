@@ -45,20 +45,10 @@ public class Altitude
 	{
 		_stringValue = inValue;
 		_unit = inUnit;
-		if (inValue == null || inValue.equals("")) {
-			_valid = false;
-		}
-		else
-		{
-			try
-			{
-				_value = Double.parseDouble(inValue.trim());
-				_valid = true;
-			}
-			catch (NumberFormatException nfe) {
-				_valid = false;
-			}
-		}
+		final String trimmedValue = (inValue == null ? "" : inValue.trim());
+		final Double result = NumberUtils.parseDoubleUsingLocale(trimmedValue);
+		_value = (result != null ? result : 0.0);
+		_valid = (result != null);
 	}
 
 	/**
