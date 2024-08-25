@@ -16,6 +16,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.MediaList;
 import tim.prune.data.Photo;
 import tim.prune.data.TimeDifference;
+import tim.prune.function.PointUtils;
 
 
 /**
@@ -165,7 +166,7 @@ public class PhotoCorrelator extends Correlator
 				else
 				{
 					// photo time falls between two points, so need to interpolate new one
-					DataPoint pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
+					DataPoint pointToAdd = PointUtils.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
 					pointToAdd.setSegmentStart(true);
 					inPointsToCreate.add(pointToAdd);
 					inPointPhotoPairs.add(new PointAndMedia(pointToAdd, photoToLink, null));
