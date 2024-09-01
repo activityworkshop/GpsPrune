@@ -149,6 +149,11 @@ public class DataPoint
 		_timestamp = new TimestampUtc(null);
 	}
 
+	/** Simplified constructor just giving raw values for latitude and longitude */
+	public DataPoint(double inLatitude, double inLongitude) {
+		this(Latitude.make(inLatitude), Longitude.make(inLongitude), null);
+	}
+
 	/**
 	 * Get the value for the given field
 	 * @param inField field to interrogate
@@ -476,45 +481,6 @@ public class DataPoint
 			}
 		}
 		return mediaName;
-	}
-
-	/**
-	 * Interpolate a point between this one and the given one
-	 * @param inEndPoint end point of interpolation
-	 * @param inIndex the index of this interpolation (0 to inNumPoints-1)
-	 * @param inNumPoints number of points to generate
-	 * @return the interpolated DataPoint
-	 */
-	public DataPoint interpolate(DataPoint inEndPoint, int inIndex, int inNumPoints)
-	{
-		Coordinate latitude = Latitude.interpolate(_latitude, inEndPoint.getLatitude(), inIndex, inNumPoints);
-		Coordinate longitude = Longitude.interpolate(_longitude, inEndPoint.getLongitude(), inIndex, inNumPoints);
-		Altitude altitude = Altitude.interpolate(_altitude, inEndPoint.getAltitude(), inIndex, inNumPoints);
-		DataPoint point = new DataPoint(latitude, longitude, altitude);
-		if (hasTimestamp() && inEndPoint.hasTimestamp()) {
-			String value = TimestampUtc.interpolate(getTimestamp(), inEndPoint.getTimestamp(), inIndex, inNumPoints);
-			point.setFieldValue(Field.TIMESTAMP, value, false);
-		}
-		return point;
-	}
-
-	/**
-	 * Interpolate between the two given points
-	 * @param inStartPoint start point
-	 * @param inEndPoint end point
-	 * @param inFrac fractional distance from first point (0.0 to 1.0)
-	 * @return new DataPoint object between two given ones
-	 */
-	public static DataPoint interpolate(DataPoint inStartPoint, DataPoint inEndPoint, double inFrac)
-	{
-		if (inStartPoint == null || inEndPoint == null) {
-			return null;
-		}
-		return new DataPoint(
-			Latitude.interpolate(inStartPoint.getLatitude(), inEndPoint.getLatitude(), inFrac),
-			Longitude.interpolate(inStartPoint.getLongitude(), inEndPoint.getLongitude(), inFrac),
-			Altitude.interpolate(inStartPoint.getAltitude(), inEndPoint.getAltitude(), inFrac)
-		);
 	}
 
 	/**

@@ -57,8 +57,8 @@ public class InterpolateFunction extends SingleNumericParameterFunction
 			int answer = JOptionPane.showConfirmDialog(_parentFrame,
 				I18nManager.getText("dialog.interpolate.betweenwaypoints"),
 				getName(), JOptionPane.YES_NO_OPTION);
-			if (answer == JOptionPane.NO_OPTION) {
-				// user said no, so nothing to do
+			if (answer != JOptionPane.YES_OPTION) {
+				// user said no (or cancel), so nothing to do
 				return;
 			}
 			betweenWaypoints = true;
@@ -67,8 +67,11 @@ public class InterpolateFunction extends SingleNumericParameterFunction
 		final int numToAdd = inParam;
 		final Track track = _app.getTrackInfo().getTrack();
 		InsertVariousPointsCmd command = makeCommand(track, startIndex, endIndex, numToAdd, betweenWaypoints);
-		if (_app.execute(command)) {
-			_app.getTrackInfo().getSelection().selectRange(startIndex, endIndex + command.getNumInserted());
+		if (_app.execute(command))
+		{
+			final int lastIndex = endIndex + command.getNumInserted();
+			_app.getTrackInfo().getSelection().selectRange(startIndex, lastIndex);
+			_app.getTrackInfo().selectPoint(lastIndex);
 		}
 	}
 
@@ -99,8 +102,13 @@ public class InterpolateFunction extends SingleNumericParameterFunction
 				|| (!currPoint.isWaypoint() && !prevPoint.isWaypoint() && !currPoint.getSegmentStart());
 			if (interpolate)
 			{
-				for (int j=0; j<inNumToAdd; j++) {
-					insertedPoints.add(prevPoint.interpolate(currPoint, j, inNumToAdd));
+				for (int j=0; j<inNumToAdd; j++)
+				{
+					DataPoint newPoint = PointUtils.interpolate(prevPoint, currPoint, j, inNumToAdd);
+					if (j == 0 && inBetweenWaypoints) {
+						newPoint.setSegmentStart(true);
+					}
+					insertedPoints.add(newPoint);
 					indexes.add(inTrack.getNumPoints() + insertedPoints.size() - 1);
 				}
 			}

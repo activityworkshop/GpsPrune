@@ -2,7 +2,6 @@ package tim.prune.gui.map;
 
 import java.util.ArrayList;
 
-import tim.prune.config.Config;
 
 /**
  * Class to hold a library for all the map sources
@@ -16,14 +15,14 @@ public abstract class MapSourceLibrary
 	private static int _numFixedSources = 0;
 
 	/**
-	 * @param inConfig config object
+	 * @param inConfigString string describing extra sources
 	 */
-	public static void init(Config inConfig)
+	public static void init(String inConfigString)
 	{
 		_sourceList = new ArrayList<>();
 		addFixedSources();
 		_numFixedSources = _sourceList.size();
-		addConfigSources(inConfig);
+		addConfigSources(inConfigString);
 	}
 
 	/** Private constructor to block instantiation */
@@ -53,24 +52,23 @@ public abstract class MapSourceLibrary
 
 	/**
 	 * Add custom sources from Config to the library
-	 * @param inConfig config object
+	 * @param inConfigString string describing custom sources
 	 */
-	private static void addConfigSources(Config inConfig)
+	private static void addConfigSources(String inConfigString)
 	{
-		String configString = inConfig.getConfigString(Config.KEY_MAPSOURCE_LIST);
-		if (configString != null && configString.length() > 10)
+		if (inConfigString != null && inConfigString.length() > 10)
 		{
 			// Loop over sources in string, separated by vertical bars
-			int splitPos = configString.indexOf('|');
+			int splitPos = inConfigString.indexOf('|');
 			while (splitPos > 0)
 			{
-				String sourceString = configString.substring(0, splitPos);
+				String sourceString = inConfigString.substring(0, splitPos);
 				MapSource source = OsmMapSource.fromConfig(sourceString);
 				if (source != null) {
 					_sourceList.add(source);
 				}
-				configString = configString.substring(splitPos+1);
-				splitPos = configString.indexOf('|');
+				inConfigString = inConfigString.substring(splitPos+1);
+				splitPos = inConfigString.indexOf('|');
 			}
 		}
 	}

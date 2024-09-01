@@ -44,34 +44,22 @@ public class WizardLayout extends CardLayout
 	/**
 	 * Go to the first card
 	 */
-	public void showFirstCard()
-	{
-		first(_panel);
-		_currentCard = 0;
+	public void showFirstCard() {
+		showCard(0);
 	}
 
 	/**
 	 * Go to the next card
 	 */
-	public void showNextCard()
-	{
-		if (_currentCard < (_numCards-1))
-		{
-			next(_panel);
-			_currentCard++;
-		}
+	public void showNextCard() {
+		showCard(_currentCard + 1);
 	}
 
 	/**
 	 * Go to the previous card
 	 */
-	public void showPreviousCard()
-	{
-		if (_currentCard > 0)
-		{
-			previous(_panel);
-			_currentCard--;
-		}
+	public void showPreviousCard() {
+		showCard(_currentCard - 1);
 	}
 
 	/**
