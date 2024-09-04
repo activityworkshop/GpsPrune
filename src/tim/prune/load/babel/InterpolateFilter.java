@@ -71,8 +71,8 @@ public final class InterpolateFilter extends FilterDefinition
 	 */
 	public boolean isFilterValid()
 	{
-		final boolean distGiven = _distField.getText() != null && _distField.getText().trim().length() > 0;
-		final boolean timeGiven = _secondsField.getText() != null && _secondsField.getText().trim().length() > 0;
+		final boolean distGiven = !_distField.isEmpty();
+		final boolean timeGiven = !_secondsField.isEmpty();
 		if ((!distGiven && !timeGiven) || (distGiven && timeGiven)) {
 			return false; // either one or the other, not both
 		}

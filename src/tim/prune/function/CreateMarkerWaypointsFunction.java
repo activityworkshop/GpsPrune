@@ -150,7 +150,7 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 			final double valueBeforeBreak = (m * inLimit) - inPrevValue;
 			final double valueAfterBreak = inCurrValue - (m * inLimit);
 			final double fractionFromPrev = valueBeforeBreak / (valueBeforeBreak + valueAfterBreak);
-			DataPoint marker = DataPoint.interpolate(inPrevPoint, inCurrPoint, fractionFromPrev);
+			DataPoint marker = PointUtils.interpolate(inPrevPoint, inCurrPoint, fractionFromPrev);
 			marker.setWaypointName(createLimitDescription(m));
 			_pointsToAdd.add(marker);
 		}
@@ -240,7 +240,7 @@ public class CreateMarkerWaypointsFunction extends DistanceTimeLimitFunction
 			final double valueBeforeBreak = inTargetValue - inPrevValue;
 			final double valueAfterBreak = inCurrValue - inTargetValue;
 			final double fractionFromPrev = valueBeforeBreak / (valueBeforeBreak + valueAfterBreak);
-			DataPoint marker = DataPoint.interpolate(inPrevPoint, inCurrPoint, fractionFromPrev);
+			DataPoint marker = PointUtils.interpolate(inPrevPoint, inCurrPoint, fractionFromPrev);
 			marker.setWaypointName(createHalfwayName(inType));
 			_pointsToAdd.add(marker);
 			return true;

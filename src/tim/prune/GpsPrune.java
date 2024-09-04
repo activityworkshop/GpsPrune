@@ -29,6 +29,7 @@ import tim.prune.gui.SidebarController;
 import tim.prune.gui.StatusBar;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.map.MapCanvas;
+import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.gui.profile.ProfileChart;
 
 /**
@@ -41,9 +42,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "24.3";
+	public static final String VERSION_NUMBER = "24.4";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "418";
+	public static final String BUILD_NUMBER = "420";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -127,12 +128,16 @@ public class GpsPrune
 			// Make sure Config holds chosen language
 			config.setConfigString(Config.KEY_LANGUAGE_CODE, localeCode);
 		}
-		else {
+		else
+		{
 			// Set locale according to Config's language property
 			String configLang = config.getConfigString(Config.KEY_LANGUAGE_CODE);
-			if (configLang != null) {
+			if (configLang != null)
+			{
 				Locale configLocale = getLanguage(configLang);
-				if (configLocale != null) {locale = configLocale;}
+				if (configLocale != null) {
+					locale = configLocale;
+				}
 			}
 		}
 		I18nManager.init(locale);
@@ -160,12 +165,37 @@ public class GpsPrune
 		}
 		catch (Exception e) {}
 
+		setupMaps(config);
+
 		// Set up the window and go
 		launch(config, dataFiles);
 
 		if (migratedConfigFile != null) {
 			SwingUtilities.invokeLater(() -> new MigrateConfig(APP, migratedConfigFile).begin());
 		}
+	}
+
+	/** Use the Config to initialise the MapSourceLibrary with the custom sources */
+	private static void setupMaps(Config inConfig)
+	{
+		MapSourceLibrary.init(inConfig.getConfigString(Config.KEY_MAPSOURCE_LIST));
+
+		// Adjust the index of the selected map
+		// (only required if config was loaded from a previous version of GpsPrune)
+		int sourceNum = inConfig.getConfigInt(Config.KEY_MAPSOURCE_INDEX);
+		int prevNumFixed = inConfig.getConfigInt(Config.KEY_NUM_FIXED_MAPS);
+		// Number of fixed maps not specified in version <=13, default to 6
+		if (prevNumFixed == 0) {
+			prevNumFixed = 6;
+		}
+		int currNumFixed = MapSourceLibrary.getNumFixedSources();
+		// Only need to do something if the number has changed
+		if (currNumFixed != prevNumFixed && (sourceNum >= prevNumFixed || sourceNum >= currNumFixed))
+		{
+			sourceNum += (currNumFixed - prevNumFixed);
+			inConfig.setConfigInt(Config.KEY_MAPSOURCE_INDEX, sourceNum);
+		}
+		inConfig.setConfigInt(Config.KEY_NUM_FIXED_MAPS, currNumFixed);
 	}
 
 

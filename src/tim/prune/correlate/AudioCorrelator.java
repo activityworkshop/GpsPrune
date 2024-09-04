@@ -22,6 +22,7 @@ import tim.prune.data.MediaObject;
 import tim.prune.data.TimeDifference;
 import tim.prune.data.Timestamp;
 import tim.prune.data.TimestampUtc;
+import tim.prune.function.PointUtils;
 
 /**
  * Class to manage the automatic correlation of audio clips to points
@@ -236,7 +237,7 @@ public class AudioCorrelator extends Correlator
 				else
 				{
 					// audio time falls between two points, so need to interpolate new one
-					DataPoint pointToAdd = DataPoint.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
+					DataPoint pointToAdd = PointUtils.interpolate(pair.getPointBefore(), pair.getPointAfter(), pair.getFraction());
 					pointToAdd.setSegmentStart(true);
 					inPointsToCreate.add(pointToAdd);
 					inPointAudioPairs.add(new PointAndMedia(pointToAdd, null, audioToLink));

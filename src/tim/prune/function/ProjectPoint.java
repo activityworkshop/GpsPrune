@@ -22,8 +22,6 @@ import tim.prune.I18nManager;
 import tim.prune.cmd.InsertPointCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
-import tim.prune.data.Latitude;
-import tim.prune.data.Longitude;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.DecimalNumberField;
@@ -186,20 +184,10 @@ public class ProjectPoint extends GenericFunction
 		DataPoint currPoint = _app.getTrackInfo().getCurrentPoint();
 		Unit distUnit = _distanceIsMetric ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET;
 		final double projectRads = Distance.convertDistanceToRadians(_distanceField.getValue(), distUnit);
-		final double origLatRads = Math.toRadians(currPoint.getLatitude().getDouble());
-		final double origLonRads = Math.toRadians(currPoint.getLongitude().getDouble());
 		final double bearingRads = Math.toRadians(_bearingField.getValue());
 
-		double lat2 = Math.asin(Math.sin(origLatRads) * Math.cos(projectRads)
-			+ Math.cos(origLatRads) * Math.sin(projectRads) * Math.cos(bearingRads));
-		double lon2 = origLonRads + Math.atan2(Math.sin(bearingRads) * Math.sin(projectRads) * Math.cos(origLatRads),
-			Math.cos(projectRads) - Math.sin(origLatRads) * Math.sin(lat2));
-
-		double finalLatDeg = Math.toDegrees(lat2);
-		double finalLonDeg = Math.toDegrees(lon2);
-
 		// Create point and append to track
-		DataPoint point = new DataPoint(Latitude.make(finalLatDeg), Longitude.make(finalLonDeg));
+		DataPoint point = PointUtils.projectPoint(currPoint, bearingRads, projectRads);
 		point.setWaypointName(_nameField.getText());
 		point.setSegmentStart(true);
 

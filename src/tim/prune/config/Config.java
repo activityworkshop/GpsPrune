@@ -10,7 +10,6 @@ import tim.prune.data.UnitSet;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.gui.colour.ColourerFactory;
 import tim.prune.gui.colour.PointColourer;
-import tim.prune.gui.map.MapSourceLibrary;
 
 
 /**
@@ -152,8 +151,6 @@ public class Config
 		_pointColourer = ColourerFactory.createColourer(_configValues.getProperty(KEY_POINT_COLOURER));
 		_recentFiles = new RecentFileList(_configValues.getProperty(KEY_RECENT_FILES));
 		_unitSet = UnitSetLibrary.getUnitSet(_configValues.getProperty(KEY_UNITSET_KEY));
-		// Adjust map source index if necessary
-		adjustSelectedMap();
 		// Reset coord display format
 		setConfigString(KEY_COORD_DISPLAY_FORMAT, "NONE");
 
@@ -194,26 +191,6 @@ public class Config
 		props.put(KEY_ICONS_DOUBLE_SIZE, "0"); // regular size by default
 		props.put(KEY_ASKED_ABOUT_CONFIG_MIGRATION, "0"); // not asked
 		return props;
-	}
-
-	/**
-	 * Adjust the index of the selected map
-	 * (only required if config was loaded from a previous version of GpsPrune)
-	 */
-	private void adjustSelectedMap()
-	{
-		int sourceNum = getConfigInt(Config.KEY_MAPSOURCE_INDEX);
-		int prevNumFixed = getConfigInt(Config.KEY_NUM_FIXED_MAPS);
-		// Number of fixed maps not specified in version <=13, default to 6
-		if (prevNumFixed == 0) prevNumFixed = 6;
-		int currNumFixed = MapSourceLibrary.getNumFixedSources();
-		// Only need to do something if the number has changed
-		if (currNumFixed != prevNumFixed && (sourceNum >= prevNumFixed || sourceNum >= currNumFixed))
-		{
-			sourceNum += (currNumFixed - prevNumFixed);
-			setConfigInt(Config.KEY_MAPSOURCE_INDEX, sourceNum);
-		}
-		setConfigInt(Config.KEY_NUM_FIXED_MAPS, currNumFixed);
 	}
 
 	/**

@@ -21,7 +21,6 @@ import tim.prune.gui.UndoManager;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.colour.ColourerCaretaker;
 import tim.prune.gui.colour.PointColourer;
-import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.load.FileLoader;
 import tim.prune.load.ItemToLoad;
 import tim.prune.load.JpegLoader;
@@ -75,7 +74,6 @@ public class App
 		_colCaretaker = new ColourerCaretaker(this);
 		UpdateMessageBroker.addSubscriber(_colCaretaker);
 		_colCaretaker.setColourer(_config.getPointColourer());
-		MapSourceLibrary.init(_config);
 	}
 
 
