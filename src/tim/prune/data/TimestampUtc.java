@@ -383,6 +383,23 @@ public class TimestampUtc extends Timestamp
 		return "" + middleMillis;
 	}
 
+	/** @return a string describing the interpolated timestamp between two existing ones */
+	public static String interpolate(Timestamp inStartStamp, Timestamp inEndStamp, double inFrac)
+	{
+		if (inStartStamp == null || !inStartStamp.isValid()
+			|| inEndStamp == null || !inEndStamp.isValid()
+			|| inEndStamp.isBefore(inStartStamp))
+		{
+			return "";
+		}
+		TimeZone utcZone = TimeZone.getTimeZone("UTC");
+		final long startMillis = inStartStamp.getMilliseconds(utcZone);
+		final long endMillis = inEndStamp.getMilliseconds(utcZone);
+		final long middleMillis = startMillis + (long) (inFrac * (endMillis - startMillis));
+		TimestampUtc result = new TimestampUtc(middleMillis);
+		return result.getText(Format.ISO8601, utcZone);
+	}
+
 	/**
 	 * Utility method for formatting dates / times
 	 * @param inFormat formatter object

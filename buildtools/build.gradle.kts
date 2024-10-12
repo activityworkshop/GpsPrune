@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "tim.prune"
-version = 24.4
+version = 24.5
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
