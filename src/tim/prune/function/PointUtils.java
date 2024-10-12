@@ -33,11 +33,17 @@ public abstract class PointUtils
 		if (inStartPoint == null || inEndPoint == null) {
 			return null;
 		}
-		return new DataPoint(
+		DataPoint result = new DataPoint(
 				Latitude.interpolate(inStartPoint.getLatitude(), inEndPoint.getLatitude(), inFrac),
 				Longitude.interpolate(inStartPoint.getLongitude(), inEndPoint.getLongitude(), inFrac),
 				Altitude.interpolate(inStartPoint.getAltitude(), inEndPoint.getAltitude(), inFrac)
 		);
+		if (inStartPoint.hasTimestamp() && inEndPoint.hasTimestamp())
+		{
+			String value = TimestampUtc.interpolate(inStartPoint.getTimestamp(), inEndPoint.getTimestamp(), inFrac);
+			result.setFieldValue(Field.TIMESTAMP, value, false);
+		}
+		return result;
 	}
 
 	/**

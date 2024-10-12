@@ -80,23 +80,24 @@ class TimestampTest
 	{
 		Timestamp first = new TimestampUtc(1611800L);
 		Timestamp second = new TimestampUtc("");
-		Assertions.assertEquals("", TimestampUtc.interpolate(first, second, 0, 1));
-		Assertions.assertEquals("", TimestampUtc.interpolate(first, null, 0, 1));
+		Assertions.assertEquals("", TimestampUtc.interpolate(first, second, 0.5));
+		Assertions.assertEquals("", TimestampUtc.interpolate(first, null, 0.5));
 		// Also fails if second timestamp is before the first
 		second = new TimestampUtc(1611700L);
-		Assertions.assertEquals("", TimestampUtc.interpolate(first, second, 0, 1));
+		Assertions.assertEquals("", TimestampUtc.interpolate(first, second, 0.5));
 	}
 
 	@Test
 	void testInterpolateTimestamps_halfway()
 	{
-		Timestamp first = new TimestampUtc(1611800L);
-		Timestamp second = new TimestampUtc(1611800L);
+		final String timestampString = "1970-01-01T00:26:51.800Z";
+		Timestamp first = new TimestampUtc(timestampString);
+		Timestamp second = new TimestampUtc(timestampString);
 		// Equal timestamps are allowed, then halfway is the same too
-		Assertions.assertEquals("1611800", TimestampUtc.interpolate(first, second, 0, 1));
+		Assertions.assertEquals(timestampString, TimestampUtc.interpolate(first, second, 0.5));
 
 		// Halfway between the two timestamps
-		second = new TimestampUtc(1612800L);
-		Assertions.assertEquals("1612300", TimestampUtc.interpolate(first, second, 0, 1));
+		second = new TimestampUtc("1970-01-01T00:28:51.800Z");
+		Assertions.assertEquals("1970-01-01T00:27:51.800Z", TimestampUtc.interpolate(first, second, 0.5));
 	}
 }
