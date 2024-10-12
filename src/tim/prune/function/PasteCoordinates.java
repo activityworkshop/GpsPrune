@@ -156,7 +156,7 @@ public class PasteCoordinates extends GenericFunction
 	{
 		String text = _coordField.getText();
 		_okButton.setEnabled(text != null && text.length() > 6
-			&& (text.indexOf(' ') >= 0 || text.indexOf(',') >= 0));
+			&& (text.indexOf(' ') > 0 || text.indexOf(',') > 0) || text.indexOf(';') > 0);
 	}
 
 	/**
