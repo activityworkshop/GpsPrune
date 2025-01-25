@@ -16,9 +16,9 @@ public abstract class ProfileDataColourer extends ContinuousPointColourer
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
 	 */
-	public ProfileDataColourer(Color inStartColour, Color inEndColour)
+	public ProfileDataColourer(Color inStartColour, Color inEndColour, boolean inWideHues)
 	{
-		super(inStartColour, inEndColour);
+		super(inStartColour, inEndColour, inWideHues);
 	}
 
 	/**

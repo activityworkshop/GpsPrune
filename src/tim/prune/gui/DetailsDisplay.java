@@ -1,7 +1,6 @@
 package tim.prune.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -124,8 +123,7 @@ public class DetailsDisplay extends GenericDisplay
 		_config = inApp.getConfig();
 		setLayout(new BorderLayout());
 
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+		BoxPanel mainPanel = BoxPanel.create();
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 		Font biggerFont = new JLabel().getFont();
 		biggerFont = biggerFont.deriveFont(Font.BOLD, biggerFont.getSize2D() + 2.0f);
@@ -158,7 +156,6 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_typeLabel);
 		_filenameLabel = new JLabel("");
 		pointDetailsPanel.add(_filenameLabel);
-		pointDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// range details panel
 		JPanel rangeDetailsPanel = makeDetailsPanel("details.rangedetails", biggerFont);
@@ -174,7 +171,6 @@ public class DetailsDisplay extends GenericDisplay
 		rangeDetailsPanel.add(_altRangeLabel);
 		_updownLabel = new JLabel("");
 		rangeDetailsPanel.add(_updownLabel);
-		rangeDetailsPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		// photo details panel
 		_photoDetailsPanel = makeDetailsPanel("details.photodetails", biggerFont);
@@ -203,7 +199,6 @@ public class DetailsDisplay extends GenericDisplay
 		_rotationButtons.add(rotRight);
 		_rotationButtons.add(Box.createHorizontalStrut(10));
 		_rotationButtons.add(popup);
-		_rotationButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_rotationButtons.setVisible(false);
 		_photoDetailsPanel.add(_rotationButtons);
 		_photoDetailsPanel.setVisible(false);
@@ -233,7 +228,6 @@ public class DetailsDisplay extends GenericDisplay
 		_playAudioPanel.add(playAudio);
 		JButton stopAudio = makeRotateButton(iconManager, IconManager.CONTROL_STOP, FunctionLibrary.FUNCTION_STOP_AUDIO);
 		_playAudioPanel.add(stopAudio);
-		_playAudioPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_playAudioPanel.setVisible(false);
 		_audioDetailsPanel.add(_playAudioPanel);
 		_audioDetailsPanel.setVisible(false);
@@ -251,19 +245,15 @@ public class DetailsDisplay extends GenericDisplay
 		add(mainPanel, BorderLayout.NORTH);
 
 		// Add format, units selection
-		JPanel lowerPanel = new JPanel();
-		lowerPanel.setLayout(new BoxLayout(lowerPanel, BoxLayout.Y_AXIS));
+		BoxPanel lowerPanel = BoxPanel.create();
 		JLabel coordFormatLabel = new JLabel(I18nManager.getText("details.coordformat") + ": ");
-		coordFormatLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		lowerPanel.add(coordFormatLabel);
 		String[] coordFormats = {I18nManager.getText("units.original"), I18nManager.getText("units.degminsec"),
 			I18nManager.getText("units.degmin"), I18nManager.getText("units.deg")};
 		_coordFormatDropdown = new JComboBox<String>(coordFormats);
 		_coordFormatDropdown.addActionListener(e -> dataUpdated(DataSubscriber.UNITS_CHANGED));
 		lowerPanel.add(_coordFormatDropdown);
-		_coordFormatDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
 		JLabel unitsLabel = new JLabel(I18nManager.getText("details.distanceunits") + ": ");
-		unitsLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		lowerPanel.add(unitsLabel);
 		// Make dropdown for distance units
 		_distUnitsDropdown = new JComboBox<String>();
@@ -279,7 +269,6 @@ public class DetailsDisplay extends GenericDisplay
 			UpdateMessageBroker.informSubscribers(DataSubscriber.UNITS_CHANGED);
 		});
 		lowerPanel.add(_distUnitsDropdown);
-		_distUnitsDropdown.setAlignmentX(Component.LEFT_ALIGNMENT);
 		add(lowerPanel, BorderLayout.SOUTH);
 	}
 

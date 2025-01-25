@@ -10,7 +10,6 @@ public class SearchResult
 	private boolean _match = false;
 	private boolean _needsRecheck = true;
 	private String _contents = "";
-	// TODO: for distance filter, store distance from search point
 
 
 	public SearchResult(TrackFile inTrackFile)

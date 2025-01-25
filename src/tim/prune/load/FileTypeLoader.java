@@ -18,10 +18,10 @@ import tim.prune.data.Checker;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.FieldList;
+import tim.prune.data.FileType;
 import tim.prune.data.PointCreateOptions;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.Checker.DoubleStatus;
-import tim.prune.data.SourceInfo.FileType;
 import tim.prune.load.xml.XmlHandler;
 
 /**
@@ -137,18 +137,19 @@ public class FileTypeLoader
 		PointCreateOptions inOptions)
 	{
 		ArrayList<DataPoint> points = new ArrayList<>();
-		boolean firstPoint = true;
+		boolean firstTrackPoint = true;
 		FieldList fields = new FieldList(inFields);
 		for (Object[] objects : inData)
 		{
 			DataPoint point = new DataPoint((String[]) objects, fields, inOptions);
 			if (point.isValid())
 			{
-				if (firstPoint) {
+				if (firstTrackPoint && !point.isWaypoint())
+				{
 					point.setSegmentStart(true);
+					firstTrackPoint = false;
 				}
 				points.add(point);
-				firstPoint = false;
 			}
 		}
 		return points;

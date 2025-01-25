@@ -62,8 +62,8 @@ import tim.prune.load.BabelLoadFromGps;
 import tim.prune.save.GpsSaver;
 import tim.prune.save.GpxExporter;
 import tim.prune.save.ImageExporter;
-import tim.prune.save.KmlExporter;
 import tim.prune.save.PovExporter;
+import tim.prune.save.xml.KmlExporter;
 
 
 /**

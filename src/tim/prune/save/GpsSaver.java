@@ -7,6 +7,7 @@ import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 
@@ -28,9 +29,10 @@ import tim.prune.ExternalTools;
 import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
+import tim.prune.save.xml.GpxWriter10;
 
 /**
- * Class to manage the loading of GPS data using GpsBabel
+ * Class to manage the saving of GPS data using GPSBabel
  */
 public class GpsSaver extends GenericFunction
 {
@@ -49,8 +51,7 @@ public class GpsSaver extends GenericFunction
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public GpsSaver(App inApp)
-	{
+	public GpsSaver(App inApp) {
 		super(inApp);
 	}
 
@@ -262,7 +263,7 @@ public class GpsSaver extends GenericFunction
 
 
 	/**
-	 * Execute the call to gpsbabel
+	 * Execute the call to GPSBabel
 	 */
 	private void callGpsBabel() throws Exception
 	{
@@ -293,26 +294,39 @@ public class GpsSaver extends GenericFunction
 		Process process = Runtime.getRuntime().exec(commands);
 
 		String trackName = _trackNameField.getText();
-		if (trackName == null || trackName.equals("")) {trackName = "gpsprune";}
+		if (trackName == null || trackName.equals("")) {
+			trackName = "gpsprune";
+		}
 		// Generate the GPX file and send to the GPS
-		OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream());
-		SettingsForExport settings = new SettingsForExport();
-		settings.setExportMissingAltitudesAsZero(true);
-		new GpxWriter(null, settings).exportData(writer, _app.getTrackInfo(), trackName, null, null);
-		writer.close();
+		try (OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream()))
+		{
+			SettingsForExport settings = new SettingsForExport();
+			settings.setExportMissingAltitudesAsZero(true);
+			// TODO: Export as Gpx version 1.0 or 1.1?
+			new GpxWriter10(null, settings).exportData(writer, _app.getTrackInfo(), trackName, null, null);
+		}
+		catch (IOException e) {
+			errorMessage = e.getMessage();
+		}
 
 		// Read the error stream to see if there's a better error message there
-		BufferedReader r = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-		String line = null;
 		String errorMessage2 = "";
-		while ((line = r.readLine()) != null) {
-			errorMessage2 += line + "\n";
+		try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getErrorStream())))
+		{
+			String line = null;
+			while ((line = r.readLine()) != null) {
+				errorMessage2 += line + "\n";
+			}
 		}
-		// Close error stream
-		try {
-			r.close();
-		} catch (Exception e) {}
-		if (errorMessage2.length() > 0) {errorMessage = errorMessage2;}
-		if (errorMessage.length() > 0) {throw new Exception(errorMessage);}
+		catch (IOException e)
+		{
+			if (errorMessage2.isEmpty()) {
+				errorMessage2 = e.getMessage();
+			}
+		}
+		final String messageToThrow = errorMessage2.isEmpty() ? errorMessage : errorMessage2;
+		if (!messageToThrow.isEmpty()) {
+			throw new Exception(messageToThrow);
+		}
 	}
 }

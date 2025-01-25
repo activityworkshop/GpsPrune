@@ -393,7 +393,7 @@ public class FileSaver
 		{
 			_fileChooser = new JFileChooser();
 			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.txt", new String[] {"txt", "text"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetypefilter.txt", new String[] {"txt", "text"}));
 			_fileChooser.setAcceptAllFileFilterUsed(true);
 			// start from directory in config which should be set
 			Config config = _app.getConfig();

@@ -301,10 +301,11 @@ public class Charter extends GenericFunction
 		catch (Exception e) {
 			_app.showErrorMessageNoLookup(getNameKey(), e.getMessage());
 		}
-		finally {
+		finally
+		{
 			try {
 				// Close writer
-				if (writer != null) writer.close();
+				if (writer != null) {writer.close();}
 			}
 			catch (Exception e) {} // ignore
 		}
@@ -377,7 +378,8 @@ public class Charter extends GenericFunction
 		try (FileWriter tempFileWriter = new FileWriter(tempFile))
 		{
 			tempFileWriter.write("# Temporary data file for GpsPrune charts\n\n");
-			for (int i = 0; i < inTrack.getNumPoints(); i++) {
+			for (int i = 0; i < inTrack.getNumPoints(); i++)
+			{
 				if (xValues.hasData(i) && yValues.hasData(i)) {
 					tempFileWriter.write("" + xValues.getData(i) + ", " + yValues.getData(i) + "\n");
 				}
@@ -554,7 +556,7 @@ public class Charter extends GenericFunction
 		{
 			_fileChooser = new JFileChooser();
 			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-			_fileChooser.setFileFilter(new GenericFileFilter("filetype.svg", new String[] {"svg"}));
+			_fileChooser.setFileFilter(new GenericFileFilter("filetypefilter.svg", new String[] {"svg"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
 			String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);

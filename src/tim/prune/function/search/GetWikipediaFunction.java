@@ -118,9 +118,12 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 			_errorMessage = e.getClass().getName() + " - " + e.getMessage();
 		}
 		// Close stream and ignore errors
-		try {
-			inStream.close();
-		} catch (Exception e) {}
+		if (inStream != null)
+		{
+			try {
+				inStream.close();
+			} catch (Exception e) {}
+		}
 		// Add track list to model
 		ArrayList<SearchResult> trackList = xmlHandler.getTrackList();
 		_trackListModel.addTracks(trackList, true);

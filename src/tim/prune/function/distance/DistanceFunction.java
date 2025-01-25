@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridLayout;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
@@ -15,7 +14,10 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
@@ -34,6 +36,8 @@ public class DistanceFunction extends GenericFunction
 	private JTable _pointTable = null;
 	/** Model for 'from' table */
 	private FromTableModel _fromModel = null;
+	/** Table for showing distances, bearings */
+	private JTable _distancesTable = null;
 	/** Model for distance table */
 	private DistanceTableModel _distModel = null;
 
@@ -42,8 +46,7 @@ public class DistanceFunction extends GenericFunction
 	 * Constructor
 	 * @param inApp App object
 	 */
-	public DistanceFunction(App inApp)
-	{
+	public DistanceFunction(App inApp) {
 		super(inApp);
 	}
 
@@ -76,6 +79,7 @@ public class DistanceFunction extends GenericFunction
 		final int pointIndex = getPointIndex(pointList, _app.getTrackInfo());
 		_pointTable.getSelectionModel().setSelectionInterval(pointIndex, pointIndex);
 		_distModel.recalculate(pointIndex, getConfig());
+		centerAlignBearingColumn();
 		_dialog.setVisible(true);
 	}
 
@@ -92,8 +96,6 @@ public class DistanceFunction extends GenericFunction
 		topLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		dialogPanel.add(topLabel, BorderLayout.NORTH);
 
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new GridLayout(1, 2));
 		// First table for 'from point'
 		_fromModel = new FromTableModel();
 		_pointTable = new JTable(_fromModel);
@@ -102,17 +104,21 @@ public class DistanceFunction extends GenericFunction
 				_distModel.recalculate(_pointTable.getSelectedRow(), getConfig());
 			}
 		});
-		JScrollPane scrollPane = new JScrollPane(_pointTable);
-		scrollPane.setPreferredSize(new Dimension(100, 250));
-		mainPanel.add(scrollPane);
+		JScrollPane fromScrollPane = new JScrollPane(_pointTable);
+		fromScrollPane.setPreferredSize(new Dimension(100, 250));
+
 		// second table for distances
 		_distModel = new DistanceTableModel();
-		JTable distTable = new JTable(_distModel);
-		distTable.setAutoCreateRowSorter(true);
-		scrollPane = new JScrollPane(distTable);
-		scrollPane.setPreferredSize(new Dimension(200, 250));
-		mainPanel.add(scrollPane);
-		dialogPanel.add(mainPanel, BorderLayout.CENTER);
+		_distancesTable = new JTable(_distModel);
+		_distancesTable.setAutoCreateRowSorter(true);
+		JScrollPane toScrollPane = new JScrollPane(_distancesTable);
+		toScrollPane.setPreferredSize(new Dimension(200, 250));
+
+		// Combine using a horizontal split pane
+		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, fromScrollPane, toScrollPane);
+		splitPane.setDividerLocation(0.3);
+		splitPane.setResizeWeight(0.4);
+		dialogPanel.add(splitPane, BorderLayout.CENTER);
 
 		// close window if escape pressed
 		KeyAdapter escListener = new KeyAdapter() {
@@ -123,7 +129,7 @@ public class DistanceFunction extends GenericFunction
 			}
 		};
 		_pointTable.addKeyListener(escListener);
-		distTable.addKeyListener(escListener);
+		_distancesTable.addKeyListener(escListener);
 
 		// button panel at bottom
 		JPanel buttonPanel = new JPanel();
@@ -136,13 +142,25 @@ public class DistanceFunction extends GenericFunction
 	}
 
 	/**
+	 * We want the right-hand column aligned centrally.
+	 * For some reason we need to do this after every table update, as it gets forgotten after model.recalculate
+	 */
+	private void centerAlignBearingColumn()
+	{
+		// center the third column, so it's not so close to the second column
+		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+		_distancesTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer);
+	}
+
+	/**
 	 * Get the point list for the tables
 	 * @param inTrackInfo TrackInfo object
 	 */
 	private static ArrayList<DataPoint> getPointList(TrackInfo inTrackInfo)
 	{
 		// Get the list of waypoints (if any)
-		ArrayList<DataPoint> pointList = new ArrayList<DataPoint>();
+		ArrayList<DataPoint> pointList = new ArrayList<>();
 		inTrackInfo.getTrack().getWaypoints(pointList);
 		// Get the current point (if any)
 		DataPoint currPoint = inTrackInfo.getCurrentPoint();
@@ -165,7 +183,8 @@ public class DistanceFunction extends GenericFunction
 		if (currPoint != null && currPoint.isWaypoint())
 		{
 			// Currently selected point is a waypoint, so select this one for convenience
-			for (int i=0; i<pointList.size(); i++) {
+			for (int i=0; i<pointList.size(); i++)
+			{
 				if (pointList.get(i) == currPoint) {
 					return i;
 				}

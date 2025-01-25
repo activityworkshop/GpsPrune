@@ -21,20 +21,17 @@ public class FieldEdit
 		_value = inValue;
 	}
 
-
 	/**
 	 * @return the field
 	 */
-	public Field getField()
-	{
+	public Field getField() {
 		return _field;
 	}
 
 	/**
 	 * @return the value
 	 */
-	public String getValue()
-	{
+	public String getValue() {
 		return _value;
 	}
 }

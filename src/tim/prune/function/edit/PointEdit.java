@@ -20,7 +20,6 @@ public class PointEdit
 		_value = inValue;
 	}
 
-
 	/**
 	 * @return the point index
 	 */

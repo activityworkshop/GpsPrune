@@ -53,10 +53,7 @@ public class UndoManager
 		UndoStack undoStack = _app.getUndoStack();
 		mainPanel.add(new JLabel(I18nManager.getText("dialog.undo.pretext")), BorderLayout.NORTH);
 
-		String[] undoActions = new String[undoStack.size()];
-		for (int i=0; i<undoStack.size(); i++) {
-			undoActions[i] = undoStack.getCommandAt(undoStack.size()-1-i).getDescription();
-		}
+		String[] undoActions = undoStack.getDescriptions().toArray(new String[0]);
 		_actionList = new JList<String>(undoActions);
 		_actionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		_actionList.setSelectedIndex(0);

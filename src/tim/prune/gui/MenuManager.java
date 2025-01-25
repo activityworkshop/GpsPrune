@@ -24,6 +24,7 @@ import tim.prune.config.Config;
 import tim.prune.data.AudioClip;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.GeocacheCode;
 import tim.prune.data.Photo;
 import tim.prune.data.RecentFile;
 import tim.prune.data.RecentFileList;
@@ -34,13 +35,17 @@ import tim.prune.function.AverageSelection;
 import tim.prune.function.ChooseSingleParameter;
 import tim.prune.function.CutAndMoveFunction;
 import tim.prune.function.DeleteCurrentPoint;
+import tim.prune.function.InterpolateTimestamps;
 import tim.prune.function.PasteCoordinateList;
 import tim.prune.function.PasteCoordinates;
 import tim.prune.function.PlusCodeFunction;
+import tim.prune.function.ProjectRange;
 import tim.prune.function.ReverseSelectedRange;
 import tim.prune.function.SelectExtremePoint;
+import tim.prune.function.browser.OpenCachePageFunction;
 import tim.prune.function.browser.UrlGenerator;
 import tim.prune.function.browser.WebMapFunction;
+import tim.prune.function.comparesegments.CompareSegmentsFunction;
 import tim.prune.function.edit.PointEditor;
 import tim.prune.function.filesleuth.StartFindFilesFunction;
 import tim.prune.function.search.SearchOpenCachingDeFunction;
@@ -83,6 +88,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _deleteMarkedPointsItem = null;
 	private JMenuItem _deleteByDateItem = null;
 	private JMenuItem _interpolateItem = null;
+	private JMenuItem _interpolateTimestampsItem = null;
 	private JMenuItem _averageItem = null;
 	private JMenuItem _selectAllItem = null;
 	private JMenuItem _selectNoneItem = null;
@@ -100,6 +106,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _reverseItem = null;
 	private JMenuItem _addTimeOffsetItem = null;
 	private JMenuItem _addAltitudeOffsetItem = null;
+	private JMenuItem _projectRangeItem = null;
 	private JMenuItem _mergeSegmentsItem = null;
 	private JMenuItem _rearrangeWaypointsItem = null;
 	private JMenuItem _dedupeWaypointsItem = null;
@@ -119,12 +126,14 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _showPeakfinderItem = null;
 	private JMenuItem _showGeohackItem = null;
 	private JMenuItem _searchOpencachingDeItem = null;
+	private JMenuItem _openCachePageItem = null;
 	private JMenuItem _downloadOsmItem = null;
 	private JMenuItem _getWeatherItem = null;
 	private JMenuItem _distanceItem = null;
 	private JMenuItem _viewFullDetailsItem = null;
 	private JMenuItem _estimateTimeItem = null;
 	private JMenuItem _learnEstimationParams = null;
+	private JMenuItem _compareSegmentsItem = null;
 	private JMenuItem _autoplayTrack = null;
 	private JMenuItem _saveExifItem = null;
 	private JMenuItem _photoPopupItem = null;
@@ -290,6 +299,8 @@ public class MenuManager implements DataSubscriber
 		onlineMenu.addSeparator();
 		_searchOpencachingDeItem = makeMenuItem(new SearchOpenCachingDeFunction(_app), false);
 		onlineMenu.add(_searchOpencachingDeItem);
+		_openCachePageItem = makeMenuItem(new OpenCachePageFunction(_app), false);
+		onlineMenu.add(_openCachePageItem);
 		_downloadOsmItem = makeMenuItem(FunctionLibrary.FUNCTION_DOWNLOAD_OSM, false);
 		onlineMenu.add(_downloadOsmItem);
 		_getWeatherItem = makeMenuItem(FunctionLibrary.FUNCTION_GET_WEATHER_FORECAST, false);
@@ -380,10 +391,14 @@ public class MenuManager implements DataSubscriber
 		rangeMenu.add(_addTimeOffsetItem);
 		_addAltitudeOffsetItem = makeMenuItem(FunctionLibrary.FUNCTION_ADD_ALTITUDE_OFFSET, false);
 		rangeMenu.add(_addAltitudeOffsetItem);
+		_projectRangeItem = makeMenuItem(new ProjectRange(_app), false);
+		rangeMenu.add(_projectRangeItem);
 		_mergeSegmentsItem = makeMenuItem(new MergeSegmentsFunction(_app), false);
 		rangeMenu.add(_mergeSegmentsItem);
 		_deleteFieldValuesItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_FIELD_VALUES, false);
 		rangeMenu.add(_deleteFieldValuesItem);
+		_interpolateTimestampsItem = makeMenuItem(new InterpolateTimestamps(_app), false);
+		rangeMenu.add(_interpolateTimestampsItem);
 		rangeMenu.addSeparator();
 		_interpolateItem = makeMenuItem(new ChooseSingleParameter(_app, FunctionLibrary.FUNCTION_INTERPOLATE), false);
 		rangeMenu.add(_interpolateItem);
@@ -474,6 +489,9 @@ public class MenuManager implements DataSubscriber
 		// estimate time
 		_estimateTimeItem = makeMenuItem(FunctionLibrary.FUNCTION_ESTIMATE_TIME, false);
 		viewMenu.add(_estimateTimeItem);
+		// Compare segments
+		_compareSegmentsItem = makeMenuItem(new CompareSegmentsFunction(_app), false);
+		viewMenu.add(_compareSegmentsItem);
 		viewMenu.addSeparator();
 		// autoplay
 		_autoplayTrack = makeMenuItem(FunctionLibrary.FUNCTION_AUTOPLAY_TRACK, false);
@@ -773,10 +791,13 @@ public class MenuManager implements DataSubscriber
 		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
 		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasWaypoints() && _track.getNumPoints() > 1);
 		_dedupeWaypointsItem.setEnabled(hasData && _track.hasWaypoints() && _track.getNumPoints() > 1);
+		_viewFullDetailsItem.setEnabled(hasData);
+		_viewInfoButton.setEnabled(hasData);
 		final boolean hasSeveralTrackPoints = hasData && _track.hasTrackPoints() && _track.getNumPoints() > 3;
 		_splitSegmentsItem.setEnabled(hasSeveralTrackPoints);
 		_sewSegmentsItem.setEnabled(hasSeveralTrackPoints);
 		_createMarkerWaypointsItem.setEnabled(hasSeveralTrackPoints);
+		_compareSegmentsItem.setEnabled(hasSeveralTrackPoints);
 		_selectAllItem.setEnabled(hasData);
 		_selectNoneItem.setEnabled(hasData);
 		_show3dItem.setEnabled(hasMultiplePoints && _threeDAvailable);
@@ -824,6 +845,7 @@ public class MenuManager implements DataSubscriber
 		_showPeakfinderItem.setEnabled(hasPoint);
 		_showGeohackItem.setEnabled(hasPoint);
 		_searchOpencachingDeItem.setEnabled(hasPoint);
+		_openCachePageItem.setEnabled(hasPoint && GeocacheCode.isValidCode(currPoint.getWaypointName()));
 		// is it a waypoint?
 		_selectSegmentItem.setEnabled(hasPoint && !currPoint.isWaypoint());
 		// are there any photos?
@@ -859,16 +881,17 @@ public class MenuManager implements DataSubscriber
 		_deleteRangeItem.setEnabled(hasRange);
 		_deleteRangeButton.setEnabled(hasRange);
 		_cropTrackItem.setEnabled(hasRange);
+		boolean rangeHasTimestamps = hasData && _track.hasData(Field.TIMESTAMP, _selection.getStart(), _selection.getEnd());
+		_interpolateTimestampsItem.setEnabled(hasRange && rangeHasTimestamps && _track.hasTrackPoints());
 		_interpolateItem.setEnabled(hasRange);
 		_averageItem.setEnabled(hasRange);
 		_mergeSegmentsItem.setEnabled(hasRange);
 		_reverseItem.setEnabled(hasRange);
 		_addTimeOffsetItem.setEnabled(hasRange);
 		_addAltitudeOffsetItem.setEnabled(hasRange);
+		_projectRangeItem.setEnabled(hasRange);
 		_deleteFieldValuesItem.setEnabled(hasRange);
-		_viewFullDetailsItem.setEnabled(hasRange || hasPoint);
-		_viewInfoButton.setEnabled(hasRange || hasPoint);
-		_estimateTimeItem.setEnabled(hasRange);
+		_estimateTimeItem.setEnabled(hasRange && _track.hasTrackPoints());
 		_learnEstimationParams.setEnabled(hasData && _track.hasTrackPoints() && _track.hasData(Field.TIMESTAMP)
 			&& _track.hasAltitudeData());
 		// Is the currently selected point outside the current range?

@@ -16,10 +16,11 @@ public class SpeedColourer extends ProfileDataColourer
 	 * Constructor
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
+	 * @param inWideHues true for wide mode, false for narrow
 	 */
-	public SpeedColourer(Color inStartColour, Color inEndColour)
+	public SpeedColourer(Color inStartColour, Color inEndColour, boolean inWideHues)
 	{
-		super(inStartColour, inEndColour);
+		super(inStartColour, inEndColour, inWideHues);
 	}
 
 	@Override
