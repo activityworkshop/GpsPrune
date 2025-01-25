@@ -72,7 +72,6 @@ public class NumberUtilsTest
 	@Test
 	public void testParsingLocal()
 	{
-		Locale currentDefaultLocale = Locale.getDefault();
 		// Using an english Locale, the comma isn't recognised because the decimal character is dot
 		Locale.setDefault(Locale.ENGLISH);
 		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("11,5"));
@@ -83,8 +82,5 @@ public class NumberUtilsTest
 		Assertions.assertEquals(-71.25, NumberUtils.parseDoubleUsingLocale("-71,25"));
 		// Not allowed because of the extra apostrophe
 		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("4'111,5"));
-
-		// Return the default to what it was, so that other tests aren't affected
-		Locale.setDefault(currentDefaultLocale);
 	}
 }

@@ -72,7 +72,7 @@ public class TimestampLocal extends Timestamp
 	}
 
 	@Override
-	public Timestamp addOffsetSeconds(long inOffset) {
+	public Timestamp addOffsetMilliseconds(long inOffset) {
 		throw new IllegalArgumentException("Local timestamps don't support offsets.");
 	}
 

@@ -289,7 +289,7 @@ public class PovExporter extends Export3dFunction
 		{
 			_fileChooser = new JFileChooser();
 			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-			_fileChooser.setFileFilter(new GenericFileFilter("filetype.pov", new String[] {"pov"}));
+			_fileChooser.setFileFilter(new GenericFileFilter("filetypefilter.pov", new String[] {"pov"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
 			final String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);

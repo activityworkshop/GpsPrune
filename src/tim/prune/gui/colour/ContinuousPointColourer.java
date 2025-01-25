@@ -11,15 +11,11 @@ public abstract class ContinuousPointColourer extends PointColourer
 	 * Constructor
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
+	 * @param inWideHues true for wide mode, false for narrow
 	 */
-	public ContinuousPointColourer(Color inStartColour, Color inEndColour)
+	public ContinuousPointColourer(Color inStartColour, Color inEndColour, boolean inWideHues)
 	{
-		super(inStartColour, inEndColour);
-	}
-
-	/** Continuous colourers don't need a maximum count */
-	public static boolean isMaxColoursRequired() {
-		return false;
+		super(inStartColour, inEndColour, inWideHues);
 	}
 
 	/**

@@ -15,6 +15,10 @@ public class GpxTag
 		_value = inVal;
 	}
 
+	public void clear() {
+		setValue("");
+	}
+
 	/**
 	 * @return value
 	 */

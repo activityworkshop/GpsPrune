@@ -16,8 +16,7 @@ public class FunctionLauncher implements ActionListener
 	 * Constructor
 	 * @param inFunction function to launch
 	 */
-	public FunctionLauncher(GenericFunction inFunction)
-	{
+	public FunctionLauncher(GenericFunction inFunction) {
 		_function = inFunction;
 	}
 
@@ -25,8 +24,7 @@ public class FunctionLauncher implements ActionListener
 	 * React to action
 	 * @param e event
 	 */
-	public void actionPerformed(ActionEvent e)
-	{
+	public void actionPerformed(ActionEvent e) {
 		_function.begin();
 	}
 

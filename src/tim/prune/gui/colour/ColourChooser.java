@@ -1,37 +1,23 @@
 package tim.prune.gui.colour;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
+import javax.swing.JColorChooser;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
+import javax.swing.colorchooser.AbstractColorChooserPanel;
 
 import tim.prune.I18nManager;
 
 /**
- * Class to offer a dialog to choose a colour.
- * Normally a JColorChooser would be used, but this is too buggy
- * in Java 1.6 and extremely prone to thread-locking, meaning
- * that the application has to be killed (and all data lost).
+ * Class to offer a dialog to choose a colour using a JColorChooser.
  */
 public class ColourChooser
 {
-	/** main dialog object */
+	/** dialog object */
 	private final JDialog _dialog;
-	/** array of three slider objects for rgb */
-	private JSlider[] _rgbSliders = null;
-	/** array of labels for rgb values */
-	private JLabel[] _rgbLabels = null;
+	/** Chooser */
+	private final JColorChooser _chooser;
 	/** colour patch */
 	private ColourPatch _patch = null;
-	/** chosen colour */
-	private Color _chosenColour = null;
 
 
 	/**
@@ -40,100 +26,50 @@ public class ColourChooser
 	 */
 	public ColourChooser(JDialog inParent)
 	{
-		_dialog = new JDialog(inParent, I18nManager.getText("dialog.colourchooser.title"), true);
-		_dialog.setLocationRelativeTo(inParent);
-		_dialog.getContentPane().add(makeContents());
-		_dialog.pack();
+		_chooser = new JColorChooser();
+		_chooser.setPreviewPanel(new JPanel());
+		setPanels(_chooser);
+		_dialog = JColorChooser.createDialog(inParent, I18nManager.getText("dialog.colourchooser.title"), true, _chooser,
+			e -> chosenColour(), e -> _patch = null);
 	}
 
-	/**
-	 * Make the dialog contents
-	 * @return JPanel containing dialog elements
-	 */
-	private JPanel makeContents()
+	/** Remove the Swatch and CMYK panels, they make it look more complicated than it needs to  be */
+	private static void setPanels(JColorChooser inChooser)
 	{
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BorderLayout());
-		_rgbSliders = new JSlider[3];
-		_rgbLabels = new JLabel[3];
-		_patch = new ColourPatch(Color.WHITE);
-		JPanel centrePanel = new JPanel();
-		centrePanel.setLayout(new BorderLayout());
-		centrePanel.add(_patch, BorderLayout.CENTER);
-
-		JPanel sliderPanel = new JPanel();
-		sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.Y_AXIS));
-		final String[] labelKeys = {"red", "green", "blue"};
-		for (int i=0; i<3; i++)
+		AbstractColorChooserPanel[] defaultPanels = inChooser.getChooserPanels();
+		for (AbstractColorChooserPanel panel : defaultPanels)
 		{
-			String key = I18nManager.getText("dialog.colourchooser." + labelKeys[i]);
-			sliderPanel.add(new JLabel(key));
-			_rgbSliders[i] = new JSlider(0, 255);
-			_rgbSliders[i].addChangeListener(e -> updatePatch());
-			_rgbSliders[i].setToolTipText(key);
-			JPanel sliderHolder = new JPanel();
-			sliderHolder.setLayout(new BorderLayout(5, 0));
-			sliderHolder.add(_rgbSliders[i], BorderLayout.CENTER);
-			_rgbLabels[i] = new JLabel("255");
-			_rgbLabels[i].setPreferredSize(new Dimension(40, 1));
-			sliderHolder.add(_rgbLabels[i], BorderLayout.EAST);
-			sliderPanel.add(sliderHolder);
+			if (shouldPanelBeRemoved(panel)) {
+				inChooser.removeChooserPanel(panel);
+			}
 		}
-		centrePanel.add(sliderPanel, BorderLayout.SOUTH);
-		mainPanel.add(centrePanel, BorderLayout.CENTER);
+	}
 
-		// Button panel for ok, cancel
-		JPanel buttonPanel = new JPanel();
-		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(e -> {
-			_chosenColour = _patch.getBackground();
-			_dialog.setVisible(false);
-		});
-		buttonPanel.add(okButton);
-		JButton cancelButton = new JButton(I18nManager.getText("button.cancel"));
-		cancelButton.addActionListener(e -> {
-			_chosenColour = null;
-			_dialog.setVisible(false);
-		});
-		buttonPanel.add(cancelButton);
-		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-		return mainPanel;
+	/** @return true if the chooser panel should be removed */
+	private static boolean shouldPanelBeRemoved(AbstractColorChooserPanel inPanel)
+	{
+		return inPanel.getClass().getName().toLowerCase().contains("defaultswatch")
+			|| inPanel.getDisplayName().toUpperCase().contains("CMYK");
 	}
 
 	/**
 	 * Show the dialog to choose a colour
-	 * @param inStartColour current colour
+	 * @param inPatch calling patch
 	 */
-	public void showDialog(Color inStartColour)
+	public void showDialog(ColourPatch inPatch)
 	{
-		// Initialise sliders
-		_rgbSliders[0].setValue(inStartColour.getRed());
-		_rgbSliders[1].setValue(inStartColour.getGreen());
-		_rgbSliders[2].setValue(inStartColour.getBlue());
-		updatePatch();
+		_patch = inPatch;
+		_chooser.setColor(inPatch.getBackground());
 		_dialog.setLocationRelativeTo(_dialog.getParent());
 		_dialog.setVisible(true);
 	}
 
-	/**
-	 * Update the patch colour from the slider values
-	 */
-	private void updatePatch()
+	/** A colour was selected, so give it back to the calling patch */
+	private void chosenColour()
 	{
-		for (int i=0; i<3; i++) {
-			_rgbLabels[i].setText("" + _rgbSliders[i].getValue());
+		if (_patch != null) {
+			_patch.setColour(_chooser.getColor());
 		}
-		final Color colour = new Color(_rgbSliders[0].getValue(),
-			_rgbSliders[1].getValue(),_rgbSliders[2].getValue());
-		_patch.setColour(colour);
-	}
-
-	/**
-	 * @return the selected colour, or null if cancel pressed
-	 */
-	public Color getChosenColour()
-	{
-		return _chosenColour;
+		_patch = null;
 	}
 }

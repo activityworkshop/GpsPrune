@@ -26,9 +26,7 @@ public class PatchListener extends MouseAdapter
 	}
 
 	/** React to mouse clicks */
-	public void mouseClicked(MouseEvent e)
-	{
-		_colourChooser.showDialog(_patch.getBackground());
-		_patch.setColour(_colourChooser.getChosenColour());
+	public void mouseClicked(MouseEvent e) {
+		_colourChooser.showDialog(_patch);
 	}
 }

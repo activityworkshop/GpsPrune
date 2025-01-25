@@ -279,7 +279,7 @@ public class Coordinate
 	 * @param inValue value of coordinate
 	 * @param inCardinal cardinal
 	 */
-    Coordinate(double inValue, Cardinal inCardinal)
+	Coordinate(double inValue, Cardinal inCardinal)
 	{
 		_asDouble = inValue;
 		_value = null;
@@ -329,6 +329,13 @@ public class Coordinate
 		}
 		if (inFormat == _originalFormat && inNumDigits == NUMDIGITS_DEFAULT) {
 			return _originalString;
+		}
+		if (inFormat == Format.DECIMAL_FORCE_POINT && _originalFormat == Format.DEG_WITHOUT_CARDINAL
+			&& inNumDigits == NUMDIGITS_DEFAULT)
+		{
+			if (_originalString.indexOf('.') > 0 && _originalString.indexOf(',') < 0) {
+				return _originalString;
+			}
 		}
 		int numDigits = (inNumDigits == NUMDIGITS_DEFAULT ? getNumDigits(inFormat) : inNumDigits);
 

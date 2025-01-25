@@ -188,7 +188,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		{
 			_fileChooser = new JFileChooser();
 			_fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-			_fileChooser.setFileFilter(new GenericFileFilter("filetype.png", new String[] {"png"}));
+			_fileChooser.setFileFilter(new GenericFileFilter("filetypefilter.png", new String[] {"png"}));
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
 			final String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);

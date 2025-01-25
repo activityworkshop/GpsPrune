@@ -12,6 +12,9 @@ public class FileInfo
 {
 	/** List of sources */
 	private final ArrayList<SourceInfo> _sources = new ArrayList<>();
+	/** Most recent source (to save looping) */
+	private SourceInfo _previousSource = null;
+
 
 	/**
 	 * Add a data source to the list, if it's not already present
@@ -19,8 +22,9 @@ public class FileInfo
 	 */
 	public void addSource(SourceInfo inInfo)
 	{
-		if (inInfo != null)
+		if (inInfo != null && inInfo != _previousSource)
 		{
+			_previousSource = inInfo;
 			for (SourceInfo info : _sources)
 			{
 				if (info == inInfo) {
@@ -77,13 +81,8 @@ public class FileInfo
 	{
 		ArrayList<String> values = new ArrayList<>();
 		HashSet<String> valueSet = new HashSet<>();
-		SourceInfo previousSource = null;
 		for (SourceInfo source : _sources)
 		{
-			if (source == previousSource) {
-				continue;
-			}
-			previousSource = source;
 			final String value = inTaker.takeValue(source);
 			if (value != null && !value.isEmpty() && !valueSet.contains(value))
 			{
@@ -92,5 +91,38 @@ public class FileInfo
 			}
 		}
 		return values;
+	}
+
+	/** @return true if any of the loaded sources use an extension of the given type */
+	public boolean hasExtensions(FileType inType)
+	{
+		for (SourceInfo source : _sources)
+		{
+			if (source.getFileType() != inType) {
+				continue;
+			}
+			final String extensions = source.getExtensions();
+			if (extensions != null && !extensions.isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/** @return a list of the version strings loaded from the given type */
+	public List<String> getVersions(FileType inType)
+	{
+		ArrayList<String> versions = new ArrayList<>();
+		for (SourceInfo source : _sources)
+		{
+			if (source.getFileType() != inType) {
+				continue;
+			}
+			final String version = source.getFileVersion();
+			if (version != null && !version.isEmpty()) {
+				versions.add(version);
+			}
+		}
+		return versions;
 	}
 }

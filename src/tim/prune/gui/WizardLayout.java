@@ -2,6 +2,8 @@ package tim.prune.gui;
 
 import java.awt.CardLayout;
 import java.awt.Component;
+
+import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 /**
@@ -23,6 +25,7 @@ public class WizardLayout extends CardLayout
 		super();
 		_panel = inPanel;
 		_panel.setLayout(this);
+		_panel.setBorder(BorderFactory.createEmptyBorder(6, 6, 6, 6));
 	}
 
 	/**

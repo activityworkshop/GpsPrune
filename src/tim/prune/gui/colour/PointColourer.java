@@ -13,12 +13,14 @@ import tim.prune.data.TrackInfo;
 public abstract class PointColourer
 {
 	/** default colour */
-	private Color _defaultColour = Color.BLUE;
+	private static final Color _defaultColour = Color.BLUE;
 	/** start and end colours */
 	private final Color _startColour;
 	private final Color _endColour;
 	/** max number of unique colours before wrapping */
 	private final int _maxColours;
+	/** true for wide hue scaling, false for narrow (default) */
+	private final boolean _wideHues;
 
 
 	/**
@@ -26,12 +28,15 @@ public abstract class PointColourer
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
 	 * @param inMaxColours max number of colours
+	 * @param inWideHues true for wide mode, false for narrow
 	 */
-	public PointColourer(Color inStartColour, Color inEndColour, int inMaxColours)
+	public PointColourer(Color inStartColour, Color inEndColour,
+		int inMaxColours, boolean inWideHues)
 	{
 		_startColour = inStartColour;
-		_endColour   = inEndColour;
-		_maxColours  = inMaxColours;
+		_endColour = inEndColour;
+		_maxColours = inMaxColours;
+		_wideHues = inWideHues;
 	}
 
 	/**
@@ -39,8 +44,8 @@ public abstract class PointColourer
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
 	 */
-	public PointColourer(Color inStartColour, Color inEndColour) {
-		this(inStartColour, inEndColour, -1);
+	public PointColourer(Color inStartColour, Color inEndColour, boolean inWideHues) {
+		this(inStartColour, inEndColour, -1, inWideHues);
 	}
 
 	/**
@@ -55,19 +60,8 @@ public abstract class PointColourer
 	 * @param inPointIndex index of point in track
 	 * @return colour object
 	 */
-	public Color getColour(int inPointIndex)
-	{
+	public Color getColour(int inPointIndex) {
 		return _defaultColour;
-	}
-
-	/**
-	 * @param inColour default colour to use
-	 */
-	protected void setDefaultColour(Color inColour)
-	{
-		if (inColour != null) {
-			_defaultColour = inColour;
-		}
 	}
 
 	/**
@@ -81,14 +75,14 @@ public abstract class PointColourer
 	 * @return start colour
 	 */
 	protected Color getStartColour() {
-		return _startColour;
+		return _startColour == null ? getDefaultColour() : _startColour;
 	}
 
 	/**
 	 * @return end colour
 	 */
 	protected Color getEndColour() {
-		return _endColour;
+		return _endColour == null ? getDefaultColour() : _endColour;
 	}
 
 	/**
@@ -99,23 +93,72 @@ public abstract class PointColourer
 	}
 
 	/**
+	 * @return true if wide hue scaling is active, false for normal
+	 */
+	boolean isWideHueScaling() {
+		return _wideHues;
+	}
+
+	/**
+	 * @return true for discrete, false for continuous
+	 */
+	boolean isDiscrete() {
+		return _maxColours >= 0;
+	}
+
+	/**
 	 * Mix the given colours together using HSB values instead of interpolating RGB
 	 * @param inFraction between 0.0 (start) and 1.0 (end)
 	 * @return mixed colour
 	 */
 	protected Color mixColour(float inFraction)
 	{
-		if (_startColour == null && _endColour == null) return getDefaultColour();
-		if (_startColour == null) return _endColour;
-		if (_endColour == null || inFraction < 0.0 || inFraction > 1.0) return _startColour;
+		if (_startColour == null && _endColour == null) {
+			return getDefaultColour();
+		}
+		if (_startColour == null) {
+			return _endColour;
+		}
+		if (_endColour == null || inFraction < 0.0 || inFraction > 1.0) {
+			return _startColour;
+		}
 
-		// Convert both colours to hsb, and interpolate
+		// Convert both colours to hsb, and interpolate (using either 'wide' mode or 'narrow' mode)
 		float[] startHSB = Color.RGBtoHSB(_startColour.getRed(), _startColour.getGreen(), _startColour.getBlue(), null);
 		float[] endHSB = Color.RGBtoHSB(_endColour.getRed(), _endColour.getGreen(), _endColour.getBlue(), null);
-		// Note that if end hue is less than start hue, hue will go backwards rather than forwards with wrap around 0
-
-		return Color.getHSBColor(startHSB[0] + (endHSB[0]-startHSB[0]) * inFraction,
+		final float startHue = (startHSB[1] == 0.0 ? endHSB[0] : startHSB[0]);
+		final float endHue = (endHSB[1] == 0.0 ? startHSB[0] : endHSB[0]);
+		final float hue = calculateHue(startHue, endHue, inFraction, _wideHues);
+		return Color.getHSBColor(hue,
 			startHSB[1] + (endHSB[1]-startHSB[1]) * inFraction,
 			startHSB[2] + (endHSB[2]-startHSB[2]) * inFraction);
+	}
+
+	/**
+	 * Interpolate a hue value between the given start and end values
+	 * @param inStartValue start hue from 0 to 1
+	 * @param inEndValue end hue from 0 to 1
+	 * @param inFraction fraction of interpolation, from 0 to 1
+	 * @param inWide true for a 'wide' interpolation, greater than 180 degrees, false for 'narrow' less than 180
+	 * @return interpolated hue value (only the fractional part is relevant)
+	 */
+	private static float calculateHue(float inStartValue, float inEndValue, float inFraction, boolean inWide)
+	{
+		final boolean isWide = Math.abs(inEndValue - inStartValue) > 0.5;
+		if (inWide == isWide) {
+			return interpolate(inStartValue, inEndValue, inFraction);
+		}
+		// Need to modify values to get the right direction
+		if (inStartValue <= inEndValue) {
+			return interpolate(inStartValue + 1.0f, inEndValue, inFraction);
+		}
+		else {
+			return interpolate(inStartValue, inEndValue + 1.0f, inFraction);
+		}
+	}
+
+	/** Simple interpolation between start value and end value */
+	private static float interpolate(float inStartValue, float inEndValue, float inFraction) {
+		return inStartValue + (inEndValue - inStartValue) * inFraction;
 	}
 }

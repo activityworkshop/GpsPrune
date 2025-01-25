@@ -10,6 +10,6 @@ public class TileFilter extends GenericFileFilter
 	/** Constructor */
 	public TileFilter()
 	{
-		super("filetype.jpeg", new String[] {"jpg", "png", "gif", "temp"});
+		super("filetypefilter.jpeg", new String[] {"jpg", "png", "gif", "temp"});
 	}
 }

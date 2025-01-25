@@ -1,11 +1,11 @@
-GpsPrune version 24.5
-=====================
+GpsPrune version 25
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
 Full details can be found at https://gpsprune.activityworkshop.net/
 
-GpsPrune is copyright 2006-2024 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
+GpsPrune is copyright 2006-2025 activityworkshop.net and distributed under the terms of the Gnu GPL version 2.
 You may freely use the software, and may help others to freely use it too.  For further information
 on your rights and how they are protected, see the included license.txt file.
 
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_24.5.jar
+   java -jar gpsprune_25.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,47 +25,23 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_24.5.jar --lang=DE
+   java -jar gpsprune_25.jar --lang=DE
 
 
-New with version 24.5
-=====================
-The following fixes were made since version 24.4:
-  - Another bugfix for interpolating the timestamps when interpolating between points
-  - Bugfix to ensure that the altitude field can be added to points with the edit point dialog
-  - Some more translations
-
-New with version 24.4
-=====================
-The following fixes were made since version 24.3:
-  - Bugfix for range selection after interpolation
-  - Bugfix for interpolation when you don't say Yes or No to interpolation between waypoints
-  - Bugfix for GPSBabel interpolation filter
-  - Bugfix for saving of selected map source in the settings
-
-New with version 24.3
-=====================
-The following fixes were made since version 24.2:
-  - When interpolating new points between existing points, interpolate the timestamps too
-  - Bugfix: parsing of altitudes using decimal commas
-  - Norwegian translations
-
-New with version 24.2
-=====================
-The following fixes were made since version 24.1:
-  - Added Norwegian language to language selection dialog
-  - Bugfix: Segment flag when cropping track to selected range
-  - Bugfix: Fractional seconds values being lost in call to Exiftool depending on system's decimal point
-  - Bugfix: Photo selection when deleting photo but not deleting the attached point
-  - Bugfix: Tooltip for colour patches
-  - Bugfix: Don't create points with null Coordinates
-
-New with version 24.1
-=====================
-The following fixes were made since version 24:
-  - Allow applying a time offset in seconds, not just minutes, hours, days, weeks (Range -> Add time offset)
-  - Fix SRTM lookup bug when the system locale uses a decimal comma
-  - Treat all altitudes as floating point values, avoid rounding to integer except in details panel
+New with version 25
+===================
+The following fixes and additions were made since version 24:
+  - Improved handling of Gpx versioning and extensions (Issues #75, #96, Wishlist #72)
+  - File information in the full details dialog (Wishlist #53)
+  - Colour selection using hsv/hsl in addition to rgb
+  - Preview of colourer output for discrete and continuous colourers
+  - Creating timestamps for existing points using their neighbours' timestamps
+  - Show direction from one point to another in the distances dialog (Wishlist #74)
+  - Project all the points in the selected range (Request by email)
+  - Function to compare speeds, distances, times of two attempts of the same route
+  - Go to the webpage for geocache information if the point name looks like a geocache code
+  - Removal of Korean and Japanese languages, as they have fallen below 60%
+  - Adding of Norwegian language
 
 New with version 24
 ===================

@@ -1,10 +1,15 @@
 package tim.prune.load.xml;
 
 import java.util.ArrayList;
+import java.util.List;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import tim.prune.data.ExtensionInfo;
 import tim.prune.data.Field;
+import tim.prune.data.FieldXml;
+import tim.prune.data.FileType;
 
 
 /**
@@ -12,8 +17,10 @@ import tim.prune.data.Field;
  */
 public class KmlHandler extends XmlHandler
 {
+	private String _fileTitle = null;
 	private boolean _insideCoordinates = false;
-	private boolean _insideGxTrack = false;
+	private boolean _insideTrack = false;
+	private boolean _insideExtendedData = false;
 	private String _value = null;
 	private String _name = null, _desc = null;
 	private String _timestamp = null, _imgLink = null;
@@ -21,24 +28,36 @@ public class KmlHandler extends XmlHandler
 	private ArrayList<String> _coordinateList = null;
 	private ArrayList<String[]> _pointList = new ArrayList<>();
 	private ArrayList<String> _linkList = new ArrayList<>();
-	// variables for gx extensions
+	private final ExtensionInfo _extensionInfo = new ExtensionInfo();
+	// variables for gx extensions / 2.3 timestamps
 	private ArrayList<String> _whenList = new ArrayList<>();
 	private ArrayList<String> _whereList = new ArrayList<>();
+	private ArrayList<String> _valueList = null;
+	private Field _extensionField = null;
+	private ArrayList<KmlExtendedDataField> _extendedDataFields = null;
 
+
+	/** Constructor, setting up the basic fields */
+	public KmlHandler()
+	{
+		final Field[] fields = {Field.LONGITUDE, Field.LATITUDE, Field.ALTITUDE,
+			Field.WAYPT_NAME, Field.DESCRIPTION, Field.NEW_SEGMENT, Field.TIMESTAMP};
+		for (Field field : fields) {
+			addField(field);
+		}
+	}
 
 	/**
 	 * Receive the start of a tag
-	 * @see org.xml.sax.ContentHandler#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)
 	 */
 	public void startElement(String uri, String localName, String qName,
-		Attributes attributes) throws SAXException
+		Attributes inAttributes) throws SAXException
 	{
 		String tagName = localName;
 		if (tagName == null || tagName.equals("")) {tagName = qName;}
 		tagName = tagName.toLowerCase();
 
-		if (tagName.equals("placemark"))
-		{
+		if (tagName.equals("placemark")) {
 			_coordinateList = new ArrayList<String>();
 		}
 		else if (tagName.equals("coordinates"))
@@ -46,21 +65,91 @@ public class KmlHandler extends XmlHandler
 			_insideCoordinates = true;
 			_coordinates = null;
 		}
-		else if (tagName.equals("gx:track"))
+		else if (tagName.equals("gx:track")) {
+			_insideTrack = true;
+		}
+		else if (tagName.equals("track"))
 		{
-			_insideGxTrack = true;
+			_insideTrack = true;
+			if ("2.2".equals(getFileVersion())) {
+				setFileVersion("2.3");
+			}
+		}
+		else if (tagName.equals("extendeddata"))
+		{
+			_insideExtendedData = true;
+			if (_extendedDataFields == null) {
+				_extendedDataFields = new ArrayList<>();
+			}
+			else {
+				_extendedDataFields.clear();
+			}
+		}
+		else if (_insideExtendedData
+			&& (tagName.equals("simplearraydata") || tagName.equals("gx:simplearraydata")))
+		{
+			String fieldName = getAttribute(inAttributes, "name");
+			_extensionField = new FieldXml(FileType.KML, fieldName, (String) null);
+			if (!hasField(_extensionField)) {
+				addField(_extensionField);
+			}
+			if (_valueList == null) {
+				_valueList = new ArrayList<>();
+			}
+			else {
+				_valueList.clear();
+			}
+		}
+		else if (tagName.equals("kml"))
+		{
+			setFileType(FileType.KML);
+			processKmlAttributes(inAttributes);
 		}
 		_value = null;
-		super.startElement(uri, localName, qName, attributes);
+		super.startElement(uri, localName, qName, inAttributes);
 	}
 
 
+	/** Process the attributes of the main kml tag, including extensions */
+	private void processKmlAttributes(Attributes attributes)
+	{
+		final int numAttributes = attributes.getLength();
+		for (int i=0; i<numAttributes; i++)
+		{
+			String attributeName = attributes.getQName(i).toLowerCase();
+			String attrValue = attributes.getValue(i);
+			// System.out.println("   Attribute '" + attributeName + "' - '" + attributes.getValue(i) + "'");
+			if (attributeName.equals("xmlns"))
+			{
+				String namespace = attrValue;
+				_extensionInfo.setNamespace(namespace);
+				if (namespace != null && namespace.length() > 3) {
+					setFileVersion(namespace.substring(namespace.length() - 3));
+				}
+			}
+			else if (attributeName.equals("xmlns:xsi")) {
+				_extensionInfo.setXsi(attrValue);
+			}
+			else if (attributeName.equals("xsi:schemalocation"))
+			{
+				String[] schemas = attrValue.split(" ");
+				for (int s=0; s<schemas.length; s++) {
+					_extensionInfo.addXsiAttribute(schemas[s]);
+				}
+			}
+			else if (attributeName.startsWith("xmlns:"))
+			{
+				String prefix= attributeName.substring(6);
+				_extensionInfo.addNamespace(prefix, attrValue);
+			}
+		}
+	}
+
 	/**
 	 * Process end tag
-	 * @see org.xml.sax.ContentHandler#endElement(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public void endElement(String uri, String localName, String qName)
-	throws SAXException
+		throws SAXException
 	{
 		String tagName = localName;
 		if (tagName == null || tagName.equals("")) {tagName = qName;}
@@ -78,6 +167,9 @@ public class KmlHandler extends XmlHandler
 		}
 		else if (tagName.equals("name"))
 		{
+			if (_coordinateList == null) {
+				_fileTitle = _value;
+			}
 			_name = _value;
 		}
 		else if (tagName.equals("description"))
@@ -87,21 +179,41 @@ public class KmlHandler extends XmlHandler
 		}
 		else if (tagName.equals("when"))
 		{
-			if (!_insideGxTrack)
+			if (!_insideTrack) {
 				_timestamp = _value;
-			else
+			}
+			else {
 				_whenList.add(_value);
+			}
 		}
-		else if (tagName.equals("gx:coord"))
+		else if (tagName.equals("gx:coord") || tagName.equals("coord"))
 		{
-			if (_insideGxTrack) {
+			if (_insideTrack) {
 				_whereList.add(_value);
 			}
 		}
-		else if (tagName.equals("gx:track"))
+		else if (tagName.equals("gx:track") || tagName.equals("track"))
 		{
-			processGxTrack();
-			_insideGxTrack = false;
+			processTrack();
+			_insideTrack = false;
+		}
+		else if (_insideExtendedData
+			&& (tagName.equals("gx:value") || tagName.equals("value"))
+			&& _valueList != null)
+		{
+			_valueList.add(_value);
+		}
+		else if (_insideExtendedData
+			&& (tagName.equals("gx:simplearraydata") || tagName.equals("simplearraydata")))
+		{
+			_extendedDataFields.add(new KmlExtendedDataField(_extensionField, _valueList));
+			_extensionField = null;
+			_valueList.clear();
+		}
+		else if (tagName.equals("extendeddata"))
+		{
+			_insideExtendedData = false;
+			_extensionField = null;
 		}
 		super.endElement(uri, localName, qName);
 	}
@@ -112,7 +224,7 @@ public class KmlHandler extends XmlHandler
 	 * @see org.xml.sax.ContentHandler#characters(char[], int, int)
 	 */
 	public void characters(char[] ch, int start, int length)
-			throws SAXException
+		throws SAXException
 	{
 		String val = new String(ch, start, length);
 		if (_insideCoordinates)
@@ -122,11 +234,12 @@ public class KmlHandler extends XmlHandler
 			}
 			_coordinates.append(val);
 		}
-		else
-		{
+		else if (_value == null) {
 			// Store string in _value
-			if (_value == null) _value = val;
-			else _value = _value + val;
+			_value = val;
+		}
+		else {
+			_value = _value + val;
 		}
 		super.characters(ch, start, length);
 	}
@@ -137,7 +250,9 @@ public class KmlHandler extends XmlHandler
 	 */
 	private void processPlacemark()
 	{
-		if (_coordinateList == null || _coordinateList.isEmpty()) return;
+		if (_coordinateList == null || _coordinateList.isEmpty()) {
+			return;
+		}
 		final boolean isSingleSelection = (_coordinateList.size() == 1);
 		// Loop over coordinate sets in list (may have multiple <coordinates> tags within single placemark)
 		for (String coords : _coordinateList)
@@ -148,7 +263,7 @@ public class KmlHandler extends XmlHandler
 			{
 				// Add single point to list
 				final String name = (isSingleSelection ? _name : null);
-				_pointList.add(makeStringArray(coords, name, _desc, _timestamp));
+				_pointList.add(makeStringArray(true, coords, name, _desc, _timestamp));
 				_linkList.add(_imgLink);
 			}
 			else if (numPoints > 1)
@@ -159,8 +274,7 @@ public class KmlHandler extends XmlHandler
 				{
 					if (coord != null && coord.trim().length()>3)
 					{
-						String[] pointArray = makeStringArray(coord, null, null, null);
-						if (firstPoint) {pointArray[5] = "1";} // start of segment flag
+						String[] pointArray = makeStringArray(firstPoint, coord, null, null, null);
 						firstPoint = false;
 						_pointList.add(pointArray);
 					}
@@ -171,14 +285,17 @@ public class KmlHandler extends XmlHandler
 	}
 
 	/**
-	 * Process a Gx track including timestamps
+	 * Process a track or gx track including timestamps and extended data
 	 */
-	private void processGxTrack()
+	private void processTrack()
 	{
 		if (!_whereList.isEmpty())
 		{
 			// If the whens don't match, then throw them all away
-			if (_whenList.size() != _whereList.size()) {System.out.println("clearing!"); _whenList.clear();}
+			if (_whenList.size() != _whereList.size()) {
+				// TODO: Show warning about mismatch?
+				_whenList.clear();
+			}
 
 			// Add each of the unnamed track points to list
 			boolean firstPoint = true;
@@ -192,15 +309,22 @@ public class KmlHandler extends XmlHandler
 					String[] coords = where.split(" ");
 					if (coords.length == 3)
 					{
-						String[] pointArray = new String[7];
-						pointArray[0] = coords[0];
-						pointArray[1] = coords[1];
-						pointArray[2] = coords[2];
+						resetCurrentValues();
+						addCurrentValue(Field.LONGITUDE, coords[0]);
+						addCurrentValue(Field.LATITUDE, coords[1]);
+						addCurrentValue(Field.ALTITUDE, coords[2]);
 						// leave name and description empty
-						if (firstPoint) {pointArray[5] = "1";} // start of segment flag
+						addCurrentValue(Field.NEW_SEGMENT, firstPoint ? "1" : null);
 						firstPoint = false;
-						pointArray[6] = when; // timestamp
-						_pointList.add(pointArray);
+						addCurrentValue(Field.TIMESTAMP, when);
+						// Loop over extended data fields too and add values for these if available
+						if (_extendedDataFields != null)
+						{
+							for (KmlExtendedDataField exField : _extendedDataFields) {
+								addCurrentValue(exField.getField(), getFieldValue(exField, p));
+							}
+						}
+						_pointList.add(getCurrentValues());
 					}
 				}
 				_linkList.add(null);
@@ -208,6 +332,19 @@ public class KmlHandler extends XmlHandler
 		}
 		_whenList.clear();
 		_whereList.clear();
+	}
+
+	/** Get the value for the specified point out of the extended data */
+	private String getFieldValue(KmlExtendedDataField inField, int inPointIndex)
+	{
+		if (inField == null) {
+			return null;
+		}
+		List<String> values = inField.getValues();
+		if (values == null || values.isEmpty() || inPointIndex < 0 || inPointIndex >= values.size()) {
+			return null;
+		}
+		return values.get(inPointIndex);
 	}
 
 	/**
@@ -235,38 +372,33 @@ public class KmlHandler extends XmlHandler
 
 	/**
 	 * Construct the String array for the given coordinates and name
+	 * @param inFirstPoint true if this is the first point in a segment
 	 * @param inCoordinates coordinate string in Kml format
 	 * @param inName name of waypoint, or null if track point
 	 * @param inDesc description of waypoint, if any
 	 * @param inTimestamp timestamp of waypoint, if any
 	 * @return String array for point
 	 */
-	private static String[] makeStringArray(String inCoordinates,
+	private String[] makeStringArray(boolean inFirstPoint, String inCoordinates,
 		String inName, String inDesc, String inTimestamp)
 	{
-		String[] result = new String[7];
+		resetCurrentValues();
 		String[] values = inCoordinates.split(",");
 		final int numValues = values.length;
-		if (numValues == 3 || numValues == 2) {
-			System.arraycopy(values, 0, result, 0, numValues);
+		if (numValues == 3 || numValues == 2)
+		{
+			addCurrentValue(Field.LONGITUDE, values[0]);
+			addCurrentValue(Field.LATITUDE, values[1]);
+			if (numValues == 3) {
+				addCurrentValue(Field.ALTITUDE, values[2]);
+			}
 		}
-		result[3] = inName;
-		result[4] = inDesc;
-		result[6] = inTimestamp;
-		return result;
+		addCurrentValue(Field.WAYPT_NAME, inName);
+		addCurrentValue(Field.DESCRIPTION, inDesc);
+		addCurrentValue(Field.TIMESTAMP, inTimestamp);
+		addCurrentValue(Field.NEW_SEGMENT, inFirstPoint ? "1" : null);
+		return getCurrentValues();
 	}
-
-
-	/**
-	 * @see tim.prune.load.xml.XmlHandler#getFieldArray()
-	 */
-	public Field[] getFieldArray()
-	{
-		final Field[] fields = {Field.LONGITUDE, Field.LATITUDE, Field.ALTITUDE,
-			Field.WAYPT_NAME, Field.DESCRIPTION, Field.NEW_SEGMENT, Field.TIMESTAMP};
-		return fields;
-	}
-
 
 	/**
 	 * Return the parsed information as a 2d array
@@ -298,5 +430,16 @@ public class KmlHandler extends XmlHandler
 		}
 		if (!hasLink) {result = null;}
 		return result;
+	}
+
+	/**
+	 * @return file title
+	 */
+	public String getFileTitle() {
+		return _fileTitle;
+	}
+
+	public ExtensionInfo getExtensionInfo() {
+		return _extensionInfo;
 	}
 }

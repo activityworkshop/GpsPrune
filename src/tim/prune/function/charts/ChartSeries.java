@@ -21,11 +21,17 @@ public class ChartSeries
 	}
 
 	/**
+	 * @return the number of values
+	 */
+	public int getNumPoints() {
+		return _hasData.length;
+	}
+
+	/**
 	 * @param inIndex index of point
 	 * @return true if series has data for this point
 	 */
-	public boolean hasData(int inIndex)
-	{
+	public boolean hasData(int inIndex) {
 		return _hasData[inIndex];
 	}
 
@@ -33,8 +39,7 @@ public class ChartSeries
 	 * @param inIndex index of point
 	 * @return data value for this point
 	 */
-	public double getData(int inIndex)
-	{
+	public double getData(int inIndex) {
 		return _data[inIndex];
 	}
 

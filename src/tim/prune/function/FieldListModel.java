@@ -10,7 +10,7 @@ import tim.prune.data.Field;
 public class FieldListModel extends AbstractListModel<String>
 {
 	/** ArrayList containing fields */
-	private ArrayList<Field> _fields = new ArrayList<Field>();
+	private final ArrayList<Field> _fields = new ArrayList<>();
 
 
 	/**

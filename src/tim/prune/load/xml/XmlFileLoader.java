@@ -96,10 +96,11 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 			}
 			else
 			{
-				SourceInfo.FileType sourceType = (_handler instanceof GpxHandler ? SourceInfo.FileType.GPX : SourceInfo.FileType.KML);
-				SourceInfo sourceInfo = new SourceInfo(_fileLock.getFile(), sourceType);
+				SourceInfo sourceInfo = new SourceInfo(_fileLock.getFile(), _handler.getFileType(),
+					_handler.getFileVersion());
 				sourceInfo.setFileTitle(_handler.getFileTitle());
 				sourceInfo.setFileDescription(_handler.getFileDescription());
+				sourceInfo.setExtensionInfo(_handler.getExtensionInfo());
 
 				// Pass information back to app
 				new FileTypeLoader(_app).loadData(_handler, sourceInfo, _autoAppend,
@@ -167,9 +168,7 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 				_unknownType = qName;
 			}
 		}
-		else
-		{
-			// Handler instantiated so pass tags on to it
+		if (_handler != null) {
 			_handler.startElement(uri, localName, qName, attributes);
 		}
 		super.startElement(uri, localName, qName, attributes);
@@ -210,8 +209,7 @@ public class XmlFileLoader extends DefaultHandler implements Runnable
 	/**
 	 * @return The Xml handler used for the parsing
 	 */
-	public XmlHandler getHandler()
-	{
+	public XmlHandler getHandler() {
 		return _handler;
 	}
 }

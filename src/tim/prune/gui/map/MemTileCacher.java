@@ -1,6 +1,7 @@
 package tim.prune.gui.map;
 
 import java.awt.Image;
+import java.util.Arrays;
 
 /**
  * Class to act as a memory-based map tile cache
@@ -100,11 +101,8 @@ public class MemTileCacher
 	/**
 	 * Clear all the cached images
 	 */
-	public void clearAll()
-	{
-		for (int i=0; i<_tiles.length; i++) {
-			_tiles[i] = null;
-		}
+	public void clearAll() {
+		Arrays.fill(_tiles, null);
 	}
 
 	/**

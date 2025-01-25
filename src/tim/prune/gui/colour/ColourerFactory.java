@@ -23,38 +23,6 @@ public abstract class ColourerFactory
 	}
 
 	/**
-	 * Does the specified colourer need a field for maximum number of colours?
-	 * @param inId id of colourer
-	 * @return true if max colours required, false otherwise
-	 */
-	public static boolean isMaxColoursRequired(ColourerId inId)
-	{
-		switch (inId)
-		{
-			case NONE:        return false;
-			case BY_FILE:     return FileColourer.isMaxColoursRequired();
-			case BY_SEGMENT:  return SegmentColourer.isMaxColoursRequired();
-			case BY_ALTITUDE: return AltitudeColourer.isMaxColoursRequired();
-			case BY_SPEED:    return SpeedColourer.isMaxColoursRequired();
-			case BY_VSPEED:   return VertSpeedColourer.isMaxColoursRequired();
-			case BY_GRADIENT: return GradientColourer.isMaxColoursRequired();
-			case BY_DATE:     return DateColourer.isMaxColoursRequired();
-		}
-		return false;
-	}
-
-	/**
-	 * Does the specified colourer need fields for start and end colours?
-	 * @param inId id of colourer
-	 * @return true if colours required, false otherwise
-	 */
-	public static boolean areColoursRequired(ColourerId inId)
-	{
-		// all of them except NONE need start and end colours
-		return inId != ColourerId.NONE;
-	}
-
-	/**
 	 * @param inDesc Single character used as a code (in Config string)
 	 * @return associated ColourerId
 	 */
@@ -74,30 +42,48 @@ public abstract class ColourerFactory
 	}
 
 	/**
+	 * @param inColourer colourer object
+	 * @return associated prefix
+	 */
+	private static char getColourerPrefix(PointColourer inColourer)
+	{
+		if (inColourer instanceof FileColourer) {return 'f';}
+		if (inColourer instanceof SegmentColourer) {return 's';}
+		if (inColourer instanceof AltitudeColourer) {return 'a';}
+		if (inColourer instanceof SpeedColourer) {return 'p';}
+		if (inColourer instanceof VertSpeedColourer) {return 'v';}
+		if (inColourer instanceof GradientColourer) {return 'g';}
+		if (inColourer instanceof DateColourer) {return 'd';}
+		throw new IllegalArgumentException("Unrecognised colourer: " + inColourer.getClass().getName());
+	}
+
+	/**
 	 * Create a new PointColourer object given the parameters
 	 * @param inId id of colourer to create
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
 	 * @param inMaxColours maximum number of colours
+	 * @param inWideHues true for wide mode, false for narrow
 	 * @return PointColourer object, or null
 	 */
-	public static PointColourer createColourer(ColourerId inId, Color inStartColour, Color inEndColour, String inMaxColours)
+	public static PointColourer createColourer(ColourerId inId, Color inStartColour, Color inEndColour,
+		String inMaxColours, boolean inWideHues)
 	{
 		try
 		{
 			switch (inId)
 			{
 				case NONE: return null;
-				case BY_FILE: return new FileColourer(inStartColour, inEndColour, Integer.parseInt(inMaxColours));
-				case BY_SEGMENT: return new SegmentColourer(inStartColour, inEndColour, Integer.parseInt(inMaxColours));
-				case BY_ALTITUDE: return new AltitudeColourer(inStartColour, inEndColour);
-				case BY_SPEED: return new SpeedColourer(inStartColour, inEndColour);
-				case BY_VSPEED: return new VertSpeedColourer(inStartColour, inEndColour);
-				case BY_GRADIENT: return new GradientColourer(inStartColour, inEndColour);
-				case BY_DATE: return new DateColourer(inStartColour, inEndColour, Integer.parseInt(inMaxColours));
+				case BY_FILE: return new FileColourer(inStartColour, inEndColour, Integer.parseInt(inMaxColours), inWideHues);
+				case BY_SEGMENT: return new SegmentColourer(inStartColour, inEndColour, Integer.parseInt(inMaxColours), inWideHues);
+				case BY_ALTITUDE: return new AltitudeColourer(inStartColour, inEndColour, inWideHues);
+				case BY_SPEED: return new SpeedColourer(inStartColour, inEndColour, inWideHues);
+				case BY_VSPEED: return new VertSpeedColourer(inStartColour, inEndColour, inWideHues);
+				case BY_GRADIENT: return new GradientColourer(inStartColour, inEndColour, inWideHues);
+				case BY_DATE: return new DateColourer(inStartColour, inEndColour, Integer.parseInt(inMaxColours), inWideHues);
 			}
 		}
-		catch (NumberFormatException nfe) {} // drop out to return null
+		catch (NumberFormatException ignored) {} // drop out to return null
 		return null;
 	}
 
@@ -111,13 +97,14 @@ public abstract class ColourerFactory
 		try
 		{
 			String[] comps = inString.split(";");
-			if (comps.length == 4)
+			if (comps.length == 4 || comps.length == 5)
 			{
 				ColourerId colourerType = getColourerId(comps[0].charAt(0));
 				Color startColour = ColourUtils.colourFromHex(comps[1]);
 				Color endColour   = ColourUtils.colourFromHex(comps[2]);
 				String maxColours = comps[3];
-				return createColourer(colourerType, startColour, endColour, maxColours);
+				boolean isWide = (comps.length == 5 && comps[4].equals("w"));
+				return createColourer(colourerType, startColour, endColour, maxColours, isWide);
 			}
 		}
 		catch (NullPointerException | NumberFormatException ignored) {}
@@ -135,28 +122,14 @@ public abstract class ColourerFactory
 		{
 			final String startColour = ColourUtils.makeHexCode(inColourer.getStartColour());
 			final String endColour = ColourUtils.makeHexCode(inColourer.getEndColour());
-			final int maxColours = inColourer.getMaxColours();
-			if (inColourer instanceof FileColourer) {
-				return "f;" + startColour + ";" + endColour + ";" + maxColours;
+			final boolean isContinuous = inColourer instanceof ContinuousPointColourer;
+			final int maxColours = isContinuous ? 0 : inColourer.getMaxColours();
+
+			String result = getColourerPrefix(inColourer) + ";" + startColour + ";" + endColour + ";" + maxColours;
+			if (inColourer.isWideHueScaling()) {
+				result = result + ";w";
 			}
-			else if (inColourer instanceof SegmentColourer) {
-				return "s;" + startColour + ";" + endColour + ";" + maxColours;
-			}
-			else if (inColourer instanceof AltitudeColourer) {
-				return "a;" + startColour + ";" + endColour + ";0";
-			}
-			else if (inColourer instanceof SpeedColourer) {
-				return "p;" + startColour + ";" + endColour + ";0";
-			}
-			else if (inColourer instanceof VertSpeedColourer) {
-				return "v;" + startColour + ";" + endColour + ";0";
-			}
-			else if (inColourer instanceof GradientColourer) {
-				return "g;" + startColour + ";" + endColour + ";0";
-			}
-			else if (inColourer instanceof DateColourer) {
-				return "d;" + startColour + ";" + endColour + ";" + maxColours;
-			}
+			return result;
 		}
 		return null;
 	}

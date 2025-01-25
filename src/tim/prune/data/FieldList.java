@@ -2,6 +2,7 @@ package tim.prune.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Class to hold an ordered list of fields
@@ -146,5 +147,18 @@ public class FieldList
 		}
 		result.append(')');
 		return result.toString();
+	}
+
+	/** @return list of fields specific to the given file type */
+	public List<Field> getFields(FileType inFileType)
+	{
+		ArrayList<Field> fields = new ArrayList<Field>();
+		for (Field field : _fields)
+		{
+			if (field.isSpecificToFileType(inFileType)) {
+				fields.add(field);
+			}
+		}
+		return fields;
 	}
 }

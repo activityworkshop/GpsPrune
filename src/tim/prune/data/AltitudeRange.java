@@ -71,7 +71,6 @@ public class AltitudeRange
 							else {_gotPreviousMaximum = true;}
 							_previousExtreme = _previousValue;
 							_previousValue = altValue;
-							_gotPreviousValue = true;
 						}
 					}
 					else if (overallUp)
@@ -88,7 +87,6 @@ public class AltitudeRange
 							_previousExtreme = _previousValue;
 							_gotPreviousMinimum = false; _gotPreviousMaximum = true;
 							_previousValue = altValue;
-							_gotPreviousValue = true;
 						}
 					}
 					else if (overallDn)
@@ -102,13 +100,11 @@ public class AltitudeRange
 								_previousExtreme = _previousValue;
 								_gotPreviousMinimum = true; _gotPreviousMaximum = false;
 								_previousValue = altValue;
-								_gotPreviousValue = true;
 							}
 						}
 						else {
 							// we're still going down - do nothing
 							_previousValue = altValue;
-							_gotPreviousValue = true;
 						}
 					}
 					// Note: Behaviour when WIGGLE_LIMIT == 0 should be same as before, all differences cumulated
@@ -205,8 +201,7 @@ public class AltitudeRange
 	/**
 	 * @return overall height gain in metres
 	 */
-	public double getMetricHeightDiff()
-	{
+	public double getMetricHeightDiff() {
 		return getClimb(UnitSetLibrary.UNITS_METRES) - getDescent(UnitSetLibrary.UNITS_METRES);
 	}
 }

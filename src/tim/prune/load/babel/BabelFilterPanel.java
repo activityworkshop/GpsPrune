@@ -35,7 +35,7 @@ public class BabelFilterPanel extends JPanel
 
 	/** Regular expression for detecting valid filter strings */
 	private static final Pattern FILTER_PATTERN
-		= Pattern.compile("(-x [a-z,\\.0-9=]+ *)+");
+		= Pattern.compile("(-x [a-z,.0-9=]+ *)+");
 
 	/**
 	 * Constructor

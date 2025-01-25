@@ -12,6 +12,7 @@ import javax.swing.JOptionPane;
 import tim.prune.App;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
+import tim.prune.data.FileType;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.SourceInfo;
@@ -70,7 +71,7 @@ public class JsonFileLoader extends FileTypeLoader
 			if (appendOption == JOptionPane.CANCEL_OPTION) {
 				return;
 			}
-			loadData(makePointList(), new SourceInfo(inFileLock.getFile(), SourceInfo.FileType.JSON),
+			loadData(makePointList(), new SourceInfo(inFileLock.getFile(), FileType.JSON),
 				appendOption == JOptionPane.YES_OPTION);
 		}
 		// TODO: Show message if nothing was found?

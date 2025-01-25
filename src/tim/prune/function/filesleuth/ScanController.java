@@ -13,7 +13,7 @@ public class ScanController implements TrackListListener, WorkerCoordinator
 	private final TrackFileList _trackList;
 	private final TimeZone _timezone;
 	private int _numCurrentWorkers = 0;
-	private final Deque<AbstractFileScanner> _waitingScanners = new LinkedList<>();
+	private final LinkedList<AbstractFileScanner> _waitingScanners = new LinkedList<>();
 	private ScannerCreator _scannerCreator = FileScanner::new;
 
 	private static final int MAX_PARALLEL_SCANS = 10;

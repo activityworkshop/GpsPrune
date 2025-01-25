@@ -1,6 +1,9 @@
 package tim.prune.data;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import tim.prune.data.Coordinate.Cardinal;
@@ -8,6 +11,11 @@ import tim.prune.data.Coordinate.Cardinal;
 /** Tests the parsing of Coordinate objects from Strings and double values */
 public class CoordinateParsingTest
 {
+	@BeforeEach
+	public void setup() {
+		Locale.setDefault(Locale.ENGLISH);
+	}
+
 	@Test
 	public void testFromPositiveDouble()
 	{
