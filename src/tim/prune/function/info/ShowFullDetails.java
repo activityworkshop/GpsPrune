@@ -25,10 +25,14 @@ import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.FieldList;
+import tim.prune.data.FileInfo;
+import tim.prune.data.FileType;
 import tim.prune.data.NumberUtils;
 import tim.prune.data.Photo;
 import tim.prune.data.RangeStatsWithGradients;
 import tim.prune.data.Selection;
+import tim.prune.data.SourceInfo;
 import tim.prune.data.SpeedCalculator;
 import tim.prune.data.SpeedValue;
 import tim.prune.data.Track;
@@ -47,6 +51,7 @@ public class ShowFullDetails extends GenericFunction
 	private JTabbedPane _tabs = null;
 	private JButton _okButton = null;
 
+	private JTextArea _fileTextArea = null;
 	private JTextArea _pointTextArea = null;
 	private JTextArea _rangeTextArea = null;
 
@@ -55,8 +60,7 @@ public class ShowFullDetails extends GenericFunction
 	 * Constructor
 	 * @param inApp App object
 	 */
-	public ShowFullDetails(App inApp)
-	{
+	public ShowFullDetails(App inApp) {
 		super(inApp);
 	}
 
@@ -105,26 +109,16 @@ public class ShowFullDetails extends GenericFunction
 		};
 		_tabs.addKeyListener(escapeCloser);
 
-		JPanel pointPanel = new JPanel();
-		pointPanel.setLayout(new BorderLayout());
+		_fileTextArea = new JTextArea(I18nManager.getText("details.nofileloaded"));
+		JPanel filePanel = makePanelForTab(_fileTextArea);
+		_tabs.add(I18nManager.getText("details.filedetails"), filePanel);
+
 		_pointTextArea = new JTextArea(I18nManager.getText("details.nopointselection"));
-		_pointTextArea.setEditable(false);
-		_pointTextArea.setLineWrap(true);
-		JScrollPane scrollPane = new JScrollPane(_pointTextArea);
-		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane.setPreferredSize(new Dimension(500, 230));
-		pointPanel.add(scrollPane, BorderLayout.CENTER);
+		JPanel pointPanel = makePanelForTab(_pointTextArea);
 		_tabs.add(I18nManager.getText("details.pointdetails"), pointPanel);
 
-		JPanel rangePanel = new JPanel();
-		rangePanel.setLayout(new BorderLayout());
 		_rangeTextArea = new JTextArea(I18nManager.getText("details.norangeselection"));
-		_rangeTextArea.setEditable(false);
-		_rangeTextArea.setLineWrap(true);
-		JScrollPane scrollPane2 = new JScrollPane(_rangeTextArea);
-		scrollPane2.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-		scrollPane2.setPreferredSize(new Dimension(500, 230));
-		rangePanel.add(scrollPane2, BorderLayout.CENTER);
+		JPanel rangePanel = makePanelForTab(_rangeTextArea);
 		_tabs.add(I18nManager.getText("details.rangedetails"), rangePanel);
 
 		// OK button at the bottom
@@ -139,24 +133,38 @@ public class ShowFullDetails extends GenericFunction
 	}
 
 
+	private JPanel makePanelForTab(JTextArea inTextArea)
+	{
+		JPanel panel = new JPanel();
+		panel.setLayout(new BorderLayout());
+		inTextArea.setEditable(false);
+		inTextArea.setLineWrap(true);
+		JScrollPane scrollPane = new JScrollPane(inTextArea);
+		scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		scrollPane.setPreferredSize(new Dimension(500, 230));
+		panel.add(scrollPane, BorderLayout.CENTER);
+		return panel;
+	}
+
 	/**
 	 * Update the labels with the current details
 	 */
 	private void updateDetails()
 	{
+		int tabToShow = 0;
+
+		_fileTextArea.setText(makeFileDescription(_app.getTrackInfo().getFileInfo()));
+
 		if (_app.getTrackInfo().getCurrentPoint() != null)
 		{
 			final String pointString = makePointDescription(_app.getTrackInfo().getTrack(),
 				_app.getTrackInfo().getSelection().getCurrentPointIndex());
 			_pointTextArea.setText(pointString);
 			// Select point tab
-			_tabs.setSelectedIndex(0);
+			tabToShow = 1;
 		}
-		else
-		{
+		else {
 			_pointTextArea.setText(I18nManager.getText("details.nopointselection"));
-			// Select range tab
-			_tabs.setSelectedIndex(1);
 		}
 
 		Selection selection = _app.getTrackInfo().getSelection();
@@ -168,11 +176,49 @@ public class ShowFullDetails extends GenericFunction
 			SpeedValue maxSpeed = calculateMaxSpeed(_app.getTrackInfo().getTrack(),
 				selection.getStart(), selection.getEnd());
 			_rangeTextArea.setText(makeRangeDescription(stats, maxSpeed));
+			// Select range tab
+			tabToShow = 2;
 		}
-		else
-		{
+		else {
 			_rangeTextArea.setText(I18nManager.getText("details.norangeselection"));
 		}
+		_tabs.setSelectedIndex(tabToShow);
+	}
+
+	/**
+	 * @return string describing the file or files loaded
+	 */
+	private String makeFileDescription(FileInfo inFileInfo)
+	{
+		StringBuilder builder = new StringBuilder();
+		boolean foundFile = false;
+		int numSources = inFileInfo.getNumFiles();
+		for (int idx=0; idx < numSources; idx++)
+		{
+			SourceInfo source = inFileInfo.getSource(idx);
+			FileType type = source.getFileType();
+			if (type == null || type == FileType.GPSBABEL) {
+				continue;
+			}
+			if (foundFile) {
+				builder.append("========================================\n");
+			}
+			foundFile = true;
+			addTextPair(builder, "details.track.file", source.getName());
+			addTextPair(builder, "details.track.filetype", I18nManager.getText(type.getTextKey()));
+			addTextPair(builder, "details.track.fileversion", source.getFileVersion());
+			addTextPair(builder, "details.track.filepath", source.getFile().getAbsolutePath());
+			// could also show file size, timestamp if anybody cares?
+			addTextPair(builder, "dialog.exportgpx.name", source.getFileTitle());
+			addTextPair(builder, "dialog.exportgpx.desc", source.getFileDescription());
+			addTextPair(builder, "dialog.exportgpx.extensions", source.getExtensions());
+			builder.append('\n');
+		}
+
+		if (foundFile) {
+			return builder.toString();
+		}
+		return I18nManager.getText("details.nofileloaded");
 	}
 
 	/**
@@ -211,7 +257,7 @@ public class ShowFullDetails extends GenericFunction
 
 		final Coordinate.Format coordDisplayFormat = Coordinate.getCoordinateFormatForDisplay(
 			getConfig().getConfigString(Config.KEY_COORD_DISPLAY_FORMAT));
-		StringBuffer result = new StringBuffer();
+		StringBuilder result = new StringBuilder();
 		final String latStr = CoordDisplay.makeCoordinateLabel(point.getLatitude(), coordDisplayFormat);
 		final String lonStr = CoordDisplay.makeCoordinateLabel(point.getLongitude(), coordDisplayFormat);
 		addTextPair(result, "fieldname.latitude", latStr);
@@ -274,6 +320,15 @@ public class ShowFullDetails extends GenericFunction
 			addTextPair(result, "details.media.fullpath", currentAudio.getFullPath());
 		}
 
+		// Additional fields, if any
+		FieldList fieldList = point.getFieldList();
+		for (int i=0; i<fieldList.getNumFields(); i++)
+		{
+			Field field = fieldList.getField(i);
+			if (!field.isBuiltIn()) {
+				addTextPairWithoutTranslation(result, field.getName(), point.getFieldValue(field));
+			}
+		}
 		return result.toString();
 	}
 
@@ -285,7 +340,7 @@ public class ShowFullDetails extends GenericFunction
 	 */
 	private String makeRangeDescription(RangeStatsWithGradients inStats, SpeedValue inMaxSpeed)
 	{
-		StringBuffer result = new StringBuffer();
+		StringBuilder result = new StringBuilder();
 		addTextPair(result, "details.track.points", "" + inStats.getNumPoints());
 		addTextPair(result, "details.range.numsegments", "" + inStats.getNumSegments());
 		final boolean hasMultipleSegments = (inStats.getNumSegments() > 1);
@@ -366,50 +421,65 @@ public class ShowFullDetails extends GenericFunction
 
 	/**
 	 * Add the label and value to the buffer
-	 * @param inBuffer buffer to append to
+	 * @param inBuilder buffer to append to
 	 * @param inLabelKey label key
 	 * @param inValue value text
 	 */
-	private static void addTextPair(StringBuffer inBuffer, String inLabelKey, String inValue)
+	private static void addTextPair(StringBuilder inBuilder, String inLabelKey, String inValue)
 	{
-		addTextPair(inBuffer, inLabelKey, inValue, null);
+		addTextPair(inBuilder, inLabelKey, inValue, null);
 	}
 
 	/**
 	 * Add the label and value to the buffer
-	 * @param inBuffer buffer to append to
+	 * @param inBuilder buffer to append to
+	 * @param inLabel label text without translation
+	 * @param inValue value text
+	 */
+	private static void addTextPairWithoutTranslation(StringBuilder inBuilder, String inLabel, String inValue)
+	{
+		if (inValue != null && !inValue.equals(""))
+		{
+			inBuilder.append(inLabel).append(": ").append(inValue);
+			inBuilder.append("\n");
+		}
+	}
+
+	/**
+	 * Add the label and value to the buffer
+	 * @param inBuilder buffer to append to
 	 * @param inLabelKey label key
 	 * @param inValue value text
 	 * @param inUnits optional units string
 	 */
-	private static void addTextPair(StringBuffer inBuffer, String inLabelKey, String inValue, String inUnits)
+	private static void addTextPair(StringBuilder inBuilder, String inLabelKey, String inValue, String inUnits)
 	{
 		if (inValue != null && !inValue.equals(""))
 		{
-			inBuffer.append(I18nManager.getText(inLabelKey));
-			inBuffer.append(": ");
-			inBuffer.append(inValue);
+			inBuilder.append(I18nManager.getText(inLabelKey));
+			inBuilder.append(": ");
+			inBuilder.append(inValue);
 			if (inUnits != null && !inUnits.equals(""))
 			{
-				inBuffer.append(' ');
-				inBuffer.append(inUnits);
+				inBuilder.append(' ');
+				inBuilder.append(inUnits);
 			}
-			inBuffer.append("\n");
+			inBuilder.append("\n");
 		}
 	}
 
 	/**
 	 * Add a heading to the buffer
-	 * @param inBuffer buffer to append to
+	 * @param inBuilder buffer to append to
 	 * @param inLabelKey key for heading
 	 */
-	private static void addHeading(StringBuffer inBuffer, String inLabelKey)
+	private static void addHeading(StringBuilder inBuilder, String inLabelKey)
 	{
 		final String heading = I18nManager.getText(inLabelKey);
-		inBuffer.append('\n').append(heading).append('\n');
+		inBuilder.append('\n').append(heading).append('\n');
 		for (int i=0; i<heading.length(); i++) {
-			inBuffer.append('=');
+			inBuilder.append('=');
 		}
-		inBuffer.append('\n');
+		inBuilder.append('\n');
 	}
 }

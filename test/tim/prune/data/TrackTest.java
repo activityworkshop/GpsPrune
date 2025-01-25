@@ -6,8 +6,6 @@ import java.io.File;
 
 import org.junit.jupiter.api.Test;
 
-import tim.prune.data.SourceInfo.FileType;
-
 /**
  * Unit tests for some functions of the Track class
  */

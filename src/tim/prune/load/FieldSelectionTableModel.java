@@ -4,13 +4,13 @@ import javax.swing.table.AbstractTableModel;
 
 import tim.prune.I18nManager;
 import tim.prune.data.Field;
+import tim.prune.data.FieldCustom;
 
 /**
  * Class to hold the table model for the field selection table
  */
 public class FieldSelectionTableModel extends AbstractTableModel
 {
-
 	private int _numRows = 0;
 	private Field[] _fieldArray = null;
 	private final String _customText;
@@ -29,11 +29,14 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	/**
 	 * @return the column count
 	 */
-	public int getColumnCount()
-	{
+	public int getColumnCount() {
 		return 3;
 	}
 
+	/** @return the language-specific name defining any custom field */
+	public String getCustomText() {
+		return _customText;
+	}
 
 	/**
 	 * @param inColNum column number
@@ -54,8 +57,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	/**
 	 * @return the row count
 	 */
-	public int getRowCount()
-	{
+	public int getRowCount() {
 		return _fieldArray == null ? 2 : _numRows;
 	}
 
@@ -67,8 +69,12 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	 */
 	public Object getValueAt(int inRowIndex, int inColumnIndex)
 	{
-		if (_fieldArray == null) return "";
-		if (inColumnIndex == 0) return ("" + (inRowIndex+1));
+		if (_fieldArray == null) {
+			return "";
+		}
+		if (inColumnIndex == 0) {
+			return ("" + (inRowIndex+1));
+		}
 		Field field = _fieldArray[inRowIndex];
 		if (inColumnIndex == 1)
 		{
@@ -129,9 +135,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 		{
 			// change description if it's custom
 			Field field = _fieldArray[inRowIndex];
-			if (!field.isBuiltIn()) {
-				field.setName(inValue.toString());
-			}
+			field.setName(inValue.toString());
 		}
 	}
 
@@ -192,16 +196,17 @@ public class FieldSelectionTableModel extends AbstractTableModel
 		}
 
 		// Changes to custom field need to be handled differently
-		boolean changeToCustom = inValue.equals(I18nManager.getText("fieldname.custom"));
+		boolean changeToCustom = inValue.equals(_customText);
 		if (changeToCustom)
 		{
 			if (field.isBuiltIn())
 			{
 				String customPrefix = I18nManager.getText("fieldname.prefix") + " ";
 				int index = inRow + 1;
-				while (hasField(customPrefix + index))
+				while (hasField(customPrefix + index)) {
 					index++;
-				_fieldArray[inRow] = new Field(customPrefix + index);
+				}
+				_fieldArray[inRow] = new FieldCustom(customPrefix + index);
 			}
 			// ignore custom to custom changes
 		}
@@ -222,8 +227,7 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	/**
 	 * @return array of Field objects
 	 */
-	public Field[] getFieldArray()
-	{
+	public Field[] getFieldArray() {
 		return _fieldArray;
 	}
 
@@ -234,7 +238,9 @@ public class FieldSelectionTableModel extends AbstractTableModel
 	 */
 	private boolean hasField(String inName)
 	{
-		if (_fieldArray == null || inName == null) return false;
+		if (_fieldArray == null || inName == null) {
+			return false;
+		}
 		for (int i=0; i<_numRows; i++)
 		{
 			if (_fieldArray[i].getName().equals(inName)) {

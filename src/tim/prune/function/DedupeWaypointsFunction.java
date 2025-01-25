@@ -9,10 +9,10 @@ import tim.prune.App;
 import tim.prune.GenericFunction;
 import tim.prune.cmd.ShuffleAndCropCmd;
 import tim.prune.data.DataPoint;
-import tim.prune.data.ListUtils;
 import tim.prune.data.Track;
 import tim.prune.function.compress.WaypointComparer;
 import tim.prune.function.compress.WaypointComparer.CompareResult;
+import tim.prune.java8.ListUtils;
 
 
 /**

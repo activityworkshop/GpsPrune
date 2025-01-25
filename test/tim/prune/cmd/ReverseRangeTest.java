@@ -3,6 +3,7 @@ package tim.prune.cmd;
 import org.junit.jupiter.api.Test;
 import tim.prune.data.*;
 import tim.prune.function.ReverseSelectedRange;
+import tim.prune.java8.ListUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

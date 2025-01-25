@@ -57,6 +57,7 @@ public class TrackInfo
 		return _fileInfo;
 	}
 
+	/** Delete the current file information so that it will be regenerated */
 	public void clearFileInfo() {
 		_fileInfo = null;
 	}
@@ -98,7 +99,6 @@ public class TrackInfo
 	public AudioClip getCurrentAudio() {
 		return _audioList.get(_selection.getCurrentAudioIndex());
 	}
-
 
 	/**
 	 * Delete the specified point and modify the selection accordingly
@@ -208,7 +208,8 @@ public class TrackInfo
 				}
 			}
 		}
-		else {
+		else
+		{
 			// no photo, but maybe need to deselect point
 			if (currPoint != null && currPoint.getPhoto() != null) {
 				pointIndex = -1;
@@ -250,14 +251,16 @@ public class TrackInfo
 			if (audio.isConnected()) {
 				pointIndex = _track.getPointIndex(audio.getDataPoint());
 			}
-			else {
+			else
+			{
 				// Check whether to deselect current point or not if audio not correlated
 				if (pointIndex >= 0 && _track.getPoint(pointIndex).getAudio() != null) {
 					pointIndex = -1;
 				}
 			}
 		}
-		else {
+		else
+		{
 			// check if current point has audio or not
 			if (currPoint != null && currPoint.getAudio() != null) {
 				pointIndex = -1;
@@ -266,11 +269,13 @@ public class TrackInfo
 		// Has the new point got a photo?
 		DataPoint selectedPoint = _track.getPoint(pointIndex);
 		int photoIndex = _selection.getCurrentPhotoIndex();
-		if (selectedPoint != null && selectedPoint.getPhoto() != null) {
+		if (selectedPoint != null && selectedPoint.getPhoto() != null)
+		{
 			// New point has a photo, so select it
 			photoIndex = _photoList.getIndexOf(selectedPoint.getPhoto());
 		}
-		else if (currPoint != null && selectedPoint != currPoint && currPoint.getPhoto() != null) {
+		else if (currPoint != null && selectedPoint != currPoint && currPoint.getPhoto() != null)
+		{
 			// Old point had a photo, so deselect it
 			photoIndex = -1;
 		}

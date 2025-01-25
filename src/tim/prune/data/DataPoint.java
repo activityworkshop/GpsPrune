@@ -27,6 +27,8 @@ public class DataPoint
 	private boolean _markedForDeletion = false;
 	private int _modifyCount = 0;
 
+	private static FieldList _sharedLatLonAltFieldList = null;
+
 
 	/**
 	 * Constructor
@@ -81,7 +83,7 @@ public class DataPoint
 			else {
 				speedUnit = inOptions.getSpeedUnits();
 			}
-			_hSpeed = new Speed(getFieldValue(Field.SPEED), speedUnit);
+			_hSpeed = Speed.createOrNull(getFieldValue(Field.SPEED), speedUnit);
 		}
 		if (inField == null || inField == Field.VERTICAL_SPEED)
 		{
@@ -97,7 +99,7 @@ public class DataPoint
 				vspeedUnit = inOptions.getVerticalSpeedUnits();
 				isInverted = !inOptions.getVerticalSpeedsUpwards();
 			}
-			_vSpeed = new Speed(getFieldValue(Field.VERTICAL_SPEED), vspeedUnit, isInverted);
+			_vSpeed = Speed.createOrNull(getFieldValue(Field.VERTICAL_SPEED), vspeedUnit, isInverted);
 		}
 		if (inField == null || inField == Field.TIMESTAMP) {
 			_timestamp = new TimestampUtc(getFieldValue(Field.TIMESTAMP));
@@ -132,8 +134,7 @@ public class DataPoint
 	{
 		// Only these three fields are available
 		_fieldValues = new String[3];
-		Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE};
-		_fieldList = new FieldList(fields);
+		_fieldList = getSharedLatLonFieldList();
 		// TODO: Check if either latitude or longitude is null - in which case do what?
 		_latitude = inLatitude;
 		_fieldValues[0] = inLatitude.toString();
@@ -152,6 +153,17 @@ public class DataPoint
 	/** Simplified constructor just giving raw values for latitude and longitude */
 	public DataPoint(double inLatitude, double inLongitude) {
 		this(Latitude.make(inLatitude), Longitude.make(inLongitude), null);
+	}
+
+	/** @return a shared field list just containing latitude longitude and altitude */
+	private static FieldList getSharedLatLonFieldList()
+	{
+		if (_sharedLatLonAltFieldList == null)
+		{
+			Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE};
+			_sharedLatLonAltFieldList = new FieldList(fields);
+		}
+		return _sharedLatLonAltFieldList;
 	}
 
 	/**

@@ -25,7 +25,9 @@ public abstract class XmlUtils
 	 */
 	public static String fixCdata(String inString)
 	{
-		if (inString == null || inString.isEmpty()) return "";
+		if (inString == null || inString.isEmpty()) {
+			return "";
+		}
 		if (!hasIllegalCharacter(inString)) {
 			return inString;
 		}

@@ -8,8 +8,8 @@ import tim.prune.I18nManager;
 import tim.prune.cmd.CompoundCommand;
 import tim.prune.cmd.PointFlag;
 import tim.prune.data.DataPoint;
-import tim.prune.data.ListUtils;
 import tim.prune.data.Track;
+import tim.prune.java8.ListUtils;
 
 /**
  * Class to provide the function to delete the currently selected range

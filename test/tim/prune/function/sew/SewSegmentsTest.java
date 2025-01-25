@@ -12,10 +12,10 @@ import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Latitude;
-import tim.prune.data.ListUtils;
 import tim.prune.data.Longitude;
 import tim.prune.data.Track;
 import tim.prune.gui.ProgressIndicator;
+import tim.prune.java8.ListUtils;
 
 /**
  * Tests for the function to sew track segments together

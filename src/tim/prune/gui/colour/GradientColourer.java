@@ -16,10 +16,11 @@ public class GradientColourer extends ProfileDataColourer
 	 * Constructor
 	 * @param inStartColour start colour
 	 * @param inEndColour end colour
+	 * @param inWideHues true for wide mode, false for narrow
 	 */
-	public GradientColourer(Color inStartColour, Color inEndColour)
+	public GradientColourer(Color inStartColour, Color inEndColour, boolean inWideHues)
 	{
-		super(inStartColour, inEndColour);
+		super(inStartColour, inEndColour, inWideHues);
 	}
 
 	@Override

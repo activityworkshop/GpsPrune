@@ -11,6 +11,7 @@ import javax.swing.JOptionPane;
 import tim.prune.App;
 import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
+import tim.prune.data.FileType;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.SourceInfo;
@@ -98,7 +99,7 @@ public class NmeaFileLoader extends FileTypeLoader
 			if (appendOption == JOptionPane.CANCEL_OPTION) {
 				return;
 			}
-			loadData(makePointList(messages), new SourceInfo(inFileLock.getFile(), SourceInfo.FileType.NMEA),
+			loadData(makePointList(messages), new SourceInfo(inFileLock.getFile(), FileType.NMEA),
 				appendOption == JOptionPane.YES_OPTION);
 		}
 	}

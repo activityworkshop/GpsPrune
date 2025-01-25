@@ -114,7 +114,16 @@ public abstract class Timestamp
 	 * @param inOffset number of seconds to add/subtract
 	 * @return a new Timestamp offset from the current one
 	 */
-	public abstract Timestamp addOffsetSeconds(long inOffset);
+	public Timestamp addOffsetSeconds(long inOffset) {
+		return addOffsetMilliseconds(inOffset * 1000L);
+	}
+
+	/**
+	 * Add the given number of milliseconds offset
+	 * @param inOffset number of milliseconds to add/subtract
+	 * @return a new Timestamp offset from the current one
+	 */
+	public abstract Timestamp addOffsetMilliseconds(long inOffset);
 
 	/**
 	 * @return true if the timestamp has non-zero milliseconds
@@ -142,13 +151,13 @@ public abstract class Timestamp
 			{
 				SimpleDateFormat sdf = (SimpleDateFormat) DEFAULT_TIME_FORMAT;
 				String pattern = sdf.toPattern();
-				if (pattern.indexOf("ss") > 0 && pattern.indexOf("SS") < 0)
+				if (pattern.indexOf("ss") > 0 && !pattern.contains("SS"))
 				{
 					sdf.applyPattern(pattern.replaceFirst("s+", "$0.SSS"));
 					_millisAddedToTimeFormat = true;
 				}
 			}
-			catch (ClassCastException cce) {}
+			catch (ClassCastException ignored) {}
 		}
 		return format(DEFAULT_TIME_FORMAT, inTimezone);
 	}

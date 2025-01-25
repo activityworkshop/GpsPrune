@@ -2,6 +2,7 @@ package tim.prune.load.xml;
 
 import java.io.FileInputStream;
 import java.util.zip.GZIPInputStream;
+
 import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.SourceInfo;
@@ -49,8 +50,10 @@ public class GzipFileLoader
 			else
 			{
 				// Send back to app
-				SourceInfo sourceInfo = new SourceInfo(inFileLock.getFile(),
-					(handler instanceof GpxHandler ? SourceInfo.FileType.GPX : SourceInfo.FileType.KML));
+				SourceInfo sourceInfo = new SourceInfo(inFileLock.getFile(), handler.getFileType(), handler.getFileVersion());
+				sourceInfo.setFileTitle(handler.getFileTitle());
+				sourceInfo.setFileDescription(handler.getFileDescription());
+				sourceInfo.setExtensionInfo(handler.getExtensionInfo());
 				new FileTypeLoader(_app).loadData(handler, sourceInfo, inAutoAppend,
 					new MediaLinkInfo(inFileLock.getFile(), handler.getLinkArray()));
 			}

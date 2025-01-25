@@ -11,11 +11,11 @@ import tim.prune.data.Altitude;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Latitude;
-import tim.prune.data.ListUtils;
 import tim.prune.data.Longitude;
 import tim.prune.data.Track;
 import tim.prune.data.UnitSetLibrary;
 import tim.prune.function.compress.WaypointComparer.CompareResult;
+import tim.prune.java8.ListUtils;
 
 /**
  * JUnit tests for the waypoint duplicate detection

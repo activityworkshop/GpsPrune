@@ -59,7 +59,8 @@ public class SrtmLowResSource extends SrtmSource
 		try
 		{
 			int dir = _tileData[idx];
-			if (dir > 0) {
+			if (dir > 0)
+			{
 				try {
 					url = new URL(URL_PREFIX + CONTINENTS[dir] + "/"
 						+ getFilename(inTile));
@@ -73,8 +74,7 @@ public class SrtmLowResSource extends SrtmSource
 	/**
 	 * @return filename with which this tile data will be cached
 	 */
-	public String getFilename(SrtmTile inTile)
-	{
+	public String getFilename(SrtmTile inTile) {
 		return inTile.getTileName() + ".hgt.zip";
 	}
 
@@ -144,7 +144,12 @@ public class SrtmLowResSource extends SrtmSource
 			result = Result.DOWNLOAD_FAILED;
 		}
 		// Make sure stream is closed
-		try {inStream.close();} catch (Exception e) {}
+		if (inStream != null)
+		{
+			try {
+				inStream.close();
+			} catch (Exception e) {}
+		}
 
 		return result;
 	}

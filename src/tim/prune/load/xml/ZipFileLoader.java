@@ -62,8 +62,11 @@ public class ZipFileLoader
 						else
 						{
 							// Send back to app
-							SourceInfo sourceInfo = new SourceInfo(inFileLock.getFile(),
-								(handler instanceof GpxHandler ? SourceInfo.FileType.GPX : SourceInfo.FileType.KML));
+							SourceInfo sourceInfo = new SourceInfo(inFileLock.getFile(), handler.getFileType(),
+								handler.getFileVersion());
+							sourceInfo.setFileTitle(handler.getFileTitle());
+							sourceInfo.setFileDescription(handler.getFileDescription());
+							sourceInfo.setExtensionInfo(handler.getExtensionInfo());
 							new FileTypeLoader(_app).loadData(handler, sourceInfo, inAutoAppend,
 								new MediaLinkInfo(inFileLock.getFile(), handler.getLinkArray()));
 							xmlFound = true;

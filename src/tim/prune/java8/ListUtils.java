@@ -1,4 +1,4 @@
-package tim.prune.data;
+package tim.prune.java8;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,15 @@ public abstract class ListUtils
 		}
 		return result;
 	}
+
+	/** Equivalent of List.of for a single String */
+	public static List<String> makeListOfString(String inValue)
+	{
+		ArrayList<String> values = new ArrayList<>();
+		values.add(inValue);
+		return values;
+	}
+
 
 	/** Equivalent of List.of for a single FieldEdit value */
 	public static List<FieldEdit> makeListOfEdit(FieldEdit inEdit)

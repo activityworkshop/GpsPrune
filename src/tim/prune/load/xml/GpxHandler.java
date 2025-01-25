@@ -1,11 +1,16 @@
 package tim.prune.load.xml;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
+import tim.prune.data.ExtensionInfo;
 import tim.prune.data.Field;
+import tim.prune.data.FieldGpx;
+import tim.prune.data.FieldXml;
+import tim.prune.data.FileType;
 
 
 /**
@@ -15,19 +20,33 @@ public class GpxHandler extends XmlHandler
 {
 	private boolean _insidePoint = false;
 	private boolean _insideWaypoint = false;
+	private boolean _insideExtensions = false;
 	private boolean _startSegment = true;
 	private int _trackNum = -1;
 	private final GpxTag _fileTitle = new GpxTag(), _fileDescription = new GpxTag();
 	private final GpxTag _pointName = new GpxTag(), _trackName = new GpxTag();
-	private String _latitude = null, _longitude = null;
 	private final GpxTag _elevation = new GpxTag(), _time = new GpxTag();
 	private final GpxTag _type = new GpxTag(), _description = new GpxTag();
 	private final GpxTag _link = new GpxTag(), _comment = new GpxTag();
 	private final GpxTag _sym = new GpxTag();
 	private GpxTag _currentTag = null;
+	private final ExtensionInfo _extensionInfo = new ExtensionInfo();
 	private final ArrayList<String[]> _pointList = new ArrayList<>();
 	private final ArrayList<String> _linkList = new ArrayList<>();
+	private Stack<String> _extensionTags = null;
+	private FieldGpx _gpxField = null;
 
+
+	/** Constructor, setting up the fields */
+	public GpxHandler()
+	{
+		final Field[] fields = {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
+			Field.WAYPT_NAME, Field.TIMESTAMP, Field.NEW_SEGMENT,
+			Field.WAYPT_TYPE, Field.DESCRIPTION, Field.COMMENT, Field.SYMBOL};
+		for (Field field : fields) {
+			addField(field);
+		}
+	}
 
 	/**
 	 * Receive the start of a tag
@@ -38,17 +57,14 @@ public class GpxHandler extends XmlHandler
 	{
 		// Read the parameters for waypoints and track points
 		String tag = qName.toLowerCase();
+		_gpxField = null;
 		if (tag.equals("wpt") || tag.equals("trkpt") || tag.equals("rtept"))
 		{
 			_insidePoint = true;
 			_insideWaypoint = tag.equals("wpt");
-			final int numAttributes = attributes.getLength();
-			for (int i=0; i<numAttributes; i++)
-			{
-				String att = attributes.getQName(i).toLowerCase();
-				if (att.equals("lat")) {_latitude = attributes.getValue(i);}
-				else if (att.equals("lon")) {_longitude = attributes.getValue(i);}
-			}
+			resetCurrentValues();
+			addCurrentValue(Field.LATITUDE, getAttribute(attributes, "lat"));
+			addCurrentValue(Field.LONGITUDE, getAttribute(attributes, "lon"));
 			_elevation.setValue(null);
 			_pointName.setValue(null);
 			_time.setValue(null);
@@ -79,7 +95,8 @@ public class GpxHandler extends XmlHandler
 		else if (tag.equals("type")) {
 			_currentTag = _type;
 		}
-		else if (tag.equals("description") || tag.equals("desc")) {
+		else if (tag.equals("description") || tag.equals("desc"))
+		{
 			if (_insidePoint) {
 				_currentTag = _description;
 			}
@@ -104,9 +121,65 @@ public class GpxHandler extends XmlHandler
 			_trackNum++;
 			_trackName.setValue(null);
 		}
+		else if (tag.equals("extensions") && _insidePoint)
+		{
+			_insideExtensions = true;
+			_currentTag = new GpxTag();
+			_extensionTags = new Stack<>();
+		}
+		else if (_insideExtensions)
+		{
+			_extensionTags.add(qName);
+			_currentTag.clear();
+		}
+		else if (tag.equals("gpx"))
+		{
+			setFileType(FileType.GPX);
+			processGpxAttributes(attributes);
+		}
+		else
+		{
+			// Maybe it's a recognised gpx field like hdop
+			_gpxField = FieldGpx.getField(tag);
+			_currentTag = new GpxTag();
+		}
 		super.startElement(uri, localName, qName, attributes);
 	}
 
+
+	/** Process the attributes from the main gpx tag including extensions */
+	private void processGpxAttributes(Attributes attributes)
+	{
+		// System.out.println("Start gpx element: " + qName);
+		final int numAttributes = attributes.getLength();
+		for (int i=0; i<numAttributes; i++)
+		{
+			String attributeName = attributes.getQName(i).toLowerCase();
+			String attrValue = attributes.getValue(i);
+			// System.out.println("   Attribute '" + attributeName + "' - '" + attributes.getValue(i) + "'");
+			if (attributeName.equals("version")) {
+				setFileVersion(attributes.getValue(i));
+			}
+			else if (attributeName.contentEquals("xmlns")) {
+				_extensionInfo.setNamespace(attrValue);
+			}
+			else if (attributeName.equals("xmlns:xsi")) {
+				_extensionInfo.setXsi(attrValue);
+			}
+			else if (attributeName.equals("xsi:schemalocation"))
+			{
+				String[] schemas = attrValue.split(" ");
+				for (int s=0; s<schemas.length; s++) {
+					_extensionInfo.addXsiAttribute(schemas[s]);
+				}
+			}
+			else if (attributeName.startsWith("xmlns:"))
+			{
+				String prefix = attributeName.substring(6);
+				_extensionInfo.addNamespace(prefix, attrValue);
+			}
+		}
+	}
 
 	/**
 	 * Process end tag
@@ -121,12 +194,69 @@ public class GpxHandler extends XmlHandler
 			processPoint();
 			_insidePoint = false;
 		}
+		else if (tag.equals("extensions")) {
+			_insideExtensions = false;
+		}
+		else if (_insideExtensions)
+		{
+			String value = _currentTag.getValue().trim();
+			_extensionTags.pop();
+			if (!value.isEmpty())
+			{
+				FieldXml field = new FieldXml(FileType.GPX, tag, _extensionTags);
+				if (!hasField(field)) {
+					addField(field);
+				}
+				addCurrentValue(field, value);
+			}
+			_currentTag.clear();
+		}
+		else if (_gpxField != null)
+		{
+			String value = _currentTag.getValue().trim();
+			if (!value.isEmpty())
+			{
+				if (!hasField(_gpxField)) {
+					addField(_gpxField);
+				}
+				addCurrentValue(_gpxField, value);
+			}
+			_currentTag.clear();
+			_gpxField = null;
+		}
+		else if (_insidePoint && _currentTag != null && getFileVersion().equals("1.0"))
+		{
+			String value = _currentTag.getValue().trim();
+			String tagNamespace = getNamespace(tag);
+			if (tagNamespace != null)
+			{
+				String id = this.getExtensionInfo().getNamespaceName(tagNamespace);
+				if (id != null)
+				{
+					FieldXml field = new FieldXml(FileType.GPX, tag, id);
+					if (!hasField(field)) {
+						addField(field);
+					}
+					addCurrentValue(field, value);
+				}
+			}
+			_currentTag = null;
+		}
 		else {
 			_currentTag = null;
 		}
 		super.endElement(uri, localName, qName);
 	}
 
+
+	private static String getNamespace(String inTagName)
+	{
+		int firstColonPos = inTagName.indexOf(':');
+		if (firstColonPos > 0) {
+			return inTagName.substring(0, firstColonPos);
+		}
+		return null;
+	}
 
 	/**
 	 * Process character text (inside tags or between them)
@@ -151,7 +281,9 @@ public class GpxHandler extends XmlHandler
 	 */
 	private static String checkCharacters(String inVariable, String inValue)
 	{
-		if (inVariable == null) {return inValue;}
+		if (inVariable == null) {
+			return inValue;
+		}
 		return inVariable + inValue;
 	}
 
@@ -161,34 +293,23 @@ public class GpxHandler extends XmlHandler
 	 */
 	private void processPoint()
 	{
-		// Put the values into a String array matching the order in getFieldArray()
-		String[] values = new String[10];
-		values[0] = _latitude;
-		values[1] = _longitude;
-		values[2] = _elevation.getValue();
-		if (_insideWaypoint) {values[3] = _pointName.getValue();}
-		values[4] = _time.getValue();
+		// Values go into a String array matching the order in getFieldArray()
+		addCurrentValue(Field.ALTITUDE, _elevation.getValue());
+		if (_insideWaypoint) {
+			addCurrentValue(Field.WAYPT_NAME, _pointName.getValue());
+		}
+		addCurrentValue(Field.TIMESTAMP, _time.getValue());
 		if (_startSegment && !_insideWaypoint)
 		{
-			values[5] = "1";
+			addCurrentValue(Field.NEW_SEGMENT, "1");
 			_startSegment = false;
 		}
-		values[6] = _type.getValue();
-		values[7] = _description.getValue();
-		values[8] = _comment.getValue();
-		values[9] = _sym.getValue();
-		_pointList.add(values);
+		addCurrentValue(Field.WAYPT_TYPE, _type.getValue());
+		addCurrentValue(Field.DESCRIPTION, _description.getValue());
+		addCurrentValue(Field.COMMENT, _comment.getValue());
+		addCurrentValue(Field.SYMBOL, _sym.getValue());
+		_pointList.add(getCurrentValues());
 		_linkList.add(_link.getValue());
-	}
-
-
-	/**
-	 * @see tim.prune.load.xml.XmlHandler#getFieldArray()
-	 */
-	public Field[] getFieldArray() {
-		return new Field[] {Field.LATITUDE, Field.LONGITUDE, Field.ALTITUDE,
-			Field.WAYPT_NAME, Field.TIMESTAMP, Field.NEW_SEGMENT,
-			Field.WAYPT_TYPE, Field.DESCRIPTION, Field.COMMENT, Field.SYMBOL};
 	}
 
 
@@ -220,7 +341,9 @@ public class GpxHandler extends XmlHandler
 			result[i] = _linkList.get(i);
 			if (result[i] != null) {hasLink = true;}
 		}
-		if (!hasLink) {result = null;}
+		if (!hasLink) {
+			result = null;
+		}
 		return result;
 	}
 
@@ -236,5 +359,10 @@ public class GpxHandler extends XmlHandler
 	 */
 	public String getFileDescription() {
 		return _fileDescription.getValue();
+	}
+
+	@Override
+	public ExtensionInfo getExtensionInfo() {
+		return _extensionInfo;
 	}
 }

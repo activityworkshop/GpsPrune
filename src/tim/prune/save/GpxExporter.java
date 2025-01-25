@@ -9,6 +9,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -32,12 +33,16 @@ import tim.prune.GenericFunction;
 import tim.prune.I18nManager;
 import tim.prune.UpdateMessageBroker;
 import tim.prune.config.Config;
+import tim.prune.data.FileInfo;
+import tim.prune.data.FileType;
 import tim.prune.data.TrackInfo;
 import tim.prune.gui.DialogCloser;
 import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.ProgressDialog;
 import tim.prune.load.GenericFileFilter;
-import tim.prune.save.xml.GpxCacherList;
+import tim.prune.save.xml.GpxWriter;
+import tim.prune.save.xml.GpxWriter10;
+import tim.prune.save.xml.GpxWriter11;
 import tim.prune.save.xml.XmlUtils;
 
 
@@ -51,9 +56,9 @@ public class GpxExporter extends GenericFunction
 	private JDialog _dialog = null;
 	private JComboBox<String> _titleField = null;
 	private JComboBox<String> _descriptionField = null;
+	private JComboBox<String> _versionField = null;
 	private PointTypeSelector _pointTypeSelector = null;
 	private JCheckBox _timestampsCheckbox = null;
-	private JCheckBox _copySourceCheckbox = null;
 	private JCheckBox _descsToCommentsCheckbox = null;
 	private JPanel _encodingsPanel = null;
 	private JRadioButton _useSystemRadio = null, _forceUtf8Radio = null;
@@ -114,26 +119,35 @@ public class GpxExporter extends GenericFunction
 		dialogPanel.setLayout(new BorderLayout());
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
 		// Make a panel for the name/desc text boxes
+		final String longStringToDefineWidth = "Long enough for a reasonable description";
 		JPanel descPanel = new JPanel();
 		double[] weights = new double[] {0.2, 0.8};
 		boolean[] aligns = new boolean[] {true, false};
 		GuiGridLayout comboGrid = new GuiGridLayout(descPanel, weights, aligns);
 		comboGrid.add(new JLabel(I18nManager.getText("dialog.exportgpx.name")));
 		_titleField = new JComboBox<>();
-		_titleField.setPrototypeDisplayValue("Long enough for a reasonable description");
+		_titleField.setPrototypeDisplayValue(longStringToDefineWidth);
 		_titleField.setEditable(true);
 		comboGrid.add(_titleField);
 		comboGrid.add(new JLabel(I18nManager.getText("dialog.exportgpx.desc")));
 		_descriptionField = new JComboBox<>();
-		_descriptionField.setPrototypeDisplayValue("Long enough for a reasonable description");
+		_descriptionField.setPrototypeDisplayValue(longStringToDefineWidth);
 		_descriptionField.setEditable(true);
 		comboGrid.add(_descriptionField);
+		// file version
+		comboGrid.add(new JLabel(I18nManager.getText("dialog.exportxml.version")));
+		_versionField = new JComboBox<>();
+		_versionField.setPrototypeDisplayValue(longStringToDefineWidth);
+		_versionField.setEditable(false);
+		comboGrid.add(_versionField);
 		mainPanel.add(descPanel);
-		mainPanel.add(Box.createVerticalStrut(5));
+		mainPanel.add(Box.createVerticalStrut(15));
 		// point type selection (track points, waypoints, photo points)
 		_pointTypeSelector = new PointTypeSelector();
 		mainPanel.add(_pointTypeSelector);
+		mainPanel.add(Box.createVerticalStrut(15));
 		// checkboxes for timestamps and copying
 		JPanel checkPanel = new JPanel();
 		weights = new double[] {0.5, 0.5};
@@ -142,9 +156,6 @@ public class GpxExporter extends GenericFunction
 		_timestampsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.includetimestamps"));
 		_timestampsCheckbox.setSelected(true);
 		checkGrid.add(_timestampsCheckbox);
-		_copySourceCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.copysource"));
-		_copySourceCheckbox.setSelected(true);
-		checkGrid.add(_copySourceCheckbox);
 		_descsToCommentsCheckbox = new JCheckBox(I18nManager.getText("dialog.exportgpx.descriptionstocomments"));
 		checkGrid.add(_descsToCommentsCheckbox, 2, true);
 		mainPanel.add(checkPanel);
@@ -190,12 +201,34 @@ public class GpxExporter extends GenericFunction
 	}
 
 	/**
-	 * Set the suggestions for the title and description with which to export
+	 * Set the suggestions for the title, description and version with which to export
 	 */
 	private void populateComboboxes()
 	{
-		populateCombobox(_titleField, _app.getTrackInfo().getFileInfo().getAllTitles());
-		populateCombobox(_descriptionField, _app.getTrackInfo().getFileInfo().getAllDescriptions());
+		final FileInfo fileInfo = _app.getTrackInfo().getFileInfo();
+		populateCombobox(_titleField, fileInfo.getAllTitles());
+		populateCombobox(_descriptionField, fileInfo.getAllDescriptions());
+		_versionField.removeAllItems();
+		// Check whether any extensions are used or not
+		final boolean hasExtensions = fileInfo.hasExtensions(FileType.GPX);
+		_versionField.addItem(I18nManager.getText("dialog.exportgpx.version10" + (hasExtensions ? "withextensions" : "")));
+		_versionField.addItem(I18nManager.getText("dialog.exportgpx.version11" + (hasExtensions ? "withextensions" : "")));
+		// Find best GPX version and pre-select item from combo
+		boolean isGpx10 = shouldExportGpx10(fileInfo);
+		_versionField.setSelectedIndex(isGpx10 ? 0 : 1);
+	}
+
+	/** @return true if Gpx version 1.0 should be pre-selected in the combobox */
+	private boolean shouldExportGpx10(FileInfo inFileInfo)
+	{
+		ArrayList<String> gpxVersions = new ArrayList<>();
+		gpxVersions.add("1.0");
+		gpxVersions.add("1.1");
+		VersionCombiner combiner = new VersionCombiner(gpxVersions);
+		for (String version : inFileInfo.getVersions(FileType.GPX)) {
+			combiner.addVersion(version);
+		}
+		return combiner.getBestVersion().equals("1.0");
 	}
 
 	/** Add the specified values to the combobox */
@@ -254,7 +287,7 @@ public class GpxExporter extends GenericFunction
 		File saveFile = null;
 		JFileChooser fileChooser = new JFileChooser();
 		fileChooser.setDialogType(JFileChooser.SAVE_DIALOG);
-		fileChooser.setFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
+		fileChooser.setFileFilter(new GenericFileFilter("filetypefilter.gpx", new String[] {"gpx"}));
 		fileChooser.setAcceptAllFileFilterUsed(false);
 		// start from directory in config which should be set
 		if (inDirectory != null) {
@@ -327,11 +360,6 @@ public class GpxExporter extends GenericFunction
 	 */
 	public void run()
 	{
-		// Instantiate source file cachers in case we want to copy output
-		GpxCacherList gpxCachers = null;
-		if (_copySourceCheckbox.isSelected()) {
-			gpxCachers = new GpxCacherList(_trackInfo.getFileInfo());
-		}
 		OutputStreamWriter writer = null;
 		// TODO: Try with resources
 		try
@@ -354,8 +382,10 @@ public class GpxExporter extends GenericFunction
 			// write file
 			final String name = getEnteredName();
 			final String description = getEnteredDescription();
-			final int numPoints = new GpxWriter(_progress, settings).exportData(writer, _trackInfo, name,
-					description, gpxCachers);
+			final boolean useGpx10 = _versionField.getSelectedIndex() == 0;
+			GpxWriter gpxWriter = useGpx10 ? new GpxWriter10(_progress, settings)
+				: new GpxWriter11(_progress, settings);
+			final int numPoints = gpxWriter.exportData(writer, _trackInfo, name, description, _app.getTrackInfo().getFileInfo());
 
 			// close file
 			writer.close();

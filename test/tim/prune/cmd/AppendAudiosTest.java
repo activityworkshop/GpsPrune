@@ -3,10 +3,10 @@ package tim.prune.cmd;
 import org.junit.jupiter.api.Test;
 
 import tim.prune.data.AudioClip;
-import tim.prune.data.ListUtils;
 import tim.prune.data.MediaObject;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.java8.ListUtils;
 
 import java.io.File;
 import java.util.List;

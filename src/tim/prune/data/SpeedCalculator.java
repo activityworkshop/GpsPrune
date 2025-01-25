@@ -100,8 +100,7 @@ public abstract class SpeedCalculator
 			}
 		}
 		// Did we get a value?
-		if (pointHasSpeed)
-		{
+		if (pointHasSpeed) {
 			inValue.setValue(speedValue);
 		}
 		// otherwise, just leave value as invalid

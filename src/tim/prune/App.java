@@ -404,8 +404,8 @@ public class App
 			for (int i=0; i<inNumUndos; i++) {
 				_undoStack.popCommand().getInverse().execute(_trackInfo);
 			}
-			String message = "" + inNumUndos + " "
-				 + (inNumUndos == 1 ? I18nManager.getText("confirm.undo.single") : I18nManager.getText("confirm.undo.multi"));
+			String message = (inNumUndos == 1 ? I18nManager.getText("confirm.undo.single")
+					: I18nManager.getTextWithNumber("confirm.undo.multi", inNumUndos));
 			UpdateMessageBroker.informSubscribers(message);
 		}
 		catch (EmptyStackException empty) {}

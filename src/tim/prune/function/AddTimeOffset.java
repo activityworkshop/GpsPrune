@@ -15,6 +15,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingConstants;
@@ -26,6 +27,7 @@ import tim.prune.cmd.EditSingleFieldCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
 import tim.prune.data.Timestamp;
+import tim.prune.data.Track;
 import tim.prune.function.edit.PointEdit;
 import tim.prune.gui.WholeNumberField;
 
@@ -40,6 +42,7 @@ public class AddTimeOffset extends GenericFunction
 	private WholeNumberField _hourField = null, _minuteField = null;
 	private WholeNumberField _secondsField = null;
 	private JButton _okButton = null;
+	private boolean _warningAlreadyShown = false;
 
 
 	/**
@@ -67,6 +70,19 @@ public class AddTimeOffset extends GenericFunction
 			_app.showErrorMessage(getNameKey(), "dialog.addtimeoffset.notimestamps");
 			return;
 		}
+		if (!_warningAlreadyShown && hasUnselectedTimes(_app.getTrackInfo().getTrack(), selStart, selEnd))
+		{
+			Object[] buttonTexts = {I18nManager.getText("button.continue"), I18nManager.getText("button.cancel")};
+			if (JOptionPane.showOptionDialog(_parentFrame,
+					I18nManager.getText("dialog.addtimeoffset.confirm"),
+					getName(), JOptionPane.YES_NO_OPTION,
+					JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1])
+				!= JOptionPane.YES_OPTION)
+			{
+				return;
+			}
+			_warningAlreadyShown = true;
+		}
 		// Make dialog window
 		if (_dialog == null)
 		{
@@ -79,6 +95,14 @@ public class AddTimeOffset extends GenericFunction
 		_dialog.setVisible(true);
 	}
 
+	/**
+	 * @return true if there are any timestamps before or after the selected range
+	 */
+	private boolean hasUnselectedTimes(Track inTrack, int inSelStart, int inSelEnd)
+	{
+		return inTrack.hasData(Field.TIMESTAMP, 0, inSelStart - 1)
+			|| inTrack.hasData(Field.TIMESTAMP, inSelEnd + 1, inTrack.getNumPoints() -1);
+	}
 
 	/**
 	 * Create dialog components
@@ -164,7 +188,6 @@ public class AddTimeOffset extends GenericFunction
 		dialogPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 		return dialogPanel;
 	}
-
 
 	/**
 	 * @param inKey text key

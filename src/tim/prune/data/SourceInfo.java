@@ -8,33 +8,41 @@ import java.io.File;
  */
 public class SourceInfo
 {
-	/** File type of source file */
-	public enum FileType {TEXT, GPX, KML, NMEA, GPSBABEL, JSON}
-
 	/** Source file */
 	private final File _sourceFile;
 	/** Name of source */
 	private final String _sourceName;
 	/** File type */
 	private final FileType _fileType;
+	/** File version */
+	private final String _fileVersion;
 	/** File title, if any */
 	private String _fileTitle = null;
 	/** File description, if any */
 	private String _fileDescription = null;
+	/** Extension info, if any */
+	private ExtensionInfo _extensionInfo = null;
 	/** Number of points */
 	private int _numPoints = 0;
 
+
+	/** Constructor giving just the file and its type, without a version */
+	public SourceInfo(File inFile, FileType inType) {
+		this(inFile, inType, null);
+	}
 
 	/**
 	 * Constructor
 	 * @param inFile source file
 	 * @param inType type of file
+	 * @param inVersion version
 	 */
-	public SourceInfo(File inFile, FileType inType)
+	public SourceInfo(File inFile, FileType inType, String inVersion)
 	{
 		_sourceFile = inFile;
 		_sourceName = inFile.getName();
 		_fileType = inType;
+		_fileVersion = inVersion;
 	}
 
 	/**
@@ -47,6 +55,7 @@ public class SourceInfo
 		_sourceFile = null;
 		_sourceName = inName;
 		_fileType = inType;
+		_fileVersion = null;
 	}
 
 	/**
@@ -61,6 +70,10 @@ public class SourceInfo
 	 */
 	public void setFileDescription(String inDesc) {
 		_fileDescription = inDesc;
+	}
+
+	public void setExtensionInfo(ExtensionInfo inInfo) {
+		_extensionInfo = inInfo;
 	}
 
 	/**
@@ -82,6 +95,11 @@ public class SourceInfo
 	 */
 	public FileType getFileType() {
 		return _fileType;
+	}
+
+	/** @return version of file */
+	public String getFileVersion() {
+		return _fileVersion;
 	}
 
 	/**
@@ -110,5 +128,32 @@ public class SourceInfo
 	 */
 	public int getNumPoints() {
 		return _numPoints;
+	}
+
+	/**
+	 * @return a string describing the extensions, or null if there aren't any
+	 */
+	public String getExtensions()
+	{
+		if (_extensionInfo == null) {
+			return null;
+		}
+		StringBuilder builder = null;
+		for (String url : _extensionInfo.getExtensions())
+		{
+			if (builder == null) {
+				builder = new StringBuilder();
+			}
+			else {
+				builder.append(", ");
+			}
+			builder.append(url);
+		}
+		return builder == null ? null : builder.toString();
+	}
+
+	/** @return the complete extension information, or null */
+	public ExtensionInfo getExtensionInfo() {
+		return _extensionInfo;
 	}
 }

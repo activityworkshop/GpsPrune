@@ -337,6 +337,14 @@ public class TimestampUtc extends Timestamp
 		return _milliseconds;
 	}
 
+	/**
+	 * Add the given number of milliseconds offset
+	 * @param inOffset number of milliseconds to add/subtract
+	 * @return new timestamp, offset from this one
+	 */
+	public Timestamp addOffsetMilliseconds(long inOffset) {
+		return new TimestampUtc(_milliseconds + inOffset);
+	}
 
 	/**
 	 * Add the given number of seconds offset
@@ -344,9 +352,8 @@ public class TimestampUtc extends Timestamp
 	 * @return new timestamp, offset from this one
 	 */
 	public Timestamp addOffsetSeconds(long inOffset) {
-		return new TimestampUtc(_milliseconds + (inOffset * 1000L));
+		return addOffsetMilliseconds(inOffset * 1000L);
 	}
-
 
 	/**
 	 * @param inFormat format of timestamp
@@ -365,22 +372,6 @@ public class TimestampUtc extends Timestamp
 
 		// Nothing cached, so use the regular one
 		return super.getText(inFormat, inTimezone);
-	}
-
-	/** @return a string describing the interpolated timestamp between two existing ones */
-	public static String interpolate(Timestamp inStartStamp, Timestamp inEndStamp, int inIndex, int inNumPoints)
-	{
-		if (inStartStamp == null || !inStartStamp.isValid()
-			|| inEndStamp == null || !inEndStamp.isValid()
-			|| inEndStamp.isBefore(inStartStamp))
-		{
-			return "";
-		}
-		final double fraction = 1.0 * (inIndex + 1) / (inNumPoints + 1);
-		final long startMillis = inStartStamp.getMilliseconds(TimeZone.getTimeZone("UTC"));
-		final long endMillis = inEndStamp.getMilliseconds(TimeZone.getTimeZone("UTC"));
-		final long middleMillis = startMillis + (long) (fraction * (endMillis - startMillis));
-		return "" + middleMillis;
 	}
 
 	/** @return a string describing the interpolated timestamp between two existing ones */

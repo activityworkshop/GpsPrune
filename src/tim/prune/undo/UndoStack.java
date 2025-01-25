@@ -1,6 +1,9 @@
 package tim.prune.undo;
 
-import java.util.Stack;
+import tim.prune.data.Stack;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import tim.prune.cmd.Command;
 
@@ -30,7 +33,6 @@ public class UndoStack extends Stack<CommandWithState>
 	/** Number of undos (and clears) already performed */
 	private int _numUndos = 0;
 
-	@Override
 	public synchronized void clear()
 	{
 		_numUndos++;
@@ -38,8 +40,8 @@ public class UndoStack extends Stack<CommandWithState>
 	}
 
 	/** Add a command to the stack */
-	public synchronized boolean add(Command inCommand) {
-		return super.add(new CommandWithState(inCommand, _numUndos));
+	public synchronized void add(Command inCommand) {
+		super.add(new CommandWithState(inCommand, _numUndos));
 	}
 
 	/** Pop the latest command from the stack */
@@ -49,9 +51,14 @@ public class UndoStack extends Stack<CommandWithState>
 		return super.pop()._command;
 	}
 
-	/** Get the command at the given index */
-	public Command getCommandAt(int inIndex) {
-		return super.elementAt(inIndex)._command;
+	/** Get the list of command descriptions, starting with the most recently added */
+	public List<String> getDescriptions()
+	{
+		ArrayList<String> commands = new ArrayList<>();
+		for (CommandWithState cws : asList()) {
+			commands.add(cws._command.getDescription());
+		}
+		return commands;
 	}
 
 	/** @return number of undos */

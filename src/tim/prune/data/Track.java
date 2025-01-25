@@ -13,15 +13,15 @@ import tim.prune.gui.map.MapUtils;
 public class Track
 {
 	// Data points
-	private DataPoint[] _dataPoints = null;
+	private DataPoint[] _dataPoints;
 	// Scaled x, y values
 	private double[] _xValues = null;
 	private double[] _yValues = null;
 	private boolean _scaled = false;
-	private int _numPoints = 0;
+	private int _numPoints;
 	private boolean _hasTrackpoint = false;
 	private boolean _hasWaypoint = false;
-	private FieldList _masterFieldList = null;
+	private FieldList _masterFieldList;
 	// variable ranges
 	private DoubleRange _latRange = null, _longRange = null;
 	private DoubleRange _xRange = null, _yRange = null;

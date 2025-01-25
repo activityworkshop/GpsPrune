@@ -11,16 +11,29 @@ import tim.prune.config.ColourUtils;
  */
 public class ColourPatch extends JPanel
 {
+	/** Listener to be informed of changes */
+	private final ColourChangeListener _listener;
+
 	/**
 	 * Constructor
 	 * @param inColour starting colour
 	 */
-	public ColourPatch(Color inColour)
+	public ColourPatch(Color inColour) {
+		this(inColour, null);
+	}
+
+	/**
+	 * Constructor
+	 * @param inColour starting colour
+	 * @param inListener optional listener
+	 */
+	public ColourPatch(Color inColour, ColourChangeListener inListener)
 	{
 		Dimension size = new Dimension(80, 50);
 		setMinimumSize(size);
 		setPreferredSize(size);
 		setColour(inColour);
+		_listener = inListener;
 	}
 
 	/**
@@ -33,6 +46,9 @@ public class ColourPatch extends JPanel
 		{
 			super.setBackground(inColour);
 			setToolTipText(ColourUtils.makeHexCode(inColour));
+			if (_listener != null) {
+				_listener.colourChanged();
+			}
 		}
 	}
 }

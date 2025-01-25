@@ -117,8 +117,8 @@ public class PointEditor extends GenericFunction
 			result.addField(field);
 		}
 		// Now add additional ones which may not be in the master field list
-		result.addFields(Field.ALTITUDE, Field.COMMENT, Field.DESCRIPTION, Field.TIMESTAMP,
-			Field.WAYPT_NAME, Field.WAYPT_TYPE, Field.SYMBOL);
+		result.addFields(Field.COMMENT, Field.DESCRIPTION, Field.TIMESTAMP,
+			Field.WAYPT_NAME, Field.WAYPT_TYPE, Field.SYMBOL, Field.ALTITUDE);
 		return result;
 	}
 

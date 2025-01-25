@@ -54,4 +54,38 @@ public class LatitudeTest
 		Assertions.assertEquals("S003°59.50'", coord.output(Coordinate.Format.DEG_MIN, 2));
 		Assertions.assertTrue(coord.getDouble() < -3.0);
 	}
+
+	@Test
+	public void testUseOriginalStringIfPossible()
+	{
+		Coordinate coord = Latitude.make("27.123401234012340");
+		Assertions.assertNotNull(coord);
+		Assertions.assertEquals("N 27.12", coord.output(Coordinate.Format.DEG, 2));
+		Assertions.assertEquals("N 27.12340123", coord.output(Coordinate.Format.DEG));
+
+		Assertions.assertEquals("27.12", coord.output(Coordinate.Format.DECIMAL_FORCE_POINT, 2));
+		Assertions.assertEquals("27.123401234012340", coord.output(Coordinate.Format.DECIMAL_FORCE_POINT));
+	}
+
+	@Test
+	public void testUseOriginalStringNotPossible()
+	{
+		Coordinate coord = Latitude.make("N 27.123401234012340");
+		Assertions.assertNotNull(coord);
+		Assertions.assertEquals("N 27.12", coord.output(Coordinate.Format.DEG, 2));
+		Assertions.assertEquals("N 27.123401234012340", coord.output(Coordinate.Format.DEG));
+
+		// Don't use original string with all the decimal places, re-format it to 8
+		Assertions.assertEquals("27.12", coord.output(Coordinate.Format.DECIMAL_FORCE_POINT, 2));
+		Assertions.assertEquals("27.12340123", coord.output(Coordinate.Format.DECIMAL_FORCE_POINT));
+
+		coord = Latitude.make("27,123401234012340");
+		Assertions.assertNotNull(coord);
+		Assertions.assertEquals("N 27.12", coord.output(Coordinate.Format.DEG, 2));
+		Assertions.assertEquals("N 27.12340123", coord.output(Coordinate.Format.DEG));
+
+		// Can't use original string because it has a comma, re-format it to 8 decimal places
+		Assertions.assertEquals("27.12", coord.output(Coordinate.Format.DECIMAL_FORCE_POINT, 2));
+		Assertions.assertEquals("27.12340123", coord.output(Coordinate.Format.DECIMAL_FORCE_POINT));
+	}
 }

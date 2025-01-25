@@ -76,8 +76,12 @@ public class ProfileChart extends GenericDisplay
 			}
 		}
 		/** @return true if two Indexes are equal */
-		public boolean equals(PointIndex other)
+		public boolean equals(Object inOther)
 		{
+			if (!(inOther instanceof PointIndex)) {
+				return false;
+			}
+			PointIndex other = (PointIndex) inOther;
 			if (!hasValue || !other.hasValue) {
 				return hasValue == other.hasValue;
 			}

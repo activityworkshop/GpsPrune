@@ -2,6 +2,7 @@ package tim.prune.gui.colour;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 
 import javax.swing.BorderFactory;
@@ -9,10 +10,12 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.border.EtchedBorder;
 
 import tim.prune.I18nManager;
 import tim.prune.gui.GuiGridLayout;
+import tim.prune.gui.RadioButtonGroup;
 import tim.prune.gui.colour.ColourerFactory.ColourerId;
 
 /**
@@ -31,8 +34,16 @@ public class ColourerSelectorPanel extends JPanel
 	/** Array of colour patches for start and end */
 	private ColourPatch[] _startEndPatches = null;
 	/** Panel holding the max colours selection */
-	JPanel _maxColoursPanel = null;
+	private JPanel _maxColoursPanel = null;
 	private JComboBox<String> _maxColoursCombo = null;
+	/** Panel holding the hue interpolation mode */
+	private JPanel _wideHuesPanel = null;
+	/** Radio buttons to select wide hues */
+	private JRadioButton _narrowHueScalingRadio = null;
+	private JRadioButton _wideHueScalingRadio = null;
+	/** Panel holding the preview */
+	private JPanel _previewPanel = null;
+	private final ColourerPreview _colourerPreview = new ColourerPreview();
 
 	/** Array of label keys for the 2 patches */
 	private static final String[] LABEL_KEYS = {"start", "end"};
@@ -106,7 +117,7 @@ public class ColourerSelectorPanel extends JPanel
 			colPanel.setLayout(new BoxLayout(colPanel, BoxLayout.Y_AXIS));
 			// Top label and patch
 			colPanel.add(new JLabel(I18nManager.getText("dialog.colourer." + LABEL_KEYS[i])));
-			ColourPatch patch = new ColourPatch(Color.BLUE); // will be set by init() method shortly
+			ColourPatch patch = new ColourPatch(Color.BLUE, this::updatePreview);
 			patch.addMouseListener(new PatchListener(patch, inColourChooser));
 			colPanel.add(patch);
 			_startEndPatches[i] = patch;
@@ -132,9 +143,38 @@ public class ColourerSelectorPanel extends JPanel
 		grid.add(new JLabel(I18nManager.getText("dialog.colourer.maxcolours")));
 		String[] colourOptions = new String[] {"2", "3", "5", "10", "15"};
 		_maxColoursCombo = new JComboBox<>(colourOptions);
+		_maxColoursCombo.addActionListener(e -> updatePreview());
 		grid.add(_maxColoursCombo);
 		_maxColoursPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		add(_maxColoursPanel);
+
+		// Radios for narrow/wide hues
+		_wideHuesPanel = new JPanel();
+		grid = new GuiGridLayout(_wideHuesPanel);
+		grid.add(new JLabel(I18nManager.getText("dialog.colourer.huesmode")));
+		JPanel radiosPanel = new JPanel();
+		radiosPanel.setLayout(new FlowLayout());
+		_narrowHueScalingRadio = new JRadioButton(I18nManager.getText("dialog.colourer.huesmode.narrow"));
+		_wideHueScalingRadio = new JRadioButton(I18nManager.getText("dialog.colourer.huesmode.wide"));
+		radiosPanel.add(_narrowHueScalingRadio);
+		radiosPanel.add(_wideHueScalingRadio);
+		_narrowHueScalingRadio.addActionListener(e -> updatePreview());
+		_wideHueScalingRadio.addActionListener(e -> updatePreview());
+		new RadioButtonGroup(_narrowHueScalingRadio, _wideHueScalingRadio);
+		grid.add(radiosPanel);
+		_wideHuesPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+		add(_wideHuesPanel);
+
+		// Preview
+		_previewPanel = new JPanel();
+		_previewPanel.setLayout(new BoxLayout(_previewPanel, BoxLayout.Y_AXIS));
+		_previewPanel.add(new JLabel("Preview:"));
+		_previewPanel.add(_colourerPreview);
+		add(_previewPanel);
+	}
+
+	private void updatePreview() {
+		_colourerPreview.setColourer(getSelectedColourer());
 	}
 
 	/**
@@ -151,16 +191,19 @@ public class ColourerSelectorPanel extends JPanel
 			startColour = inColourer.getStartColour();
 			endColour   = inColourer.getEndColour();
 			_maxColoursCombo.setSelectedItem("" + inColourer.getMaxColours());
+			_narrowHueScalingRadio.setSelected(!inColourer.isWideHueScaling());
+			_wideHueScalingRadio.setSelected(inColourer.isWideHueScaling());
 		}
 		else
 		{
 			// no colourer, so default to 5 colours maximum
 			_maxColoursCombo.setSelectedIndex(2);
+			_narrowHueScalingRadio.setSelected(true);
 		}
 		if (startColour == null) {startColour = inDefaultColour;}
 		if (endColour   == null) {endColour = makeDefaultEndColour(inDefaultColour);}
-		if (startColour != null) {_startEndPatches[0].setColour(startColour);}
-		if (endColour != null)   {_startEndPatches[1].setColour(endColour);}
+		_startEndPatches[0].setColour(startColour);
+		_startEndPatches[1].setColour(endColour);
 		onColourerTypeChanged(); // make sure gui is updated
 	}
 
@@ -172,9 +215,8 @@ public class ColourerSelectorPanel extends JPanel
 	private static Color makeDefaultEndColour(Color inStartColour)
 	{
 		float[] defaultHSB = Color.RGBtoHSB(inStartColour.getRed(), inStartColour.getGreen(), inStartColour.getBlue(), null);
-		// add 120 degrees to the hue
-		defaultHSB[0] += (1.0f/3f);
-		return Color.getHSBColor(defaultHSB[0], defaultHSB[1], defaultHSB[2]);
+		// add 180 degrees to the hue
+		return Color.getHSBColor(defaultHSB[0] + 0.5f, defaultHSB[1], defaultHSB[2]);
 	}
 
 	/**
@@ -183,10 +225,12 @@ public class ColourerSelectorPanel extends JPanel
 	 */
 	private void onColourerTypeChanged()
 	{
-		final ColourerId id = _typeIds[_typeCombo.getSelectedIndex()];
-		// Set visibility of controls according to whether they're needed for the selected type
-		_patchPanel.setVisible(ColourerFactory.areColoursRequired(id));
-		_maxColoursPanel.setVisible(ColourerFactory.isMaxColoursRequired(id));
+		PointColourer colourer = getSelectedColourer();
+		_patchPanel.setVisible(colourer != null);
+		_maxColoursPanel.setVisible(colourer != null && colourer.isDiscrete());
+		_wideHuesPanel.setVisible(colourer != null);
+		_previewPanel.setVisible(colourer != null);
+		updatePreview();
 	}
 
 	/**
@@ -195,8 +239,11 @@ public class ColourerSelectorPanel extends JPanel
 	public PointColourer getSelectedColourer()
 	{
 		final ColourerId id = _typeIds[_typeCombo.getSelectedIndex()];
-		return ColourerFactory.createColourer(id, _startEndPatches[0].getBackground(),
-			_startEndPatches[1].getBackground(), _maxColoursCombo.getSelectedItem().toString());
+		final Object selectedItem = _maxColoursCombo.getSelectedItem();
+		final String selectedString = (selectedItem == null ? "2" : selectedItem.toString());
+		PointColourer result = ColourerFactory.createColourer(id, _startEndPatches[0].getBackground(),
+			_startEndPatches[1].getBackground(), selectedString, _wideHueScalingRadio.isSelected());
+		return result;
 	}
 
 	/**

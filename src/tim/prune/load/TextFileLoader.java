@@ -22,6 +22,7 @@ import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.FileType;
 import tim.prune.data.PointCreateOptions;
 import tim.prune.data.SourceInfo;
 import tim.prune.data.Unit;
@@ -311,7 +312,6 @@ public class TextFileLoader extends FileTypeLoader
 		_wizard = new WizardLayout(cardPanel);
 		JPanel firstCard = new JPanel();
 		firstCard.setLayout(new BorderLayout());
-		firstCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 
 		JPanel delimsPanel = new JPanel();
 		delimsPanel.setLayout(new GridLayout(0, 2));
@@ -355,7 +355,6 @@ public class TextFileLoader extends FileTypeLoader
 		// Second screen, for field order selection
 		JPanel secondCard = new JPanel();
 		secondCard.setLayout(new BorderLayout());
-		secondCard.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 15));
 		// table for file contents
 		_fileExtractTableModel = new FileExtractTableModel();
 		JTable extractTable = new JTable(_fileExtractTableModel);
@@ -629,6 +628,8 @@ public class TextFileLoader extends FileTypeLoader
 		for (String fieldName : Field.getFieldNames()) {
 			fieldTypesBox.addItem(fieldName);
 		}
+		// add custom field too
+		fieldTypesBox.addItem(_fieldTableModel.getCustomText());
 		_fieldTable.getColumnModel().getColumn(1).setCellEditor(new DefaultCellEditor(fieldTypesBox));
 
 		// Set altitude format to same as last time if available
@@ -670,7 +671,7 @@ public class TextFileLoader extends FileTypeLoader
 		_lastSelectedFields = _fieldTableModel.getFieldArray();
 		// TODO: Remember all the units selections for next load?
 		File file = _fileLock.getFile();
-		SourceInfo sourceInfo = (file == null ? null : new SourceInfo(file, SourceInfo.FileType.TEXT));
+		SourceInfo sourceInfo = (file == null ? null : new SourceInfo(file, FileType.TEXT));
 		PointCreateOptions options = new PointCreateOptions();
 		// Get the selected units for altitudes and speeds
 		options.setAltitudeUnits(_altitudeUnitsDropdown.getSelectedIndex() == 0 ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET);

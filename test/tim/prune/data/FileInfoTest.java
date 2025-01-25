@@ -33,7 +33,7 @@ public class FileInfoTest
 	public void testInfoWithSingleSource()
 	{
 		FileInfo info = new FileInfo();
-		SourceInfo source = new SourceInfo(new File("example.gpx"), SourceInfo.FileType.GPX);
+		SourceInfo source = new SourceInfo(new File("example.gpx"), FileType.GPX);
 		source.setFileTitle("my title");
 		// Deliberately add the same source twice, second one is ignored
 		info.addSource(source);
@@ -50,10 +50,10 @@ public class FileInfoTest
 	public void testInfoWithTwoSources()
 	{
 		FileInfo info = new FileInfo();
-		SourceInfo source1 = new SourceInfo(new File("example1.gpx"), SourceInfo.FileType.GPX);
+		SourceInfo source1 = new SourceInfo(new File("example1.gpx"), FileType.GPX);
 		source1.setFileTitle("first title");
 		source1.setFileDescription("first longer description");
-		SourceInfo source2 = new SourceInfo(new File("example2.kml"), SourceInfo.FileType.KML);
+		SourceInfo source2 = new SourceInfo(new File("example2.kml"), FileType.KML);
 		source2.setFileTitle("second title");
 		// Add these sources multiple times
 		SourceInfo[] sources = new SourceInfo[] {source1, source2, source1, null, source1, null, source2};

@@ -7,8 +7,8 @@ import tim.prune.App;
 import tim.prune.cmd.Command;
 import tim.prune.cmd.PointFlag;
 import tim.prune.data.DataPoint;
-import tim.prune.data.ListUtils;
 import tim.prune.data.Track;
+import tim.prune.java8.ListUtils;
 
 /**
  * Class to provide the function to crop the track

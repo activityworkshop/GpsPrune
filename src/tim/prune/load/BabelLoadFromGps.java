@@ -21,8 +21,8 @@ import javax.swing.event.ChangeListener;
 import tim.prune.App;
 import tim.prune.I18nManager;
 import tim.prune.config.Config;
+import tim.prune.data.FileType;
 import tim.prune.data.SourceInfo;
-import tim.prune.data.SourceInfo.FileType;
 import tim.prune.load.babel.BabelFilterPanel;
 
 /**

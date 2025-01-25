@@ -13,9 +13,9 @@ import tim.prune.cmd.CompoundCommand;
 import tim.prune.cmd.ConnectMediaCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
-import tim.prune.data.ListUtils;
 import tim.prune.data.MediaObject;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.java8.ListUtils;
 import tim.prune.load.MediaHelper;
 
 /**

@@ -40,6 +40,16 @@ public class Speed
 		}
 	}
 
+	public static Speed createOrNull(String inValue, Unit inUnit) {
+		return createOrNull(inValue, inUnit, false);
+	}
+
+	public static Speed createOrNull(String inValue, Unit inUnit, boolean isInverted)
+	{
+		Speed speed = new Speed(inValue, inUnit, isInverted);
+		return speed.isValid() ? speed : null;
+	}
+
 	/**
 	 * Check if the given unit is valid for a speed
 	 * @param inUnit unit

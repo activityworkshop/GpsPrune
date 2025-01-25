@@ -18,10 +18,10 @@ public class FileColourer extends DiscretePointColourer
 	 * @param inStartColour start colour of scale
 	 * @param inEndColour end colour of scale
 	 * @param inWrapLength number of unique colours before wrap
+	 * @param inWideHues true for wide mode, false for narrow
 	 */
-	public FileColourer(Color inStartColour, Color inEndColour, int inWrapLength)
-	{
-		super(inStartColour, inEndColour, inWrapLength);
+	public FileColourer(Color inStartColour, Color inEndColour, int inWrapLength, boolean inWideHues) {
+		super(inStartColour, inEndColour, inWrapLength, inWideHues);
 	}
 
 	/**

@@ -25,7 +25,7 @@ public class EditSingleFieldCmd extends Command
 	}
 
 	protected EditSingleFieldCmd(EditSingleFieldCmd inParent, Field inField,
-			List<PointEdit> inEditList, UnitSet inUnitSet)
+		List<PointEdit> inEditList, UnitSet inUnitSet)
 	{
 		super(inParent);
 		_field = inField;
@@ -47,6 +47,9 @@ public class EditSingleFieldCmd extends Command
 		inInfo.getTrack().getFieldList().addField(_field);
 		for (PointEdit edit : _editList) {
 			inInfo.getTrack().getPoint(edit.getPointIndex()).setFieldValue(_field, edit.getValue(), _unitSet, isUndo());
+		}
+		if (_field == Field.LATITUDE || _field == Field.LONGITUDE) {
+			inInfo.getTrack().requestRescale();
 		}
 		return true;
 	}

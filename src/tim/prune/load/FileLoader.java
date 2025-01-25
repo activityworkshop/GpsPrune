@@ -57,10 +57,10 @@ public class FileLoader
 		if (_fileChooser == null)
 		{
 			_fileChooser = new JFileChooser();
-			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.txt", new String[] {"txt", "text"}));
-			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.gpx", new String[] {"gpx"}));
-			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kml", new String[] {"kml"}));
-			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetype.kmz", new String[] {"kmz"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetypefilter.txt", new String[] {"txt", "text"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetypefilter.gpx", new String[] {"gpx"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetypefilter.kml", new String[] {"kml"}));
+			_fileChooser.addChoosableFileFilter(new GenericFileFilter("filetypefilter.kmz", new String[] {"kmz"}));
 			_fileChooser.setAcceptAllFileFilterUsed(true);
 			_fileChooser.setFileFilter(_fileChooser.getAcceptAllFileFilter()); // For some reason seems necessary
 			// start from directory in config if already set (by load jpegs)

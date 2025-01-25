@@ -19,15 +19,12 @@ public abstract class DiscretePointColourer extends PointColourer
 	 * @param inStartColour start colour of scale
 	 * @param inEndColour end colour of scale
 	 * @param inMaxColours number of unique colours before wrap
+	 * @param inWideHues true for wide mode, false for narrow
 	 */
-	public DiscretePointColourer(Color inStartColour, Color inEndColour, int inMaxColours)
+	public DiscretePointColourer(Color inStartColour, Color inEndColour,
+		int inMaxColours, boolean inWideHues)
 	{
-		super(inStartColour, inEndColour, inMaxColours);
-	}
-
-	/** max number of colours is required here */
-	public static boolean isMaxColoursRequired() {
-		return true;
+		super(inStartColour, inEndColour, inMaxColours, inWideHues);
 	}
 
 	/**
@@ -83,7 +80,7 @@ public abstract class DiscretePointColourer extends PointColourer
 	 * Generate the set of discrete colours to use
 	 * @param inNumCategories number of different categories found in the data
 	 */
-	protected void generateDiscreteColours(int inNumCategories)
+	void generateDiscreteColours(int inNumCategories)
 	{
 		int maxColours = getMaxColours();
 		if (maxColours <= 1) {maxColours = 2;}

@@ -184,13 +184,13 @@ public class AboutScreen extends GenericFunction
 			new JLabel(" Gy\u00F6rgy, HooAU, Sergey, P\u00E9ter, serhijdubyk, Peter, Cristian,"),
 			1, 6);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel(" Roman, Erkki, Carlos, Tche333, J.M."),
+			new JLabel(" Roman, Erkki, Carlos, Tche333, J.M., edelsteen, Sprinto"),
 			1, 7);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.translations") + " : "),
 			0, 8);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
-			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad"),
+			new JLabel("Open Office, Gpsdrive, Babelfish, Leo, Launchpad, DeepL"),
 			1, 8);
 		addToGridBagPanel(creditsPanel, gridBag, constraints,
 			new JLabel(I18nManager.getText("dialog.about.credits.devtools") + " : "),
@@ -253,9 +253,8 @@ public class AboutScreen extends GenericFunction
 			+ "<p>" + I18nManager.getText("dialog.about.summarytext3") + "</p>"
 			+ "<p>" + I18nManager.getText("dialog.about.languages") + " : "
 				+ "afrikaans, catal\u00e0, \u010de\u0161tina, deutsch, english, espa\u00F1ol, fran\u00E7ais,<br>" +
-				" italiano, magyar, nederlands, norsk, polski, portugu\u00EAs, rom\u00E2n\u0103, suomi, svenska,<br>" +
-				" \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese), \u65E5\u672C\u8A9E (japanese), \uD55C\uAD6D\uC5B4/\uC870\uC120\uB9D0 (korean),<br>" +
-				" schwiizerd\u00FC\u00FCtsch</p>"
+				" italiano, magyar, nederlands, norsk bokm\u00e5l, polski, portugu\u00EAs, rom\u00E2n\u0103, suomi,<br>" +
+				" svenska, \u0440\u0443\u0441\u0441\u043a\u0438\u0439 (russian), \u4e2d\u6587 (chinese), schwiizerd\u00FC\u00FCtsch</p>"
 			+ "<p>" + I18nManager.getText("dialog.about.translatedby") + "</p>";
 	}
 

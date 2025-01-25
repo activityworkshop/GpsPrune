@@ -2,6 +2,7 @@ package tim.prune.load;
 
 import tim.prune.I18nManager;
 import tim.prune.data.Field;
+import tim.prune.data.FieldCustom;
 import tim.prune.data.Latitude;
 import tim.prune.data.Longitude;
 import tim.prune.data.TimestampUtc;
@@ -128,13 +129,13 @@ public abstract class FieldGuesser
 					// Can we use the field name given?
 					Field customField = null;
 					if (isHeader && inValues[f] != null && inValues[f].length() > 0) {
-						customField = new Field(inValues[f]);
+						customField = new FieldCustom(inValues[f]);
 					}
 					// Find an unused field number
 					while (customField == null || checkArrayHasField(fields, customField))
 					{
 						customFieldNum++;
-						customField = new Field(customPrefix + (customFieldNum));
+						customField = new FieldCustom(customPrefix + (customFieldNum));
 					}
 					fields[f] = customField;
 				}

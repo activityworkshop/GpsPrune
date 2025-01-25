@@ -21,18 +21,15 @@ public abstract class GenericTableModel extends AbstractTableModel
 	 * Initialize the table model with the point list
 	 * @param inPointList list of points
 	 */
-	public void init(ArrayList<DataPoint> inPointList)
-	{
+	public void init(ArrayList<DataPoint> inPointList) {
 		_pointList = inPointList;
 	}
 
 	/**
 	 * @return row count
 	 */
-	public int getRowCount()
-	{
-		if (_pointList == null) {return 0;}
-		return _pointList.size();
+	public int getRowCount() {
+		return _pointList == null ? 0 : _pointList.size();
 	}
 
 	/**
@@ -42,9 +39,13 @@ public abstract class GenericTableModel extends AbstractTableModel
 	 */
 	protected String getPointName(int inIndex)
 	{
-		if (_pointList == null) {return "null";}
+		if (_pointList == null) {
+			return "null";
+		}
 		DataPoint point = _pointList.get(inIndex);
-		if (point.isWaypoint()) {return point.getWaypointName();}
+		if (point.isWaypoint()) {
+			return point.getWaypointName();
+		}
 		return _currPointLabel;
 	}
 }
