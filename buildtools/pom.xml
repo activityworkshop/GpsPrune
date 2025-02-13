@@ -79,7 +79,9 @@
 				<directory>${project.basedir}/test</directory>
 				<includes>
 					<include>tim/prune/function/weather/xml/*</include>
+					<include>tim/prune/function/filesleuth/data/*.txt</include>
 				</includes>
+				<targetPath>${project.build.directory}/classes/java/test</targetPath>
 			</testResource>
 		</testResources>
 
