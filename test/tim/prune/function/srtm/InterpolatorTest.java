@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Locale;
+
 class InterpolatorTest extends Interpolator
 {
 	void testAverageNonVoid(int[] inInputs, double inExpected)
@@ -129,7 +131,7 @@ class InterpolatorTest extends Interpolator
 		for (int i=0; i<100; i++)
 		{
 			double height = Interpolator.calculateAltitude(11.2, 58.0 + i/100.0, altitudes, true, 7);
-			builder.append(String.format("%.3f", height));
+			builder.append(String.format(Locale.US, "%.3f", height));
 			builder.append(',');
 		}
 		String result = builder.toString();
