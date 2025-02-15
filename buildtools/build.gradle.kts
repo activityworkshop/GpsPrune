@@ -24,8 +24,10 @@ java {
         java.srcDir("test")
         resources.srcDirs("test")
         resources.include(
-            "tim/prune/function/weather/xml/*"
+                "tim/prune/function/weather/xml/*",
+                "tim/prune/function/filesleuth/data/*.txt"
         )
+        output.setResourcesDir(layout.buildDirectory.dir("classes/java/test"))
     }
 }
 
