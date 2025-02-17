@@ -414,8 +414,7 @@ public class KmlExporter extends GenericFunction
 				if (exportImages)
 				{
 					// Get entered value for image size, store in config
-					int thumbSize = _imageSizeField.getValue();
-					if (thumbSize < DEFAULT_THUMBNAIL_WIDTH) {thumbSize = DEFAULT_THUMBNAIL_WIDTH;}
+					final int thumbSize = Math.max(DEFAULT_THUMBNAIL_WIDTH, _imageSizeField.getValue());
 					getConfig().setConfigInt(Config.KEY_KMZ_IMAGE_SIZE, thumbSize);
 
 					// Create thumbnails of each photo in turn and add to zip as images/image<n>.jpg
