@@ -8,6 +8,7 @@ import tim.prune.config.Config;
 import tim.prune.config.TimezoneHelper;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
+import tim.prune.data.NumberUtils;
 import tim.prune.data.Track;
 import tim.prune.data.Unit;
 import tim.prune.data.UnitSet;
@@ -16,6 +17,8 @@ import tim.prune.gui.BoxPanel;
 import tim.prune.gui.WizardLayout;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -77,6 +80,21 @@ public class CompareSegmentsFunction extends GenericFunction
 		}
 	}
 
+	/** Custom cell renderer using padding on right side */
+	private static class RightPaddedRenderer extends DefaultTableCellRenderer
+	{
+		public Component getTableCellRendererComponent(JTable inTable, Object inValue, boolean inSelected,
+			boolean inHasFocus, int inRow, int inColumn)
+		{
+			JLabel label = (JLabel) super.getTableCellRendererComponent(inTable, inValue, inSelected, inHasFocus, inRow, inColumn);
+			label.setHorizontalAlignment(SwingConstants.RIGHT);
+			label.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 24));
+			label.setText(NumberUtils.formatNumberLocal((Double) inValue, 3));
+			return label;
+		}
+	}
+
+
 	/**
 	 * Constructor
 	 */
@@ -119,6 +137,8 @@ public class CompareSegmentsFunction extends GenericFunction
 		Unit distanceUnits = getConfig().getUnitSet().getDistanceUnit();
 		_segmentModel.init(segments, timezone, distanceUnits);
 		_segmentTable.clearSelection();
+		_segmentTable.getColumnModel().getColumn(2).setCellRenderer(new RightPaddedRenderer());
+
 		_compareButton.setEnabled(segments.size() == 2);
 		setDialogTitle(segments.size() == 2);
 		if (segments.size() == 2) {
@@ -189,7 +209,7 @@ public class CompareSegmentsFunction extends GenericFunction
 		_topLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 		selectionPanel.add(_topLabel, BorderLayout.NORTH);
 
-		// First table for 'from point'
+		// Table to show segments found
 		_segmentTable = new JTable(_segmentModel);
 		_segmentTable.getSelectionModel().addListSelectionListener(e -> checkSelection());
 		_segmentTable.setRowSelectionAllowed(true);

@@ -199,7 +199,7 @@ public class GpxHandler extends XmlHandler
 		}
 		else if (_insideExtensions)
 		{
-			String value = _currentTag.getValue().trim();
+			String value = _currentTag.getValue();
 			_extensionTags.pop();
 			if (!value.isEmpty())
 			{
@@ -213,7 +213,7 @@ public class GpxHandler extends XmlHandler
 		}
 		else if (_gpxField != null)
 		{
-			String value = _currentTag.getValue().trim();
+			String value = _currentTag.getValue();
 			if (!value.isEmpty())
 			{
 				if (!hasField(_gpxField)) {
@@ -226,9 +226,9 @@ public class GpxHandler extends XmlHandler
 		}
 		else if (_insidePoint && _currentTag != null && getFileVersion().equals("1.0"))
 		{
-			String value = _currentTag.getValue().trim();
+			String value = _currentTag.getValue();
 			String tagNamespace = getNamespace(tag);
-			if (tagNamespace != null)
+			if (tagNamespace != null && !value.isEmpty())
 			{
 				String id = this.getExtensionInfo().getNamespaceName(tagNamespace);
 				if (id != null)

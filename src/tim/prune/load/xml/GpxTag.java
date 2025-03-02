@@ -23,6 +23,6 @@ public class GpxTag
 	 * @return value
 	 */
 	public String getValue() {
-		return _value;
+		return _value == null ? "" : _value.trim();
 	}
 }

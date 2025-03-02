@@ -319,13 +319,15 @@ public abstract class KmlWriter
 		// Check selection checkbox
 		final boolean justSelection = _exportOptions.getExportJustSelection();
 		int selStart = -1, selEnd = -1;
-		if (justSelection) {
+		if (justSelection)
+		{
 			selStart = _trackInfo.getSelection().getStart();
 			selEnd = _trackInfo.getSelection().getEnd();
 		}
 
 		final Track track = _trackInfo.getTrack();
 		final int numPoints = track.getNumPoints();
+		_imageDimensions = new Dimension[numPoints];
 		int photoNum = 0;
 		// Loop over all points in track
 		for (int i=0; i<numPoints && !_cancelPressed; i++)
