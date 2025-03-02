@@ -98,10 +98,10 @@ public class SegmentTableModel extends AbstractTableModel
 	public String getColumnName(int inColIndex)
 	{
 		if (inColIndex == 0) {
-			return I18nManager.getText("fieldname.date");
+			return I18nManager.getText("dialog.comparesegments.startdate");
 		}
 		if (inColIndex == 1) {
-			return I18nManager.getText("fieldname.time");
+			return I18nManager.getText("dialog.comparesegments.starttime");
 		}
 		if (inColIndex == 2)
 		{
