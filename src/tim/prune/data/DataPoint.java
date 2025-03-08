@@ -429,6 +429,16 @@ public class DataPoint
 	}
 
 	/**
+	 * Set the altitude from another altitude value
+	 */
+	public void setAltitude(Altitude inAltitude)
+	{
+		_altitude = new Altitude(inAltitude);
+		setFieldValue(Field.ALTITUDE, _altitude.getStringValue(null), false);
+		setModified(false);
+	}
+
+	/**
 	 * Set the photo for this data point
 	 * @param inPhoto Photo object
 	 */

@@ -235,7 +235,13 @@ public class ProjectRange extends GenericFunction
 			// Create point and append to track
 			DataPoint currPoint = track.getPoint(pointNum);
 			DataPoint point = PointUtils.projectPoint(currPoint, inBearingRads, inDistanceRads);
-			point.setSegmentStart(pointNum == inStartIndex);
+			point.setSegmentStart(pointNum == inStartIndex || currPoint.getSegmentStart());
+			if (currPoint.isWaypoint()) {
+				point.setWaypointName(currPoint.getWaypointName() + "'");
+			}
+			if (currPoint.hasAltitude()) {
+				point.setAltitude(currPoint.getAltitude());
+			}
 			points.add(point);
 		}
 

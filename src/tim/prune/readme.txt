@@ -1,5 +1,5 @@
-GpsPrune version 25
-===================
+GpsPrune version 25.1
+=====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_25.jar
+   java -jar gpsprune_25.1.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,17 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_25.jar --lang=DE
+   java -jar gpsprune_25.1.jar --lang=DE
 
+
+New with version 25.1
+=====================
+The following fixes and additions were made since version 25:
+  - Fix bug with exporting images to kmz (Issue #111)
+  - Tweak appearance of segment table in comparison function (Issue #110)
+  - Display of Gpx extension fields (Issue #75)
+  - Fix bug from parsing empty Gpx extension fields
+  - Respect segment breaks and altitudes when projecting a range with copy
 
 New with version 25
 ===================

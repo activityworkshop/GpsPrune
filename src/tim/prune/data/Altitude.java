@@ -37,6 +37,17 @@ public class Altitude
 	}
 
 	/**
+	 * Constructor with another Altitude value
+	 */
+	public Altitude(Altitude inOther)
+	{
+		_value = inOther._value;
+		_unit = inOther._unit;
+		_valid = inOther._valid;
+		_stringValue = inOther._stringValue;
+	}
+
+	/**
 	 * Reset the altitude parameters to the same as the given object
 	 * @param inValue value to set as string
 	 * @param inUnit units

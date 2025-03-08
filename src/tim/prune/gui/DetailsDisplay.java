@@ -30,6 +30,7 @@ import tim.prune.data.AudioClip;
 import tim.prune.data.Coordinate;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Field;
+import tim.prune.data.FieldList;
 import tim.prune.data.Photo;
 import tim.prune.data.RangeStats;
 import tim.prune.data.Selection;
@@ -52,10 +53,12 @@ public class DetailsDisplay extends GenericDisplay
 	private JLabel _latLabel = null, _longLabel = null;
 	private JLabel _altLabel = null;
 	private JLabel _ptDateLabel = null, _ptTimeLabel = null;
-	private JLabel _descLabel = null;
+	private JLabel _descLabel = null, _commentLabel = null;
 	private JLabel _speedLabel = null, _vSpeedLabel = null;
 	private JLabel _nameLabel = null, _typeLabel = null;
 	private JLabel _filenameLabel = null;
+	private static final int NUM_EXTENSION_LABELS = 5;
+	private final JLabel[] _ptExtensionLabels = new JLabel[NUM_EXTENSION_LABELS];
 
 	// Range details
 	private JLabel _rangeLabel = null;
@@ -146,6 +149,8 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_ptTimeLabel);
 		_descLabel = new JLabel("");
 		pointDetailsPanel.add(_descLabel);
+		_commentLabel = new JLabel("");
+		pointDetailsPanel.add(_commentLabel);
 		_speedLabel = new JLabel("");
 		pointDetailsPanel.add(_speedLabel);
 		_vSpeedLabel = new JLabel("");
@@ -156,6 +161,10 @@ public class DetailsDisplay extends GenericDisplay
 		pointDetailsPanel.add(_typeLabel);
 		_filenameLabel = new JLabel("");
 		pointDetailsPanel.add(_filenameLabel);
+		for (int i=0; i<NUM_EXTENSION_LABELS; i++) {
+			_ptExtensionLabels[i] = new JLabel("example");
+			pointDetailsPanel.add(_ptExtensionLabels[i]);
+		}
 
 		// range details panel
 		JPanel rangeDetailsPanel = makeDetailsPanel("details.rangedetails", biggerFont);
@@ -258,7 +267,8 @@ public class DetailsDisplay extends GenericDisplay
 		// Make dropdown for distance units
 		_distUnitsDropdown = new JComboBox<String>();
 		final UnitSet currUnits = _config.getUnitSet();
-		for (int i=0; i<UnitSetLibrary.getNumUnitSets(); i++) {
+		for (int i=0; i<UnitSetLibrary.getNumUnitSets(); i++)
+		{
 			_distUnitsDropdown.addItem(I18nManager.getText(UnitSetLibrary.getUnitSet(i).getDistanceUnit().getNameKey()));
 			if (UnitSetLibrary.getUnitSet(i) == currUnits) {
 				_distUnitsDropdown.setSelectedIndex(i);
@@ -307,11 +317,13 @@ public class DetailsDisplay extends GenericDisplay
 			_ptDateLabel.setText("");
 			_ptTimeLabel.setText("");
 			_descLabel.setText("");
+			_commentLabel.setText("");
 			_nameLabel.setText("");
 			_typeLabel.setText("");
 			_speedLabel.setText("");
 			_vSpeedLabel.setText("");
 			_filenameLabel.setText("");
+			clearPointExtensionLabels();
 		}
 		else
 		{
@@ -400,6 +412,7 @@ public class DetailsDisplay extends GenericDisplay
 				_filenameLabel.setText("");
 				_filenameLabel.setToolTipText("");
 			}
+			setPointExtensionLabels(currentPoint);
 		}
 
 		// Update range details
@@ -526,39 +539,67 @@ public class DetailsDisplay extends GenericDisplay
 		_playAudioPanel.setVisible(currentAudio != null);
 	}
 
+	private void clearPointExtensionLabels()
+	{
+		for (JLabel label : _ptExtensionLabels) {
+			label.setText("");
+		}
+	}
+
+	private void setPointExtensionLabels(DataPoint inPoint)
+	{
+		int labelIndex = 0;
+		FieldList fields = inPoint.getFieldList();
+		for (int i=0; i<fields.getNumFields(); i++)
+		{
+			Field field = fields.getField(i);
+			if (field.isBuiltIn() || labelIndex >= NUM_EXTENSION_LABELS) {
+				continue;
+			}
+			String value = inPoint.getFieldValue(field);
+			if (value != null && !value.isEmpty() && !field.isBuiltIn())
+			{
+				_ptExtensionLabels[labelIndex].setText(field.getName() + ": " + value);
+				labelIndex++;
+			}
+		}
+		// Clear the ones afterwards
+		while (labelIndex < NUM_EXTENSION_LABELS)
+		{
+			_ptExtensionLabels[labelIndex].setText("");
+			labelIndex++;
+		}
+	}
+
 	/** Set either the description or comment from the current point */
 	private void showDescriptionOrComment(DataPoint inPoint)
 	{
 		String desc = inPoint.getFieldValue(Field.DESCRIPTION);
-		if (desc != null && !desc.isEmpty()) {
-			showDescriptionOrComment(LABEL_POINT_DESCRIPTION, desc);
-			return;
-		}
+		showDescriptionOrComment(_descLabel, LABEL_POINT_DESCRIPTION, desc);
 		String comment = inPoint.getFieldValue(Field.COMMENT);
-		if (comment != null && !comment.isEmpty()) {
-			showDescriptionOrComment(LABEL_POINT_COMMENT, comment);
-			return;
+		if (comment == null || comment.isEmpty() || comment.equals(desc)) {
+			comment = "";
 		}
-		showDescriptionOrComment("", "");
+		showDescriptionOrComment(_commentLabel, LABEL_POINT_COMMENT, comment);
 	}
 
-	/** Set the description label and its tooltip */
-	private void showDescriptionOrComment(String inPrefix, String inValue)
+	/** Set the description or comment label and its tooltip */
+	private void showDescriptionOrComment(JLabel inLabel, String inPrefix, String inValue)
 	{
-		if (inPrefix.isEmpty() || inValue.isEmpty())
+		if (inPrefix.isEmpty() || inValue == null || inValue.isEmpty())
 		{
-			_descLabel.setText("");
-			_descLabel.setToolTipText("");
+			inLabel.setText("");
+			inLabel.setToolTipText("");
 		}
 		else
 		{
 			if (inValue.length() < 10) {
-				_descLabel.setText(inPrefix + inValue);
+				inLabel.setText(inPrefix + inValue);
 			}
 			else {
-				_descLabel.setText(shortenString(inValue));
+				inLabel.setText(shortenString(inValue));
 			}
-			_descLabel.setToolTipText(inPrefix + inValue);
+			inLabel.setToolTipText(inPrefix + inValue);
 		}
 	}
 
