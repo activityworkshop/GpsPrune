@@ -1,6 +1,7 @@
 package tim.prune.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -208,6 +209,7 @@ public class DetailsDisplay extends GenericDisplay
 		_rotationButtons.add(rotRight);
 		_rotationButtons.add(Box.createHorizontalStrut(10));
 		_rotationButtons.add(popup);
+		_rotationButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_rotationButtons.setVisible(false);
 		_photoDetailsPanel.add(_rotationButtons);
 		_photoDetailsPanel.setVisible(false);
