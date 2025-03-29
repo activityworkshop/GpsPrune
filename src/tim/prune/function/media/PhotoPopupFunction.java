@@ -54,6 +54,10 @@ public class PhotoPopupFunction extends GenericFunction implements DataSubscribe
 	 */
 	public void begin()
 	{
+		final Photo photo = _app.getTrackInfo().getCurrentPhoto();
+		if (photo == null) {
+			return;
+		}
 		if (_frame == null)
 		{
 			_frame = new JFrame(getName());
@@ -70,7 +74,6 @@ public class PhotoPopupFunction extends GenericFunction implements DataSubscribe
 			});
 		}
 		initFrame();
-		final Photo photo = _app.getTrackInfo().getCurrentPhoto();
 		if (photo.getWidth() <= 0 || photo.getHeight() <= 0)
 		{
 			_frame.setVisible(false);

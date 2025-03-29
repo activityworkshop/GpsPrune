@@ -1,4 +1,4 @@
-GpsPrune version 25.1
+GpsPrune version 25.2
 =====================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_25.1.jar
+   java -jar gpsprune_25.2.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,8 +25,15 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_25.1.jar --lang=DE
+   java -jar gpsprune_25.2.jar --lang=DE
 
+
+New with version 25.2
+=====================
+The following fixes were made since version 25.1:
+  - Fix sorting segment results by time (Issue #110)
+  - Fix some issues with photo display, especially with long names
+  - Additional translations
 
 New with version 25.1
 =====================
