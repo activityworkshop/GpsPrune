@@ -1,6 +1,7 @@
 package tim.prune.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -208,6 +209,7 @@ public class DetailsDisplay extends GenericDisplay
 		_rotationButtons.add(rotRight);
 		_rotationButtons.add(Box.createHorizontalStrut(10));
 		_rotationButtons.add(popup);
+		_rotationButtons.setAlignmentX(Component.LEFT_ALIGNMENT);
 		_rotationButtons.setVisible(false);
 		_photoDetailsPanel.add(_rotationButtons);
 		_photoDetailsPanel.setVisible(false);
@@ -471,6 +473,7 @@ public class DetailsDisplay extends GenericDisplay
 		{
 			// no photo, hide details
 			_photoLabel.setText(I18nManager.getText("details.nophoto"));
+			_photoLabel.setToolTipText("");
 			_photoPathLabel.setText("");
 			_photoPathLabel.setToolTipText("");
 			_photoTimestampLabel.setText("");
@@ -481,8 +484,11 @@ public class DetailsDisplay extends GenericDisplay
 		}
 		else
 		{
-			if (currentPhoto == null) {currentPhoto = currentPoint.getPhoto();}
-			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + currentPhoto.getName());
+			if (currentPhoto == null) {
+				currentPhoto = currentPoint.getPhoto();
+			}
+			_photoLabel.setText(I18nManager.getText("details.photofile") + ": " + shortenString(currentPhoto.getName()));
+			_photoLabel.setToolTipText(currentPhoto.getName());
 			String fullPath = currentPhoto.getFullPath();
 			String shortPath = shortenPath(fullPath);
 			_photoPathLabel.setText(fullPath == null ? "" : LABEL_FULL_PATH + shortPath);
@@ -498,7 +504,9 @@ public class DetailsDisplay extends GenericDisplay
 				_photoBearingLabel.setText(I18nManager.getText("details.photo.bearing") + ": "
 					+ (int) currentPhoto.getBearing() + " \u00B0");
 			}
-			else _photoBearingLabel.setText("");
+			else {
+				_photoBearingLabel.setText("");
+			}
 			_photoThumbnail.setVisible(true);
 			_photoThumbnail.setPhoto(currentPhoto);
 			_rotationButtons.setVisible(true);

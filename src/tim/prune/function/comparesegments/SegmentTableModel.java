@@ -31,7 +31,7 @@ public class SegmentTableModel extends AbstractTableModel
 		private final Object[] _values = new Object[NUM_COLUMNS];
 		private TableValues(SegmentSummary inSegment, TimeZone inTimezone, Unit inDistUnits)
 		{
-			_values[0] = inSegment.getStartTimestamp().getDateText(inTimezone);
+			_values[0] = new DateForTable(inSegment.getStartTimestamp(), inTimezone);
 			_values[1] = inSegment.getStartTimestamp().getTimeText(inTimezone);
 			_values[2] = Distance.convertRadiansToDistance(inSegment.getDistanceInRadians(), inDistUnits);
 			_values[3] = new Duration(inSegment.getDurationInSeconds());
@@ -76,6 +76,9 @@ public class SegmentTableModel extends AbstractTableModel
 	 */
 	public Class<?> getColumnClass(int inColumnIndex)
 	{
+		if (inColumnIndex == 0) {
+			return DateForTable.class;
+		}
 		if (inColumnIndex == 2) {
 			return Double.class;
 		}

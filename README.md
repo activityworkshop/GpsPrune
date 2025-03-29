@@ -3,7 +3,7 @@ GpsPrune is a map-based application for viewing, editing and converting coordina
 
 It's a cross-platform java application, and its home page is at https://gpsprune.activityworkshop.net .
 
-Here on github you'll find all the sources from version 1 to the current version 24.5, and bug reports and suggestions in the form of "Issues".
+Here on github you'll find all the sources from version 1 to the current version 25.2, and bug reports and suggestions in the form of "Issues".
 
 This branch patches the master branch to make the sources compilable with Java version 8, because it turns out that compiling with Java 11 and specifying a target version of 8 doesn't entirely work.
 
