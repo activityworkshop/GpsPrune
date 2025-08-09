@@ -27,11 +27,13 @@ public abstract class MediaHelper
 	 */
 	public static MediaObject createMediaObjectFromUrl(URL inUrl)
 	{
-		if (inUrl == null) return null;
+		if (inUrl == null) {
+			return null;
+		}
 		byte[] data = null;
 		try (InputStream is = inUrl.openStream()) {
 			data = ByteScooper.scoop(is);
-			return createMediaObject(data, inUrl.getFile(), inUrl.toString());
+			return createMediaObject(data, getFilename(inUrl), inUrl.toString());
 		}
 		catch (IOException ioe) {
 			System.err.println("Got ioe from url: " + ioe.getMessage());
@@ -39,6 +41,10 @@ public abstract class MediaHelper
 		return null;
 	}
 
+	/** Don't use URL.getFile(), because this includes the whole path */
+	private static String getFilename(URL inUrl) {
+		return new File(inUrl.getPath()).getName();
+	}
 
 	/**
 	 * Construct a MediaObject for the given path
@@ -102,8 +108,12 @@ public abstract class MediaHelper
 	 */
 	private static MediaObject createMediaObject(File inFile)
 	{
-		if (inFile == null) {return null;}
-		if (!inFile.exists() || !inFile.canRead() || !inFile.isFile()) {return null;}
+		if (inFile == null) {
+			return null;
+		}
+		if (!inFile.exists() || !inFile.canRead() || !inFile.isFile()) {
+			return null;
+		}
 		initFilters();
 		// Check if filename looks like a jpeg
 		if (_jpegFilter.acceptFilename(inFile.getName())) {

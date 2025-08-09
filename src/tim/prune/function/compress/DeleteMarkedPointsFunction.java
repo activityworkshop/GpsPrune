@@ -1,6 +1,7 @@
 package tim.prune.function.compress;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import tim.prune.App;
@@ -10,6 +11,7 @@ import tim.prune.cmd.PointFlag;
 import tim.prune.cmd.ShuffleAndCropCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
+import tim.prune.data.TrackInfo;
 
 
 /**
@@ -41,17 +43,21 @@ public class DeleteMarkedPointsFunction extends GenericFunction
 		_splitSegments = inSplitSegments;
 	}
 
-	@Override
 	public void begin()
 	{
 		ArrayList<Integer> indexesToKeep = new ArrayList<>();
 		ArrayList<Integer> indexesToDelete = new ArrayList<>();
-		Track track = _app.getTrackInfo().getTrack();
-		for (int i=0; i<track.getNumPoints(); i++)
+		ArrayList<Integer> indexesOfSegments = new ArrayList<>();
+		TrackInfo trackInfo = _app.getTrackInfo();
+
+		for (int i=0; i<trackInfo.getTrack().getNumPoints(); i++)
 		{
-			DataPoint point = track.getPoint(i);
-			if (point.getDeleteFlag()) {
+			if (trackInfo.isPointMarkedForDeletion(i))
+			{
 				indexesToDelete.add(i);
+				if (trackInfo.isPointMarkedForSegmentBreak(i) || _splitSegments) {
+					indexesOfSegments.add(i);
+				}
 			}
 			else {
 				indexesToKeep.add(i);
@@ -66,35 +72,30 @@ public class DeleteMarkedPointsFunction extends GenericFunction
 		else
 		{
 			Command command = new ShuffleAndCropCmd(indexesToKeep, indexesToDelete,
-				makeSegmentFlags(track, indexesToDelete));
+				makeSegmentFlags(trackInfo.getTrack(), indexesToDelete, indexesOfSegments));
 			_app.execute(command);
 		}
 	}
 
-	private List<PointFlag> makeSegmentFlags(Track inTrack, ArrayList<Integer> inIndexesToDelete)
+	private List<PointFlag> makeSegmentFlags(Track inTrack, List<Integer> inIndexesToDelete,
+		List<Integer> inIndexesOfSegments)
 	{
 		ArrayList<PointFlag> flags = new ArrayList<>();
-		DataPoint prevPoint = null;
-		for (int i : inIndexesToDelete)
+		HashSet<Integer> deleteSet = new HashSet<>(inIndexesToDelete);
+		HashSet<Integer> segmentSet = new HashSet<>(inIndexesOfSegments);
+		final int numPoints = inTrack.getNumPoints();
+		boolean setSegmentBreak = false;
+		for (int i=0; i<numPoints; i++)
 		{
-			if (inTrack.getPoint(i).getSegmentStart() || _splitSegments)
+			DataPoint point = inTrack.getPoint(i);
+			if (point.isWaypoint()) {
+				continue;
+			}
+			setSegmentBreak = setSegmentBreak || segmentSet.contains(i);
+			if (!deleteSet.contains(i) && setSegmentBreak)
 			{
-				DataPoint nextPoint = inTrack.getNextTrackPoint(i+1);
-				if (nextPoint == null || nextPoint == prevPoint) {
-					continue;
-				}
-				// Check it's not one of the indexes to delete
-				boolean willBeDeleted = false;
-				for (int j : inIndexesToDelete)
-				{
-					if (j > i && inTrack.getPoint(j) == nextPoint) {
-						willBeDeleted = true;
-					}
-				}
-				if (!willBeDeleted) {
-					prevPoint = nextPoint;
-					flags.add(new PointFlag(nextPoint, true));
-				}
+				flags.add(new PointFlag(point, true));
+				setSegmentBreak = false;
 			}
 		}
 		return flags;

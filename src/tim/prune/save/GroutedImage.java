@@ -101,4 +101,12 @@ public class GroutedImage
 	public DoubleRange getYRange() {
 		return _yRange;
 	}
+
+	/** Try to encourage the image memory to be cleared */
+	public void flush()
+	{
+		if (_image != null) {
+			_image.flush();
+		}
+	}
 }

@@ -69,9 +69,8 @@ public class MediaList<T extends MediaObject>
 	 * @return true if it's already in the list
 	 */
 	public boolean contains(T inMedia) {
-		return (getIndexOf(inMedia) > -1);
+		return getIndexOf(inMedia) > -1;
 	}
-
 
 	/**
 	 * Get the index of the given media
@@ -89,7 +88,7 @@ public class MediaList<T extends MediaObject>
 		for (int i=0; i<num; i++)
 		{
 			T m = _media.get(i);
-			if (m != null && m.equals(inMedia)) {
+			if (m == inMedia) {
 				return i;
 			}
 		}
@@ -97,6 +96,26 @@ public class MediaList<T extends MediaObject>
 		return -1;
 	}
 
+	/**
+	 * Checks if a media object _like_ the given one is already in the list
+	 * @param inMedia media object to check
+	 * @return true if there's a duplicate one already in the list
+	 */
+	public boolean hasDuplicate(T inMedia)
+	{
+		final int num = getCount();
+		if (num <= 0 || inMedia == null) {
+			return false;
+		}
+		for (int i=0; i<num; i++)
+		{
+			T m = _media.get(i);
+			if (inMedia.equals(m)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 	/**
 	 * Get the media at the given index

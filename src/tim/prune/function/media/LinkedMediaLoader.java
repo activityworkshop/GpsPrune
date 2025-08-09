@@ -16,6 +16,7 @@ import tim.prune.data.DataPoint;
 import tim.prune.data.Distance;
 import tim.prune.data.MediaObject;
 import tim.prune.data.UnitSetLibrary;
+import tim.prune.load.ItemToLoad.BlockStatus;
 import tim.prune.load.MediaHelper;
 
 /**
@@ -36,13 +37,29 @@ public class LinkedMediaLoader
 	 * Load a media using a provided url
 	 * @param inUrl url
 	 * @param inPoint point to which this media will be attached
+	 * @param inStatus possible block status already applied
 	 */
-	public void loadFromUrl(URL inUrl, DataPoint inPoint)
+	public void loadFromUrl(URL inUrl, DataPoint inPoint, BlockStatus inStatus)
 	{
+		processBlockStatus(inUrl, inStatus);
 		if (isDomainAllowed(inUrl)) {
 			loadMedia(MediaHelper.createMediaObjectFromUrl(inUrl), inPoint);
 		}
 		_app.informDataLoadComplete();
+	}
+
+	private void processBlockStatus(URL inUrl, BlockStatus inStatus)
+	{
+		if (inStatus == BlockStatus.NOT_ASKED || inStatus == BlockStatus.ASKED) {
+			return;
+		}
+		String domain = inUrl.getHost();
+		if (inStatus == BlockStatus.ALLOW) {
+			_allowedDomains.add(domain);
+		}
+		else if (inStatus == BlockStatus.BLOCK) {
+			_blockedDomains.add(domain);
+		}
 	}
 
 	/**
@@ -74,9 +91,20 @@ public class LinkedMediaLoader
 		CompoundCommand command = new CompoundCommand()
 				.addCommand(new AppendMediaCmd(List.of(inMedia)))
 				.addCommand(new ConnectMediaCmd(inPoint, inMedia));
-		command.setDescription(I18nManager.getText("undo.loadmedia", inMedia.getName()));
+		command.setDescription(I18nManager.getText("undo.loadmedia", shortenName(inMedia.getName())));
 		command.setConfirmText(I18nManager.getText("confirm.loadedmedia"));
 		_app.execute(command);
+	}
+
+	private String shortenName(String inName)
+	{
+		if (inName == null) {
+			return "";
+		}
+		if (inName.length() < 30) {
+			return inName;
+		}
+		return "..." + inName.substring(inName.length() - 30);
 	}
 
 	/**
@@ -108,6 +136,10 @@ public class LinkedMediaLoader
 			_blockedDomains.add(domain);
 		}
 		return answer == JOptionPane.YES_OPTION;
+	}
+
+	public boolean isDomainKnown(String inDomain) {
+		return _allowedDomains.contains(inDomain) || _blockedDomains.contains(inDomain);
 	}
 
 	/**

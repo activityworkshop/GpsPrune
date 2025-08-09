@@ -1,5 +1,5 @@
-GpsPrune version 25.2
-=====================
+GpsPrune version 26
+===================
 
 GpsPrune is an application for viewing, editing and managing coordinate data from GPS systems,
 including format conversion, charting, 3d visualisation, audio and photo correlation, and online resource lookup.
@@ -17,7 +17,7 @@ Running
 =======
 
 To run GpsPrune from the jar file, simply call it from a command prompt or shell:
-   java -jar gpsprune_25.2.jar
+   java -jar gpsprune_26.jar
 
 If the jar file is saved in a different directory, you will need to include the path.
 Depending on your system settings, you may be able to click or double-click on the jar file
@@ -25,24 +25,20 @@ in a file manager window to execute it.  A shortcut, menu item, alias, desktop i
 or other link can of course be made should you wish.
 
 To specify a language other than the default, use an additional parameter, eg:
-   java -jar gpsprune_25.2.jar --lang=DE
+   java -jar gpsprune_26.jar --lang=DE
 
 
-New with version 25.2
-=====================
-The following fixes were made since version 25.1:
-  - Fix sorting segment results by time (Issue #110)
-  - Fix some issues with photo display, especially with long names
-  - Additional translations
-
-New with version 25.1
-=====================
+New with version 26
+===================
 The following fixes and additions were made since version 25:
-  - Fix bug with exporting images to kmz (Issue #111)
-  - Tweak appearance of segment table in comparison function (Issue #110)
-  - Display of Gpx extension fields (Issue #75)
-  - Fix bug from parsing empty Gpx extension fields
-  - Respect segment breaks and altitudes when projecting a range with copy
+  - New compression methods based on speed / distance / time (for example Issue 84, also Issue 27)
+  - Showing the current zoom level in the statusbar (based on Issue 73)
+  - Allowing selection of your own custom waypoint icon — but only one, used for all waypoint types (part of Issue 3)
+  - Blocking or allowing a bunch of domains in one go for the media log (Issue 103)
+  - Marking points outside a drawn rectangle for deletion — like the existing function to mark the points inside but of course opposite
+  - Possibility to redo an undone command
+  - Improvements to image export (Issue 113)
+  - Bugfix for removing conflicting gpx namespace attributes when combining files (Issue 115)
 
 New with version 25
 ===================

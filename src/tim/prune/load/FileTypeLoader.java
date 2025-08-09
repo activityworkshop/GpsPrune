@@ -178,11 +178,14 @@ public class FileTypeLoader
 		{
 			// Build list of linked media to be loaded afterwards
 			ArrayList<ItemToLoad> items = new ArrayList<>();
-			for (int i=0; i<points.size(); i++) {
+			for (int i=0; i<points.size(); i++)
+			{
 				String link = inMediaLinks.getLinkArray()[i];
-				if (link != null) {
+				if (link != null)
+				{
 					DataPoint point = points.get(i);
-					if (looksLikeUrl(link)) {
+					if (looksLikeUrl(link))
+					{
 						try {
 							items.add(ItemToLoad.mediaUrl(new URL(link), point));
 						} catch (MalformedURLException ignored) {}

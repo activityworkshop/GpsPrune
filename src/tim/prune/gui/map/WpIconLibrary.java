@@ -96,6 +96,6 @@ public abstract class WpIconLibrary
 		final String iconName = getIconName(inType);
 		ImageIcon icon = inIconManager.getImageIcon(IconManager.WAYPOINT_ICON_PREFIX
 			+ iconName + inSize.getSuffix());
-		return new WpIconDefinition(iconName, icon);
+		return new WpIconDefinition(icon);
 	}
 }

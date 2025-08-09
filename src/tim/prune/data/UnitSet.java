@@ -64,6 +64,11 @@ public class UnitSet
 		return _vertSpeedUnit;
 	}
 
+	public boolean isMetric() {
+		return _distanceUnit == UnitSetLibrary.UNITS_KILOMETRES
+				|| _distanceUnit == UnitSetLibrary.UNITS_METRES;
+	}
+
 	/**
 	 * @return default point creation options for this unit set
 	 */

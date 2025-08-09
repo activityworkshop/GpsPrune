@@ -1,37 +1,55 @@
 package tim.prune.config;
 
+import java.util.ArrayList;
+
 /**
  * Split a string into tokens using semicolons as delimiters.
  * Unlike StringTokenizer and Scanner this also allows empty tokens.
  */
 public class ParamSet
 {
-	private final String _source;
-	private int _currPos = 0;
+	private final ArrayList<String> _params = new ArrayList<>();
 
 	/**
 	 * Constructor
 	 * @param inSource source string to parse
 	 */
 	public ParamSet(String inSource) {
-		_source = (inSource == null ? "" : inSource);
+		getParams(inSource == null ? "" : inSource);
 	}
 
-	/**
-	 * @return the next token
-	 */
-	public String getNext()
+	/** Extract the parameters into the _params list */
+	private void getParams(String inSource)
 	{
 		StringBuilder builder = new StringBuilder();
-		while (_currPos < _source.length())
+		int currPos = 0;
+		while (currPos < inSource.length())
 		{
-			char c = _source.charAt(_currPos);
-			_currPos++;
-			if (c == ';') {
-				break;
+			char c = inSource.charAt(currPos);
+			currPos++;
+			if (c == ';')
+			{
+				_params.add(builder.toString());
+				builder = new StringBuilder();
 			}
-			builder.append(c);
+			else {
+				builder.append(c);
+			}
 		}
-		return builder.toString();
+		_params.add(builder.toString());
+	}
+
+	/** @return the number of parameters read */
+	public int getNumParams() {
+		return _params.size();
+	}
+
+	/** @return the parameter at the given index, or an empty string */
+	public String getParam(int inIndex)
+	{
+		if (inIndex < 0 || inIndex >= _params.size()) {
+			return "";
+		}
+		return _params.get(inIndex);
 	}
 }

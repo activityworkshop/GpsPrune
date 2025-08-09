@@ -105,6 +105,10 @@ public class Config
 	public static final String KEY_WAYPOINT_ICONS = "prune.waypointicons";
 	/** Size of waypoint icons to use */
 	public static final String KEY_WAYPOINT_ICON_SIZE = "prune.waypointiconsize";
+	/** True to use a custom waypoint icon instead of a built-in one */
+	public static final String KEY_WAYPOINT_ICON_CUSTOM = "prune.waypointiconusecustom";
+	/** Path to the custom waypoint icon */
+	public static final String KEY_WAYPOINT_ICON_PATH = "prune.waypointiconpath";
 	/** Salt to use for waypoint colouring */
 	public static final String KEY_WPICON_SALT = "prune.waypointsalt";
 	/** Id of selected timezone */
@@ -115,10 +119,13 @@ public class Config
 	public static final String KEY_EARTHDATA_AUTH = "prune.earthdataauth";
 	/** Settings for track compression */
 	public static final String KEY_COMPRESSION_SETTINGS = "prune.compression";
+	public static final String KEY_COMPRESSION_METHODS = "prune.compressionmethods";
 	/** true for double-sized icons */
 	public static final String KEY_ICONS_DOUBLE_SIZE = "prune.iconsdoublesize";
 	/** true if user has already been asked about config migration */
 	public static final String KEY_ASKED_ABOUT_CONFIG_MIGRATION = "prune.configmigrationasked";
+	/** Show zoom level in status bar or not */
+	public static final String KEY_SHOW_ZOOMLEVEL = "prune.showzoomlevel";
 
 
 	/** Initialise the default properties */
@@ -189,6 +196,7 @@ public class Config
 		props.put(KEY_WAYPOINT_ICON_SIZE, "1"); // medium size
 		props.put(KEY_WPICON_SALT, "-1"); // no waypoint colouring by default
 		props.put(KEY_ICONS_DOUBLE_SIZE, "0"); // regular size by default
+		props.put(KEY_SHOW_ZOOMLEVEL, "0"); // don't show
 		props.put(KEY_ASKED_ABOUT_CONFIG_MIGRATION, "0"); // not asked
 		return props;
 	}
@@ -274,7 +282,7 @@ public class Config
 	 */
 	public void setConfigBoolean(String inKey, boolean inValue)
 	{
-		if (inKey != null && !inKey.equals("")) {
+		if (inKey != null && !inKey.isEmpty()) {
 			_configValues.put(inKey, (inValue ? "1" : "0"));
 		}
 	}
@@ -286,7 +294,7 @@ public class Config
 	 */
 	public void setConfigInt(String inKey, int inValue)
 	{
-		if (inKey != null && !inKey.equals("")) {
+		if (inKey != null && !inKey.isEmpty()) {
 			_configValues.put(inKey, "" + inValue);
 		}
 	}

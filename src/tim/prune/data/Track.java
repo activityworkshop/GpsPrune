@@ -305,35 +305,6 @@ public class Track
 	}
 
 	/**
-	 * @return true if track contains any points marked for deletion
-	 */
-	public boolean hasMarkedPoints()
-	{
-		if (_numPoints < 1) {
-			return false;
-		}
-		// Loop over points looking for any marked for deletion
-		for (int i=0; i<=_numPoints-1; i++)
-		{
-			if (_dataPoints[i] != null && _dataPoints[i].getDeleteFlag()) {
-				return true;
-			}
-		}
-		// None found
-		return false;
-	}
-
-	/**
-	 * Clear all the deletion markers
-	 */
-	public void clearDeletionMarkers()
-	{
-		for (int i=0; i<_numPoints; i++) {
-			_dataPoints[i].setMarkedForDeletion(false);
-		}
-	}
-
-	/**
 	 * Collect all the waypoints into the given List
 	 * @param inList List to fill with waypoints
 	 */

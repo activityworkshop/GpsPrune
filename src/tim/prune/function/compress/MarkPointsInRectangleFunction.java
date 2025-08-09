@@ -5,7 +5,7 @@ import tim.prune.UpdateMessageBroker;
 import tim.prune.data.DataPoint;
 
 /**
- * Function to mark all the points in the selected rectangle
+ * Function to mark all the points inside or outside the selected rectangle
  */
 public class MarkPointsInRectangleFunction extends MarkAndDeleteFunction
 {
@@ -13,20 +13,23 @@ public class MarkPointsInRectangleFunction extends MarkAndDeleteFunction
 	private double _minLat = 0.0, _maxLat = 0.0;
 	/** Minimum and maximum longitude values of rectangle */
 	private double _minLon = 0.0, _maxLon = 0.0;
-
+	/** Mark the ones inside or mark the ones outside? */
+	private final boolean _markInside;
 
 	/**
 	 * Constructor
 	 * @param inApp App object
+	 * @param inInside true for marking points inside, false for outside
 	 */
-	public MarkPointsInRectangleFunction(App inApp)
+	public MarkPointsInRectangleFunction(App inApp, boolean inInside)
 	{
 		super(inApp);
+		_markInside = inInside;
 	}
 
 	/** @return name key */
 	public String getNameKey() {
-		return "menu.track.markrectangle";
+		return _markInside ? "menu.track.markinsiderectangle" : "menu.track.markoutsiderectangle";
 	}
 
 	/**
@@ -45,18 +48,10 @@ public class MarkPointsInRectangleFunction extends MarkAndDeleteFunction
 		}
 		else
 		{
-			if (inLon2 > inLon1) {
-				_minLon = inLon1; _maxLon = inLon2;
-			}
-			else {
-				_minLon = inLon2; _maxLon = inLon1;
-			}
-			if (inLat2 > inLat1) {
-				_minLat = inLat1; _maxLat = inLat2;
-			}
-			else {
-				_minLat = inLat2; _maxLat = inLat1;
-			}
+			_minLon = Math.min(inLon1, inLon2);
+			_maxLon = Math.max(inLon1, inLon2);
+			_minLat = Math.min(inLat1, inLat2);
+			_maxLat = Math.max(inLat1, inLat2);
 		}
 	}
 
@@ -72,6 +67,8 @@ public class MarkPointsInRectangleFunction extends MarkAndDeleteFunction
 		// Loop over all points in track
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
 		int numMarked = 0;
+		int numNotMarked = 0;
+		_app.getTrackInfo().clearAllMarkers();
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
@@ -80,19 +77,25 @@ public class MarkPointsInRectangleFunction extends MarkAndDeleteFunction
 			final double pointLat = point.getLatitude().getDouble();
 			final boolean insideRect = (pointLon >= _minLon && pointLon <= _maxLon
 				&& pointLat >= _minLat && pointLat <= _maxLat);
-			// Mark it accordingly (also resetting points outside the rect to false)
-			point.setMarkedForDeletion(insideRect);
-			if (insideRect) {
+			if (insideRect == _markInside) {
+				_app.getTrackInfo().markPointForDeletion(i);
 				numMarked++;
+			}
+			else {
+				numNotMarked++;
 			}
 		}
 
 		// Inform subscribers to update display
 		UpdateMessageBroker.informSubscribers();
 		// Confirm message showing how many marked
-		if (numMarked > 0)
-		{
+		if (numMarked > 0 && numNotMarked > 0) {
 			optionallyDeleteMarkedPoints(numMarked);
 		}
+	}
+
+	/** for this function, segments should be split at deleted points */
+	protected boolean getShouldSplitSegments() {
+		return true;
 	}
 }

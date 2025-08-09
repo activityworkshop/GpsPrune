@@ -6,12 +6,14 @@ import tim.prune.gui.GuiGridLayout;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.colour.WaypointColours;
 import tim.prune.gui.map.WpIconLibrary;
+import tim.prune.load.GenericFileFilter;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.image.BufferedImage;
+import java.io.File;
 
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
@@ -77,6 +79,9 @@ public class SetWaypointSettings extends GenericFunction
 	private JComboBox<Integer> _wpIconCombobox = null;
 	private JRadioButton[] _sizeRadioButtons = null;
 	private JCheckBox _coloursCheckbox = null;
+	private JCheckBox _customIconCheckbox = null;
+	private JButton _browseButton = null;
+	private File _selectedIconFile = null;
 	/** Slider for salt */
 	private JSlider _saltSlider = null;
 	private JLabel _saltLabel = null;
@@ -143,6 +148,16 @@ public class SetWaypointSettings extends GenericFunction
 			sizePanel.add(_sizeRadioButtons[i]);
 		}
 		iconsPanel.add(sizePanel);
+		// Choose a custom waypoint icon
+		JPanel customIconPanel = new JPanel();
+		_customIconCheckbox = new JCheckBox(I18nManager.getText("dialog.waypointsettings.usecustomicon"));
+		_customIconCheckbox.addActionListener(e -> updateCustomIconCheckbox());
+		customIconPanel.add(_customIconCheckbox);
+		_browseButton = new JButton(I18nManager.getText("button.browse"));
+		_browseButton.addActionListener(e -> chooseCustomIconFile());
+		_browseButton.setEnabled(false);
+		customIconPanel.add(_browseButton);
+		iconsPanel.add(customIconPanel);
 		midPanel.add(iconsPanel);
 		midPanel.add(Box.createVerticalStrut(15));
 
@@ -200,6 +215,48 @@ public class SetWaypointSettings extends GenericFunction
 		return mainPanel;
 	}
 
+	/** React to changes in the custom waypoint icon checkbox */
+	private void updateCustomIconCheckbox()
+	{
+		boolean showFile = _customIconCheckbox.isSelected() && _selectedIconFile != null
+			&& _selectedIconFile.exists() && _selectedIconFile.isFile()
+			&& _selectedIconFile.canRead();
+		String text = I18nManager.getText("dialog.waypointsettings.usecustomicon");
+		if (showFile) {
+			text = text + " (" + _selectedIconFile.getName() + ")";
+		}
+		_customIconCheckbox.setText(text);
+		enableIconControls(_customIconCheckbox.isSelected());
+	}
+
+	/** Enable or disable the icon controls based on the custom checkbox */
+	private void enableIconControls(boolean inCustom)
+	{
+		_wpIconCombobox.setEnabled(!inCustom);
+		for (JRadioButton radio : _sizeRadioButtons) {
+			radio.setEnabled(!inCustom);
+		}
+		_browseButton.setEnabled(inCustom);
+	}
+
+	/** React to clicks on the browse button, to start the selection of the custom icon */
+	private void chooseCustomIconFile()
+	{
+		JFileChooser chooser = new JFileChooser();
+		chooser.addChoosableFileFilter(
+			new GenericFileFilter("filetypefilter.png", new String[] {"png"}));
+		chooser.setAcceptAllFileFilterUsed(false);
+		// Set start path from currently selected file
+		if (_selectedIconFile != null) {
+			chooser.setSelectedFile(_selectedIconFile);
+		}
+		if (chooser.showOpenDialog(_parentFrame) == JFileChooser.APPROVE_OPTION)
+		{
+			_selectedIconFile = chooser.getSelectedFile();
+			updateCustomIconCheckbox();
+		}
+	}
+
 	/**
 	 * React to enabling / disabling checkbox controlling colours of waypoints
 	 */
@@ -229,6 +286,10 @@ public class SetWaypointSettings extends GenericFunction
 			_wpIconCombobox.setSelectedIndex(config.getConfigInt(Config.KEY_WAYPOINT_ICONS));
 		} catch (IllegalArgumentException ignored) {}
 		selectIconSizeRadio(config.getConfigInt(Config.KEY_WAYPOINT_ICON_SIZE));
+		_selectedIconFile = makeFile(config.getConfigString(Config.KEY_WAYPOINT_ICON_PATH));
+		_customIconCheckbox.setSelected(config.getConfigBoolean(Config.KEY_WAYPOINT_ICON_CUSTOM)
+				&& _selectedIconFile != null);
+		updateCustomIconCheckbox();
 		final int salt = config.getConfigInt(Config.KEY_WPICON_SALT);
 		_coloursCheckbox.setSelected(salt >= 0);
 		_saltSlider.setValue(Math.max(salt, 0));
@@ -236,6 +297,19 @@ public class SetWaypointSettings extends GenericFunction
 		_typeList.compile(_app.getTrackInfo().getTrack());
 		showPreview(salt);
 		_dialog.setVisible(true);
+	}
+
+	/** @return a File object from the given path if represents a valid png file, otherwise null */
+	private File makeFile(String inPath)
+	{
+		if (inPath == null || inPath.isEmpty()) {
+			return null;
+		}
+		File file = new File(inPath);
+		if (file.exists() && file.isFile() && file.canRead() && file.getName().toLowerCase().endsWith(".png")) {
+			return file;
+		}
+		return null;
 	}
 
 	/**
@@ -291,7 +365,8 @@ public class SetWaypointSettings extends GenericFunction
 		}
 		final int rgb = color.getRGB();
 		BufferedImage bi = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB);
-		for (int x=1; x<19; x++) {
+		for (int x=1; x<19; x++)
+		{
 			bi.setRGB(x, 0, 0);
 			bi.setRGB(0, x, 0);
 			for (int y=1; y<19; y++) {
@@ -312,6 +387,8 @@ public class SetWaypointSettings extends GenericFunction
 		Config config = getConfig();
 		config.setConfigInt(Config.KEY_WAYPOINT_ICONS, _wpIconCombobox.getSelectedIndex());
 		config.setConfigInt(Config.KEY_WAYPOINT_ICON_SIZE, getSelectedIconSize());
+		config.setConfigBoolean(Config.KEY_WAYPOINT_ICON_CUSTOM, _customIconCheckbox.isSelected());
+		config.setConfigString(Config.KEY_WAYPOINT_ICON_PATH, _selectedIconFile == null ? "" : _selectedIconFile.getAbsolutePath());
 		final int saltValue = _coloursCheckbox.isSelected() ? _saltSlider.getValue() : -1;
 		config.setConfigInt(Config.KEY_WPICON_SALT, saltValue);
 		// refresh display

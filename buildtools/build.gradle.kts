@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "tim.prune"
-version = 25.2
+version = 26
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -25,7 +25,8 @@ java {
         resources.srcDirs("test")
         resources.include(
             "tim/prune/function/weather/xml/*",
-            "tim/prune/function/filesleuth/data/*.txt"
+            "tim/prune/function/filesleuth/data/*.txt",
+            "tim/prune/gui/map/*.png"
         )
         output.setResourcesDir(layout.buildDirectory.dir("classes/java/test"))
     }

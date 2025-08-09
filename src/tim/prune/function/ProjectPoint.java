@@ -158,9 +158,8 @@ public class ProjectPoint extends GenericFunction
 	 */
 	private void setLabelText()
 	{
-		Unit distUnit = getConfig().getUnitSet().getDistanceUnit();
-		_distanceIsMetric = (distUnit == UnitSetLibrary.UNITS_METRES || distUnit == UnitSetLibrary.UNITS_KILOMETRES);
-		distUnit = _distanceIsMetric ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET;
+		_distanceIsMetric = getConfig().getUnitSet().isMetric();
+		final Unit distUnit = _distanceIsMetric ? UnitSetLibrary.UNITS_METRES : UnitSetLibrary.UNITS_FEET;
 		final String unitKey = distUnit.getShortnameKey();
 		_distanceDescLabel.setText(I18nManager.getText("fieldname.distance") + " (" + I18nManager.getText(unitKey) + ")");
 	}

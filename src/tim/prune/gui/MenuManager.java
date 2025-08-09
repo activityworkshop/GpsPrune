@@ -68,13 +68,14 @@ public class MenuManager implements DataSubscriber
 	// Menu items which need enabling/disabling
 	private JMenuItem _sendGpsItem = null;
 	private JMenuItem _saveItem = null;
-	private JMenuItem _exportKmlItem = null;
 	private JMenuItem _exportGpxItem = null;
+	private JMenuItem _exportKmlItem = null;
 	private JMenuItem _exportPovItem = null;
 	private JMenuItem _exportImageItem = null;
 	private JMenu     _recentFileMenu = null;
 	private JMenuItem _undoItem = null;
 	private JMenuItem _clearUndoItem = null;
+	private JMenuItem _redoItem = null;
 	private JMenuItem _editPointItem = null;
 	private JMenuItem _editWaypointNameItem = null;
 	private JMenuItem _togglePointSegmentItem = null;
@@ -83,8 +84,8 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _deleteRangeItem = null;
 	private JMenuItem _cropTrackItem = null;
 	private JMenuItem _compressItem = null;
-	private JMenuItem _markRectangleItem = null;
-	private JMenuItem _markUphillLiftsItem = null;
+	private JMenuItem _markRectangleInsideItem = null;
+	private JMenuItem _markRectangleOutsideItem = null;
 	private JMenuItem _deleteMarkedPointsItem = null;
 	private JMenuItem _deleteByDateItem = null;
 	private JMenuItem _interpolateItem = null;
@@ -157,6 +158,7 @@ public class MenuManager implements DataSubscriber
 	// Toolbar buttons which need enabling/disabling
 	private JButton _saveButton = null;
 	private JButton _undoButton = null;
+	private JButton _redoButton = null;
 	private JButton _editPointButton = null;
 	private JButton _viewInfoButton = null;
 	private JButton _deletePointButton = null;
@@ -238,12 +240,12 @@ public class MenuManager implements DataSubscriber
 		_saveItem.addActionListener(e -> _app.saveFile());
 		_saveItem.setEnabled(false);
 		fileMenu.add(_saveItem);
-		// Export - Kml
-		_exportKmlItem = makeMenuItem(FunctionLibrary.FUNCTION_KMLEXPORT, false);
-		fileMenu.add(_exportKmlItem);
-		// Gpx
+		// Export - Gpx
 		_exportGpxItem = makeMenuItem(FunctionLibrary.FUNCTION_GPXEXPORT, false);
 		fileMenu.add(_exportGpxItem);
+		// Kml
+		_exportKmlItem = makeMenuItem(FunctionLibrary.FUNCTION_KMLEXPORT, false);
+		fileMenu.add(_exportKmlItem);
 		// Pov
 		_exportPovItem = makeMenuItem(FunctionLibrary.FUNCTION_POVEXPORT, false);
 		fileMenu.add(_exportPovItem);
@@ -320,19 +322,28 @@ public class MenuManager implements DataSubscriber
 		_clearUndoItem.addActionListener(e -> _app.clearUndo());
 		_clearUndoItem.setEnabled(false);
 		trackMenu.add(_clearUndoItem);
+		_redoItem = new JMenuItem(I18nManager.getText("menu.track.redo"));
+		_redoItem.addActionListener(e -> _app.beginRedo());
+		_redoItem.setEnabled(false);
+		trackMenu.add(_redoItem);
 		trackMenu.addSeparator();
 		_compressItem = makeMenuItem(FunctionLibrary.FUNCTION_COMPRESS, false);
 		setShortcut(_compressItem, "shortcut.menu.track.compress");
 		trackMenu.add(_compressItem);
-		_markRectangleItem = new JMenuItem(I18nManager.getText("menu.track.markrectangle"));
-		_markRectangleItem.addActionListener(e -> {
-			_app.setCurrentMode(App.AppMode.DRAWRECT);
+		_markRectangleInsideItem = new JMenuItem(I18nManager.getText("menu.track.markinsiderectangle"));
+		_markRectangleInsideItem.addActionListener(e -> {
+			_app.setCurrentMode(App.AppMode.DRAWRECT_INSIDE);
 			UpdateMessageBroker.informSubscribers();
 		});
-		_markRectangleItem.setEnabled(false);
-		trackMenu.add(_markRectangleItem);
-		_markUphillLiftsItem = makeMenuItem(FunctionLibrary.FUNCTION_MARK_LIFTS, false);
-		trackMenu.add(_markUphillLiftsItem);
+		_markRectangleInsideItem.setEnabled(false);
+		trackMenu.add(_markRectangleInsideItem);
+		_markRectangleOutsideItem = new JMenuItem(I18nManager.getText("menu.track.markoutsiderectangle"));
+		_markRectangleOutsideItem.addActionListener(e -> {
+			_app.setCurrentMode(App.AppMode.DRAWRECT_OUTSIDE);
+			UpdateMessageBroker.informSubscribers();
+		});
+		_markRectangleOutsideItem.setEnabled(false);
+		trackMenu.add(_markRectangleOutsideItem);
 		_deleteMarkedPointsItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_MARKED_POINTS, false);
 		trackMenu.add(_deleteMarkedPointsItem);
 		_deleteByDateItem = makeMenuItem(FunctionLibrary.FUNCTION_DELETE_BY_DATE, false);
@@ -707,9 +718,11 @@ public class MenuManager implements DataSubscriber
 		// Save / export file
 		_saveButton = makeToolbarButton(IconManager.TOOLBAR_EXPORT_FILE, "menu.file.export", e -> showExportMenu());
 		toolbar.add(_saveButton);
-		// Undo
+		// Undo, Redo
 		_undoButton = makeToolbarButton(IconManager.TOOLBAR_UNDO, "menu.track.undo", e -> _app.beginUndo());
 		toolbar.add(_undoButton);
+		_redoButton = makeToolbarButton(IconManager.TOOLBAR_REDO, "menu.track.redo", e -> _app.beginRedo());
+		toolbar.add(_redoButton);
 		// Edit point
 		_editPointButton = makeToolbarButton(IconManager.TOOLBAR_EDIT_POINT, new PointEditor(_app));
 		toolbar.add(_editPointButton);
@@ -781,14 +794,14 @@ public class MenuManager implements DataSubscriber
 		_sendGpsItem.setEnabled(hasData);
 		_saveItem.setEnabled(hasData);
 		_saveButton.setEnabled(hasData);
-		_exportKmlItem.setEnabled(hasData);
 		_exportGpxItem.setEnabled(hasData);
+		_exportKmlItem.setEnabled(hasData);
 		_exportPovItem.setEnabled(hasMultiplePoints);
 		_exportImageItem.setEnabled(hasMultiplePoints);
 		_compressItem.setEnabled(hasData);
-		_markRectangleItem.setEnabled(hasData);
-		_markUphillLiftsItem.setEnabled(hasData && _track.hasAltitudeData());
-		_deleteMarkedPointsItem.setEnabled(hasData && _track.hasMarkedPoints());
+		_markRectangleInsideItem.setEnabled(hasData);
+		_markRectangleOutsideItem.setEnabled(hasData);
+		_deleteMarkedPointsItem.setEnabled(hasData && _app.getTrackInfo().hasPointsMarkedForDeletion());
 		_rearrangeWaypointsItem.setEnabled(hasData && _track.hasWaypoints() && _track.getNumPoints() > 1);
 		_dedupeWaypointsItem.setEnabled(hasData && _track.hasWaypoints() && _track.getNumPoints() > 1);
 		_viewFullDetailsItem.setEnabled(hasData);
@@ -824,6 +837,9 @@ public class MenuManager implements DataSubscriber
 		_undoItem.setEnabled(hasUndo);
 		_undoButton.setEnabled(hasUndo);
 		_clearUndoItem.setEnabled(hasUndo);
+		boolean hasRedo = !_app.getRedoStack().isEmpty();
+		_redoButton.setEnabled(hasRedo);
+		_redoItem.setEnabled(hasRedo);
 		// is there a current point?
 		DataPoint currPoint = _app.getTrackInfo().getCurrentPoint();
 		boolean hasPoint = (currPoint != null);

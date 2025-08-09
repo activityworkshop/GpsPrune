@@ -150,4 +150,24 @@ public abstract class NumberUtils
 		}
 		return ", ";
 	}
+
+	public static int getIntOrZero(String inString)
+	{
+		try {
+			return Integer.parseInt(inString);
+		}
+		catch (NumberFormatException ignored) {
+			return 0;
+		}
+	}
+
+	public static double getDoubleOrZero(String inString)
+	{
+		try {
+			return Double.parseDouble(inString);
+		}
+		catch (NumberFormatException | NullPointerException ignored) {
+			return 0.0;
+		}
+	}
 }

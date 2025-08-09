@@ -17,6 +17,11 @@ public class ItemToLoad
 	private final String _itemPathWithinZip;
 	private final URL _url;
 	private final DataPoint _point;
+	private BlockStatus _blockStatus = BlockStatus.NOT_ASKED;
+
+	/** Remember whether this item was blocked or allowed or never asked */
+	public enum BlockStatus {NOT_ASKED, ASKED, ALLOW, BLOCK};
+
 
 	/**
 	 * Constructor
@@ -73,5 +78,13 @@ public class ItemToLoad
 
 	public DataPoint getPoint() {
 		return _point;
+	}
+
+	public void setBlockStatus(BlockStatus inStatus) {
+		_blockStatus = inStatus;
+	}
+
+	public BlockStatus getBlockStatus() {
+		return _blockStatus;
 	}
 }
