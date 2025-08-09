@@ -28,6 +28,7 @@ import tim.prune.data.UnitSetLibrary;
 import tim.prune.function.Describer;
 import tim.prune.jpeg.InternalExifLibrary;
 import tim.prune.jpeg.JpegData;
+import tim.prune.tips.TipManager;
 
 /**
  * Class to manage the loading of Jpegs and dealing with the GPS data from them
@@ -46,6 +47,7 @@ public class JpegLoader
 	private boolean _cancelled = false;
 	private LatLonRectangle _trackRectangle = null;
 	private ArrayList<Photo> _photos = null;
+	private boolean _foundDuplicatePhoto = false;
 
 
 	/**
@@ -123,6 +125,7 @@ public class JpegLoader
 		_counters = new LoadCounts();
 		_photos = new ArrayList<>();
 		File[] files = _fileChooser.getSelectedFiles();
+		_foundDuplicatePhoto = false;
 		// Loop recursively over selected files/directories to count files
 		int numFiles = countFileList(files, true, _subdirCheckbox.isSelected());
 		// Set up the progress bar for this number of files
@@ -148,7 +151,11 @@ public class JpegLoader
 		}
 		else
 		{
-			// Found some photos to load - pass information back to app
+			// Found some photos to load
+			if (_foundDuplicatePhoto) {
+				_app.showTip(TipManager.Tip_DuplicatePhotoLoaded);
+			}
+			// pass information back to app
 			_photos.sort(new MediaSorter());
 			LoadPhotosWithPointsCmd command = new LoadPhotosWithPointsCmd(_photos);
 			final int numPhotos = _photos.size();
@@ -157,6 +164,7 @@ public class JpegLoader
 			Describer undoDescriber = new Describer("undo.loadphoto", "undo.loadphotos");
 			String firstPhotoName = _photos.get(0).getName();
 			command.setDescription(undoDescriber.getDescriptionWithNameOrCount(firstPhotoName, numPhotos));
+			// TODO: If app execute says false, then we need to show a message or something?
 			_app.execute(command);
 		}
 	}
@@ -208,7 +216,6 @@ public class JpegLoader
 		if (!_fileFilter.acceptFilename(inFile.getName())) {
 			return;
 		}
-		// If it's a Jpeg, we can use ExifReader to get coords, otherwise we could try exiftool (if it's installed)
 
 		if (inFile.exists() && inFile.canRead()) {
 			_counters.foundPhoto();
@@ -223,6 +230,9 @@ public class JpegLoader
 				|| _outsideAreaCheckbox.isSelected() || _trackRectangle.containsPoint(photo.getDataPoint())))
 		{
 			_photos.add(photo);
+			if (_app.getTrackInfo().getPhotoList().hasDuplicate(photo)) {
+				_foundDuplicatePhoto = true;
+			}
 		}
 	}
 

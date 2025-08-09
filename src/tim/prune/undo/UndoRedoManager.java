@@ -1,4 +1,4 @@
-package tim.prune.gui;
+package tim.prune.undo;
 
 import java.awt.FlowLayout;
 import java.awt.event.KeyAdapter;
@@ -16,45 +16,46 @@ import javax.swing.ListSelectionModel;
 
 import tim.prune.App;
 import tim.prune.I18nManager;
-import tim.prune.undo.UndoStack;
 
 /**
- * Class to manage the selection of actions to undo
+ * Class to manage the selection of actions to undo or redo
  */
-public class UndoManager
+public abstract class UndoRedoManager
 {
 	private final App _app;
 	private final JFrame _parentFrame;
 	private JDialog _dialog = null;
 	private JList<String> _actionList = null;
+	private final String _tokenPrefix;
 
 
 	/**
 	 * Constructor
 	 * @param inApp App object
 	 * @param inFrame parent frame
+	 * @param inUndo true for undo, false for redo
 	 */
-	public UndoManager(App inApp, JFrame inFrame)
+	protected UndoRedoManager(App inApp, JFrame inFrame, boolean inUndo)
 	{
 		_app = inApp;
 		_parentFrame = inFrame;
+		_tokenPrefix = "dialog." + (inUndo ? "undo" : "redo") + ".";
 	}
 
 	/**
-	 * Show the dialog to select which actions to undo
+	 * Show the dialog to select which actions to undo or redo
 	 */
-	public void show()
+	public void show(UndoStack inStack)
 	{
-		_dialog = new JDialog(_parentFrame, I18nManager.getText("dialog.undo.title"), true);
+		_dialog = new JDialog(_parentFrame, getText("title"), true);
 		_dialog.setLocationRelativeTo(_parentFrame);
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout(3, 3));
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		UndoStack undoStack = _app.getUndoStack();
-		mainPanel.add(new JLabel(I18nManager.getText("dialog.undo.pretext")), BorderLayout.NORTH);
+		mainPanel.add(new JLabel(getText("pretext") + ":"), BorderLayout.NORTH);
 
-		String[] undoActions = undoStack.getDescriptions().toArray(new String[0]);
-		_actionList = new JList<String>(undoActions);
+		String[] actions = inStack.getDescriptions().toArray(new String[0]);
+		_actionList = new JList<String>(actions);
 		_actionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
 		_actionList.setSelectedIndex(0);
 		_actionList.addListSelectionListener(e -> {
@@ -78,7 +79,7 @@ public class UndoManager
 		buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		JButton okButton = new JButton(I18nManager.getText("button.ok"));
 		okButton.addActionListener(e -> {
-			_app.undoActions(_actionList.getMaxSelectionIndex() + 1);
+			undoRedoActions(_app, _actionList.getMaxSelectionIndex() + 1);
 			_dialog.dispose();
 		});
 		buttonPanel.add(okButton);
@@ -89,5 +90,13 @@ public class UndoManager
 		_dialog.getContentPane().add(mainPanel);
 		_dialog.pack();
 		_dialog.setVisible(true);
+	}
+
+	/** To be overridden by subclasses */
+	protected abstract void undoRedoActions(App inApp, int inNumActions);
+
+	/** @return text for the given key */
+	private String getText(String inKey) {
+		return I18nManager.getText(_tokenPrefix + inKey);
 	}
 }

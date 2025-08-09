@@ -3,6 +3,7 @@ package tim.prune;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
+import java.util.HashSet;
 
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
@@ -13,20 +14,23 @@ import tim.prune.data.LatLonRectangle;
 import tim.prune.data.RecentFile;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.function.media.BlockMultipleMediaDialog;
 import tim.prune.function.media.LinkedMediaLoader;
 import tim.prune.function.settings.SaveConfig;
 import tim.prune.gui.IconManager;
 import tim.prune.gui.SidebarController;
-import tim.prune.gui.UndoManager;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.colour.ColourerCaretaker;
 import tim.prune.gui.colour.PointColourer;
 import tim.prune.load.FileLoader;
 import tim.prune.load.ItemToLoad;
 import tim.prune.load.JpegLoader;
+import tim.prune.load.ItemToLoad.BlockStatus;
 import tim.prune.save.ExifSaver;
 import tim.prune.save.FileSaver;
 import tim.prune.tips.TipManager;
+import tim.prune.undo.RedoManager;
+import tim.prune.undo.UndoManager;
 import tim.prune.undo.UndoStack;
 
 
@@ -48,13 +52,14 @@ public class App
 	private JpegLoader _jpegLoader = null;
 	private FileSaver _fileSaver = null;
 	private final UndoStack _undoStack;
+	private final UndoStack _redoStack;
 	private final ColourerCaretaker _colCaretaker;
 	private Viewport _viewport = null;
 	private final ArrayList<ItemToLoad> _itemsToLoad = new ArrayList<>();
 	private AppMode _appMode = AppMode.NORMAL;
 
-	/** Enum for the app mode - currently only two options but may expand later */
-	public enum AppMode {NORMAL, DRAWRECT}
+	/** Enum for the app mode - may expand later */
+	public enum AppMode {NORMAL, DRAWRECT_INSIDE, DRAWRECT_OUTSIDE}
 
 
 	/**
@@ -68,6 +73,7 @@ public class App
 		_config = inConfig == null ? new Config() : inConfig;
 		_iconManager = new IconManager(_config.getConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE));
 		_undoStack = new UndoStack();
+		_redoStack = new UndoStack();
 		_track = new Track();
 		_trackInfo = new TrackInfo(_track);
 		FunctionLibrary.initialise(this);
@@ -109,6 +115,13 @@ public class App
 	}
 
 	/**
+	 * @return the redo stack
+	 */
+	public UndoStack getRedoStack() {
+		return _redoStack;
+	}
+
+	/**
 	 * Update the system's point colourer using the one in the Config
 	 */
 	public void updatePointColourer()
@@ -121,10 +134,8 @@ public class App
 	/**
 	 * @return colourer object, or null
 	 */
-	public PointColourer getPointColourer()
-	{
-		if (_colCaretaker == null) {return null;}
-		return _colCaretaker.getColourer();
+	public PointColourer getPointColourer() {
+		return _colCaretaker == null ? null : _colCaretaker.getColourer();
 	}
 
 	/**
@@ -134,7 +145,7 @@ public class App
 	public void showTip(int inTipNumber)
 	{
 		String key = TipManager.fireTipTrigger(inTipNumber);
-		if (key != null && !key.equals(""))
+		if (key != null && !key.isEmpty())
 		{
 			JOptionPane.showMessageDialog(_frame, I18nManager.getText(key),
 				I18nManager.getText("tip.title"), JOptionPane.INFORMATION_MESSAGE);
@@ -173,6 +184,7 @@ public class App
 		if (inCommand.execute(_trackInfo))
 		{
 			_undoStack.add(inCommand);
+			_redoStack.clear();
 			UpdateMessageBroker.informSubscribers(inCommand.getConfirmText());
 			UpdateMessageBroker.informSubscribers(inCommand.getUpdateFlags());
 			return true;
@@ -270,7 +282,7 @@ public class App
 	{
 		// deselect point, range and photo
 		_trackInfo.getSelection().clearAll();
-		_track.clearDeletionMarkers();
+		_trackInfo.clearAllMarkers();
 	}
 
 
@@ -306,6 +318,7 @@ public class App
 	private void loadNextItem(boolean inAutoAppend)
 	{
 		new Thread(() -> {
+			checkForMultipleMediaDomains();
 			while (!_itemsToLoad.isEmpty())
 			{
 				ItemToLoad item = _itemsToLoad.remove(0);
@@ -317,19 +330,44 @@ public class App
 					_fileLoader.openFile(item.getDataFile(), inAutoAppend);
 					return;
 				}
-				if (_linkedMediaLoader == null) {
-					_linkedMediaLoader = new LinkedMediaLoader(this);
-				}
-				if (item.isUrl()) {
-					_linkedMediaLoader.loadFromUrl(item.getUrl(), item.getPoint());
+				if (item.isUrl())
+				{
+					getLinkedMediaLoader().loadFromUrl(item.getUrl(), item.getPoint(), item.getBlockStatus());
 					return;
 				}
 				else if (item.isArchivedFile()) {
-					_linkedMediaLoader.loadFromArchive(item.getArchiveFile(), item.getItemPath(), item.getPoint());
+					getLinkedMediaLoader().loadFromArchive(item.getArchiveFile(), item.getItemPath(), item.getPoint());
 					return;
 				}
 			}
 		}).start();
+	}
+
+	private LinkedMediaLoader getLinkedMediaLoader()
+	{
+		if (_linkedMediaLoader == null) {
+			_linkedMediaLoader = new LinkedMediaLoader(this);
+		}
+		return _linkedMediaLoader;
+	}
+
+	private void checkForMultipleMediaDomains()
+	{
+		HashSet<String> domains = new HashSet<>();
+		for (ItemToLoad item : _itemsToLoad)
+		{
+			if (!item.isUrl() || item.getBlockStatus() != BlockStatus.NOT_ASKED) {
+				continue;
+			}
+			String domain = item.getUrl().getHost();
+			if (!getLinkedMediaLoader().isDomainKnown(domain)) {
+				domains.add(domain);
+			}
+		}
+		if (domains.size() < 3) {
+			return;
+		}
+		new BlockMultipleMediaDialog(_frame, domains, _itemsToLoad).setVisible(true);
 	}
 
 
@@ -363,10 +401,9 @@ public class App
 				I18nManager.getText("dialog.undo.none.title"), JOptionPane.INFORMATION_MESSAGE);
 		}
 		else {
-			new UndoManager(this, _frame).show();
+			new UndoManager(this, _frame).show(getUndoStack());
 		}
 	}
-
 
 	/**
 	 * Clear the undo stack (losing all undo information)
@@ -401,11 +438,47 @@ public class App
 	{
 		try
 		{
-			for (int i=0; i<inNumUndos; i++) {
-				_undoStack.popCommand().getInverse().execute(_trackInfo);
+			for (int i=0; i<inNumUndos; i++)
+			{
+				Command command = _undoStack.popCommand();
+				_redoStack.add(command);
+				command.getInverse().execute(_trackInfo);
 			}
 			String message = (inNumUndos == 1 ? I18nManager.getText("confirm.undo.single")
 					: I18nManager.getTextWithNumber("confirm.undo.multi", inNumUndos));
+			UpdateMessageBroker.informSubscribers(message);
+		}
+		catch (EmptyStackException empty) {}
+
+		UpdateMessageBroker.informSubscribers();
+	}
+
+	/**
+	 * Begin redo process
+	 */
+	public void beginRedo()
+	{
+		if (!_redoStack.isEmpty()) {
+			new RedoManager(this, _frame).show(_redoStack);
+		}
+	}
+
+	/**
+	 * Redo the specified number of actions
+	 * @param inNumActions number of actions to undo
+	 */
+	public void redoActions(int inNumActions)
+	{
+		try
+		{
+			for (int i=0; i<inNumActions; i++)
+			{
+				Command command = _redoStack.popCommand();
+				_undoStack.add(command);
+				command.execute(_trackInfo);
+			}
+			String message = (inNumActions == 1 ? I18nManager.getText("confirm.redo.single")
+					: I18nManager.getTextWithNumber("confirm.redo.multi", inNumActions));
 			UpdateMessageBroker.informSubscribers(message);
 		}
 		catch (EmptyStackException empty) {}

@@ -41,6 +41,7 @@ public class IconManager
 	public static final String TOOLBAR_ADD_PHOTO = "toolbar/add-image";
 	public static final String TOOLBAR_EXPORT_FILE = "toolbar/export-file";
 	public static final String TOOLBAR_UNDO = "toolbar/undo";
+	public static final String TOOLBAR_REDO = "toolbar/redo";
 	public static final String TOOLBAR_EDIT_POINT = "toolbar/edit-details";
 	public static final String TOOLBAR_VIEW_INFO = "toolbar/view-info";
 	public static final String TOOLBAR_DELETE_POINT = "toolbar/delete-point";

@@ -32,16 +32,14 @@ public class SummaryLabel extends JLabel
 	public void setValue(int inNumToDelete)
 	{
 		setText(makeString(inNumToDelete));
-		setEnabled(true);
+		setEnabled(inNumToDelete > 0);
 	}
 
 	/**
 	 * Clear value
 	 */
-	public void clearValue()
-	{
-		setText(makeString(0));
-		setEnabled(false);
+	public void clearValue() {
+		setValue(0);
 	}
 
 	/**

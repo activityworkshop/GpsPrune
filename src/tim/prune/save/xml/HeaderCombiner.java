@@ -1,6 +1,7 @@
 package tim.prune.save.xml;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import tim.prune.data.ExtensionInfo;
 import tim.prune.data.FileType;
@@ -16,6 +17,7 @@ public class HeaderCombiner
 	private final GpxVersion _ignoreVersion;
 	private boolean _foundLocations = false;
 	private final ArrayList<String> _namespaces = new ArrayList<>();
+	private final HashSet<String> _namespaceKeys = new HashSet<>();
 	private final ArrayList<String> _locationPairs = new ArrayList<>();
 
 	/** Constructor giving target version of Gpx1.0 or Gpx1.1 */
@@ -53,13 +55,23 @@ public class HeaderCombiner
 		if (inNamespace == null || inNamespace.isEmpty()) {
 			return;
 		}
-		for (String ns : _namespaces)
-		{
-			if (ns.equalsIgnoreCase(inNamespace)) {
-				return; // already got it
-			}
+		final String lowerAttributeKey = getAttributeKey(inNamespace).toLowerCase();
+		if (_namespaceKeys.contains(lowerAttributeKey)) {
+			// key already present, so prevent duplicates
+			return;
 		}
+		_namespaceKeys.add(lowerAttributeKey);
 		_namespaces.add(inNamespace);
+	}
+
+	/** @return the key of the given xml attribute (the part before the equals sign) */
+	private static String getAttributeKey(String inNamespace)
+	{
+		final int equalsPos = inNamespace.indexOf('=');
+		if (equalsPos <= 0) {
+			return inNamespace;
+		}
+		return inNamespace.substring(0, equalsPos).trim();
 	}
 
 	/** Add a location pair (id and url) to the collection */

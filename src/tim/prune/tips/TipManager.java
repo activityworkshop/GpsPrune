@@ -12,7 +12,8 @@ public abstract class TipManager
 	public static final int Tip_UseSrtmFor3d    = 3;
 	public static final int Tip_ManuallyCorrelateOne = 4;
 	public static final int Tip_NonStandardConfigFile = 5;
-	private static final int Number_Tips = Tip_NonStandardConfigFile + 1;
+	public static final int Tip_DuplicatePhotoLoaded = 6;
+	private static final int Number_Tips = Tip_DuplicatePhotoLoaded + 1;
 
 	/** Array of tip definitions */
 	private static TipDefinition[] TIPDEFS = new TipDefinition[Number_Tips];
@@ -26,6 +27,7 @@ public abstract class TipManager
 		TIPDEFS[Tip_UseSrtmFor3d] = new TipDefinition("tip.usesrtmfor3d");
 		TIPDEFS[Tip_ManuallyCorrelateOne] = new TipDefinition("tip.manuallycorrelateone");
 		TIPDEFS[Tip_NonStandardConfigFile] = new TipDefinition("tip.nonstandardconfigfilename");
+		TIPDEFS[Tip_DuplicatePhotoLoaded] = new TipDefinition("tip.duplicatephotoloaded");
 	}
 
 	/**

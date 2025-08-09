@@ -28,6 +28,9 @@ public class ImagePreviewPanel extends JPanel
 	/** Set the base image */
 	public void setImage(GroutedImage inImage)
 	{
+		if (_baseImage != null) {
+			_baseImage.flush();
+		}
 		_baseImage = inImage;
 		_loading = false;
 		repaint();

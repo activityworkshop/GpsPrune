@@ -2,10 +2,12 @@ package tim.prune.data;
 
 
 /**
- * Abstract class to hold static calculation functions
- * for speed (and vertical speed)
+ * Class to hold static calculation functions
+ * for horizontal and vertical speeds.
+ * Subclasses may introduce special handling of ignoring points
+ * (for example, if marked for deletion)
  */
-public abstract class SpeedCalculator
+public class SpeedCalculator
 {
 	/**
 	 * Calculate the horizontal speed value of the track at the specified index
@@ -17,8 +19,20 @@ public abstract class SpeedCalculator
 	public static void calculateSpeed(Track inTrack, int inIndex,
 		UnitSet inUnitSet, SpeedValue inValue)
 	{
-		if (inValue != null)
-		{
+		new SpeedCalculator().calculateHorizontalSpeed(inTrack, inIndex, inUnitSet, inValue);
+	}
+
+	/**
+	 * Calculate the horizontal speed value of the track at the specified index
+	 * @param inTrack track object
+	 * @param inIndex index of point to calculate speed for
+	 * @param inUnitSet unit set to use for calculations
+	 * @param inValue object in which to place result of calculation
+	 */
+	public void calculateHorizontalSpeed(Track inTrack, int inIndex,
+		UnitSet inUnitSet, SpeedValue inValue)
+	{
+		if (inValue != null) {
 			inValue.setInvalid();
 		}
 		if (inTrack == null || inIndex < 0 || inValue == null)
@@ -52,19 +66,25 @@ public abstract class SpeedCalculator
 			{
 				do
 				{
-					DataPoint p = inTrack.getPoint(index);
-					boolean timeOk = p != null && p.hasTimestamp() && p.getTimestamp().isBefore(point.getTimestamp());
-					boolean pValid = timeOk && !p.isWaypoint();
-					if (pValid) {
-						totalRadians += DataPoint.calculateRadiansBetween(p, q);
-						earlyStamp = p.getTimestamp();
+					if (shouldIgnorePoint(index)) {
+						stop = index < 0;
 					}
+					else
+					{
+						DataPoint p = inTrack.getPoint(index);
+						boolean timeOk = p != null && p.hasTimestamp() && p.getTimestamp().isBefore(point.getTimestamp());
+						boolean pValid = timeOk && !p.isWaypoint();
+						if (pValid) {
+							totalRadians += DataPoint.calculateRadiansBetween(p, q);
+							earlyStamp = p.getTimestamp();
+						}
 
-					stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(p, point);
-					index--;
-					if (p != null && !p.isWaypoint()) {
-						q = p;
+						stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(p, point);
+						if (p != null && !p.isWaypoint()) {
+							q = p;
+						}
 					}
+					index--;
 				}
 				while (!stop);
 			}
@@ -75,18 +95,24 @@ public abstract class SpeedCalculator
 			do
 			{
 				DataPoint p = inTrack.getPoint(index);
-				boolean timeOk = p != null && p.hasTimestamp() && !p.getTimestamp().isBefore(point.getTimestamp());
-				boolean pValid = timeOk && !p.isWaypoint() && !p.getSegmentStart();
-				if (pValid) {
-					totalRadians += DataPoint.calculateRadiansBetween(p, q);
-					lateStamp = p.getTimestamp();
+				if (shouldIgnorePoint(index)) {
+					stop = (p == null);
 				}
+				else
+				{
+					boolean timeOk = p != null && p.hasTimestamp() && !p.getTimestamp().isBefore(point.getTimestamp());
+					boolean pValid = timeOk && !p.isWaypoint() && !p.getSegmentStart();
+					if (pValid) {
+						totalRadians += DataPoint.calculateRadiansBetween(p, q);
+						lateStamp = p.getTimestamp();
+					}
 
-				stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point, p);
-				index++;
-				if (p != null && !p.isWaypoint()) {
-					q = p;
+					stop = (p == null) || p.getSegmentStart() || hasSufficientTimeDifference(point, p);
+					if (p != null && !p.isWaypoint()) {
+						q = p;
+					}
 				}
+				index++;
 			}
 			while (!stop);
 
@@ -104,6 +130,15 @@ public abstract class SpeedCalculator
 			inValue.setValue(speedValue);
 		}
 		// otherwise, just leave value as invalid
+	}
+
+
+	/**
+	 * Subclasses may override this to ignore certain points
+	 * @return true to ignore the specified point, false to consider it
+	 */
+	protected boolean shouldIgnorePoint(int index) {
+		return false;
 	}
 
 
@@ -191,8 +226,7 @@ public abstract class SpeedCalculator
 			}
 		}
 		// Check whether we got a value from either method
-		if (pointHasSpeed)
-		{
+		if (pointHasSpeed) {
 			inValue.setValue(speedValue);
 		}
 	}
@@ -205,10 +239,12 @@ public abstract class SpeedCalculator
 	 */
 	private static boolean hasSufficientTimeDifference(DataPoint inP1, DataPoint inP2)
 	{
-		if (inP1 == null || inP2 == null)
+		if (inP1 == null || inP2 == null) {
 			return true; // we have to give up now
-		if (!inP1.hasTimestamp() || !inP2.hasTimestamp())
+		}
+		if (!inP1.hasTimestamp() || !inP2.hasTimestamp()) {
 			return false; // keep looking
+		}
 		final long MIN_TIME_DIFFERENCE_MS = 1000L;
 		return inP2.getTimestamp().getMillisecondsSince(inP1.getTimestamp()) >= MIN_TIME_DIFFERENCE_MS;
 	}

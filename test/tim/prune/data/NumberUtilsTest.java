@@ -72,15 +72,49 @@ public class NumberUtilsTest
 	@Test
 	public void testParsingLocal()
 	{
-		// Using an english Locale, the comma isn't recognised because the decimal character is dot
-		Locale.setDefault(Locale.ENGLISH);
-		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("11,5"));
+		Locale originalLocale = Locale.getDefault();
+		try
+		{
+			// Using an english Locale, the comma isn't recognised because the decimal character is dot
+			Locale.setDefault(Locale.ENGLISH);
+			Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("11,5"));
 
-		// With a german locale, both the dot and the comma are recognised
-		Locale.setDefault(Locale.GERMAN);
-		Assertions.assertEquals(11.5, NumberUtils.parseDoubleUsingLocale("11.5"));
-		Assertions.assertEquals(-71.25, NumberUtils.parseDoubleUsingLocale("-71,25"));
-		// Not allowed because of the extra apostrophe
-		Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("4'111,5"));
+			// With a german locale, both the dot and the comma are recognised
+			Locale.setDefault(Locale.GERMAN);
+			Assertions.assertEquals(11.5, NumberUtils.parseDoubleUsingLocale("11.5"));
+			Assertions.assertEquals(-71.25, NumberUtils.parseDoubleUsingLocale("-71,25"));
+			// Not allowed because of the extra apostrophe
+			Assertions.assertNull(NumberUtils.parseDoubleUsingLocale("4'111,5"));
+		}
+		finally {
+			Locale.setDefault(originalLocale);
+		}
+	}
+
+	@Test
+	public void testIntParsing()
+	{
+		Assertions.assertEquals(0, NumberUtils.getIntOrZero(null));
+		Assertions.assertEquals(0, NumberUtils.getIntOrZero(""));
+		Assertions.assertEquals(0, NumberUtils.getIntOrZero("abc"));
+		Assertions.assertEquals(0, NumberUtils.getIntOrZero(" 123"));
+		Assertions.assertEquals(0, NumberUtils.getIntOrZero("1234.0"));
+
+		Assertions.assertEquals(-1, NumberUtils.getIntOrZero("-1"));
+		Assertions.assertEquals(1234, NumberUtils.getIntOrZero("1234"));
+	}
+
+	@Test
+	public void testDoubleParsing()
+	{
+		Assertions.assertEquals(0.0, NumberUtils.getDoubleOrZero(null));
+		Assertions.assertEquals(0.0, NumberUtils.getDoubleOrZero(""));
+		Assertions.assertEquals(0.0, NumberUtils.getDoubleOrZero("abc"));
+		Assertions.assertEquals(123.0, NumberUtils.getDoubleOrZero(" 123"));
+		Assertions.assertEquals(0.0, NumberUtils.getDoubleOrZero("1234a.0"));
+
+		Assertions.assertEquals(-1.0, NumberUtils.getDoubleOrZero("-1"));
+		Assertions.assertEquals(-100.25, NumberUtils.getDoubleOrZero("-100.250"));
+		Assertions.assertEquals(1234.5, NumberUtils.getDoubleOrZero("1234.5"));
 	}
 }

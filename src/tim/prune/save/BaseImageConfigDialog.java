@@ -179,22 +179,17 @@ public class BaseImageConfigDialog implements Runnable
 		if (_zoomDropdown.getItemCount() == 0) {
 			currentZoom = _imageDef.getZoom();
 		}
-		// Get the extent of the track so we can work out how big the images are going to be for each zoom level
-		final double xyExtent = Math.max(_track.getXRange().getRange(), _track.getYRange().getRange());
-		int zoomToSelect = -1;
 
+		int zoomToSelect = -1;
 		_rebuilding = true;
 		_zoomDropdown.removeAllItems();
 		if (_useImageCheckbox.isSelected() && _mapSourceDropdown.getItemCount() > 0)
 		{
 			int currentSource = _mapSourceDropdown.getSelectedIndex();
-			for (int i=5; i<18; i++)
+			for (int i=5; i<19; i++)
 			{
 				// How many pixels does this give?
-				final int zoomFactor = 1 << i;
-				final int pixCount = (int) (xyExtent * zoomFactor * 256);
-				if (pixCount > 100      // less than this isn't worth it
-					&& pixCount < 4000  // don't want to run out of memory
+				if (ImageSizeLimits.isZoomLevelOk(_track, i)
 					&& isZoomAvailable(i, MapSourceLibrary.getSource(currentSource)))
 				{
 					_zoomDropdown.addItem("" + i);
@@ -243,7 +238,9 @@ public class BaseImageConfigDialog implements Runnable
 	 */
 	private boolean isZoomAvailable(int inZoom, MapSource inSource)
 	{
-		if (inSource == null) {return false;}
+		if (inSource == null) {
+			return false;
+		}
 		String path = _config.getConfigString(Config.KEY_DISK_CACHE);
 		if (path == null || path.equals("")) {
 			return false;
@@ -441,7 +438,9 @@ public class BaseImageConfigDialog implements Runnable
 		// Remember the current dropdown indices, so we know whether they've changed or not
 		final int mapIndex = _mapSourceDropdown.getSelectedIndex();
 		final int zoomIndex = _zoomDropdown.getSelectedIndex();
-		if (!_useImageCheckbox.isSelected() || mapIndex < 0 || zoomIndex < 0) {return;}
+		if (!_useImageCheckbox.isSelected() || mapIndex < 0 || zoomIndex < 0) {
+			return;
+		}
 
 		// Get the map source from the index
 		MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
@@ -457,7 +456,7 @@ public class BaseImageConfigDialog implements Runnable
 		{
 			_previewPanel.setImage(groutedImage);
 			final int numTilesRemaining = groutedImage.getNumTilesTotal() - groutedImage.getNumTilesUsed();
-			final boolean offerDownload = numTilesRemaining > 0 && numTilesRemaining < 50
+			final boolean offerDownload = numTilesRemaining > 0 && numTilesRemaining < 100
 				&& _config.getConfigBoolean(Config.KEY_ONLINE_MODE);
 			// Set values of labels
 			_downloadTilesButton.setVisible(offerDownload);
@@ -508,14 +507,8 @@ public class BaseImageConfigDialog implements Runnable
 	/**
 	 * @return true if selected zoom is valid for the current track (based only on pixel size)
 	 */
-	public boolean isSelectedZoomValid()
-	{
-		final double xyExtent = Math.max(_track.getXRange().getRange(), _track.getYRange().getRange());
-		// How many pixels does this give?
-		final int zoomFactor = 1 << _imageDef.getZoom();
-		final int pixCount = (int) (xyExtent * zoomFactor * 256);
-		return (pixCount > 100     // less than this isn't worth it
-			&& pixCount < 4000);   // don't want to run out of memory
+	public boolean isSelectedZoomValid() {
+		return ImageSizeLimits.isZoomLevelOk(_track, _imageDef.getZoom());
 	}
 
 	/**
@@ -536,7 +529,9 @@ public class BaseImageConfigDialog implements Runnable
 			// Use a grouter to get all tiles from the TileManager, including downloading
 			MapGrouter grouter = new MapGrouter();
 			final int mapIndex = _mapSourceDropdown.getSelectedIndex();
-			if (!_useImageCheckbox.isSelected() || mapIndex < 0) {return;}
+			if (!_useImageCheckbox.isSelected() || mapIndex < 0) {
+				return;
+			}
 			MapSource mapSource = MapSourceLibrary.getSource(mapIndex);
 			grouter.createMapImage(_track, mapSource, getSelectedZoomLevel(), true, _config);
 			_progressBar.setVisible(false);

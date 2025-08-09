@@ -24,7 +24,6 @@ public class DataPoint
 	private AudioClip _audio = null;
 	private String _waypointName = null;
 	private boolean _startOfSegment = false;
-	private boolean _markedForDeletion = false;
 	private int _modifyCount = 0;
 
 	private static FieldList _sharedLatLonAltFieldList = null;
@@ -300,14 +299,6 @@ public class DataPoint
 		setFieldValue(Field.NEW_SEGMENT, inFlag ? "1" : null, false);
 	}
 
-	/**
-	 * Mark the point for deletion
-	 * @param inFlag true to delete, false to keep
-	 */
-	public void setMarkedForDeletion(boolean inFlag) {
-		_markedForDeletion = inFlag;
-	}
-
 	/** @return latitude */
 	public Coordinate getLatitude() {
 		return _latitude;
@@ -366,11 +357,6 @@ public class DataPoint
 	/** @return true if start of new track segment */
 	public boolean getSegmentStart() {
 		return _startOfSegment;
-	}
-
-	/** @return true if point marked for deletion */
-	public boolean getDeleteFlag() {
-		return _markedForDeletion;
 	}
 
 	/**

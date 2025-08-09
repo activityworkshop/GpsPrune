@@ -133,7 +133,8 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 
 		_infoTable = new JTable(new DeletionTableModel(_infoList));
 		_infoTable.getTableHeader().addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent mouseEvent) {
+			public void mouseClicked(MouseEvent mouseEvent)
+			{
 				int index = _infoTable.convertColumnIndexToModel(_infoTable.columnAtPoint(mouseEvent.getPoint()));
 				if (index >= 2) {
 					modifyAllCheckboxes(index == 3); // parameter is true for delete, false for keep
@@ -250,6 +251,7 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 		int numMarked = 0;
 		final int numPoints = _app.getTrackInfo().getTrack().getNumPoints();
 		final int numDates = _infoList.getNumEntries();
+		_app.getTrackInfo().clearAllMarkers();
 		// Loop over all points to mark each one for deletion or not
 		for (int p=0; p<numPoints; p++)
 		{
@@ -271,8 +273,8 @@ public class DeleteByDateFunction extends MarkAndDeleteFunction
 						break;
 					}
 				}
-				point.setMarkedForDeletion(pointMarked);
 				if (pointMarked) {
+					_app.getTrackInfo().markPointForDeletion(p);
 					numMarked++;
 				}
 			}

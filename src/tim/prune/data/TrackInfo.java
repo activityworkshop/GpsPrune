@@ -13,6 +13,7 @@ public class TrackInfo
 	private FileInfo _fileInfo = null;
 	private final MediaList<Photo> _photoList = new MediaList<>();
 	private final MediaList<AudioClip> _audioList = new MediaList<>();
+	private MarkingData _markingData = null;
 
 
 	/**
@@ -312,5 +313,40 @@ public class TrackInfo
 			return true;
 		}
 		return false;
+	}
+
+	public boolean hasPointsMarkedForDeletion() {
+		return _markingData != null && _markingData.hasMarkedPoints();
+	}
+
+	public boolean isPointMarkedForDeletion(int inIndex) {
+		return _markingData != null && _markingData.isPointMarkedForDeletion(inIndex);
+	}
+
+	public boolean isPointMarkedForSegmentBreak(int inIndex) {
+		return _markingData != null && _markingData.isPointMarkedForSegmentBreak(inIndex);
+	}
+
+	public void markPointForDeletion(int inIndex) {
+		markPointForDeletion(inIndex, true);
+	}
+
+	public void markPointForDeletion(int inIndex, boolean inDelete) {
+		markPointForDeletion(inIndex, inDelete, false);
+	}
+
+	public void markPointForDeletion(int inIndex, boolean inDelete, boolean inSegmentBreak)
+	{
+		if (_markingData == null) {
+			_markingData = new MarkingData(getTrack());
+		}
+		_markingData.markPointForDeletion(inIndex, inDelete, inSegmentBreak);
+	}
+
+	public void clearAllMarkers()
+	{
+		if (_markingData != null) {
+			_markingData.clear();
+		}
 	}
 }

@@ -192,7 +192,9 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 			_fileChooser.setAcceptAllFileFilterUsed(false);
 			// start from directory in config which should be set
 			final String configDir = getConfig().getConfigString(Config.KEY_TRACK_DIR);
-			if (configDir != null) {_fileChooser.setCurrentDirectory(new File(configDir));}
+			if (configDir != null) {
+				_fileChooser.setCurrentDirectory(new File(configDir));
+			}
 		}
 
 		// Allow choose again if an existing file is selected
@@ -434,7 +436,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		final boolean useImage = _baseImagePanel.getImageDefinition().getUseImage();
 		final int zoomLevel = _baseImagePanel.getImageDefinition().getZoom();
 		final boolean okEnabled = useImage && _baseImagePanel.getFoundData()
-			&& MapGrouter.isZoomLevelOk(_app.getTrackInfo().getTrack(), zoomLevel);
+			&& ImageSizeLimits.isZoomLevelOk(_app.getTrackInfo().getTrack(), zoomLevel);
 		_okButton.setEnabled(okEnabled);
 	}
 }

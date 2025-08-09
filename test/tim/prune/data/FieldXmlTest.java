@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,11 @@ public class FieldXmlTest
 	@BeforeEach
 	public void setup() {
 		I18nManager.init(Locale.UK);
+	}
+
+	@AfterAll
+	public static void tearDown() {
+		FieldRecogniser.clearMap();
 	}
 
 	@Test

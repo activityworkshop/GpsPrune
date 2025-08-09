@@ -39,6 +39,7 @@ public class SetDisplaySettings extends GenericFunction
 	private JCheckBox _antialiasCheckbox = null;
 	private JCheckBox _osScalingCheckbox = null;
 	private JCheckBox _doubledIconsCheckbox = null;
+	private JCheckBox _showZoomLevelCheckbox = null;
 	private JRadioButton[] _windowStyleRadios = null;
 	// settings when entering dialog in order to detect changes
 	private String _previousStyle = null;
@@ -97,6 +98,10 @@ public class SetDisplaySettings extends GenericFunction
 		// Icon size
 		_doubledIconsCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.doublesizedicons"), false);
 		grid.add(_doubledIconsCheckbox);
+		grid.add(new JLabel(""));
+		// Show zoom level
+		_showZoomLevelCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.showzoomlevel"), false);
+		grid.add(_showZoomLevelCheckbox);
 		grid.add(new JLabel(""));
 
 		linesPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -176,6 +181,7 @@ public class SetDisplaySettings extends GenericFunction
 		_antialiasCheckbox.setSelected(config.getConfigBoolean(Config.KEY_ANTIALIAS));
 		_osScalingCheckbox.setSelected(config.getConfigBoolean(Config.KEY_OSSCALING));
 		_doubledIconsCheckbox.setSelected(config.getConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE));
+		_showZoomLevelCheckbox.setSelected(config.getConfigBoolean(Config.KEY_SHOW_ZOOMLEVEL));
 		selectWindowStyleRadio(config.getConfigString(Config.KEY_WINDOW_STYLE));
 		// Remember what the current settings are
 		_previousStyle = getSelectedStyleString();
@@ -228,6 +234,7 @@ public class SetDisplaySettings extends GenericFunction
 		config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
 		config.setConfigBoolean(Config.KEY_OSSCALING, _osScalingCheckbox.isSelected());
 		config.setConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE, _doubledIconsCheckbox.isSelected());
+		config.setConfigBoolean(Config.KEY_SHOW_ZOOMLEVEL, _showZoomLevelCheckbox.isSelected());
 		config.setConfigString(Config.KEY_WINDOW_STYLE, getSelectedStyleString());
 		if (needsRestart())
 		{

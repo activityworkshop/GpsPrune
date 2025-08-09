@@ -7,7 +7,7 @@
 
 	<groupId>tim.prune</groupId>
 	<artifactId>gpsprune</artifactId>
-	<version>25.2</version>
+	<version>26</version>
 	<packaging>jar</packaging>
 
 	<name>tim.prune.gpsprune</name>
@@ -80,6 +80,7 @@
 				<includes>
 					<include>tim/prune/function/weather/xml/*</include>
 					<include>tim/prune/function/filesleuth/data/*.txt</include>
+					<include>tim/prune/gui/map/*.png</include>
 				</includes>
 				<targetPath>${project.build.directory}/classes/java/test</targetPath>
 			</testResource>
