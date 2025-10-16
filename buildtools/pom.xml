@@ -7,7 +7,7 @@
 
 	<groupId>tim.prune</groupId>
 	<artifactId>gpsprune</artifactId>
-	<version>26</version>
+	<version>26.1</version>
 	<packaging>jar</packaging>
 
 	<name>tim.prune.gpsprune</name>
