@@ -38,8 +38,8 @@ import tim.prune.gui.colour.PointColourer;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.gui.map.MapUtils;
+import tim.prune.gui.map.WaypointIcons;
 import tim.prune.gui.map.WpIconDefinition;
-import tim.prune.gui.map.WpIconLibrary;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.ImageDefinition;
 
@@ -326,11 +326,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		// Now the waypoints
 		final Color textColour = getConfig().getColourScheme().getColour(ColourScheme.IDX_TEXT);
 		g.setColor(textColour);
-		WpIconDefinition wpIconDefinition = null;
-		final int wpType = getConfig().getConfigInt(Config.KEY_WAYPOINT_ICONS);
-		if (wpType != WpIconLibrary.WAYPT_DEFAULT) {
-			wpIconDefinition = WpIconLibrary.getFixedIconDefinition(wpType, getIconManager());
-		}
+		final WpIconDefinition wpIconDefinition = WaypointIcons.getDefinition(getConfig(), _app.getIconManager());
 		// Loop again to draw waypoints
 		for (int i=0; i<numPoints; i++)
 		{
@@ -343,8 +339,7 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 				int px = (int) (x * zoomFactor * 256), py = (int) (y * zoomFactor * 256);
 				// Fill Rect or draw icon image?
 				g.fillRect(px-3, py-3, 6, 6);
-				if (wpIconDefinition == null)
-				{
+				if (wpIconDefinition == null) {
 					g.fillRect(px-3, py-3, 6, 6);
 				}
 				else
