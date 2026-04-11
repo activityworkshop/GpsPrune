@@ -168,9 +168,9 @@ public class SelectTimezoneFunction extends GenericFunction
 		radioGroup.add(_systemRadio); radioGroup.add(_customRadio);
 		dialogPanel.add(topPanel, BorderLayout.NORTH);
 
-		// Main panel with box layout, list Panel with four lists in a grid
+		// Main panel with with four lists in a grid
 		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+		mainPanel.setLayout(new BorderLayout());
 
 		JPanel listsPanel = new JPanel();
 		listsPanel.setLayout(new GridLayout(1, 4));
@@ -187,7 +187,7 @@ public class SelectTimezoneFunction extends GenericFunction
 
 		// second list for offsets
 		_listBoxes[LIST_OFFSETS] = new CombinedListAndModel(1);
-		_listBoxes[LIST_OFFSETS].setMaxNumEntries(24);
+		_listBoxes[LIST_OFFSETS].setMaxNumEntries(30);
 		_listBoxes[LIST_OFFSETS].addListSelectionListener(new ListListener(LIST_OFFSETS));
 		scrollPane = new JScrollPane(_listBoxes[LIST_OFFSETS]);
 		scrollPane.setPreferredSize(new Dimension(100, 200));
@@ -214,7 +214,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		scrollPane.setMinimumSize(new Dimension(100, 200));
 		scrollPane.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 		listsPanel.add(scrollPane);
-		mainPanel.add(listsPanel);
+		mainPanel.add(listsPanel, BorderLayout.CENTER);
 
 		// Details labels underneath lists - description and offset
 		JPanel detailsPanel = new JPanel();
@@ -225,7 +225,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		grid.add(new JLabel(I18nManager.getText("dialog.settimezone.offsetfromutc") + " :"));
 		_selectedOffsetLabel = new JLabel("");
 		grid.add(_selectedOffsetLabel);
-		mainPanel.add(detailsPanel);
+		mainPanel.add(detailsPanel, BorderLayout.SOUTH);
 		dialogPanel.add(mainPanel, BorderLayout.CENTER);
 
 		// close window if escape pressed
@@ -381,8 +381,8 @@ public class SelectTimezoneFunction extends GenericFunction
 				offsetsinMinutes.add(currZone._offset);
 			}
 		}
-		for (Integer offset : offsetsinMinutes)
-		{
+		_listBoxes[LIST_OFFSETS].setUnlimited(inRegion != null);
+		for (Integer offset : offsetsinMinutes) {
 			_listBoxes[LIST_OFFSETS].addItem(makeOffsetString(offset));
 		}
 	}
