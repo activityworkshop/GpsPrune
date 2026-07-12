@@ -8,10 +8,10 @@ import javax.swing.ImageIcon;
 import tim.prune.config.Config;
 import tim.prune.gui.IconManager;
 
-public class WaypointIcons
+class WaypointIcons
 {
 	/** @return an icon definition to use for waypoints based on the current config */
-	public static WpIconDefinition getDefinition(Config inConfig, IconManager inIconManager)
+	static WpIconDefinition getDefinition(Config inConfig, IconManager inIconManager)
 	{
 		if (inConfig.getConfigBoolean(Config.KEY_WAYPOINT_ICON_CUSTOM))
 		{

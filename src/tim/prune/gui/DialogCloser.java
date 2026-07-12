@@ -11,7 +11,7 @@ import javax.swing.JDialog;
 public class DialogCloser extends KeyAdapter
 {
 	/** dialog to close */
-	private JDialog _dialog = null;
+	private final JDialog _dialog;
 
 	/**
 	 * Constructor

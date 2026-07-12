@@ -43,7 +43,6 @@ public class SewSegmentsCmd extends CompoundCommand
 		return _indexesToDelete.size();
 	}
 
-	@Override
 	protected Command makeInverse(TrackInfo inInfo)
 	{
 		return makeInverse(inInfo, null,

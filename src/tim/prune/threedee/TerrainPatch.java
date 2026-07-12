@@ -93,7 +93,7 @@ public class TerrainPatch
 	/**
 	 * @param inI first index
 	 * @param inJ second index
-	 * @return true if there is an altitude in the patch in this position
+	 * @return altitude of the patch in this position, or 0.0
 	 */
 	private double getAltitude(int inI, int inJ)
 	{

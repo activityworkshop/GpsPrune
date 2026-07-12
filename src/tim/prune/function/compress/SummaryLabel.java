@@ -49,12 +49,14 @@ public class SummaryLabel extends JLabel
 	 */
 	private String makeString(int inNumToDelete)
 	{
-		String desc = I18nManager.getText("dialog.compress.summarylabel") + ": " + inNumToDelete;
+		StringBuilder desc = new StringBuilder();
+		desc.append(I18nManager.getText("dialog.compress.summarylabel"))
+			.append(": ").append(inNumToDelete);
 		if (inNumToDelete > 0)
 		{
-			long percent = Math.round(100.0 * inNumToDelete / _track.getNumPoints());
-			desc += " (" + percent + "%)";
+			final long percent = Math.round(100.0 * inNumToDelete / _track.getNumPoints());
+			desc.append(" (").append(percent).append("%)");
 		}
-		return desc;
+		return desc.toString();
 	}
 }

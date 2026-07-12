@@ -51,9 +51,9 @@ public abstract class ProfileDataColourer extends ContinuousPointColourer
 				if (inData.hasData(i))
 				{
 					double fraction = (inData.getData(i) - minValue) / (maxValue - minValue);
-					setColour(i, mixColour((float) fraction));
+					setColour(i, mixColour((float) fraction), fraction);
 				}
-				else setColour(i, null);
+				else setColour(i, null, 0.0);
 			}
 		}
 	}

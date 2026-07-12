@@ -92,7 +92,7 @@ class InsertSinglePointTest
 		}
 		for (int insertPos = 0; insertPos < 9; insertPos++)
 		{
-			info.getSelection().selectRange(3,  5);
+			info.getSelection().selectRange(3, 5);
 			DataPoint point = new DataPoint(Latitude.make("5.234"), Longitude.make("6.345"));
 			Command command = new InsertPointCmd(point, insertPos);
 			assertTrue(command.execute(info));

@@ -142,7 +142,9 @@ public class GetWeatherForecastFunction extends GenericFunction
 		forecastTypeGroup.add(_dailyForecastRadio);
 		forecastTypeGroup.add(threeHourlyRadio);
 		radioPanel.add(_currentForecastRadio);
+		radioPanel.add(Box.createHorizontalStrut(8));
 		radioPanel.add(_dailyForecastRadio);
+		radioPanel.add(Box.createHorizontalStrut(8));
 		radioPanel.add(threeHourlyRadio);
 		_currentForecastRadio.setSelected(true);
 		ActionListener radioListener = e -> {

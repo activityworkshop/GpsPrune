@@ -1,6 +1,7 @@
 package tim.prune.cmd;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import tim.prune.DataSubscriber;
@@ -29,12 +30,10 @@ public class RemoveMediaCmd extends Command
 		}
 	}
 
-	@Override
 	public int getUpdateFlags() {
 		return DataSubscriber.MEDIA_MODIFIED;
 	}
 
-	@Override
 	protected boolean executeCommand(TrackInfo inInfo)
 	{
 		for (MediaObject media : _media)
@@ -52,10 +51,9 @@ public class RemoveMediaCmd extends Command
 		return !_media.isEmpty();
 	}
 
-	@Override
 	protected Command makeInverse(TrackInfo inInfo)
 	{
-		ArrayList<MediaInsertion> inserts = new ArrayList<>();
+		final ArrayList<MediaInsertion> inserts = new ArrayList<>();
 		for (MediaObject mediaObj : _media)
 		{
 			if (mediaObj instanceof Photo) {
@@ -67,6 +65,7 @@ public class RemoveMediaCmd extends Command
 				inserts.add(new MediaInsertion(audio, inInfo.getAudioList().getIndexOf(audio)));
 			}
 		}
+		Collections.sort(inserts);
 		return new InsertMediaCmd(this, inserts);
 	}
 }

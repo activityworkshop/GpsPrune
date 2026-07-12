@@ -48,7 +48,7 @@ public class DeleteSelectedRangeFunction extends DeleteBitOfTrackFunction
 
 		ArrayList<Integer> indexesToKeep = new ArrayList<>();
 		ArrayList<Integer> indexesToDelete = new ArrayList<>();
-		int numMedia = fillLists(indexesToKeep, indexesToDelete, (i) -> i<selStart || i>selEnd);
+		int numMedia = fillLists(indexesToKeep, indexesToDelete, i -> i<selStart || i>selEnd);
 		List<PointFlag> nextBreak = null;
 		// Add segment break after this range if there was one within it
 		if (track.isSegmentBreakWithin(selStart, selEnd))
@@ -59,7 +59,10 @@ public class DeleteSelectedRangeFunction extends DeleteBitOfTrackFunction
 			}
 		}
 		CompoundCommand command = createCommand(indexesToKeep, indexesToDelete, nextBreak, numMedia);
-		command.setDescription(I18nManager.getTextWithNumber("undo.deletepoints", indexesToDelete.size()));
-		_app.execute(command);
+		if (command != null)
+		{
+			command.setDescription(I18nManager.getTextWithNumber("undo.deletepoints", indexesToDelete.size()));
+			_app.execute(command);
+		}
 	}
 }

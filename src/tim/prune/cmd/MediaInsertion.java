@@ -5,7 +5,7 @@ import tim.prune.data.MediaObject;
 /**
  * Data holder for inserting photos or inserting audios
  */
-public class MediaInsertion
+public class MediaInsertion implements Comparable<MediaInsertion>
 {
 	private final MediaObject _media;
 	private final int _insertIndex;
@@ -22,19 +22,15 @@ public class MediaInsertion
 		_insertIndex = inIndex;
 	}
 
-	/**
-	 * Constructor
-	 * @param inMedia media object to append
-	 */
-	public MediaInsertion(MediaObject inMedia) {
-		this(inMedia, -1);
-	}
-
 	public MediaObject getMedia() {
 		return _media;
 	}
 
 	public int getInsertIndex() {
 		return _insertIndex;
+	}
+
+	public int compareTo(MediaInsertion inOther) {
+		return _insertIndex - inOther._insertIndex;
 	}
 }

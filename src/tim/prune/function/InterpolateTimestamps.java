@@ -47,8 +47,8 @@ public class InterpolateTimestamps extends GenericFunction
 			{
 				if (fromPoint != null && !pointList.isEmpty())
 				{
-				   distanceSoFar += distanceBetween(latestPoint, point);
-				   processPointList(pointList, distanceSoFar,
+					distanceSoFar += distanceBetween(latestPoint, point);
+					processPointList(pointList, distanceSoFar,
 						fromPoint.getTimestamp(), point.getTimestamp());
 				}
 				fromPoint = point;

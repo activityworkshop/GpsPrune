@@ -4,7 +4,7 @@ import tim.prune.data.Bearing;
 import tim.prune.data.DataPoint;
 
 /** Holds the information about a single line between two (not necessarily consecutive) track points and its bearing */
-public class LineAndBearing
+class LineAndBearing
 {
 	final PointData _fromPoint;
 	final PointData _toPoint;

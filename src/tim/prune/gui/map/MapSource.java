@@ -1,6 +1,8 @@
 package tim.prune.gui.map;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import tim.prune.I18nManager;
@@ -111,37 +113,75 @@ public abstract class MapSource
 	 */
 	public static String fixBaseUrl(String inUrlString)
 	{
-		if (inUrlString == null || inUrlString.equals("")) {return null;}
+		if (inUrlString == null || inUrlString.isEmpty()) {
+			return null;
+		}
+		if (hasPlaceholders(inUrlString)) {
+			return fixBaseUrlWithPlaceholders(inUrlString);
+		}
 		String urlstr = inUrlString;
 
 		// check prefix
-		URL url = null;
-		try {
-			url = new URL(urlstr.replace('[', 'w').replace(']', 'w'));
-		}
-		catch (MalformedURLException me) {
-			// fail if protocol specified
-			if (urlstr.contains("://")) {return null;}
+		URL url = makeUrl(urlstr);
+		if (url == null)
+		{
 			// add the http protocol and try again
 			urlstr = "http://" + urlstr;
-			try {
-				url = new URL(urlstr.replace('[', 'w').replace(']', 'w'));
-			}
-			catch (MalformedURLException e) {
-				return null;
-			}
+			url = makeUrl(urlstr);
 		}
-		// url host must contain a dot (but not two consecutively)
-		if (url.getHost().indexOf('.') < 0
+
+		// url must be valid and host must contain at least one dot (but not two consecutively)
+		if (url == null
+			|| url.getHost().indexOf('.') < 0
 			|| url.getHost().contains("..")
 			|| !placeHoldersOk(url.getPath())) {
 			return null;
 		}
-		// Possibly add trailing slash, but only if placeholders aren't used
-		if (urlstr.indexOf('{') < 0 && !urlstr.endsWith("/")) {
+		// Add trailing slash if not already present
+		if (!urlstr.endsWith("/")) {
 			urlstr = urlstr + "/";
 		}
 		return urlstr;
+	}
+
+	/** @return true if the given url string contains any curly brackets */
+	private static boolean hasPlaceholders(String inUrlString) {
+		return inUrlString.contains("{") || inUrlString.contains("}");
+	}
+
+	private static String fixBaseUrlWithPlaceholders(String inUrlString)
+	{
+		if (!placeHoldersOk(inUrlString)) {
+			return null;
+		}
+		String urlstr = inUrlString;
+		String urlWithoutPlaceholders = inUrlString.replace("{x}", "-x-")
+			.replace("{y}", "-y-").replace("{z}", "-z-");
+		URL url = makeUrl(urlWithoutPlaceholders);
+		if (url == null)
+		{
+			// add the http protocol and try again
+			urlstr = "http://" + urlstr;
+			url = makeUrl("http://" + urlWithoutPlaceholders);
+		}
+		// url must be valid and host must contain at least one dot (but not two consecutively)
+		if (url == null
+			|| url.getHost().indexOf('.') < 0
+			|| url.getHost().contains("..")
+			|| !placeHoldersOk(url.getPath())) {
+			return null;
+		}
+		return urlstr;
+	}
+
+	private static URL makeUrl(String urlString)
+	{
+		try {
+			return new URI(urlString.replace('[', 'w').replace(']', 'w')).toURL();
+		}
+		catch (MalformedURLException | URISyntaxException | IllegalArgumentException e) {
+			return null;
+		}
 	}
 
 	/**
@@ -156,12 +196,14 @@ public abstract class MapSource
 		}
 		boolean expectLetter = false, expectClose = false;
 		boolean foundX = false, foundY = false, foundZ = false;
-		for (char c : path.toCharArray()) {
+		for (char c : path.toCharArray())
+		{
 			if (expectClose) {
 				if (c != '}') {return false;}
 				expectClose = false;
 			}
-			else if (expectLetter) {
+			else if (expectLetter)
+			{
 				switch (c) {
 					case 'x': foundX = true; break;
 					case 'y': foundY = true; break;

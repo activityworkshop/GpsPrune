@@ -78,7 +78,7 @@ public class Coordinate
 		long[] fields = new long[4]; // needs to be long for lengthy decimals
 		int[] lengths = new int[4];
 		boolean[] otherDelims = new boolean[5]; // remember whether delimiters have non-decimal chars
-		ParseResult result = parseString(source, fields, lengths, otherDelims);
+		final ParseResult result = parseString(source, fields, lengths, otherDelims);
 		final int numFields = result.numFields;
 		final boolean isNegative = result.isNegative && cardinal == Cardinal.NO_CARDINAL;
 		if (!cardinalSpecified) {

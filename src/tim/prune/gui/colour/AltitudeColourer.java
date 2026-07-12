@@ -62,9 +62,11 @@ public class AltitudeColourer extends ContinuousPointColourer
 				{
 					double altValue = point.getAltitude().getMetricValue();
 					double fraction = (altValue - minAltitude) / (maxAltitude - minAltitude);
-					setColour(i, mixColour((float) fraction));
+					setColour(i, mixColour((float) fraction), fraction);
 				}
-				else setColour(i, null);
+				else {
+					setColour(i, null, 0.0);
+				}
 			}
 		}
 	}

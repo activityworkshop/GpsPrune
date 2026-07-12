@@ -3,7 +3,6 @@ package tim.prune.function.srtm;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -62,9 +61,9 @@ public class SrtmLowResSource extends SrtmSource
 			if (dir > 0)
 			{
 				try {
-					url = new URL(URL_PREFIX + CONTINENTS[dir] + "/"
+					url = makeUrl(URL_PREFIX + CONTINENTS[dir] + "/"
 						+ getFilename(inTile));
-				} catch (MalformedURLException e) {} // ignore error, url stays null
+				} catch (IOException e) {} // ignore error, url stays null
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {} // ignore error, url stays null
 

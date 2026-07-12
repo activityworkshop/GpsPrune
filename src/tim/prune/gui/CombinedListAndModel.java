@@ -14,7 +14,7 @@ import tim.prune.I18nManager;
  */
 public class CombinedListAndModel extends JList<String>
 {
-	private DefaultListModel<String> _model = null;
+	private final DefaultListModel<String> _model;
 	private final int _key;
 	private int _maxNumEntries = 0;
 	private boolean _tooManyEntries = false;
@@ -27,7 +27,7 @@ public class CombinedListAndModel extends JList<String>
 	public CombinedListAndModel(int inKey)
 	{
 		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		_model = new DefaultListModel<String>();
+		_model = new DefaultListModel<>();
 		setModel(_model);
 		_key = inKey;
 	}

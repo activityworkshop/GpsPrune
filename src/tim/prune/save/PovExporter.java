@@ -1,6 +1,7 @@
 package tim.prune.save;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
@@ -38,6 +39,7 @@ import tim.prune.gui.BaseImageDefinitionPanel;
 import tim.prune.gui.DecimalNumberField;
 import tim.prune.gui.DialogCloser;
 import tim.prune.gui.TerrainDefinitionPanel;
+import tim.prune.gui.colour.PointColourer;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.load.GenericFileFilter;
@@ -370,6 +372,7 @@ public class PovExporter extends Export3dFunction
 			// create and scale model
 			ThreeDModel model = new ThreeDModel(_track);
 			model.setModelSize(MODEL_SCALE_FACTOR);
+			model.setPointColourer(_app.getPointColourer());
 			// set altitude factor
 			double givenFactor = _altitudeFactorField.getValue();
 			if (givenFactor > 0.0) {
@@ -448,7 +451,7 @@ public class PovExporter extends Export3dFunction
 			// Create file and write basics
 			writer = new FileWriter(inPovFile);
 			writeStartOfFile(writer, lineSeparator, useImage ? inImageFile : null,
-			                 useTerrain ? inTerrainFile : null);
+			                 useTerrain ? inTerrainFile : null, model);
 
 			// write out points
 			if (_ballsAndSticksButton.isSelected()) {
@@ -488,9 +491,11 @@ public class PovExporter extends Export3dFunction
 	 * @param inLineSeparator line separator to use
 	 * @param inImageFile image file to reference (or null if none)
 	 * @param inTerrainFile terrain file to reference (or null if none)
+	 * @param inModel data model
 	 * @throws IOException on file writing error
 	 */
-	private void writeStartOfFile(FileWriter inWriter, String inLineSeparator, File inImageFile, File inTerrainFile)
+	private void writeStartOfFile(FileWriter inWriter, String inLineSeparator, File inImageFile,
+			File inTerrainFile, ThreeDModel inModel)
 	throws IOException
 	{
 		inWriter.write("// Pov file produced by GpsPrune - see https://gpsprune.activityworkshop.net/");
@@ -566,62 +571,7 @@ public class PovExporter extends Export3dFunction
 		  "       finish { phong 1 }",
 		  useImage ? "    } no_shadow" : "    }",
 		  "  }",
-		  "#declare track_sphere0 =",
-		  "  sphere {",
-		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
-		  "   texture {",
-		  "      pigment {color rgb <0.1 0.6 0.1>}", // dark green
-		  "      finish { phong 1 }",
-		  "   }",
-		  " }",
-		  "#declare track_sphere1 =",
-		  "  sphere {",
-		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
-		  "   texture {",
-		  "      pigment {color rgb <0.4 0.9 0.2>}", // green
-		  "      finish { phong 1 }",
-		  "   }",
-		  " }",
-		  "#declare track_sphere2 =",
-		  "  sphere {",
-		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
-		  "   texture {",
-		  "      pigment {color rgb <0.7 0.8 0.2>}", // yellow
-		  "      finish { phong 1 }",
-		  "   }",
-		  " }",
-		  "#declare track_sphere3 =",
-		  "  sphere {",
-		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
-		  "   texture {",
-		  "      pigment {color rgb <0.5 0.8 0.6>}", // greeny
-		  "      finish { phong 1 }",
-		  "   }",
-		  " }",
-		  "#declare track_sphere4 =",
-		  "  sphere {",
-		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
-		  "   texture {",
-		  "      pigment {color rgb <0.2 0.9 0.9>}", // cyan
-		  "      finish { phong 1 }",
-		  "   }",
-		  " }",
-		  "#declare track_sphere5 =",
-		  "  sphere {",
-		  "   <0, 0, 0>, " + getScaledSymbolSize(0.3),
-		  "   texture {",
-		  "      pigment {color rgb <1.0 1.0 1.0>}", // white
-		  "      finish { phong 1 }",
-		  "   }",
-		  " }",
-		  "#declare track_sphere_t =",
-		  "  sphere {",
-		  "   <0, 0, 0>, " + getScaledSymbolSize(0.25),
-		  "   texture {",
-		  "      pigment {color rgb <0.6 1.0 0.2>}",
-		  "      finish { phong 1 }",
-		  "   } no_shadow",
-		  " }",
+		  getTrackSphereDefinitions(inModel),
 		  "#declare wall_colour = rgbt <0.5, 0.5, 0.5, 0.3>;", "",
 		  "// Base plane",
 		  "box {",
@@ -656,6 +606,34 @@ public class PovExporter extends Export3dFunction
 		// write strings to file
 		writeLinesToFile(inWriter, inLineSeparator, outputLines);
 		writeLinesToFile(inWriter, inLineSeparator, lightsLines);
+	}
+
+	private String getTrackSphereDefinitions(ThreeDModel inModel)
+	{
+		final int numCodes = inModel.getNumColourCodes();
+		final String symbolSize = getScaledSymbolSize(0.3);
+		final PointColourer colourer = inModel.getPointColourer();
+		final ArrayList<String> lines = new ArrayList<>();
+		for (int idx=0; idx<inModel.getNumColourCodes(); idx++) {
+			final double frac = idx * 1.0 / (numCodes - 1);
+			final Color pointColour = colourer.getColourForColourIndex(frac);
+			lines.add("#declare track_sphere" + idx + " =");
+			lines.add("  sphere {");
+			lines.add("   <0, 0, 0>, " + symbolSize);
+			lines.add("   texture {");
+			lines.add("      pigment {color rgb <" + getRgb(pointColour) + ">}");
+			lines.add("      finish { phong 1 }");
+			lines.add("   }");
+			lines.add(" }");
+		}
+		return String.join("\n", lines);
+	}
+
+	private String getRgb(Color pointColour)
+	{
+		return String.format("%.2f", pointColour.getRed() / 255.0)
+				+ " " + String.format("%.2f", pointColour.getGreen() / 255.0)
+				+ " " + String.format("%.2f", pointColour.getBlue() / 255.0);
 	}
 
 	/**
@@ -735,7 +713,7 @@ public class PovExporter extends Export3dFunction
 			else
 			{
 				// normal track point ball
-				inWriter.write("object { track_sphere" + checkHeightCode(inModel.getPointHeightCode(i))
+				inWriter.write("object { track_sphere" + inModel.getPointColourCode(i)
 					+ " translate <" + inModel.getScaledHorizValue(i) + "," + inModel.getScaledAltValue(i)
 					+ "," + inModel.getScaledVertValue(i) + "> }");
 			}
@@ -898,20 +876,6 @@ public class PovExporter extends Export3dFunction
 			}
 		}
 	}
-
-
-	/**
-	 * @param inCode height code to check
-	 * @return validated height code within range 0 to maxHeightCode
-	 */
-	private static byte checkHeightCode(byte inCode)
-	{
-		final byte maxHeightCode = 5;
-		if (inCode < 0) return 0;
-		if (inCode > maxHeightCode) return maxHeightCode;
-		return inCode;
-	}
-
 
 	/**
 	 * Check the given coordinate

@@ -2,6 +2,8 @@ package tim.prune.function.search;
 
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -104,14 +106,14 @@ public class SearchOsmPoisFunction extends GenericDownloaderFunction
 
 		try
 		{
-			URL url = new URL(urlString);
+			URL url = new URI(urlString).toURL();
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			try (InputStream inStream = url.openStream()) {
 				saxParser.parse(inStream, xmlHandler);
 			} catch (Exception e) {
 				_errorMessage = e.getClass().getName() + " - " + e.getMessage();
 			}
-		} catch (MalformedURLException | SAXException | ParserConfigurationException ignored) {
+		} catch (MalformedURLException | SAXException | ParserConfigurationException | URISyntaxException ignored) {
 		}
 
 		// Calculate distances for each returned point

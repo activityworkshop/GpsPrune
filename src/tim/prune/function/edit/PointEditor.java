@@ -58,7 +58,6 @@ public class PointEditor extends GenericFunction
 		super(inApp);
 	}
 
-	@Override
 	public String getNameKey() {
 		return "menu.point.editpoint";
 	}

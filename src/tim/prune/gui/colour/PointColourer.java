@@ -161,4 +161,19 @@ public abstract class PointColourer
 	private static float interpolate(float inStartValue, float inEndValue, float inFraction) {
 		return inStartValue + (inEndValue - inStartValue) * inFraction;
 	}
+
+	/**
+	 * @param inPointIndex index of point
+	 * @return colour index to use for this point (between 0.0 and 1.0)
+	 */
+	public abstract double getColourIndex(int inPointIndex);
+
+	/**
+	 * @param inColourIndex index of colour (between 0.0 and 1.0)
+	 * @return Color to use for this index
+	 */
+	public abstract Color getColourForColourIndex(double inColourIndex);
+
+	/** @return the number of distinct colours used, or -1 for continuous colourers */
+	public abstract int getNumDistinctColours();
 }

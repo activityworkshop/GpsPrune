@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 
 import tim.prune.App;
@@ -41,9 +42,11 @@ public class SetDisplaySettings extends GenericFunction
 	private JCheckBox _doubledIconsCheckbox = null;
 	private JCheckBox _showZoomLevelCheckbox = null;
 	private JRadioButton[] _windowStyleRadios = null;
+	private WholeNumberField _textScaleField = null;
 	// settings when entering dialog in order to detect changes
 	private String _previousStyle = null;
 	private boolean _previousDoubleIcons = false;
+	private int _previousTextScaling = 100;
 
 	private static final String STYLEKEY_NIMBUS = "javax.swing.plaf.nimbus.NimbusLookAndFeel";
 	private static final String STYLEKEY_GTK = "com.sun.java.swing.plaf.gtk.GTKLookAndFeel";
@@ -76,28 +79,17 @@ public class SetDisplaySettings extends GenericFunction
 		midPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 
 		JPanel linesPanel = new JPanel();
-		linesPanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
-		);
+		linesPanel.setBorder(makeEtchedBorder());
 		GuiGridLayout grid = new GuiGridLayout(linesPanel);
 		grid.setYPadding(8);
 
 		// line width
-		JLabel lineWidthLabel = new JLabel(I18nManager.getText("dialog.displaysettings.linewidth"));
-		grid.add(lineWidthLabel);
+		grid.add(new JLabel(I18nManager.getText("dialog.displaysettings.linewidth")));
 		_lineWidthField = new WholeNumberField(1);
 		grid.add(_lineWidthField);
 		// Antialiasing
 		_antialiasCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.antialias"), false);
 		grid.add(_antialiasCheckbox);
-		grid.add(new JLabel(""));
-		// OS scaling
-		_osScalingCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.allowosscaling"), false);
-		grid.add(_osScalingCheckbox);
-		grid.add(new JLabel(""));
-		// Icon size
-		_doubledIconsCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.doublesizedicons"), false);
-		grid.add(_doubledIconsCheckbox);
 		grid.add(new JLabel(""));
 		// Show zoom level
 		_showZoomLevelCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.showzoomlevel"), false);
@@ -108,11 +100,28 @@ public class SetDisplaySettings extends GenericFunction
 		midPanel.add(linesPanel);
 		midPanel.add(Box.createVerticalStrut(15));
 
+		// Panel for tiny pixels
+		JPanel tinyPixelsPanel = new JPanel();
+		tinyPixelsPanel.setBorder(makeEtchedBorder());
+		grid = new GuiGridLayout(tinyPixelsPanel);
+		grid.setYPadding(8);
+		// OS scaling
+		_osScalingCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.allowosscaling"), false);
+		grid.add(_osScalingCheckbox);
+		grid.add(new JLabel(""));
+		// Icon size
+		_doubledIconsCheckbox = new JCheckBox(I18nManager.getText("dialog.displaysettings.doublesizedicons"), false);
+		grid.add(_doubledIconsCheckbox);
+		grid.add(new JLabel(""));
+		_textScaleField = new WholeNumberField(3);
+		grid.add(new JLabel(I18nManager.getText("dialog.displaysettings.textscaling")));
+		grid.add(_textScaleField);
+		midPanel.add(tinyPixelsPanel);
+		midPanel.add(Box.createVerticalStrut(15));
+
 		// Panel for window style
 		JPanel windowStylePanel = new JPanel();
-		windowStylePanel.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createEtchedBorder(EtchedBorder.LOWERED), BorderFactory.createEmptyBorder(3, 3, 3, 3))
-		);
+		windowStylePanel.setBorder(makeEtchedBorder());
 		windowStylePanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 		windowStylePanel.add(new JLabel(I18nManager.getText("dialog.displaysettings.windowstyle")));
 		windowStylePanel.add(Box.createHorizontalStrut(10));
@@ -145,6 +154,13 @@ public class SetDisplaySettings extends GenericFunction
 		buttonPanel.add(cancelButton);
 		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return mainPanel;
+	}
+
+	/** @return an etched border for a panel */
+	private static Border makeEtchedBorder() {
+		return BorderFactory.createCompoundBorder(
+				BorderFactory.createEtchedBorder(EtchedBorder.LOWERED),
+				BorderFactory.createEmptyBorder(3, 3, 3, 3));
 	}
 
 	/**
@@ -181,11 +197,13 @@ public class SetDisplaySettings extends GenericFunction
 		_antialiasCheckbox.setSelected(config.getConfigBoolean(Config.KEY_ANTIALIAS));
 		_osScalingCheckbox.setSelected(config.getConfigBoolean(Config.KEY_OSSCALING));
 		_doubledIconsCheckbox.setSelected(config.getConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE));
+		_textScaleField.setValue(config.getConfigInt(Config.KEY_TEXT_SCALING_FACTOR));
 		_showZoomLevelCheckbox.setSelected(config.getConfigBoolean(Config.KEY_SHOW_ZOOMLEVEL));
 		selectWindowStyleRadio(config.getConfigString(Config.KEY_WINDOW_STYLE));
 		// Remember what the current settings are
 		_previousStyle = getSelectedStyleString();
 		_previousDoubleIcons = _doubledIconsCheckbox.isSelected();
+		_previousTextScaling = _textScaleField.getValue();
 		_dialog.setVisible(true);
 	}
 
@@ -234,6 +252,7 @@ public class SetDisplaySettings extends GenericFunction
 		config.setConfigBoolean(Config.KEY_ANTIALIAS, _antialiasCheckbox.isSelected());
 		config.setConfigBoolean(Config.KEY_OSSCALING, _osScalingCheckbox.isSelected());
 		config.setConfigBoolean(Config.KEY_ICONS_DOUBLE_SIZE, _doubledIconsCheckbox.isSelected());
+		config.setConfigInt(Config.KEY_TEXT_SCALING_FACTOR, _textScaleField.getValue());
 		config.setConfigBoolean(Config.KEY_SHOW_ZOOMLEVEL, _showZoomLevelCheckbox.isSelected());
 		config.setConfigString(Config.KEY_WINDOW_STYLE, getSelectedStyleString());
 		if (needsRestart())
@@ -246,10 +265,11 @@ public class SetDisplaySettings extends GenericFunction
 		_dialog.dispose();
 	}
 
-	/** @return true if either the double-icons or window style settings have changed */
+	/** @return true if the double-icons setting, the window style or the text scaling has changed */
 	private boolean needsRestart()
 	{
 		return _doubledIconsCheckbox.isSelected() != _previousDoubleIcons
-			|| !Objects.equals(_previousStyle, getSelectedStyleString());
+			|| !Objects.equals(_previousStyle, getSelectedStyleString())
+			|| _textScaleField.getValue() != _previousTextScaling;
 	}
 }

@@ -23,12 +23,10 @@ public class AppendRangeCmd extends Command
 		_points = inPoints;
 	}
 
-	@Override
 	public int getUpdateFlags() {
 		return DataSubscriber.DATA_ADDED_OR_REMOVED;
 	}
 
-	@Override
 	protected boolean executeCommand(TrackInfo inInfo)
 	{
 		if (_points == null || _points.isEmpty()) {
@@ -37,7 +35,6 @@ public class AppendRangeCmd extends Command
 		return inInfo.appendRange(_points);
 	}
 
-	@Override
 	protected Command makeInverse(TrackInfo inInfo) {
 		return new DeleteFinalRangeCmd(this, _points.size());
 	}

@@ -36,7 +36,6 @@ public class CompoundCommand extends Command
 		return this;
 	}
 
-	@Override
 	public int getUpdateFlags()
 	{
 		int flags = _updateFlags;
@@ -46,7 +45,6 @@ public class CompoundCommand extends Command
 		return flags;
 	}
 
-	@Override
 	protected boolean executeCommand(TrackInfo inInfo)
 	{
 		boolean success = true;
@@ -56,12 +54,11 @@ public class CompoundCommand extends Command
 		return success;
 	}
 
-	@Override
 	protected Command makeInverse(TrackInfo inInfo)
 	{
 		CompoundCommand undo = new CompoundCommand(this);
 		// Undo in the opposite order
-		for (int i=_commands.size()-1; i>= 0; i--)
+		for (int i = _commands.size()-1; i >= 0; i--)
 		{
 			Command command = _commands.get(i);
 			Command opposite = command.makeInverse(inInfo);
@@ -81,7 +78,7 @@ public class CompoundCommand extends Command
 	{
 		CompoundCommand inverse = new CompoundCommand(this);
 		// Undo in the opposite order
-		for (int i=_commands.size()-1; i>= 0; i--)
+		for (int i = _commands.size()-1; i >= 0; i--)
 		{
 			Command command = _commands.get(i);
 			Command opposite = inInverses[i];

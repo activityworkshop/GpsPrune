@@ -3,6 +3,8 @@ package tim.prune.gui.map.tile;
 import tim.prune.gui.map.MapSource;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Objects;
 
@@ -45,21 +47,21 @@ public class TileDef
 	@Override
 	public String toString() {
 		return "TileDef{layer=" + _layerIdx +
-				", x=" + _x + ", y=" + _y + ", zoom=" + _zoom +	'}';
+				", x=" + _x + ", y=" + _y + ", zoom=" + _zoom + '}';
 	}
 
 	/**
 	 * @return a new TileDef describing the next zoom level out
 	 */
 	public TileDef zoomOut() {
-		return new TileDef(_mapSource, _layerIdx, _x/2, _y/2, _zoom-1);
+		return new TileDef(_mapSource, _layerIdx, _x/2, _y/2, _zoom - 1);
 	}
 
 	/**
 	 * @return a new TileDef describing one of the tiles in the next zoom level in
 	 */
 	public TileDef zoomIn(int inIndex) {
-		return new TileDef(_mapSource, _layerIdx, _x*2 + (inIndex%2), _y*2 + (inIndex/2), _zoom+1);
+		return new TileDef(_mapSource, _layerIdx, _x*2 + (inIndex%2), _y*2 + (inIndex/2), _zoom + 1);
 	}
 
 	/**
@@ -68,9 +70,9 @@ public class TileDef
 	public URL getUrl()
 	{
 		try {
-			return new URL(_mapSource.makeURL(_layerIdx, _zoom, _x, _y));
+			return new URI(_mapSource.makeURL(_layerIdx, _zoom, _x, _y)).toURL();
 		}
-		catch (MalformedURLException ignored) {
+		catch (MalformedURLException | URISyntaxException ignored) {
 			return null;
 		}
 	}

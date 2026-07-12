@@ -267,7 +267,7 @@ public class Charter extends GenericFunction
 		try
 		{
 			final String gnuplotPath = getConfig().getConfigString(Config.KEY_GNUPLOT_PATH);
-			Process process = Runtime.getRuntime().exec(gnuplotPath + " -persist");
+			Process process = Runtime.getRuntime().exec(new String[] {gnuplotPath, "-persist"});
 			writer = new OutputStreamWriter(process.getOutputStream());
 			if (showSvg)
 			{

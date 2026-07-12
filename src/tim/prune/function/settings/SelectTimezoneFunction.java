@@ -93,8 +93,7 @@ public class SelectTimezoneFunction extends GenericFunction
 	 * Constructor
 	 * @param inApp App object
 	 */
-	public SelectTimezoneFunction(App inApp)
-	{
+	public SelectTimezoneFunction(App inApp) {
 		super(inApp);
 	}
 
@@ -121,12 +120,10 @@ public class SelectTimezoneFunction extends GenericFunction
 			+ TimeZone.getDefault().getID() + ")");
 		// Set up dialog according to current config
 		String selectedTimezone = getConfig().getConfigString(Config.KEY_TIMEZONE_ID);
-		if (selectedTimezone == null || selectedTimezone.equals(""))
-		{
+		if (selectedTimezone == null || selectedTimezone.equals("")) {
 			_systemRadio.setSelected(true);
 		}
-		else
-		{
+		else {
 			_customRadio.setSelected(true);
 		}
 		_dialog.setVisible(true);
@@ -165,7 +162,8 @@ public class SelectTimezoneFunction extends GenericFunction
 		_customRadio.addFocusListener(radioFocusListener);
 		topPanel.add(_customRadio);
 		ButtonGroup radioGroup = new ButtonGroup();
-		radioGroup.add(_systemRadio); radioGroup.add(_customRadio);
+		radioGroup.add(_systemRadio);
+		radioGroup.add(_customRadio);
 		dialogPanel.add(topPanel, BorderLayout.NORTH);
 
 		// Main panel with with four lists in a grid
@@ -252,7 +250,9 @@ public class SelectTimezoneFunction extends GenericFunction
 		cancelButton.addActionListener(e -> _dialog.dispose());
 		cancelButton.addKeyListener(new KeyAdapter() {
 			public void keyPressed(KeyEvent inE) {
-				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {_dialog.dispose();}
+				if (inE.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					_dialog.dispose();
+				}
 			}
 		});
 		buttonPanel.add(cancelButton);
@@ -299,14 +299,16 @@ public class SelectTimezoneFunction extends GenericFunction
 		if (inKey == LIST_OFFSETS
 			|| (inKey == LIST_REGIONS && !offsetSelected))
 		{
-			populateTimezoneGroups(_listBoxes[LIST_REGIONS].getSelectedItem(), _listBoxes[LIST_OFFSETS].getSelectedItem());
+			populateTimezoneGroups(_listBoxes[LIST_REGIONS].getSelectedItem(),
+					_listBoxes[LIST_OFFSETS].getSelectedItem());
 		}
 		// Update names?
 		if (inKey == LIST_GROUPS
 			|| (inKey <= LIST_OFFSETS && !groupSelected))
 		{
-			populateTimezoneNames(_listBoxes[LIST_REGIONS].getSelectedItem(), _listBoxes[LIST_OFFSETS].getSelectedItem(),
-				_listBoxes[LIST_GROUPS].getSelectedItem());
+			populateTimezoneNames(_listBoxes[LIST_REGIONS].getSelectedItem(),
+					_listBoxes[LIST_OFFSETS].getSelectedItem(),
+					_listBoxes[LIST_GROUPS].getSelectedItem());
 		}
 		// Show the details of the selected timezone
 		showTimezoneDetails();
@@ -342,12 +344,10 @@ public class SelectTimezoneFunction extends GenericFunction
 	{
 		_listBoxes[LIST_REGIONS].clear();
 		TreeSet<String> regions = new TreeSet<String>();
-		for (TimezoneDetails currZone : _zoneInfo)
-		{
+		for (TimezoneDetails currZone : _zoneInfo) {
 			regions.add(currZone._region);
 		}
-		for (String region : regions)
-		{
+		for (String region : regions) {
 			_listBoxes[LIST_REGIONS].addItem(region);
 		}
 	}
@@ -358,8 +358,7 @@ public class SelectTimezoneFunction extends GenericFunction
 	private static String getRegion(String inId)
 	{
 		final int slashPos = (inId == null ? -1 : inId.indexOf('/'));
-		if (slashPos > 0)
-		{
+		if (slashPos > 0) {
 			return inId.substring(0, slashPos);
 		}
 		return null;
@@ -376,8 +375,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		for (TimezoneDetails currZone : _zoneInfo)
 		{
 			String region = currZone._region;
-			if (inRegion == null || region.equals(inRegion))
-			{
+			if (inRegion == null || region.equals(inRegion)) {
 				offsetsinMinutes.add(currZone._offset);
 			}
 		}
@@ -392,10 +390,11 @@ public class SelectTimezoneFunction extends GenericFunction
 	 */
 	private static String makeOffsetString(int inOffsetInMinutes)
 	{
-		if (inOffsetInMinutes == 0) return "0";
+		if (inOffsetInMinutes == 0) {
+			return "0";
+		}
 		final boolean isWholeHours = (inOffsetInMinutes % 60) == 0;
-		if (isWholeHours)
-		{
+		if (isWholeHours) {
 			return (inOffsetInMinutes > 0 ? "+" : "") + (inOffsetInMinutes / 60);
 		}
 		final double numHours = inOffsetInMinutes / 60.0;
@@ -418,8 +417,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		{
 			if (inRegion == null || currZone._region.equals(inRegion))
 			{
-				if (offsetMins == -1 || offsetMins == currZone._offset)
-				{
+				if (offsetMins == -1 || offsetMins == currZone._offset) {
 					zoneGroups.add(currZone._group);
 				}
 			}
@@ -427,8 +425,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		// If the region and offset were given, then list is unlimited
 		_listBoxes[LIST_GROUPS].setUnlimited(inRegion != null && inOffset != null);
 		// Add all the found names to the listbox
-		for (String group : zoneGroups)
-		{
+		for (String group : zoneGroups) {
 			_listBoxes[LIST_GROUPS].addItem(group);
 		}
 	}
@@ -459,8 +456,7 @@ public class SelectTimezoneFunction extends GenericFunction
 		// If the region and offset were given, then list is unlimited
 		nameList.setUnlimited(inRegion != null && inOffset != null);
 		// Add all the found names to the listbox
-		for (String name : zoneNames)
-		{
+		for (String name : zoneNames) {
 			nameList.addItem(name);
 		}
 	}
@@ -522,8 +518,7 @@ public class SelectTimezoneFunction extends GenericFunction
 			}
 		}
 		// Should have exactly one result now
-		if (zoneIds.size() == 1)
-		{
+		if (zoneIds.size() == 1) {
 			return TimeZone.getTimeZone(zoneIds.first());
 		}
 

@@ -14,7 +14,6 @@ import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 import javax.swing.JToolBar;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.WindowConstants;
 
 import tim.prune.config.Config;
@@ -27,6 +26,7 @@ import tim.prune.gui.MenuManager;
 import tim.prune.gui.SelectorDisplay;
 import tim.prune.gui.SidebarController;
 import tim.prune.gui.StatusBar;
+import tim.prune.gui.UiStyler;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.map.MapCanvas;
 import tim.prune.gui.map.MapSourceLibrary;
@@ -42,9 +42,9 @@ import tim.prune.gui.profile.ProfileChart;
 public class GpsPrune
 {
 	/** Version number of application, used in about screen and for version check */
-	public static final String VERSION_NUMBER = "26.2";
+	public static final String VERSION_NUMBER = "27";
 	/** Build number, just used for about screen */
-	public static final String BUILD_NUMBER = "436";
+	public static final String BUILD_NUMBER = "438";
 	/** Static reference to App object */
 	private static App APP = null;
 
@@ -159,11 +159,12 @@ public class GpsPrune
 		}
 
 		// Set look-and-feel
-		try {
-			String windowStyle = config.getConfigString(Config.KEY_WINDOW_STYLE);
-			UIManager.setLookAndFeel(windowStyle);
+		final String windowStyle = config.getConfigString(Config.KEY_WINDOW_STYLE);
+		final int textScaleFactor = config.getConfigInt(Config.KEY_TEXT_SCALING_FACTOR);
+		final int usedTextScale = UiStyler.styleGui(windowStyle, textScaleFactor);
+		if (usedTextScale != textScaleFactor) {
+			config.setConfigInt(Config.KEY_TEXT_SCALING_FACTOR, usedTextScale);
 		}
-		catch (Exception e) {}
 
 		setupMaps(config);
 

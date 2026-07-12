@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 
@@ -115,5 +117,15 @@ public abstract class SrtmSource
 		}
 		// Close output stream; input stream will be closed by creator
 		return false;
+	}
+
+	protected static URL makeUrl(String inString) throws IOException
+	{
+		try {
+			return new URI(inString).toURL();
+		}
+		catch (URISyntaxException e) {
+			throw new IOException("uri: " + inString);
+		}
 	}
 }

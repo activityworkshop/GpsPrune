@@ -21,12 +21,10 @@ public class RemovePhotoCmd extends Command
 		_photoIndex = inPhotoIndex;
 	}
 
-	@Override
 	public int getUpdateFlags() {
 		return DataSubscriber.MEDIA_MODIFIED;
 	}
 
-	@Override
 	protected boolean executeCommand(TrackInfo inInfo)
 	{
 		try {
@@ -38,10 +36,9 @@ public class RemovePhotoCmd extends Command
 		}
 	}
 
-	@Override
 	protected Command makeInverse(TrackInfo inInfo)
 	{
-		Photo photo = inInfo.getPhotoList().get(_photoIndex);
+		final Photo photo = inInfo.getPhotoList().get(_photoIndex);
 		return new InsertPhotoCmd(this, photo, _photoIndex);
 	}
 }

@@ -6,12 +6,14 @@ import java.util.List;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
-import tim.prune.cmd.Command;
+import tim.prune.cmd.CompoundCommand;
 import tim.prune.cmd.PointFlag;
 import tim.prune.cmd.ShuffleAndCropCmd;
 import tim.prune.data.DataPoint;
 import tim.prune.data.Track;
 import tim.prune.data.TrackInfo;
+import tim.prune.function.media.LinkedMediaAction;
+import tim.prune.function.media.PopupResponse;
 
 
 /**
@@ -27,7 +29,6 @@ public class DeleteMarkedPointsFunction extends GenericFunction
 		super(inApp);
 	}
 
-	@Override
 	public String getNameKey() {
 		return "function.deletemarked";
 	}
@@ -49,6 +50,7 @@ public class DeleteMarkedPointsFunction extends GenericFunction
 		ArrayList<Integer> indexesToDelete = new ArrayList<>();
 		ArrayList<Integer> indexesOfSegments = new ArrayList<>();
 		TrackInfo trackInfo = _app.getTrackInfo();
+		int numSelectedMedia = 0;
 
 		for (int i=0; i<trackInfo.getTrack().getNumPoints(); i++)
 		{
@@ -57,6 +59,9 @@ public class DeleteMarkedPointsFunction extends GenericFunction
 				indexesToDelete.add(i);
 				if (trackInfo.isPointMarkedForSegmentBreak(i) || _splitSegments) {
 					indexesOfSegments.add(i);
+				}
+				if (trackInfo.getTrack().getPoint(i).hasMedia()) {
+					numSelectedMedia++;
 				}
 			}
 			else {
@@ -71,8 +76,28 @@ public class DeleteMarkedPointsFunction extends GenericFunction
 		}
 		else
 		{
-			Command command = new ShuffleAndCropCmd(indexesToKeep, indexesToDelete,
+			final PopupResponse response = numSelectedMedia > 0 ?
+				LinkedMediaAction.chooseMediaAction(_app.getFrame(), numSelectedMedia)
+				: PopupResponse.MEDIA_NOT_CONNECTED;
+			if (response == PopupResponse.CANCEL) {
+				return;
+			}
+			CompoundCommand command = new ShuffleAndCropCmd(indexesToKeep, indexesToDelete,
 				makeSegmentFlags(trackInfo.getTrack(), indexesToDelete, indexesOfSegments));
+			switch (response)
+			{
+				case DELETE:
+					command.addCommand(LinkedMediaAction.makeDeleteMediaCommand(indexesToDelete, trackInfo.getTrack()));
+					break;
+				case UNLINK:
+					command.addCommand(LinkedMediaAction.makeUnlinkMediaCommand(indexesToDelete, trackInfo.getTrack()));
+					break;
+				case CANCEL:
+					return;
+				case MEDIA_NOT_CONNECTED:
+				default:
+					break;
+			}
 			_app.execute(command);
 		}
 	}

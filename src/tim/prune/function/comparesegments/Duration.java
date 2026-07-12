@@ -11,7 +11,7 @@ class Duration implements Comparable<Duration>
 	private final long _seconds;
 	private final String _displayValue;
 
-	public Duration(long inSeconds)
+	Duration(long inSeconds)
 	{
 		_seconds = inSeconds;
 		_displayValue = DisplayUtils.buildDurationString(inSeconds);

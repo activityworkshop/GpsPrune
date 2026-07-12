@@ -29,17 +29,24 @@ public class PhotoPopupFunction extends GenericFunction implements DataSubscribe
 {
 	/** popup window */
 	private JFrame _frame = null; // would be a JDialog but that doesn't allow max button
-	/** label for filename */
+	/** label for filename, image size */
 	private JLabel _label = null;
 	/** Photo thumbnail */
 	private PhotoThumbnail _photoThumb = null;
+	/** Photo sequence for next/previous */
+	private final PhotoSequence _photoSequence;
+	private JButton _previousButton = null;
+	private JButton _nextButton = null;
+
 
 	/**
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public PhotoPopupFunction(App inApp) {
+	public PhotoPopupFunction(App inApp)
+	{
 		super(inApp);
+		_photoSequence = new PhotoSequence(inApp);
 	}
 
 	/**
@@ -78,7 +85,7 @@ public class PhotoPopupFunction extends GenericFunction implements DataSubscribe
 		{
 			_frame.setVisible(false);
 			_app.showErrorMessageNoLookup(getNameKey(), I18nManager.getText("error.showphoto.failed")
-			 + " : " + photo.getName());
+				+ " : " + photo.getName());
 		}
 		else
 		{
@@ -106,6 +113,7 @@ public class PhotoPopupFunction extends GenericFunction implements DataSubscribe
 				+ photo.getWidth() + " x " + photo.getHeight() + ")");
 		}
 		_photoThumb.setPhoto(photo);
+		recalculateButtons();
 	}
 
 	/**
@@ -113,38 +121,75 @@ public class PhotoPopupFunction extends GenericFunction implements DataSubscribe
 	 */
 	private Component makeContents()
 	{
-		JPanel mainPanel = new JPanel();
+		final JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new BorderLayout());
 		_label = new JLabel("Photo popup");
 		mainPanel.add(_label, BorderLayout.NORTH);
 		_photoThumb = new PhotoThumbnail(false); // specify not in details panel
 		_photoThumb.setPreferredSize(new Dimension(300, 300));
 		mainPanel.add(_photoThumb, BorderLayout.CENTER);
-		// Close button at bottom
-		JPanel okPanel = new JPanel();
-		okPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
-		JButton okButton = new JButton(I18nManager.getText("button.ok"));
-		okButton.addActionListener(e -> _frame.dispose());
-		okButton.addKeyListener(new KeyListener() {
+		// button panel at bottom
+		final JPanel buttonPanel = new JPanel();
+		buttonPanel.setLayout(new BorderLayout());
+		// next/previous on left
+		final JPanel navPanel = new JPanel();
+		navPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+		_previousButton = new JButton(I18nManager.getText("button.photo.previous"));
+		_previousButton.addActionListener(e -> selectPreviousPhoto());
+		navPanel.add(_previousButton);
+		_nextButton = new JButton(I18nManager.getText("button.photo.next"));
+		_nextButton.addActionListener(e -> selectNextPhoto());
+		navPanel.add(_nextButton);
+		buttonPanel.add(navPanel, BorderLayout.WEST);
+		// close button on right
+		final JPanel closePanel = new JPanel();
+		closePanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		JButton closeButton = new JButton(I18nManager.getText("button.close"));
+		closeButton.addActionListener(e -> _frame.dispose());
+		closeButton.addKeyListener(new KeyListener() {
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {_frame.dispose();}
 			}
 			public void keyTyped(KeyEvent e) {}
 			public void keyReleased(KeyEvent e) {}
 		});
-		okPanel.add(okButton);
-		mainPanel.add(okPanel, BorderLayout.SOUTH);
+		closePanel.add(closeButton);
+		buttonPanel.add(closePanel, BorderLayout.EAST);
+		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 		return mainPanel;
 	}
 
 	public void dataUpdated(int inUpdateType)
 	{
 		// Update photo if selection changes
-		if ((inUpdateType & DataSubscriber.SELECTION_CHANGED) > 0)
-		{
+		if ((inUpdateType & DataSubscriber.SELECTION_CHANGED) > 0) {
 			initFrame();
 		}
 	}
 
 	public void actionCompleted(String inMessage) {}
+
+	/** Enable and disable the previous/next buttons according to the currently selected photo */
+	private void recalculateButtons()
+	{
+		_photoSequence.recalculate();
+		_previousButton.setEnabled(_photoSequence.hasPrevious());
+		_previousButton.setToolTipText(_photoSequence.getPreviousName());
+		_nextButton.setEnabled(_photoSequence.hasNext());
+		_nextButton.setToolTipText(_photoSequence.getNextName());
+	}
+
+	private void selectPreviousPhoto()
+	{
+		if (_photoSequence.hasPrevious()) {
+			_app.getTrackInfo().selectPhoto(_photoSequence.getPreviousIndex());
+		}
+	}
+
+	private void selectNextPhoto()
+	{
+		if (_photoSequence.hasNext()) {
+			_app.getTrackInfo().selectPhoto(_photoSequence.getNextIndex());
+		}
+	}
 }

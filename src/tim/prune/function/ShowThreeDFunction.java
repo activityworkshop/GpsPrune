@@ -162,8 +162,7 @@ public class ShowThreeDFunction extends GenericFunction
 	{
 		// Store exaggeration factor and grid size in config
 		getConfig().setConfigInt(Config.KEY_HEIGHT_EXAGGERATION, (int) (_exaggField.getValue() * 100));
-		int terrainGridSize = _terrainPanel.getGridSize();
-		if (terrainGridSize < 20) {terrainGridSize = 20;}
+		final int terrainGridSize = Math.max(20, _terrainPanel.getGridSize());
 		getConfig().setConfigInt(Config.KEY_TERRAIN_GRID_SIZE, terrainGridSize);
 
 		ThreeDWindow window = WindowFactory.getWindow(_parentFrame);
@@ -173,6 +172,7 @@ public class ShowThreeDFunction extends GenericFunction
 			{
 				// Pass the parameters to use and show the window
 				window.setTrack(_app.getTrackInfo().getTrack());
+				window.setPointColourer(_app.getPointColourer());
 				window.setAltitudeFactor(_exaggField.getValue());
 				if (_symbolScaleField.isEmpty()) {
 					_symbolScaleField.setValue(1.0);

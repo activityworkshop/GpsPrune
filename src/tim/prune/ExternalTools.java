@@ -38,7 +38,7 @@ public abstract class ExternalTools
 			case TOOL_GNUPLOT:
 				String toolPath = inConfig.getConfigString(CONFIG_KEYS[inToolNum]);
 				if (toolPath != null && toolPath.length() > 0) {
-					return check(toolPath + " " + VERIFY_FLAGS[inToolNum]);
+					return check(toolPath, VERIFY_FLAGS[inToolNum]);
 				}
 				break;
 			case TOOL_XERCES:
@@ -67,7 +67,7 @@ public abstract class ExternalTools
 			case TOOL_EXIFTOOL:
 			case TOOL_GPSBABEL:
 			case TOOL_GNUPLOT:
-				return check(inPath + " " + VERIFY_FLAGS[inToolNum]);
+				return check(inPath, VERIFY_FLAGS[inToolNum]);
 		}
 		// Not found
 		return false;
@@ -77,7 +77,7 @@ public abstract class ExternalTools
 	 * Attempt to call the specified command
 	 * @return true if found, false otherwise
 	 */
-	private static boolean check(String inCommand)
+	private static boolean check(String ... inCommand)
 	{
 		try
 		{

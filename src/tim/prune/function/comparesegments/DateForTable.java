@@ -8,6 +8,7 @@ class DateForTable implements Comparable<DateForTable>
 {
 	private final Timestamp _timestamp;
 	private final String _asString;
+
 	DateForTable(Timestamp inTimestamp, TimeZone inTimezone)
 	{
 		_timestamp = inTimestamp;

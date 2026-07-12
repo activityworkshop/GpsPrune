@@ -9,7 +9,7 @@ public class BearingTest
 	public void testSamePoint()
 	{
 		DataPoint point = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
-		double bearing = Bearing.calculateDegrees(point,  point);
+		double bearing = Bearing.calculateDegrees(point, point);
 		Assertions.assertEquals(0.0, bearing);
 	}
 
@@ -18,9 +18,9 @@ public class BearingTest
 	{
 		DataPoint point1 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
 		DataPoint point2 = new DataPoint(Latitude.make("2.81"), Longitude.make("5.44"));
-		double bearing = Bearing.calculateDegrees(point1,  point2);
+		double bearing = Bearing.calculateDegrees(point1, point2);
 		Assertions.assertEquals(0.0, bearing);
-		bearing = Bearing.calculateDegrees(point2,  point1);
+		bearing = Bearing.calculateDegrees(point2, point1);
 		Assertions.assertEquals(180.0, bearing);
 	}
 
@@ -29,9 +29,9 @@ public class BearingTest
 	{
 		DataPoint point1 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.44"));
 		DataPoint point2 = new DataPoint(Latitude.make("1.81"), Longitude.make("5.48"));
-		double bearing = Bearing.calculateDegrees(point1,  point2);
+		double bearing = Bearing.calculateDegrees(point1, point2);
 		Assertions.assertEquals(90.0, bearing, 0.001);
-		bearing = Bearing.calculateDegrees(point2,  point1);
+		bearing = Bearing.calculateDegrees(point2, point1);
 		Assertions.assertEquals(-90.0, bearing, 0.001);
 	}
 
@@ -40,9 +40,9 @@ public class BearingTest
 	{
 		DataPoint point1 = new DataPoint(Latitude.make("0.0"), Longitude.make("0.0"));
 		DataPoint point2 = new DataPoint(Latitude.make("0.25"), Longitude.make("0.25"));
-		double bearing = Bearing.calculateDegrees(point1,  point2);
+		double bearing = Bearing.calculateDegrees(point1, point2);
 		Assertions.assertEquals(45.0, bearing, 0.001);
-		bearing = Bearing.calculateDegrees(point2,  point1);
+		bearing = Bearing.calculateDegrees(point2, point1);
 		Assertions.assertEquals(-135.0, bearing, 0.001);
 	}
 

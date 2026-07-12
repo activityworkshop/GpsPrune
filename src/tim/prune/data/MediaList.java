@@ -35,7 +35,13 @@ public class MediaList<T extends MediaObject>
 	 */
 	public void add(T inObject, int inIndex)
 	{
-		if (inObject != null) {
+		if (inObject == null) {
+			return;
+		}
+		if (inIndex == -1) {
+			_media.add(inObject);
+		}
+		else {
 			_media.add(inIndex, inObject);
 		}
 	}

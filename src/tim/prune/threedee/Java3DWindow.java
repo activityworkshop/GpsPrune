@@ -1,6 +1,7 @@
 package tim.prune.threedee;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsConfiguration;
@@ -49,6 +50,7 @@ import tim.prune.config.Config;
 import tim.prune.data.Track;
 import tim.prune.function.Export3dFunction;
 import tim.prune.function.srtm.LookupSrtmFunction;
+import tim.prune.gui.colour.PointColourer;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.save.GroutedImage;
 import tim.prune.save.MapGrouter;
@@ -70,6 +72,7 @@ public class Java3DWindow implements ThreeDWindow
 	private Track _track = null;
 	private final JFrame _parentFrame;
 	private JFrame _frame = null;
+	private PointColourer _pointColourer = null;
 	private UprightOrbiter _orbit = null;
 	private double _altFactor = -1.0;
 	private double _symbolScaleFactor = -1.0;
@@ -97,7 +100,6 @@ public class Java3DWindow implements ThreeDWindow
 		_parentFrame = inFrame;
 	}
 
-
 	/**
 	 * Set the track object
 	 * @param inTrack Track object
@@ -113,9 +115,12 @@ public class Java3DWindow implements ThreeDWindow
 		_altFactor = inFactor;
 	}
 
-	@Override
 	public void setSymbolScalingFactor(double inFactor) {
 		_symbolScaleFactor = inFactor;
+	}
+
+	public void setPointColourer(PointColourer inColourer) {
+		_pointColourer = inColourer;
 	}
 
 	/**
@@ -323,7 +328,7 @@ public class Java3DWindow implements ThreeDWindow
 		// Create model containing track information
 		ThreeDModel model = new ThreeDModel(_track);
 		model.setAltitudeFactor(_altFactor);
-
+		model.setPointColourer(_pointColourer);
 		if (showTerrain)
 		{
 			TerrainHelper terrainHelper = new TerrainHelper(_terrainDefinition.getGridSize());
@@ -364,25 +369,11 @@ public class Java3DWindow implements ThreeDWindow
 		}
 
 		// N, S, E, W
-		GeneralPath bevelPath = new GeneralPath();
-		bevelPath.moveTo(0.0f, 0.0f);
-		for (int i=0; i<91; i+= 5)
-		{
-			bevelPath.lineTo((float) (0.1 - 0.1 * Math.cos(Math.toRadians(i))),
-			  (float) (0.1 * Math.sin(Math.toRadians(i))));
-		}
-		for (int i=90; i>0; i-=5)
-		{
-			bevelPath.lineTo((float) (0.3 + 0.1 * Math.cos(Math.toRadians(i))),
-			  (float) (0.1 * Math.sin(Math.toRadians(i))));
-		}
-		Font3D compassFont = new Font3D(
-			new Font(CARDINALS_FONT, Font.PLAIN, 1),
-			new FontExtrusion(bevelPath));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.n"), new Point3f(0f, 0f, -11.5f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.s"), new Point3f(0f, 0f, 11.5f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.w"), new Point3f(-11.5f, 0f, 0f), compassFont));
-		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"), new Point3f(11.5f, 0f, 0f), compassFont));
+		Font3D cardinalFont = makeCardinalFont();
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.n"), new Point3f(0f, 0f, -11.5f), cardinalFont));
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.s"), new Point3f(0f, 0f, 11.5f), cardinalFont));
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.w"), new Point3f(-11.5f, 0f, 0f), cardinalFont));
+		objTrans.addChild(createCompassPoint(I18nManager.getText("cardinal.e"), new Point3f(11.5f, 0f, 0f), cardinalFont));
 
 		// Add points to model
 		objTrans.addChild(createDataPoints(model));
@@ -428,6 +419,24 @@ public class Java3DWindow implements ThreeDWindow
 		return objRoot;
 	}
 
+	/** @return the font to use for the cardinal letters */
+	private static Font3D makeCardinalFont()
+	{
+		final GeneralPath bevelPath = new GeneralPath();
+		bevelPath.moveTo(0.0f, 0.0f);
+		for (int i=0; i<91; i+= 5)
+		{
+			bevelPath.lineTo((float) (0.1 - 0.1 * Math.cos(Math.toRadians(i))),
+					(float) (0.1 * Math.sin(Math.toRadians(i))));
+		}
+		for (int i=90; i>0; i-=5)
+		{
+			bevelPath.lineTo((float) (0.3 + 0.1 * Math.cos(Math.toRadians(i))),
+					(float) (0.1 * Math.sin(Math.toRadians(i))));
+		}
+		final FontExtrusion extrusion = new FontExtrusion(bevelPath);
+		return new Font3D(new Font(CARDINALS_FONT, Font.PLAIN, 1), extrusion);
+	}
 
 	/**
 	 * Create a text object for compass point, N S E or W
@@ -488,7 +497,8 @@ public class Java3DWindow implements ThreeDWindow
 				group.addChild(createTrackpoint(new Point3d(
 					inModel.getScaledHorizValue(i) * MODEL_SCALE_FACTOR,
 					inModel.getScaledAltValue(i)   * MODEL_SCALE_FACTOR,
-					-inModel.getScaledVertValue(i) * MODEL_SCALE_FACTOR), inModel.getPointHeightCode(i)));
+					-inModel.getScaledVertValue(i) * MODEL_SCALE_FACTOR),
+					inModel.getPointColour(i)));
 			}
 		}
 		return group;
@@ -522,31 +532,22 @@ public class Java3DWindow implements ThreeDWindow
 	/**
 	 * @return track point object
 	 */
-	private Group createTrackpoint(Point3d inPointPos, byte inHeightCode)
+	private Group createTrackpoint(Point3d inPointPos, Color inColour)
 	{
-		Material mat = getTrackpointMaterial(inHeightCode);
+		Material mat = getTrackpointMaterial(inColour);
 		Sphere dot = new Sphere((float) (0.2 * _symbolScaleFactor));
 		return createBall(inPointPos, dot, mat);
 	}
 
 
 	/**
-	 * @return Material object for track points with the appropriate colour for the height
+	 * @return Material object for track points with the appropriate colour
 	 */
-	private static Material getTrackpointMaterial(byte inHeightCode)
+	private static Material getTrackpointMaterial(Color inColour)
 	{
-		// create default material
-		Material mat = new Material(new Color3f(0.3f, 0.2f, 0.1f),
-			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(0.0f, 0.6f, 0.0f),
+		return new Material(new Color3f(0.3f, 0.2f, 0.1f),
+			new Color3f(0.0f, 0.0f, 0.0f), new Color3f(inColour),
 			new Color3f(1.0f, 0.6f, 0.6f), 70.0f);
-		// change colour according to height code
-		if (inHeightCode == 1) mat.setDiffuseColor(new Color3f(0.4f, 0.9f, 0.2f));
-		else if (inHeightCode == 2) mat.setDiffuseColor(new Color3f(0.7f, 0.8f, 0.2f));
-		else if (inHeightCode == 3) mat.setDiffuseColor(new Color3f(0.3f, 0.6f, 0.4f));
-		else if (inHeightCode == 4) mat.setDiffuseColor(new Color3f(0.1f, 0.9f, 0.9f));
-		else if (inHeightCode >= 5) mat.setDiffuseColor(new Color3f(1.0f, 1.0f, 1.0f));
-		// return object
-		return mat;
 	}
 
 

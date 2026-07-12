@@ -28,14 +28,17 @@ class CoordPair
 	 * @param inFirst first character of pair
 	 * @param inSecond second character of pair
 	 * @return CoordPair from (0, 0) to (19/20, 19/20)
-	 * @throws ParseException
 	 */
 	public static CoordPair decode(char inFirst, char inSecond) throws ParseException
 	{
 		final boolean isFirstPadding = (inFirst == '0');
 		final boolean isSecondPadding = (inSecond == '0');
-		if (isFirstPadding && isSecondPadding) {return CoordPair.PADDING;}
-		if (isFirstPadding || isSecondPadding) {throw new ParseException();}
+		if (isFirstPadding && isSecondPadding) {
+			return CoordPair.PADDING;
+		}
+		if (isFirstPadding || isSecondPadding) {
+			throw new ParseException();
+		}
 		// Try to turn these characters into numbers
 		final double lat = decodeChar(inFirst);
 		final double lon = decodeChar(inSecond);
@@ -46,7 +49,6 @@ class CoordPair
 	 * Try to parse the given single character into a CoordPair
 	 * @param inChar single character from level 11
 	 * @return CoordPair from (0, 0) to (19/20, 19/20)
-	 * @throws ParseException
 	 */
 	public static CoordPair decode(char inChar) throws ParseException
 	{
@@ -76,8 +78,7 @@ class CoordPair
 	 * Get the character for the given index
 	 * @param inValue from 0 to 19
 	 */
-	public static char encode(int inValue)
-	{
+	public static char encode(int inValue) {
 		return ALPHABET.charAt((inValue + 20) % 20);
 	}
 }
