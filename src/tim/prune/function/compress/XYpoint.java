@@ -1,37 +1,28 @@
 package tim.prune.function.compress;
 
 /**
- * Basic class to hold x and y coordinates
+ * Basic record to hold x and y coordinates
  * for a point or a vector
  */
-public class XYpoint
+public record XYpoint(double x, double y)
 {
-	// x and y coordinates
-	public final double x, y;
-
-	/**
-	 * Constructor
-	 * @param inX x value
-	 * @param inY y value
-	 */
-	public XYpoint(double inX, double inY) {
-		x = inX;
-		y = inY;
-	}
-
 	/**
 	 * @param inOther other vector
 	 * @return scalar dot product
 	 */
 	public double dot(XYpoint inOther) {
-		return (x * inOther.x + y * inOther.y);
+		return x * inOther.x + y * inOther.y;
 	}
 
 	/** @return length of vector */
-	public double len() {return Math.sqrt(len2());}
+	public double len() {
+		return Math.sqrt(len2());
+	}
 
 	/** @return squared length of vector */
-	public double len2() {return (x*x + y*y);}
+	public double len2() {
+		return x * x + y * y;
+	}
 
 	/**
 	 * @param inOther other point object

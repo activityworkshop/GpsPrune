@@ -7,22 +7,6 @@ import tim.prune.data.DataPoint;
  * including the bearing of the track at this point, and the
  * cumulative distance from the start of the segment to here
  */
-class PointData
-{
-	final DataPoint _point;
-	final double _bearing;
-	final double _distanceToHereRadians;
-	final double _distanceToPrevPointRadians;
-	final double _speedRadiansPerSec;
-
-
-	PointData(DataPoint inPoint, double inBearing, double inDistanceToPrevPointRadians,
-		double inDistanceToHereRadians, double inSpeedRadsPerSec)
-	{
-		_point = inPoint;
-		_bearing = inBearing;
-		_distanceToPrevPointRadians = inDistanceToPrevPointRadians;
-		_distanceToHereRadians = inDistanceToHereRadians;
-		_speedRadiansPerSec = inSpeedRadsPerSec;
-	}
+record PointData(DataPoint point, double bearing, double distanceToPrevPointRadians, double distanceToHereRadians,
+				 double speedRadiansPerSec) {
 }

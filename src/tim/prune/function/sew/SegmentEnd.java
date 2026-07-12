@@ -12,8 +12,8 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 	private SegmentEnd _otherEnd = null;
 	private final Coordinate _longitude;
 	private final Coordinate _latitude;
-	private int        _pointIndex = 0;
-	private boolean    _active = true;
+	private int     _pointIndex = 0;
+	private boolean _active = true;
 
 
 	/**
@@ -26,7 +26,7 @@ public class SegmentEnd implements Comparable<SegmentEnd>
 		_longitude = inPoint.getLongitude();
 		_latitude  = inPoint.getLatitude();
 		_pointIndex = inIndex;
-		_active    = true;
+		_active = true;
 	}
 
 	/**

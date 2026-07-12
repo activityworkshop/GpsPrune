@@ -69,7 +69,7 @@ public class TileWorkerCoordinator implements Coordinator
 		if (def == null) {
 			return null;
 		}
-		int zoom = def._zoom;
+		int zoom = def.zoom();
 		if (zoom != _previousZoom)
 		{
 			_processingDefs.clear();

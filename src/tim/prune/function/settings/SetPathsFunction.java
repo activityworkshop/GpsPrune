@@ -127,12 +127,13 @@ public class SetPathsFunction extends GenericFunction
 	 */
 	private void checkPaths()
 	{
-		String yesText = I18nManager.getText("dialog.about.yes");
-		String noText = I18nManager.getText("dialog.about.no");
+		final String yesText = I18nManager.getText("dialog.about.yes");
+		final String noText = I18nManager.getText("dialog.about.no");
 		for (int i=0; i<NUM_KEYS; i++)
 		{
-			String command = _editFields[i].getText();
-			_installedLabels[i].setText("   " + (ExternalTools.isToolInstalled(i, command)?yesText:noText));
+			final String command = _editFields[i].getText();
+			final boolean isInstalled = ExternalTools.isToolInstalled(i, command);
+			_installedLabels[i].setText("   " + (isInstalled ? yesText : noText));
 		}
 	}
 
@@ -143,7 +144,7 @@ public class SetPathsFunction extends GenericFunction
 	{
 		for (int i=0; i<NUM_KEYS; i++)
 		{
-			String val = _editFields[i].getText();
+			final String val = _editFields[i].getText();
 			// TODO: Check path values?
 			getConfig().setConfigString(CONFIG_KEYS[i], val);
 		}

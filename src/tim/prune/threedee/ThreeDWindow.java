@@ -3,13 +3,13 @@ package tim.prune.threedee;
 import tim.prune.DataStatus;
 import tim.prune.config.Config;
 import tim.prune.data.Track;
+import tim.prune.gui.colour.PointColourer;
 
 /**
  * Interface to decouple from Java3D classes
  */
 public interface ThreeDWindow
 {
-
 	/**
 	 * Set the Track data
 	 * @param inTrack Track object
@@ -25,6 +25,11 @@ public interface ThreeDWindow
 	 * @param inFactor symbol scaling factor to use
 	 */
 	public void setSymbolScalingFactor(double inFactor);
+
+	/**
+	 * @param pointColourer point colourer, or null
+	 */
+	public void setPointColourer(PointColourer pointColourer);
 
 	/**
 	 * @param inDefinition image definition (image or not, source, zoom)

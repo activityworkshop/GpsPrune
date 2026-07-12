@@ -52,13 +52,12 @@ public class ShuffleAndCropCmd extends CompoundCommand
 		return indexes;
 	}
 
-	@Override
 	protected Command makeInverse(TrackInfo inInfo)
 	{
 		ArrayList<DataPoint> deletedPoints = new ArrayList<>();
 		for (int i : _indexesToDelete) {
 			deletedPoints.add(inInfo.getTrack().getPoint(i));
 		}
-		return makeInverse(inInfo, null, new AppendRangeCmd(deletedPoints), null);
+		return makeInverse(inInfo, null, new AppendRangeCmd(deletedPoints), null, null);
 	}
 }

@@ -106,7 +106,7 @@ public class DouglasPeuckerMethod extends CompressionMethod
 		final double dist2AB = ab.len2();
 		// create unit vector perpendicular to AB
 		final double distAB = ab.len();
-		XYpoint perpendicular = new XYpoint(ab.y/distAB, -ab.x/distAB);
+		XYpoint perpendicular = new XYpoint(ab.y()/distAB, -ab.x()/distAB);
 		// Check whether distAB is 0.0 - if so, find furthest point from startxy and compress from start to here and here to end
 		if (distAB <= 0.0)
 		{

@@ -1,8 +1,11 @@
 package tim.prune.threedee;
 
+import java.awt.Color;
+
 import tim.prune.data.DataPoint;
 import tim.prune.data.PointScaler;
 import tim.prune.data.Track;
+import tim.prune.gui.colour.PointColourer;
 
 /**
  * Class to hold a 3d model of the track data,
@@ -14,59 +17,59 @@ public class ThreeDModel
 	private final Track _track;
 	private Track _terrainTrack = null;
 	private PointScaler _scaler = null;
+	private PointColourer _pointColourer = null;
 	private final double _scaleFactor = 1.0;
 	private double _altFactor = 1.0;
 	private double _externalScaleFactor = 1.0;
 	// MAYBE: How to store rods (lifts) in data?
 	private byte[] _pointTypes = null;
-	private byte[] _pointHeights = null;
+	private byte[] _pointColourCodes = null;
 
 	// Constants for point types
 	public static final byte POINT_TYPE_WAYPOINT      = 1;
 	public static final byte POINT_TYPE_NORMAL_POINT  = 2;
 	public static final byte POINT_TYPE_SEGMENT_START = 3;
 
+	private static final int MAX_NUM_DISTINCT_COLOURS = 32;
+
 
 	/**
 	 * Constructor
 	 * @param inTrack Track object
 	 */
-	public ThreeDModel(Track inTrack)
-	{
+	public ThreeDModel(Track inTrack) {
 		_track = inTrack;
 	}
-
 
 	/**
 	 * @param inTrack terrain track to set
 	 */
-	public void setTerrain(Track inTrack)
-	{
+	public void setTerrain(Track inTrack) {
 		_terrainTrack = inTrack;
 	}
 
 	/**
 	 * @return the number of points in the model
 	 */
-	public int getNumPoints()
-	{
-		if (_track == null) return 0;
-		return _track.getNumPoints();
+	public int getNumPoints() {
+		return (_track == null ? 0 : _track.getNumPoints());
 	}
 
 	/**
 	 * @param inFactor altitude exaggeration factor (default 1.0)
 	 */
-	public void setAltitudeFactor(double inFactor)
-	{
+	public void setAltitudeFactor(double inFactor) {
 		_altFactor = inFactor;
+	}
+
+	public void setPointColourer(PointColourer inColourer) {
+		_pointColourer = inColourer;
 	}
 
 	/**
 	 * @param inSize size of model
 	 */
-	public void setModelSize(double inSize)
-	{
+	public void setModelSize(double inSize) {
 		_externalScaleFactor = inSize;
 	}
 
@@ -93,25 +96,39 @@ public class ThreeDModel
 		calculatePointTypes();
 	}
 
+	/** @return the number of colour used by the colourer */
+	public int getNumColourCodes()
+	{
+		int numColourCodes = _pointColourer.getNumDistinctColours();
+		if (numColourCodes <= 0) {
+			numColourCodes = MAX_NUM_DISTINCT_COLOURS;
+		}
+		return numColourCodes;
+	}
 
 	/**
-	 * Calculate the point types and height codes
+	 * Calculate the point types and colour codes
 	 */
 	private void calculatePointTypes()
 	{
 		int numPoints = getNumPoints();
 		_pointTypes = new byte[numPoints];
-		_pointHeights = new byte[numPoints];
+		_pointColourCodes = new byte[numPoints];
+		int numColourCodes = getNumColourCodes();
 		// Loop over points in track
 		for (int i=0; i<numPoints; i++)
 		{
 			DataPoint point = _track.getPoint(i);
-			_pointTypes[i] = (point.isWaypoint()?POINT_TYPE_WAYPOINT:
-				(point.getSegmentStart()?POINT_TYPE_SEGMENT_START:POINT_TYPE_NORMAL_POINT));
-			_pointHeights[i] = (byte) (point.getAltitude().getMetricValue() / 500);
+			_pointTypes[i] = (point.isWaypoint() ? POINT_TYPE_WAYPOINT :
+				(point.getSegmentStart() ? POINT_TYPE_SEGMENT_START : POINT_TYPE_NORMAL_POINT));
+			_pointColourCodes[i] = (byte) (_pointColourer.getColourIndex(i) * (numColourCodes-1));
 		}
 	}
 
+	/** @return the point colourer for track points */
+	public PointColourer getPointColourer() {
+		return _pointColourer;
+	}
 
 	/**
 	 * Get the scaled horizontal value for the specified point
@@ -187,17 +204,23 @@ public class ThreeDModel
 	 * @param inIndex index of point, starting at 0
 	 * @return point type, either POINT_TYPE_WAYPOINT or POINT_TYPE_NORMAL_POINT
 	 */
-	public byte getPointType(int inIndex)
-	{
+	public byte getPointType(int inIndex) {
 		return _pointTypes[inIndex];
 	}
 
 	/**
 	 * @param inIndex index of point, starting at 0
-	 * @return point height code
+	 * @return point colour code
 	 */
-	public byte getPointHeightCode(int inIndex)
-	{
-		return _pointHeights[inIndex];
+	public byte getPointColourCode(int inIndex) {
+		return _pointColourCodes[inIndex];
+	}
+
+	/**
+	 * @param inIndex index of point, starting at 0
+	 * @return point colour
+	 */
+	public Color getPointColour(int inIndex) {
+		return _pointColourer.getColour(inIndex);
 	}
 }

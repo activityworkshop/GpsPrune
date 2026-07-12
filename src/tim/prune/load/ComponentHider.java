@@ -13,18 +13,9 @@ import tim.prune.data.Field;
 public class ComponentHider
 {
 	/**
-	 * Inner class to hold each Component and its Field
+	 * Record to hold each Component and its Field
 	 */
-	static class ComponentPair
-	{
-		public final Component _component;
-		public final Field _field;
-		/** Constructor */
-		public ComponentPair(Component inComponent, Field inField)
-		{
-			_component = inComponent;
-			_field     = inField;
-		}
+	private record ComponentPair(Component component, Field field) {
 	}
 
 	/** list itself */
@@ -51,8 +42,8 @@ public class ComponentHider
 	{
 		for (ComponentPair pair : _componentList)
 		{
-			if (pair != null && pair._field == inField) {
-				pair._component.setEnabled(inEnabled);
+			if (pair != null && pair.field() == inField) {
+				pair.component().setEnabled(inEnabled);
 			}
 		}
 	}

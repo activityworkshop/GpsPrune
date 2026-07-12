@@ -740,14 +740,8 @@ public class MapCanvas extends JPanel implements MouseListener, MouseMotionListe
 					if (_trackInfo.isPointMarkedForDeletion(i)) {
 						inG.setColor(currentColour);
 					}
-					else if (pointColourer != null)
-					{  // use the point colourer if there is one
-						Color trackColour = pointColourer.getColour(i);
-						inG.setColor(trackColour);
-					}
-					else
-					{
-						inG.setColor(pointColour);
+					else {
+						inG.setColor(pointColourer.getColour(i));
 					}
 
 					// Draw rectangle for track point if it's visible

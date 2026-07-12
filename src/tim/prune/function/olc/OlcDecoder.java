@@ -81,8 +81,8 @@ public class OlcDecoder
 					else
 					{
 						// Add to current lat, lon
-						lat += (pair.lat * resolution);
-						lon += (pair.lon * resolution);
+						lat += (pair.lat() * resolution);
+						lon += (pair.lon() * resolution);
 						numSteps++;
 						resolution /= 20.0;
 					}
@@ -101,8 +101,8 @@ public class OlcDecoder
 					// take next character, make pair
 					CoordPair pair = CoordPair.decode(code.charAt(charPos));
 					// Add to current lat, lon
-					lat += (pair.lat * resolution);
-					lon += (pair.lon * resolution);
+					lat += (pair.lat() * resolution);
+					lon += (pair.lon() * resolution);
 					charPos += 1;
 					numSteps++;
 					resolution /= 20.0;

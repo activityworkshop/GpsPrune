@@ -2,7 +2,11 @@ package tim.prune.gui.map;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+
 import javax.swing.JPanel;
 
 import tim.prune.I18nManager;
@@ -37,7 +41,15 @@ public class ScaleBar extends JPanel
 	{
 		_config = inConfig;
 		setOpaque(false);
-		setPreferredSize(new Dimension(100, 20));
+		final int height = getScaleFudge() + 10;
+		setPreferredSize(new Dimension(100, height));
+	}
+
+	private int getScaleFudge()
+	{
+		final int textScaleFactor = _config.getConfigInt(Config.KEY_TEXT_SCALING_FACTOR);
+		final int clampedFactor = Math.max(100, Math.min(textScaleFactor, 300));
+		return (int) (clampedFactor * 0.01 * 10);
 	}
 
 	/**
@@ -146,13 +158,15 @@ public class ScaleBar extends JPanel
 		inG.drawLine(rightSide+1, Y_OFFSET+1, rightSide+1, Y_OFFSET-TICK_HEIGHT);
 		// text
 		final String text = getScaleText(inScale, _config.getUnitSet().getDistanceUnit());
+		final int textYOffset = getScaleFudge();
 		inG.setColor(blankColour);
-		inG.drawString(text, rightSide+MARGIN_WIDTH-1, Y_OFFSET);
-		inG.drawString(text, rightSide+MARGIN_WIDTH+1, Y_OFFSET);
-		inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET-1);
-		inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET+1);
+		((Graphics2D) inG).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		final Font regularFont = inG.getFont();
+		inG.setFont(regularFont.deriveFont(Font.BOLD));
+		inG.drawString(text, rightSide+MARGIN_WIDTH, textYOffset);
 		inG.setColor(barColour);
-		inG.drawString(text, rightSide+MARGIN_WIDTH, Y_OFFSET);
+		inG.drawString(text, rightSide+MARGIN_WIDTH, textYOffset);
+		inG.setFont(regularFont);
 	}
 
 	/**
@@ -163,7 +177,8 @@ public class ScaleBar extends JPanel
 	 */
 	private static String getScaleText(int inScale, Unit inDistUnit)
 	{
-		if (inScale > 0) {
+		if (inScale > 0)
+		{
 			// Positive scale means km or miles
 			return "" + inScale	+ " " +
 				I18nManager.getText(inDistUnit.getShortnameKey());

@@ -1,7 +1,8 @@
 package tim.prune.load;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -187,8 +188,8 @@ public class FileTypeLoader
 					if (looksLikeUrl(link))
 					{
 						try {
-							items.add(ItemToLoad.mediaUrl(new URL(link), point));
-						} catch (MalformedURLException ignored) {}
+							items.add(ItemToLoad.mediaUrl(new URI(link).toURL(), point));
+						} catch (MalformedURLException | URISyntaxException ignored) {}
 					}
 					else {
 						items.add(ItemToLoad.archivedFile(inSourceInfo.getFile(), link, point));

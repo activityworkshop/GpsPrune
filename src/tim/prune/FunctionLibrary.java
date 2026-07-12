@@ -42,6 +42,7 @@ import tim.prune.function.media.DisconnectPhotoFunction;
 import tim.prune.function.media.IgnoreExifThumb;
 import tim.prune.function.media.PhotoPopupFunction;
 import tim.prune.function.media.PlayAudioFunction;
+import tim.prune.function.media.RemoveAllPhotosFunction;
 import tim.prune.function.media.RemoveAudioFunction;
 import tim.prune.function.media.RemovePhotoFunction;
 import tim.prune.function.media.RotatePhoto;
@@ -89,6 +90,7 @@ public abstract class FunctionLibrary
 	public static GenericFunction FUNCTION_SEW_SEGMENTS = null;
 	public static GenericFunction FUNCTION_CREATE_MARKER_WAYPOINTS = null;
 	public static GenericFunction FUNCTION_REARRANGE_PHOTOS = null;
+	public static GenericFunction FUNCTION_REMOVE_ALL_PHOTOS = null;
 	public static GenericFunction FUNCTION_COMPRESS = null;
 	public static DeleteMarkedPointsFunction FUNCTION_DELETE_MARKED_POINTS = null;
 	public static GenericFunction FUNCTION_DELETE_RANGE = null;
@@ -170,6 +172,7 @@ public abstract class FunctionLibrary
 		FUNCTION_SEW_SEGMENTS = new SewTrackSegmentsFunction(inApp);
 		FUNCTION_CREATE_MARKER_WAYPOINTS = new CreateMarkerWaypointsFunction(inApp);
 		FUNCTION_REARRANGE_PHOTOS = new RearrangePhotosFunction(inApp);
+		FUNCTION_REMOVE_ALL_PHOTOS = new RemoveAllPhotosFunction(inApp);
 		FUNCTION_COMPRESS = new CompressTrackFunction(inApp);
 		FUNCTION_DELETE_MARKED_POINTS = new DeleteMarkedPointsFunction(inApp);
 		FUNCTION_DELETE_RANGE = new DeleteSelectedRangeFunction(inApp);

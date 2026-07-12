@@ -31,7 +31,7 @@ public class BabelFilterPanel extends JPanel
 	/** Dialog for adding a new filter */
 	private AddFilterDialog _addDialog = null;
 	/** Icon manager for validation label */
-	private IconManager _iconManager = null;
+	private final IconManager _iconManager;
 
 	/** Regular expression for detecting valid filter strings */
 	private static final Pattern FILTER_PATTERN

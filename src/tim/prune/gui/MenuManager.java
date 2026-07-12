@@ -144,6 +144,7 @@ public class MenuManager implements DataSubscriber
 	private JMenuItem _disconnectPhotoItem = null;
 	private JMenuItem _correlatePhotosItem = null;
 	private JMenuItem _rearrangePhotosItem = null;
+	private JMenuItem _removeAllPhotosItem = null;
 	private JMenuItem _rotatePhotoLeft = null;
 	private JMenuItem _rotatePhotoRight = null;
 	private JMenuItem _ignoreExifThumb = null;
@@ -549,6 +550,9 @@ public class MenuManager implements DataSubscriber
 		// rearrange photo points
 		_rearrangePhotosItem = makeMenuItem(FunctionLibrary.FUNCTION_REARRANGE_PHOTOS, false);
 		photoMenu.add(_rearrangePhotosItem);
+		// remove all photos
+		_removeAllPhotosItem = makeMenuItem(FunctionLibrary.FUNCTION_REMOVE_ALL_PHOTOS, false);
+		photoMenu.add(_removeAllPhotosItem);
 		menubar.add(photoMenu);
 
 		// Audio menu
@@ -880,6 +884,7 @@ public class MenuManager implements DataSubscriber
 		_disconnectPhotoItem.setEnabled(hasPhoto && currentPhoto.getDataPoint() != null);
 		_correlatePhotosItem.setEnabled(anyPhotos && hasData);
 		_rearrangePhotosItem.setEnabled(anyPhotos && hasMultiplePoints);
+		_removeAllPhotosItem.setEnabled(anyPhotos);
 		_removePhotoItem.setEnabled(hasPhoto);
 		_rotatePhotoLeft.setEnabled(hasPhoto);
 		_rotatePhotoRight.setEnabled(hasPhoto);

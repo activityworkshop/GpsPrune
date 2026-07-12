@@ -78,9 +78,9 @@ public class Coordinate
 		long[] fields = new long[4]; // needs to be long for lengthy decimals
 		int[] lengths = new int[4];
 		boolean[] otherDelims = new boolean[5]; // remember whether delimiters have non-decimal chars
-		ParseResult result = parseString(source, fields, lengths, otherDelims);
-		final int numFields = result.numFields;
-		final boolean isNegative = result.isNegative && cardinal == Cardinal.NO_CARDINAL;
+		final ParseResult result = parseString(source, fields, lengths, otherDelims);
+		final int numFields = result.numFields();
+		final boolean isNegative = result.isNegative() && cardinal == Cardinal.NO_CARDINAL;
 		if (!cardinalSpecified) {
 			cardinal = isNegative ? inNegativeCardinal : inPositiveCardinal;
 		}
@@ -173,16 +173,10 @@ public class Coordinate
 		return new Coordinate(_cardinal.getOpposite(), _originalString, _originalFormat, doubleValue, wrappedValue);
 	}
 
-	/** Class to hold the results of the string parsing */
-	private static class ParseResult
-	{
-		public final int numFields;
-		public final boolean isNegative;
-		ParseResult(int inNumFields, boolean inNegative)
-		{
-			numFields = inNumFields;
-			isNegative = inNegative;
-		}
+	/**
+	 * Record to hold the results of the string parsing
+	 */
+	private record ParseResult(int numFields, boolean isNegative) {
 	}
 
 	/**

@@ -99,7 +99,7 @@ public class DiskCache
 	public void saveTileImage(RenderedImage inImage, TileDef inDefinition) throws CacheFailure
 	{
 		if (_basePath == null) {return;} // no cache specified
-		if (!inDefinition._mapSource.getFileExtension(inDefinition._layerIdx).equals("png")) {
+		if (!inDefinition.mapSource().getFileExtension(inDefinition.layerIdx()).equals("png")) {
 			return; // can only write png tiles
 		}
 		File tileFile = new File(_basePath, inDefinition.getFilePath());

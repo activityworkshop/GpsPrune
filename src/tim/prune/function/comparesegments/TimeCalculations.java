@@ -8,22 +8,11 @@ import tim.prune.function.PointUtils;
 /** Calculations dealing with time matching between the two segments */
 class TimeCalculations
 {
-	/** Placeholder class to get the information from a time match */
-	private static class TimeResult
-	{
-		private final IntersectionResult _firstResult;
-		private final IntersectionResult _resultBefore;
-		private final IntersectionResult _resultAfter;
-		private final double _fraction;
-
-		public TimeResult(IntersectionResult inFirst, IntersectionResult inBefore,
-			IntersectionResult inAfter, double inFraction)
-		{
-			_firstResult = inFirst;
-			_resultBefore = inBefore;
-			_resultAfter = inAfter;
-			_fraction = inFraction;
-		}
+	/**
+	 * Placeholder record to get the information from a time match
+	 */
+	private record TimeResult(IntersectionResult firstResult, IntersectionResult resultBefore,
+	                          IntersectionResult resultAfter, double fraction) {
 	}
 
 	/**
@@ -33,15 +22,15 @@ class TimeCalculations
 	public static Double findSecondDistanceAtSameTime(List<IntersectionResult> inResults, long inFirstSeconds)
 	{
 		TimeResult timeResult = findResultsAtSameTime(inResults, inFirstSeconds);
-		if (timeResult == null || timeResult._fraction < 0.0 || timeResult._fraction > 1.0) {
+		if (timeResult == null || timeResult.fraction() < 0.0 || timeResult.fraction() > 1.0) {
 			return null;
 		}
-		double distBeforeRadians = timeResult._resultBefore.getSecondDistanceRadians(timeResult._firstResult);
-		double spanRadians = timeResult._resultAfter.getSecondDistanceRadians(timeResult._firstResult) - distBeforeRadians;
+		double distBeforeRadians = timeResult.resultBefore().getSecondDistanceRadians(timeResult.firstResult());
+		double spanRadians = timeResult.resultAfter().getSecondDistanceRadians(timeResult.firstResult()) - distBeforeRadians;
 		if (spanRadians < 0.0) {
 			return null;
 		}
-		return distBeforeRadians + timeResult._fraction;
+		return distBeforeRadians + timeResult.fraction();
 	}
 
 	/**
@@ -51,12 +40,12 @@ class TimeCalculations
 	public static DataPoint findSecondPointAtSameTime(List<IntersectionResult> inResults, long inFirstSeconds)
 	{
 		TimeResult timeResult = findResultsAtSameTime(inResults, inFirstSeconds);
-		if (timeResult == null || timeResult._fraction < 0.0 || timeResult._fraction > 1.0) {
+		if (timeResult == null || timeResult.fraction() < 0.0 || timeResult.fraction() > 1.0) {
 			return null;
 		}
-		final DataPoint pointBefore = timeResult._resultBefore.getSecondPoint();
-		final DataPoint pointAfter = timeResult._resultAfter.getSecondPoint();
-		return PointUtils.interpolate(pointBefore, pointAfter, timeResult._fraction);
+		final DataPoint pointBefore = timeResult.resultBefore().getSecondPoint();
+		final DataPoint pointAfter = timeResult.resultAfter().getSecondPoint();
+		return PointUtils.interpolate(pointBefore, pointAfter, timeResult.fraction());
 	}
 
 	private static TimeResult findResultsAtSameTime(List<IntersectionResult> inResults, long inFirstSeconds)

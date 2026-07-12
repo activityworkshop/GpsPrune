@@ -6,6 +6,8 @@ public abstract class ContinuousPointColourer extends PointColourer
 {
 	/** array of colours to use */
 	private Color[] _colours = null;
+	/** array of scale values (0.0 to 1.0) */
+	private double[] _values = null;
 
 	/**
 	 * Constructor
@@ -26,12 +28,14 @@ public abstract class ContinuousPointColourer extends PointColourer
 	{
 		if (_colours == null || _colours.length != inNumPoints)
 		{
-			// Array needs to be created or resized
+			// Arrays need to be created or resized
 			if (inNumPoints > 0) {
 				_colours = new Color[inNumPoints];
+				_values = new double[inNumPoints];
 			}
 			else {
 				_colours = null;
+				_values = null;
 			}
 		}
 	}
@@ -40,12 +44,15 @@ public abstract class ContinuousPointColourer extends PointColourer
 	 * Set the colour at the given index
 	 * @param inPointIndex point index
 	 * @param inColour colour to use, or null
+	 * @param inValue value to use, or 0.0
 	 */
-	protected void setColour(int inPointIndex, Color inColour)
+	protected void setColour(int inPointIndex, Color inColour, double inValue)
 	{
-		if (_colours != null && _colours.length > inPointIndex && inPointIndex >= 0)
-		{
+		if (_colours != null && _colours.length > inPointIndex && inPointIndex >= 0) {
 			_colours[inPointIndex] = inColour;
+		}
+		if (_values != null && _values.length > inPointIndex && inPointIndex >= 0) {
+			_values[inPointIndex] = inValue;
 		}
 	}
 
@@ -66,5 +73,23 @@ public abstract class ContinuousPointColourer extends PointColourer
 			colour = super.getDefaultColour();
 		}
 		return colour;
+	}
+
+	/** @return the colour fraction to use for the given point */
+	public double getColourIndex(int inPointIndex)
+	{
+		if (_values != null && _values.length > inPointIndex && inPointIndex >= 0) {
+			return _values[inPointIndex];
+		}
+		return 0.0;
+	}
+
+	/** @return the Colour to use for the given colour fraction */
+	public Color getColourForColourIndex(double inColourIndex) {
+		return mixColour((float) inColourIndex);
+	}
+
+	public int getNumDistinctColours() {
+		return -1;
 	}
 }

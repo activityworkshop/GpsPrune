@@ -14,9 +14,9 @@ import javax.swing.SwingUtilities;
 public abstract class FilterDefinition extends JPanel
 {
 	/** Parent dialog to inform of parameter changes */
-	private AddFilterDialog _parentDialog = null;
+	private final AddFilterDialog _parentDialog;
 	/** Listener for key presses on the parameter entry fields */
-	protected KeyListener _paramChangeListener = null;
+	protected final KeyListener _paramChangeListener;
 
 	/**
 	 * Constructor

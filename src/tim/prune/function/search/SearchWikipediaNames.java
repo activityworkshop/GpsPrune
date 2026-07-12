@@ -1,6 +1,7 @@
 package tim.prune.function.search;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -112,7 +113,7 @@ public class SearchWikipediaNames extends GenericDownloaderFunction
 
 		try
 		{
-			URL url = new URL(urlString);
+			URL url = new URI(urlString).toURL();
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			inStream = url.openStream();
 			saxParser.parse(inStream, xmlHandler);

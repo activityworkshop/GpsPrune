@@ -49,13 +49,13 @@ public class SegmentLooper
 	private IntersectionResult matchFound(PointData inPoint, LineAndBearing inLine)
 	{
 		// Check that two bearings are within a tolerance of BEARING_TOLERANCE_DEGREES
-		final double bearingDifference = Bearing.angleDifferenceDegrees(inPoint._bearing, inLine._bearing);
+		final double bearingDifference = Bearing.angleDifferenceDegrees(inPoint.bearing(), inLine._bearing);
 		if (bearingDifference >= BEARING_TOLERANCE_DEGREES) {
 			return null;
 		}
 		// Project point at right angles to bearing
-		DataPoint pointRight = PointUtils.projectPoint(inPoint._point, Math.toRadians(inPoint._bearing + 90.0), DISTANCE_TOLERANCE_RADIANS);
-		DataPoint pointLeft = PointUtils.projectPoint(inPoint._point, Math.toRadians(inPoint._bearing - 90.0), DISTANCE_TOLERANCE_RADIANS);
+		DataPoint pointRight = PointUtils.projectPoint(inPoint.point(), Math.toRadians(inPoint.bearing() + 90.0), DISTANCE_TOLERANCE_RADIANS);
+		DataPoint pointLeft = PointUtils.projectPoint(inPoint.point(), Math.toRadians(inPoint.bearing() - 90.0), DISTANCE_TOLERANCE_RADIANS);
 		DataPoint lineFromPoint = inLine.getFromPoint();
 		DataPoint lineToPoint = inLine.getToPoint();
 		if (!overlap(pointLeft.getLongitude(), pointRight.getLongitude(), lineFromPoint.getLongitude(), lineToPoint.getLongitude())
@@ -72,13 +72,13 @@ public class SegmentLooper
 		long totalMillis = inLine.getMilliseconds();
 		Timestamp timestamp = lineFromPoint.getTimestamp().addOffsetMilliseconds((long) (totalMillis * lineFraction));
 		double lineDistRadians = inLine._distToFromPointRadians + lineFraction * inLine._distAlongRadians;
-		final double speed1 = inPoint._speedRadiansPerSec;
+		final double speed1 = inPoint.speedRadiansPerSec();
 		final double speed2 = inLine.getInterpolatedSpeed(lineFraction);
 		// we'll interpolate the cut point too to be able to show it if we need to
 		DataPoint calculatedPoint = PointUtils.interpolate(lineFromPoint, lineToPoint, lineFraction);
-		return new IntersectionResult(inPoint._point, calculatedPoint,
-			inPoint._point.getTimestamp(), timestamp,
-			inPoint._distanceToHereRadians, lineDistRadians,
+		return new IntersectionResult(inPoint.point(), calculatedPoint,
+			inPoint.point().getTimestamp(), timestamp,
+			inPoint.distanceToHereRadians(), lineDistRadians,
 			speed1, speed2);
 	}
 

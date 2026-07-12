@@ -31,11 +31,11 @@ public class InsertMediaCmd extends Command
 	{
 		for (MediaInsertion item : _media)
 		{
-			if (item.getMedia() instanceof Photo) {
-				inInfo.getPhotoList().add((Photo) item.getMedia(), item.getInsertIndex());
+			if (item.media() instanceof Photo photo) {
+				inInfo.getPhotoList().add(photo, item.insertIndex());
 			}
-			else if (item.getMedia() instanceof AudioClip) {
-				inInfo.getAudioList().add((AudioClip) item.getMedia(), item.getInsertIndex());
+			else if (item.media() instanceof AudioClip audio) {
+				inInfo.getAudioList().add(audio, item.insertIndex());
 			}
 			else {
 				return false;

@@ -8,19 +8,9 @@ import java.util.List;
 import tim.prune.cmd.Command;
 
 /**
- * Class to hold a command together with a counter
+ * Record to hold a command together with a counter
  */
-class CommandWithState
-{
-	public final Command _command;
-	public final int _undoCounter;
-
-	/** Constructor */
-	public CommandWithState(Command inCommand, int inCounter)
-	{
-		_command = inCommand;
-		_undoCounter = inCounter;
-	}
+record CommandWithState(Command command, int undoCounter) {
 }
 
 
@@ -48,7 +38,7 @@ public class UndoStack extends Stack<CommandWithState>
 	public synchronized Command popCommand()
 	{
 		_numUndos++;
-		return super.pop()._command;
+		return super.pop().command();
 	}
 
 	/** Get the list of command descriptions, starting with the most recently added */
@@ -56,7 +46,7 @@ public class UndoStack extends Stack<CommandWithState>
 	{
 		ArrayList<String> commands = new ArrayList<>();
 		for (CommandWithState cws : asList()) {
-			commands.add(cws._command.getDescription());
+			commands.add(cws.command().getDescription());
 		}
 		return commands;
 	}
@@ -64,8 +54,10 @@ public class UndoStack extends Stack<CommandWithState>
 	/** @return number of undos */
 	public int getNumUndos()
 	{
-		if (isEmpty()) {return 0;}
+		if (isEmpty()) {
+			return 0;
+		}
 		// Get the number of undos stored by the last operation on the stack
-		return peek()._undoCounter;
+		return peek().undoCounter();
 	}
 }

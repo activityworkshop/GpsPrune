@@ -43,10 +43,10 @@ class OlcDecoderTest
 	{
 		OlcArea area = OlcDecoder.decode("22000000");
 		assertNotNull(area, "Decoding with padding gives non-null");
-		assertEquals(-90.0, area.minLat, 0.0, "South 90");
-		assertEquals(-70.0, area.maxLat, 0.0, "South 70");
-		assertEquals(-180.0, area.minLon, 0.0, "West 180");
-		assertEquals(-160.0, area.maxLon, 0.0, "West 160");
+		assertEquals(-90.0, area.minLat(), 0.0, "South 90");
+		assertEquals(-70.0, area.maxLat(), 0.0, "South 70");
+		assertEquals(-180.0, area.minLon(), 0.0, "West 180");
+		assertEquals(-160.0, area.maxLon(), 0.0, "West 160");
 	}
 
 	@Test
@@ -54,10 +54,10 @@ class OlcDecoderTest
 	{
 		OlcArea area = OlcDecoder.decode("22220000");
 		assertNotNull(area, "Decoding with padding gives non-null");
-		assertEquals(-90.0, area.minLat, 0.0, "South 90");
-		assertEquals(-89.0, area.maxLat, 0.0, "South 89");
-		assertEquals(-180.0, area.minLon, 0.0, "West 180");
-		assertEquals(-179.0, area.maxLon, 0.0, "West 179");
+		assertEquals(-90.0, area.minLat(), 0.0, "South 90");
+		assertEquals(-89.0, area.maxLat(), 0.0, "South 89");
+		assertEquals(-180.0, area.minLon(), 0.0, "West 180");
+		assertEquals(-179.0, area.maxLon(), 0.0, "West 179");
 	}
 
 	@Test
@@ -67,8 +67,8 @@ class OlcDecoderTest
 		assertNotNull(area, "Decoding with separator gives non-null");
 //		System.out.println("Lat: " + area.minLat + " to " + area.maxLat);
 //		System.out.println("lon: " + area.minLon + " to " + area.maxLon);
-		assertTrue(area.maxLat > area.minLat, "latitude range");
-		assertTrue(area.maxLon > area.minLon, "longitude range");
+		assertTrue(area.maxLat() > area.minLat(), "latitude range");
+		assertTrue(area.maxLon() > area.minLon(), "longitude range");
 	}
 
 	@Test
@@ -79,13 +79,13 @@ class OlcDecoderTest
 		// Now try as a short form
 		area = OlcDecoder.decode("7VP3+PR6", 1.0, 104.0);
 		assertNotNull(area);
-		assertTrue(area.code.startsWith("6PH5"), "Singapore");
-		assertTrue(area.minLat > 0.0);
+		assertTrue(area.code().startsWith("6PH5"), "Singapore");
+		assertTrue(area.minLat() > 0.0);
 		// same code but different reference location, gives different code and latitude
 		area = OlcDecoder.decode("7VP3+", -19.0, 48.0);
 		assertNotNull(area);
-		assertTrue(area.code.startsWith("5HH9"), "Madagaskar");
-		assertTrue(area.minLat < -18.0);
+		assertTrue(area.code().startsWith("5HH9"), "Madagaskar");
+		assertTrue(area.minLat() < -18.0);
 	}
 
 	@Test

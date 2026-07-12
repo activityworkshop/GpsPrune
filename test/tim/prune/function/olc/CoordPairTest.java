@@ -18,14 +18,14 @@ class CoordPairTest
 		// 2, 2
 		pair = CoordPair.decode('2', '2');
 		assertFalse(pair == CoordPair.PADDING);
-		assertEquals(0.0, pair.lat);
-		assertEquals(0.0, pair.lon);
+		assertEquals(0.0, pair.lat());
+		assertEquals(0.0, pair.lon());
 
 		// 3, 4
 		pair = CoordPair.decode('3', '4');
 		assertFalse(pair == CoordPair.PADDING);
-		assertEquals(1.0/20.0, pair.lat);
-		assertEquals(2.0/20.0, pair.lon);
+		assertEquals(1.0/20.0, pair.lat());
+		assertEquals(2.0/20.0, pair.lon());
 	}
 
 	@Test

@@ -15,7 +15,7 @@ import tim.prune.function.media.PlayAudioFunction;
 public class AudioListener implements Runnable, ActionListener
 {
 	/** progress bar */
-	private JProgressBar _progressBar = null;
+	private final JProgressBar _progressBar;
 
 	/**
 	 * Constructor

@@ -28,7 +28,8 @@ public class DataStatus
 	 */
 	public boolean hasDataChanged(DataStatus inPreviousStatus)
 	{
-		return _undoSize != inPreviousStatus._undoSize
+		return inPreviousStatus == null
+			|| _undoSize != inPreviousStatus._undoSize
 			|| _numUndos != inPreviousStatus._numUndos;
 	}
 }

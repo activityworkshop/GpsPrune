@@ -162,12 +162,12 @@ public class JsonFileLoader extends FileTypeLoader
 		ArrayList<DataPoint> points = new ArrayList<>();
 		for (JsonPoint jsonPoint : _jsonPoints)
 		{
-			DataPoint point = new DataPoint(Latitude.make(jsonPoint._latitude),
-				Longitude.make(jsonPoint._longitude),
-				new Altitude(jsonPoint._altitude, UnitSetLibrary.UNITS_METRES));
+			DataPoint point = new DataPoint(Latitude.make(jsonPoint.latitude()),
+				Longitude.make(jsonPoint.longitude()),
+				new Altitude(jsonPoint.altitude(), UnitSetLibrary.UNITS_METRES));
 			if (point.isValid())
 			{
-				point.setSegmentStart(jsonPoint._newSegment);
+				point.setSegmentStart(jsonPoint.newSegment());
 				points.add(point);
 			}
 		}

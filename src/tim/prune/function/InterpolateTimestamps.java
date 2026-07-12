@@ -47,8 +47,8 @@ public class InterpolateTimestamps extends GenericFunction
 			{
 				if (fromPoint != null && !pointList.isEmpty())
 				{
-				   distanceSoFar += distanceBetween(latestPoint, point);
-				   processPointList(pointList, distanceSoFar,
+					distanceSoFar += distanceBetween(latestPoint, point);
+					processPointList(pointList, distanceSoFar,
 						fromPoint.getTimestamp(), point.getTimestamp());
 				}
 				fromPoint = point;
@@ -87,11 +87,11 @@ public class InterpolateTimestamps extends GenericFunction
 	{
 		for (IndexAndDistance idxDist : inPointList)
 		{
-			final double fraction = idxDist._distance / inTotalDistance;
+			final double fraction = idxDist.distance() / inTotalDistance;
 			final long millisAfter = (long) (inEndTimestamp.getMillisecondsSince(inStartTimestamp) * fraction);
 			Timestamp stamp = inStartTimestamp.addOffsetMilliseconds(millisAfter);
 			String stampText = stamp.getText(Timestamp.Format.ISO8601, null);
-			_edits.add(new PointEdit(idxDist._pointIndex, stampText));
+			_edits.add(new PointEdit(idxDist.pointIndex(), stampText));
 		}
 	}
 
@@ -107,16 +107,9 @@ public class InterpolateTimestamps extends GenericFunction
 	}
 
 
-	/** Inner class to hold points and distances in a list */
-	private static class IndexAndDistance
-	{
-		private final int _pointIndex;
-		private final double _distance;
-
-		private IndexAndDistance(int inIndex, double inDistance)
-		{
-			_pointIndex = inIndex;
-			_distance = inDistance;
-		}
+	/**
+	 * Record to hold points and distances in a list
+	 */
+	private record IndexAndDistance(int pointIndex, double distance) {
 	}
 }

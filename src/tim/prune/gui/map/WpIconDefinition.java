@@ -8,9 +8,9 @@ import javax.swing.ImageIcon;
 public class WpIconDefinition
 {
 	/** X offset of marker point in image */
-	private final int    _xOffset;
+	private final int _xOffset;
 	/** Y offset of marker point in image */
-	private final int    _yOffset;
+	private final int _yOffset;
 	/** icon */
 	private final ImageIcon _icon;
 

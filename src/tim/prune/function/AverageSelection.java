@@ -44,7 +44,7 @@ public class AverageSelection extends GenericFunction
 	 * Average selected points
 	 * @param inStartIndex start index of selection
 	 * @param inEndIndex end index of selection
-	 * @return true if successful
+	 * @return a new point if successful, otherwise null
 	 */
 	private DataPoint average(Track inTrack, int inStartIndex, int inEndIndex)
 	{

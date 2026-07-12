@@ -82,15 +82,14 @@ public abstract class DiscretePointColourer extends PointColourer
 	 */
 	void generateDiscreteColours(int inNumCategories)
 	{
-		int maxColours = getMaxColours();
-		if (maxColours <= 1) {maxColours = 2;}
-		if (inNumCategories < 1) {inNumCategories = 1;}
-		else if (inNumCategories > maxColours) {inNumCategories = maxColours;}
+		int maxColours = Math.max(2, getMaxColours());
+		int numCategories = Math.max(1, inNumCategories);
+		numCategories = Math.min(numCategories, maxColours);
 
 		// Use this number of categories to generate the colours
-		_discreteColours = new Color[inNumCategories];
-		for (int i=0; i<inNumCategories; i++) {
-			_discreteColours[i] = mixColour(i, inNumCategories);
+		_discreteColours = new Color[numCategories];
+		for (int i=0; i<numCategories; i++) {
+			_discreteColours[i] = mixColour(i, numCategories);
 		}
 	}
 
@@ -118,4 +117,27 @@ public abstract class DiscretePointColourer extends PointColourer
 		return _discreteColours[inIndex % getMaxColours()];
 	}
 
+	public double getColourIndex(int inPointIndex)
+	{
+		if (_colourIndexes != null && _colourIndexes.length > inPointIndex && inPointIndex >= 0 && getMaxColours() > 0)
+		{
+			final int colourIndex = _colourIndexes[inPointIndex] % getMaxColours();
+			final int numDiscreteColours = _discreteColours.length;
+			double result = colourIndex * 1.0 / (numDiscreteColours - 1);
+			return result;
+		}
+		return 0.0;
+	}
+
+	/** @return the number of distinct colours being used */
+	public int getNumDistinctColours() {
+		return (_discreteColours == null ? 1 : _discreteColours.length);
+	}
+
+	public Color getColourForColourIndex(double inColourIndex)
+	{
+		final int numDiscreteColours = _discreteColours.length;
+		final double colourIndex = Math.round(inColourIndex * (numDiscreteColours - 1));
+		return _discreteColours[(int) colourIndex];
+	}
 }

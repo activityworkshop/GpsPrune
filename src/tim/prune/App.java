@@ -1,5 +1,6 @@
 package tim.prune;
 
+import java.awt.Color;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EmptyStackException;
@@ -9,6 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import tim.prune.cmd.Command;
+import tim.prune.config.ColourScheme;
 import tim.prune.config.Config;
 import tim.prune.data.LatLonRectangle;
 import tim.prune.data.RecentFile;
@@ -22,6 +24,7 @@ import tim.prune.gui.SidebarController;
 import tim.prune.gui.Viewport;
 import tim.prune.gui.colour.ColourerCaretaker;
 import tim.prune.gui.colour.PointColourer;
+import tim.prune.gui.colour.StaticColourer;
 import tim.prune.load.FileLoader;
 import tim.prune.load.ItemToLoad;
 import tim.prune.load.JpegLoader;
@@ -132,10 +135,17 @@ public class App
 	}
 
 	/**
-	 * @return colourer object, or null
+	 * @return colourer object for track points
 	 */
-	public PointColourer getPointColourer() {
-		return _colCaretaker == null ? null : _colCaretaker.getColourer();
+	public PointColourer getPointColourer()
+	{
+		final PointColourer colourer = (_colCaretaker == null ? null : _colCaretaker.getColourer());
+		if (colourer != null) {
+			return colourer;
+		}
+		final ColourScheme cs = getConfig().getColourScheme();
+		final Color pointColour  = cs.getColour(ColourScheme.IDX_POINT);
+		return new StaticColourer(pointColour);
 	}
 
 	/**
@@ -181,7 +191,7 @@ public class App
 
 	public boolean execute(Command inCommand)
 	{
-		if (inCommand.execute(_trackInfo))
+		if (inCommand != null && inCommand.execute(_trackInfo))
 		{
 			_undoStack.add(inCommand);
 			_redoStack.clear();

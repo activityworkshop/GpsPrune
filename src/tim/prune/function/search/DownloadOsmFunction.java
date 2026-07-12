@@ -9,7 +9,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.NumberFormat;
 
 import javax.swing.BorderFactory;
@@ -153,14 +154,15 @@ public class DownloadOsmFunction extends GenericFunction implements Runnable
 	{
 		double mid = (inRange.getMaximum() + inRange.getMinimum()) / 2.0;
 		double range = inRange.getRange();
-		double max = 0.0, min = 0.0;
+		final double max, min;
 		// Expand range to at least 0.02 degree
 		if (range < 0.02)
 		{
 			min = mid - 0.01;
 			max = mid + 0.01;
 		}
-		else {
+		else
+		{
 			// expand by 10% in both directions
 			min = mid - range * 0.55;
 			max = mid + range * 0.55;
@@ -188,8 +190,9 @@ public class DownloadOsmFunction extends GenericFunction implements Runnable
 			_progressBar.setVisible(true);
 			new Thread(this).start();
 		}
-		else
+		else {
 			_dialog.dispose();
+		}
 	}
 
 	/**
@@ -245,7 +248,7 @@ public class DownloadOsmFunction extends GenericFunction implements Runnable
 		int numBytesRead = 0;
 		try
 		{
-			inStream = new URL(url).openStream();
+			inStream = new URI(url).toURL().openStream();
 			outStream = new FileOutputStream(_selectedFile);
 			// Loop and copy bytes to file
 			while ((numBytesRead = inStream.read(buffer)) > -1 && !_cancelled)
@@ -254,8 +257,8 @@ public class DownloadOsmFunction extends GenericFunction implements Runnable
 			}
 		}
 		catch (MalformedURLException mue) {}
-		catch (IOException ioe) {
-			_app.showErrorMessageNoLookup(getNameKey(), ioe.getClass().getName() + " - " + ioe.getMessage());
+		catch (IOException | URISyntaxException e) {
+			_app.showErrorMessageNoLookup(getNameKey(), e.getClass().getName() + " - " + e.getMessage());
 		}
 		// clean up streams
 		finally {

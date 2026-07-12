@@ -36,9 +36,9 @@ public abstract class MarkAndDeleteFunction extends GenericFunction
 			I18nManager.getText("button.always")};
 		int answer = _automaticallyDelete ? JOptionPane.YES_OPTION :
 			JOptionPane.showOptionDialog(_parentFrame,
-			I18nManager.getTextWithNumber("dialog.compress.confirm", inNumMarked),
-			getName(), JOptionPane.YES_NO_CANCEL_OPTION,
-			JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1]);
+				I18nManager.getTextWithNumber("dialog.compress.confirm", inNumMarked),
+				getName(), JOptionPane.YES_NO_CANCEL_OPTION,
+				JOptionPane.WARNING_MESSAGE, null, buttonTexts, buttonTexts[1]);
 		if (answer == JOptionPane.CANCEL_OPTION) {
 			// "always" is third option
 			_automaticallyDelete = true;

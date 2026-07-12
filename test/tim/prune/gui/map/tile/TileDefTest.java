@@ -37,14 +37,14 @@ class TileDefTest
 		TileDef tile1 = new TileDef(source, 0, 100, 200, 9);
 		TileDef tile2 = tile1.zoomOut();
 		assertNotEquals(tile1, tile2);
-		assertEquals(tile1._mapSource, tile2._mapSource);
-		assertEquals(tile1._layerIdx, tile2._layerIdx);
-		assertEquals(tile1._x / 2, tile2._x);
-		assertEquals(tile1._y / 2, tile2._y);
-		assertEquals(tile1._zoom - 1, tile2._zoom);
+		assertEquals(tile1.mapSource(), tile2.mapSource());
+		assertEquals(tile1.layerIdx(), tile2.layerIdx());
+		assertEquals(tile1.x() / 2, tile2.x());
+		assertEquals(tile1.y() / 2, tile2.y());
+		assertEquals(tile1.zoom() - 1, tile2.zoom());
 
 		// Tile next to tile1 zooms out to the same tile on the next zoom level
-		TileDef tile3 = new TileDef(source, tile1._layerIdx, tile1._x+1, tile1._y+1, tile1._zoom);
+		TileDef tile3 = new TileDef(source, tile1.layerIdx(), tile1.x() + 1, tile1.y() + 1, tile1.zoom());
 		TileDef tile4 = tile3.zoomOut();
 		assertFalse(tile2 == tile4);
 		assertEquals(tile2, tile4);

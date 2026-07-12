@@ -4,7 +4,7 @@ import tim.prune.data.Bearing;
 import tim.prune.data.DataPoint;
 
 /** Holds the information about a single line between two (not necessarily consecutive) track points and its bearing */
-public class LineAndBearing
+class LineAndBearing
 {
 	final PointData _fromPoint;
 	final PointData _toPoint;
@@ -16,17 +16,17 @@ public class LineAndBearing
 	{
 		_fromPoint = fromPoint;
 		_toPoint = toPoint;
-		_bearing = Bearing.calculateDegrees(_fromPoint._point, toPoint._point);
-		_distToFromPointRadians = fromPoint._distanceToHereRadians;
-		_distAlongRadians = toPoint._distanceToHereRadians - fromPoint._distanceToHereRadians;
+		_bearing = Bearing.calculateDegrees(_fromPoint.point(), toPoint.point());
+		_distToFromPointRadians = fromPoint.distanceToHereRadians();
+		_distAlongRadians = toPoint.distanceToHereRadians() - fromPoint.distanceToHereRadians();
 	}
 
 	DataPoint getFromPoint() {
-		return _fromPoint._point;
+		return _fromPoint.point();
 	}
 
 	DataPoint getToPoint() {
-		return _toPoint._point;
+		return _toPoint.point();
 	}
 
 	long getMilliseconds() {
@@ -35,8 +35,8 @@ public class LineAndBearing
 
 	double getInterpolatedSpeed(double inFraction)
 	{
-		final double fromSpeed = _fromPoint._speedRadiansPerSec;
-		final double toSpeed = _toPoint._speedRadiansPerSec;
+		final double fromSpeed = _fromPoint.speedRadiansPerSec();
+		final double toSpeed = _toPoint.speedRadiansPerSec();
 		return fromSpeed + inFraction * (toSpeed - fromSpeed);
 	}
 }

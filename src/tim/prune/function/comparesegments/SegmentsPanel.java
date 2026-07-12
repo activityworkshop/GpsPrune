@@ -108,13 +108,13 @@ public class SegmentsPanel extends JPanel
 	private static void setDistance(PointData inLastPoint, Unit inDistUnits,
 		String inDistUnitsStr, JLabel inLabel)
 	{
-		final double dist = Distance.convertRadiansToDistance(inLastPoint._distanceToHereRadians, inDistUnits);
+		final double dist = Distance.convertRadiansToDistance(inLastPoint.distanceToHereRadians(), inDistUnits);
 		inLabel.setText(DisplayUtils.roundedNumber(dist) + " " + inDistUnitsStr);
 	}
 
 	private static void setDuration(PointData inFirstPoint, PointData inLastPoint, JLabel inLabel)
 	{
-		final long seconds = inLastPoint._point.getTimestamp().getSecondsSince(inFirstPoint._point.getTimestamp());
+		final long seconds = inLastPoint.point().getTimestamp().getSecondsSince(inFirstPoint.point().getTimestamp());
 		inLabel.setText(DisplayUtils.buildDurationString(seconds));
 	}
 }

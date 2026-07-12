@@ -1,24 +1,14 @@
 package tim.prune.function;
 
-import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.JOptionPane;
 
 import tim.prune.App;
 import tim.prune.GenericFunction;
-import tim.prune.I18nManager;
-import tim.prune.cmd.Command;
 import tim.prune.cmd.CompoundCommand;
-import tim.prune.cmd.ConnectMultipleMediaCmd;
-import tim.prune.cmd.MediaLinkType;
-import tim.prune.cmd.PointAndMedia;
 import tim.prune.cmd.PointFlag;
-import tim.prune.cmd.RemoveMediaCmd;
 import tim.prune.cmd.ShuffleAndCropCmd;
-import tim.prune.data.DataPoint;
-import tim.prune.data.MediaObject;
 import tim.prune.data.Track;
+import tim.prune.function.media.LinkedMediaAction;
 import tim.prune.function.media.PopupResponse;
 
 
@@ -35,28 +25,6 @@ public abstract class DeleteBitOfTrackFunction extends GenericFunction
 	 */
 	protected DeleteBitOfTrackFunction(App inApp) {
 		super(inApp);
-	}
-
-	/**
-	 * Decide whether to delete the media or unlink them
-	 * @param inNumMedia number of media found
-	 * @return decision what to do with them
-	 */
-	protected PopupResponse chooseMediaAction(int inNumMedia)
-	{
-		if (inNumMedia <= 0) {
-			return PopupResponse.MEDIA_NOT_CONNECTED;
-		}
-		final String message = I18nManager.getTextWithNumber("dialog.deletepoints.deletemedia", inNumMedia);
-		int response = JOptionPane.showConfirmDialog(_app.getFrame(), message,
-			I18nManager.getText("dialog.deletepoints.title"),
-			JOptionPane.YES_NO_CANCEL_OPTION);
-		if (response == JOptionPane.CANCEL_OPTION || response == JOptionPane.CLOSED_OPTION)
-		{
-			// cancel pressed- abort delete
-			return PopupResponse.CANCEL;
-		}
-		return (response == JOptionPane.YES_OPTION ? PopupResponse.DELETE : PopupResponse.UNLINK);
 	}
 
 	/**
@@ -99,7 +67,7 @@ public abstract class DeleteBitOfTrackFunction extends GenericFunction
 	protected CompoundCommand createCommand(List<Integer> inIndexesToKeep, List<Integer> inIndexesToDelete,
 		List<PointFlag> inSegmentFlags, int inNumMedia)
 	{
-		PopupResponse mediaAction = chooseMediaAction(inNumMedia);
+		PopupResponse mediaAction = LinkedMediaAction.chooseMediaAction(_app.getFrame(), inNumMedia);
 		if (mediaAction == PopupResponse.CANCEL) {
 			return null;
 		}
@@ -107,10 +75,10 @@ public abstract class DeleteBitOfTrackFunction extends GenericFunction
 		switch (mediaAction)
 		{
 			case DELETE:
-				command.addCommand(makeDeleteMediaCommand(inIndexesToDelete));
+				command.addCommand(LinkedMediaAction.makeDeleteMediaCommand(inIndexesToDelete, _app.getTrackInfo().getTrack()));
 				break;
 			case UNLINK:
-				command.addCommand(makeUnlinkMediaCommand(inIndexesToDelete));
+				command.addCommand(LinkedMediaAction.makeUnlinkMediaCommand(inIndexesToDelete, _app.getTrackInfo().getTrack()));
 				break;
 			case MEDIA_NOT_CONNECTED:
 			case CANCEL:
@@ -118,43 +86,6 @@ public abstract class DeleteBitOfTrackFunction extends GenericFunction
 				break;
 		}
 		return command;
-	}
-
-	/**
-	 * @param inIndexesToDelete indexes of points which will be deleted
-	 * @return command to unlink points from their media
-	 */
-	private Command makeUnlinkMediaCommand(List<Integer> inIndexesToDelete)
-	{
-		ArrayList<PointAndMedia> points = new ArrayList<>();
-		for (int i : inIndexesToDelete)
-		{
-			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
-			if (point.hasMedia()) {
-				points.add(new PointAndMedia(point, null, null)); // disconnect
-			}
-		}
-		return new ConnectMultipleMediaCmd(MediaLinkType.LINK_BOTH, points);
-	}
-
-	/**
-	 * @param inIndexesToDelete indexes of points which will be deleted
-	 * @return command to remove the media belonging to these points
-	 */
-	private Command makeDeleteMediaCommand(List<Integer> inIndexesToDelete)
-	{
-		ArrayList<MediaObject> media = new ArrayList<>();
-		for (int i : inIndexesToDelete)
-		{
-			DataPoint point = _app.getTrackInfo().getTrack().getPoint(i);
-			if (point.getPhoto() != null) {
-				media.add(point.getPhoto());
-			}
-			if (point.getAudio() != null) {
-				media.add(point.getAudio());
-			}
-		}
-		return new RemoveMediaCmd(media);
 	}
 
 	/**

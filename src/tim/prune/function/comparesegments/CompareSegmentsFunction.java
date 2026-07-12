@@ -437,7 +437,7 @@ public class CompareSegmentsFunction extends GenericFunction
 		final String gnuplotPath = getConfig().getConfigString(Config.KEY_GNUPLOT_PATH);
 		try
 		{
-			Process process = Runtime.getRuntime().exec(gnuplotPath + " -persist");
+			Process process = Runtime.getRuntime().exec(new String[] {gnuplotPath, "-persist"});
 			try (OutputStreamWriter writer = new OutputStreamWriter(process.getOutputStream()))
 			{
 				writer.write("set multiplot layout 3,1\n");

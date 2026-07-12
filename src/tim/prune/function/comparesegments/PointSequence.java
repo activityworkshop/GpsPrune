@@ -33,7 +33,7 @@ public class PointSequence
 	}
 
 	Timestamp getFirstTimestamp() {
-		return _points.isEmpty() ? null : getFirstPoint()._point.getTimestamp();
+		return _points.isEmpty() ? null : getFirstPoint().point().getTimestamp();
 	}
 
 	List<PointData> getPoints() {

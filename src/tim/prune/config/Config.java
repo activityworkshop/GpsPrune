@@ -21,7 +21,7 @@ public class Config
 	private File _configFile = null;
 
 	/** key/value pairs containing all config values */
-	private Properties _configValues = null;
+	private final Properties _configValues;
 	/** Colour scheme object is also part of config */
 	private final ColourScheme _colourScheme = new ColourScheme();
 	/** Point colourer object, if any */
@@ -122,6 +122,8 @@ public class Config
 	public static final String KEY_COMPRESSION_METHODS = "prune.compressionmethods";
 	/** true for double-sized icons */
 	public static final String KEY_ICONS_DOUBLE_SIZE = "prune.iconsdoublesize";
+	/** scale factor for text components (usually 100) */
+	public static final String KEY_TEXT_SCALING_FACTOR = "prune.textscalefactor";
 	/** true if user has already been asked about config migration */
 	public static final String KEY_ASKED_ABOUT_CONFIG_MIGRATION = "prune.configmigrationasked";
 	/** Show zoom level in status bar or not */
@@ -191,11 +193,12 @@ public class Config
 		props.put(KEY_UNITSET_KEY, "unitset.kilometres"); // metric by default
 		props.put(KEY_COORD_DISPLAY_FORMAT, "NONE"); // original
 		props.put(KEY_HEIGHT_EXAGGERATION, "100"); // 100%, no exaggeration
-		props.put(KEY_TERRAIN_GRID_SIZE, "50");
+		props.put(KEY_TERRAIN_GRID_SIZE, "100");
 		props.put(KEY_ALTITUDE_TOLERANCE, "0"); // 0, all exact as before
 		props.put(KEY_WAYPOINT_ICON_SIZE, "1"); // medium size
 		props.put(KEY_WPICON_SALT, "-1"); // no waypoint colouring by default
 		props.put(KEY_ICONS_DOUBLE_SIZE, "0"); // regular size by default
+		props.put(KEY_TEXT_SCALING_FACTOR, "100"); // standard is 100%
 		props.put(KEY_SHOW_ZOOMLEVEL, "0"); // don't show
 		props.put(KEY_ASKED_ABOUT_CONFIG_MIGRATION, "0"); // not asked
 		return props;

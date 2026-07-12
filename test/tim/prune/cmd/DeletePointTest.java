@@ -92,7 +92,7 @@ class DeletePointTest
 		}
 		for (int delPos = 0; delPos < 9; delPos++)
 		{
-			info.getSelection().selectRange(3,  5);
+			info.getSelection().selectRange(3, 5);
 			Command command = new DeletePointCmd(delPos);
 			assertTrue(command.execute(info));
 			assertEquals(9, track.getNumPoints());

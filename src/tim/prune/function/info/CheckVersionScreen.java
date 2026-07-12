@@ -2,7 +2,8 @@ package tim.prune.function.info;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -25,8 +26,7 @@ public class CheckVersionScreen extends GenericFunction
 	 * Constructor
 	 * @param inApp app object
 	 */
-	public CheckVersionScreen(App inApp)
-	{
+	public CheckVersionScreen(App inApp) {
 		super(inApp);
 	}
 
@@ -51,7 +51,8 @@ public class CheckVersionScreen extends GenericFunction
 		try
 		{
 			// Load properties from the url on the server
-			InputStream inStream = new URL(filePathStart + GpsPrune.VERSION_NUMBER + filePathEnd).openStream();
+			InputStream inStream = new URI(filePathStart + GpsPrune.VERSION_NUMBER + filePathEnd)
+					.toURL().openStream();
 			props.load(inStream);
 
 			// Extract the three fields we want, ignore others
@@ -59,8 +60,8 @@ public class CheckVersionScreen extends GenericFunction
 			nextVersion = props.getProperty("prune.nextversion");
 			releaseDate = props.getProperty("prune.releasedate");
 		}
-		catch (IOException ioe) {
-			System.err.println(ioe.getClass().getName() + " - " + ioe.getMessage());
+		catch (IOException | URISyntaxException e) {
+			System.err.println(e.getClass().getName() + " - " + e.getMessage());
 		}
 
 		if (latestVer == null) {

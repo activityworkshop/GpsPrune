@@ -32,7 +32,7 @@ public abstract class I18nManager
 	public static void init(Locale inLocale)
 	{
 		final String BUNDLE_NAME = "tim.prune.lang.prune-texts";
-		final Locale BACKUP_LOCALE = new Locale("en", "GB");
+		final Locale BACKUP_LOCALE = Locale.of("en", "GB");
 
 		_localTexts = new Properties();
 		// Load English texts first to use as defaults

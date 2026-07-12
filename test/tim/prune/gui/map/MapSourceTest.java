@@ -43,6 +43,11 @@ class MapSourceTest
 		testUrlFixUnchanged("http://abc.something.com/{z}/{y}/{x}");
 		testUrlFixUnchanged("http://abc.something.com/{z}/{y}/{x}/");
 		testUrlFixUnchanged("http://something.com/{x}/{y}{z}/{x}.png");
+		testUrlFixUnchanged("https://something.com/{x}/{y}/{z}.jpg");
+		// placeholders and also wildcards
+		testUrlFixUnchanged("http://[abcd].something.com/{x}/{y}{z}/{x}.png");
+		// placeholders but no protocol, adds http
+		testUrlFix("something.com/{x}/{y}{z}/{x}.png", "http://something.com/{x}/{y}{z}/{x}.png");
 	}
 
 	private void testUrlFixUnchanged(String inStart) {

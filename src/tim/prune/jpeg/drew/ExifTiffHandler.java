@@ -17,7 +17,7 @@ import tim.prune.jpeg.JpegData;
  */
 public class ExifTiffHandler
 {
-	private JpegData _jpegData = null;
+	private final JpegData _jpegData;
 	private long _thumbnailOffset = -1L, _thumbnailLength = -1L;
 
 	/** This tag is a pointer to the Exif SubIFD. */
@@ -44,21 +44,14 @@ public class ExifTiffHandler
 	 * Constructor
 	 * @param jpegData data object to populate with received results
 	 */
-	public ExifTiffHandler(JpegData jpegData)
-	{
+	public ExifTiffHandler(JpegData jpegData) {
 		_jpegData = jpegData;
-		_thumbnailOffset = _thumbnailLength = -1L;
 	}
 
 	public boolean isTagIfdPointer(int tagType)
 	{
-		if (tagType == DIR_EXIF_SUB_IFD_OFFSET) {
-			return true;
-		} else if (tagType == DIR_GPS_INFO_OFFSET) {
-			return true;
-		}
-
-		return false;
+		return tagType == DIR_EXIF_SUB_IFD_OFFSET
+			|| tagType == DIR_GPS_INFO_OFFSET;
 	}
 
 	public void completed(final ByteArrayReader reader, final int tiffHeaderOffset)
@@ -74,7 +67,7 @@ public class ExifTiffHandler
 					System.arraycopy(thumbData, 0, thumbCopy, 0, thumbData.length);
 					_jpegData.setThumbnailImage(thumbCopy);
 				}
-			} catch (ExifException ex) {}
+			} catch (ExifException ignored) {}
 		}
 	}
 

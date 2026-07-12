@@ -44,9 +44,6 @@ public class RemovePhotoFunction extends GenericFunction
 		boolean disconnected = false;
 		switch (shouldDeletePoint(currentPhoto))
 		{
-			default:
-			case CANCEL:
-				return;
 			case MEDIA_NOT_CONNECTED:
 				command = deleteCommand;
 				break;
@@ -63,6 +60,9 @@ public class RemovePhotoFunction extends GenericFunction
 						.addCommand(point == null || point.getPhoto() == null ? null :
 								new RemoveAudioCmd(_app.getTrackInfo().getSelection().getCurrentAudioIndex()));
 				break;
+			case CANCEL:
+			default:
+				return;
 		}
 		command.setDescription(I18nManager.getText("undo.removephoto", currentPhoto.getName()));
 		command.setConfirmText(I18nManager.getText("confirm.media.removed", currentPhoto.getName()));

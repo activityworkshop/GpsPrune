@@ -1,6 +1,7 @@
 package tim.prune.function.search;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -109,7 +110,7 @@ public class GetWikipediaFunction extends GenericDownloaderFunction
 
 		try
 		{
-			URL url = new URL(urlString);
+			final URL url = new URI(urlString).toURL();
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			inStream = url.openStream();
 			saxParser.parse(inStream, xmlHandler);

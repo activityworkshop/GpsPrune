@@ -38,8 +38,8 @@ import tim.prune.gui.colour.PointColourer;
 import tim.prune.gui.map.MapSource;
 import tim.prune.gui.map.MapSourceLibrary;
 import tim.prune.gui.map.MapUtils;
-import tim.prune.gui.map.WaypointIcons;
 import tim.prune.gui.map.WpIconDefinition;
+import tim.prune.gui.map.WpIconLibrary;
 import tim.prune.load.GenericFileFilter;
 import tim.prune.threedee.ImageDefinition;
 
@@ -307,7 +307,6 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 				double y = track.getY(i) - yRange.getMinimum();
 				// use zoom level to calculate pixel coords on image
 				int px = (int) (x * zoomFactor * 256), py = (int) (y * zoomFactor * 256);
-				// System.out.println("Point: x=" + x + ", px=" + px + ", y=" + y + ", py=" + py);
 				if (!point.getSegmentStart() && gotPreviousPoint) {
 					// draw from previous point to this one
 					g.drawLine(prevX, prevY, px, py);
@@ -326,7 +325,11 @@ public class ImageExporter extends GenericFunction implements BaseImageConsumer
 		// Now the waypoints
 		final Color textColour = getConfig().getColourScheme().getColour(ColourScheme.IDX_TEXT);
 		g.setColor(textColour);
-		final WpIconDefinition wpIconDefinition = WaypointIcons.getDefinition(getConfig(), _app.getIconManager());
+		WpIconDefinition wpIconDefinition = null;
+		final int wpType = getConfig().getConfigInt(Config.KEY_WAYPOINT_ICONS);
+		if (wpType != WpIconLibrary.WAYPT_DEFAULT) {
+			wpIconDefinition = WpIconLibrary.getFixedIconDefinition(wpType, getIconManager());
+		}
 		// Loop again to draw waypoints
 		for (int i=0; i<numPoints; i++)
 		{

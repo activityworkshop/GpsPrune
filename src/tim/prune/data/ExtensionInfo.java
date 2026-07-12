@@ -6,16 +6,10 @@ import java.util.List;
 
 public class ExtensionInfo
 {
-	/** Prefix and identifier of a single extension */
-	private static class Extension
-	{
-		private final String _prefix;
-		private final String _identifier;
-		private Extension(String inPrefix, String inIdentifier)
-		{
-			_prefix = inPrefix;
-			_identifier = inIdentifier;
-		}
+	/**
+	 * Prefix and identifier of a single extension
+	 */
+	private record Extension(String prefix, String identifier) {
 	}
 
 	private String _namespace = null;
@@ -62,7 +56,7 @@ public class ExtensionInfo
 	{
 		ArrayList<String> result = new ArrayList<>();
 		for (Extension extn : _extensions) {
-			result.add(extn._identifier);
+			result.add(extn.identifier());
 		}
 		return result;
 	}
@@ -71,7 +65,7 @@ public class ExtensionInfo
 	{
 		ArrayList<String> result = new ArrayList<>();
 		for (Extension extn : _extensions) {
-			result.add("xmlns:" + extn._prefix + "=\"" + extn._identifier + "\"");
+			result.add("xmlns:" + extn.prefix() + "=\"" + extn.identifier() + "\"");
 		}
 		return result;
 	}
@@ -82,8 +76,8 @@ public class ExtensionInfo
 		builder.append(_namespace).append(' ').append(_xsdLinks.getOrDefault(_namespace, ""));
 		for (Extension extn : _extensions)
 		{
-			builder.append(' ').append(extn._identifier)
-				.append(' ').append(_xsdLinks.getOrDefault(extn._identifier, ""));
+			builder.append(' ').append(extn.identifier())
+				.append(' ').append(_xsdLinks.getOrDefault(extn.identifier(), ""));
 		}
 		return builder.toString();
 	}
@@ -92,13 +86,13 @@ public class ExtensionInfo
 	{
 		for (Extension extn : _extensions)
 		{
-			if (extn._prefix.equals(inPrefix))
+			if (extn.prefix().equals(inPrefix))
 			{
-				final int lastSlashPos = extn._identifier.lastIndexOf('/');
-				if (lastSlashPos > 0 && "Vv".indexOf(extn._identifier.charAt(lastSlashPos + 1)) >= 0) {
-					final int prevSlashPos = extn._identifier.lastIndexOf('/', lastSlashPos - 1);
+				final int lastSlashPos = extn.identifier().lastIndexOf('/');
+				if (lastSlashPos > 0 && "Vv".indexOf(extn.identifier().charAt(lastSlashPos + 1)) >= 0) {
+					final int prevSlashPos = extn.identifier().lastIndexOf('/', lastSlashPos - 1);
 					if (prevSlashPos > 0) {
-						return extn._identifier.substring(prevSlashPos + 1, lastSlashPos);
+						return extn.identifier().substring(prevSlashPos + 1, lastSlashPos);
 					}
 				}
 			}

@@ -461,7 +461,6 @@ public class FileSaver
 			{
 				// Determine delimiter character to use
 				final char delimiter = getDelimiter();
-				FieldInfo info = null;
 
 				int numFields = _model.getRowCount();
 				boolean firstField = true;
@@ -471,7 +470,7 @@ public class FileSaver
 					StringBuilder buffer = new StringBuilder();
 					for (int f=0; f<numFields; f++)
 					{
-						info = _model.getFieldInfo(f);
+						FieldInfo info = _model.getFieldInfo(f);
 						if (info.isSelected())
 						{
 							// output field separator
@@ -510,7 +509,7 @@ public class FileSaver
 					StringBuffer buffer = new StringBuffer();
 					for (int f=0; f<numFields; f++)
 					{
-						info = _model.getFieldInfo(f);
+						FieldInfo info = _model.getFieldInfo(f);
 						if (info.isSelected())
 						{
 							// output field separator

@@ -2,6 +2,8 @@ package tim.prune.function.search;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -45,7 +47,9 @@ public class SearchOpenCachingDeFunction extends GenericDownloaderFunction
 	 */
 	protected String getColumnKey(int inColNum)
 	{
-		if (inColNum == 0) return "dialog.wikipedia.column.name";
+		if (inColNum == 0) {
+			return "dialog.wikipedia.column.name";
+		}
 		return "dialog.wikipedia.column.distance";
 	}
 
@@ -90,12 +94,12 @@ public class SearchOpenCachingDeFunction extends GenericDownloaderFunction
 
 		try
 		{
-			URL url = new URL(urlString);
+			URL url = new URI(urlString).toURL();
 			SAXParser saxParser = SAXParserFactory.newInstance().newSAXParser();
 			try (InputStream inStream = url.openStream()) {
 				saxParser.parse(inStream, xmlHandler);
 			}
-		} catch (SAXException | IOException | ParserConfigurationException ignored) {
+		} catch (SAXException | IOException | ParserConfigurationException | URISyntaxException ignored) {
 		}
 
 		// Add track list to model

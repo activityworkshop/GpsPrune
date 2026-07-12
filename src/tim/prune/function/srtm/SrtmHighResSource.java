@@ -1,8 +1,8 @@
 package tim.prune.function.srtm;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 
@@ -51,8 +51,8 @@ public class SrtmHighResSource extends SrtmSource
 	{
 		URL url = null;
 		try {
-			url = new URL(URL_PREFIX + getFilename(inTile));
-		} catch (MalformedURLException e) {} // ignore error, url stays null
+			url = makeUrl(URL_PREFIX + getFilename(inTile));
+		} catch (IOException e) {} // ignore error, url stays null
 		return url;
 	}
 
@@ -140,7 +140,7 @@ public class SrtmHighResSource extends SrtmSource
 			if (status == HTTP_CODE_REDIRECT)
 			{
 				// 302 is a redirect, so we go round the loop again.
-				url = new URL(connection.getHeaderField("Location"));
+				url = makeUrl(connection.getHeaderField("Location"));
 			}
 			else if (status == HTTP_CODE_NOTFOUND) {
 				throw new Exception("SRTM file not found");

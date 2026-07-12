@@ -171,28 +171,28 @@ public class PlusCodeFunction extends GenericFunction
 		}
 
 		ArrayList<DataPoint> points = new ArrayList<>();
-		if (inArea.minLat == inArea.maxLat && inArea.minLon == inArea.maxLon)
+		if (inArea.minLat() == inArea.maxLat() && inArea.minLon() == inArea.maxLon())
 		{
 			// Not actually an area, just a single point
-			DataPoint point = new DataPoint(Latitude.make(inArea.minLat), Longitude.make(inArea.minLon));
-			point.setWaypointName(inArea.code);
+			DataPoint point = new DataPoint(Latitude.make(inArea.minLat()), Longitude.make(inArea.minLon()));
+			point.setWaypointName(inArea.code());
 			points.add(point);
 		}
 		else
 		{
 			for (int i=0; i<5; i++)
 			{
-				Coordinate lat = Latitude.make((i%4==0 || i==3) ? inArea.minLat : inArea.maxLat);
-				Coordinate lon = Longitude.make((i%4==0 || i==1) ? inArea.minLon : inArea.maxLon);
+				Coordinate lat = Latitude.make((i%4==0 || i==3) ? inArea.minLat() : inArea.maxLat());
+				Coordinate lon = Longitude.make((i%4==0 || i==1) ? inArea.minLon() : inArea.maxLon());
 				DataPoint point = new DataPoint(lat, lon);
 				point.setSegmentStart(i==0);
 				points.add(point);
 			}
 			// Middle point with name
-			Coordinate lat = Latitude.make((inArea.minLat + inArea.maxLat) / 2.0);
-			Coordinate lon = Longitude.make((inArea.minLon + inArea.maxLon) / 2.0);
+			Coordinate lat = Latitude.make((inArea.minLat() + inArea.maxLat()) / 2.0);
+			Coordinate lon = Longitude.make((inArea.minLon() + inArea.maxLon()) / 2.0);
 			DataPoint point = new DataPoint(lat, lon);
-			point.setWaypointName(inArea.code);
+			point.setWaypointName(inArea.code());
 			points.add(point);
 		}
 		// Make and execute the command

@@ -64,8 +64,9 @@ public class SearchOsmPoisXmlHandler extends DefaultHandler
 		if (inTagName.equals("node"))
 		{
 			// end of the entry
-			if (_currPoint.getTrackName() != null && !_currPoint.getTrackName().equals(""))
-			_pointList.add(_currPoint);
+			if (_currPoint.getTrackName() != null && !_currPoint.getTrackName().isEmpty()) {
+				_pointList.add(_currPoint);
+			}
 		}
 		super.endElement(inUri, inLocalName, inTagName);
 	}
@@ -73,8 +74,7 @@ public class SearchOsmPoisXmlHandler extends DefaultHandler
 	/**
 	 * @return the list of points
 	 */
-	public ArrayList<SearchResult> getPointList()
-	{
+	public ArrayList<SearchResult> getPointList() {
 		return _pointList;
 	}
 }

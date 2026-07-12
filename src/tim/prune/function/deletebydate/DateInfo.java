@@ -45,8 +45,6 @@ public class DateInfo implements Comparable<DateInfo>
 		else {
 			_dateString = DEFAULT_DATE_FORMAT.format(_date);
 		}
-		_numPoints = 0;
-		_toDelete = false;
 	}
 
 	/**

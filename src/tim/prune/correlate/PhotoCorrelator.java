@@ -129,6 +129,7 @@ public class PhotoCorrelator extends Correlator
 		command.setDescription(makeUndoText(pointPhotoPairs.size()));
 		command.setConfirmText(makeConfirmText(pointPhotoPairs.size()));
 		_app.execute(command);
+		_app.getTrackInfo().getSelection().clearAll();
 	}
 
 	/**

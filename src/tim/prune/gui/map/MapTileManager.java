@@ -201,7 +201,7 @@ public class MapTileManager implements TileManager
 	@Override
 	public void returnTile(TileDef inDef, TileBytes inResult)
 	{
-		if (inDef == null || inDef._mapSource == null || inResult == null || inResult.isEmpty()) {
+		if (inDef == null || inDef.mapSource() == null || inResult == null || inResult.isEmpty()) {
 			return;
 		}
 		// construct image from result bytes
@@ -221,7 +221,7 @@ public class MapTileManager implements TileManager
 			if (imgWidth == 512)
 			{
 				// Double resolution, so need to slice and store as 4 separate tiles
-				_mapSource.setDoubleRes(inDef._layerIdx);
+				_mapSource.setDoubleRes(inDef.layerIdx());
 				// Construct four different images, pass each one in turn
 				for (int subtile=0; subtile<4; subtile++)
 				{
@@ -260,14 +260,14 @@ public class MapTileManager implements TileManager
 	private void processDownloadedTile(Image inImage, TileBytes inBytes, TileDef inDefinition) throws CacheFailure
 	{
 		// Pass image to appropriate memcacher
-		_tempCaches[inDefinition._layerIdx].setTile(inImage, inDefinition._x, inDefinition._y, inDefinition._zoom);
+		_tempCaches[inDefinition.layerIdx()].setTile(inImage, inDefinition.x(), inDefinition.y(), inDefinition.zoom());
 		_diskCache.saveTileBytes(inBytes, inDefinition);
 	}
 
 	private void processDownloadedTile(BufferedImage inImage, TileDef inDefinition) throws CacheFailure
 	{
 		// Pass image to appropriate memcacher
-		_tempCaches[inDefinition._layerIdx].setTile(inImage, inDefinition._x, inDefinition._y, inDefinition._zoom);
+		_tempCaches[inDefinition.layerIdx()].setTile(inImage, inDefinition.x(), inDefinition.y(), inDefinition.zoom());
 		_diskCache.saveTileImage(inImage, inDefinition);
 	}
 }
