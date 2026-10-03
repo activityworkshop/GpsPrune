@@ -159,10 +159,10 @@ public class JsonFileLoader extends FileTypeLoader
 	 */
 	private List<DataPoint> makePointList()
 	{
-		ArrayList<DataPoint> points = new ArrayList<>();
+		final ArrayList<DataPoint> points = new ArrayList<>();
 		for (JsonPoint jsonPoint : _jsonPoints)
 		{
-			DataPoint point = new DataPoint(Latitude.make(jsonPoint.latitude()),
+			final DataPoint point = new DataPoint(Latitude.make(jsonPoint.latitude()),
 				Longitude.make(jsonPoint.longitude()),
 				new Altitude(jsonPoint.altitude(), UnitSetLibrary.UNITS_METRES));
 			if (point.isValid())

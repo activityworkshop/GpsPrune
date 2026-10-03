@@ -116,6 +116,43 @@ public class CoordinateParsingTest
 	}
 
 	@Test
+	public void testParseFromString_singleField()
+	{
+		Coordinate angle = Coordinate.parse("174", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertEquals(174.0, angle.getDouble());
+		angle = Coordinate.parse("E 174", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertEquals(174.0, angle.getDouble());
+		angle = Coordinate.parse("174.", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertEquals(174.0, angle.getDouble());
+		angle = Coordinate.parse("W 174", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertEquals(-174.0, angle.getDouble());
+		angle = Coordinate.parse("-23", Cardinal.NORTH, Cardinal.SOUTH);
+		Assertions.assertEquals(-23.0, angle.getDouble());
+	}
+
+	@Test
+	public void testParseFailFromString_fiveOrSixFields()
+	{
+		Coordinate angle = Coordinate.parse("174 11 12 13 14", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNull(angle);
+		angle = Coordinate.parse("-44 1 2 3 4 5", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNull(angle);
+	}
+
+	@Test
+	public void testParseFailFromString_valuesOutOfRange()
+	{
+		Coordinate angle = Coordinate.parse("W001°78'00.0\"", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNull(angle);
+		angle = Coordinate.parse("W001°8'60.0\"", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNull(angle);
+		// Minus sign is ignored for the minutes, treated as positive 8
+		angle = Coordinate.parse("E001°-8'6.0\"", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNotNull(angle);
+		Assertions.assertEquals("E 1.13500", angle.output(Coordinate.Format.DEG, 5));
+	}
+
+	@Test
 	public void testRounding()
 	{
 		Coordinate angle = Coordinate.parse("1.26518", Cardinal.NORTH, Cardinal.SOUTH);

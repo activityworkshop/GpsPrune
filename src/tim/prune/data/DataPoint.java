@@ -134,11 +134,10 @@ public class DataPoint
 		// Only these three fields are available
 		_fieldValues = new String[3];
 		_fieldList = getSharedLatLonFieldList();
-		// TODO: Check if either latitude or longitude is null - in which case do what?
 		_latitude = inLatitude;
-		_fieldValues[0] = inLatitude.toString();
+		_fieldValues[0] = getStringOf(inLatitude);
 		_longitude = inLongitude;
-		_fieldValues[1] = inLongitude.toString();
+		_fieldValues[1] = getStringOf(inLongitude);
 		if (inAltitude == null) {
 			_altitude = Altitude.NONE;
 		}
@@ -147,6 +146,10 @@ public class DataPoint
 			_fieldValues[2] = "" + inAltitude.getValue();
 		}
 		_timestamp = new TimestampUtc(null);
+	}
+
+	private String getStringOf(Coordinate inValue) {
+		return inValue == null ? "<null>" : inValue.toString();
 	}
 
 	/** Simplified constructor just giving raw values for latitude and longitude */
@@ -196,6 +199,17 @@ public class DataPoint
 		setRawFieldValue(Field.WAYPT_NAME, inValue);
 		setModified(false);
 		_waypointName = inValue;
+	}
+
+	public boolean wouldAcceptEdit(Field inField, String inValue)
+	{
+		if (inField.equals(Field.LATITUDE)) {
+			return Latitude.make(inValue) != null;
+		}
+		if (inField.equals(Field.LONGITUDE)) {
+			return Longitude.make(inValue) != null;
+		}
+		return true;
 	}
 
 	/**
@@ -610,6 +624,6 @@ public class DataPoint
 	 * Get string for debug
 	 */
 	public String toString() {
-		return "[Lat=" + getLatitude().toString() + ", Lon=" + getLongitude().toString() + "]";
+		return "[Lat=" + getStringOf(getLatitude()) + ", Lon=" + getStringOf(getLongitude()) + "]";
 	}
 }

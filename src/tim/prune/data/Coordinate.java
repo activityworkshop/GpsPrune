@@ -88,7 +88,12 @@ public class Coordinate
 		// parse fields according to number found
 		final FractionalSeconds seconds;
 		final Format originalFormat;
-		if (numFields == 2)
+		if (numFields == 1) {
+			// String is just whole degrees as an integer
+			originalFormat = cardinalSpecified ? Format.DEG : Format.DEG_WITHOUT_CARDINAL;
+			seconds = new FractionalSeconds(fields[0], 0, 1);
+		}
+		else if (numFields == 2)
 		{
 			if (!otherDelims[1])
 			{
