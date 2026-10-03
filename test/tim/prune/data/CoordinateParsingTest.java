@@ -153,6 +153,21 @@ public class CoordinateParsingTest
 	}
 
 	@Test
+	public void testParseFromString_spaceAndDot()
+	{
+		final Coordinate angle1 = Coordinate.parse("E01°18. 123\'", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNotNull(angle1);
+		final Coordinate angle2 = Coordinate.parse("E01°18.123\'", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNotNull(angle2);
+		Assertions.assertEquals(angle1.getDouble(), angle2.getDouble());
+		// Just a space means it will be parsed as dms, so 123 is now invalid and 18 is 18 seconds
+		final Coordinate angle3 = Coordinate.parse("E01°18 123\'", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertNull(angle3);
+		final Coordinate angle4 = Coordinate.parse("E01°18 18\'", Cardinal.EAST, Cardinal.WEST);
+		Assertions.assertEquals(1.305, angle4.getDouble());
+	}
+
+	@Test
 	public void testRounding()
 	{
 		Coordinate angle = Coordinate.parse("1.26518", Cardinal.NORTH, Cardinal.SOUTH);

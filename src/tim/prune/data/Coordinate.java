@@ -184,6 +184,30 @@ public class Coordinate
 	private record ParseResult(int numFields, boolean isNegative) {
 	}
 
+	static class DelimsFound
+	{
+		private boolean _decimalChar = false;
+		private boolean _spaceChar = false;
+		private boolean _otherChar = false;
+
+		void found(char c)
+		{
+			if (c == ' ') {
+				_spaceChar = true;
+			}
+			else if (c == ',' || c == '.') {
+				_decimalChar = true;
+			}
+			else if ("0123456789".indexOf(c) < 0) {
+				_otherChar = true;
+			}
+		}
+
+		boolean isOtherDelimiter() {
+			return _otherChar || (_spaceChar && !_decimalChar);
+		}
+	}
+
 	/**
 	 * @param inSource source string to parse
 	 * @param inFields array of field values to populate
@@ -194,6 +218,10 @@ public class Coordinate
 	{
 		int numFields = 0;
 		boolean isNegative = false;
+		final DelimsFound[] delimsFound = new DelimsFound[inOtherDelims.length];
+		for (int i=0; i<delimsFound.length; i++) {
+			delimsFound[i] = new DelimsFound();
+		}
 		try
 		{
 			final int strLen = inSource.length();
@@ -225,13 +253,18 @@ public class Coordinate
 				{
 					isNumeric = false;
 					// Remember delimiters
-					if (currChar != ',' && currChar != '.') {
-						inOtherDelims[numFields] = true;
-					}
+					delimsFound[numFields].found(currChar);
 				}
 			}
 		}
 		catch (ArrayIndexOutOfBoundsException ignored) {}
+		// Copy flags back into array parameter
+		for (int i=0; i<inOtherDelims.length; i++)
+		{
+			if (delimsFound[i].isOtherDelimiter()) {
+				inOtherDelims[i] = true;
+			}
+		}
 		return new ParseResult(numFields, isNegative);
 	}
 
