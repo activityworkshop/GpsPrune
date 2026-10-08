@@ -50,14 +50,21 @@ public class EditPointCmd extends Command
 	@Override
 	protected boolean executeCommand(TrackInfo inInfo)
 	{
-		DataPoint point = inInfo.getTrack().getPoint(_pointIndex);
+		final DataPoint point = inInfo.getTrack().getPoint(_pointIndex);
 		if (point == null) {
 			return false;
+		}
+		// Check first whether all the edits would be accepted
+		for (FieldEdit edit : _editList)
+		{
+			if (!point.wouldAcceptEdit(edit.getField(), edit.getValue())) {
+				return false;
+			}
 		}
 		boolean coordsChanged = false;
 		for (FieldEdit edit : _editList)
 		{
-			Field field = edit.getField();
+			final Field field = edit.getField();
 			point.setFieldValue(field, edit.getValue(), _unitSet, isUndo());
 			inInfo.getTrack().getFieldList().addField(field);
 			coordsChanged |= (field.equals(Field.LATITUDE)
@@ -77,13 +84,13 @@ public class EditPointCmd extends Command
 	@Override
 	protected Command makeInverse(TrackInfo inInfo)
 	{
-		DataPoint pointToEdit = inInfo.getTrack().getPoint(_pointIndex);
+		final DataPoint pointToEdit = inInfo.getTrack().getPoint(_pointIndex);
 		return new EditPointCmd(this, _pointIndex, makeOppositeEdits(pointToEdit), _unitSet);
 	}
 
 	private List<FieldEdit> makeOppositeEdits(DataPoint pointToEdit)
 	{
-		List<FieldEdit> opposite = new ArrayList<>();
+		final List<FieldEdit> opposite = new ArrayList<>();
 		for (FieldEdit fieldEdit : _editList) {
 			final Field field = fieldEdit.getField();
 			opposite.add(new FieldEdit(field, pointToEdit.getFieldValue(field)));
